@@ -127,27 +127,27 @@ if match:
 Cuando hay personas en la escena, la IA tiende a hacerlas ver pequeñas en el fondo para que la pintura se vea gigante.
 * Si el prompt contiene figuras humanas (`discreet standing`, `standing adult`, etc.):
 ```python
-# Reducción de escala física del cuadro del 35% (multiplicador de 0.65)
+# Reducción de escala física del cuadro al 50% (multiplicador de 0.50)
 if has_human:
-    fill_ratio *= 0.65
+    fill_ratio *= 0.50
 ```
 * **Efecto:** La pintura es más pequeña en el canvas, forzando a la IA a renderizar a la persona más grande y en primer plano.
 
 ### C. Compresión de Largo en Perspectiva 3/4
 Para vistas anguladas (cámaras de 3/4), el lienzo debe acortarse visualmente en sentido horizontal (fuga de perspectiva) para no verse "estirado" en la pantalla:
 ```python
-# Aplicar una compresión extra del 15% (fuga a 75% en lugar del 90%)
+# Aplicar una compresión extra del 30% (fuga a 70% en lugar del 90%)
 if warp_dir == "left":
     pa = [
         (0, 0), (0, h),
-        (int(w * 0.75), int(h * 0.85)), # Acortado a 75% de ancho
-        (int(w * 0.75), int(h * 0.15))
+        (int(w * 0.70), int(h * 0.85)), # Acortado a 70% de ancho
+        (int(w * 0.70), int(h * 0.15))
     ]
-    target_size = (int(w * 0.75), h)
+    target_size = (int(w * 0.70), h)
 else: # right
     pa = [
-        (int(w * 0.25), int(h * 0.15)), # Fuga inicial en 25%
-        (int(w * 0.25), int(h * 0.85)),
+        (int(w * 0.30), int(h * 0.15)), # Fuga inicial en 30%
+        (int(w * 0.30), int(h * 0.85)),
         (w, h), (w, 0)
     ]
     target_size = (w, h)

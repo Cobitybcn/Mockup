@@ -44,14 +44,14 @@ La obra raíz se posiciona sobre un lienzo cuadrado base de `1024x1024` píxeles
 * **Obras Muy Grandes ($\le 220$ cm):** Ocupan el **$48\%$** del lienzo.
 * **Obras Monumentales ($> 220$ cm):** Ocupan el **$58\%$** del lienzo (comandando la pared de piso a techo).
 
-### 3. Coeficiente de Escala Humana (Reducción del 35%)
+### 3. Coeficiente de Escala Humana (Reducción del 50%)
 Cuando el prompt requiere una figura humana (un hombre de 1.80 m o una mujer de 1.55 m como referencia), la IA tiende a generar a la persona pequeña y lejana en el fondo (perspectiva forzada) haciendo que la pintura parezca gigantesca.
-* **Solución:** Si se detecta una figura humana, aplicamos automáticamente un **multiplicador de `0.65`** (reducción del **$35\%$**) sobre el `fill_ratio`. 
-* Esto encoge la pintura sobre la plantilla del lienzo, forzando a la IA a renderizar una escala humana mucho más grande y cercana, logrando que el hombre de 1.80 m sea visiblemente más alto que la pintura de 1.20 m de altura.
+* **Solución:** Si se detecta una figura humana, aplicamos automáticamente un **multiplicador de `0.50`** (reducción del **$50\%$**) sobre el `fill_ratio`. 
+* Esto encoge la pintura a la mitad en la plantilla de la pared, forzando a la IA a renderizar una escala humana mucho más grande y cercana, logrando que la persona sea visiblemente más alta que la pintura y respetando la relación de aspecto física.
 
-### 4. Compresión de Perspectiva 3/4 (Reducción del 15% en el "Largo")
+### 4. Compresión de Perspectiva 3/4 (Reducción del 30% en el "Largo")
 Al renderizar vistas en perspectiva angular (3/4 izquierda o derecha), el lienzo plano de la pintura tendía a verse estirado horizontalmente en 2D (pareciendo medir 3 metros de largo en lugar de 1.6 metros).
-* **Solución:** Incrementamos el nivel de fuga de la transformación de perspectiva en Python, encogiéndola a un **$75\%$** de proyección horizontal (un **$15\%$** de compresión adicional respecto al $90\%$ por defecto). El cerebro lo interpreta como una inclinación de pared más realista y natural.
+* **Solución:** Incrementamos el nivel de fuga de la transformación de perspectiva en Python, encogiéndola a un **$70\%$** de proyección horizontal (un **$30\%$** de compresión adicional respecto al $100\%$ original). El cerebro lo interpreta como una inclinación de pared más realista y natural.
 
 ### 5. Restricción de Altura del Techo
 Para evitar que la IA dibuje salas cavernosas de 6 metros de altura donde los humanos se ven diminutos, los prompts inyectan de forma estricta un límite de **techo de 3.0 metros (10 pies)**, calibrando la altura general de la escena.

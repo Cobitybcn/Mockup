@@ -204,18 +204,20 @@ def handle_generate_image(args):
                 pb = [(0, 0), (0, h), (w, h), (w, 0)]
                 if warp_dir == "left":
                     # Left side is closer (larger), right side is further (smaller)
+                    # Compress horizontal width to 70% for a steeper 3/4 perspective to resolve visual stretching
                     pa = [
                         (0, 0),
                         (0, h),
-                        (int(w * 0.9), int(h * 0.88)),
-                        (int(w * 0.9), int(h * 0.12))
+                        (int(w * 0.70), int(h * 0.85)),
+                        (int(w * 0.70), int(h * 0.15))
                     ]
-                    target_size = (int(w * 0.9), h)
+                    target_size = (int(w * 0.70), h)
                 else:
                     # Left side is further (smaller), right side is closer (larger)
+                    # Compress horizontal width to 70% (offset 0.30) for a steeper 3/4 perspective to resolve visual stretching
                     pa = [
-                        (int(w * 0.1), int(h * 0.12)),
-                        (int(w * 0.1), int(h * 0.88)),
+                        (int(w * 0.30), int(h * 0.15)),
+                        (int(w * 0.30), int(h * 0.85)),
                         (w, h),
                         (w, 0)
                     ]
@@ -255,11 +257,11 @@ def handle_generate_image(args):
                 except Exception:
                     pass
             
-            # Apply 35% reduction if a human scale figure is present in the prompt
+            # Apply 50% reduction (multiplier 0.50) if a human scale figure is present to resolve the remaining 20-25% size gap
             prompt_lower = args.prompt.lower()
             has_human = any(kw in prompt_lower for kw in ["discreet standing", "standing adult", "standing human", "scale figure"])
             if has_human:
-                fill_ratio *= 0.65
+                fill_ratio *= 0.50
             
             max_art_dim = int(canvas_size * fill_ratio)
             
