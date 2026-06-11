@@ -1,0 +1,289 @@
+<?php
+declare(strict_types=1);
+
+class GeminiArtworkAnalyzer implements ArtworkAnalyzerInterface
+{
+    private ContextSelectorInterface $contextSelector;
+    private GeminiImageClient $client;
+
+    public function __construct(?ContextSelectorInterface $contextSelector = null, ?GeminiImageClient $client = null)
+    {
+        $this->contextSelector = $contextSelector ?: new MockContextSelector(new MockPromptBuilder());
+        $this->client = $client ?: new GeminiImageClient();
+    }
+
+    public function analyze(string $imagePath, array $metadata = []): array
+    {
+        if (!is_file($imagePath)) {
+            throw new RuntimeException('No se encontro la imagen para analizar.');
+        }
+
+        $imageMeta = $this->imageMeta($imagePath, $metadata);
+        $analysisWarning = null;
+        $t0 = microtime(true);
+        Logger::log('Iniciando analisis Gemini para obra: ' . basename($imagePath), 'gemini');
+
+        try {
+            $profile = $this->callGeminiAnalysis($imagePath, $metadata, $imageMeta);
+            $elapsed = round(microtime(true) - $t0, 2);
+            Logger::log('Analisis Gemini exitoso en ' . $elapsed . 's para: ' . basename($imagePath), 'gemini');
+        } catch (Throwable $e) {
+            $elapsed = round(microtime(true) - $t0, 2);
+            $analysisWarning = 'Gemini analysis fallback used: ' . $e->getMessage();
+            Logger::log('Analisis Gemini fallo despues de ' . $elapsed . 's, usando fallback. Error: ' . $e->getMessage(), 'warning');
+            $profile = $this->fallbackProfile($metadata);
+        }
+
+        $profile['_artist_profile'] = is_array($metadata['artist_profile'] ?? null) ? $metadata['artist_profile'] : [];
+        $profile['_artist_profile_prompt'] = trim((string)($metadata['artist_profile_prompt'] ?? ''));
+        $profile['_artist_profile_updated_at'] = (string)($profile['_artist_profile']['updated_at'] ?? '');
+
+        $contextCount = PromptSettings::mockupContextCount();
+        $contexts = $this->contextSelector->select($profile, $imageMeta, $contextCount);
+
+        return [
+            'ok' => true,
+            'mode' => 'gemini',
+            'context_count' => $contextCount,
+            'analysis_warning' => $analysisWarning,
+            'image' => [
+                'file' => basename($imagePath),
+                'path' => $imagePath,
+                'width_px' => $imageMeta['width_px'],
+                'height_px' => $imageMeta['height_px'],
+                'orientation' => $imageMeta['orientation'],
+                'aspect_ratio' => $imageMeta['aspect_ratio'],
+                'physical_size' => $imageMeta['physical_size'],
+            ],
+            'artwork_profile' => $profile,
+            'recommended_contexts' => $contexts,
+        ];
+    }
+
+    private function callGeminiAnalysis(string $imagePath, array $metadata, array $imageMeta): array
+    {
+        $notes = trim((string)($metadata['artist_notes'] ?? ''));
+        $region = trim((string)($metadata['region'] ?? ''));
+        $scaleText = trim((string)($metadata['scale_text'] ?? ''));
+        $artistProfilePrompt = trim((string)($metadata['artist_profile_prompt'] ?? ''));
+
+        $prompt = <<<PROMPT
+Analyze this artwork for premium mockup strategy. Return only valid JSON. No markdown.
+
+The image is the approved root artwork image. Do not suggest changing the artwork.
+
+Artist profile context:
+{$artistProfilePrompt}
+
+Use the artist profile only to understand language, materials, target audience, preferred regions, preferred contexts, forbidden contexts and commercial positioning. Never use it to modify, repaint or reinterpret the artwork.
+
+You must understand:
+- dominant style: abstract, surreal, architectural, geometric, organic, material, minimal, expressive, etc.
+- emotional and psychological associations of colors and dominant temperatures.
+- likely audience and sales positioning.
+- region and season strategy for publication. Region from user, if any: {$region}
+- dreamlike/oniric presence vs color vibration vs gesture/materiality.
+- materiality: texture, brushwork, palette knife, incisions, surface, canvas edge.
+- scale strategy for realistic mockups: {$scaleText}
+
+Image facts:
+- Orientation: {$imageMeta['orientation']}
+- Pixels: {$imageMeta['width_px']} x {$imageMeta['height_px']}
+- Artist notes: {$notes}
+
+Return this exact JSON shape:
+{
+  "style_summary": "",
+  "style_tags": [],
+  "mood_tags": [],
+  "palette": [],
+  "palette_family": [],
+  "luminosity": "medium",
+  "saturation": "balanced",
+  "detail_density": "medium",
+  "texture_visibility": "medium",
+  "structure_tags": [],
+  "commercial_fit": [],
+  "seasonality": [],
+  "recommended_shot_needs": [],
+  "avoid": [],
+  "one_line_curatorial_read": "",
+  "style_interpretation": {
+    "dominant_language": [],
+    "reads_through": []
+  },
+  "emotional_palette": {
+    "temperature": "balanced",
+    "psychological_associations": []
+  },
+  "audience_profile": {
+    "primary": "",
+    "secondary": ""
+  },
+  "region_context": {
+    "target_region": "",
+    "strategy": ""
+  },
+  "seasonal_strategy": {
+    "primary_season": "neutral",
+    "reason": ""
+  },
+  "dreamlike_presence": {
+    "level": "low",
+    "reading": ""
+  },
+  "materiality_strategy": {
+    "importance": "medium",
+    "show": []
+  }
+}
+PROMPT;
+
+        $parts = [
+            $this->client->textPart($prompt),
+            $this->client->imagePart($imagePath),
+        ];
+
+        $lastError = null;
+
+        foreach (['gemini-2.5-flash', 'gemini-2-flash', 'gemini-2-flash-lite'] as $model) {
+            try {
+                $text = $this->client->generateText($parts, $model);
+                $json = $this->extractJson($text);
+                $profile = json_decode($json, true);
+
+                if (!is_array($profile)) {
+                    throw new RuntimeException('Gemini devolvio analisis no JSON: ' . $text);
+                }
+
+                return $this->normalizeProfile($profile);
+            } catch (Throwable $e) {
+                $lastError = $e;
+            }
+        }
+
+        throw $lastError ?: new RuntimeException('No se pudo analizar la obra con Gemini.');
+    }
+
+    private function extractJson(string $text): string
+    {
+        $text = trim($text);
+        $text = preg_replace('/^```(?:json)?\s*/i', '', $text);
+        $text = preg_replace('/\s*```$/', '', (string)$text);
+
+        $start = strpos((string)$text, '{');
+        $end = strrpos((string)$text, '}');
+
+        if ($start !== false && $end !== false && $end > $start) {
+            return substr((string)$text, $start, $end - $start + 1);
+        }
+
+        return (string)$text;
+    }
+
+    private function normalizeProfile(array $profile): array
+    {
+        foreach (['style_tags', 'mood_tags', 'palette', 'palette_family', 'structure_tags', 'commercial_fit', 'seasonality', 'recommended_shot_needs', 'avoid'] as $key) {
+            $profile[$key] = isset($profile[$key]) && is_array($profile[$key])
+                ? array_values(array_unique(array_map(fn($v) => strtolower(trim((string)$v)), $profile[$key])))
+                : [];
+        }
+
+        return $profile;
+    }
+
+    private function fallbackProfile(array $metadata): array
+    {
+        $artistProfile = is_array($metadata['artist_profile'] ?? null) ? $metadata['artist_profile'] : [];
+        $artistProfilePrompt = trim((string)($metadata['artist_profile_prompt'] ?? ''));
+        $notes = strtolower(trim((string)($metadata['artist_notes'] ?? '') . "\n" . $artistProfilePrompt));
+        $scaleText = trim((string)($metadata['scale_text'] ?? ''));
+        $targetAudience = trim((string)($artistProfile['target_audience'] ?? ''));
+        $preferredRegions = trim((string)($artistProfile['preferred_regions'] ?? ''));
+
+        $styleTags = ['abstract', 'contemporary', 'material'];
+        if (str_contains($notes, 'arquitect')) {
+            $styleTags[] = 'architectural';
+            $styleTags[] = 'geometric';
+        }
+        if (str_contains($notes, 'surreal') || str_contains($notes, 'onir')) {
+            $styleTags[] = 'surreal';
+        }
+        if (str_contains($notes, 'figur')) {
+            $styleTags[] = 'figurative';
+        }
+
+        return [
+            'style_summary' => $artistProfilePrompt !== ''
+                ? 'Analisis local de emergencia: lectura contemporanea basada en metadata, perfil del artista y reglas curatoriales del sistema.'
+                : 'Analisis local de emergencia: lectura contemporanea basada en metadata, notas del artista y reglas curatoriales del sistema.',
+            'style_tags' => array_values(array_unique($styleTags)),
+            'mood_tags' => ['contemplative', 'premium', 'collector-grade', 'quiet intensity'],
+            'palette' => ['inferred from root artwork by downstream prompt', 'manual review recommended'],
+            'palette_family' => ['balanced', 'material', 'artwork-led'],
+            'luminosity' => 'medium',
+            'saturation' => 'balanced',
+            'detail_density' => 'medium',
+            'texture_visibility' => 'high',
+            'structure_tags' => ['composition', 'surface', 'gesture', 'materiality'],
+            'commercial_fit' => ['collector', 'gallery', 'designer_home', 'premium_context'],
+            'seasonality' => ['neutral'],
+            'recommended_shot_needs' => ['frontality', 'scale realism', 'material detail', 'sophisticated environment'],
+            'avoid' => ['generic decor', 'cheap room', 'kitchen', 'common bedroom', 'reinterpreting the artwork'],
+            'one_line_curatorial_read' => 'La obra debe presentarse como pieza fiel, material y emocionalmente deseable en ambientes sofisticados.',
+            'style_interpretation' => [
+                'dominant_language' => array_values(array_unique($styleTags)),
+                'reads_through' => ['color vibration', 'surface', 'trace', 'material presence'],
+            ],
+            'emotional_palette' => [
+                'temperature' => 'balanced',
+                'psychological_associations' => ['contemplation', 'desire', 'collector confidence'],
+            ],
+            'audience_profile' => [
+                'primary' => $targetAudience !== '' ? $targetAudience : 'collector or premium interior buyer',
+                'secondary' => 'gallery, architect, interior designer or boutique hospitality audience',
+            ],
+            'region_context' => [
+                'target_region' => $preferredRegions !== '' ? $preferredRegions : ($metadata['region'] ?? 'Europe or United States'),
+                'strategy' => 'Use sophisticated European or American collector interiors, avoiding generic stock-room language.',
+            ],
+            'seasonal_strategy' => [
+                'primary_season' => 'neutral',
+                'reason' => 'Fallback analysis keeps season neutral until manual or AI reading is available.',
+            ],
+            'dreamlike_presence' => [
+                'level' => in_array('surreal', $styleTags, true) ? 'high' : 'medium',
+                'reading' => 'Fallback reading: preserve possible poetic or evocative presence without over-interpreting.',
+            ],
+            'materiality_strategy' => [
+                'importance' => 'high',
+                'show' => ['texture', 'brushwork', 'palette knife', 'incisions', 'edge', 'canvas tension'],
+            ],
+            'scale_strategy' => $scaleText,
+        ];
+    }
+
+    private function imageMeta(string $path, array $metadata): array
+    {
+        $size = @getimagesize($path);
+        $width = $size ? (int)$size[0] : 0;
+        $height = $size ? (int)$size[1] : 0;
+        $orientation = 'unknown';
+
+        if ($width > 0 && $height > 0) {
+            $orientation = $width > $height ? 'horizontal' : ($height > $width ? 'vertical' : 'square');
+        }
+
+        return [
+            'width_px' => $width,
+            'height_px' => $height,
+            'orientation' => $orientation,
+            'aspect_ratio' => $height > 0 ? round($width / $height, 4) : null,
+            'physical_size' => [
+                'width_cm' => $metadata['width_cm'] ?? null,
+                'height_cm' => $metadata['height_cm'] ?? null,
+                'depth_cm' => $metadata['depth_cm'] ?? null,
+            ],
+        ];
+    }
+}

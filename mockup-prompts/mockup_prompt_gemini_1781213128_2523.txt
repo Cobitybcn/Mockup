@@ -1,0 +1,126 @@
+Create a world-class premium art mockup from the provided ROOT ARTWORK image and the selected curatorial context.
+
+This app sells art online through emotion, desire and collector-level atmosphere. The result must feel unique, not like a generic marketplace mockup.
+
+ROOT ARTWORK PRESERVATION:
+- The provided image is the approved root artwork.
+- Preserve the artwork's identity, composition, color relationships, brushwork, texture, incisions, palette knife marks, material vibration and proportions.
+- Do not redesign, repaint, redraw, simplify, stylize, clean, symmetrize, crop or invent elements inside the artwork.
+- The artwork may be integrated into the scene with realistic perspective, edge depth, shadows, wall contact, scale and lighting, but its internal image must remain faithful.
+
+SCALE IS CRITICAL:
+- Follow the scale instructions already present in the curatorial direction.
+Respetar las medidas reales de la obra frente a muebles, puertas, ventanas, cielorraso, pedestales y figuras humanas.
+No agrandar la obra para dramatizar.
+Si hay figura humana, debe estar parada en el mismo plano de suelo y profundidad (distancia a la cámara) exactamente igual a la de la obra, manteniéndose inmediatamente al lado de ella (a menos de 1 metro de distancia lateral).
+Nunca colocar las figuras humanas en el fondo o en planos de profundidad alejados de la obra, ya que esto distorsiona visualmente la proporción real y hace que la pintura parezca gigantesca.
+Usar zócalo, puerta, consola, silla y altura humana como referencias de escala realistas y proporcionales en el mismo plano.
+No convertir una obra mediana en mural, panel monumental o instalación si sus medidas no lo justifican.
+
+MOCKUP QUALITY:
+- Create a fully integrated scene, not a pasted photo on a stock background.
+- Add believable shadows, contact shadows, scale, wall interaction, depth, edge detail and subtle environmental light on the physical canvas.
+- The setting must feel European or American, sophisticated, collector-grade, emotionally compelling and original.
+Crear un mockup integrado, no una foto pegada sobre fondo generico.
+Agregar sombras reales, contacto con muro, profundidad, borde fisico del lienzo y luz ambiental sutil.
+El ambiente debe sentirse sofisticado, europeo o americano, de coleccionista, galeria, museo, feria de arte o interior de alto nivel.
+El impacto emocional debe venir de escena, luz y contexto, no de falsa escala.
+La obra debe sentirse colocada, coleccionada y deseada.
+
+NEGATIVE RULES:
+No cocinas.
+No dormitorios comunes.
+No decoracion barata.
+No interiores genericos de stock.
+No logos.
+No texto visible.
+No letras, numeros, placas, etiquetas, carteles, medidas, cotas, lineas de medicion, marcas de regla o anotaciones.
+No zapatos ni calzado como referencia de escala.
+No perspectiva deformada.
+No redibujar ni repintar la obra.
+
+SELECTED CONTEXT:
+madrid_contemporary_art_fair_booth
+
+CURATORIAL DIRECTION:
+Create a premium art mockup using the approved root artwork image.
+
+PROMPT_RULESET_VERSION: admin_editable_v1
+
+CRITICAL PRESERVATION RULES:
+- Preserve the artwork exactly.
+- Do not repaint, redesign, recolor, crop, stretch, symmetrize or reinterpret the artwork.
+- Do not improve the painting as a new artwork.
+- Preserve composition, colors, traces, brushwork, palette knife marks, incisions, texture and material vibration.
+- The artwork is horizontal and must keep its original proportions.
+
+SCALE RULES:
+- The physical artwork measures 160 cm wide x 120 cm high. Stretcher/support depth is 5 cm. This is a large statement horizontal artwork. It may command the wall, but must still keep believable clearance from furniture, floor, ceiling, doors and nearby architectural elements. Scale calibration anchors: against a common 205 cm interior door, the artwork height should be about 59% of the door height; against an 80 cm console table, the artwork height is about 1.5 times the table height; compared with an 8 cm floor baseboard, the artwork height is about 15 baseboard heights. The room or gallery in this scene must have a realistic ceiling height of approximately 3.0 meters (10 feet) to anchor the scale of the room, preventing the space from looking like a giant cavernous hall.
+Respetar las medidas reales de la obra frente a muebles, puertas, ventanas, cielorraso, pedestales y figuras humanas.
+No agrandar la obra para dramatizar.
+Si hay figura humana, debe estar parada en el mismo plano de suelo y profundidad (distancia a la cámara) exactamente igual a la de la obra, manteniéndose inmediatamente al lado de ella (a menos de 1 metro de distancia lateral).
+Nunca colocar las figuras humanas en el fondo o en planos de profundidad alejados de la obra, ya que esto distorsiona visualmente la proporción real y hace que la pintura parezca gigantesca.
+Usar zócalo, puerta, consola, silla y altura humana como referencias de escala realistas y proporcionales en el mismo plano.
+No convertir una obra mediana en mural, panel monumental o instalación si sus medidas no lo justifican.
+
+ART DIRECTION:
+- Context name: Madrid contemporary art fair booth
+- Purpose: art_fair_desire
+- Scene: A sophisticated contemporary art fair booth in Madrid, clean but alive, with gallery walls, polished floor and discreet collector presence.
+- Lighting: Professional fair lighting, bright but elegant, with believable wall contact and no visible signage. Time of day: clear daytime, natural visibility, no nocturnal mood.
+- Camera: front-wide
+- Time of day: day
+- Hang the artwork naturally on the wall at a believable height.
+- Do not include any human figure.
+
+CURATORIAL / COMMERCIAL READING:
+- A powerful abstract composition featuring a dynamically segmented fuchsia spiral emerging from a deeply textured, earthy substratum, evoking primal structure and contemplative presence.
+- Visual summary: A bold, abstract composition featuring a prominent, segmented spiral in vibrant fuchsia and deep pink, set against a richly textured background of earthy reds, dark greens, and muted browns. The piece combines dynamic organic movement with structural integrity and a deeply material surface.
+- Target audience: Collectors of contemporary abstract art, high-end interior designers, architects, gallery owners.
+- Seasonal direction: neutral
+- The environment must feel original, collector-grade, emotionally persuasive and specific to this artwork.
+- Use sophisticated European or American collector interiors, private galleries, design homes or editorial art contexts.
+
+ARTIST PROFILE CONTEXT:
+- Use this profile only to choose context, audience, region, atmosphere and commercial positioning.
+- Do not modify, reinterpret, redraw or stylize the artwork because of this profile.
+Artist name: Maurizio Valch
+Short bio: Maurizio Valch es artista visual y escritor. Su obra explora la relación entre paisaje, conciencia y estructura interior a través de composiciones abstractas, simbólicas y contemplativas. Trabaja con planos de color, incisiones, monolitos, escaleras y territorios silenciosos donde la pintura funciona como una cartografía perceptiva y emocional.
+Statement: Mi obra busca tensar la relación entre territorio, conciencia y silencio. No represento paisajes en sentido tradicional, sino espacios donde la estructura parece emerger de la tierra como una forma primigenia de pensamiento.
+
+Trabajo con planos amplios, divisiones sutiles, monolitos, escaleras e incisiones que actúan como signos de tránsito, aparición y presencia. Me interesa el momento en que algo comienza a organizarse: una forma, una cultura, una mirada, una conciencia.
+
+La pintura se convierte así en un territorio de observación. No intenta explicar, sino abrir un espacio donde el espectador pueda detenerse, mirar y percibir con mayor claridad.
+Visual language: Abstracto, contemporáneo, estructural, simbólico y metafísico. Mi lenguaje visual se construye a partir de campos de color, horizontes, bloques geométricos, monolitos, escaleras, incisiones, segmentos y relaciones espaciales. Busco una tensión entre silencio, presencia, profundidad y orden interno.
+Materials and process: Trabajo principalmente con acrílico sobre lienzo. Utilizo espátula, pincel, capas de color, veladuras, raspados e incisiones sobre la superficie. El proceso combina construcción y reducción: agrego materia, organizo planos, elimino ruido visual y dejo que la obra encuentre una estructura esencial.
+Recurring themes: Territorio, silencio, austeridad, monolitos, escaleras, estratos tectónicos, tiempo geológico, génesis, tránsito, estructura, vacío, presencia, relación entre el individuo y la tierra.
+Palette notes: Azules profundos, cian, rojos contenidos, amarillos, anaranjados, ocres, verdes oscuros y negros. La temperatura emocional oscila entre la contemplación, la austeridad, la tensión silenciosa y una calma estructural de carácter nocturno o territorial.
+Target audience: Coleccionistas de arte contemporáneo, galerías, arquitectos, interioristas, decoradores de alto nivel, curadores, compradores internacionales y personas interesadas en obras abstractas, minimalistas, simbólicas, silenciosas y de gran presencia espacial.
+Preferred regions: Europa, Estados Unidos, Reino Unido, Francia, Alemania, Suiza, Bélgica, Países Bajos, Italia, España, Miami, New York, Londres, París y mercados internacionales vinculados al coleccionismo contemporáneo.
+Preferred contexts: Galerías de arte contemporáneo, museos, colecciones privadas, townhouses, residencias de lujo, interiores minimalistas, estudios de arquitectura, hoteles boutique, espacios mediterráneos, casas con diseño sobrio, salones amplios y ambientes donde la obra pueda respirar con silencio y presencia.
+Forbidden contexts: Cocinas, dormitorios comunes, espacios genéricos, decoración banal, lujo ostentoso, ambientes fríos sin carácter, brutalismo excesivamente duro, oficinas corporativas impersonales, interiores recargados, fondos que compitan con la obra o contextos que reduzcan la pintura a simple decoración.
+Commercial positioning: Arte contemporáneo premium orientado a coleccionistas, galerías, interioristas de alto nivel, arquitectos y compradores internacionales. Obra abstracta, estructural y simbólica, con presencia institucional, carácter contemplativo y potencial para espacios sofisticados, colecciones privadas y proyectos curatoriales.
+
+NEGATIVE RULES:
+No cocinas.
+No dormitorios comunes.
+No decoracion barata.
+No interiores genericos de stock.
+No logos.
+No texto visible.
+No letras, numeros, placas, etiquetas, carteles, medidas, cotas, lineas de medicion, marcas de regla o anotaciones.
+No zapatos ni calzado como referencia de escala.
+No perspectiva deformada.
+No redibujar ni repintar la obra.
+
+MOCKUP QUALITY RULES:
+Crear un mockup integrado, no una foto pegada sobre fondo generico.
+Agregar sombras reales, contacto con muro, profundidad, borde fisico del lienzo y luz ambiental sutil.
+El ambiente debe sentirse sofisticado, europeo o americano, de coleccionista, galeria, museo, feria de arte o interior de alto nivel.
+El impacto emocional debe venir de escena, luz y contexto, no de falsa escala.
+La obra debe sentirse colocada, coleccionada y deseada.
+
+The result should feel realistic, premium, faithful and commercially useful.
+
+OUTPUT:
+Realistic, premium, emotionally persuasive art mockup. The artwork should feel placed, collected and desired, not copied and pasted.

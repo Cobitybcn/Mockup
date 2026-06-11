@@ -1,0 +1,29 @@
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/Support/Database.php';
+require_once __DIR__ . '/Support/Auth.php';
+require_once __DIR__ . '/Support/ArtistProfile.php';
+require_once __DIR__ . '/Support/Display.php';
+require_once __DIR__ . '/Support/PromptSettings.php';
+require_once __DIR__ . '/Support/RootArtworkCropper.php';
+require_once __DIR__ . '/Support/ProviderSettings.php';
+require_once __DIR__ . '/Support/Logger.php';
+require_once __DIR__ . '/Contracts/ArtworkProcessorInterface.php';
+require_once __DIR__ . '/Contracts/ArtworkAnalyzerInterface.php';
+require_once __DIR__ . '/Contracts/ContextSelectorInterface.php';
+require_once __DIR__ . '/Contracts/MockupGeneratorInterface.php';
+require_once __DIR__ . '/Services/MockPromptBuilder.php';
+require_once __DIR__ . '/Services/MockContextSelector.php';
+require_once __DIR__ . '/Services/MockArtworkProcessor.php';
+require_once __DIR__ . '/Services/MockArtworkAnalyzer.php';
+require_once __DIR__ . '/Services/MockMockupGenerator.php';
+require_once __DIR__ . '/Services/GeminiImageClient.php';
+require_once __DIR__ . '/Services/GeminiArtworkProcessor.php';
+require_once __DIR__ . '/Services/GeminiArtworkAnalyzer.php';
+require_once __DIR__ . '/Services/GeminiMockupGenerator.php';
+require_once __DIR__ . '/Services/OpenAIArtworkProcessor.php';
+require_once __DIR__ . '/Services/OpenAIArtworkAnalyzer.php';
+require_once __DIR__ . '/Services/OpenAIMockupGenerator.php';
+require_once __DIR__ . '/Services/ServiceFactory.php';

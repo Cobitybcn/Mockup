@@ -1,0 +1,45 @@
+Create a world-class premium art mockup from the provided ROOT ARTWORK image and the selected curatorial context.
+
+This app sells art online through emotion, desire and collector-level atmosphere. The result must feel unique, not like a generic marketplace mockup.
+
+ROOT ARTWORK PRESERVATION:
+- The provided image is the approved root artwork.
+- Preserve the artwork's identity, composition, color relationships, brushwork, texture, incisions, palette knife marks, material vibration and proportions.
+- Do not redesign, repaint, redraw, simplify, stylize, clean, symmetrize, crop or invent elements inside the artwork.
+- The artwork may be integrated into the scene with realistic perspective, edge depth, shadows, wall contact, scale and lighting, but its internal image must remain faithful.
+
+SCALE IS CRITICAL:
+- Follow the scale instructions already present in the curatorial direction.
+Respetar las medidas reales de la obra frente a muebles, puertas, ventanas, cielorraso, pedestales y figuras humanas.
+No agrandar la obra para dramatizar.
+
+MOCKUP QUALITY:
+- Create a fully integrated scene, not a pasted photo on a stock background.
+- Add believable shadows, contact shadows, scale, wall interaction, depth, edge detail and subtle environmental light on the physical canvas.
+- The setting must feel European or American, sophisticated, collector-grade, emotionally compelling and original.
+Crear un mockup integrado, no una foto pegada sobre fondo generico.
+Agregar sombras reales, contacto con muro, profundidad, borde fisico del lienzo y luz ambiental sutil.
+El ambiente debe sentirse sofisticado, europeo o americano, de coleccionista, galeria, museo, feria de arte o interior de alto nivel.
+El impacto emocional debe venir de escena, luz y contexto, no de falsa escala.
+La obra debe sentirse colocada, coleccionada y deseada.
+
+NEGATIVE RULES:
+No cocinas.
+No dormitorios comunes.
+No decoracion barata.
+No interiores genericos de stock.
+No logos.
+No texto visible.
+No letras, numeros, placas, etiquetas, carteles, medidas, cotas, lineas de medicion, marcas de regla o anotaciones.
+No zapatos ni calzado como referencia de escala.
+No perspectiva deformada.
+No redibujar ni repintar la obra.
+
+SELECTED CONTEXT:
+paris_collector_apartment
+
+CURATORIAL DIRECTION:
+A Paris collector apartment, wall mockup with warm soft ambient light, high ceilings, old plaster, quiet luxury.
+
+OUTPUT:
+Realistic, premium, emotionally persuasive art mockup. The artwork should feel placed, collected and desired, not copied and pasted.
