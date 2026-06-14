@@ -22,47 +22,97 @@ class MockMockupGenerator implements MockupGeneratorInterface
         $t0 = microtime(true);
         Logger::log("Iniciando generacion de mockup MOCK. Contexto: {$contextId}, Obra: " . basename($imagePath), 'mock');
 
-        $stamp = time() . '_' . random_int(1000, 9999);
-        $promptName = 'mockup_prompt_mock_' . $stamp . '.txt';
-        $outputName = 'mockup_mock_' . $stamp . '.svg';
+        $seoParams = $metadata['seo_params'] ?? null;
+        $ext = 'png';
+        if ($seoParams) {
+            // Respect the extension request (usually jpg or png)
+            $ext = trim((string)($seoParams['extension'] ?? 'png'), '.');
+            if ($ext === 'svg') {
+                $ext = 'png';
+                $seoParams['extension'] = 'png';
+            }
+            $outputName = Display::generateSeoImageFilename($seoParams, $resultsDir);
+        } else {
+            $stamp = time() . '_' . random_int(1000, 9999);
+            $outputName = 'mockup_mock_' . $stamp . '.png';
+        }
+        
+        $promptName = pathinfo($outputName, PATHINFO_FILENAME) . '.txt';
+        $outputPath = $resultsDir . DIRECTORY_SEPARATOR . $outputName;
 
+        // Save prompt text
         file_put_contents($promptsDir . DIRECTORY_SEPARATOR . $promptName, $prompt);
-        file_put_contents($resultsDir . DIRECTORY_SEPARATOR . $outputName, $this->svg($contextId, basename($imagePath), $prompt));
+
+        // Determine mime type to draw mockup image
+        $mime = ($ext === 'jpg' || $ext === 'jpeg') ? 'image/jpeg' : 'image/png';
+
+        // Draw and save the mock raster image
+        $this->drawMockPng($contextId, basename($imagePath), $prompt, $outputPath, $mime);
+
+        // Apply ImageResizer to scale the generated mockup proportionally to 2200 px on shortest side
+        ImageResizer::resize($outputPath);
 
         $elapsed = round(microtime(true) - $t0, 2);
-        Logger::log("Mockup MOCK generado exitosamente en {$elapsed}s. Archivo: {$outputName}", 'mock');
+        Logger::log("Mockup MOCK generado y redimensionado exitosamente en {$elapsed}s. Archivo: {$outputName}", 'mock');
 
         return [
             'file' => $outputName,
-            'path' => $resultsDir . DIRECTORY_SEPARATOR . $outputName,
+            'path' => $outputPath,
             'prompt_file' => $promptName,
             'mock' => true,
-            'message' => 'Mockup placeholder generado localmente. No se uso API.',
+            'message' => 'Mockup placeholder generated locally and resized proportionally.',
         ];
     }
 
-    private function svg(string $contextId, string $rootFile, string $prompt): string
+    private function drawMockPng(string $contextId, string $rootFile, string $prompt, string $filePath, string $mime): void
     {
-        $context = htmlspecialchars($contextId ?: 'contexto_mock', ENT_QUOTES, 'UTF-8');
-        $root = htmlspecialchars($rootFile, ENT_QUOTES, 'UTF-8');
-        $shortPrompt = htmlspecialchars(substr(preg_replace('/\s+/', ' ', $prompt), 0, 220), ENT_QUOTES, 'UTF-8');
+        // 1536x1024 is the standard mockup canvas size before resizing
+        $im = imagecreatetruecolor(1536, 1024);
+        
+        // Editorial background
+        $bg = imagecolorallocate($im, 243, 243, 240);
+        imagefill($im, 0, 0, $bg);
 
-        return <<<SVG
-<svg xmlns="http://www.w3.org/2000/svg" width="1536" height="1024" viewBox="0 0 1536 1024">
-  <rect width="1536" height="1024" fill="#f3f3f0"/>
-  <rect x="120" y="96" width="1296" height="832" fill="#ffffff" stroke="#d5d5ce" stroke-width="4"/>
-  <rect x="468" y="210" width="600" height="380" fill="#ece8df" stroke="#111111" stroke-width="8"/>
-  <line x1="468" y1="210" x2="1068" y2="590" stroke="#c7b98c" stroke-width="10" opacity="0.8"/>
-  <line x1="1068" y1="210" x2="468" y2="590" stroke="#8b9aae" stroke-width="10" opacity="0.8"/>
-  <text x="768" y="660" font-family="Arial, sans-serif" font-size="42" text-anchor="middle" fill="#111111">MOCKUP SIMULADO</text>
-  <text x="768" y="718" font-family="Arial, sans-serif" font-size="28" text-anchor="middle" fill="#444444">{$context}</text>
-  <text x="768" y="770" font-family="Arial, sans-serif" font-size="22" text-anchor="middle" fill="#555555">Imagen raiz: {$root}</text>
-  <foreignObject x="250" y="810" width="1036" height="90">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:20px;line-height:1.35;color:#333;text-align:center;">
-      {$shortPrompt}
-    </div>
-  </foreignObject>
-</svg>
-SVG;
+        // Draw outer canvas border
+        $white = imagecolorallocate($im, 255, 255, 255);
+        $border = imagecolorallocate($im, 213, 213, 206);
+        imagefilledrectangle($im, 120, 96, 1416, 928, $white);
+        imagerectangle($im, 120, 96, 1416, 928, $border);
+
+        // Draw frame placeholder representing the artwork
+        $frameBg = imagecolorallocate($im, 236, 232, 223);
+        $frameBorder = imagecolorallocate($im, 17, 17, 17);
+        imagefilledrectangle($im, 468, 210, 1068, 590, $frameBg);
+        imagerectangle($im, 468, 210, 1068, 590, $frameBorder);
+
+        // Draw perspective lines
+        $gold = imagecolorallocate($im, 199, 185, 140);
+        $blue = imagecolorallocate($im, 139, 154, 174);
+        imageline($im, 468, 210, 1068, 590, $gold);
+        imageline($im, 1068, 210, 468, 590, $blue);
+
+        // Render mockup details text onto the image
+        $textColor = imagecolorallocate($im, 17, 17, 17);
+        $mutedText = imagecolorallocate($im, 68, 68, 68);
+        
+        imagestring($im, 5, 680, 640, "MOCKUP SIMULADO", $textColor);
+        imagestring($im, 4, 480, 690, "Contexto: " . substr($contextId, 0, 60), $mutedText);
+        imagestring($im, 4, 480, 720, "Obra Raiz: " . substr($rootFile, 0, 60), $mutedText);
+        
+        $wrappedPrompt = wordwrap($prompt, 95, "\n");
+        $lines = explode("\n", $wrappedPrompt);
+        $y = 760;
+        foreach (array_slice($lines, 0, 5) as $line) {
+            imagestring($im, 3, 250, $y, trim($line), $mutedText);
+            $y += 20;
+        }
+
+        if ($mime === 'image/jpeg') {
+            imagejpeg($im, $filePath, 90);
+        } else {
+            imagepng($im, $filePath, 6);
+        }
+        
+        imagedestroy($im);
     }
 }

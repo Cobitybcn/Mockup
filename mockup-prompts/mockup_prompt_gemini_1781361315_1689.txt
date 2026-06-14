@@ -1,0 +1,109 @@
+Create a world-class premium art mockup from the provided ROOT ARTWORK image and the selected curatorial context.
+
+This app sells art online through emotion, desire and collector-level atmosphere. The result must feel unique, not like a generic marketplace mockup.
+
+ROOT ARTWORK PRESERVATION:
+- The provided image is the approved root artwork.
+- Preserve the artwork's identity, composition, color relationships, brushwork, texture, incisions, palette knife marks, material vibration and proportions.
+- Do not redesign, repaint, redraw, simplify, stylize, clean, symmetrize, crop or invent elements inside the artwork.
+- The artwork may be integrated into the scene with realistic perspective, edge depth, shadows, wall contact, scale and lighting, but its internal image must remain faithful.
+
+SCALE IS CRITICAL:
+- Follow the scale instructions already present in the curatorial direction.
+Respect the physical dimensions of the artwork relative to furniture, doors, windows, ceilings, pedestals, and human figures.
+Do not enlarge the artwork for dramatic effect.
+If a human figure is present, they must be standing on the exact same floor plane and depth (distance from camera) as the artwork, positioned immediately next to it (less than 1 meter of lateral distance).
+Never place human figures in the background or at depth planes far from the artwork, as this distorts the true proportions and makes the painting appear gigantic.
+For a medium-to-large artwork (e.g., 160 x 120 cm) next to a person (e.g., a 1.55 m tall woman), the artwork's height (120 cm) must be visibly smaller than the person, reaching approximately shoulder or chin level if hung at eye-level, and the artwork's width (160 cm) must be only slightly larger than the person's height, never appearing as a monumental panel that dominates the wall from floor to ceiling.
+Use baseboards, doors, consoles, chairs, and human height as realistic, proportional scale references in the same plane.
+Do not convert a medium-sized artwork into a mural, monumental panel, or installation if its dimensions do not warrant it.
+
+MOCKUP QUALITY:
+- Create a fully integrated scene, not a pasted photo on a stock background.
+- Add believable shadows, contact shadows, scale, wall interaction, depth, edge detail and subtle environmental light on the physical canvas.
+- The setting must feel European or American, sophisticated, collector-grade, emotionally compelling and original.
+Create an integrated mockup, not a photo pasted on a generic background.
+Add realistic contact shadows, wall contact, depth, the canvas physical edge, and subtle ambient light.
+The environment must feel sophisticated, European or American collector style, gallery, museum, art fair, or high-end interior.
+The emotional impact should come from the scene, lighting, and context, not from false scaling.
+The artwork must feel placed, collected, and desired.
+
+NEGATIVE RULES:
+No kitchens.
+No common bedrooms.
+No cheap decor.
+No generic stock interiors.
+No logos.
+No visible text.
+No letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.
+No shoes or footwear as scale reference.
+No distorted perspective.
+Do not redraw or repaint the artwork.
+
+SELECTED CONTEXT:
+110
+
+CURATORIAL DIRECTION:
+Create a premium art mockup using the approved root artwork image.
+
+PROMPT_RULESET_VERSION: admin_editable_v1
+
+SCALE RULES:
+- The physical artwork measures 120 cm wide x 80 cm high. Stretcher/support depth is 3 cm. This is a medium horizontal artwork, not a monumental piece. It should read at real collector-home scale, comparable to a console table width when horizontal, clearly smaller than a large sofa, below door height, and never as a wall-filling exhibition panel. Scale calibration anchors: against a common 205 cm interior door, the artwork height should be about 39% of the door height; against an 80 cm console table, the artwork height is about 1 times the table height; compared with an 8 cm floor baseboard, the artwork height is about 10 baseboard heights. The room or gallery in this scene must have a realistic ceiling height of approximately 3.0 meters (10 feet) to anchor the scale of the room, preventing the space from looking like a giant cavernous hall. The 1.80 m man must stand immediately next to the artwork (within 1 meter of the artwork's side edge) on the exact same depth and floor plane as the artwork. He must not stand in the background or foreground. Visually, the artwork height must be about 44% of the man's standing height, and the artwork width must be about 67% of the man's standing height. Use only architecture, furniture and full standing human height as scale references. Do not introduce shoes or footwear as visual scale references.
+Respect the physical dimensions of the artwork relative to furniture, doors, windows, ceilings, pedestals, and human figures.
+Do not enlarge the artwork for dramatic effect.
+If a human figure is present, they must be standing on the exact same floor plane and depth (distance from camera) as the artwork, positioned immediately next to it (less than 1 meter of lateral distance).
+Never place human figures in the background or at depth planes far from the artwork, as this distorts the true proportions and makes the painting appear gigantic.
+For a medium-to-large artwork (e.g., 160 x 120 cm) next to a person (e.g., a 1.55 m tall woman), the artwork's height (120 cm) must be visibly smaller than the person, reaching approximately shoulder or chin level if hung at eye-level, and the artwork's width (160 cm) must be only slightly larger than the person's height, never appearing as a monumental panel that dominates the wall from floor to ceiling.
+Use baseboards, doors, consoles, chairs, and human height as realistic, proportional scale references in the same plane.
+Do not convert a medium-sized artwork into a mural, monumental panel, or installation if its dimensions do not warrant it.
+
+CRITICAL PRESERVATION RULES:
+- Preserve the artwork exactly.
+- Do not repaint, redesign, recolor, crop, stretch, symmetrize or reinterpret the artwork.
+- Do not improve the painting as a new artwork.
+- Preserve composition, colors, traces, brushwork, palette knife marks, incisions, texture and material vibration.
+- The artwork is horizontal and must keep its original proportions.
+
+ART DIRECTION:
+- Context name: Gothic Revival Parlor
+- Purpose: collector positioning
+- Scene: A ornate, rich, historic European apartment interior with dramatic, romantic, mysterious, opulent, day atmosphere. Materials: dark velvet upholstery, antique carved wood furniture, intricate subtle wallpaper, rich textiles
+- Lighting: luminous natural daylight, bright and clear
+- Camera: 3/4 right view, showing side perspective (three_quarter_right)
+- Time of day: day
+- Hang the artwork naturally on the wall at a believable height.
+- Include exactly one standing adult man, 1.80 meters tall, as a full-body scale reference (feet and full body clearly visible on the floor, standing immediately next to the artwork frame on the same wall plane, same depth, no foreground/background perspective offset). He must face the artwork in a natural three-quarter body position, never in full side profile and never facing the camera directly. His head and gaze should be gently directed toward the artwork, with relaxed shoulders and a calm, positive, contemplative attitude; elegant, natural, not posing, and not distracting.
+
+CURATORIAL / COMMERCIAL READING:
+- A haunting day tableau weaving together ancient architectural depth, enigmatic figures, and symbolic light into a profound dreamlike narrative.
+- Visual summary: Dark Surrealism with Neo-Gothic architectural influences, strong symbolism, and a muted, evocative palette.
+- Target audience: The contemplative intellectual, the art collector drawn to psychological depth and narrative complexity, or the interior designer seeking a statement piece for a unique, sophisticated space.
+- Seasonal direction: neutral
+- The environment must feel original, collector-grade, emotionally persuasive and specific to this artwork.
+- Use sophisticated European or American collector interiors, private galleries, design homes or editorial art contexts.
+
+
+NEGATIVES AND PROHIBITIONS:
+No kitchens.
+No common bedrooms.
+No cheap decor.
+No generic stock interiors.
+No logos.
+No visible text.
+No letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.
+No shoes or footwear as scale reference.
+No distorted perspective.
+Do not redraw or repaint the artwork.
+
+MOCKUP QUALITY RULES:
+Create an integrated mockup, not a photo pasted on a generic background.
+Add realistic contact shadows, wall contact, depth, the canvas physical edge, and subtle ambient light.
+The environment must feel sophisticated, European or American collector style, gallery, museum, art fair, or high-end interior.
+The emotional impact should come from the scene, lighting, and context, not from false scaling.
+The artwork must feel placed, collected, and desired.
+
+The result should feel realistic, premium, faithful and commercially useful.
+
+OUTPUT:
+Realistic, premium, emotionally persuasive art mockup. The artwork should feel placed, collected and desired, not copied and pasted.

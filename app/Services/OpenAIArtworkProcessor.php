@@ -7,6 +7,7 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
     {
         $mainFile = basename((string)($status['main_file'] ?? ''));
         $source = rtrim($jobDir, '/\\') . DIRECTORY_SEPARATOR . $mainFile;
+        $jobId = basename($jobDir);
 
         if (!$mainFile || !is_file($source)) {
             throw new RuntimeException('No se encontro la imagen principal del job.');
@@ -18,63 +19,43 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
             mkdir($resultsDir, 0775, true);
         }
 
-        $outputName = 'base_artwork_ai_' . time() . '_' . random_int(1000, 9999) . '.png';
-        $outputPath = $resultsDir . DIRECTORY_SEPARATOR . $outputName;
+        $outputNameTemplate = 'base_artwork_ai_' . $jobId . '_v';
         $prompt = $this->buildPrompt($status, $source);
         $targetSize = $this->targetSize($status, $source);
 
         file_put_contents($jobDir . '/prompt.txt', $prompt);
         file_put_contents($jobDir . '/target_size.txt', $targetSize);
 
-        $b64 = $this->callImageEdit($jobDir, $source, $status, $prompt, $targetSize);
-        $imageData = base64_decode($b64);
+        $images = $this->callImageEditCandidates($jobDir, $source, $status, $prompt, $targetSize);
 
-        if ($imageData === false) {
-            throw new RuntimeException('OpenAI no devolvio una imagen base64 valida.');
+        $files = [];
+        $paths = [];
+        $i = 1;
+        foreach ($images as $imageData) {
+            $outputName = $outputNameTemplate . $i . '.png';
+            $outputPath = $resultsDir . DIRECTORY_SEPARATOR . $outputName;
+            file_put_contents($outputPath, $imageData);
+            $files[] = $outputName;
+            $paths[] = $outputPath;
+            $i++;
         }
 
-        file_put_contents($outputPath, $imageData);
-
         return [
-            'file' => $outputName,
-            'path' => $outputPath,
+            'files' => $files,
+            'paths' => $paths,
             'mock' => false,
             'ai_root_enhancement' => true,
-            'message' => 'Imagen raiz mejorada con IA. Revisala antes de crear mockups.',
-            'meta' => $this->imageMeta($outputPath),
+            'message' => 'Root image enhanced (3 versions). Please select one.',
+            'meta' => $this->imageMeta($paths[0]),
         ];
     }
 
     private function buildPrompt(array $status, string $source): string
     {
-        $artistNotes = trim((string)($status['artist_notes'] ?? ''));
-        $extraCount = count($status['extra_files'] ?? []);
-        $dimensionText = $this->dimensionText($status['measurements'] ?? [], $source);
-        $notesBlock = $artistNotes !== '' ? "\n\nARTIST NOTES:\n{$artistNotes}" : '';
-
-        $references = $extraCount > 0
-            ? "\nUsa las imagenes secundarias solo como referencia de textura, color real, incisiones, pincelada, espatula, bordes y bastidor. No deben cambiar la composicion de la imagen principal."
-            : '';
-
-        return <<<PROMPT
-Crea una foto de lujo de primer plano frontal con esta pintura adjunta.
-La obra esta apoyada en el suelo y contra la pared.
-La pintura esta perfectamente tensada sobre un bastidor de madera.
-La obra esta totalmente visible.
-Ilumina el producto con luz de estudio compuesta: luz suave de relleno de ambos lados y destellos direccionales, con separacion tonal tipo HDR y bordes impecables.
-Sin logotipos, textos ni marcas visibles.
-Todo el producto debe estar nitido, sin desenfoque de fondo, con los detalles de las incisiones, texturas, pinceladas, espatula y bloques para que el publico pueda observarlos y disfrutarlos.
-El resultado debe verse realista, limpio, premium y detalladamente retocado.
-
-Respeta la obra original: no redibujes, no cambies composicion, no cambies colores artisticamente, no modifiques la vibracion del trazo del artista ni las texturas creadas por el artista.
-La imagen principal manda sobre composicion, proporcion e identidad visual.{$references}
-
-Medidas reales de la obra, no de la foto ni del fondo:
-{$dimensionText}{$notesBlock}
-PROMPT;
+        return PromptSettings::rootArtworkRules();
     }
 
-    private function callImageEdit(string $jobDir, string $source, array $status, string $prompt, string $targetSize): string
+    private function callImageEditCandidates(string $jobDir, string $source, array $status, string $prompt, string $targetSize): array
     {
         $apiDir = rtrim($jobDir, '/\\') . DIRECTORY_SEPARATOR . 'api_inputs';
         if (!is_dir($apiDir)) {
@@ -88,8 +69,9 @@ PROMPT;
             'prompt' => $prompt,
             'size' => $targetSize,
             'quality' => ProviderSettings::openAIImageQuality(),
-            'n' => '1',
-            'image[0]' => new CURLFile($mainApiPath, $this->mime($mainApiPath), basename($mainApiPath)),
+            'n' => '3',
+            'response_format' => 'b64_json',
+            'image' => new CURLFile($mainApiPath, $this->mime($mainApiPath), basename($mainApiPath)),
         ];
 
         $i = 1;
@@ -121,13 +103,25 @@ PROMPT;
 
             if ($lastErr === '' && $lastStatus >= 200 && $lastStatus < 300) {
                 $decoded = json_decode((string)$lastRaw, true);
-                $b64 = $decoded['data'][0]['b64_json'] ?? null;
-
-                if (!$b64) {
-                    throw new RuntimeException('OpenAI no devolvio b64_json para la obra raiz. Respuesta: ' . $lastRaw);
+                
+                $images = [];
+                if (isset($decoded['data']) && is_array($decoded['data'])) {
+                    foreach ($decoded['data'] as $item) {
+                        $b64 = $item['b64_json'] ?? null;
+                        if ($b64) {
+                            $decodedB64 = base64_decode($b64);
+                            if ($decodedB64) {
+                                $images[] = $decodedB64;
+                            }
+                        }
+                    }
                 }
 
-                return $b64;
+                if (count($images) === 0) {
+                    throw new RuntimeException('OpenAI no devolvio imagenes validas para la obra raiz. Respuesta: ' . $lastRaw);
+                }
+
+                return $images;
             }
 
             if (!in_array($lastStatus, [429, 500, 502, 503, 504], true)) {
@@ -233,7 +227,8 @@ PROMPT;
             $text .= " They do not refer to the full photograph, background, table, wall, support board, margins, or surrounding objects.";
             $ratio = (float)str_replace(',', '.', $width) / max(0.01, (float)str_replace(',', '.', $height));
             $orientation = $ratio >= 1 ? 'landscape' : 'portrait';
-            $text .= " Use these dimensions to preserve the real artwork proportion. Required output orientation: {$orientation}. Required aspect ratio: " . round($ratio, 4) . ".";
+            $fraction = $this->getRatioFraction($ratio);
+            $text .= " Use these dimensions to preserve the real artwork proportion. Required output orientation: {$orientation}. Required aspect ratio: {$fraction}.";
 
             if ($depth !== '') {
                 $text .= " Stretcher/support depth of the artwork: {$depth} {$unit}.";
@@ -244,6 +239,23 @@ PROMPT;
 
         $meta = $this->imageMeta($source);
         return 'No physical artwork measurements were provided. Preserve the visible artwork proportion from the main image: ' . ($meta['aspect_ratio'] ?? 'unknown') . '.';
+    }
+
+    private function getRatioFraction(float $ratio): string
+    {
+        $best_num = 1;
+        $best_den = 1;
+        $best_diff = 999.0;
+        for ($den = 1; $den <= 16; $den++) {
+            $num = (int)round($ratio * $den);
+            $diff = abs($ratio - ($num / $den));
+            if ($diff < $best_diff) {
+                $best_diff = $diff;
+                $best_num = $num;
+                $best_den = $den;
+            }
+        }
+        return "{$best_num}:{$best_den}";
     }
 
     private function targetSize(array $status, string $source): string

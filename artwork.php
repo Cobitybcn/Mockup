@@ -35,9 +35,554 @@ function read_json_file(string $path): array
     return is_array($data) ? $data : [];
 }
 
+function words_from($value): array
+{
+    if (is_array($value)) {
+        $items = [];
+        foreach ($value as $item) {
+            $items = array_merge($items, words_from($item));
+        }
+
+        return $items;
+    }
+
+    $parts = preg_split('/[,;|\/\n]+/', strtolower((string)$value));
+
+    return array_values(array_filter(array_map(
+        fn($part) => trim(preg_replace('/\s+/', ' ', (string)$part)),
+        $parts ?: []
+    )));
+}
+
+function unique_limited(array $items, int $limit, array $fallback = []): array
+{
+    $out = [];
+
+    foreach (array_merge($items, $fallback) as $item) {
+        $item = trim(preg_replace('/\s+/', ' ', (string)$item));
+
+        if ($item === '') {
+            continue;
+        }
+
+        $key = strtolower($item);
+        if (!isset($out[$key])) {
+            $out[$key] = $item;
+        }
+
+        if (count($out) >= $limit) {
+            break;
+        }
+    }
+
+    return array_values($out);
+}
+
+function sentence_from(array $items, string $fallback): string
+{
+    $items = unique_limited($items, 4);
+
+    return $items ? implode(', ', $items) : $fallback;
+}
+
+function labelize_term(string $value): string
+{
+    $value = str_replace(
+        ['Á', 'É', 'Í', 'Ó', 'Ú', 'Ü', 'Ñ', 'á', 'é', 'í', 'ó', 'ú', 'ü', 'ñ'],
+        ['A', 'E', 'I', 'O', 'U', 'U', 'N', 'a', 'e', 'i', 'o', 'u', 'u', 'n'],
+        $value
+    );
+    $value = strtolower(trim(preg_replace('/[_-]+/', ' ', $value)));
+    $map = [
+        'abstracto' => 'abstract',
+        'contemporaneo' => 'contemporary',
+        'contemporánea' => 'contemporary',
+        'contemporanea' => 'contemporary',
+        'material' => 'material',
+        'geometrico' => 'geometric',
+        'geométrico' => 'geometric',
+        'arquitectonico' => 'architectural',
+        'arquitectónico' => 'architectural',
+        'organico' => 'organic',
+        'orgánico' => 'organic',
+        'minimalista' => 'minimal',
+        'estructural' => 'structural',
+        'surreal' => 'surreal',
+        'figurativo' => 'figurative',
+        'expresivo' => 'expressive',
+        'coleccionismo' => 'collecting',
+        'coleccionistas' => 'collectors',
+        'galeria' => 'gallery',
+        'galería' => 'gallery',
+        'interiorismo de autor' => 'designer interiors',
+        'contexto premium' => 'premium context',
+        'intensidad silenciosa' => 'quiet intensity',
+        'contemplativo' => 'contemplative',
+        'equilibrado' => 'balanced',
+        'calido' => 'warm',
+        'cálido' => 'warm',
+        'frio' => 'cool',
+        'frío' => 'cool',
+        'neutral' => 'neutral',
+        'alta' => 'high',
+        'media' => 'medium',
+        'baja' => 'low',
+        'sutil' => 'subtle',
+        'silencio' => 'silence',
+        'territorio' => 'territory',
+        'austeridad' => 'austerity',
+        'monolitos' => 'monoliths',
+        'monolito' => 'monolith',
+        'simbolico' => 'symbolic',
+        'simbólico' => 'symbolic',
+        'metafisico' => 'metaphysical',
+        'metafísico' => 'metaphysical',
+        'campos de color' => 'color fields',
+        'campo interior' => 'inner field',
+    ];
+
+    return $map[$value] ?? $value;
+}
+
+function labelize_terms(array $items): array
+{
+    return array_values(array_filter(array_map(
+        fn($item) => labelize_term((string)$item),
+        $items
+    )));
+}
+
+function concise_terms(array $items, array $fallback): array
+{
+    $terms = [];
+
+    foreach (labelize_terms($items) as $item) {
+        if (str_word_count($item) <= 4 && strlen($item) <= 42) {
+            $terms[] = $item;
+        }
+    }
+
+    return unique_limited($terms, 12, $fallback);
+}
+
+function looks_spanish(string $value): bool
+{
+    return (bool)preg_match('/\b(obra|artista|coleccion|coleccionistas|galerias|galerias|arquitectos|interioristas|decoradores|compradores|personas|lenguaje|visual|construye|partir|silenciosas|simbolicas|metafisicas|territorio|austeridad)\b/i', $value);
+}
+
+function english_or_default(string $value, string $fallback): string
+{
+    $value = trim($value);
+
+    if ($value === '' || looks_spanish($value)) {
+        return $fallback;
+    }
+
+    return $value;
+}
+
+function title_case_soft(string $value): string
+{
+    $small = ['and', 'or', 'of', 'in', 'the', 'a', 'an', 'with', 'for'];
+    $words = preg_split('/\s+/', strtolower(trim($value))) ?: [];
+    $words = array_map(function (string $word) use ($small): string {
+        return in_array($word, $small, true) ? $word : ucfirst($word);
+    }, $words);
+
+    if ($words) {
+        $words[0] = ucfirst($words[0]);
+    }
+
+    return implode(' ', $words);
+}
+
+function slugify(string $value): string
+{
+    $slug = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $value), '-'));
+
+    return $slug !== '' ? $slug : 'artwork';
+}
+
+function first_sentence(string $value): string
+{
+    $value = trim((string)preg_replace('/\s+/', ' ', $value));
+    if ($value === '') {
+        return '';
+    }
+    if (preg_match('/^(.+?[.!?])\s+/', $value . ' ', $match)) {
+        return trim($match[1]);
+    }
+    return $value;
+}
+
+function public_copy_tone(array $artistProfile): string
+{
+    $tone = trim((string)($artistProfile['statement'] ?? ''));
+    return $tone !== '' ? $tone : 'Clear, poetic, sober, elegant, human, public-facing, not academic, not overly curatorial, not decorative, not generic.';
+}
+
+function forbidden_language(array $artistProfile): array
+{
+    return unique_limited(array_merge([
+        'This artwork is presented as',
+        'This version positions the piece',
+        'collector-grade silence',
+        'curatorial narrative',
+        'commercial presentation',
+        'publication-ready',
+        'for galleries, curators and interior designers',
+        'overly academic language',
+        'generic marketplace filler text',
+    ], words_from($artistProfile['commercial_positioning'] ?? '')), 40);
+}
+
+function clean_public_copy(string $copy, array $artistProfile): string
+{
+    foreach (forbidden_language($artistProfile) as $phrase) {
+        $copy = str_ireplace((string)$phrase, '', $copy);
+    }
+    $copy = preg_replace('/\s+([,.])/', '$1', $copy);
+    $copy = preg_replace('/\s{2,}/', ' ', (string)$copy);
+    return trim((string)$copy);
+}
+
+function visual_analysis_from(array $artwork, array $profile, array $artistProfile, string $sizeText): array
+{
+    $source = is_array($profile['artwork_analysis'] ?? null) ? $profile['artwork_analysis'] : $profile;
+    $dominantColors = concise_terms(words_from($source['dominant_colors'] ?? $source['palette'] ?? []), ['balanced tones']);
+    $secondaryColors = concise_terms(words_from($source['secondary_colors'] ?? $source['palette_family'] ?? []), ['subtle secondary tones']);
+    $style = concise_terms(words_from($source['visual_language'] ?? $source['style_tags'] ?? $artistProfile['visual_language'] ?? []), ['contemporary artwork']);
+    $composition = labelize_term((string)($source['composition_type'] ?? sentence_from(words_from($source['structure_tags'] ?? []), 'balanced composition')));
+    $contrast = labelize_term((string)($source['contrast_level'] ?? $source['contrast'] ?? 'balanced contrast'));
+    $surface = labelize_term((string)($source['surface'] ?? $source['texture_visibility'] ?? sentence_from(words_from($artistProfile['materials'] ?? ''), 'visible surface')));
+    $rhythm = labelize_term((string)($source['rhythm'] ?? sentence_from(words_from($source['structure_tags'] ?? []), 'measured rhythm')));
+    $symbols = concise_terms(words_from($source['visible_symbols'] ?? $source['visible_elements'] ?? $artistProfile['recurring_themes'] ?? []), ['forms', 'marks', 'fields']);
+    $emotions = concise_terms(words_from($source['emotional_energy'] ?? $source['mood_tags'] ?? $artistProfile['palette_notes'] ?? []), ['quiet', 'human', 'contemplative']);
+    $audience = english_or_default((string)($source['audience_profile']['primary'] ?? $artistProfile['target_audience'] ?? ''), 'collectors and thoughtful buyers');
+
+    return [
+        'dominant_colors' => $dominantColors,
+        'secondary_colors' => $secondaryColors,
+        'style' => $style,
+        'composition' => $composition,
+        'contrast' => $contrast,
+        'surface' => $surface,
+        'rhythm' => $rhythm,
+        'symbols' => $symbols,
+        'emotions' => $emotions,
+        'atmosphere' => sentence_from($emotions, 'quiet emotional atmosphere'),
+        'audience' => $audience,
+        'medium' => trim((string)($artwork['medium'] ?? '')) ?: 'original artwork',
+        'series' => trim((string)($artwork['series'] ?? '')),
+        'size' => $sizeText,
+        'context' => sentence_from(words_from($artistProfile['preferred_contexts'] ?? ''), 'a calm interior, gallery wall, or collector space'),
+        'tone' => public_copy_tone($artistProfile),
+    ];
+}
+
+function build_artwork_package_v2(array $artwork, array $profile, array $artistProfile, array $mockups, string $sizeText, array $contexts = []): array
+{
+    $artist = trim((string)($artistProfile['artist_name'] ?? ''));
+    $medium = trim((string)($artwork['medium'] ?? ''));
+    $series = trim((string)($artwork['series'] ?? ''));
+    $year = trim((string)($artwork['artwork_year'] ?? ''));
+    $visual = visual_analysis_from($artwork, $profile, $artistProfile, $sizeText);
+    $style = $visual['style'];
+    $mood = $visual['emotions'];
+    $palette = $visual['dominant_colors'];
+    $themes = $visual['symbols'];
+    $structure = concise_terms([$visual['composition'], $visual['rhythm'], $visual['surface']], ['composition', 'surface', 'spatial presence']);
+    $materials = concise_terms(words_from($artistProfile['materials'] ?? ''), ['mixed media', 'surface work']);
+    $artistLanguage = concise_terms(words_from($artistProfile['visual_language'] ?? ''), ['contemporary visual language']);
+    $commercial = concise_terms(words_from(($profile['commercial_fit'] ?? []) ?: $visual['audience']), ['collectors', 'buyers', 'interiors']);
+
+    // Parse dynamic AI metadata if present
+    $aiMeta = $profile['publishing_metadata'] ?? [];
+    $aiDescriptions = [];
+    $titles = [];
+    
+    if (!empty($aiMeta['suggested_titles'])) {
+        $titles = [
+            $aiMeta['suggested_titles']['poetic'] ?? '',
+            $aiMeta['suggested_titles']['descriptive'] ?? '',
+            $aiMeta['suggested_titles']['marketplace_friendly'] ?? ''
+        ];
+        $titles = array_filter(array_map('trim', $titles));
+    }
+    
+    if (empty($titles) || count($titles) < 3) {
+        $baseTitleTerms = unique_limited(array_merge($palette, $mood, $style, $structure, $themes), 8, ['quiet', 'field', 'surface']);
+        $titleSeedA = $baseTitleTerms[0] ?? 'quiet';
+        $titleSeedB = $baseTitleTerms[1] ?? 'field';
+        $seriesPrefix = $series !== '' ? $series . ': ' : '';
+        $titles = unique_limited([
+            $seriesPrefix . title_case_soft($titleSeedA . ' and ' . $titleSeedB),
+            title_case_soft(sentence_from([$visual['composition'], $titleSeedA, $medium], 'Abstract Composition')),
+            title_case_soft(($medium !== '' ? $medium : 'Original Artwork') . ' in ' . $titleSeedA),
+        ], 3, ['Quiet Field', 'Abstract Composition in Balanced Tones', 'Original Artwork in Sober Color']);
+    }
+    
+    $titleLabels = [
+        $titles[0] => 'Poetic',
+        $titles[1] => 'Descriptive',
+        $titles[2] => 'Marketplace-friendly',
+    ];
+
+    $storedTitle = trim((string)($artwork['final_title'] ?? ''));
+    $storedSubtitle = trim((string)($artwork['subtitle'] ?? ''));
+    $titleForCopy = ($storedTitle !== '' && !looks_spanish($storedTitle)) ? $storedTitle : $titles[0];
+    $suggestedSubtitle = title_case_soft(($medium !== '' ? $medium : 'original artwork') . ' with ' . sentence_from([$visual['composition'], $visual['atmosphere']], 'visual presence'));
+    $subtitle = ($storedSubtitle !== '' && !looks_spanish($storedSubtitle)) ? $storedSubtitle : $suggestedSubtitle;
+    $titleLine = $titleForCopy . ($subtitle !== '' ? ': ' . $subtitle : '');
+    $specLine = trim(implode(', ', array_filter([$medium, $sizeText !== 'No dimensions specified' ? $sizeText : '', $year])));
+    $fileSlug = slugify(($artist !== '' ? $artist . '-' : '') . $titleForCopy);
+
+    if (!empty($aiMeta['descriptions'])) {
+        $aiDescriptions = [
+            'poetic_focus' => $aiMeta['descriptions']['poetic_focus'] ?? '',
+            'formal_focus' => $aiMeta['descriptions']['formal_focus'] ?? '',
+            'commercial_focus' => $aiMeta['descriptions']['commercial_focus'] ?? ''
+        ];
+    }
+
+    $description = !empty($aiDescriptions['poetic_focus']) 
+        ? clean_public_copy($aiDescriptions['poetic_focus'], $artistProfile)
+        : null;
+
+    if (empty($description)) {
+        $styleSummary = clean_public_copy(english_or_default((string)($profile['style_summary'] ?? ''), ''), $artistProfile);
+        $curatorialRead = clean_public_copy(english_or_default((string)($profile['one_line_curatorial_read'] ?? ''), ''), $artistProfile);
+        $descriptionParts = [
+            'The work draws the eye first through ' . sentence_from($palette, 'its color field') . ', where ' . $visual['contrast'] . ' and ' . $visual['surface'] . ' give the image its physical presence.',
+            'Its ' . $visual['composition'] . ' composition creates a ' . $visual['rhythm'] . ' rhythm, allowing ' . sentence_from($themes, 'visible forms and marks') . ' to carry the viewer across the surface without forcing a single reading.',
+            'The atmosphere is ' . $visual['atmosphere'] . ', direct enough to meet a room clearly and open enough to reward a slower look.',
+        ];
+        if ($styleSummary !== '') {
+            $descriptionParts[] = first_sentence($styleSummary);
+        } elseif ($curatorialRead !== '') {
+            $descriptionParts[] = first_sentence($curatorialRead);
+        }
+        if ($artist !== '') {
+            $descriptionParts[] = 'Seen within ' . $artist . "'s practice, it connects to " . sentence_from(array_merge($artistLanguage, $materials), 'a material and contemporary language') . ' while remaining led by what is visible in the artwork itself.';
+        }
+        $description = clean_public_copy(implode(' ', $descriptionParts), $artistProfile);
+    }
+
+    $shortDescription = !empty($description) 
+        ? clean_public_copy(first_sentence($description) . ' A ' . strtolower($medium !== '' ? $medium : 'work') . ' with ' . sentence_from($mood, 'a quiet atmosphere') . '.', $artistProfile)
+        : '';
+
+    $technicalDetailsForTitle = function (string $titleOption) use ($artist, $specLine): string {
+        return 'Technical details: ' . trim(($artist !== '' ? $artist . ', ' : '') . $titleOption . ($specLine !== '' ? ', ' . $specLine : '')) . '.';
+    };
+
+    $publicationDescriptions = [];
+    foreach ($titles as $index => $titleOption) {
+        if (!empty($aiDescriptions)) {
+            if ($index === 0) {
+                $copy = $aiDescriptions['poetic_focus'] ?? '';
+            } elseif ($index === 1) {
+                $copy = $aiDescriptions['formal_focus'] ?? '';
+            } else {
+                $copy = $aiDescriptions['commercial_focus'] ?? '';
+            }
+        } else {
+            if ($index === 0) {
+                $copy = $description;
+            } elseif ($index === 1) {
+                $copy = 'Under the title "' . $titleOption . '", the work is described through what can be seen: ' . sentence_from($palette, 'balanced color') . ', ' . $visual['composition'] . ' structure, and ' . $visual['surface'] . '. It suits viewers who want a clear visual entry point before moving into the quieter emotional layers of the piece.';
+            } else {
+                $copy = '"' . $titleOption . '" gives buyers a direct way to understand the piece: an original ' . strtolower($medium !== '' ? $medium : 'artwork') . ' with ' . sentence_from($palette, 'a balanced palette') . ', ' . sentence_from($mood, 'a quiet mood') . ', and a strong visual presence for ' . $visual['audience'] . '.';
+            }
+        }
+        $publicationDescriptions[$titleOption] = trim(clean_public_copy($copy, $artistProfile) . "\n\n" . $technicalDetailsForTitle($titleOption));
+    }
+
+    if (!empty($aiMeta['seo_keywords'])) {
+        $mainKeywords = unique_limited($aiMeta['seo_keywords'], 20);
+    } else {
+        $mainKeywords = unique_limited(array_merge([
+            $artist ? $artist . ' artwork' : '',
+            $titles[0],
+            'contemporary art',
+            'original artwork',
+            'art for collectors',
+            $medium,
+            $series,
+        ], $style, $palette, $themes, $mood, $materials, $commercial), 20, [
+            'abstract art',
+            'contemporary artwork',
+            'artist-made artwork',
+            'art for interiors',
+            'symbolic art',
+            'collectible artwork',
+            'art for Catawiki',
+            'art for Saatchi Art',
+            'gallery wall art',
+            'quiet art',
+            'sophisticated art',
+        ]);
+    }
+
+    $longTailKeywords = unique_limited([
+        ($artist ? $artist . ' original artwork' : 'original contemporary artwork') . ' for collectors',
+        sentence_from($style, 'abstract contemporary') . ' artwork for interiors',
+        sentence_from($palette, 'sober palette') . ' artwork for collectors',
+        'artwork ready to publish on Catawiki',
+        'artwork ready to publish on Saatchi Art',
+        'contemporary art for homes and collections',
+        'original artwork with clear description and SEO',
+        'Pinterest-ready artwork with title description and keywords',
+        sentence_from($mood, 'quiet contemplative') . ' artwork for private collections',
+        'artist-made artwork for sophisticated spaces',
+        'online listing for contemporary artwork',
+        'mockups for selling art online',
+        'art description for international marketplace listing',
+        'artwork for collectors of contemporary abstract art',
+        'complete artwork sheet for online art sales',
+    ], 15);
+
+    if (!empty($aiMeta['seo_tags'])) {
+        $tags = unique_limited($aiMeta['seo_tags'], 16);
+    } else {
+        $tags = unique_limited(array_merge($style, $mood, $palette, $structure, $themes, $commercial), 16, ['contemporary art', 'interiors']);
+    }
+
+    if (!empty($aiDescriptions['commercial_focus'])) {
+        $marketplaceDescription = clean_public_copy($aiDescriptions['commercial_focus'], $artistProfile) . "\n\n" . 'Technical details: ' . ($artist !== '' ? $artist . ', ' : '') . $titleForCopy . ($specLine !== '' ? ', ' . $specLine : '') . '.';
+    } else {
+        $marketplaceDescription = clean_public_copy(
+            ($artist !== ''
+                ? $titleForCopy . ' by ' . $artist
+                : $titleForCopy
+            ) . ' is an original artwork with ' . sentence_from($palette, 'a balanced palette') . ' and ' . $visual['composition'] . ' composition. The visible surface, rhythm, and emotional tone make it suitable for collectors, private interiors, and online art platforms looking for a distinctive contemporary piece. Main visual features: ' . sentence_from(array_merge($palette, $structure, $themes), 'color, structure, and surface') . '.',
+            $artistProfile
+        ) . "\n\n" . 'Technical details: ' . ($artist !== '' ? $artist . ', ' : '') . $titleForCopy . ($specLine !== '' ? ', ' . $specLine : '') . '.';
+    }
+
+    $boardSuggestion = in_array('architectural', $style, true) || in_array('structural', $style, true)
+        ? 'Architectural Minimalism'
+        : (in_array('minimal', $style, true) ? 'Minimalist Abstract Painting' : 'Contemporary Abstract Art');
+    $pinterestKeywords = unique_limited(array_merge([
+        'contemporary abstract art',
+        'original painting for sale',
+        'artwork for collectors',
+        'abstract painting for interiors',
+        'large wall art',
+        'statement painting',
+    ], $longTailKeywords, $mainKeywords), 14);
+    $hashtags = array_map(
+        fn($tag) => '#' . preg_replace('/[^a-z0-9]/', '', strtolower($tag)),
+        unique_limited(array_merge(['contemporary art', 'abstract painting', 'original artwork', 'art collectors', 'interior design art', 'statement art'], $style), 8)
+    );
+
+    $pinSources = $mockups ?: [[
+        'context_id' => 'root artwork',
+        'mockup_file' => $artwork['root_file'] ?? '',
+    ]];
+    $pinterestPins = [];
+    foreach ($pinSources as $index => $mockup) {
+        $contextId = (string)($mockup['context_id'] ?? '');
+        $matchingContext = null;
+        
+        foreach ($contexts as $ctx) {
+            if ((string)($ctx['id'] ?? '') === $contextId || (string)($ctx['name'] ?? '') === $contextId) {
+                $matchingContext = $ctx;
+                break;
+            }
+        }
+        
+        $aiPinterest = $matchingContext['pinterest_marketing'] ?? [];
+        $contextTitle = Display::contextTitle($mockup['context_id'] ?? ('Pin ' . ($index + 1)));
+        
+        $keyword = title_case_soft(($style[0] ?? 'Abstract') . ' ' . ($medium !== '' ? $medium : 'Painting'));
+        if (stripos($keyword, 'painting') === false && stripos($keyword, 'artwork') === false) {
+            $keyword .= ' Painting';
+        }
+        
+        // Calculate fallback title/description
+        $fallbackPinTitle = $keyword . ' - ' . title_case_soft(($mood[0] ?? 'Quiet') . ' ' . ($themes[0] ?? 'Composition')) . ' (' . $titleForCopy . ')';
+        $fallbackPinDescription = '"' . $titleForCopy . '"' . ($artist !== '' ? ' by ' . $artist : '') . '. ' . first_sentence($description) . ' Searchable details: ' . sentence_from(array_merge($palette, $style, $mood), 'contemporary artwork') . ', ' . strtolower($medium !== '' ? $medium : 'original art') . ', artwork for collectors and interiors.';
+        
+        $board = !empty($aiPinterest['board_suggestion']) ? $aiPinterest['board_suggestion'] : $boardSuggestion;
+        
+        $pTitle = !empty($aiPinterest['pin_title']) ? $aiPinterest['pin_title'] : $fallbackPinTitle;
+        if (strlen($pTitle) > 100) {
+            $pTitle = substr($pTitle, 0, 97) . '...';
+        }
+        
+        $pDesc = !empty($aiPinterest['pin_description']) ? $aiPinterest['pin_description'] : $fallbackPinDescription;
+        if (strlen($pDesc) > 500) {
+            $pDesc = substr($pDesc, 0, 497) . '...';
+        }
+        
+        $contextText = strtolower($contextTitle);
+        $pAlt = !empty($aiPinterest['alt_text']) 
+            ? $aiPinterest['alt_text'] 
+            : ('Artwork titled ' . $titleForCopy . ' shown in a ' . $contextText . ' setting, with visible wall placement, scale, colors, and surrounding interior.');
+
+        $pinterestPins[] = [
+            'label' => $contextTitle,
+            'board' => $board,
+            'title' => $pTitle,
+            'description' => clean_public_copy($pDesc, $artistProfile),
+            'alt' => $pAlt,
+            'destination' => '',
+            'keywords' => $pinterestKeywords,
+            'hashtags' => $hashtags,
+            'mockup_file' => $mockup['mockup_file'] ?? '',
+        ];
+    }
+
+    return [
+        'visual_analysis' => $visual,
+        'titles' => $titles,
+        'title_labels' => $titleLabels,
+        'suggested_subtitle' => $suggestedSubtitle,
+        'description' => $description,
+        'short_description' => $shortDescription,
+        'publication_descriptions' => $publicationDescriptions,
+        'technical_details' => $technicalDetailsForTitle($titleForCopy),
+        'curatorial_reading' => $curatorialRead !== '' ? $curatorialRead : $descriptionParts[1],
+        'seo_slug' => $fileSlug,
+        'main_keywords' => $mainKeywords,
+        'long_tail_keywords' => $longTailKeywords,
+        'tags' => $tags,
+        'captions' => [
+            $titleLine . ' - ' . sentence_from($style, 'contemporary artwork') . ' with ' . sentence_from($mood, 'quiet presence') . '.',
+            '"' . $titleForCopy . '" holds the room through color, surface, and a quiet emotional charge.',
+            ($artist !== '' ? $artist . ', ' : '') . $titleForCopy . ($specLine !== '' ? ' (' . $specLine . ')' : '') . '.',
+        ],
+        'alt_texts' => [
+            'Clean root image of ' . $titleForCopy . ', an original artwork with ' . sentence_from($palette, 'balanced') . ' colors and ' . $visual['composition'] . ' composition.',
+            $titleForCopy . ' with visible ' . sentence_from($themes, 'forms and marks') . ', ' . $visual['surface'] . ', and ' . sentence_from($mood, 'quiet atmosphere') . '.',
+            'Original artwork titled ' . $titleForCopy . ' shown clearly for online listing and accessible image description.',
+        ],
+        'file_names' => [
+            $fileSlug . '-root-artwork.jpg',
+            $fileSlug . '-mockup-01.jpg',
+            $fileSlug . '-marketplace-listing.jpg',
+        ],
+        'social' => [
+            'Instagram' => $titleLine . "\n\n" . sentence_from($palette, 'Color') . ', ' . $visual['surface'] . ', and ' . sentence_from($mood, 'a quiet emotional pull') . ".\n\n#" . implode(' #', array_map(fn($tag) => str_replace(' ', '', $tag), unique_limited($tags, 8))),
+            'Facebook' => $titleLine . "\n\n" . $shortDescription,
+            'X' => $titleLine . ' - original contemporary artwork prepared for collectors, interiors, and art platforms.',
+            'TikTok' => 'Show the clean root image, close details of color and surface, then the final mockup for "' . $titleForCopy . '".',
+        ],
+        'pinterest_pins' => $pinterestPins,
+        'marketplace' => [
+            'titles' => $titles,
+            'description' => $marketplaceDescription,
+            'Catawiki' => 'Suggested emphasis for Catawiki: authenticity, condition, dimensions, medium, year, series, provenance notes, and secure shipping.',
+            'Saatchi Art' => 'Suggested positioning for Saatchi Art: ' . $visual['audience'] . '.',
+            'Similar Platforms' => 'Use the title, description, keywords, tags, alt text, and mockup gallery as a coherent artwork listing.',
+        ],
+    ];
+}
+
 if ($id <= 0) {
     http_response_code(404);
-    die('Falta la obra.');
+    die('Missing artwork.');
 }
 
 $stmt = $pdo->prepare('
@@ -55,7 +600,34 @@ $artwork = $stmt->fetch();
 
 if (!is_array($artwork)) {
     http_response_code(404);
-    die('No se encontro la obra.');
+    die('Artwork not found.');
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_sheet') {
+    $update = $pdo->prepare('
+        UPDATE artworks
+        SET final_title = :final_title,
+            subtitle = :subtitle,
+            medium = :medium,
+            artwork_year = :artwork_year,
+            series = :series,
+            updated_at = :updated_at
+        WHERE id = :id
+        AND user_id = :user_id
+    ');
+    $update->execute([
+        'final_title' => trim((string)($_POST['final_title'] ?? '')),
+        'subtitle' => trim((string)($_POST['subtitle'] ?? '')),
+        'medium' => trim((string)($_POST['medium'] ?? '')),
+        'artwork_year' => trim((string)($_POST['artwork_year'] ?? '')),
+        'series' => trim((string)($_POST['series'] ?? '')),
+        'updated_at' => date('c'),
+        'id' => $id,
+        'user_id' => (int)$user['id'],
+    ]);
+
+    header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&saved=1');
+    exit;
 }
 
 $rootFile = basename((string)($artwork['root_file'] ?? ''));
@@ -63,8 +635,51 @@ $rootPath = $rootFile ? RESULTS_DIR . DIRECTORY_SEPARATOR . $rootFile : '';
 $rootBase = $rootFile ? pathinfo($rootFile, PATHINFO_FILENAME) : '';
 $meta = $rootBase ? read_json_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $rootBase . '.meta.json') : [];
 $analysis = $rootBase ? read_json_file(ANALYSIS_DIR . DIRECTORY_SEPARATOR . $rootBase . '.analysis.json') : [];
+
+$analysisStmt = $pdo->prepare('
+    SELECT *
+    FROM artwork_analysis
+    WHERE artwork_id = :artwork_id
+    ORDER BY id DESC
+    LIMIT 1
+');
+$analysisStmt->execute(['artwork_id' => $id]);
+$dbAnalysis = $analysisStmt->fetch();
+
+if (!$analysis && is_array($dbAnalysis)) {
+    $analysisData = json_decode((string)$dbAnalysis['analysis_json'], true);
+    $analysis = is_array($analysisData) ? ['artwork_profile' => $analysisData] : [];
+}
+
 $profile = is_array($analysis['artwork_profile'] ?? null) ? $analysis['artwork_profile'] : [];
+if (!$profile && is_array($analysis['artwork_analysis'] ?? null)) {
+    $profile = $analysis['artwork_analysis'];
+}
 $contexts = is_array($analysis['recommended_contexts'] ?? null) ? $analysis['recommended_contexts'] : [];
+
+if (!$contexts) {
+    $contextStmt = $pdo->prepare('
+        SELECT *
+        FROM mockup_contexts
+        WHERE artwork_id = :artwork_id
+        ORDER BY id ASC
+    ');
+    $contextStmt->execute(['artwork_id' => $id]);
+    foreach ($contextStmt->fetchAll() as $contextRow) {
+        $contextJson = json_decode((string)$contextRow['context_json'], true);
+        $contextJson = is_array($contextJson) ? $contextJson : [];
+        $contexts[] = [
+            'id' => (string)$contextRow['id'],
+            'name' => $contextRow['context_name'],
+            'why' => $contextJson['curatorial_reason'] ?? '',
+            'camera_group' => $contextJson['camera_group'] ?? '',
+            'time_of_day' => $contextJson['time_of_day'] ?? '',
+            'prompt' => $contextRow['prompt'],
+            'pinterest_marketing' => $contextJson['pinterest_marketing'] ?? [],
+        ];
+    }
+}
+
 $firstPrompt = (string)($contexts[0]['prompt'] ?? '');
 $analysisNeedsRefresh = $firstPrompt !== '' && (
     str_contains($firstPrompt, 'shoe lengths') ||
@@ -92,82 +707,424 @@ $height = $measurement['height'] ?? $artwork['height'] ?? '';
 $depth = $measurement['depth'] ?? $artwork['depth'] ?? '';
 $sizeText = trim((string)$width) !== '' && trim((string)$height) !== ''
     ? trim((string)$width . ' x ' . (string)$height . ($depth !== '' && $depth !== null ? ' x ' . (string)$depth : '') . ' ' . $unit)
-    : 'Sin medidas';
+    : 'No dimensions specified';
 
 $artistProfile = is_array($profile['_artist_profile'] ?? null) ? $profile['_artist_profile'] : ArtistProfile::findForUser((int)$user['id']);
 $artistName = trim((string)($artistProfile['artist_name'] ?? ''));
+$orientation = $analysis['image']['orientation'] ?? '';
+if ($orientation === '' && (float)$width > 0 && (float)$height > 0) {
+    $orientation = (float)$width > (float)$height ? 'horizontal' : ((float)$height > (float)$width ? 'vertical' : 'square');
+}
+$orientation = $orientation ?: 'Not specified';
+$package = build_artwork_package_v2($artwork, $profile, $artistProfile, $mockups, $sizeText, $contexts);
+$storedTitle = trim((string)($artwork['final_title'] ?? ''));
+$storedSubtitle = trim((string)($artwork['subtitle'] ?? ''));
+$selectedTitle = ($storedTitle !== '' && !looks_spanish($storedTitle)) ? $storedTitle : $package['titles'][0];
+$selectedSubtitle = ($storedSubtitle !== '' && !looks_spanish($storedSubtitle)) ? $storedSubtitle : $package['suggested_subtitle'];
+$selectedPublicationDescription = $package['publication_descriptions'][$selectedTitle] ?? trim($package['description'] . "\n\n" . ($package['technical_details'] ?? ''));
+$publicationCopy = trim($selectedTitle . ($selectedSubtitle !== '' ? "\n" . $selectedSubtitle : '') . "\n\n" . $selectedPublicationDescription);
+
+$copyIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+$downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>';
+$hyphenatedLongTails = array_map(fn($kw) => slugify((string)$kw), $package['long_tail_keywords']);
+$publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $package['main_keywords']) . "\nLong-tail Keywords: " . implode(', ', $package['long_tail_keywords']);
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Ficha de obra</title>
+    <title>Permanent Artwork Sheet - The Artwork Curator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
         .artwork-sheet {
             display: grid;
             grid-template-columns: minmax(280px, 420px) 1fr;
-            gap: 28px;
+            gap: 34px;
             align-items: start;
         }
 
-        .root-panel img {
+        .root-panel {
+            position: sticky;
+            top: 92px;
+        }
+
+        .root-frame {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            padding: 16px;
+            box-shadow: var(--shadow);
+            border-radius: var(--radius);
+        }
+
+        .root-frame img {
             width: 100%;
             height: auto;
             display: block;
             background: var(--surface-soft);
-            border: 14px solid #fff;
-            box-shadow: var(--shadow);
+            border-radius: 2px;
         }
 
-        .data-grid {
+        .sheet-stack {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
+        }
+
+        .subtitle-line {
+            margin: 0;
+            font-family: var(--font-serif);
+            font-size: 20px;
+            color: var(--accent);
+        }
+
+        .title-grid,
+        .publishing-grid,
+        .marketplace-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .title-card,
+        .spec-card {
+            background: var(--surface-soft);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 16px;
+        }
+
+        .title-card.selected {
+            background: #fbf7ef;
+            border-color: var(--accent);
+        }
+
+        .title-card h3 {
+            font-size: 23px;
+            margin-bottom: 12px;
+        }
+
+        .compact-title-list {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 10px;
+        }
+
+        .compact-title-row {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: var(--surface-soft);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 16px;
+            min-height: 100%;
+        }
+
+        .compact-title-row.selected {
+            background: #fbf7ef;
+            border-color: var(--accent);
+        }
+
+        .compact-title-main {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .compact-title-main h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 500;
+            overflow-wrap: anywhere;
+        }
+
+        .title-option-subtitle {
+            margin: -6px 0 0;
+            font-family: var(--font-serif);
+            color: var(--accent);
+            font-size: 16px;
+            line-height: 1.25;
+        }
+
+        .title-option-description {
+            flex: 1;
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .selected-label {
+            flex: 0 0 auto;
+            color: var(--accent);
+            border: 1px solid rgba(154, 123, 86, 0.32);
+            border-radius: var(--radius);
+            padding: 3px 6px;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .mini-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .mini-actions button {
+            width: auto;
+            margin: 0;
+            padding: 8px 10px;
+            font-size: 10px;
+        }
+
+        .copy-button {
+            width: auto;
+            margin: 0;
+            padding: 8px 10px;
+            font-size: 10px;
+        }
+
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 12px;
         }
 
-        .data-box {
-            background: var(--surface-soft);
-            border: 1px solid var(--line);
-            padding: 13px;
-            min-height: 78px;
+        .spec-card strong {
+            display: block;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            margin-bottom: 5px;
         }
 
-        .data-box strong {
-            display: block;
-            margin-bottom: 5px;
-            color: var(--muted);
+        .copy-block {
+            white-space: pre-wrap;
+            color: var(--ink);
+            line-height: 1.7;
+        }
+
+        .keyword-wrap,
+        .tag-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .keyword-chip,
+        .tag-chip {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid var(--line);
+            background: var(--surface);
+            color: var(--ink);
+            padding: 6px 10px;
+            border-radius: 999px;
             font-size: 12px;
-            letter-spacing: .05em;
-            text-transform: uppercase;
+        }
+
+        .pinterest-panel {
+            background: linear-gradient(180deg, var(--surface) 0%, #fbf8f2 100%);
+            border-color: rgba(154, 123, 86, 0.32);
+        }
+
+        .pinterest-intro {
+            max-width: 840px;
+            margin: -4px 0 24px;
+            color: var(--muted);
+        }
+
+        .pin-stack {
+            display: grid;
+            gap: 18px;
+        }
+
+        .pin-card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 22px;
+            box-shadow: var(--shadow);
+        }
+
+        .pin-card-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 18px;
+            padding-bottom: 14px;
+            margin-bottom: 18px;
+            border-bottom: 1px dashed var(--line);
+        }
+
+        .pin-card-header h3 {
+            font-size: 25px;
+        }
+
+        .pin-fields {
+            display: grid;
+            grid-template-columns: minmax(220px, .8fr) minmax(0, 1.2fr);
+            gap: 16px;
+        }
+
+        .pin-field {
+            background: var(--surface-soft);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 14px;
+        }
+
+        .pin-field.full {
+            grid-column: 1 / -1;
+        }
+
+        .pin-field label {
+            margin-top: 0;
+        }
+
+        .pin-field p {
+            margin: 0 0 12px;
+            color: var(--ink);
+        }
+
+        .pin-field textarea {
+            min-height: 110px;
+            background: var(--surface);
+        }
+
+        .pin-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .details-panel {
+            border: 1px solid var(--line);
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            margin-top: 12px;
+        }
+
+        .details-panel summary {
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        .detail-list {
+            display: grid;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .detail-list textarea,
+        .prompt-preview {
+            min-height: 130px;
+            font-family: Consolas, monospace;
+            font-size: 12px;
+            background: var(--surface-soft);
         }
 
         .context-list {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 14px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+            margin-top: 16px;
         }
 
-        .context-card {
+        .copy-card {
+            display: flex;
+            flex-direction: column;
+            background: var(--surface-soft);
             border: 1px solid var(--line);
-            background: #fff;
+            border-radius: var(--radius);
             padding: 16px;
         }
 
-        .context-card h3 {
+        .copy-card.generated .inline-result {
+            border-style: solid;
+            border-width: 1px;
+            padding: 10px;
+            display: block;
+            aspect-ratio: auto;
+            background: var(--surface-soft);
+        }
+
+        .copy-card h3 {
+            margin: 0 0 8px;
             font-size: 18px;
         }
 
-        .inline-result {
-            display: none;
-            margin: 14px 0;
-            background: #f1f1ef;
-            border: 1px solid #dfdfdc;
-            padding: 10px;
+        .copy-card p {
+            margin: 0 0 12px;
+            font-size: 13px;
+            line-height: 1.5;
         }
 
-        .inline-result.active {
-            display: block;
+        .copy-card form {
+            margin-top: auto;
+            width: 100%;
+        }
+
+        .copy-card button {
+            width: 100%;
+            border: 1px solid var(--accent);
+            background: var(--accent);
+            color: var(--surface);
+            padding: 10px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: var(--radius);
+            transition: all 0.3s ease;
+        }
+
+        .copy-card button:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+
+        .copy-card button:disabled {
+            background: var(--line);
+            border-color: var(--line);
+            color: var(--muted);
+            cursor: not-allowed;
+        }
+
+        .inline-result {
+            margin: 14px 0;
+            background: var(--surface-soft);
+            border: 1.5px dashed var(--line);
+            border-radius: var(--radius);
+            aspect-ratio: 4 / 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .copy-card:not(.generated) .inline-result:hover {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .copy-card:not(.generated) .inline-result svg {
+            transition: all 0.3s ease;
+        }
+
+        .copy-card:not(.generated) .inline-result:hover svg {
+            transform: scale(1.1);
+            stroke: var(--accent);
         }
 
         .inline-result img {
@@ -175,156 +1132,96 @@ $artistName = trim((string)($artistProfile['artist_name'] ?? ''));
             aspect-ratio: 4 / 3;
             object-fit: cover;
             display: block;
-            background: #e8e8e4;
+            background: var(--surface-soft);
+            border: 1px solid var(--line);
+            border-radius: 2px;
         }
 
-        .inline-thumb {
-            display: block;
-            margin-bottom: 10px;
+        .inline-loader {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid var(--line);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .85s linear infinite;
         }
 
         .download-icon {
-            width: 22px;
-            height: 22px;
+            width: 12px;
+            height: 12px;
+            border-bottom: 2px solid currentColor;
             display: inline-block;
             position: relative;
-            border-bottom: 2px solid currentColor;
         }
 
         .download-icon::before {
             content: "";
             position: absolute;
-            left: 10px;
-            top: 2px;
+            left: 5px;
+            top: 1px;
             width: 2px;
-            height: 13px;
+            height: 7px;
             background: currentColor;
         }
 
         .download-icon::after {
             content: "";
             position: absolute;
-            left: 6px;
-            top: 10px;
-            width: 8px;
-            height: 8px;
+            left: 2px;
+            top: 5px;
+            width: 5px;
+            height: 5px;
             border-right: 2px solid currentColor;
             border-bottom: 2px solid currentColor;
             transform: rotate(45deg);
-        }
-
-        .inline-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .inline-actions a {
-            font-weight: 700;
-            text-decoration: none;
-            border-bottom: 1px solid currentColor;
-        }
-
-        .inline-loader {
-            display: grid;
-            grid-template-columns: 34px 1fr;
-            gap: 12px;
-            align-items: center;
-        }
-
-        .inline-status {
-            color: #4a453e;
-            font-size: 13px;
-            line-height: 1.4;
-        }
-
-        .spinner {
-            width: 28px;
-            height: 28px;
-            border: 3px solid #d8d8d2;
-            border-top-color: #e51f3f;
-            border-radius: 50%;
-            animation: spin .85s linear infinite;
-        }
-
-        .loader-track {
-            height: 7px;
-            margin-top: 9px;
-            overflow: hidden;
-            background: #deded8;
-            position: relative;
-        }
-
-        .loader-track::before {
-            content: "";
-            position: absolute;
-            inset: 0 auto 0 0;
-            width: 38%;
-            background: #e51f3f;
-            animation: trackMove 1.35s ease-in-out infinite;
-        }
-
-        .context-card.generated .context-copy,
-        .context-card.generated .prompt-preview {
-            display: none;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
-        @keyframes trackMove {
-            0% { left: -38%; }
-            55% { left: 100%; }
-            100% { left: 100%; }
-        }
-
-        .prompt-preview {
-            width: 100%;
-            min-height: 160px;
-            font-family: Consolas, monospace;
-            font-size: 12px;
-            line-height: 1.45;
-            background: #fafafa;
-        }
-
-        @media (max-width: 980px) {
+        @media (max-width: 1100px) {
             .artwork-sheet,
-            .data-grid {
+            .title-grid,
+            .compact-title-list,
+            .publishing-grid,
+            .marketplace-grid,
+            .pin-fields {
                 grid-template-columns: 1fr;
+            }
+
+            .root-panel {
+                position: static;
+            }
+
+            .metadata-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 700px) {
+            .metadata-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .compact-title-main {
+                align-items: flex-start;
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
 <div class="app-shell">
-    <aside class="sidebar">
-        <div class="sidebar-head">
-            <a class="brand" href="dashboard.php">ARTMOCK <span class="brand-mark"></span></a>
-        </div>
-
-        <div class="sidebar-action">
-            <a class="button-link" href="artwork_new.php">+ Nueva obra</a>
-        </div>
-
-        <ul class="nav">
-            <li><a href="dashboard.php">Dashboard</a></li>
-            <li><a href="artwork_new.php">Crear obra raiz</a></li>
-            <li><a href="artist_profile.php">Perfil de artista</a></li>
-            <?php if ($isAdmin): ?>
-                <li><a href="admin_prompts.php">Admin prompts</a></li>
-                <li><a href="admin_api_keys.php">API keys</a></li>
-            <?php endif; ?>
-            <li><a href="account.php">Cuenta y pagos</a></li>
-        </ul>
-
-        <div class="nav-section">Archivo</div>
-        <ul class="nav">
-            <li><a class="active" href="artwork.php?id=<?= h($id) ?>">Ficha de obra</a></li>
-            <li><a href="mockups.php">Mockups</a></li>
-            <li><a href="logout.php">Salir</a></li>
-        </ul>
-    </aside>
+    <?php include __DIR__ . '/sidebar.php'; ?>
 
     <main class="main-area">
         <header class="app-header">
@@ -332,175 +1229,635 @@ $artistName = trim((string)($artistProfile['artist_name'] ?? ''));
         </header>
 
         <div class="alert-strip">
-            Ficha permanente de obra: imagen raiz, lectura curatorial, propuestas, prompts y mockups.
+            Permanent artwork sheet: root image, visual reading, public descriptions, SEO, social content and marketplace text.
         </div>
 
         <div class="workspace">
             <div class="workspace-header">
                 <div>
-                    <h1>Ficha de obra</h1>
-                    <p><?= h(Display::artworkTitle($rootFile, (string)$artwork['job_id'])) ?></p>
+                    <h1>Artwork Details</h1>
+                    <p><?= h($selectedSubtitle) ?></p>
                 </div>
                 <div class="topbar-actions">
                     <?php if ($rootFile): ?>
-                        <a class="button-link" href="form2.php?image=<?= rawurlencode($rootFile) ?>">Mockups</a>
-                        <a class="button-link secondary" href="analyze.php?image=<?= rawurlencode($rootFile) ?>&redirect=1">Actualizar analisis</a>
-                        <a class="button-link secondary" href="<?= h(media_url($rootFile, true)) ?>">Descargar raiz</a>
+                        <a class="button-link" href="form2.php?image=<?= rawurlencode($rootFile) ?>">Curatorial Direction</a>
+                        <a class="button-link secondary" href="analyze.php?image=<?= rawurlencode($rootFile) ?>&redirect=1">Recalculate Analysis</a>
+                        <a class="button-link secondary" href="<?= h(media_url($rootFile, true)) ?>">Download Root</a>
                     <?php endif; ?>
                 </div>
             </div>
 
+            <?php if (isset($_GET['saved'])): ?>
+                <div class="notice">Artwork sheet saved.</div>
+            <?php endif; ?>
+
             <?php if ($analysisNeedsRefresh): ?>
                 <div class="notice error">
-                    Este analisis fue generado con una version anterior del prompt de escala. Actualiza el analisis antes de generar nuevos mockups para evitar referencias visuales no deseadas.
+                    This analysis was generated with an older prompt ruleset. Recalculate the analysis before generating new mockups.
                 </div>
             <?php endif; ?>
 
             <section class="artwork-sheet">
-                <div class="root-panel">
-                    <?php if ($rootFile && is_file($rootPath)): ?>
-                        <img src="<?= h(media_url($rootFile)) ?>" alt="Imagen raiz">
-                    <?php else: ?>
-                        <div class="empty-state">Esta obra todavia no tiene imagen raiz terminada.</div>
-                    <?php endif; ?>
-                </div>
+                <aside class="root-panel">
+                    <div style="background: var(--surface); border: 1px solid var(--line); padding: 16px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 12px;">
+                        <label style="margin-top: 0; font-size: 11px; text-transform: uppercase; font-weight: 600; color: var(--ink); letter-spacing: 0.05em; display: block; margin-bottom: 6px;">SEO Slug / Filename Customizer</label>
+                        <input type="text" id="seo_slug_input" class="form-control" value="<?= h($package['seo_slug']) ?>" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 13px; font-family: monospace; border: 1px solid var(--line); border-radius: var(--radius);">
+                        <small style="margin: 4px 0 0 0; color: var(--muted); font-size: 11px; line-height: 1.3; display: block;">Changes here will update all image download names dynamically.</small>
+                    </div>
 
-                <div>
+                    <div class="root-frame">
+                        <?php if ($rootFile && is_file($rootPath)): ?>
+                            <a href="<?= h(media_url($rootFile)) ?>" target="_blank" title="Click to open full size">
+                                <img src="<?= h(media_url($rootFile)) ?>" alt="<?= h($package['alt_texts'][0]) ?>">
+                            </a>
+                        <?php else: ?>
+                            <div class="empty-state">This artwork does not have a completed root image yet.</div>
+                        <?php endif; ?>
+                    </div>
+
+                    <?php if ($rootFile && is_file($rootPath)): ?>
+                        <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; padding: 0 4px;">
+                            <a id="download_root_link" data-base-file="<?= h($rootFile) ?>" href="<?= h(media_url($rootFile, true)) ?>" title="Download Root Image" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--accent); text-decoration: none; font-weight: 500;">
+                                <span class="download-icon" aria-hidden="true"></span>
+                                <span style="margin-left: 6px;">Download Root</span>
+                            </a>
+                        </div>
+
+                        <details class="details-panel" style="margin-top: 12px; padding: 12px 14px; font-size: 12px;">
+                            <summary style="font-weight: 600; font-size: 12px; color: var(--ink);">Caption & Alt</summary>
+                            <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 10px;">
+                                <div>
+                                    <label style="font-size: 9px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; font-weight: 700; letter-spacing: 0.05em;">Caption</label>
+                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                                        <span style="line-height: 1.4;"><?= h($package['captions'][0]) ?></span>
+                                        <button class="copy-button secondary" type="button" data-copy="<?= h($package['captions'][0]) ?>" aria-label="Copy Caption" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label style="font-size: 9px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; font-weight: 700; letter-spacing: 0.05em;">Alt Text</label>
+                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                                        <span style="line-height: 1.4;"><?= h($package['alt_texts'][0]) ?></span>
+                                        <button class="copy-button secondary" type="button" data-copy="<?= h($package['alt_texts'][0]) ?>" aria-label="Copy Alt Text" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label style="font-size: 9px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; font-weight: 700; letter-spacing: 0.05em;">Suggested Filename</label>
+                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                                        <span id="suggested_filename_display" style="font-family: monospace; word-break: break-all; font-size: 11px;"><?= h($package['file_names'][0]) ?></span>
+                                        <button class="copy-button secondary" type="button" data-copy="<?= h($package['file_names'][0]) ?>" aria-label="Copy Filename" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
+                    <?php endif; ?>
+
+                    <details class="details-panel" style="margin-top: 12px; padding: 14px 16px;" <?= isset($_GET['saved']) ? 'open' : '' ?>>
+                        <summary style="font-weight: 600; cursor: pointer; color: var(--ink);">Sheet Metadata</summary>
+                        <form method="post" style="margin-top: 12px;">
+                            <input type="hidden" name="action" value="save_sheet">
+                            <label style="margin-top: 0;">Artwork Title</label>
+                            <input type="text" name="final_title" value="<?= h($selectedTitle) ?>">
+                            <label>Suggested Subtitle</label>
+                            <input type="text" name="subtitle" value="<?= h($selectedSubtitle) ?>">
+                            <label>Medium / Technique</label>
+                            <input type="text" name="medium" value="<?= h($artwork['medium'] ?? '') ?>" placeholder="Acrylic on canvas">
+                            <div class="row" style="grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">
+                                <div>
+                                    <label>Year</label>
+                                    <input type="text" name="artwork_year" value="<?= h($artwork['artwork_year'] ?? '') ?>" placeholder="2026">
+                                </div>
+                                <div>
+                                    <label>Series</label>
+                                    <input type="text" name="series" value="<?= h($artwork['series'] ?? '') ?>" placeholder="Series name">
+                                </div>
+                            </div>
+                            <label>Description Style Preference</label>
+                            <select name="description_style_preference">
+                                <option>Balanced</option>
+                                <option>More poetic</option>
+                                <option>More direct</option>
+                                <option>More commercial</option>
+                                <option>More minimal</option>
+                                <option>More emotional</option>
+                                <option>More SEO-focused</option>
+                            </select>
+                            <button type="submit" style="margin-top: 12px; width: 100%;">Save Artwork Sheet</button>
+                        </form>
+                    </details>
+                </aside>
+
+                <div class="sheet-stack">
                     <section class="panel">
-                        <h2>Datos de obra</h2>
-                        <div class="data-grid">
-                            <div class="data-box"><strong>Artista</strong><?= h($artistName !== '' ? $artistName : 'Sin nombre definido') ?></div>
-                            <div class="data-box"><strong>Medidas de la obra</strong><?= h($sizeText) ?></div>
-                            <div class="data-box"><strong>Estado</strong><?= h($artwork['status']) ?></div>
-                            <div class="data-box"><strong>Fecha</strong><?= h(date('d/m/Y H:i', strtotime((string)$artwork['created_at']))) ?></div>
-                            <div class="data-box"><strong>Orientacion</strong><?= h($analysis['image']['orientation'] ?? '-') ?></div>
-                            <div class="data-box"><strong>Mockups creados</strong><?= h(count($mockups)) ?></div>
+                        <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
+                            <div>
+                                <h2>Suggested Artwork Titles</h2>
+                                <p>Poetic, descriptive, and marketplace-friendly options</p>
+                            </div>
+                            <button class="copy-button secondary" type="button" data-copy="<?= h($publicationPackageCopy) ?>" aria-label="Copy Suggested Artwork Content" style="padding: 6px 8px; display: inline-flex; align-items: center; justify-content: center; min-height: unset; width: auto; margin: 0; line-height: 1;"><?= $copyIconSvg ?></button>
+                        </div>
+
+                        <div class="compact-title-list">
+                            <?php foreach ($package['titles'] as $title): ?>
+                                <?php
+                                    $titleDescription = $package['publication_descriptions'][$title] ?? $selectedPublicationDescription;
+                                    $titleCopy = trim($title . ($selectedSubtitle !== '' ? "\n" . $selectedSubtitle : '') . "\n\n" . $titleDescription);
+                                ?>
+                                <article class="compact-title-row <?= $title === $selectedTitle ? 'selected' : '' ?>">
+                                    <div class="compact-title-main">
+                                        <h3><?= h($title) ?></h3>
+                                        <?php if ($title === $selectedTitle): ?>
+                                            <span class="selected-label">Selected</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <p class="meta-line" style="margin: -6px 0 0; font-size: 10px; text-transform: uppercase; letter-spacing: .08em;"><?= h($package['title_labels'][$title] ?? 'Title option') ?></p>
+                                    <?php if ($selectedSubtitle !== ''): ?>
+                                        <p class="title-option-subtitle"><?= h($selectedSubtitle) ?></p>
+                                    <?php endif; ?>
+                                    <p class="copy-block title-option-description"><?= h($titleDescription) ?></p>
+                                    <div class="mini-actions" style="display: flex; gap: 6px; align-items: center; margin-top: auto;">
+                                        <button class="copy-button secondary" type="button" data-copy="<?= h($titleCopy) ?>" aria-label="Copy Title Option" style="padding: 6px 8px; display: inline-flex; align-items: center; justify-content: center; min-height: unset; width: auto; margin: 0; line-height: 1;"><?= $copyIconSvg ?></button>
+                                        <form method="post" style="margin: 0;">
+                                            <input type="hidden" name="action" value="save_sheet">
+                                            <input type="hidden" name="final_title" value="<?= h($title) ?>">
+                                            <input type="hidden" name="subtitle" value="<?= h($selectedSubtitle) ?>">
+                                            <input type="hidden" name="medium" value="<?= h($artwork['medium'] ?? '') ?>">
+                                            <input type="hidden" name="artwork_year" value="<?= h($artwork['artwork_year'] ?? '') ?>">
+                                            <input type="hidden" name="series" value="<?= h($artwork['series'] ?? '') ?>">
+                                            <button type="submit" style="font-size: 11px; padding: 6px 10px; margin: 0;"><?= $title === $selectedTitle ? 'Selected' : 'Select' ?></button>
+                                        </form>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <div class="keywords-box" style="margin-top: 14px; font-size: 11px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 10px;">
+                            <div style="margin-bottom: 6px; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                                <span style="line-height: 1.4;"><strong>Keywords:</strong> <?= h(implode(', ', $package['main_keywords'])) ?></span>
+                                <button class="copy-button secondary" type="button" data-copy="<?= h(implode(', ', $package['main_keywords'])) ?>" aria-label="Copy Keywords" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                            </div>
+                            <div style="margin-bottom: 6px; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                                <span style="line-height: 1.4;"><strong>Long-tail Keywords:</strong> <?= h(implode(', ', $package['long_tail_keywords'])) ?></span>
+                                <button class="copy-button secondary" type="button" data-copy="<?= h(implode(', ', $package['long_tail_keywords'])) ?>" aria-label="Copy Long-tail Keywords" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                            </div>
+                            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                                <span style="line-height: 1.4;"><strong>Long-tail (Hyphenated):</strong> <?= h(implode(', ', $hyphenatedLongTails)) ?></span>
+                                <button class="copy-button secondary" type="button" data-copy="<?= h(implode(', ', $hyphenatedLongTails)) ?>" aria-label="Copy Hyphenated Long-tail Keywords" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                            </div>
                         </div>
                     </section>
 
                     <section class="panel">
-                        <h2>Lectura curatorial</h2>
-                        <?php if (!$profile): ?>
-                            <div class="empty-state">Todavia no hay analisis curatorial. Abre Formulario 2 para generarlo.</div>
+                        <div class="section-heading">
+                            <h2>Generated Publishing Metadata</h2>
+                            <p>Main, short, marketplace, SEO and accessibility copy</p>
+                        </div>
+                        <div class="publishing-grid" style="gap: 16px;">
+                            <article class="copy-card" style="position: relative;">
+                                <button class="copy-button secondary" type="button" data-copy="<?= h($package['description']) ?>" aria-label="Copy Main Description" style="position: absolute; top: 12px; right: 12px; padding: 6px 8px; width: auto; margin: 0;"><?= $copyIconSvg ?></button>
+                                <h3 style="font-size: 15px; margin-bottom: 8px;">Main Artwork Description</h3>
+                                <p class="copy-block" style="font-size: 13px; padding-right: 34px;"><?= h($package['description']) ?></p>
+                            </article>
+                            <article class="copy-card" style="position: relative;">
+                                <button class="copy-button secondary" type="button" data-copy="<?= h($package['short_description']) ?>" aria-label="Copy Short Description" style="position: absolute; top: 12px; right: 12px; padding: 6px 8px; width: auto; margin: 0;"><?= $copyIconSvg ?></button>
+                                <h3 style="font-size: 15px; margin-bottom: 8px;">Short Description</h3>
+                                <p class="copy-block" style="font-size: 13px; padding-right: 34px;"><?= h($package['short_description']) ?></p>
+                            </article>
+                            <article class="copy-card" style="position: relative;">
+                                <button class="copy-button secondary" type="button" data-copy="<?= h($package['marketplace']['description']) ?>" aria-label="Copy Marketplace Description" style="position: absolute; top: 12px; right: 12px; padding: 6px 8px; width: auto; margin: 0;"><?= $copyIconSvg ?></button>
+                                <h3 style="font-size: 15px; margin-bottom: 8px;">Marketplace Description</h3>
+                                <p class="copy-block" style="font-size: 13px; padding-right: 34px;"><?= h($package['marketplace']['description']) ?></p>
+                            </article>
+                        </div>
+                        <div class="metadata-grid" style="margin-top: 14px;">
+                            <div class="spec-card"><strong>Pinterest Title</strong><?= h($package['pinterest_pins'][0]['title'] ?? '') ?></div>
+                            <div class="spec-card"><strong>Instagram Caption</strong><?= h($package['social']['Instagram'] ?? '') ?></div>
+                            <div class="spec-card"><strong>Alt Text</strong><?= h($package['alt_texts'][0] ?? '') ?></div>
+                            <div class="spec-card"><strong>SEO Slug</strong><?= h($package['seo_slug']) ?></div>
+                        </div>
+                    </section>
+
+                    <!-- 2. Pinterest Pin Content Panel -->
+                    <section class="panel pinterest-panel">
+                        <div class="section-heading">
+                            <h2>Pinterest Pin Content</h2>
+                            <p>Traffic-ready publishing fields</p>
+                        </div>
+                        <p class="pinterest-intro" style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">
+                            Pinterest is prepared as a strategic external traffic channel. Each generated mockup receives a Pin layout containing optimized SEO titles, descriptions, and alt text. Títulos y descripciones en menú desplegable bajo cada mockup de Pinterest.
+                        </p>
+                        
+                        <div class="pin-stack">
+                            <?php foreach ($package['pinterest_pins'] as $pinIndex => $pin): ?>
+                                <?php
+                                    $destinationId = 'pin_destination_' . $pinIndex;
+                                    $keywordsText = implode(', ', $pin['keywords']);
+                                    $hashtagsText = implode(' ', $pin['hashtags']);
+                                    $mockupFile = basename((string)($pin['mockup_file'] !== '' ? $pin['mockup_file'] : $rootFile));
+                                    $mockupUrl = 'media.php?file=' . rawurlencode($mockupFile);
+                                ?>
+                                <article class="pin-card" style="display: grid; grid-template-columns: 140px 1fr; gap: 20px; align-items: start; padding: 20px;">
+                                    <!-- Thumbnail & Download -->
+                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                        <div class="root-frame" style="padding: 6px; width: 100%; border: 1px solid var(--line); border-radius: 4px; background: var(--surface);">
+                                            <a href="<?= h($mockupUrl) ?>" target="_blank" title="Click to open full size">
+                                                <img src="<?= h($mockupUrl) ?>" alt="Mockup Pin <?= h($pinIndex + 1) ?>" style="width: 100%; height: auto; display: block; border-radius: 2px;">
+                                            </a>
+                                        </div>
+                                        <a href="<?= h($mockupUrl . '&download=1') ?>" class="download-mockup-link" data-base-file="<?= h($mockupFile) ?>" data-context="<?= h(slugify($pin['label'])) ?>" title="Download Mockup" style="display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--accent); text-decoration: none; font-weight: 500; margin-top: 2px;">
+                                            <span class="download-icon" aria-hidden="true"></span>
+                                            <span style="margin-left: 4px;">Download</span>
+                                        </a>
+                                    </div>
+                                    
+                                    <!-- Collapsible publishing details -->
+                                    <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+                                        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; border-bottom: 1px dashed var(--line); padding-bottom: 4px;">
+                                            <h3 style="font-size: 18px; font-family: var(--font-serif); margin: 0;"><?= h($pin['label']) ?></h3>
+                                            <span style="font-size: 11px; text-transform: uppercase; color: var(--muted); font-weight: 700; letter-spacing: 0.05em;">Pin <?= h($pinIndex + 1) ?></span>
+                                        </div>
+                                        
+                                        <details class="details-panel" style="margin: 0; padding: 10px 12px; font-size: 12px;" open>
+                                            <summary style="font-size: 12px; font-weight: 600; color: var(--ink);">Show Publishing Fields</summary>
+                                            <div class="pin-fields" style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px; font-size: 12px;">
+                                                <div class="pin-field" style="padding: 10px;">
+                                                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Pinterest Board / Category Suggestion</label>
+                                                    <p style="margin: 0; font-size: 12px;"><?= h($pin['board']) ?></p>
+                                                </div>
+                                                <div class="pin-field" style="padding: 10px;">
+                                                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Pin Title</label>
+                                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                                                        <span style="font-size: 12px; font-weight: 500; line-height: 1.4;"><?= h($pin['title']) ?></span>
+                                                        <button class="copy-button secondary" type="button" data-copy="<?= h($pin['title']) ?>" aria-label="Copy Pin Title" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                                    </div>
+                                                </div>
+                                                <div class="pin-field full" style="padding: 10px;">
+                                                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Pin Description</label>
+                                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                                                        <span style="font-size: 12px; line-height: 1.4;"><?= h($pin['description']) ?></span>
+                                                        <button class="copy-button secondary" type="button" data-copy="<?= h($pin['description']) ?>" aria-label="Copy Pin Description" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                                    </div>
+                                                </div>
+                                                <div class="pin-field full" style="padding: 10px;">
+                                                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Alt Text / Accessibility Text</label>
+                                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                                                        <span style="font-size: 12px; line-height: 1.4;"><?= h($pin['alt']) ?></span>
+                                                        <button class="copy-button secondary" type="button" data-copy="<?= h($pin['alt']) ?>" aria-label="Copy Pin Alt Text" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                                    </div>
+                                                </div>
+                                                <div class="pin-field full" style="padding: 10px;">
+                                                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Destination Link</label>
+                                                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                                                        <input id="<?= h($destinationId) ?>" type="text" value="<?= h($pin['destination']) ?>" placeholder="Saatchi Art, Catawiki or website URL" style="flex: 1; font-size: 12px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface);">
+                                                        <button class="copy-button secondary" type="button" data-copy-source="<?= h($destinationId) ?>" aria-label="Copy Destination Link" style="padding: 6px; display: inline-flex; align-items: center; justify-content: center; min-height: unset; width: auto; margin: 0; line-height: 1;"><?= $copyIconSvg ?></button>
+                                                    </div>
+                                                </div>
+                                                <div class="pin-field full" style="padding: 10px;">
+                                                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Suggested Pinterest Keywords & Hashtags</label>
+                                                    <div style="margin-bottom: 4px; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                                                        <span style="font-size: 12px; line-height: 1.4;"><strong>Keywords:</strong> <?= h($keywordsText) ?></span>
+                                                        <button class="copy-button secondary" type="button" data-copy="<?= h($keywordsText) ?>" aria-label="Copy Pinterest Keywords" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                                    </div>
+                                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                                                        <span style="font-size: 12px; line-height: 1.4;"><strong>Hashtags:</strong> <?= h($hashtagsText) ?></span>
+                                                        <button class="copy-button secondary" type="button" data-copy="<?= h($hashtagsText) ?>" aria-label="Copy Pinterest Hashtags" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </details>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    </section>
+
+                    <!-- 4. Generated Mockups Gallery Panel -->
+                    <section class="panel">
+                        <div class="section-heading">
+                            <h2>Generated Mockups Gallery</h2>
+                            <p><?= h(count($mockups)) ?> images</p>
+                        </div>
+                        <?php if (!$mockups): ?>
+                            <div class="empty-state">No mockups have been generated for this artwork yet.</div>
                         <?php else: ?>
-                            <div class="data-grid">
-                                <div class="data-box"><strong>Lectura</strong><?= h($profile['one_line_curatorial_read'] ?? '-') ?></div>
-                                <div class="data-box"><strong>Estilo</strong><?= h($profile['style_summary'] ?? '-') ?></div>
-                                <div class="data-box"><strong>Paleta</strong><?= h(implode(', ', $profile['palette'] ?? [])) ?></div>
-                                <div class="data-box"><strong>Atmosfera</strong><?= h(implode(', ', $profile['mood_tags'] ?? [])) ?></div>
-                                <div class="data-box"><strong>Publico</strong><?= h($profile['audience_profile']['primary'] ?? '-') ?></div>
-                                <div class="data-box"><strong>Temporada</strong><?= h($profile['seasonal_strategy']['primary_season'] ?? '-') ?></div>
-                                <div class="data-box"><strong>Temperatura emocional</strong><?= h($profile['emotional_palette']['temperature'] ?? '-') ?></div>
-                                <div class="data-box"><strong>Presencia onirica</strong><?= h($profile['dreamlike_presence']['level'] ?? '-') ?></div>
+                            <div class="grid">
+                                <?php foreach ($mockups as $mockup): ?>
+                                    <?php 
+                                        $mFile = basename((string)$mockup['mockup_file']);
+                                        $mUrl = 'media.php?file=' . rawurlencode($mFile);
+                                    ?>
+                                    <article class="item-card" style="padding: 14px;">
+                                        <div class="root-frame" style="padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px;">
+                                            <a href="<?= h($mUrl) ?>" target="_blank" title="Click to open full size">
+                                                <img src="<?= h($mUrl) ?>" alt="Generated mockup" style="width: 100%; height: auto; display: block; border-radius: 2px;">
+                                            </a>
+                                        </div>
+                                        <h3 style="margin-top: 10px; font-size: 16px;"><a href="viewer.php?id=<?= h($mockup['id']) ?>" style="text-decoration: none; color: inherit;"><?= h(Display::contextTitle($mockup['context_id'])) ?></a></h3>
+                                        
+                                        <div class="card-actions" style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                            <a href="<?= h($mUrl . '&download=1') ?>" aria-label="Download mockup" title="Download" style="display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--accent); text-decoration: none; font-weight: 500;">
+                                                <span class="download-icon" aria-hidden="true"></span>
+                                                <span style="margin-left: 4px;">Download</span>
+                                            </a>
+                                        </div>
+
+                                        <!-- Collapsible caption/alt under each mockup -->
+                                        <details class="details-panel" style="margin-top: 10px; font-size: 11px; padding: 8px 10px;">
+                                            <summary style="font-size: 11px; font-weight: 600; color: var(--ink);">Caption & Alt</summary>
+                                            <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 8px;">
+                                                <div>
+                                                    <label style="font-size: 9px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; font-weight: 700; letter-spacing: 0.05em;">Caption</label>
+                                                    <?php $m_caption = '“' . $selectedTitle . '” mockup in ' . Display::contextTitle($mockup['context_id']) . '.'; ?>
+                                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 4px;">
+                                                        <span style="line-height: 1.3;"><?= h($m_caption) ?></span>
+                                                        <button class="copy-button secondary" type="button" data-copy="<?= h($m_caption) ?>" aria-label="Copy Caption" style="padding: 2px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label style="font-size: 9px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; font-weight: 700; letter-spacing: 0.05em;">Alt Text</label>
+                                                    <?php $m_alt = 'A premium mockup showing “' . $selectedTitle . '” in a ' . strtolower(Display::contextTitle($mockup['context_id'])) . ' environment.'; ?>
+                                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 4px;">
+                                                        <span style="line-height: 1.3;"><?= h($m_alt) ?></span>
+                                                        <button class="copy-button secondary" type="button" data-copy="<?= h($m_alt) ?>" aria-label="Copy Alt Text" style="padding: 2px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </details>
+                                    </article>
+                                <?php endforeach; ?>
                             </div>
                         <?php endif; ?>
                     </section>
-                </div>
-            </section>
 
-            <section class="panel">
-                <div class="section-heading">
-                    <h2>Mockups de esta obra</h2>
-                    <p><?= h(count($mockups)) ?> imagenes</p>
-                </div>
+                    <!-- 5. Collapsible Specifications Panel -->
+                    <details class="details-panel" style="margin-top: 16px;">
+                        <summary style="font-weight: 600; cursor: pointer; color: var(--ink);">Artwork Specifications</summary>
+                        <div class="metadata-grid" style="margin-top: 14px;">
+                            <div class="spec-card"><strong>Artist</strong><?= h($artistName !== '' ? $artistName : 'Unnamed Artist') ?></div>
+                            <div class="spec-card"><strong>Dimensions</strong><?= h($sizeText) ?></div>
+                            <div class="spec-card"><strong>Medium / Technique</strong><?= h($artwork['medium'] ?: 'Not specified') ?></div>
+                            <div class="spec-card"><strong>Year</strong><?= h($artwork['artwork_year'] ?: 'Not specified') ?></div>
+                            <div class="spec-card"><strong>Series / Body of Work</strong><?= h($artwork['series'] ?: 'Not specified') ?></div>
+                            <div class="spec-card"><strong>Orientation</strong><?= h(labelize_term((string)$orientation)) ?></div>
+                            <div class="spec-card"><strong>Visible Elements</strong><?= h(sentence_from($package['visual_analysis']['symbols'] ?? [], 'forms, marks and fields')) ?></div>
+                            <div class="spec-card"><strong>Dominant Colors</strong><?= h(sentence_from($package['visual_analysis']['dominant_colors'] ?? [], 'balanced tones')) ?></div>
+                            <div class="spec-card"><strong>Emotional Keywords</strong><?= h(sentence_from($package['visual_analysis']['emotions'] ?? [], 'quiet, human, contemplative')) ?></div>
+                            <div class="spec-card"><strong>Intended Use</strong><?= h($package['visual_analysis']['audience'] ?? 'collectors and thoughtful buyers') ?></div>
+                            <div class="spec-card"><strong>Description Style Preference</strong><?= h(public_copy_tone($artistProfile)) ?></div>
+                            <div class="spec-card"><strong>Status</strong><?= h($artwork['status']) ?></div>
+                            <div class="spec-card"><strong>Creation Date</strong><?= h(date('m/d/Y H:i', strtotime((string)$artwork['created_at']))) ?></div>
+                            <div class="spec-card"><strong>Mockups Generated</strong><?= h(count($mockups)) ?></div>
+                        </div>
+                    </details>
 
-                <?php if (!$mockups): ?>
-                    <div class="empty-state">Todavia no hay mockups generados desde esta obra.</div>
-                <?php else: ?>
-                    <div class="grid">
-                        <?php foreach ($mockups as $mockup): ?>
-                            <article class="item-card">
-                                <a class="inline-thumb" href="viewer.php?id=<?= h($mockup['id']) ?>" aria-label="Abrir mockup">
-                                    <img src="<?= h(media_url($mockup['mockup_file'])) ?>" alt="Mockup">
-                                </a>
-                                <h3><?= h(Display::contextTitle($mockup['context_id'])) ?></h3>
-                                <div class="card-actions">
-                                    <a href="<?= h(media_url($mockup['mockup_file'], true)) ?>" aria-label="Descargar mockup" title="Descargar">
-                                        <span class="download-icon" aria-hidden="true"></span>
-                                    </a>
-                                    <?php if ($isAdmin && !empty($mockup['prompt_file'])): ?>
-                                        <a href="<?= h(media_url($mockup['prompt_file'])) ?>" target="_blank">Prompt</a>
-                                    <?php endif; ?>
+                    <!-- 6. Collapsible Visual Reading Panel -->
+                    <details class="details-panel" style="margin-top: 16px;">
+                        <summary style="font-weight: 600; cursor: pointer; color: var(--ink);">Visual Reading</summary>
+                        <div style="margin-top: 14px;">
+                            <p class="copy-block" style="line-height: 1.6; font-size: 14px; margin-bottom: 14px;"><?= h($package['curatorial_reading']) ?></p>
+                            <div class="metadata-grid">
+                                <div class="spec-card"><strong>Visual Language</strong><?= h(sentence_from(labelize_terms(words_from($profile['style_tags'] ?? $artistProfile['visual_language'] ?? [])), 'derived from the root image and artist profile')) ?></div>
+                                <div class="spec-card"><strong>Style</strong><?= h($profile['style_summary'] ?? 'Reading built from the artwork, its technical data and the artist profile.') ?></div>
+                                <div class="spec-card"><strong>Palette</strong><?= h(sentence_from(labelize_terms(words_from($profile['palette'] ?? $artistProfile['palette_notes'] ?? [])), 'palette inferred from the root image')) ?></div>
+                                <div class="spec-card"><strong>Audience</strong><?= h($profile['audience_profile']['primary'] ?? $artistProfile['target_audience'] ?? 'collectors, galleries and interior designers') ?></div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- 7. Collapsible Social Content Panel -->
+                    <details class="details-panel" style="margin-top: 16px;">
+                        <summary style="font-weight: 600; cursor: pointer; color: var(--ink);">Other Social Media Content (Instagram, Facebook, X, TikTok)</summary>
+                        <div class="publishing-grid" style="margin-top: 14px; gap: 16px;">
+                            <?php foreach ($package['social'] as $platform => $copy): ?>
+                                <article class="copy-card" style="position: relative;">
+                                    <div style="position: absolute; top: 12px; right: 12px;">
+                                        <button class="copy-button secondary" type="button" data-copy="<?= h($copy) ?>" aria-label="Copy Social Text" style="padding: 6px 8px; display: inline-flex; align-items: center; justify-content: center; min-height: unset; width: auto; margin: 0; line-height: 1;"><?= $copyIconSvg ?></button>
+                                    </div>
+                                    <h3 style="font-size: 15px; margin-bottom: 8px; font-weight: 600; color: var(--muted); text-transform: uppercase;"><?= h($platform) ?></h3>
+                                    <p class="copy-block" style="margin: 0; font-size: 13px; line-height: 1.5; padding-right: 32px;"><?= h($copy) ?></p>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    </details>
+
+                    <!-- 8. Collapsible Raw AI Analysis Panel -->
+                    <?php
+                    $rawAnalysisJson = '';
+                    if (is_array($dbAnalysis) && !empty($dbAnalysis['analysis_json'])) {
+                        $rawAnalysisJson = (string)$dbAnalysis['analysis_json'];
+                    } elseif ($rootBase && is_file(ANALYSIS_DIR . DIRECTORY_SEPARATOR . $rootBase . '.analysis.json')) {
+                        $rawAnalysisJson = (string)file_get_contents(ANALYSIS_DIR . DIRECTORY_SEPARATOR . $rootBase . '.analysis.json');
+                    }
+                    if ($rawAnalysisJson !== ''):
+                        $decodedJson = json_decode($rawAnalysisJson, true);
+                        if (is_array($decodedJson)) {
+                            $rawAnalysisJson = json_encode($decodedJson, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                        }
+                    ?>
+                        <details class="details-panel" style="margin-top: 16px;">
+                            <summary style="font-weight: 600; cursor: pointer; color: var(--ink);">Show Raw AI Analysis (JSON)</summary>
+                            <div style="margin-top: 12px;">
+                                <pre style="background: var(--surface-soft); border: 1px solid var(--line); padding: 12px; border-radius: var(--radius); overflow-x: auto; font-family: monospace; font-size: 11px; margin: 0; max-height: 400px; color: var(--ink);"><code class="json"><?= h($rawAnalysisJson) ?></code></pre>
+                            </div>
+                        </details>
+                    <?php endif; ?>
+
+                    <!-- 9. Collapsible Tags, Captions, ALT Panel -->
+                    <details class="details-panel" style="margin-top: 16px;">
+                        <summary>Tags, Captions, ALT Texts and Suggested File Names</summary>
+                        <div class="detail-list" style="margin-top: 12px; display: flex; flex-direction: column; gap: 14px;">
+                            <div>
+                                <h3 style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Tags</h3>
+                                <div class="tag-wrap">
+                                    <?php foreach ($package['tags'] as $tag): ?>
+                                        <span class="tag-chip"><?= h($tag) ?></span>
+                                    <?php endforeach; ?>
                                 </div>
-                            </article>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-            </section>
-
-
-            <section class="panel">
-                <div class="section-heading">
-                    <h2><?= h(count($contexts)) ?> propuestas curatoriales</h2>
-                    <p><?= h(count($contexts)) ?> propuestas</p>
-                </div>
-
-                <?php if (!$contexts): ?>
-                    <div class="empty-state">Todavia no hay propuestas guardadas.</div>
-                <?php else: ?>
-                    <div class="context-list">
-                        <?php foreach ($contexts as $index => $context): ?>
-                            <article class="context-card">
-                                <p class="meta-line">Direccion <?= h($index + 1) ?> · <?= h($context['camera_group'] ?? '-') ?> · <?= h($context['time_of_day'] ?? '-') ?></p>
-                                <h3><?= h($context['name'] ?? $context['id'] ?? 'Contexto') ?></h3>
-                                <div class="inline-result" aria-live="polite">
-                                    <div class="inline-status">Esperando generacion.</div>
+                            </div>
+                            <div>
+                                <h3 style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Captions</h3>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <?php foreach ($package['captions'] as $caption): ?>
+                                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; background: var(--surface-soft); padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px;">
+                                            <span style="font-size: 12px; line-height: 1.4;"><?= h($caption) ?></span>
+                                            <button class="copy-button secondary" type="button" data-copy="<?= h($caption) ?>" aria-label="Copy Caption" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                        </div>
+                                    <?php endforeach; ?>
                                 </div>
-                                <p class="context-copy"><?= h($context['why'] ?? '') ?></p>
-                                <div class="card-actions">
-                                    <?php if ($rootFile && !$analysisNeedsRefresh): ?>
-                                        <form class="inline-mockup-form" action="generate_mockup.php" method="post">
-                                            <input type="hidden" name="image" value="<?= h($rootFile) ?>">
-                                            <input type="hidden" name="json" value="<?= h($rootBase . '.analysis.json') ?>">
-                                            <input type="hidden" name="context_id" value="<?= h($context['id'] ?? '') ?>">
-                                            <input type="hidden" name="prompt" value="<?= h($context['prompt'] ?? '') ?>">
-                                            <input type="hidden" name="ajax" value="1">
-                                            <button type="submit">Generar</button>
-                                        </form>
-                                    <?php elseif ($rootFile): ?>
-                                        <a href="analyze.php?image=<?= rawurlencode($rootFile) ?>&redirect=1">Actualizar antes de generar</a>
-                                    <?php endif; ?>
+                            </div>
+                            <div>
+                                <h3 style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">ALT Texts</h3>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <?php foreach ($package['alt_texts'] as $alt): ?>
+                                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; background: var(--surface-soft); padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px;">
+                                            <span style="font-size: 12px; line-height: 1.4;"><?= h($alt) ?></span>
+                                            <button class="copy-button secondary" type="button" data-copy="<?= h($alt) ?>" aria-label="Copy Alt Text" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                        </div>
+                                    <?php endforeach; ?>
                                 </div>
-                                <?php if ($isAdmin): ?>
-                                    <details>
-                                        <summary>Ver prompt tecnico</summary>
+                            </div>
+                            <div>
+                                <h3 style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Suggested File Names</h3>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <?php foreach ($package['file_names'] as $fileName): ?>
+                                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; background: var(--surface-soft); padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px;">
+                                            <span style="font-size: 12px; font-family: monospace; line-height: 1.4;"><?= h($fileName) ?></span>
+                                            <button class="copy-button secondary" type="button" data-copy="<?= h($fileName) ?>" aria-label="Copy Filename" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details class="details-panel">
+                        <summary>Technical Prompts and Curatorial Mockup Proposals</summary>
+                        <?php if (!$contexts): ?>
+                            <div class="empty-state" style="margin-top: 16px;">No technical prompts saved yet.</div>
+                        <?php else: ?>
+                            <div class="context-list">
+                                <?php foreach ($contexts as $index => $context): ?>
+                                    <?php
+                                        $ctxId = $context['id'] ?? ('ctx_' . ($index + 1));
+                                        $existingMockup = null;
+                                        foreach ($mockups as $m) {
+                                            if ($m['context_id'] === $ctxId || $m['context_id'] === (string)($index + 1)) {
+                                                $existingMockup = $m;
+                                                break;
+                                            }
+                                        }
+                                    ?>
+                                    <article class="copy-card <?= $existingMockup ? 'generated' : '' ?>">
+                                        <p class="meta-line">Direction <?= h($index + 1) ?> - <?= h($context['camera_group'] ?? '-') ?> - <?= h($context['time_of_day'] ?? '-') ?></p>
+                                        <h3><?= h($context['name'] ?? $context['id'] ?? 'Context') ?></h3>
+                                        <div class="inline-result" aria-live="polite">
+                                            <?php if ($existingMockup): ?>
+                                                <?php
+                                                    $mFile = basename((string)$existingMockup['mockup_file']);
+                                                    $mUrl = 'media.php?file=' . rawurlencode($mFile);
+                                                    $mViewerUrl = 'viewer.php?id=' . rawurlencode((string)$existingMockup['id']);
+                                                    $mDownloadUrl = $mUrl . '&download=1';
+                                                ?>
+                                                <a class="inline-thumb" href="<?= h($mViewerUrl) ?>" aria-label="Open generated mockup" style="display: block; margin-bottom: 8px; overflow: hidden; border-radius: 2px;">
+                                                    <img src="<?= h($mUrl) ?>" alt="Generated mockup" style="width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; border: 1px solid var(--line); border-radius: 2px;">
+                                                </a>
+                                                <div class="inline-actions" style="display: flex; gap: 12px; align-items: center;">
+                                                    <a href="<?= h($mDownloadUrl) ?>" aria-label="Download mockup" title="Download" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 11px; text-decoration: none; color: var(--ink); border: 1px solid var(--line); padding: 6px 12px; border-radius: 4px; background: var(--surface);">
+                                                        <span class="download-icon" aria-hidden="true"></span>
+                                                        <span>Download</span>
+                                                    </a>
+                                                    <?php if ($isAdmin): ?>
+                                                        <a href="media.php?file=<?= rawurlencode(basename((string)$existingMockup['prompt_file'])) ?>" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 11px; text-decoration: none; color: var(--ink); border: 1px solid var(--line); padding: 6px 12px; border-radius: 4px; background: var(--surface);">Prompt</a>
+                                                    <?php endif; ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--muted)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5; transition: all 0.3s ease;">
+                                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                                </svg>
+                                            <?php endif; ?>
+                                        </div>
+                                        <p><?= h($context['why'] ?? '') ?></p>
+                                        <?php if ($rootFile && !$analysisNeedsRefresh): ?>
+                                            <form class="inline-mockup-form" action="generate_mockup.php" method="post">
+                                                <input type="hidden" name="image" value="<?= h($rootFile) ?>">
+                                                <input type="hidden" name="json" value="<?= h($rootBase . '.analysis.json') ?>">
+                                                <input type="hidden" name="context_id" value="<?= h($context['id'] ?? '') ?>">
+                                                <input type="hidden" name="prompt" value="<?= h($context['prompt'] ?? '') ?>">
+                                                <input type="hidden" name="ajax" value="1">
+                                                <button type="submit"><?= $existingMockup ? 'Regenerate' : 'Generate Mockup' ?></button>
+                                            </form>
+                                        <?php endif; ?>
                                         <textarea class="prompt-preview" readonly><?= h($context['prompt'] ?? '') ?></textarea>
-                                    </details>
-                                <?php endif; ?>
-                            </article>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+                                    </article>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </details>
+                </div>
             </section>
-
         </div>
     </main>
 </div>
 <script>
     const isAdmin = <?= $isAdmin ? 'true' : 'false' ?>;
 
+    const seoInput = document.getElementById('seo_slug_input');
+    
+    function updateDownloadLinks() {
+        if (!seoInput) return;
+        const slug = seoInput.value.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/-+/g, '-');
+        
+        const rootLink = document.getElementById('download_root_link');
+        if (rootLink) {
+            const baseFile = rootLink.getAttribute('data-base-file');
+            rootLink.href = `media.php?file=${encodeURIComponent(baseFile)}&download=1&name=${encodeURIComponent(slug + '-root-artwork')}`;
+        }
+        
+        document.querySelectorAll('.download-mockup-link').forEach((link) => {
+            const baseFile = link.getAttribute('data-base-file');
+            const context = link.getAttribute('data-context');
+            link.href = `media.php?file=${encodeURIComponent(baseFile)}&download=1&name=${encodeURIComponent(slug + '-mockup-' + context)}`;
+        });
+
+        const filenameDisplay = document.getElementById('suggested_filename_display');
+        if (filenameDisplay) {
+            filenameDisplay.textContent = slug + '-root-artwork.jpg';
+        }
+    }
+    
+    if (seoInput) {
+        seoInput.addEventListener('input', updateDownloadLinks);
+        updateDownloadLinks();
+    }
+
+    document.querySelectorAll('[data-copy]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const original = button.innerHTML;
+            try {
+                await navigator.clipboard.writeText(button.dataset.copy || '');
+                button.innerHTML = 'Copied';
+                setTimeout(() => button.innerHTML = original, 1200);
+            } catch (error) {
+                button.innerHTML = 'Copy failed';
+                setTimeout(() => button.innerHTML = original, 1200);
+            }
+        });
+    });
+
+    document.querySelectorAll('[data-copy-source]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const original = button.innerHTML;
+            const source = document.getElementById(button.dataset.copySource || '');
+            try {
+                await navigator.clipboard.writeText(source ? source.value : '');
+                button.innerHTML = 'Copied';
+                setTimeout(() => button.innerHTML = original, 1200);
+            } catch (error) {
+                button.innerHTML = 'Copy failed';
+                setTimeout(() => button.innerHTML = original, 1200);
+            }
+        });
+    });
+
     document.querySelectorAll('.inline-mockup-form').forEach((form) => {
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
 
-            const card = form.closest('.context-card');
+            const card = form.closest('.copy-card');
             const resultBox = card.querySelector('.inline-result');
-            const button = form.querySelector('button');
-            const originalText = button.textContent;
+            const button = form.querySelector('button[type="submit"]');
+            const originalHtml = button.innerHTML;
 
             card.classList.remove('generated');
             resultBox.classList.add('active');
             resultBox.innerHTML = `
-                <div class="inline-loader">
-                    <div class="spinner" aria-hidden="true"></div>
-                    <div class="inline-status">
-                        Generando mockup dentro de la ficha.
-                        <div class="loader-track" aria-hidden="true"></div>
-                    </div>
+                <div class="inline-loader" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                    <div class="spinner" style="width: 32px; height: 32px;" aria-hidden="true"></div>
                 </div>
             `;
             button.disabled = true;
-            button.textContent = 'Generando...';
+            button.innerHTML = '<svg class="spinner-btn" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" style="animation: spin 0.85s linear infinite; display: inline-block; vertical-align: middle;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>';
 
             try {
                 const response = await fetch(form.action, {
@@ -512,31 +1869,43 @@ $artistName = trim((string)($artistProfile['artist_name'] ?? ''));
                     }
                 });
 
-                const data = await response.json();
+                const rawText = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(rawText);
+                } catch (parseError) {
+                    const readable = rawText
+                        .replace(/<br\s*\/?>/gi, '\n')
+                        .replace(/<[^>]+>/g, ' ')
+                        .replace(/\s+/g, ' ')
+                        .trim();
+                    throw new Error(readable || 'The server returned an invalid response while generating the mockup.');
+                }
 
                 if (!response.ok || !data.ok) {
-                    throw new Error(data.error || 'No se pudo generar el mockup.');
+                    throw new Error(data.error || 'Could not generate mockup.');
                 }
 
                 card.classList.add('generated');
                 const promptLink = isAdmin
-                    ? `<a href="${escapeAttribute(data.prompt_url)}" target="_blank" rel="noopener">Prompt</a>`
+                    ? `<a href="${escapeAttribute(data.prompt_url)}" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 11px; text-decoration: none; color: var(--ink); border: 1px solid var(--line); padding: 6px 12px; border-radius: 4px; background: var(--surface);">Prompt</a>`
                     : '';
                 resultBox.innerHTML = `
-                    <a class="inline-thumb" href="${escapeAttribute(data.viewer_url)}" aria-label="Abrir mockup generado">
-                        <img src="${escapeAttribute(data.image_url)}" alt="Mockup generado">
+                    <a class="inline-thumb" href="${escapeAttribute(data.viewer_url)}" aria-label="Open generated mockup" style="display: block; margin-bottom: 8px; overflow: hidden; border-radius: 2px;">
+                        <img src="${escapeAttribute(data.image_url)}" alt="Generated mockup" style="width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; border: 1px solid var(--line); border-radius: 2px;">
                     </a>
-                    <div class="inline-actions">
-                        <a href="${escapeAttribute(data.download_url)}" aria-label="Descargar mockup" title="Descargar">
+                    <div class="inline-actions" style="display: flex; gap: 12px; align-items: center;">
+                        <a href="${escapeAttribute(data.download_url)}" aria-label="Download mockup" title="Download" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 11px; text-decoration: none; color: var(--ink); border: 1px solid var(--line); padding: 6px 12px; border-radius: 4px; background: var(--surface);">
                             <span class="download-icon" aria-hidden="true"></span>
+                            <span>Download</span>
                         </a>
                         ${promptLink}
                     </div>
                 `;
-                button.textContent = 'Generar otra vez';
+                button.innerHTML = 'Regenerate';
             } catch (error) {
-                resultBox.innerHTML = '<div class="inline-status">Error: ' + escapeHtml(error.message) + '</div>';
-                button.textContent = originalText;
+                resultBox.innerHTML = `<div class="inline-status" style="color: var(--danger); font-size: 11px; padding: 10px; text-align: center;">Error: ${escapeHtml(error.message)}</div>`;
+                button.innerHTML = originalHtml;
             } finally {
                 button.disabled = false;
             }

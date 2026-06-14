@@ -1,0 +1,165 @@
+{
+    "artwork_analysis": {
+        "visual_language": [
+            "figurative surrealism",
+            "symbolic narrative",
+            "architectural fantasy",
+            "gothic-romantic",
+            "dreamlike"
+        ],
+        "emotional_energy": [
+            "melancholy",
+            "mystery",
+            "contemplation",
+            "quietude",
+            "surreal introspection",
+            "unease"
+        ],
+        "dominant_colors": [
+            "deep blues",
+            "muted browns",
+            "dark grays",
+            "black"
+        ],
+        "secondary_colors": [
+            "pale yellow",
+            "cream",
+            "reddish-brown"
+        ],
+        "color_temperature": "predominantly cool with warm accents",
+        "contrast_level": "moderate to high",
+        "composition_type": "deep perspective, narrative, asymmetrical",
+        "spatial_presence": "immersive, commanding, atmospheric",
+        "artwork_function": "contemplative, narrative, statement piece, mood-setting",
+        "suggested_audience": [
+            "collectors of symbolic art",
+            "surrealism enthusiasts",
+            "narrative art collectors",
+            "discerning interior designers",
+            "collectors seeking impactful statement pieces",
+            "high-end hospitality designers"
+        ],
+        "commercial_positioning": "high-end, unique statement piece for sophisticated collectors and luxury residential/hospitality projects seeking art with profound narrative and atmospheric depth",
+        "one_line_curatorial_read": "A hauntingly beautiful, surreal narrative tapestry that weaves architectural solemnity with a moonlit dreamscape, inviting deep introspection into the human condition and its hidden rituals.",
+        "style_summary": "Figurative Surrealism, Symbolic, Gothic-Romantic, Narrative, Atmospheric",
+        "seasonal_strategy": {
+            "primary_season": "neutral"
+        },
+        "audience_profile": {
+            "primary": "Discerning collectors of fine art, especially those drawn to unique narrative and atmospheric pieces, with an appreciation for dark aesthetics and symbolic depth, likely with residences that can accommodate a strong statement piece."
+        }
+    },
+    "recommended_number_of_contexts": 7,
+    "contextual_proposals": [
+        {
+            "context_name": "Ancient Echoes Gallery",
+            "context_role": "gallery validation, scale reference, premium presentation",
+            "space_type": "high-ceilinged art gallery",
+            "atmosphere": "serene, contemplative, historic gravitas",
+            "materials": [
+                "off-white textured plaster walls",
+                "aged oak or stone floor",
+                "minimal dark metal accents"
+            ],
+            "lighting": "soft, diffused natural light from unseen windows, targeted gallery track lighting",
+            "camera_angle": "frontal view",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "The gallery setting, with its subtle historic undertones, provides an ideal neutral yet resonant backdrop, allowing the artwork's own architectural and narrative elements to echo within a space of artistic contemplation. The figure offers a relatable scale against the monumental quality of the piece.",
+            "commercial_reason": "Positions the artwork within an institutional, museum-like context, validating its artistic merit and high-end collector value. The human figure helps potential buyers visualize the artwork's impressive scale in a sophisticated setting."
+        },
+        {
+            "context_name": "Private Study, Dusk Light",
+            "context_role": "collector positioning, intimate residential placement",
+            "space_type": "refined private study or library corner",
+            "atmosphere": "intimate, intellectual, slightly melancholic",
+            "materials": [
+                "dark wood paneling or shelving",
+                "rich, deep-toned rug",
+                "elegant armchair"
+            ],
+            "lighting": "low, warm ambient light from a table lamp or window at dusk",
+            "camera_angle": "three-quarter left view",
+            "human_presence": "none",
+            "curatorial_reason": "This setting enhances the artwork's introspective and narrative qualities, suggesting a space for deep thought and quiet appreciation, where its surreal elements can truly resonate in a personal context.",
+            "commercial_reason": "Appeals directly to the high-net-worth individual who collects art for personal enjoyment and intellectual engagement, demonstrating how the piece can elevate a private, sophisticated interior."
+        },
+        {
+            "context_name": "Tectonic Stone Hallway",
+            "context_role": "architectural study, premium residential placement",
+            "space_type": "spacious, elegantly minimalist hallway",
+            "atmosphere": "austere, sophisticated, grounding, quiet strength",
+            "materials": [
+                "large format natural stone (honed basalt or dark limestone) walls and floor"
+            ],
+            "lighting": "soft, indirect overhead lighting, subtle natural light from concealed source",
+            "camera_angle": "frontal view",
+            "human_presence": "none",
+            "curatorial_reason": "The raw, elemental quality of the stone backdrop subtly echoes the artwork's own ancient, architectural, and almost geological textures, allowing its symbolic structures to emerge with powerful presence.",
+            "commercial_reason": "Targets architects and interior designers working on high-end contemporary projects, showcasing the artwork's ability to integrate with and enhance minimalist yet rich material palettes."
+        },
+        {
+            "context_name": "Mediterranean Night Balcony View",
+            "context_role": "Pinterest traffic image, aspirational lifestyle placement",
+            "space_type": "luxurious living room with large opening to a dark night view",
+            "atmosphere": "mystical, tranquil, sophisticated, blending interior elegance with exterior nocturnal mystery",
+            "materials": [
+                "light plaster walls",
+                "dark wooden beams (optional)",
+                "simple elegant linen sofa"
+            ],
+            "lighting": "soft internal ambient lighting, contrasting with cool dark exterior light",
+            "camera_angle": "three-quarter right view",
+            "human_presence": "none",
+            "curatorial_reason": "The interplay between the artwork's internal nocturnal scene and the suggested exterior night view creates a compelling visual dialogue, enhancing its mysterious atmosphere and inviting deeper contemplation.",
+            "commercial_reason": "Highly shareable for social media (Pinterest, Instagram), appealing to those seeking sophisticated and evocative interior design inspiration, and showcasing the artwork's capacity to create a unique mood."
+        },
+        {
+            "context_name": "Curator's Loft Dialogue",
+            "context_role": "gallery acquisition, design validation",
+            "space_type": "refined, open-plan loft or studio space",
+            "atmosphere": "contemporary, intellectual, curated, focus on art and design",
+            "materials": [
+                "white or very light grey walls",
+                "polished concrete or light wood floors",
+                "minimalist design furniture"
+            ],
+            "lighting": "abundant, diffused natural light from large windows, balanced with subtle interior task lighting",
+            "camera_angle": "three-quarter left view",
+            "human_presence": "optional standing female figure 1.55m",
+            "curatorial_reason": "The expansive, well-lit studio context emphasizes the artwork's narrative elements and intricate details, allowing for a focused and analytical viewing experience, while the figure provides a relatable scale.",
+            "commercial_reason": "Positions the artwork as a significant piece for a major collection or a prestigious design project. The female figure makes the space aspirational and relatable for a discerning clientele."
+        },
+        {
+            "context_name": "Monolithic Hearth Wall",
+            "context_role": "statement piece, luxury residential placement",
+            "space_type": "grand living area with prominent fireplace",
+            "atmosphere": "grounded, opulent, ancient-modern blend, warm yet commanding",
+            "materials": [
+                "dark, heavily textured stone or concrete fireplace",
+                "rich, deep-toned minimalist sofa fabric"
+            ],
+            "lighting": "soft, indirect light from sconces or recessed lighting, subtle glow of a fireplace",
+            "camera_angle": "frontal view",
+            "human_presence": "none",
+            "curatorial_reason": "The artwork's architectural and primordial elements find a powerful echo in the monolithic presence of a grand fireplace, creating a focal point that speaks to ancient narratives and structural integrity.",
+            "commercial_reason": "Showcases the artwork's potential as a dominant, high-impact statement piece in a luxury living space, appealing to clients looking for art that commands attention and defines a room."
+        },
+        {
+            "context_name": "Refined Dining Tableau",
+            "context_role": "commercial alternative, hospitality design",
+            "space_type": "elegant dining room in a high-end residence or boutique hotel",
+            "atmosphere": "sophisticated, intimate, curated drama",
+            "materials": [
+                "dark wood dining table and chairs (minimalist design)",
+                "linen tablecloth",
+                "deep, muted wall tones (charcoal or muted blue-green)"
+            ],
+            "lighting": "warm, focused lighting on dining area (out of frame), softer ambient light on artwork",
+            "camera_angle": "three-quarter right view",
+            "human_presence": "none",
+            "curatorial_reason": "Placing the artwork in a sophisticated dining setting subtly connects its internal still-life elements (wine, candles) with a modern context of shared experience, adding a layer of contemporary relevance to its timeless mystery.",
+            "commercial_reason": "Broadens the market appeal to high-end hospitality projects (boutique hotels, upscale restaurants) and residential dining areas, demonstrating its ability to create a distinctive, conversation-starting atmosphere."
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1781414618_5777_v1.png"
+}

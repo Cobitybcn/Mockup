@@ -7,7 +7,7 @@ $user = Auth::requireUser();
 
 if (!Auth::isAdmin($user)) {
     http_response_code(403);
-    exit('No tienes acceso a esta seccion.');
+    exit('You do not have access to this section.');
 }
 
 $saved = false;
@@ -28,14 +28,21 @@ function h($v): string
 
 function key_status(string $value): string
 {
-    return trim($value) === '' ? 'Sin configurar' : 'Configurada';
+    return trim($value) === '' ? 'Not Configured' : 'Configured';
 }
+
+$geminiImagePlans = [
+    'gemini-3.1-flash-image' => 'Default / fast and economical - gemini-3.1-flash-image',
+    'gemini-3-pro-image' => 'Premium / maximum quality - gemini-3-pro-image',
+    'gemini-2.5-flash-image' => 'Experimental / more economical - gemini-2.5-flash-image',
+];
+
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Admin API keys</title>
+    <title>API Settings - The Artwork Curator</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .settings-grid {
@@ -46,8 +53,10 @@ function key_status(string $value): string
 
         .settings-card {
             border: 1px solid var(--line);
-            background: #fff;
+            background: var(--surface);
             padding: 22px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
         }
 
         .settings-card h2 {
@@ -57,12 +66,14 @@ function key_status(string $value): string
         .key-state {
             display: inline-block;
             margin-bottom: 10px;
-            padding: 4px 8px;
+            padding: 3px 8px;
             border: 1px solid var(--line-dark);
             color: var(--muted);
-            font-size: 12px;
-            font-weight: 700;
+            font-size: 10px;
+            font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-radius: var(--radius);
         }
 
         .checkbox-line {
@@ -87,30 +98,7 @@ function key_status(string $value): string
 </head>
 <body>
 <div class="app-shell">
-    <aside class="sidebar">
-        <div class="sidebar-head">
-            <a class="brand" href="dashboard.php">ARTMOCK <span class="brand-mark"></span></a>
-        </div>
-
-        <div class="sidebar-action">
-            <a class="button-link" href="artwork_new.php">+ Nueva obra</a>
-        </div>
-
-        <ul class="nav">
-            <li><a href="dashboard.php">Dashboard</a></li>
-            <li><a href="artwork_new.php">Crear obra raiz</a></li>
-            <li><a href="artist_profile.php">Perfil de artista</a></li>
-            <li><a href="admin_prompts.php">Admin prompts</a></li>
-            <li><a class="active" href="admin_api_keys.php">API keys</a></li>
-            <li><a href="account.php">Cuenta y pagos</a></li>
-        </ul>
-
-        <div class="nav-section">Archivo</div>
-        <ul class="nav">
-            <li><a href="mockups.php">Mockups</a></li>
-            <li><a href="logout.php">Salir</a></li>
-        </ul>
-    </aside>
+    <?php include __DIR__ . '/sidebar.php'; ?>
 
     <main class="main-area">
         <header class="app-header">
@@ -118,38 +106,39 @@ function key_status(string $value): string
         </header>
 
         <div class="alert-strip">
-            Configuracion privada de proveedores de IA y credenciales.
+            Private configuration of AI providers and credentials.
         </div>
 
         <div class="workspace">
             <div class="workspace-header">
                 <div>
-                    <h1>API keys</h1>
-                    <p>Administra claves y proveedor sin modificar codigo.</p>
+                    <h1>API Settings</h1>
+                    <p>Manage keys and providers without modifying the source code.</p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link secondary" href="admin_prompts.php">Admin prompts</a>
+                    <a class="button-link secondary" href="admin_prompts.php">System Prompts</a>
                     <a class="button-link secondary" href="dashboard.php">Dashboard</a>
                 </div>
             </div>
 
             <?php if ($saved): ?>
-                <div class="notice">Configuracion guardada.</div>
+                <div class="notice">Configuration saved successfully.</div>
             <?php endif; ?>
 
             <form method="post" class="form" autocomplete="off">
                 <div class="settings-grid">
                     <section class="settings-card">
-                        <h2>Modo de API</h2>
-                        <p>Controla si la app usa respuestas mock o llamadas reales.</p>
+                        <h2>API Mode</h2>
+                        <p>Control if the app uses mock responses or real API calls.</p>
 
-                        <label for="app_mode">Modo de aplicacion</label>
+                        <label for="app_mode">Application Mode</label>
                         <select id="app_mode" name="app_mode">
-                            <option value="mock" <?= ($settings['app_mode'] ?? '') === 'mock' ? 'selected' : '' ?>>Mock</option>
-                            <option value="openai" <?= ($settings['app_mode'] ?? '') === 'openai' ? 'selected' : '' ?>>API real</option>
+                            <option value="mock" <?= ($settings['app_mode'] ?? '') === 'mock' ? 'selected' : '' ?>>Mock Mode (simulated, no API)</option>
+                            <option value="gemini" <?= ($settings['app_mode'] ?? '') === 'gemini' ? 'selected' : '' ?>>Gemini Mode (real Gemini/Vertex AI)</option>
+                            <option value="openai" <?= in_array($settings['app_mode'] ?? '', ['openai'], true) ? 'selected' : '' ?>>OpenAI Mode (real OpenAI)</option>
                         </select>
 
-                        <label for="image_provider">Proveedor de imagenes</label>
+                        <label for="image_provider">Image Provider</label>
                         <select id="image_provider" name="image_provider">
                             <option value="gemini" <?= ($settings['image_provider'] ?? '') === 'gemini' ? 'selected' : '' ?>>Gemini</option>
                             <option value="openai" <?= ($settings['image_provider'] ?? '') === 'openai' ? 'selected' : '' ?>>OpenAI</option>
@@ -157,7 +146,7 @@ function key_status(string $value): string
 
                         <label class="checkbox-line">
                             <input type="checkbox" name="allow_real_api" value="1" <?= !empty($settings['allow_real_api']) ? 'checked' : '' ?>>
-                            Permitir consumo real de API
+                            Allow real API calls
                         </label>
                     </section>
 
@@ -165,23 +154,23 @@ function key_status(string $value): string
                         <h2>OpenAI</h2>
                         <span class="key-state"><?= h(key_status($openAIKey)) ?></span>
 
-                        <label for="openai_api_key">API key</label>
-                        <input id="openai_api_key" name="openai_api_key" type="password" value="" placeholder="Pegar nueva clave para reemplazar">
+                        <label for="openai_api_key">API Key</label>
+                        <input id="openai_api_key" name="openai_api_key" type="password" value="" placeholder="Paste new key to replace">
                         <label class="checkbox-line">
                             <input type="checkbox" name="clear_openai_api_key" value="1">
-                            Borrar clave guardada
+                            Clear saved API key
                         </label>
 
-                        <label for="openai_image_model">Modelo de imagen</label>
+                        <label for="openai_image_model">Image Model</label>
                         <input id="openai_image_model" name="openai_image_model" type="text" value="<?= h($settings['openai_image_model'] ?? 'gpt-image-1') ?>">
 
-                        <label for="openai_analysis_model">Modelo de analisis</label>
+                        <label for="openai_analysis_model">Analysis Model</label>
                         <input id="openai_analysis_model" name="openai_analysis_model" type="text" value="<?= h($settings['openai_analysis_model'] ?? 'gpt-4.1-mini') ?>">
 
-                        <label for="openai_image_quality">Calidad de imagen</label>
+                        <label for="openai_image_quality">Image Quality</label>
                         <input id="openai_image_quality" name="openai_image_quality" type="text" value="<?= h($settings['openai_image_quality'] ?? 'low') ?>">
 
-                        <label for="openai_image_size">Tamano de imagen</label>
+                        <label for="openai_image_size">Image Size</label>
                         <input id="openai_image_size" name="openai_image_size" type="text" value="<?= h($settings['openai_image_size'] ?? '1024x1024') ?>">
                     </section>
 
@@ -189,20 +178,69 @@ function key_status(string $value): string
                         <h2>Gemini</h2>
                         <span class="key-state"><?= h(key_status($geminiKey)) ?></span>
 
-                        <label for="gemini_api_key">API key</label>
-                        <input id="gemini_api_key" name="gemini_api_key" type="password" value="" placeholder="Pegar nueva clave para reemplazar">
+                        <label for="gemini_api_key">API Key</label>
+                        <input id="gemini_api_key" name="gemini_api_key" type="password" value="" placeholder="Paste new key to replace">
                         <label class="checkbox-line">
                             <input type="checkbox" name="clear_gemini_api_key" value="1">
-                            Borrar clave guardada
+                            Clear saved API key
                         </label>
 
-                        <label for="gemini_image_model">Modelo de imagen</label>
-                        <input id="gemini_image_model" name="gemini_image_model" type="text" value="<?= h($settings['gemini_image_model'] ?? 'gemini-2.5-flash-image') ?>">
+                        <label for="gemini_image_model">Gemini Image Plan</label>
+                        <select id="gemini_image_model" name="gemini_image_model">
+                            <?php foreach ($geminiImagePlans as $model => $label): ?>
+                                <option value="<?= h($model) ?>" <?= ($settings['gemini_image_model'] ?? 'gemini-3.1-flash-image') === $model ? 'selected' : '' ?>>
+                                    <?= h($label) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="checkbox-line" style="margin-top: 14px;">
+                            Default uses Gemini 3.1 Flash Image. Premium uses Gemini 3 Pro Image. Experimental uses Gemini 2.5 Flash Image if available in Vertex.
+                        </p>
+
                     </section>
                 </div>
 
-                <button type="submit">Guardar configuracion</button>
+                <button type="submit">Save API Settings</button>
             </form>
+
+            <!-- Punto #5: sección de mantenimiento -->
+            <section class="panel" style="margin-top: 28px;">
+                <h2>Maintenance</h2>
+                <p style="color: var(--muted); margin-bottom: 16px;">
+                    Automatic cleanup of completed job directories older than 30 days.
+                    Active jobs (queued or processing) are never deleted.
+                </p>
+                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    <button id="cleanup-btn" type="button" class="button-link secondary">Clean Old Jobs (&gt;30 days)</button>
+                    <span id="cleanup-result" style="font-size: 13px; color: var(--muted);"></span>
+                </div>
+                <script>
+                    document.getElementById('cleanup-btn').addEventListener('click', function() {
+                        const btn = this;
+                        const result = document.getElementById('cleanup-result');
+                        btn.disabled = true;
+                        btn.textContent = 'Cleaning...';
+                        result.textContent = '';
+
+                        fetch('cleanup_jobs.php', {
+                            method: 'POST',
+                            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: 'ajax=1&max_age_days=30'
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            result.textContent = data.summary || (data.error || 'Done.');
+                            btn.disabled = false;
+                            btn.textContent = 'Clean Old Jobs (>30 days)';
+                        })
+                        .catch(() => {
+                            result.textContent = 'Error during cleanup.';
+                            btn.disabled = false;
+                            btn.textContent = 'Clean Old Jobs (>30 days)';
+                        });
+                    });
+                </script>
+            </section>
         </div>
     </main>
 </div>

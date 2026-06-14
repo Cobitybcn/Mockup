@@ -40,7 +40,14 @@ header('Cache-Control: private, max-age=3600');
 
 if ($download) {
     $downloadName = $file;
-    if (str_starts_with($file, 'mockup_')) {
+    if (isset($_GET['name']) && trim((string)$_GET['name']) !== '') {
+        $downloadName = trim((string)$_GET['name']);
+        $originalExt = pathinfo($file, PATHINFO_EXTENSION);
+        $reqExt = pathinfo($downloadName, PATHINFO_EXTENSION);
+        if (strtolower($originalExt) !== strtolower($reqExt)) {
+            $downloadName .= '.' . $originalExt;
+        }
+    } elseif (str_starts_with($file, 'mockup_')) {
         try {
             $pdo = Database::connection();
             $stmt = $pdo->prepare('SELECT artwork_file, context_id FROM mockups WHERE mockup_file = :file LIMIT 1');
@@ -71,6 +78,18 @@ exit;
 function user_can_access_result_file(int $userId, string $file): bool
 {
     $pdo = Database::connection();
+
+    if (preg_match('/_(job_\d+_\d+)_v\d+\./', $file, $matches)) {
+        $jobId = $matches[1];
+        $stmt = $pdo->prepare('SELECT 1 FROM artworks WHERE user_id = :user_id AND job_id = :job_id LIMIT 1');
+        $stmt->execute([
+            'user_id' => $userId,
+            'job_id' => $jobId
+        ]);
+        if ($stmt->fetchColumn()) {
+            return true;
+        }
+    }
 
     $stmt = $pdo->prepare('SELECT 1 FROM artworks WHERE user_id = :user_id AND root_file = :file LIMIT 1');
     $stmt->execute([

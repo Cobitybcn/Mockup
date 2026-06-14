@@ -17,8 +17,9 @@ class ServiceFactory
 
     private static function assertOpenAIMode(): void
     {
-        if (self::appMode() !== 'openai') {
-            throw new RuntimeException('APP_MODE no esta configurado como openai.');
+        // Punto #1: acepta 'openai' (modo explícito OpenAI)
+        if (!ProviderSettings::isRealMode()) {
+            throw new RuntimeException("APP_MODE debe ser 'gemini' u 'openai' para usar APIs reales.");
         }
 
         if (!ProviderSettings::allowRealApi()) {
@@ -37,20 +38,21 @@ class ServiceFactory
 
     private static function assertGeminiProvider(): void
     {
-        if (self::appMode() !== 'openai') {
-            throw new RuntimeException('APP_MODE debe ser openai para usar Gemini.');
+        // Punto #1: acepta tanto 'gemini' (nuevo) como 'openai' (alias legacy) como modo real
+        if (!ProviderSettings::isRealMode()) {
+            throw new RuntimeException("APP_MODE debe ser 'gemini' u 'openai' para usar Gemini/Vertex AI.");
         }
 
         if (!ProviderSettings::allowRealApi()) {
             throw new RuntimeException('ALLOW_REAL_API debe ser true para consumir API real.');
         }
-        
+
         // Se omite la validación de GEMINI_API_KEY ya que se utiliza Vertex AI + ADC Local.
     }
 
     public static function artworkProcessor(): ArtworkProcessorInterface
     {
-        if (self::appMode() === 'openai') {
+        if (ProviderSettings::isRealMode()) {
             if (self::imageProvider() === 'gemini') {
                 self::assertGeminiProvider();
                 return new GeminiArtworkProcessor();
@@ -66,7 +68,7 @@ class ServiceFactory
 
     public static function artworkAnalyzer(): ArtworkAnalyzerInterface
     {
-        if (self::appMode() === 'openai') {
+        if (ProviderSettings::isRealMode()) {
             if (self::imageProvider() === 'gemini') {
                 self::assertGeminiProvider();
                 return new GeminiArtworkAnalyzer(new MockContextSelector(new MockPromptBuilder()));
@@ -83,7 +85,7 @@ class ServiceFactory
 
     public static function mockupGenerator(): MockupGeneratorInterface
     {
-        if (self::appMode() === 'openai') {
+        if (ProviderSettings::isRealMode()) {
             if (self::imageProvider() === 'gemini') {
                 self::assertGeminiProvider();
                 return new GeminiMockupGenerator();

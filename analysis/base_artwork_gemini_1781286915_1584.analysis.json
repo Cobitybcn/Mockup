@@ -1,0 +1,175 @@
+{
+    "artwork_analysis": {
+        "visual_language": [
+            "abstract",
+            "textured",
+            "layered",
+            "spiral",
+            "organic",
+            "structural",
+            "elemental",
+            "gestural"
+        ],
+        "emotional_energy": [
+            "tense",
+            "contemplative",
+            "primordial",
+            "energetic",
+            "grounded",
+            "introspective",
+            "dynamic"
+        ],
+        "dominant_colors": [
+            "teal/cyan",
+            "earthy red/orange",
+            "dark brown"
+        ],
+        "secondary_colors": [
+            "ochre",
+            "black"
+        ],
+        "color_temperature": "tense (warm vs. cool contrast), predominantly earthy warm with a strong cool anchor",
+        "contrast_level": "high (color, texture)",
+        "composition_type": "centered, radial, dynamic spiral",
+        "spatial_presence": "monumental, deep texture creates implied depth",
+        "artwork_function": "focal point, contemplative anchor, statement piece",
+        "suggested_audience": [
+            "coleccionistas de arte contemporáneo",
+            "galerías",
+            "arquitectos",
+            "interioristas",
+            "decoradores de alto nivel",
+            "curadores",
+            "compradores internacionales",
+            "personas interesadas en obras abstractas, minimalistas, simbólicas, silenciosas y de gran presencia espacial"
+        ],
+        "commercial_positioning": "arte contemporáneo premium orientado a coleccionistas, galerías, interioristas de alto nivel, arquitectos y compradores internacionales. Obra abstracta, estructural y simbólica, con presencia institucional, carácter contemplativo y potencial para espacios sofisticados, colecciones privadas y proyectos curatoriales.",
+        "one_line_curatorial_read": "A primal vortex of earth and water, mapping the tension between material structure and inner consciousness.",
+        "style_summary": "Abstract, textured, structural, symbolic, dynamic and contemplative.",
+        "seasonal_strategy": {
+            "primary_season": "neutral"
+        },
+        "audience_profile": {
+            "primary": "high-net-worth collectors, architects, interior designers"
+        }
+    },
+    "recommended_number_of_contexts": 7,
+    "contextual_proposals": [
+        {
+            "context_name": "Curatorial Gallery Ascent",
+            "context_role": "primary presentation, institutional scale",
+            "space_type": "contemporary art gallery",
+            "atmosphere": "pristine, focused, academic",
+            "materials": [
+                "white walls",
+                "polished concrete floor",
+                "minimal baseboard"
+            ],
+            "lighting": "overhead diffused gallery lighting",
+            "camera_angle": "straight-on, eye-level",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "This context emphasizes the artwork's formal qualities, scale, and allows for pure aesthetic contemplation, typical for institutional settings, aligning with the artist's 'silencio y presencia'.",
+            "commercial_reason": "Positions the artwork for serious collectors and public institutions, showcasing its gravitas and suitability for high-end gallery representation."
+        },
+        {
+            "context_name": "Elemental Dwelling Vortex",
+            "context_role": "collector positioning, architectural integration",
+            "space_type": "minimalist residence with raw materials",
+            "atmosphere": "stark, grand, contemplative, grounded",
+            "materials": [
+                "exposed concrete walls",
+                "dark stone flooring",
+                "rough-hewn wooden bench"
+            ],
+            "lighting": "dramatic single spotlight on artwork, deep shadows in room",
+            "camera_angle": "wide shot, slight low angle",
+            "human_presence": "none",
+            "curatorial_reason": "Connects to the artist's themes of 'structure emerging from earth,' 'tectonic strata,' and 'monoliths' by placing the work in a space of foundational, elemental materials.",
+            "commercial_reason": "Appeals to architects and high-end interior designers for projects seeking a powerful, integrated art piece in brutalist or wabi-sabi luxury interiors."
+        },
+        {
+            "context_name": "Mediterranean Earth Hearth",
+            "context_role": "commercial alternative, emotional connection",
+            "space_type": "rustic chic Mediterranean villa living room",
+            "atmosphere": "warm, inviting, grounded, sun-drenched",
+            "materials": [
+                "terracotta floor",
+                "thick textured plaster walls (creamy/earth tones)",
+                "natural linen sofa"
+            ],
+            "lighting": "soft, warm natural light from a large window/archway",
+            "camera_angle": "comfortable eye-level, showing part of the living area",
+            "human_presence": "none",
+            "curatorial_reason": "Highlights the earthy reds and textural qualities of the artwork, providing a counterpoint to cooler minimalist settings, and directly linking to the artist's preferred 'espacios mediterráneos'.",
+            "commercial_reason": "Broadens appeal to interior decorators focusing on sophisticated, warm, and natural living spaces, especially in southern Europe or US coastal regions."
+        },
+        {
+            "context_name": "Collector's Den Convergence",
+            "context_role": "intimate collector's view, scale reference",
+            "space_type": "private study or library in a luxury townhouse",
+            "atmosphere": "sophisticated, intimate, art-centric, evening feel",
+            "materials": [
+                "dark wood paneling",
+                "leather armchair",
+                "brass details",
+                "Persian rug"
+            ],
+            "lighting": "soft, warm table lamp, targeted art light on the painting",
+            "camera_angle": "close-up, framed by furniture",
+            "human_presence": "optional standing female figure 1.55m",
+            "curatorial_reason": "Illustrates how the artwork can anchor a rich, personal space, fostering contemplation in a private setting, aligning with the artist's vision of 'territorio de observación'.",
+            "commercial_reason": "Direct appeal to private collectors seeking a signature piece for a personal, curated collection, emphasizing its role in a high-end, lived-in environment."
+        },
+        {
+            "context_name": "Urban Stratum Workshop",
+            "context_role": "design-forward context, studio integration",
+            "space_type": "artist's or designer's loft studio",
+            "atmosphere": "raw, creative, industrial-refined, daylight",
+            "materials": [
+                "unfinished concrete wall",
+                "large industrial windows with black frames",
+                "concrete floor",
+                "simple metal desk"
+            ],
+            "lighting": "bright, diffused natural light from large windows",
+            "camera_angle": "wide view, showcasing the urban architectural context",
+            "human_presence": "none",
+            "curatorial_reason": "Connects to the artist's process of 'construcción y reducción' and the structural elements, situating the work in a dynamic, contemporary creative environment that appreciates materiality.",
+            "commercial_reason": "Appeals to a younger, design-conscious demographic of collectors and designers, showing the artwork's versatility beyond traditional luxury settings."
+        },
+        {
+            "context_name": "Zenith Serenity Gateway",
+            "context_role": "contemplative positioning, minimalist integration",
+            "space_type": "contemporary home with strong Zen influence",
+            "atmosphere": "serene, meditative, pure, spacious",
+            "materials": [
+                "light wood (maple/ash) floor",
+                "smooth white walls",
+                "minimalist low bench",
+                "single natural element (e.g., stone or small plant)"
+            ],
+            "lighting": "very soft, uniform natural light from a hidden source or large window with sheer curtains",
+            "camera_angle": "symmetric, calm, emphasizing emptiness around the work",
+            "human_presence": "none",
+            "curatorial_reason": "Emphasizes the 'silence' and 'contemplación' aspects of the artist's statement, offering a space for profound reflection where the artwork serves as a central meditative element.",
+            "commercial_reason": "Targets buyers looking for art to enhance spaces of tranquility and well-being, often associated with high-end wellness or retreat-style homes."
+        },
+        {
+            "context_name": "Boutique Lounge Horizon",
+            "context_role": "hospitality context, public presentation",
+            "space_type": "sophisticated hotel lobby or boutique lounge area",
+            "atmosphere": "elegant, welcoming, design-conscious, ambient",
+            "materials": [
+                "dark textured wall covering (e.g., subtle fabric or grasscloth)",
+                "plush seating in deep tones (e.g., charcoal, deep teal)",
+                "sculptural side table"
+            ],
+            "lighting": "soft, warm ambient lighting with targeted, subtle uplight/downlight on the artwork",
+            "camera_angle": "comfortable, slightly wide, integrating artwork into a seating arrangement",
+            "human_presence": "none",
+            "curatorial_reason": "Showcases the artwork's ability to elevate a public yet curated space, providing an aesthetic focal point for discerning guests and aligning with 'hoteles boutique' preference.",
+            "commercial_reason": "Excellent for hotel groups, high-end commercial design projects, and interior designers working on upscale hospitality venues, demonstrating the artwork's decorative and investment value."
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_1781286915_1584.png"
+}

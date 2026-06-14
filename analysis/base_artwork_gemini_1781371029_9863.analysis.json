@@ -1,0 +1,172 @@
+{
+    "artwork_analysis": {
+        "visual_language": [
+            "abstract",
+            "contemporary",
+            "structural",
+            "symbolic",
+            "metaphysical",
+            "geometric",
+            "minimal",
+            "primal"
+        ],
+        "emotional_energy": [
+            "introspection",
+            "primordial tension",
+            "silent power",
+            "geological time",
+            "emergence",
+            "mystery",
+            "existential presence",
+            "contained energy",
+            "contemplative"
+        ],
+        "dominant_colors": [
+            "deep black",
+            "dark teal",
+            "deep blue"
+        ],
+        "secondary_colors": [
+            "fiery red",
+            "orange",
+            "white (incisions/highlights)"
+        ],
+        "color_temperature": "predominantly cool with intense warm accents",
+        "contrast_level": "high",
+        "composition_type": "centralized with horizontal elements, emergent forms",
+        "spatial_presence": "deep, expansive, immersive, weighty",
+        "artwork_function": "contemplative anchor, focal point, intellectual stimulus, mood setter",
+        "suggested_audience": [
+            "collectors of abstract art",
+            "patrons of contemporary art",
+            "architects",
+            "high-end interior designers",
+            "individuals seeking philosophical depth in art"
+        ],
+        "commercial_positioning": "premium contemporary art for exclusive private and institutional collections, luxury residential and boutique hospitality projects",
+        "one_line_curatorial_read": "A powerful abstract evocation of primal structures emerging from a silent, deep, and temporally vast landscape, compelling quiet contemplation.",
+        "style_summary": "Abstract, dark-toned, structural, symbolic, contemplative.",
+        "seasonal_strategy": {
+            "primary_season": "neutral"
+        },
+        "audience_profile": {
+            "primary": "High-net-worth art collectors and design professionals"
+        }
+    },
+    "recommended_number_of_contexts": 7,
+    "contextual_proposals": [
+        {
+            "context_name": "Silent Mineral Alcove",
+            "context_role": "primary presentation",
+            "space_type": "minimal architectural gallery space",
+            "atmosphere": "silent, contemplative, austere, spacious",
+            "materials": [
+                "polished concrete",
+                "white plaster",
+                "natural stone"
+            ],
+            "lighting": "soft, diffused overhead and a subtle art light highlighting texture",
+            "camera_angle": "straight on, slightly wide",
+            "human_presence": "none",
+            "curatorial_reason": "The artwork's deep, structural contemplation is best introduced in a context that mirrors its austerity and focus, allowing its inherent 'silence' and 'presence' to dominate. The mineral materials resonate with themes of 'strata' and 'monoliths'.",
+            "commercial_reason": "This clean, gallery-like setting immediately positions the artwork as museum-quality, appealing to curators and high-end collectors who value art as a primary design element."
+        },
+        {
+            "context_name": "Collector's Nocturnal Study",
+            "context_role": "collector positioning",
+            "space_type": "private study or lounge in a luxury residence",
+            "atmosphere": "intimate, sophisticated, reflective, serene evening",
+            "materials": [
+                "dark wood paneling",
+                "leather armchair",
+                "muted velvet rug"
+            ],
+            "lighting": "warm, localized task lighting from a floor lamp, subtle natural light fading from a window",
+            "camera_angle": "medium shot, slightly from an angle, showing a glimpse of the room's depth",
+            "human_presence": "none",
+            "curatorial_reason": "The artwork's 'nocturnal character' and 'contemplative' nature find a perfect home in a sophisticated study, inviting prolonged engagement. The dark palette of the room harmonizes with the artwork's depth, allowing its internal light to glow.",
+            "commercial_reason": "Showcases the artwork's integration into an exclusive private collection, appealing to collectors who seek pieces that elevate their personal and intellectual spaces."
+        },
+        {
+            "context_name": "Urban Architectural Canvas",
+            "context_role": "architectural study",
+            "space_type": "converted industrial loft or architectural studio",
+            "atmosphere": "raw, expansive, modern, industrial-chic",
+            "materials": [
+                "exposed concrete walls",
+                "steel beams",
+                "large windows"
+            ],
+            "lighting": "bright, natural daylight from large windows, with subtle shadows",
+            "camera_angle": "wide shot, showcasing the high ceilings and open space",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "The artist's focus on 'structure,' 'territory,' and 'emergence' is powerfully amplified within an architectural context. The raw, unadorned space acts as a grand canvas, emphasizing the artwork's monumentality despite its physical size.",
+            "commercial_reason": "Appeals directly to architects and interior designers working on contemporary, large-scale residential or boutique commercial projects, highlighting the artwork's ability to define and anchor a modern space. The human figure provides scale."
+        },
+        {
+            "context_name": "Mediterranean Earthen Wall",
+            "context_role": "alternative residential placement",
+            "space_type": "minimalist Mediterranean-inspired home, living area",
+            "atmosphere": "warm, earthy, serene, natural light",
+            "materials": [
+                "textured clay plaster wall (terracotta/ochre tones)",
+                "linen textiles",
+                "simple wooden bench"
+            ],
+            "lighting": "soft, warm morning light entering from a side window",
+            "camera_angle": "eye-level, slightly off-center",
+            "human_presence": "none",
+            "curatorial_reason": "Echoes the 'territorio' and 'estratos tectónicos' themes mentioned by the artist. The earthy tones and textured wall provide a primal, grounded backdrop that contrasts and complements the artwork's deep, fiery core.",
+            "commercial_reason": "Expands market appeal to luxury Mediterranean design, appealing to interior designers and homeowners who appreciate sophisticated, natural materials and a contemplative atmosphere, aligning with the artist's 'preferred regions'."
+        },
+        {
+            "context_name": "Contemplative Gallery Walk",
+            "context_role": "scale reference / public context",
+            "space_type": "contemporary art gallery corridor or viewing area",
+            "atmosphere": "quiet, focused, institutional yet inviting",
+            "materials": [
+                "neutral grey wall",
+                "light wood floor",
+                "minimalist plinth"
+            ],
+            "lighting": "balanced gallery lighting, a mix of general ambient and focused spot lighting",
+            "camera_angle": "medium shot, showing artwork and a path forward",
+            "human_presence": "optional standing female figure 1.55m",
+            "curatorial_reason": "Positions the artwork within a formal exhibition space, emphasizing its institutional quality and inviting quiet contemplation. The figure provides a sense of human scale and interaction with the piece.",
+            "commercial_reason": "Reinforces the artwork's value and suitability for prestigious galleries and private collections, providing clear scale reference for potential buyers and curators."
+        },
+        {
+            "context_name": "Spacious Modern Salon",
+            "context_role": "high-end residential integration",
+            "space_type": "large, open-plan living room in a luxury townhouse",
+            "atmosphere": "airy, refined, harmonious, sophisticated daylight",
+            "materials": [
+                "light oak flooring",
+                "off-white walls",
+                "designer furniture in neutral tones"
+            ],
+            "lighting": "abundant natural light from large windows, supplemented by subtle recessed lighting",
+            "camera_angle": "wide shot, showcasing the artwork as a central feature within a curated living space",
+            "human_presence": "none",
+            "curatorial_reason": "Demonstrates the artwork's commanding presence within a grand domestic setting, showing how it can anchor a vast space while maintaining its contemplative energy. The minimal surroundings allow the artwork's colors and forms to resonate fully.",
+            "commercial_reason": "Targets high-level interior decorators and luxury residential clients seeking a statement piece that complements a modern, spacious interior without competing for attention, aligning with the 'townhouses' and 'residences de lujo' preference."
+        },
+        {
+            "context_name": "Zen Architectural Niche",
+            "context_role": "curatorial focus",
+            "space_type": "meditation space or architectural niche in a modern home",
+            "atmosphere": "calm, serene, focused, minimalist, tranquil",
+            "materials": [
+                "smooth concrete wall",
+                "subtle textured grey floor",
+                "minimalist integrated shelving"
+            ],
+            "lighting": "single focused soft light source from above, creating subtle shadows",
+            "camera_angle": "close-up to medium shot, emphasizing the artwork's detail within the niche",
+            "human_presence": "none",
+            "curatorial_reason": "The artwork's 'silencio' and 'contemplación' are elevated in a dedicated niche, akin to a modern shrine. This intimate context allows the viewer to connect deeply with the 'estructura interior' and 'vacío' of the piece, amplifying its metaphysical quality.",
+            "commercial_reason": "Positions the artwork for buyers seeking a piece that offers spiritual or meditative resonance, fitting perfectly into spaces designed for quiet reflection, which aligns with the artist's deeper philosophical intentions."
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_1781371029_9863.png"
+}

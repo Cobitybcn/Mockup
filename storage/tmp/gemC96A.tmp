@@ -1,0 +1,94 @@
+Analyze this artwork and propose dynamic contextual mockup recommendations following the principle "The artwork determines the space, not the space the artwork".
+Return only a valid JSON object. Do not include markdown formatting or comments.
+
+ARTIST PROFILE CONTEXT:
+Artist name: Maurizio Valch
+Short bio: Maurizio Valch es artista visual y escritor. Su obra explora la relación entre paisaje, conciencia y estructura interior a través de composiciones abstractas, simbólicas y contemplativas. Trabaja con planos de color, incisiones, monolitos, escaleras y territorios silenciosos donde la pintura funciona como una cartografía perceptiva y emocional.
+Statement: Mi obra busca tensar la relación entre territorio, conciencia y silencio. No represento paisajes en sentido tradicional, sino espacios donde la estructura parece emerger de la tierra como una forma primigenia de pensamiento.
+
+Trabajo con planos amplios, divisiones sutiles, monolitos, escaleras e incisiones que actúan como signos de tránsito, aparición y presencia. Me interesa el momento en que algo comienza a organizarse: una forma, una cultura, una mirada, una conciencia.
+
+La pintura se convierte así en un territorio de observación. No intenta explicar, sino abrir un espacio donde el espectador pueda detenerse, mirar y percibir con mayor claridad.
+Visual language: Abstracto, contemporáneo, estructural, simbólico y metafísico. Mi lenguaje visual se construye a partir de campos de color, horizontes, bloques geométricos, monolitos, escaleras, incisiones, segmentos y relaciones espaciales. Busco una tensión entre silencio, presencia, profundidad y orden interno.
+Materials and process: Trabajo principalmente con acrílico sobre lienzo. Utilizo espátula, pincel, capas de color, veladuras, raspados e incisiones sobre la superficie. El proceso combina construcción y reducción: agrego materia, organizo planos, elimino ruido visual y dejo que la obra encuentre una estructura esencial.
+Recurring themes: Territorio, silencio, austeridad, monolitos, escaleras, estratos tectónicos, tiempo geológico, génesis, tránsito, estructura, vacío, presencia, relación entre el individuo y la tierra.
+Palette notes: Azules profundos, cian, rojos contenidos, amarillos, anaranjados, ocres, verdes oscuros y negros. La temperatura emocional oscila entre la contemplación, la austeridad, la tensión silenciosa y una calma estructural de carácter nocturno o territorial.
+Target audience: Coleccionistas de arte contemporáneo, galerías, arquitectos, interioristas, decoradores de alto nivel, curadores, compradores internacionales y personas interesadas en obras abstractas, minimalistas, simbólicas, silenciosas y de gran presencia espacial.
+Preferred regions: Europa, Estados Unidos, Reino Unido, Francia, Alemania, Suiza, Bélgica, Países Bajos, Italia, España, Miami, New York, Londres, París y mercados internacionales vinculados al coleccionismo contemporáneo.
+Preferred contexts: Galerías de arte contemporáneo, museos, colecciones privadas, townhouses, residencias de lujo, interiores minimalistas, estudios de arquitectura, hoteles boutique, espacios mediterráneos, casas con diseño sobrio, salones amplios y ambientes donde la obra pueda respirar con silencio y presencia.
+Forbidden contexts: Cocinas, dormitorios comunes, espacios genéricos, decoración banal, lujo ostentoso, ambientes fríos sin carácter, brutalismo excesivamente duro, oficinas corporativas impersonales, interiores recargados, fondos que compitan con la obra o contextos que reduzcan la pintura a simple decoración.
+Commercial positioning: Arte contemporáneo premium orientado a coleccionistas, galerías, interioristas de alto nivel, arquitectos y compradores internacionales. Obra abstracta, estructural y simbólica, con presencia institucional, carácter contemplativo y potencial para espacios sofisticados, colecciones privadas y proyectos curatoriales.
+
+ARTWORK DETAILS:
+- Title: Sin título
+- Physical dimensions: 160 cm wide x 120 cm high
+- Artist notes: 
+- User preferred style: 
+- Target market: Coleccionistas de arte contemporáneo, galerías, arquitectos, interioristas, decoradores de alto nivel, curadores, compradores internacionales y personas interesadas en obras abstractas, minimalistas, simbólicas, silenciosas y de gran presencia espacial.
+- Image orientation: horizontal
+
+INSTRUCTIONS FOR THE ANALYSIS AND SELECTION OF CONTEXTS:
+
+1. Analyze the artwork across these dimensions:
+   - dominant style: abstract, surreal, Mediterranean, minimal, architectural, organic, geometric, expressive, etc.
+   - emotional and psychological associations of colors, dominant color palette and temperature.
+   - commercial fit and suggested audience.
+
+2. Determine the recommended number of contexts (from 5 to 10):
+   - Clear and potent visual identity: 5 highly precise contexts.
+   - Rich colors, symbolic ambiguity, wide commercial fit: ~7 contexts.
+   - Monumental, versatile artwork with high market appeal: up to 10 contexts.
+
+3. Propose different contextual spaces for mockups. 
+   **CRITICAL RULE: Each proposal must be completely unique and not a slight variation of the same room.**
+   Each proposal should differ significantly in at least one key element: space type (e.g. minimalist studio, London townhouse, Mediterranean countryside house), atmosphere, lighting (e.g. morning light, nocturnal art lamp), materials (stone, plaster, dark wood), camera angle, human presence.
+   
+4. The names of the contexts must be dynamically generated by you to suit the artwork's identity. 
+   Avoid rigid placeholders like "Main Sales Mockup" or "Human Scale Mockup".
+   Use evocative, curatorial names like: "Silent Mineral Interior", "Collector's Evening Room", "Warm Mediterranean Threshold", "Brutalist Stone Context", "Linen and Morning Light Interior".
+
+5. Define roles for each context (e.g. "primary presentation", "collector positioning", "scale reference", "architectural study", "commercial alternative").
+
+6. For human presence, suggest either "none", "optional standing male figure 1.80m", or "optional standing female figure 1.55m". At least 2 proposals in the list should include a human figure for scale reference.
+
+7. Write curatorial and commercial justifications explaining why the proposed space enhances the specific energy of this artwork.
+
+Return exactly this JSON schema:
+{
+  "artwork_analysis": {
+    "visual_language": [],
+    "emotional_energy": [],
+    "dominant_colors": [],
+    "secondary_colors": [],
+    "color_temperature": "",
+    "contrast_level": "",
+    "composition_type": "",
+    "spatial_presence": "",
+    "artwork_function": "",
+    "suggested_audience": [],
+    "commercial_positioning": "",
+    "one_line_curatorial_read": "",
+    "style_summary": "",
+    "seasonal_strategy": {
+      "primary_season": "neutral"
+    },
+    "audience_profile": {
+      "primary": ""
+    }
+  },
+  "recommended_number_of_contexts": 7,
+  "contextual_proposals": [
+    {
+      "context_name": "Silent Mineral Interior",
+      "context_role": "primary presentation",
+      "space_type": "minimal architectural interior",
+      "atmosphere": "silent, contemplative, mineral, spacious",
+      "materials": ["stone", "lime plaster", "neutral textile"],
+      "lighting": "soft lateral afternoon light",
+      "camera_angle": "three-quarter view",
+      "human_presence": "none",
+      "curatorial_reason": "The artwork has a silent architectural presence and needs a clean mineral space that reinforces its contemplative tension.",
+      "commercial_reason": "This context positions the artwork for collectors, architects and interior designers looking for a strong but sober contemporary piece."
+    }
+  ]
+}

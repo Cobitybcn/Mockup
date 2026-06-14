@@ -1,5 +1,12 @@
 import os
 import sys
+
+# Set fallback Google Application Default Credentials when running under Apache / SYSTEM
+if 'GOOGLE_APPLICATION_CREDENTIALS' not in os.environ:
+    fallback_adc = r"C:\laragon\www\mockups\storage\credentials.json"
+    if os.path.exists(fallback_adc):
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = fallback_adc
+
 import argparse
 import time
 import random
@@ -9,11 +16,15 @@ from google.genai.errors import ClientError
 from PIL import Image
 
 def get_client():
+    import httpx
+    # Punto #4: project ID desde variable de entorno, fallback al valor original
+    project_id = os.environ.get('VERTEX_PROJECT_ID', 'project-3c7fb926-f021-47c6-9cc')
     # Initialize the client with Vertex AI, location global, and the specific project
     return genai.Client(
         vertexai=True,
-        project="project-3c7fb926-f021-47c6-9cc",
-        location="global"
+        project=project_id,
+        location="global",
+        http_options={'httpx_client': httpx.Client(timeout=600.0)}
     )
 
 def call_with_retry(client_call_fn, max_retries=5):
@@ -40,6 +51,26 @@ def call_with_retry(client_call_fn, max_retries=5):
             raise e
     if last_error:
         raise last_error
+
+def is_rate_limit_error(error):
+    if isinstance(error, ClientError):
+        if hasattr(error, 'status_code') and error.status_code == 429:
+            return True
+        return "429" in str(error) or "exhausted" in str(error).lower()
+    return "429" in str(error) or "exhausted" in str(error).lower()
+
+def image_model_fallback_chain(selected_model, model_map):
+    fallback_order = [
+        "gemini-3.1-flash-image",
+        "gemini-2.5-flash-image",
+    ]
+    chain = [selected_model] if selected_model in model_map else ["gemini-3.1-flash-image"]
+
+    for model in fallback_order:
+        if model not in chain:
+            chain.append(model)
+
+    return chain
 
 def handle_generate_text(args):
     client = get_client()
@@ -124,60 +155,11 @@ def handle_generate_image(args):
     model_lower = model_name.lower()
     is_gemini_image = "gemini" in model_lower and "image" in model_lower
     
-    if is_gemini_image:
-        # Map friendly name to the correct Vertex AI model path
-        if "gemini-3-pro-image" in model_lower:
-            resolved_model = "publishers/google/models/gemini-3-pro-image"
-        else:
-            resolved_model = "publishers/google/models/gemini-3.1-flash-image" # Default/fallback to 3.1 flash
-            
-        contents = [args.prompt]
-        if args.image:
-            for img_path in args.image:
-                if not os.path.isfile(img_path):
-                    raise FileNotFoundError(f"Image not found at: {img_path}")
-                img = Image.open(img_path)
-                # Downscale to max 1024 for Gemini multimodal image generation models
-                max_dim = 1024
-                w, h = img.size
-                if w > max_dim or h > max_dim:
-                    ratio = min(max_dim / w, max_dim / h)
-                    img = img.resize((int(w * ratio), int(h * ratio)), Image.Resampling.LANCZOS)
-                # Convert RGBA/other modes to RGB to avoid API errors
-                if img.mode != "RGB":
-                    img = img.convert("RGB")
-                contents.append(img)
-                
-        response = call_with_retry(
-            lambda: client.models.generate_content(
-                model=resolved_model,
-                contents=contents
-            )
-        )
-        
-        if not response.candidates:
-            raise RuntimeError("No candidates in Gemini response.")
-            
-        img_found = False
-        for part in response.candidates[0].content.parts:
-            if part.inline_data:
-                img = part.as_image()
-                # Create parent directories if they don't exist
-                out_dir = os.path.dirname(args.output)
-                if out_dir and not os.path.exists(out_dir):
-                    os.makedirs(out_dir, exist_ok=True)
-                img.save(args.output)
-                print(f"SUCCESS: Image saved to {args.output}")
-                img_found = True
-                break
-                
-        if not img_found:
-            raise RuntimeError("No image was returned in the Gemini response parts.")
-            
-        return
-        
+    pil_img = None
+    mask_bytes = None
+    is_mockup = "mockup" in args.prompt.lower()
+    
     if args.image:
-        # Image-to-image or background replacement using edit_image
         base_image_path = args.image[0]
         if not os.path.isfile(base_image_path):
             raise FileNotFoundError(f"Base image not found at: {base_image_path}")
@@ -185,10 +167,6 @@ def handle_generate_image(args):
         # Open and align image dimensions to prevent 1-pixel rounding errors in Vertex AI backend
         pil_img = Image.open(base_image_path).convert("RGBA")
         w, h = pil_img.size
-        
-        # Check if this is a mockup generation request (Form 2)
-        is_mockup = "mockup" in args.prompt.lower()
-        mask_bytes = None
         
         if is_mockup:
             # Check camera perspective direction
@@ -203,7 +181,6 @@ def handle_generate_image(args):
                 # Apply 3/4 perspective skew
                 pb = [(0, 0), (0, h), (w, h), (w, 0)]
                 if warp_dir == "left":
-                    # Left side is closer (larger), right side is further (smaller)
                     # Compress horizontal width to 70% for a steeper 3/4 perspective to resolve visual stretching
                     pa = [
                         (0, 0),
@@ -213,7 +190,6 @@ def handle_generate_image(args):
                     ]
                     target_size = (int(w * 0.70), h)
                 else:
-                    # Left side is further (smaller), right side is closer (larger)
                     # Compress horizontal width to 70% (offset 0.30) for a steeper 3/4 perspective to resolve visual stretching
                     pa = [
                         (int(w * 0.30), int(h * 0.15)),
@@ -257,11 +233,34 @@ def handle_generate_image(args):
                 except Exception:
                     pass
             
+            # Apply mathematical scale correction if size_override is present in the prompt
+            size_match = re.search(r"ARTWORK SIZE CORRECTION FOR THIS REGENERATION:\s*-\s*Make the artwork appear (\d+)%\s+(larger|smaller)", args.prompt)
+            if size_match:
+                try:
+                    percent_val = float(size_match.group(1))
+                    direction_val = size_match.group(2)
+                    correction_factor = 1.0 + (percent_val / 100.0) if direction_val == 'larger' else 1.0 - (percent_val / 100.0)
+                    fill_ratio *= correction_factor
+                except Exception as e:
+                    print(f"[WARN] Failed to apply scale correction: {e}", file=sys.stderr)
+            
             # Apply 50% reduction (multiplier 0.50) if a human scale figure is present to resolve the remaining 20-25% size gap
             prompt_lower = args.prompt.lower()
-            has_human = any(kw in prompt_lower for kw in ["discreet standing", "standing adult", "standing human", "scale figure"])
+            # Punto #11: detección robusta de figura humana con múltiples keywords
+            HUMAN_PRESENCE_KEYWORDS = [
+                "standing adult", "standing human", "scale figure",
+                "1.80 m", "1.55 m", "1.80m", "1.55m",
+                "male figure", "female figure", "human figure",
+                "standing man", "standing woman",
+                "scale reference", "full-body scale",
+                "discreet standing", "standing person",
+            ]
+            has_human = any(kw in prompt_lower for kw in HUMAN_PRESENCE_KEYWORDS)
             if has_human:
                 fill_ratio *= 0.50
+                
+            # Keep fill_ratio within realistic limits (5% to 95%) to avoid layout breakage
+            fill_ratio = max(0.05, min(0.95, fill_ratio))
             
             max_art_dim = int(canvas_size * fill_ratio)
             
@@ -316,7 +315,7 @@ def handle_generate_image(args):
             new_h = (h // 8) * 8
             
             # Downscale if image is too large to save bandwidth and improve latency
-            max_dim = 1536
+            max_dim = 1024
             if new_w > max_dim or new_h > max_dim:
                 ratio = min(max_dim / new_w, max_dim / new_h)
                 new_w = int(new_w * ratio)
@@ -327,7 +326,101 @@ def handle_generate_image(args):
                 
             if (new_w, new_h) != (w, h):
                 pil_img = pil_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+
+    # ------------------ CALL MODEL ------------------
+    if is_gemini_image:
+        # Map Admin plan names to the exact Vertex AI publisher model paths.
+        gemini_image_models = {
+            "gemini-3.1-flash-image": "publishers/google/models/gemini-3.1-flash-image",
+            "gemini-3-pro-image": "publishers/google/models/gemini-3-pro-image",
+            "gemini-2.5-flash-image": "publishers/google/models/gemini-2.5-flash-image",
+        }
+        selected_model = model_lower if model_lower in gemini_image_models else "gemini-3.1-flash-image"
             
+        gemini_prompt = args.prompt
+        contents = []
+        if pil_img:
+            # Convert pre-composed image to RGB for Gemini generate_content
+            img_rgb = pil_img
+            if img_rgb.mode != "RGB":
+                img_rgb = img_rgb.convert("RGB")
+            
+            # Prepend physical scaling/placement instructions for mockups
+            if is_mockup:
+                gemini_prompt = (
+                    "The input image is a reference showing the artwork already correctly sized and positioned on a neutral wall.\n"
+                    "You must preserve this artwork exactly as it is (its aspect ratio, perspective angle, center position, and relative size must not be changed).\n"
+                    "Replace the surrounding grey wall area with a premium gallery/collector room, blending the lighting and shadows seamlessly around the artwork edges.\n\n"
+                    + args.prompt
+                )
+            contents.append(img_rgb)
+            print(f"[DEBUG] Image details: size={img_rgb.size}, mode={img_rgb.mode}", file=sys.stderr)
+            
+        contents.insert(0, gemini_prompt)
+        print(f"[DEBUG] Selected Gemini Image Plan: {selected_model}", file=sys.stderr)
+        print(f"[DEBUG] Prompt Length: {len(gemini_prompt)} characters", file=sys.stderr)
+        print(f"[DEBUG] Contents List Length: {len(contents)} items", file=sys.stderr)
+
+        response = None
+        last_error = None
+        for model_key in image_model_fallback_chain(selected_model, gemini_image_models):
+            resolved_model = gemini_image_models[model_key]
+            print(f"[DEBUG] Resolved Model: {resolved_model}", file=sys.stderr)
+            try:
+                response = call_with_retry(
+                    lambda m=resolved_model: client.models.generate_content(
+                        model=m,
+                        contents=contents
+                    ),
+                    max_retries=4
+                )
+                break
+            except Exception as e:
+                last_error = e
+                if is_rate_limit_error(e) and model_key != "gemini-2.5-flash-image":
+                    print(
+                        f"[WARN] Gemini Image quota exhausted for {model_key}. Trying fallback model...",
+                        file=sys.stderr
+                    )
+                    continue
+                raise e
+
+        if response is None:
+            raise last_error or RuntimeError(
+                "No Gemini Image model could produce a response."
+            )
+        
+        if not response.candidates:
+            raise RuntimeError("No candidates in Gemini response.")
+            
+        img_found = False
+        for part in response.candidates[0].content.parts:
+            if part.inline_data:
+                img = part.as_image()
+                # Create parent directories if they don't exist
+                out_dir = os.path.dirname(args.output)
+                if out_dir and not os.path.exists(out_dir):
+                    os.makedirs(out_dir, exist_ok=True)
+                
+                if hasattr(img, 'image_bytes') and img.image_bytes:
+                    with open(args.output, "wb") as f:
+                        f.write(img.image_bytes)
+                elif hasattr(img, 'save'):
+                    img.save(args.output)
+                else:
+                    raise RuntimeError("Unknown image object type returned from SDK.")
+                    
+                print(f"SUCCESS: Image saved to {args.output}")
+                img_found = True
+                break
+                
+        if not img_found:
+            raise RuntimeError("No image was returned in the Gemini response parts.")
+            
+        return
+        
+    elif args.image:
+        # Image-to-image or background replacement using edit_image (Imagen models)
         import io
         img_byte_arr = io.BytesIO()
         pil_img.save(img_byte_arr, format='PNG')
@@ -383,7 +476,7 @@ def handle_generate_image(args):
             )
         )
     else:
-        # Text-to-image generation
+        # Text-to-image generation (Imagen models)
         model = args.model if args.model else "imagen-3.0-generate-002"
         
         response = call_with_retry(
@@ -421,12 +514,14 @@ def main():
     # Subcommand: generate-text
     text_parser = subparsers.add_parser("generate-text", help="Generate text / analysis using Gemini")
     text_parser.add_argument("--prompt", type=str, help="Text prompt")
+    text_parser.add_argument("--prompt-file", type=str, help="Path to file containing the prompt")
     text_parser.add_argument("--image", type=str, action="append", help="Path to the input image(s)")
     text_parser.add_argument("--model", type=str, default="gemini-2.5-flash", help="Gemini model name")
     
     # Subcommand: generate-image
     image_parser = subparsers.add_parser("generate-image", help="Generate/Edit images using Imagen or Gemini")
-    image_parser.add_argument("--prompt", type=str, required=True, help="Text prompt")
+    image_parser.add_argument("--prompt", type=str, help="Text prompt")
+    image_parser.add_argument("--prompt-file", type=str, help="Path to file containing the prompt")
     image_parser.add_argument("--image", type=str, action="append", help="Path to reference base image(s) (for editing/multimodal)")
     image_parser.add_argument("--model", type=str, help="Imagen or Gemini model name")
     image_parser.add_argument("--aspect_ratio", type=str, default="1:1", help="Aspect ratio (e.g. 1:1, 4:3, 16:9)")
@@ -435,9 +530,15 @@ def main():
     args = parser.parse_args()
     
     try:
-        if hasattr(args, 'prompt') and args.prompt == "-":
+        if hasattr(args, 'prompt_file') and args.prompt_file:
+            with open(args.prompt_file, 'r', encoding='utf-8') as f:
+                args.prompt = f.read()
+        elif hasattr(args, 'prompt') and args.prompt == "-":
             # Read prompt from stdin
             args.prompt = sys.stdin.read()
+            
+        if not getattr(args, 'prompt', None):
+            raise ValueError("Must provide either --prompt or --prompt-file.")
             
         if args.command == "generate-text":
             handle_generate_text(args)

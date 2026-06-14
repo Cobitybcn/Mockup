@@ -1,0 +1,174 @@
+{
+    "artwork_analysis": {
+        "visual_language": [
+            "Abstract",
+            "Structural",
+            "Símbolic",
+            "Metaphysical",
+            "Elemental",
+            "Contemplative",
+            "Tectonic"
+        ],
+        "emotional_energy": [
+            "Profound contemplation",
+            "Silent tension",
+            "Primordial emergence",
+            "Subterranean energy",
+            "Austerity",
+            "Mystery",
+            "Groundedness"
+        ],
+        "dominant_colors": [
+            "Black",
+            "Deep Forest Green",
+            "Fiery Red"
+        ],
+        "secondary_colors": [
+            "Teal",
+            "Burnt Orange",
+            "White/Grey (incisions)"
+        ],
+        "color_temperature": "Dynamic tension between cool darkness and warm, intense highlights",
+        "contrast_level": "High",
+        "composition_type": "Vertical, central focus with linear structural elements and atmospheric fields",
+        "spatial_presence": "Vast, deep, atmospheric, immersive, elemental",
+        "artwork_function": "Provokes deep contemplation, anchors sophisticated spaces, cartography of internal/external landscapes",
+        "suggested_audience": [
+            "Contemporary art collectors",
+            "Galleries",
+            "Architects",
+            "High-end interior designers",
+            "Curators",
+            "International buyers",
+            "Minimalist art enthusiasts",
+            "Symbolic art enthusiasts"
+        ],
+        "commercial_positioning": "Premium contemporary art for sophisticated collections and architectural projects",
+        "one_line_curatorial_read": "A profound cartography of emerging structure, where subterranean energies meet geological silence in an abstract, contemplative space.",
+        "style_summary": "Abstract, structural, and deeply symbolic, the artwork manifests primal forms and tensions within vast, dark fields, defined by a powerful interplay of cool and fiery tones.",
+        "seasonal_strategy": {
+            "primary_season": "neutral"
+        },
+        "audience_profile": {
+            "primary": "Sophisticated collectors and designers valuing contemplative, architectonic abstraction"
+        }
+    },
+    "recommended_number_of_contexts": 7,
+    "contextual_proposals": [
+        {
+            "context_name": "Silent Mineral Interior",
+            "context_role": "primary presentation",
+            "space_type": "minimal architectural interior",
+            "atmosphere": "silent, contemplative, mineral, spacious",
+            "materials": [
+                "stone",
+                "lime plaster",
+                "neutral textile (linen)"
+            ],
+            "lighting": "soft lateral afternoon light",
+            "camera_angle": "three-quarter view",
+            "human_presence": "none",
+            "curatorial_reason": "The artwork has a silent architectural presence and needs a clean mineral space that reinforces its contemplative tension and structural elements.",
+            "commercial_reason": "This context positions the artwork for collectors, architects and interior designers looking for a strong but sober contemporary piece for a gallery-like setting."
+        },
+        {
+            "context_name": "Monolithic Gallery Passage",
+            "context_role": "architectural study, institutional positioning",
+            "space_type": "contemporary gallery corridor with high ceilings",
+            "atmosphere": "imposing, structural, solemn, quiet",
+            "materials": [
+                "raw concrete",
+                "dark polished floor (epoxy or stone)",
+                "minimalist white walls"
+            ],
+            "lighting": "focused art lighting from above, creating subtle shadows and depth",
+            "camera_angle": "low angle, looking slightly up at the artwork, emphasizing scale and height",
+            "human_presence": "none",
+            "curatorial_reason": "This context reinforces the artwork's monumental and structural qualities, placing it in an institutional setting suitable for its 'monoliths' and 'tectonic' themes.",
+            "commercial_reason": "Appeals to art galleries, architects for public spaces, and curators seeking significant pieces for institutional or large-scale private collections."
+        },
+        {
+            "context_name": "Geologic Dusk Lounge",
+            "context_role": "collector positioning, luxury residential",
+            "space_type": "sophisticated, dimly lit living room/lounge in a luxury townhouse",
+            "atmosphere": "intimate, contemplative, warm, luxurious, nocturnal",
+            "materials": [
+                "dark wood panels",
+                "rich velvet upholstery in deep greens/blues",
+                "bronze accents",
+                "stone fireplace"
+            ],
+            "lighting": "soft ambient lighting, subtle art lamp highlighting the painting, evening glow from a large window",
+            "camera_angle": "medium shot, artwork as a focal point in a curated domestic setting",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "The artwork's deep, fiery palette resonates with the rich, nocturnal setting, creating a powerful, intimate dialogue that evokes geological time within a human space.",
+            "commercial_reason": "Directly targets high-net-worth collectors looking for a statement piece that integrates seamlessly into sophisticated private residences, emphasizing its contemplative quality."
+        },
+        {
+            "context_name": "Volcanic Threshold Residence",
+            "context_role": "Mediterranean appeal, distinctive luxury",
+            "space_type": "modern Mediterranean home, possibly overlooking a volcanic landscape or sea",
+            "atmosphere": "elemental, warm, expansive, rugged luxury",
+            "materials": [
+                "dark lava stone flooring",
+                "white textured plaster walls",
+                "reclaimed dark wood beams",
+                "simple linen curtains"
+            ],
+            "lighting": "bright, natural morning light from a large opening, contrasting with the artwork's internal darkness",
+            "camera_angle": "wide shot, capturing the artwork in a larger architectural context, with a subtle outdoor view",
+            "human_presence": "none",
+            "curatorial_reason": "Connects the artwork's 'territorio' and 'estratos tectónicos' themes with a natural, elemental environment, enhancing its primal energy against a backdrop of natural light and raw materials.",
+            "commercial_reason": "Ideal for Mediterranean region buyers, architects specializing in luxury resorts/homes, and those seeking art that evokes a strong sense of place and natural elegance."
+        },
+        {
+            "context_name": "Urban Sanctuary Balcony",
+            "context_role": "urban collector, contrast, scale reference",
+            "space_type": "minimalist penthouse apartment with a city view balcony (blurred city lights in distance)",
+            "atmosphere": "modern, sophisticated, contemplative, urban energy contained",
+            "materials": [
+                "polished concrete floor",
+                "dark metal window frames",
+                "neutral walls"
+            ],
+            "lighting": "dim interior lighting, light from the cityscape outside provides a dramatic backdrop",
+            "camera_angle": "three-quarter view, looking towards the artwork with the city lights in the background",
+            "human_presence": "optional standing female figure 1.55m",
+            "curatorial_reason": "The artwork's emerging structures and deep palette create a sense of groundedness and contemplation amidst the dynamism of an urban environment, offering an internal 'territorio' for reflection.",
+            "commercial_reason": "Targets urban collectors, art consultants for high-rise residential projects, appealing to a modern, discerning audience who values art as a retreat within the city."
+        },
+        {
+            "context_name": "Ethereal Study Retreat",
+            "context_role": "intellectual appeal, quiet presence",
+            "space_type": "a minimalist artist studio or architect's study",
+            "atmosphere": "quiet, focused, inspiring, ethereal",
+            "materials": [
+                "light grey polished concrete",
+                "white walls",
+                "a single elegant wooden desk or minimalist chair"
+            ],
+            "lighting": "soft, even diffused daylight from a large window (north-facing)",
+            "camera_angle": "mid-range, focusing on the artwork as a source of inspiration in a workspace",
+            "human_presence": "none",
+            "curatorial_reason": "Emphasizes the artwork's 'structure' and 'génesis' themes within a space dedicated to thought and creation, positioning it as an intellectual anchor and source of profound insight.",
+            "commercial_reason": "Appeals to architects, designers, and collectors who value art as a catalyst for thought and creativity, particularly those with a minimalist and intellectual aesthetic."
+        },
+        {
+            "context_name": "Grand Foyer with Ascent",
+            "context_role": "grand scale, 'escaleras' theme, institutional/luxury",
+            "space_type": "a spacious foyer or reception area with a prominent, elegant staircase leading upwards",
+            "atmosphere": "formal, impressive, aspirational, grand",
+            "materials": [
+                "dark marble flooring",
+                "deep-toned walls (dark grey or plum)",
+                "grand staircase with metal or dark wood banisters"
+            ],
+            "lighting": "mixture of architectural spotlights and ambient light from above",
+            "camera_angle": "wide shot, showcasing the artwork alongside the staircase, emphasizing verticality and aspiration",
+            "human_presence": "none",
+            "curatorial_reason": "Directly references the artist's 'escaleras' (stairs) and 'tránsito' themes, positioning the artwork as a focal point in a journey or ascent, embodying the tension of emergence and structure.",
+            "commercial_reason": "Excellent for luxury hotels, high-end corporate lobbies, grand private residences, and architectural firms aiming to integrate art into impressive, large-scale design statements."
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_1781370381_2153.png"
+}

@@ -18,12 +18,17 @@ class GeminiImageClient
         $python = $this->getPythonExecutable();
         $bridgeScript = __DIR__ . '/vertex_bridge.py';
         
-        $cmd = escapeshellcmd($python) . ' ' . escapeshellarg($bridgeScript) . ' generate-text --model ' . escapeshellarg($model) . ' --prompt -';
+        $cmd = '"' . $python . '" ' . escapeshellarg($bridgeScript) . ' generate-text --model ' . escapeshellarg($model);
         foreach ($imagePaths as $imagePath) {
             $cmd .= ' --image ' . escapeshellarg($imagePath);
         }
 
-        return $this->runCommand($cmd, $prompt);
+        // Punto #4: pasar VERTEX_PROJECT_ID como variable de entorno al subproceso
+        if (defined('VERTEX_PROJECT_ID') && VERTEX_PROJECT_ID !== '') {
+            putenv('VERTEX_PROJECT_ID=' . VERTEX_PROJECT_ID);
+        }
+
+        return $this->runCommand($cmd, $prompt, 90); // punto #7: 90 s (era 60 s)
     }
 
     public function generateImage(array $parts, ?string $model = null): string
@@ -42,11 +47,11 @@ class GeminiImageClient
         $bridgeScript = __DIR__ . '/vertex_bridge.py';
         
         // Generate a temporary file path for the output image
-        $tempOutput = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'vertex_gen_' . uniqid() . '.png';
+        $tempOutput = $this->getTempDir() . DIRECTORY_SEPARATOR . 'vertex_gen_' . uniqid() . '.png';
 
         $model = $model ?: ProviderSettings::geminiImageModel();
         
-        $cmd = escapeshellcmd($python) . ' ' . escapeshellarg($bridgeScript) . ' generate-image --prompt - --output ' . escapeshellarg($tempOutput);
+        $cmd = '"' . $python . '" ' . escapeshellarg($bridgeScript) . ' generate-image --output ' . escapeshellarg($tempOutput);
         foreach ($imagePaths as $imagePath) {
             $cmd .= ' --image ' . escapeshellarg($imagePath);
         }
@@ -54,7 +59,12 @@ class GeminiImageClient
             $cmd .= ' --model ' . escapeshellarg($model);
         }
 
-        $this->runCommand($cmd, $prompt);
+        // Punto #4: pasar VERTEX_PROJECT_ID como variable de entorno al subproceso
+        if (defined('VERTEX_PROJECT_ID') && VERTEX_PROJECT_ID !== '') {
+            putenv('VERTEX_PROJECT_ID=' . VERTEX_PROJECT_ID);
+        }
+
+        $this->runCommand($cmd, $prompt, 150); // punto #7: 150 s (era 120 s)
 
         if (!is_file($tempOutput)) {
             throw new RuntimeException("Vertex bridge did not create output image file at: " . $tempOutput);
@@ -70,33 +80,71 @@ class GeminiImageClient
         return base64_encode($bytes);
     }
 
-    private function runCommand(string $cmd, string $stdinInput): string
+    private function runCommand(string $cmd, string $promptText, int $timeout = 90): string
     {
+        putenv('PYTHONIOENCODING=utf-8');
+        putenv('PYTHONUTF8=1');
+
+        $tempDir = $this->getTempDir();
+        $tempPromptFile = tempnam($tempDir, 'gemini_prompt_');
+        if ($tempPromptFile === false) {
+            throw new RuntimeException("Failed to create temporary prompt file.");
+        }
+
+        if (file_put_contents($tempPromptFile, $promptText) === false) {
+            @unlink($tempPromptFile);
+            throw new RuntimeException("Failed to write prompt to temporary file.");
+        }
+
+        $cmd .= ' --prompt-file ' . escapeshellarg($tempPromptFile);
+
+        $tempOutFile = tempnam($tempDir, 'gemini_out_');
+        $tempErrFile = tempnam($tempDir, 'gemini_err_');
+
         $descriptorspec = [
             0 => ["pipe", "r"], // stdin
-            1 => ["pipe", "w"], // stdout
-            2 => ["pipe", "w"]  // stderr
+            1 => ["file", $tempOutFile, "w"], // stdout
+            2 => ["file", $tempErrFile, "w"]  // stderr
         ];
 
         $process = proc_open($cmd, $descriptorspec, $pipes);
         if (!is_resource($process)) {
+            @unlink($tempPromptFile);
+            @unlink($tempOutFile);
+            @unlink($tempErrFile);
             throw new RuntimeException("Failed to start Vertex bridge process.");
         }
 
-        // Write the prompt to the python script's stdin
-        fwrite($pipes[0], $stdinInput);
+        // Close stdin immediately as we are using --prompt-file
         fclose($pipes[0]);
 
-        $stdout = stream_get_contents($pipes[1]);
-        fclose($pipes[1]);
+        // Wait for the process to finish with timeout check
+        $startTime = time();
+        $status = proc_get_status($process);
+        while ($status['running']) {
+            if (time() - $startTime > $timeout) {
+                proc_terminate($process, 9);
+                proc_close($process);
+                @unlink($tempPromptFile);
+                @unlink($tempOutFile);
+                @unlink($tempErrFile);
+                throw new RuntimeException("Vertex bridge process timed out after {$timeout} seconds.");
+            }
+            usleep(50000); // 50ms
+            $status = proc_get_status($process);
+        }
 
-        $stderr = stream_get_contents($pipes[2]);
-        fclose($pipes[2]);
+        $exitCode = proc_close($process);
 
-        $status = proc_close($process);
+        $stdout = (string)@file_get_contents($tempOutFile);
+        $stderr = (string)@file_get_contents($tempErrFile);
 
-        if ($status !== 0) {
-            throw new RuntimeException("Vertex bridge failed (exit code $status): " . trim($stderr));
+        @unlink($tempPromptFile);
+        @unlink($tempOutFile);
+        @unlink($tempErrFile);
+
+        if ($exitCode !== 0) {
+            throw new RuntimeException("Vertex bridge failed (exit code $exitCode): " . trim($stderr));
         }
 
         return $stdout;
@@ -130,20 +178,48 @@ class GeminiImageClient
 
     private function getPythonExecutable(): string
     {
+        // Punto #3: PYTHON_BINARY_PATH del .env tiene prioridad total
+        $envPath = defined('PYTHON_BINARY_PATH') ? trim((string)PYTHON_BINARY_PATH) : '';
+        if ($envPath !== '' && is_file($envPath)) {
+            return $envPath;
+        }
+
+        // Candidatos de auto-detección (sin rutas específicas de usuario)
         $candidates = [
-            'C:\Users\MSI\AppData\Local\Programs\Python\Python313\python.exe',
-            'C:\Users\MSI\AppData\Local\Programs\Python\Python312\python.exe',
-            'C:\Users\MSI\AppData\Local\Programs\Python\Python311\python.exe',
+            'python',
             'C:\laragon\bin\python\python-3.13\python.exe',
+            'C:\laragon\bin\python\python-3.12\python.exe',
+            'C:\laragon\bin\python\python-3.11\python.exe',
         ];
 
+        // Primero buscar candidatos que tengan google.genai instalado
         foreach ($candidates as $cand) {
-            if (is_file($cand)) {
+            $output = [];
+            $exitCode = -1;
+            $cmd = ($cand === 'python') ? 'python' : '"' . $cand . '"';
+            @exec($cmd . ' -c "import google.genai" 2>&1', $output, $exitCode);
+            if ($exitCode === 0) {
+                return $cand;
+            }
+        }
+
+        // Si ninguno tiene google.genai, devolver el primero que exista
+        foreach ($candidates as $cand) {
+            if ($cand === 'python' || is_file($cand)) {
                 return $cand;
             }
         }
 
         return 'python'; // Fallback
+    }
+
+    private function getTempDir(): string
+    {
+        $dir = __DIR__ . '/../../storage/tmp';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+        return realpath($dir) ?: $dir;
     }
 }
 

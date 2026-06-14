@@ -35,6 +35,9 @@ if (!is_dir($jobDir) || !is_file($statusFile)) {
     exit("No existe el trabajo\n");
 }
 
+// Configurar el log de errores de PHP en el directorio del trabajo
+ini_set('error_log', $jobDir . '/process_err.log');
+
 if (PHP_SAPI !== 'cli') {
     http_response_code(403);
     exit("La ejecucion por HTTP esta deshabilitada. Este script solo puede ejecutarse en segundo plano desde CLI.\n");
@@ -110,99 +113,26 @@ try {
     update_job_status(
         $statusFile,
         'processing',
-        'Creando imagen raiz en modo ' . ServiceFactory::appMode() . ' con proveedor ' . ProviderSettings::imageProvider() . '.'
+        'Creating root image candidates...'
     );
 
     $processor = ServiceFactory::artworkProcessor();
     $result = $processor->createRootImage($jobDir, $status);
 
-    // --- NUEVO: Ejecutar análisis de la obra de arte en segundo plano ---
-    update_job_status(
-        $statusFile,
-        'processing',
-        'Analizando la obra de arte con Inteligencia Artificial...'
-    );
+    // Update status.json with candidates
+    $status = read_status_file($statusFile);
+    $status['status'] = 'done';
+    $status['message'] = 'Root image candidates created. Awaiting user selection.';
+    $status['candidates'] = $result['files'];
+    $status['result_file'] = null; // No selected root image yet
+    write_status_file($statusFile, $status);
 
-    $analyzer = ServiceFactory::artworkAnalyzer();
-    
-    // Preparar metadatos para el análisis
-    $measurements = $status['measurements'] ?? [];
-    $artistProfile = ArtistProfile::findForUser((int)$status['user_id']);
-    
-    $metadata = [
-        'artist_notes' => $status['artist_notes'] ?? '',
-        'region' => '',
-        'artist_profile' => $artistProfile,
-        'artist_profile_prompt' => ArtistProfile::forPrompt($artistProfile),
-        'width_cm' => $measurements['unit'] === 'cm' ? ($measurements['width'] ?? null) : null,
-        'height_cm' => $measurements['unit'] === 'cm' ? ($measurements['height'] ?? null) : null,
-        'depth_cm' => $measurements['unit'] === 'cm' ? ($measurements['depth'] ?? null) : null,
-    ];
-    
-    $analysisResponse = $analyzer->analyze($result['path'], $metadata);
-    
-    // Guardar el archivo JSON de análisis en /analysis
-    if (!is_dir(ANALYSIS_DIR)) {
-        mkdir(ANALYSIS_DIR, 0775, true);
-    }
-    
-    $jsonName = pathinfo(basename($result['path']), PATHINFO_FILENAME) . '.analysis.json';
-    file_put_contents(
-        ANALYSIS_DIR . DIRECTORY_SEPARATOR . $jsonName,
-        json_encode($analysisResponse, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-    );
+    // Update SQLite database status of artwork to awaiting_selection
+    update_artwork_record($status, 'awaiting_selection', null);
 
-    if (!empty($result['mock'])) {
-        $prompt = <<<TXT
-MODO MOCK - SIN API
-
-El Formulario 1 produce una imagen raiz fiel de la obra.
-En este prototipo local se simula el procesamiento copiando la imagen principal subida.
-
-Reglas de la futura generacion real:
-- No calcar la obra.
-- No simetrizar la composicion.
-- No unificar colores artisticamente.
-- No redibujar trazos.
-- No embellecer la pintura como una nueva obra.
-- No modificar la identidad visual del artista.
-- Solo mejorar iluminacion, perspectiva, nitidez, tension del soporte y visibilidad de materialidad.
-TXT;
-
-        file_put_contents($jobDir . '/prompt.txt', $prompt);
-        file_put_contents($jobDir . '/target_size.txt', 'mock');
-    }
-
-    update_job_status(
-        $statusFile,
-        'done',
-        $result['message'],
-        $result['file'],
-        null
-    );
-
-    if (!empty($result['file'])) {
-        $metaName = pathinfo((string)$result['file'], PATHINFO_FILENAME) . '.meta.json';
-        $metaPath = RESULTS_DIR . DIRECTORY_SEPARATOR . $metaName;
-        $measurements = $status['measurements'] ?? [];
-
-        file_put_contents(
-            $metaPath,
-            json_encode([
-                'source_job_id' => $jobId,
-                'user_id' => (int)($status['user_id'] ?? 0),
-                'root_file' => $result['file'],
-                'measurements' => $measurements,
-                'artist_notes' => $status['artist_notes'] ?? '',
-                'provider_settings' => ProviderSettings::all(),
-                'scale_text' => build_scale_text_for_meta($measurements),
-            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-        );
-    }
-
-    exit('DONE ' . strtoupper(ServiceFactory::appMode()) . ': ' . $result['file'] . "\n");
+    exit('DONE candidate generation for job ' . $jobId . "\n");
 } catch (Throwable $e) {
-    update_job_status($statusFile, 'error', 'Error en modo ' . ServiceFactory::appMode() . '.', null, $e->getMessage());
+    update_job_status($statusFile, 'error', 'Generation error.', null, $e->getMessage());
     exit($e->getMessage() . "\n");
 }
 

@@ -61,72 +61,31 @@ class OpenAIArtworkAnalyzer implements ArtworkAnalyzerInterface
         $dataUrl = $this->dataUrl($imagePath);
         $notes = trim((string)($metadata['artist_notes'] ?? ''));
         $region = trim((string)($metadata['region'] ?? ''));
+        $artistProfilePrompt = trim((string)($metadata['artist_profile_prompt'] ?? ''));
+        $scaleText = trim((string)($metadata['scale_text'] ?? ''));
 
-        $prompt = <<<PROMPT
-Analyze this artwork for premium mockup strategy. Return only valid JSON.
-
-The image is the root artwork image. Do not suggest changing the artwork.
-
-You must understand:
-- dominant style: abstract, surreal, architectural, geometric, organic, material, minimal, expressive, etc.
-- emotional and psychological associations of colors and dominant temperatures.
-- likely audience and sales positioning.
-- region and season strategy for publication. Region from user, if any: {$region}
-- dreamlike/oniric presence vs color vibration vs gesture/materiality.
-- materiality: texture, brushwork, palette knife, incisions, surface, canvas edge.
-
-Image facts:
-- Orientation: {$imageMeta['orientation']}
-- Pixels: {$imageMeta['width_px']} x {$imageMeta['height_px']}
-- Artist notes: {$notes}
-
-Return this JSON object:
-{
-  "style_summary": "",
-  "style_tags": [],
-  "mood_tags": [],
-  "palette": [],
-  "palette_family": [],
-  "luminosity": "medium",
-  "saturation": "balanced",
-  "detail_density": "medium",
-  "texture_visibility": "medium",
-  "structure_tags": [],
-  "commercial_fit": [],
-  "seasonality": [],
-  "recommended_shot_needs": [],
-  "avoid": [],
-  "one_line_curatorial_read": "",
-  "style_interpretation": {
-    "dominant_language": [],
-    "reads_through": []
-  },
-  "emotional_palette": {
-    "temperature": "balanced",
-    "psychological_associations": []
-  },
-  "audience_profile": {
-    "primary": "",
-    "secondary": ""
-  },
-  "region_context": {
-    "target_region": "",
-    "strategy": ""
-  },
-  "seasonal_strategy": {
-    "primary_season": "neutral",
-    "reason": ""
-  },
-  "dreamlike_presence": {
-    "level": "low",
-    "reading": ""
-  },
-  "materiality_strategy": {
-    "importance": "medium",
-    "show": []
-  }
-}
-PROMPT;
+        $template = PromptSettings::artworkAnalysisPrompt();
+        $prompt = str_replace(
+            [
+                '{artist_profile_prompt}',
+                '{region}',
+                '{scale_text}',
+                '{orientation}',
+                '{width_px}',
+                '{height_px}',
+                '{notes}'
+            ],
+            [
+                $artistProfilePrompt,
+                $region,
+                $scaleText,
+                $imageMeta['orientation'],
+                (string)$imageMeta['width_px'],
+                (string)$imageMeta['height_px'],
+                $notes
+            ],
+            $template
+        );
 
         $payload = [
             'model' => ProviderSettings::openAIAnalysisModel(),
@@ -197,6 +156,20 @@ PROMPT;
 
     private function normalizeProfile(array $profile): array
     {
+        if (is_array($profile['artwork_analysis'] ?? null)) {
+            $analysis = $profile['artwork_analysis'];
+            $profile = array_merge($profile, $analysis);
+            $profile['style_tags'] = $profile['style_tags'] ?? ($analysis['visual_language'] ?? []);
+            $profile['mood_tags'] = $profile['mood_tags'] ?? ($analysis['emotional_energy'] ?? []);
+            $profile['palette'] = $profile['palette'] ?? ($analysis['dominant_colors'] ?? []);
+            $profile['structure_tags'] = $profile['structure_tags'] ?? array_filter([
+                $analysis['composition_type'] ?? '',
+                $analysis['rhythm'] ?? '',
+                $analysis['surface'] ?? '',
+            ]);
+            $profile['commercial_fit'] = $profile['commercial_fit'] ?? ($analysis['suggested_audience'] ?? []);
+        }
+
         foreach (['style_tags', 'mood_tags', 'palette', 'palette_family', 'structure_tags', 'commercial_fit', 'seasonality', 'recommended_shot_needs', 'avoid'] as $key) {
             $profile[$key] = isset($profile[$key]) && is_array($profile[$key])
                 ? array_values(array_unique(array_map(fn($v) => strtolower(trim((string)$v)), $profile[$key])))
@@ -275,10 +248,10 @@ PROMPT;
 
         return [
             'style_summary' => $artistProfilePrompt !== ''
-                ? 'Analisis local de emergencia: lectura contemporanea basada en metadata, perfil del artista y reglas curatoriales del sistema.'
-                : 'Analisis local de emergencia: lectura contemporanea basada en metadata, notas del artista y reglas curatoriales del sistema.',
+                ? 'Emergency local analysis: contemporary visual reading based on metadata, artist context, and artwork-led rules.'
+                : 'Emergency local analysis: contemporary visual reading based on metadata, artist notes, and artwork-led rules.',
             'style_tags' => array_values(array_unique($styleTags)),
-            'mood_tags' => ['contemplative', 'premium', 'collector-grade', 'quiet intensity'],
+            'mood_tags' => ['contemplative', 'sober', 'quiet intensity'],
             'palette' => ['inferred from root artwork by downstream prompt', 'manual review recommended'],
             'palette_family' => ['balanced', 'material', 'artwork-led'],
             'luminosity' => 'medium',
@@ -290,7 +263,7 @@ PROMPT;
             'seasonality' => ['neutral'],
             'recommended_shot_needs' => ['frontality', 'scale realism', 'material detail', 'sophisticated environment'],
             'avoid' => ['generic decor', 'cheap room', 'kitchen', 'common bedroom', 'reinterpreting the artwork'],
-            'one_line_curatorial_read' => 'La obra debe presentarse como pieza fiel, material y emocionalmente deseable en ambientes sofisticados.',
+            'one_line_curatorial_read' => 'The work should be described through its visible color, surface, composition, and emotional atmosphere.',
             'style_interpretation' => [
                 'dominant_language' => array_values(array_unique($styleTags)),
                 'reads_through' => ['color vibration', 'surface', 'trace', 'material presence'],

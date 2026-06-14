@@ -155,10 +155,10 @@ class MockContextSelector implements ContextSelectorInterface
     private function balancedSelection(array $library, int $limit): array
     {
         $slots = [
-            ['camera' => '3/4 left wide', 'camera_group' => 'three_quarter_left', 'time' => 'day', 'human' => 'male_180', 'prefer' => ['gallery']],
+            ['camera' => 'front, eye-level, 50mm lens', 'camera_group' => 'front_wide', 'time' => 'day', 'human' => 'male_180', 'prefer' => ['gallery']],
             ['camera' => '3/4 left', 'camera_group' => 'three_quarter_left', 'time' => 'afternoon', 'human' => null, 'prefer' => ['collector']],
             ['camera' => '3/4 left evening', 'camera_group' => 'three_quarter_left', 'time' => 'night', 'human' => null, 'prefer' => ['collector', 'editorial']],
-            ['camera' => '3/4 right wide', 'camera_group' => 'three_quarter_right', 'time' => 'day', 'human' => 'female_155', 'prefer' => ['gallery']],
+            ['camera' => 'front, eye-level, 50mm lens', 'camera_group' => 'front_wide', 'time' => 'day', 'human' => 'female_155', 'prefer' => ['gallery']],
             ['camera' => '3/4 right', 'camera_group' => 'three_quarter_right', 'time' => 'afternoon', 'human' => null, 'prefer' => ['designer_home', 'collector']],
             ['camera' => '3/4 right evening', 'camera_group' => 'three_quarter_right', 'time' => 'night', 'human' => 'male_180', 'prefer' => ['collector']],
             ['camera' => 'front close-up', 'camera_group' => 'front_close', 'time' => 'day', 'human' => null, 'prefer' => ['materiality', 'institutional']],

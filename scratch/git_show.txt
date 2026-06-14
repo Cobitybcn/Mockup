@@ -1,0 +1,115 @@
+Exit code: 0
+
+commit a049d673ffa9298f552a4322f463c3d0cf9059e9
+Author: Pablo Chiappero <chiappero@gmail.com>
+Date:   Thu Jun 11 19:50:49 2026 -0300
+
+    Scale: Incrementar reduccion de escala humana a 50% y perspectiva a 30%
+
+diff --git a/INSTRUCCIONES_CODEX.md b/INSTRUCCIONES_CODEX.md
+index fffaad4..8ef1054 100644
+--- a/INSTRUCCIONES_CODEX.md
++++ b/INSTRUCCIONES_CODEX.md
+@@ -127,27 +127,27 @@ if match:
+ Cuando hay personas en la escena, la IA tiende a hacerlas ver pequeñas en el fondo para que la pintura se vea gigante.
+ * Si el prompt contiene figuras humanas (`discreet standing`, `standing adult`, etc.):
+ ```python
+-# Reducción de escala física del cuadro del 35% (multiplicador de 0.65)
++# Reducción de escala física del cuadro al 50% (multiplicador de 0.50)
+ if has_human:
+-    fill_ratio *= 0.65
++    fill_ratio *= 0.50
+ ```
+ * **Efecto:** La pintura es más pequeña en el canvas, forzando a la IA a renderizar a la persona más grande y en primer plano.
+
+ ### C. Compresión de Largo en Perspectiva 3/4
+ Para vistas anguladas (cámaras de 3/4), el lienzo debe acortarse visualmente en sentido horizontal (fuga de perspectiva) para no verse "estirado" en la pantalla:
+ ```python
+-# Aplicar una compresión extra del 15% (fuga a 75% en lugar del 90%)
++# Aplicar una compresión extra del 30% (fuga a 70% en lugar del 90%)
+ if warp_dir == "left":
+     pa = [
+         (0, 0), (0, h),
+-        (int(w * 0.75), int(h * 0.85)), # Acortado a 75% de ancho
+-        (int(w * 0.75), int(h * 0.15))
++        (int(w * 0.70), int(h * 0.85)), # Acortado a 70% de ancho
++        (int(w * 0.70), int(h * 0.15))
+     ]
+-    target_size = (int(w * 0.75), h)
++    target_size = (int(w * 0.70), h)
+ else: # right
+     pa = [
+-        (int(w * 0.25), int(h * 0.15)), # Fuga inicial en 25%
+-        (int(w * 0.25), int(h * 0.85)),
++        (int(w * 0.30), int(h * 0.15)), # Fuga inicial en 30%
++        (int(w * 0.30), int(h * 0.85)),
+         (w, h), (w, 0)
+     ]
+     target_size = (w, h)
+diff --git a/README.md b/README.md
+index d70aef4..71f3afb 100644
+--- a/README.md
++++ b/README.md
+@@ -44,14 +44,14 @@ La obra raíz se posiciona sobre un lienzo cuadrado base de `1024x1024` píxeles
+ * **Obras Muy Grandes ($\le 220$ cm):** Ocupan el **$48\%$** del lienzo.
+ * **Obras Monumentales ($> 220$ cm):** Ocupan el **$58\%$** del lienzo (comandando la pared de piso a techo).
+
+-### 3. Coeficiente de Escala Humana (Reducción del 35%)
++### 3. Coeficiente de Escala Humana (Reducción del 50%)
+ Cuando el prompt requiere una figura humana (un hombre de 1.80 m o una mujer de 1.55 m como referencia), la IA tiende a generar a la persona pequeña y lejana en el fondo (perspectiva forzada) haciendo que la pintura parezca gigantesca.
+-* **Solución:** Si se detecta una figura humana, aplicamos automáticamente un **multiplicador de `0.65`** (reducción del **$35\%$**) sobre el `fill_ratio`.
+-* Esto encoge la pintura sobre la plantilla del lienzo, forzando a la IA a renderizar una escala humana mucho más grande y cercana, logrando que el hombre de 1.80 m sea visiblemente más alto que la pintura de 1.20 m de altura.
++* **Solución:** Si se detecta una figura humana, aplicamos automáticamente un **multiplicador de `0.50`** (reducción del **$50\%$**) sobre el `fill_ratio`.
++* Esto encoge la pintura a la mitad en la plantilla de la pared, forzando a la IA a renderizar una escala humana mucho más grande y cercana, logrando que la persona sea visiblemente más alta que la pintura y respetando la relación de aspecto física.
+
+-### 4. Compresión de Perspectiva 3/4 (Reducción del 15% en el "Largo")
++### 4. Compresión de Perspectiva 3/4 (Reducción del 30% en el "Largo")
+ Al renderizar vistas en perspectiva angular (3/4 izquierda o derecha), el lienzo plano de la pintura tendía a verse estirado horizontalmente en 2D (pareciendo medir 3 metros de largo en lugar de 1.6 metros).
+-* **Solución:** Incrementamos el nivel de fuga de la transformación de perspectiva en Python, encogiéndola a un **$75\%$** de proyección horizontal (un **$15\%$** de compresión adicional respecto al $90\%$ por defecto). El cerebro lo interpreta como una inclinación de pared más realista y natural.
++* **Solución:** Incrementamos el nivel de fuga de la transformación de perspectiva en Python, encogiéndola a un **$70\%$** de proyección horizontal (un **$30\%$** de compresión adicional respecto al $100\%$ original). El cerebro lo interpreta como una inclinación de pared más realista y natural.
+
+ ### 5. Restricción de Altura del Techo
+ Para evitar que la IA dibuje salas cavernosas de 6 metros de altura donde los humanos se ven diminutos, los prompts inyectan de forma estricta un límite de **techo de 3.0 metros (10 pies)**, calibrando la altura general de la escena.
+diff --git a/app/Services/vertex_bridge.py b/app/Services/vertex_bridge.py
+index 7f99b8d..fc2d7b9 100644
+--- a/app/Services/vertex_bridge.py
++++ b/app/Services/vertex_bridge.py
+@@ -204,18 +204,20 @@ def handle_generate_image(args):
+                 pb = [(0, 0), (0, h), (w, h), (w, 0)]
+                 if warp_dir == "left":
+                     # Left side is closer (larger), right side is further (smaller)
++                    # Compress horizontal width to 70% for a steeper 3/4 perspective to resolve visual stretching
+                     pa = [
+                         (0, 0),
+                         (0, h),
+-                        (int(w * 0.9), int(h * 0.88)),
+-                        (int(w * 0.9), int(h * 0.12))
++                        (int(w * 0.70), int(h * 0.85)),
++                        (int(w * 0.70), int(h * 0.15))
+                     ]
+-                    target_size = (int(w * 0.9), h)
++                    target_size = (int(w * 0.70), h)
+                 else:
+                     # Left side is further (smaller), right side is closer (larger)
++                    # Compress horizontal width to 70% (offset 0.30) for a steeper 3/4 perspective to resolve visual stretching
+                     pa = [
+-                        (int(w * 0.1), int(h * 0.12)),
+-                        (int(w * 0.1), int(h * 0.88)),
++                        (int(w * 0.30), int(h * 0.15)),
++                        (int(w * 0.30), int(h * 0.85)),
+                         (w, h),
+                         (w, 0)
+                     ]
+@@ -255,11 +257,11 @@ def handle_generate_image(args):
+                 except Exception:
+                     pass
+
+-            # Apply 35% reduction if a human scale figure is present in the prompt
++            # Apply 50% reduction (multiplier 0.50) if a human scale figure is present to resolve the remaining 20-25% size gap
+             prompt_lower = args.prompt.lower()
+             has_human = any(kw in prompt_lower for kw in ["discreet standing", "standing adult", "standing human", "scale figure"])
+             if has_human:
+-                fill_ratio *= 0.65
++                fill_ratio *= 0.50
+
+             max_art_dim = int(canvas_size * fill_ratio)

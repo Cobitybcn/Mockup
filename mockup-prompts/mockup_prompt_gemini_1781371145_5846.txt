@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 130 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Mediterranean Earthen Wall
+- Purpose: alternative residential placement
+- Scene Description: A minimalist Mediterranean-inspired home, living area with warm, earthy, serene, natural light atmosphere. Materials: textured clay plaster wall (terracotta/ochre tones), linen textiles, simple wooden bench
+- Lighting: warm afternoon light, golden hour, soft shadows
+- Camera: 3/4 left view, showing side perspective (three_quarter_left)
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult white woman, 1.55 meters tall.
+- Curatorial Mood: A powerful abstract evocation of primal structures emerging from a silent, deep, and temporally vast landscape, compelling quiet contemplation.
+
+NEGATIVE RULES:
+No kitchens.
+No common bedrooms.
+No cheap decor.
+No generic stock interiors.
+No logos.
+No visible text.
+No letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.
+No shoes or footwear as scale reference.
+No distorted perspective.

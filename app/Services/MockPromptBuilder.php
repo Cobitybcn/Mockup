@@ -13,101 +13,65 @@ class MockPromptBuilder
                 ? 'Place the artwork leaning naturally against the wall.'
                 : 'Hang the artwork naturally on the wall at a believable height.');
 
-        $curatorial = $profile['one_line_curatorial_read'] ?? 'Local mock analysis of the artwork.';
-        $summary = $profile['style_summary'] ?? 'Prototype artwork profile.';
         $orientation = $imageMeta['orientation'] ?? 'unknown';
         $scaleText = $this->scaleText($imageMeta, $context);
-        $season = $profile['seasonal_strategy']['primary_season'] ?? 'neutral';
-        $audience = $profile['audience_profile']['primary'] ?? 'collector audience';
         $timeOfDay = $context['time_of_day'] ?? 'day';
-        $artistProfileBlock = $this->artistProfileBlock($profile);
+        
         $scaleRules = PromptSettings::mockupScaleRules();
         $negativeRules = PromptSettings::mockupNegativeRules();
         $qualityRules = PromptSettings::mockupQualityRules();
+        $cameraRules = PromptSettings::mockupCameraRules();
 
-        return <<<PROMPT
-Create a premium art mockup using the approved root artwork image.
-
-PROMPT_RULESET_VERSION: admin_editable_v1
-
-CRITICAL PRESERVATION RULES:
-- Preserve the artwork exactly.
-- Do not repaint, redesign, recolor, crop, stretch, symmetrize or reinterpret the artwork.
-- Do not improve the painting as a new artwork.
-- Preserve composition, colors, traces, brushwork, palette knife marks, incisions, texture and material vibration.
-- The artwork is {$orientation} and must keep its original proportions.
-
-SCALE RULES:
-- {$scaleText}
-{$scaleRules}
-
-ART DIRECTION:
-- Context name: {$context['name']}
-- Purpose: {$context['purpose']}
-- Scene: {$context['scene']}
-- Lighting: {$context['lighting']}
-- Camera: {$context['camera']}
-- Time of day: {$timeOfDay}
-- {$placement}
-- {$humanRule}
-
-CURATORIAL / COMMERCIAL READING:
-- {$curatorial}
-- Visual summary: {$summary}
-- Target audience: {$audience}
-- Seasonal direction: {$season}
-- The environment must feel original, collector-grade, emotionally persuasive and specific to this artwork.
-- Use sophisticated European or American collector interiors, private galleries, design homes or editorial art contexts.
-{$artistProfileBlock}
-
-NEGATIVE RULES:
-{$negativeRules}
-
-MOCKUP QUALITY RULES:
-{$qualityRules}
-
-The result should feel realistic, premium, faithful and commercially useful.
-PROMPT;
-    }
-
-    private function artistProfileBlock(array $profile): string
-    {
-        $text = trim((string)($profile['_artist_profile_prompt'] ?? ''));
-
-        if ($text === '') {
-            return '';
-        }
-
-        return "\nARTIST PROFILE CONTEXT:\n"
-            . "- Use this profile only to choose context, audience, region, atmosphere and commercial positioning.\n"
-            . "- Do not modify, reinterpret, redraw or stylize the artwork because of this profile.\n"
-            . $text;
-    }
-
-    private function scaleText(array $imageMeta, array $context): string
-    {
         $physical = $imageMeta['physical_size'] ?? [];
         $width = $physical['width_cm'] ?? null;
         $height = $physical['height_cm'] ?? null;
         $depth = $physical['depth_cm'] ?? null;
 
+        $widthText = "{$orientation} canvas";
         if ($width && $height) {
-            $text = "The physical artwork measures {$width} cm wide x {$height} cm high.";
-
+            $widthText .= ", {$width} cm wide × {$height} cm high";
             if ($depth) {
-                $text .= " Stretcher/support depth is {$depth} cm.";
+                $widthText .= " × {$depth} cm deep";
             }
-
-            $text .= ' ' . $this->scaleCategoryText((float)$width, (float)$height);
-            $text .= ' ' . $this->scaleAnchorText((float)$width, (float)$height, $context);
-
-            return $text;
+        } else {
+            $widthText = "dimensions not provided";
         }
 
-        return 'No physical size was provided; use a believable collector-home scale based on the artwork proportions.';
+        return <<<PROMPT
+ARTWORK TECHNICAL DATA:
+- Artwork size: {$widthText}.
+
+MOCKUP ART DIRECTION:
+- Scene Name: {$context['name']}
+- Purpose: {$context['purpose']}
+- Scene Description: {$context['scene']}
+- Lighting: {$context['lighting']}
+- Time of Day: {$timeOfDay}
+- Placement: {$placement}
+- Human Figure: {$humanRule}
+
+CAMERA SELECTION RULES:
+{$cameraRules}
+
+NEGATIVE RULES:
+{$negativeRules}
+PROMPT;
     }
 
-    private function scaleAnchorText(float $width, float $height, array $context): string
+    public function scaleText(array $imageMeta, array $context): string
+    {
+        $physical = $imageMeta['physical_size'] ?? [];
+        $width = $physical['width_cm'] ?? null;
+        $height = $physical['height_cm'] ?? null;
+
+        if ($width && $height) {
+            return $this->scaleCategoryText((float)$width, (float)$height) . ' ' . $this->scaleAnchorText((float)$width, (float)$height, $context);
+        }
+
+        return 'Show it at believable real-world scale based on the artwork proportions.';
+    }
+
+    public function scaleAnchorText(float $width, float $height, array $context): string
     {
         $doorRatio = round(($height / 205) * 100);
         $consoleRatio = round($height / 80, 1);
@@ -132,20 +96,23 @@ PROMPT;
         return $text;
     }
 
-    private function humanRule(array $context): string
+    public function humanRule(array $context): string
     {
         if (empty($context['with_human'])) {
             return 'Do not include any human figure.';
         }
 
+        $ethnicities = ['black', 'white', 'asian', 'hispanic', 'middle eastern'];
+        $ethnicity = $ethnicities[array_rand($ethnicities)];
+
         return match ($context['human_profile'] ?? '') {
-            'male_180' => 'Include exactly one discreet standing adult man, 1.80 meters tall, only as a scale reference. He must stand immediately next to the artwork (within 1 meter of the artwork\'s side edge) on the exact same depth plane and floor plane as the wall where the painting is hung (not far away or in the background). He must be secondary, elegant, not posing, and must not distract from the artwork.',
-            'female_155' => 'Include exactly one discreet standing adult woman, 1.55 meters tall, only as a scale reference. She must stand immediately next to the artwork (within 1 meter of the artwork\'s side edge) on the exact same depth plane and floor plane as the wall where the painting is hung (not far away or in the background). She must be secondary, elegant, not posing, and must not distract from the artwork.',
-            default => 'Include exactly one discreet standing human figure only as a scale reference. The person must stand immediately next to the artwork (within 1 meter) on the exact same depth plane and floor plane as the wall where the painting is hung (not far away or in the background).',
+            'male_180' => "Include one standing adult {$ethnicity} man, 1.80 meters tall.",
+            'female_155' => "Include one standing adult {$ethnicity} woman, 1.55 meters tall.",
+            default => "Include one standing adult {$ethnicity} person.",
         };
     }
 
-    private function scaleCategoryText(float $width, float $height): string
+    public function scaleCategoryText(float $width, float $height): string
     {
         $longSide = max($width, $height);
         $shortSide = min($width, $height);

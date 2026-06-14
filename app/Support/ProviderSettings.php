@@ -81,6 +81,16 @@ class ProviderSettings
         );
     }
 
+    /**
+     * Punto #1: verdadero si el modo es 'gemini' o 'openai' (ambos usan APIs reales).
+     * Simplifica las comparaciones en ServiceFactory eliminando la doble negación.
+     */
+    public static function isRealMode(): bool
+    {
+        $mode = self::appMode();
+        return $mode === 'gemini' || $mode === 'openai';
+    }
+
     public static function allowRealApi(): bool
     {
         $fallback = defined('ALLOW_REAL_API') && ALLOW_REAL_API === true ? '1' : '0';
@@ -107,7 +117,7 @@ class ProviderSettings
     public static function geminiImageModel(): string
     {
         return self::normalizeGeminiModel(
-            self::value('gemini_image_model', defined('GEMINI_IMAGE_MODEL') ? (string)GEMINI_IMAGE_MODEL : 'gemini-2.5-flash-image')
+            self::value('gemini_image_model', defined('GEMINI_IMAGE_MODEL') ? (string)GEMINI_IMAGE_MODEL : 'gemini-3.1-flash-image')
         );
     }
 
@@ -215,7 +225,16 @@ class ProviderSettings
 
     private static function normalizeAppMode(string $mode): string
     {
-        return strtolower(trim($mode)) === 'openai' ? 'openai' : 'mock';
+        $mode = strtolower(trim($mode));
+        // Punto #1: 'gemini' es el modo real explícito para Gemini/Vertex AI
+        // 'openai' se mantiene como alias retrocompatible
+        if ($mode === 'gemini') {
+            return 'gemini';
+        }
+        if ($mode === 'openai') {
+            return 'openai';
+        }
+        return 'mock';
     }
 
     private static function normalizeImageProvider(string $provider): string
@@ -230,11 +249,16 @@ class ProviderSettings
 
     private static function normalizeGeminiModel(string $model): string
     {
-        $model = trim($model);
+        $model = strtolower(trim($model));
 
-        if (str_contains($model, 'gemini') && str_contains($model, 'image')) {
+        if (in_array($model, [
+            'gemini-3.1-flash-image',
+            'gemini-3-pro-image',
+            'gemini-2.5-flash-image',
+        ], true)) {
             return $model;
         }
-        return 'gemini-2.5-flash-image';
+
+        return 'gemini-3.1-flash-image';
     }
 }

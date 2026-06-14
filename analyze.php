@@ -135,8 +135,52 @@ try {
         $metadata['artist_notes'] = $sidecarMetadata['artist_notes'];
     }
 
-    $analyzer = ServiceFactory::artworkAnalyzer();
-    $response = $analyzer->analyze($imagePath, $metadata);
+    $appMode = ServiceFactory::appMode();
+
+    if ($appMode === 'mock') {
+        $analyzer = ServiceFactory::artworkAnalyzer();
+        $response = $analyzer->analyze($imagePath, $metadata);
+    } else {
+        // --- REAL MODE: Use MockupContextEngine to analyze and update DB ---
+        $db = Database::connection();
+        $stmtArtwork = $db->prepare("SELECT id FROM artworks WHERE root_file = :root_file LIMIT 1");
+        $stmtArtwork->execute(['root_file' => basename($imagePath)]);
+        $artworkRow = $stmtArtwork->fetch();
+        $artworkId = $artworkRow ? (int)$artworkRow['id'] : null;
+
+        $engine = new MockupContextEngine();
+        $contextAnalysis = $engine->analyzeArtworkContext($imagePath, $metadata);
+        $contextAnalysis['image_path'] = $imagePath;
+
+        if ($artworkId !== null) {
+            $db->beginTransaction();
+            try {
+                // Wipe out previous analysis and contexts
+                $stmtOldAnalysis = $db->prepare("SELECT id FROM artwork_analysis WHERE artwork_id = :artwork_id");
+                $stmtOldAnalysis->execute(['artwork_id' => $artworkId]);
+                $oldAnalysisIds = $stmtOldAnalysis->fetchAll(PDO::FETCH_COLUMN);
+
+                if ($oldAnalysisIds) {
+                    $placeholders = implode(',', array_fill(0, count($oldAnalysisIds), '?'));
+                    $db->prepare("DELETE FROM mockup_contexts WHERE analysis_id IN ($placeholders)")
+                        ->execute($oldAnalysisIds);
+                }
+
+                $db->prepare("DELETE FROM artwork_analysis WHERE artwork_id = :artwork_id")
+                    ->execute(['artwork_id' => $artworkId]);
+
+                $db->commit();
+            } catch (Throwable $e) {
+                $db->rollBack();
+                throw $e;
+            }
+
+            // Generate mockup prompts and save to DB
+            $response = $engine->generateMockupPrompts($artworkId, $contextAnalysis, $metadata);
+        } else {
+            $response = $contextAnalysis;
+        }
+    }
 
     if (!is_dir(ANALYSIS_DIR)) {
         mkdir(ANALYSIS_DIR, 0775, true);

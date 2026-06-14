@@ -14,6 +14,7 @@ class GeminiArtworkProcessor implements ArtworkProcessorInterface
     {
         $mainFile = basename((string)($status['main_file'] ?? ''));
         $source = rtrim($jobDir, '/\\') . DIRECTORY_SEPARATOR . $mainFile;
+        $jobId = basename($jobDir);
 
         if (!$mainFile || !is_file($source)) {
             throw new RuntimeException('No se encontro la imagen principal del job.');
@@ -40,47 +41,39 @@ class GeminiArtworkProcessor implements ArtworkProcessorInterface
 
         file_put_contents($jobDir . '/target_size.txt', 'gemini-native model=' . $model);
 
-        $b64 = $this->client->generateImage($parts, $model);
-        $imageData = base64_decode($b64);
+        $files = [];
+        $paths = [];
 
-        if ($imageData === false) {
-            throw new RuntimeException('Gemini no devolvio una imagen base64 valida.');
+        for ($i = 1; $i <= 3; $i++) {
+            $b64 = $this->client->generateImage($parts, $model);
+            $imageData = base64_decode($b64);
+
+            if ($imageData === false) {
+                throw new RuntimeException('Gemini no devolvio una imagen base64 valida para la version ' . $i);
+            }
+
+            $outputName = 'base_artwork_gemini_' . $jobId . '_v' . $i . '.png';
+            $outputPath = $resultsDir . DIRECTORY_SEPARATOR . $outputName;
+            file_put_contents($outputPath, $imageData);
+
+            $files[] = $outputName;
+            $paths[] = $outputPath;
+            sleep(1);
         }
 
-        $outputName = 'base_artwork_gemini_' . time() . '_' . random_int(1000, 9999) . '.png';
-        $outputPath = $resultsDir . DIRECTORY_SEPARATOR . $outputName;
-        file_put_contents($outputPath, $imageData);
-
         return [
-            'file' => $outputName,
-            'path' => $outputPath,
+            'files' => $files,
+            'paths' => $paths,
             'mock' => false,
             'gemini_root_enhancement' => true,
-            'message' => 'Imagen raiz mejorada con Gemini usando modelo ' . $model . '. Revisala antes de crear mockups.',
-            'meta' => $this->imageMeta($outputPath),
+            'message' => 'Root image enhanced (3 versions). Please select one.',
+            'meta' => $this->imageMeta($paths[0]),
         ];
     }
 
     private function buildPrompt(array $status, string $source): string
     {
-        $artistNotes = trim((string)($status['artist_notes'] ?? ''));
-        $extraCount = count($status['extra_files'] ?? []);
-        $dimensionText = $this->dimensionText($status['measurements'] ?? [], $source);
-        $notesBlock = $artistNotes !== '' ? "\n\nARTIST NOTES:\n{$artistNotes}" : '';
-        $rootArtworkRules = PromptSettings::rootArtworkRules();
-
-        $references = $extraCount > 0
-            ? "\nUsa las imagenes secundarias solo como referencia de textura, color real, incisiones, pincelada, espatula, bordes y bastidor. No deben cambiar la composicion de la imagen principal."
-            : '';
-
-        return <<<PROMPT
-ACTIVE ROOT ARTWORK DIRECTIVES:
-{$rootArtworkRules}
-{$references}
-
-Medidas reales de la obra, no de la foto ni del fondo:
-{$dimensionText}{$notesBlock}
-PROMPT;
+        return PromptSettings::rootArtworkRules();
     }
 
     private function dimensionText(array $measurements, string $source): string
@@ -95,7 +88,8 @@ PROMPT;
             $text .= " They do not refer to the full photograph, background, table, wall, support board, margins, or surrounding objects.";
             $ratio = (float)str_replace(',', '.', $width) / max(0.01, (float)str_replace(',', '.', $height));
             $orientation = $ratio >= 1 ? 'landscape' : 'portrait';
-            $text .= " Use these dimensions to preserve the real artwork proportion. Required output orientation: {$orientation}. Required aspect ratio: " . round($ratio, 4) . ".";
+            $fraction = $this->getRatioFraction($ratio);
+            $text .= " Use these dimensions to preserve the real artwork proportion. Required output orientation: {$orientation}. Required aspect ratio: {$fraction}.";
 
             if ($depth !== '') {
                 $text .= " Stretcher/support depth of the artwork: {$depth} {$unit}.";
@@ -106,6 +100,23 @@ PROMPT;
 
         $meta = $this->imageMeta($source);
         return 'No physical artwork measurements were provided. Preserve the visible artwork proportion from the main image: ' . ($meta['aspect_ratio'] ?? 'unknown') . '.';
+    }
+
+    private function getRatioFraction(float $ratio): string
+    {
+        $best_num = 1;
+        $best_den = 1;
+        $best_diff = 999.0;
+        for ($den = 1; $den <= 16; $den++) {
+            $num = (int)round($ratio * $den);
+            $diff = abs($ratio - ($num / $den));
+            if ($diff < $best_diff) {
+                $best_diff = $diff;
+                $best_num = $num;
+                $best_den = $den;
+            }
+        }
+        return "{$best_num}:{$best_den}";
     }
 
     private function expectedRatio(array $status, string $source): ?float

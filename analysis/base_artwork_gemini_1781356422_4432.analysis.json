@@ -1,0 +1,171 @@
+{
+    "artwork_analysis": {
+        "visual_language": [
+            "Surreal",
+            "Symbolic",
+            "Narrative",
+            "Allegorical",
+            "Architectural",
+            "Dreamlike",
+            "Expressive"
+        ],
+        "emotional_energy": [
+            "Melancholy",
+            "Introspection",
+            "Mystery",
+            "Existential",
+            "Enigmatic",
+            "Haunting",
+            "Contemplative"
+        ],
+        "dominant_colors": [
+            "Cool blues",
+            "Grays",
+            "Black",
+            "Muted whites"
+        ],
+        "secondary_colors": [
+            "Pale yellows (moon)",
+            "Subtle browns (wood, bare trees)",
+            "Muted greens"
+        ],
+        "color_temperature": "Cool",
+        "contrast_level": "High",
+        "composition_type": "Complex narrative with deep perspective",
+        "spatial_presence": "Deep, immersive, theatrical",
+        "artwork_function": "Provoke thought, evoke emotion, serve as a focal point in a curated space",
+        "suggested_audience": [
+            "Collectors of surrealist art",
+            "Enthusiasts of symbolic and psychological narratives",
+            "Individuals appreciating dark academia and gothic aesthetics",
+            "Interior designers seeking statement pieces for sophisticated interiors"
+        ],
+        "commercial_positioning": "Niche, sophisticated, intellectual, emotionally resonant",
+        "one_line_curatorial_read": "A haunting dreamscape that delves into the fractured self and the passage of time within an allegorical, moonlit architectural labyrinth.",
+        "style_summary": "Surreal and Symbolic Narrative with a melancholic, dreamlike aesthetic.",
+        "seasonal_strategy": {
+            "primary_season": "neutral"
+        },
+        "audience_profile": {
+            "primary": "Sophisticated collectors, art enthusiasts, interior designers with a penchant for unique, evocative pieces."
+        }
+    },
+    "recommended_number_of_contexts": 7,
+    "contextual_proposals": [
+        {
+            "context_name": "Nocturne Scholar's Study",
+            "context_role": "primary presentation",
+            "space_type": "Classic study or library with a modern twist",
+            "atmosphere": "Intellectual, contemplative, slightly melancholic, evening",
+            "materials": [
+                "Dark wood paneling",
+                "Leather",
+                "Aged brass accents",
+                "Plaster walls"
+            ],
+            "lighting": "Soft, focused art light on the artwork, ambient low light from a desk lamp or fireplace",
+            "camera_angle": "Eye-level, slightly off-center, incorporating a study desk or armchair",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "This setting positions the artwork as a deep, thoughtful piece, meant for quiet contemplation, fitting its narrative depth and symbolic elements perfectly within an intellectual environment.",
+            "commercial_reason": "Appeals to collectors who appreciate art with intellectual weight and a classic, refined aesthetic, seeing it as a focal point in a personal library or study."
+        },
+        {
+            "context_name": "Brutalist Evening Gallery",
+            "context_role": "scale reference",
+            "space_type": "Loft apartment or minimalist gallery space with brutalist architectural elements",
+            "atmosphere": "Dramatic, stark, modern, grand",
+            "materials": [
+                "Exposed concrete",
+                "Dark steel",
+                "Polished dark floor"
+            ],
+            "lighting": "Dramatic overhead lighting creating strong shadows, highlighting textures",
+            "camera_angle": "Wide shot from a slight distance, showcasing ample wall space around the artwork",
+            "human_presence": "optional standing female figure 1.55m",
+            "curatorial_reason": "Emphasizes the artwork's monumental presence and its ability to command attention in a powerful, contemporary setting. The starkness of the brutalist space contrasts with the artwork's intricate detail, making it stand out.",
+            "commercial_reason": "Targets collectors who favor bold, statement pieces in modern, architectural homes or commercial spaces, appreciating its imposing visual weight."
+        },
+        {
+            "context_name": "Moonlit Solitude Alcove",
+            "context_role": "emotional connection",
+            "space_type": "A quiet reading nook or intimate alcove",
+            "atmosphere": "Intimate, introspective, cozy yet slightly eerie, night-time feel",
+            "materials": [
+                "Textured dark wallpaper (subtle pattern)",
+                "Rich velvet or linen armchair",
+                "Aged wood side table"
+            ],
+            "lighting": "Soft, warm glow from a floor lamp, hinting at moonlight from a window",
+            "camera_angle": "Close-up, showing a comfortable, inviting corner with the artwork as the focal point",
+            "human_presence": "none",
+            "curatorial_reason": "Connects with the artwork's emotional depth and dreamlike quality, inviting the viewer to lose themselves in its narrative within a personal, contemplative space.",
+            "commercial_reason": "Appeals to individuals creating personal sanctuaries, or those who seek art for profound emotional resonance and private contemplation."
+        },
+        {
+            "context_name": "Gilded Age Chamber",
+            "context_role": "architectural study",
+            "space_type": "A room in an older, grand home (e.g., Victorian townhouse, renovated chateau)",
+            "atmosphere": "Old-world charm, slightly ornate, mysterious, refined",
+            "materials": [
+                "Dark, intricate wallpaper or paneled walls",
+                "Gilded mirror",
+                "Antique furniture",
+                "Rich drapery"
+            ],
+            "lighting": "Soft, diffused light from a tall window, perhaps a subtle chandelier glow",
+            "camera_angle": "Medium shot, incorporating some period furniture and architectural details",
+            "human_presence": "none",
+            "curatorial_reason": "Highlights the artwork's classical architectural references and melancholic grandeur, placing it in a historical context that echoes its own narrative depth and structural complexity.",
+            "commercial_reason": "Attracts collectors with a preference for classic aesthetics, eclectic interiors, or historical properties, looking for a piece that bridges past and present with an air of sophisticated mystery."
+        },
+        {
+            "context_name": "Pristine White Cube Exhibit",
+            "context_role": "commercial alternative",
+            "space_type": "Minimalist art gallery or a very clean, contemporary home with gallery-like walls",
+            "atmosphere": "Pure, focused, clean, direct",
+            "materials": [
+                "White walls",
+                "Light oak or polished concrete floor",
+                "Recessed lighting"
+            ],
+            "lighting": "Even, neutral gallery lighting, with a subtle spotlight emphasizing the artwork",
+            "camera_angle": "Straight-on, slightly wide to show surrounding immaculate wall space",
+            "human_presence": "none",
+            "curatorial_reason": "Allows the viewer to focus solely on the artwork's details, composition, and artistic merit without any environmental distractions, emphasizing its intrinsic value.",
+            "commercial_reason": "Broad appeal for modern art collectors, galleries, and interior designers seeking a versatile statement piece for a clean, sophisticated aesthetic where the art truly speaks for itself."
+        },
+        {
+            "context_name": "Forest Edge Loft",
+            "context_role": "organic integration",
+            "space_type": "Open-plan living space with large windows overlooking a natural landscape (forest, garden)",
+            "atmosphere": "Serene, natural, airy, contemplative, blurring indoors and outdoors",
+            "materials": [
+                "Natural wood elements (floor, window frames)",
+                "Light natural fabrics (linen)",
+                "Raw plaster/concrete walls"
+            ],
+            "lighting": "Soft, diffused daylight, highlighting natural textures and drawing connection to the exterior",
+            "camera_angle": "Angled shot, showing the artwork integrated with a view of nature through large windows",
+            "human_presence": "none",
+            "curatorial_reason": "Creates a direct dialogue between the artwork's depicted natural elements (bare trees, moon, dark sky) and the surrounding environment, enhancing its ethereal and profound quality.",
+            "commercial_reason": "Appeals to nature-loving collectors, those with biophilic design preferences, or anyone seeking art that integrates seamlessly with a calm, organic, and contemplative living environment."
+        },
+        {
+            "context_name": "Liminal Hallway Passage",
+            "context_role": "transitional discovery",
+            "space_type": "A well-lit hallway or landing, perhaps leading to another room, with a distinct architectural feature",
+            "atmosphere": "Inviting, transitional, revealing, discovery, anticipation",
+            "materials": [
+                "Smooth plaster walls",
+                "Light stone or wooden floor",
+                "Minimalist console table"
+            ],
+            "lighting": "Bright, diffused natural light from a window or skylight, creating a gentle play of light and shadow",
+            "camera_angle": "Shot down a hallway or corridor, with the artwork as a compelling focal point",
+            "human_presence": "none",
+            "curatorial_reason": "Positions the artwork in a space that encourages movement and discovery, echoing its narrative journey through architectural stairs and openings. It suggests the artwork as a portal to another, imagined realm.",
+            "commercial_reason": "Suitable for collectors looking to animate transitional spaces, transforming hallways or landings into points of profound interest and contemplation rather than mere passage areas."
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_1781356422_4432.png"
+}

@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $error = 'Email o contrasena incorrectos.';
+    $error = 'Incorrect email or password.';
 }
 
 function h($v): string
@@ -28,19 +28,19 @@ function h($v): string
 }
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Ingresar</title>
+    <title>Login - The Artwork Curator</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main class="auth-layout">
     <section class="auth-panel">
-        <a class="brand" href="login.php">ARTMOCK <span class="brand-mark"></span></a>
+        <a class="brand" href="login.php">The Artwork Curator <span class="brand-mark"></span></a>
 
-        <h1 style="margin-top:56px;">Ingresar</h1>
-        <p class="page-kicker">Accede a tu archivo privado de obras, imagenes raiz y mockups curatoriales.</p>
+        <h1 style="margin-top:56px;">Login</h1>
+        <p class="page-kicker">Access your private archive of artworks, root images, and curatorial mockups.</p>
 
         <?php if ($error): ?>
             <p class="notice error"><?= h($error) ?></p>
@@ -50,14 +50,14 @@ function h($v): string
             <label>Email</label>
             <input type="email" name="email" required autocomplete="email">
 
-            <label>Contrasena</label>
+            <label>Password</label>
             <input type="password" name="password" required autocomplete="current-password">
 
-            <button type="submit">Ingresar</button>
+            <button type="submit">Login</button>
         </form>
 
         <p class="auth-links">
-            No tienes cuenta? <a href="register.php">Crear cuenta</a>
+            Don't have an account? <a href="register.php">Register</a>
         </p>
     </section>
 

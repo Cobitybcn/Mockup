@@ -38,22 +38,23 @@ $error = $status['error'] ?? null;
 
 $resultUrl = null;
 
-if ($resultFile && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . basename($resultFile))) {
-    $resultUrl = 'media.php?file=' . rawurlencode(basename($resultFile));
+if ($currentStatus === 'done') {
+    header('Location: root_select.php?job=' . urlencode($job));
+    exit;
 }
 
 $statusLabels = [
-    'queued' => 'En cola',
-    'processing' => 'Procesando',
-    'done' => 'Completado',
+    'queued' => 'Analyzing artwork composition...',
+    'processing' => 'Evaluating visual atmosphere...',
+    'done' => 'Refining artwork presentation...',
     'error' => 'Error',
 ];
 
 $publicStatus = $statusLabels[(string)$currentStatus] ?? (string)$currentStatus;
 $publicMessage = match ((string)$currentStatus) {
-    'queued' => 'Trabajo recibido. Preparando la generacion.',
-    'processing' => 'Estamos creando una imagen raiz limpia y fiel.',
-    default => 'El sistema esta preparando la imagen.',
+    'queued' => 'Analyzing artwork composition and structure...',
+    'processing' => 'Evaluating visual atmosphere and dominant palette...',
+    default => 'The system is preparing the artwork presentation.',
 };
 
 function h($v): string {
@@ -61,50 +62,54 @@ function h($v): string {
 }
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Generando imagen raiz</title>
+    <title>Preparing Root Image - The Artwork Curator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
 
     <style>
         .process-card {
             max-width: 980px;
-            background: #fff;
-            border: 1px solid #dfdfdc;
+            background: var(--surface);
+            border: 1px solid var(--line);
             padding: 32px;
-            box-shadow: 0 18px 46px rgba(0,0,0,.08);
+            box-shadow: var(--shadow);
+            border-radius: var(--radius);
         }
 
         .process-card h2 {
             margin-bottom: 8px;
             font-size: clamp(34px, 5vw, 58px);
-            letter-spacing: 0;
+            letter-spacing: -0.01em;
+            font-family: var(--font-serif);
+            font-weight: 500;
         }
 
         .status-box {
-            font-size: 15px;
-            background: #f1f1ef;
+            font-size: 14px;
+            background: var(--surface-soft);
             padding: 16px;
-            border-left: 4px solid #e51f3f;
+            border-left: 3px solid var(--accent);
             margin: 24px 0;
+            border-radius: 0 var(--radius) var(--radius) 0;
         }
 
         .progress {
             width: 100%;
-            height: 12px;
+            height: 6px;
             overflow: hidden;
-            background: #e7e7e2;
-            border: 1px solid #d8d8d2;
+            background: var(--line);
             margin: 26px 0;
             position: relative;
+            border-radius: 99px;
         }
 
         .progress-bar {
             width: 42%;
             height: 100%;
-            background: #e51f3f;
+            background: var(--accent);
             position: absolute;
             left: -42%;
             top: 0;
@@ -123,20 +128,24 @@ function h($v): string {
             object-fit: contain;
             display: block;
             margin: 24px 0;
-            background: #f1f1ef;
-            border: 12px solid #fff;
-            box-shadow: 0 16px 34px rgba(0,0,0,.12);
+            background: var(--surface-soft);
+            border: 12px solid var(--surface);
+            box-shadow: var(--shadow);
+            border-radius: var(--radius);
         }
 
         .error {
-            color: #a00000;
-            background: #fff1f1;
-            border-left-color: #a00000;
+            color: var(--danger);
+            background: #FFF5F5;
+            border-left-color: var(--danger);
         }
 
         code {
-            background: #f1f1ef;
+            background: var(--surface-soft);
             padding: 2px 5px;
+            font-family: monospace;
+            font-size: 12px;
+            border-radius: 2px;
         }
 
         iframe {
@@ -150,26 +159,7 @@ function h($v): string {
 
 <body>
 <div class="app-shell">
-    <aside class="sidebar">
-        <div class="sidebar-head">
-            <a class="brand" href="dashboard.php">ARTMOCK <span class="brand-mark"></span></a>
-        </div>
-
-        <div class="sidebar-action">
-            <a class="button-link" href="artwork_new.php">+ Nueva obra</a>
-        </div>
-
-        <ul class="nav">
-            <li><a href="dashboard.php">Dashboard</a></li>
-            <li><a class="active" href="artwork_new.php">Crear obra raiz</a></li>
-            <li><a href="artist_profile.php">Perfil de artista</a></li>
-            <?php if ($isAdmin): ?>
-                <li><a href="admin_prompts.php">Admin prompts</a></li>
-                <li><a href="admin_api_keys.php">API keys</a></li>
-            <?php endif; ?>
-            <li><a href="account.php">Cuenta y pagos</a></li>
-        </ul>
-    </aside>
+    <?php include __DIR__ . '/sidebar.php'; ?>
 
     <main class="main-area">
         <header class="app-header">
@@ -177,59 +167,59 @@ function h($v): string {
         </header>
 
         <div class="alert-strip">
-            Formulario 1: estamos creando una imagen raiz fiel para los mockups posteriores.
+            Step 1 · Create Root Image: preparing a faithful, clean and proportional base image for future mockups.
         </div>
 
         <div class="workspace">
             <section class="process-card">
                 <?php if ($currentStatus === 'done' && $resultUrl): ?>
 
-                    <h2>Imagen raiz creada</h2>
-                    <p class="page-kicker">Revisa la imagen antes de crear mockups curatoriales.</p>
+                    <h2>Root Image Created</h2>
+                    <p class="page-kicker">Review the base image before proceeding to curatorial direction.</p>
 
                     <div class="status-box">
-                        Imagen raiz lista. Revisala antes de crear mockups.
+                        Root image is ready. Please inspect the framing and alignment.
                     </div>
 
-                    <img class="root-preview" src="<?= h($resultUrl) ?>" alt="Imagen raiz generada">
+                    <img class="root-preview" src="<?= h($resultUrl) ?>" alt="Generated root artwork">
 
                     <div class="topbar-actions">
                         <a class="button-link" href="form2.php?image=<?= rawurlencode(basename($resultFile)) ?>">
-                            Continuar al formulario 2
+                            Proceed to Step 2 · Curatorial Direction
                         </a>
 
                         <a class="button-link secondary" href="artwork_new.php">
-                            Crear otra imagen
+                            Upload another artwork
                         </a>
                     </div>
 
                 <?php elseif ($currentStatus === 'error'): ?>
 
-                    <h2>Error en la generacion</h2>
+                    <h2>Generation Error</h2>
 
                     <div class="status-box error">
-                        <?= h($error ?: $message ?: 'Ocurrio un error desconocido.') ?>
+                        <?= h($error ?: $message ?: 'An unknown error occurred.') ?>
                     </div>
 
-                    <p>Trabajo: <code><?= h($job) ?></code></p>
+                    <p>Job ID: <code><?= h($job) ?></code></p>
 
-                    <a class="button-link" href="artwork_new.php">Volver</a>
+                    <a class="button-link" href="artwork_new.php">Go back</a>
 
                 <?php else: ?>
 
-                    <h2>Preparando obra raiz</h2>
-                    <p class="page-kicker">Puedes dejar esta pantalla abierta. El sistema actualizara el resultado automaticamente.</p>
+                    <h2>Preparing Root Image</h2>
+                    <p class="page-kicker">You can leave this window open. The system will update the progress automatically.</p>
 
                     <div class="status-box" id="statusBox">
-                        Estado: <strong id="statusText"><?= h($publicStatus) ?></strong><br>
+                        Status: <strong id="statusText"><?= h($publicStatus) ?></strong><br>
                         <span id="messageText"><?= h($publicMessage) ?></span>
                     </div>
 
-                    <div class="progress" aria-label="Generando imagen">
+                    <div class="progress" aria-label="Generating image">
                         <div class="progress-bar"></div>
                     </div>
 
-                    <p>Trabajo: <code><?= h($job) ?></code></p>
+                    <p>Job ID: <code><?= h($job) ?></code></p>
 
                     <script>
                         const job = <?= json_encode($job) ?>;
@@ -244,28 +234,30 @@ function h($v): string {
                                 const data = await response.json();
 
                                 const labels = {
-                                    queued: 'En cola',
-                                    processing: 'Procesando',
-                                    done: 'Completado',
+                                    queued: 'Analyzing artwork composition...',
+                                    processing: 'Evaluating visual atmosphere...',
+                                    done: 'Refining artwork presentation...',
                                     error: 'Error'
                                 };
 
                                 const messages = {
-                                    queued: 'Trabajo recibido. Preparando la generacion.',
-                                    processing: 'Estamos creando una imagen raiz limpia y fiel.',
-                                    done: 'Imagen raiz lista. Revisala antes de crear mockups.',
-                                    error: 'No se pudo completar la generacion.'
+                                    queued: 'Analyzing artwork composition and structure...',
+                                    processing: 'Evaluating visual atmosphere and dominant palette...',
+                                    done: 'Artwork presentation refined. Reviewing base image...',
+                                    error: 'Generation could not be completed.'
                                 };
 
-                                document.getElementById('statusText').textContent = labels[data.status] || data.status || 'Pendiente';
-                                document.getElementById('messageText').textContent = data.message || messages[data.status] || 'El sistema esta preparando la imagen.';
+                                document.getElementById('statusText').textContent = labels[data.status] || data.status || 'Pending';
+                                document.getElementById('messageText').textContent = data.message || messages[data.status] || 'The system is preparing the image.';
 
-                                if (data.status === 'done' || data.status === 'error') {
+                                if (data.status === 'done') {
+                                    window.location.href = 'root_select.php?job=' + encodeURIComponent(job);
+                                } else if (data.status === 'error') {
                                     window.location.reload();
                                 }
 
                             } catch (e) {
-                                console.log('Esperando status...', e);
+                                console.log('Waiting for status update...', e);
                             }
                         }
 

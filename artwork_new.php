@@ -15,37 +15,121 @@ function h($v): string
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Generar obra raiz</title>
+  <title>Step 1 · Create Root Image - The Artwork Curator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <style>
+      .form-container {
+          max-width: 700px;
+          margin: 30px auto;
+      }
+      .dropzone-container {
+          position: relative;
+          border: 1.5px dashed var(--line);
+          border-radius: var(--radius);
+          background: var(--surface-soft);
+          padding: 40px 20px;
+          text-align: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 24px;
+      }
+      .dropzone-container:hover,
+      .dropzone-container.dragover {
+          border-color: var(--accent);
+          background: var(--surface);
+          box-shadow: var(--shadow-hover);
+      }
+      .dropzone-container input[type="file"] {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          opacity: 0;
+          cursor: pointer;
+      }
+      .dropzone-icon {
+          width: 48px;
+          height: 48px;
+          color: var(--accent);
+          opacity: 0.8;
+      }
+      .dropzone-text {
+          font-family: var(--font-sans);
+          font-size: 14px;
+          color: var(--ink);
+          font-weight: 500;
+      }
+      .dropzone-text span {
+          color: var(--accent);
+          text-decoration: underline;
+      }
+      .dropzone-info {
+          font-size: 11px;
+          color: var(--muted);
+      }
+      .dropzone-preview {
+          display: none;
+          max-width: 150px;
+          max-height: 150px;
+          object-fit: contain;
+          border: 1px solid var(--line);
+          border-radius: 2px;
+          margin-top: 10px;
+          box-shadow: var(--shadow);
+      }
+      .dim-input-group {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 15px;
+          margin-top: 10px;
+      }
+      .dim-input-field {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+      }
+      .dim-input-field label {
+          margin: 0;
+          font-size: 10px;
+          text-transform: uppercase;
+          font-weight: 600;
+          color: var(--muted);
+          letter-spacing: 0.08em;
+      }
+      .dim-input-field input,
+      .dim-input-field select {
+          padding: 10px 12px;
+          font-size: 13px;
+          width: 100%;
+      }
+      .step-actions {
+          margin-top: 35px;
+          border-top: 1px dashed var(--line);
+          padding-top: 25px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+      .step-actions button {
+          width: auto;
+          margin: 0;
+          padding: 14px 28px;
+      }
+  </style>
 </head>
 <body>
 
 <div class="app-shell">
-  <aside class="sidebar">
-    <div class="sidebar-head">
-      <a class="brand" href="dashboard.php">ARTMOCK <span class="brand-mark"></span></a>
-    </div>
-
-    <div class="sidebar-action">
-      <a class="button-link" href="artwork_new.php">+ Nueva obra</a>
-    </div>
-
-    <ul class="nav">
-      <li><a href="dashboard.php">Dashboard</a></li>
-      <li><a class="active" href="artwork_new.php">Crear obra raiz</a></li>
-      <li><a href="artist_profile.php">Perfil de artista</a></li>
-      <?php if ($isAdmin): ?>
-        <li><a href="admin_prompts.php">Admin prompts</a></li>
-        <li><a href="admin_api_keys.php">API keys</a></li>
-      <?php endif; ?>
-      <li><a href="account.php">Cuenta y pagos</a></li>
-    </ul>
-
-    <div class="nav-section">Sesion</div>
-    <ul class="nav">
-      <li><a href="logout.php">Salir</a></li>
-    </ul>
-  </aside>
+    <?php include __DIR__ . '/sidebar.php'; ?>
 
   <main class="main-area">
     <header class="app-header">
@@ -53,14 +137,14 @@ function h($v): string
     </header>
 
     <div class="alert-strip">
-      Formulario 1: crea una imagen raiz fiel. Los mockups se generan despues.
+      Step 1 · Create Root Image: Upload the original artwork to isolate the canvas, remove background noise and shadow interference.
     </div>
 
     <div class="workspace">
       <div class="workspace-header">
         <div>
-          <h1>Upload artwork</h1>
-          <p>Sube una fotografia de la obra y define sus medidas reales.</p>
+          <h1>Step 1 · Upload Artwork</h1>
+          <p>Upload the original art piece and enter its actual physical dimensions.</p>
         </div>
         <div class="topbar-actions">
           <a class="button-link secondary" href="dashboard.php">Dashboard</a>
@@ -68,42 +152,113 @@ function h($v): string
       </div>
 
       <p class="page-kicker">
-        El sistema preparara una imagen raiz limpia, frontal y fiel para construir los mockups posteriores.
-        La obra debe conservar su identidad visual, textura, trazo y materialidad.
+        The system uses creative models to generate 3 candidates of your artwork isolated from its environment. 
+        It is critical to specify the exact canvas sizes to maintain realistic scaling in future mockups.
       </p>
 
-      <form action="start_generate.php" method="post" enctype="multipart/form-data" class="form">
+      <div class="form-container">
+        <form action="start_generate.php" method="post" enctype="multipart/form-data" class="panel">
+          
+          <div class="form-group" style="margin-bottom: 24px;">
+            <label style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Primary Image of the Artwork</label>
+            
+            <div class="dropzone-container" id="dropzone">
+                <svg class="dropzone-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <div class="dropzone-text" id="dropzoneText">Drag and drop your image here, or <span>browse files</span></div>
+                <div class="dropzone-info">Supports PNG, JPG, JPEG or WEBP (Max 15MB)</div>
+                <img id="previewImage" class="dropzone-preview" alt="Preview" />
+                <input type="file" name="main_artwork" id="fileInput" accept="image/*" required>
+            </div>
+          </div>
 
-        <label>Imagen principal de la obra completa</label>
-        <input type="file" name="main_artwork" accept="image/*" required>
-        <small>
-          Esta imagen manda sobre composicion, proporcion, encuadre completo e identidad general.
-        </small>
+          <div class="form-group">
+            <label style="margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Physical Dimensions</label>
+            <small style="margin: 4px 0 14px 0; color: var(--muted); font-size: 11.5px; line-height: 1.4;">
+              Provide the artwork dimensions without accounting for frames, supports, shadows or photo borders.
+            </small>
+            
+            <div class="dim-input-group">
+              <div class="dim-input-field">
+                <label>Width</label>
+                <input type="number" name="width" step="0.1" placeholder="e.g. 80" required min="0.1">
+              </div>
+              <div class="dim-input-field">
+                <label>Height</label>
+                <input type="number" name="height" step="0.1" placeholder="e.g. 100" required min="0.1">
+              </div>
+              <div class="dim-input-field">
+                <label>Depth (optional)</label>
+                <input type="number" name="depth" step="0.1" placeholder="e.g. 4">
+              </div>
+              <div class="dim-input-field">
+                <label>Unit</label>
+                <select name="unit">
+                  <option value="cm" selected>cm</option>
+                  <option value="in">inches</option>
+                </select>
+              </div>
+            </div>
+          </div>
 
-        <label>Medidas reales de la obra de arte</label>
-        <small>
-          No incluyas fondo, mesa, pared, margen de la foto, soporte externo ni elementos que no formen parte de la obra.
-        </small>
-        <div class="row">
-          <input type="number" name="width" step="0.1" placeholder="Ancho real de la obra">
-          <input type="number" name="height" step="0.1" placeholder="Alto real de la obra">
-          <input type="number" name="depth" step="0.1" placeholder="Profundidad del bastidor">
-          <select name="unit">
-            <option value="cm" selected>cm</option>
-            <option value="in">in</option>
-          </select>
-        </div>
+          <div class="step-actions">
+            <span style="font-size: 11px; color: var(--muted);">Beta Mode: Uses Imagen 3 generation pipeline.</span>
+            <button type="submit" class="button">Upload & Create Root Candidates</button>
+          </div>
 
-        <small>
-          Beta: la imagen raiz se genera automaticamente con la configuracion estable del sistema.
-        </small>
-
-        <button type="submit">Generar obra raiz mejorada</button>
-
-      </form>
+        </form>
+      </div>
     </div>
   </main>
 </div>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const dropzone = document.getElementById('dropzone');
+    const dropzoneText = document.getElementById('dropzoneText');
+    const previewImage = document.getElementById('previewImage');
+
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            updateDropzoneWithFile(file);
+        }
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+        }, false);
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const file = dt.files[0];
+        if (file) {
+            fileInput.files = dt.files;
+            updateDropzoneWithFile(file);
+        }
+    });
+
+    function updateDropzoneWithFile(file) {
+        dropzoneText.innerHTML = `Selected: <strong>${file.name}</strong> (Click to replace)`;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            previewImage.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    }
+</script>
 
 </body>
 </html>

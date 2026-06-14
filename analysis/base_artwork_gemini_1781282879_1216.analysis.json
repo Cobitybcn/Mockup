@@ -1,0 +1,169 @@
+{
+    "artwork_analysis": {
+        "visual_language": [
+            "stylized figurative",
+            "psychological portraiture",
+            "monochromatic drawing",
+            "fragmented forms",
+            "symbolic abstraction",
+            "linear and chiaroscuro elements"
+        ],
+        "emotional_energy": [
+            "introspective",
+            "contemplative",
+            "profound",
+            "enigmatic",
+            "somber",
+            "thought-provoking",
+            "duality",
+            "inner struggle/harmony"
+        ],
+        "dominant_colors": [
+            "black",
+            "white"
+        ],
+        "secondary_colors": [
+            "shades of grey"
+        ],
+        "color_temperature": "Neutral, leaning cool due to monochrome and stark contrasts",
+        "contrast_level": "High contrast with subtle tonal gradations",
+        "composition_type": "Centralized, asymmetrical balance, portrait-oriented",
+        "spatial_presence": "Intimate, reflective, commands intellectual engagement",
+        "artwork_function": "Symbolic representation, catalyst for introspection, aesthetic contemplation",
+        "suggested_audience": [
+            "collectors of contemporary art",
+            "galleries",
+            "architects",
+            "interior designers for high-end projects",
+            "curators",
+            "buyers interested in symbolic and psychological art",
+            "aficionados of drawing and graphic arts"
+        ],
+        "commercial_positioning": "Premium contemporary art for collectors, galleries, and high-level designers. Symbolic, contemplative drawing with intellectual depth, suitable for sophisticated private collections and curated spaces.",
+        "one_line_curatorial_read": "An ethereal yet powerful monochromatic drawing exploring fragmented identity and the enigmatic architecture of the self.",
+        "style_summary": "Monochromatic, stylized figurative drawing with expressionistic and symbolic undertones, deeply psychological.",
+        "seasonal_strategy": {
+            "primary_season": "neutral"
+        },
+        "audience_profile": {
+            "primary": "Intellectual collectors and design professionals interested in introspective and symbolically rich contemporary graphic art."
+        }
+    },
+    "recommended_number_of_contexts": 7,
+    "contextual_proposals": [
+        {
+            "context_name": "Minimalist Serenity Study",
+            "context_role": "primary presentation",
+            "space_type": "minimalist private study or gallery corner",
+            "atmosphere": "serene, contemplative, quiet, intellectual",
+            "materials": [
+                "light grey plaster wall",
+                "pale wood floor",
+                "simple minimalist furniture"
+            ],
+            "lighting": "soft, diffused daylight from a hidden window",
+            "camera_angle": "eye-level, slightly wider shot",
+            "human_presence": "none",
+            "curatorial_reason": "This clean, uncluttered setting amplifies the artwork's quiet intensity and intellectual depth, positioning it as a focal point for reflection and introspection.",
+            "commercial_reason": "Appeals to collectors and interior designers seeking sophisticated, thought-provoking pieces that enhance a minimalist or contemporary intellectual space."
+        },
+        {
+            "context_name": "Collector's Nocturne Library",
+            "context_role": "collector positioning",
+            "space_type": "intimate private library or study",
+            "atmosphere": "intimate, sophisticated, quiet, scholarly, evening",
+            "materials": [
+                "dark wood shelving",
+                "rich textile armchair",
+                "soft rug"
+            ],
+            "lighting": "focused art lighting on the piece, warm ambient light",
+            "camera_angle": "close-up on artwork with some background blur",
+            "human_presence": "none",
+            "curatorial_reason": "The intimate, scholarly environment emphasizes the artwork's psychological depth, inviting prolonged contemplation in a personal sanctuary.",
+            "commercial_reason": "Targets discerning collectors who appreciate art for intellectual engagement and desire pieces that resonate deeply within their private, cultivated spaces."
+        },
+        {
+            "context_name": "Contemporary Architectural Hearth",
+            "context_role": "architectural study / commercial alternative",
+            "space_type": "spacious living area in a modern residence",
+            "atmosphere": "sophisticated, calm, inviting, design-led",
+            "materials": [
+                "light oak paneling",
+                "textured concrete fireplace",
+                "large windows",
+                "minimalist custom furniture"
+            ],
+            "lighting": "soft, even daylight",
+            "camera_angle": "wider shot, showcasing the artwork as a focal point within a curated interior",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "Connects the artwork's introspective quality with modern architectural living, demonstrating its impact as a central piece within a high-design domestic environment.",
+            "commercial_reason": "Positions the artwork for architects and high-end interior designers, highlighting its ability to integrate seamlessly and add depth to sophisticated residential projects."
+        },
+        {
+            "context_name": "Curated Passage",
+            "context_role": "scale reference / gallery context",
+            "space_type": "gallery hallway or an entrance in a private residence",
+            "atmosphere": "clean, focused, transitional, inviting pause",
+            "materials": [
+                "white gallery walls",
+                "light oak flooring"
+            ],
+            "lighting": "overhead track lighting highlighting the artwork",
+            "camera_angle": "straight-on view, slightly angled to show depth of hallway",
+            "human_presence": "optional standing female figure 1.55m",
+            "curatorial_reason": "Showcases the artwork in a classic exhibition context, emphasizing its gallery-readiness and ability to command attention in a public or semi-public setting, while providing human scale.",
+            "commercial_reason": "Reinforces the artwork's institutional appeal and its suitability for display in galleries and high-end residential entryways or corridors."
+        },
+        {
+            "context_name": "Textured Plaster Sanctuary",
+            "context_role": "aesthetic harmony",
+            "space_type": "minimalist living room with subtle architectural features",
+            "atmosphere": "serene, architectural, organic, quiet strength",
+            "materials": [
+                "textured off-white/light grey plaster walls",
+                "natural stone floor",
+                "light linen curtains"
+            ],
+            "lighting": "soft, diffused morning light",
+            "camera_angle": "three-quarter view, slightly elevated",
+            "human_presence": "none",
+            "curatorial_reason": "The tactile, quiet background complements the subtle detail and monochromatic nature of the drawing, enhancing its introspective theme within a refined, sensory-rich space.",
+            "commercial_reason": "Appeals to collectors and designers who favor a minimalist yet organic aesthetic, where texture and light play a crucial role in creating a contemplative atmosphere."
+        },
+        {
+            "context_name": "Dreamscape Retreat",
+            "context_role": "personal contemplation",
+            "space_type": "master bedroom wall, minimalist design",
+            "atmosphere": "calm, personal, reflective, peaceful",
+            "materials": [
+                "muted tone wall (e.g., soft taupe or pale grey)",
+                "simple bedding (linen)",
+                "minimalist bedside table"
+            ],
+            "lighting": "soft, indirect ambient light, possibly a dim bedside lamp",
+            "camera_angle": "head-on, slightly wide to show a hint of the room",
+            "human_presence": "none",
+            "curatorial_reason": "Positions the artwork as a source of personal reflection and quiet contemplation, fitting naturally into a sophisticated private sanctuary designed for rest and thought.",
+            "commercial_reason": "Targets collectors seeking art that resonates on a personal level and enhances the tranquil, sophisticated ambiance of a private bedroom in a luxury home."
+        },
+        {
+            "context_name": "Creative Insight Studio",
+            "context_role": "intellectual engagement",
+            "space_type": "architect's or designer's studio/office",
+            "atmosphere": "intellectual, focused, creative, inspiring",
+            "materials": [
+                "dark steel framed windows",
+                "light wood desk",
+                "neutral wall",
+                "architectural models/books"
+            ],
+            "lighting": "bright, even natural light",
+            "camera_angle": "slightly off-center, showing the artwork as an inspiration point",
+            "human_presence": "none",
+            "curatorial_reason": "Highlights the artwork's appeal to professionals in design and architecture, emphasizing its intellectual depth and ability to stimulate thought and creativity within a refined workspace.",
+            "commercial_reason": "Positions the artwork for commercial acquisition by architectural firms, design studios, or individual professionals seeking art that aligns with a rigorous yet creative intellectual environment."
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_1781282879_1216.png"
+}

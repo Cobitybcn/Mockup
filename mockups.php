@@ -69,41 +69,15 @@ function page_url(int $page, string $query): string
 }
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Mockups</title>
+    <title>Mockups - The Artwork Curator</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="app-shell">
-    <aside class="sidebar">
-        <div class="sidebar-head">
-            <a class="brand" href="dashboard.php">ARTMOCK <span class="brand-mark"></span></a>
-        </div>
-
-        <div class="sidebar-action">
-            <a class="button-link" href="artwork_new.php">+ Nueva obra</a>
-        </div>
-
-        <ul class="nav">
-            <li><a href="dashboard.php">Dashboard</a></li>
-            <li><a href="artwork_new.php">Crear obra raiz</a></li>
-            <li><a href="artist_profile.php">Perfil de artista</a></li>
-            <?php if ($isAdmin): ?>
-                <li><a href="admin_prompts.php">Admin prompts</a></li>
-                <li><a href="admin_api_keys.php">API keys</a></li>
-            <?php endif; ?>
-            <li><a href="account.php">Cuenta y pagos</a></li>
-        </ul>
-
-        <div class="nav-section">Archivo</div>
-        <ul class="nav">
-            <li><a href="dashboard.php#obras">Obras raiz</a></li>
-            <li><a class="active" href="mockups.php">Mockups</a></li>
-            <li><a href="logout.php">Salir</a></li>
-        </ul>
-    </aside>
+    <?php include __DIR__ . '/sidebar.php'; ?>
 
     <main class="main-area">
         <header class="app-header">
@@ -111,48 +85,48 @@ function page_url(int $page, string $query): string
         </header>
 
         <div class="alert-strip">
-            Archivo completo de mockups generados.
+            Full archive of generated curatorial mockups.
         </div>
 
         <div class="workspace">
             <div class="workspace-header">
                 <div>
-                    <h1>Mockups</h1>
-                    <p><?= h($total) ?> imagenes guardadas en tu archivo privado.</p>
+                    <h1>Generated Mockups</h1>
+                    <p><?= h($total) ?> images saved in your private archive.</p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link" href="artwork_new.php">Upload artwork</a>
+                    <a class="button-link" href="artwork_new.php">Upload Artwork</a>
                     <a class="button-link secondary" href="dashboard.php">Dashboard</a>
                 </div>
             </div>
 
             <form class="toolbar-form" method="get">
-                <input type="text" name="q" value="<?= h($query) ?>" placeholder="Buscar por contexto, archivo u obra">
-                <button type="submit">Buscar</button>
+                <input type="text" name="q" value="<?= h($query) ?>" placeholder="Search by context, file or artwork title">
+                <button type="submit">Search</button>
                 <?php if ($query !== ''): ?>
-                    <a class="button-link secondary" href="mockups.php">Limpiar</a>
+                    <a class="button-link secondary" href="mockups.php">Clear</a>
                 <?php endif; ?>
             </form>
 
             <section class="panel">
                 <div class="section-heading">
-                    <h2>Archivo completo</h2>
-                    <p>Pagina <?= h($page) ?> de <?= h($totalPages) ?></p>
+                    <h2>Mockup Archive</h2>
+                    <p>Page <?= h($page) ?> of <?= h($totalPages) ?></p>
                 </div>
 
                 <?php if (!$mockups): ?>
-                    <div class="empty-state">No hay mockups para mostrar.</div>
+                    <div class="empty-state">No mockups to display.</div>
                 <?php else: ?>
                     <div class="grid">
                         <?php foreach ($mockups as $mockup): ?>
                             <article class="item-card">
-                                <a href="viewer.php?id=<?= h($mockup['id']) ?>" aria-label="Abrir mockup">
+                                <a href="viewer.php?id=<?= h($mockup['id']) ?>" aria-label="Open mockup">
                                     <img src="<?= h(result_url($mockup['mockup_file'])) ?>" alt="Mockup">
                                 </a>
                                 <h3><?= h(Display::contextTitle($mockup['context_id'])) ?></h3>
-                                <p class="meta-line"><?= h(date('d/m/Y H:i', strtotime((string)$mockup['created_at']))) ?></p>
+                                <p class="meta-line"><?= h(date('m/d/Y H:i', strtotime((string)$mockup['created_at']))) ?></p>
                                 <div class="card-actions">
-                                    <a href="<?= h(download_url($mockup['mockup_file'])) ?>" aria-label="Descargar mockup" title="Descargar">
+                                    <a href="<?= h(download_url($mockup['mockup_file'])) ?>" aria-label="Download mockup" title="Download">
                                         <span class="download-icon" aria-hidden="true"></span>
                                     </a>
                                 </div>
@@ -162,15 +136,15 @@ function page_url(int $page, string $query): string
                 <?php endif; ?>
 
                 <?php if ($totalPages > 1): ?>
-                    <nav class="pagination" aria-label="Paginacion">
+                    <nav class="pagination" aria-label="Pagination">
                         <?php if ($page > 1): ?>
-                            <a class="button-link secondary" href="<?= h(page_url($page - 1, $query)) ?>">Anterior</a>
+                            <a class="button-link secondary" href="<?= h(page_url($page - 1, $query)) ?>">Previous</a>
                         <?php endif; ?>
 
-                        <span>Pagina <?= h($page) ?> / <?= h($totalPages) ?></span>
+                        <span>Page <?= h($page) ?> / <?= h($totalPages) ?></span>
 
                         <?php if ($page < $totalPages): ?>
-                            <a class="button-link secondary" href="<?= h(page_url($page + 1, $query)) ?>">Siguiente</a>
+                            <a class="button-link secondary" href="<?= h(page_url($page + 1, $query)) ?>">Next</a>
                         <?php endif; ?>
                     </nav>
                 <?php endif; ?>

@@ -43,6 +43,11 @@ class ArtistProfile
                     preferred_contexts = :preferred_contexts,
                     forbidden_contexts = :forbidden_contexts,
                     commercial_positioning = :commercial_positioning,
+                    conceptual_keywords = :conceptual_keywords,
+                    tone_of_voice = :tone_of_voice,
+                    marketplace_strategy = :marketplace_strategy,
+                    social_strategy = :social_strategy,
+                    pinterest_strategy = :pinterest_strategy,
                     updated_at = :updated_at
                 WHERE id = :id
                 AND user_id = :user_id
@@ -56,11 +61,15 @@ class ArtistProfile
             INSERT INTO artist_profiles (
                 user_id, artist_name, short_bio, statement, visual_language, materials,
                 recurring_themes, palette_notes, target_audience, preferred_regions,
-                preferred_contexts, forbidden_contexts, commercial_positioning, created_at, updated_at
+                preferred_contexts, forbidden_contexts, commercial_positioning,
+                conceptual_keywords, tone_of_voice, marketplace_strategy, social_strategy, pinterest_strategy,
+                created_at, updated_at
             ) VALUES (
                 :user_id, :artist_name, :short_bio, :statement, :visual_language, :materials,
                 :recurring_themes, :palette_notes, :target_audience, :preferred_regions,
-                :preferred_contexts, :forbidden_contexts, :commercial_positioning, :created_at, :updated_at
+                :preferred_contexts, :forbidden_contexts, :commercial_positioning,
+                :conceptual_keywords, :tone_of_voice, :marketplace_strategy, :social_strategy, :pinterest_strategy,
+                :created_at, :updated_at
             )
         ');
         $stmt->execute($profile);
@@ -72,16 +81,21 @@ class ArtistProfile
         $fields = [
             'artist_name' => 'Artist name',
             'short_bio' => 'Short bio',
-            'statement' => 'Statement',
-            'visual_language' => 'Visual language',
+            'statement' => 'Preferred description tone',
+            'visual_language' => 'Core artistic language',
             'materials' => 'Materials and process',
-            'recurring_themes' => 'Recurring themes',
-            'palette_notes' => 'Palette notes',
+            'recurring_themes' => 'Recurring symbols and motifs',
+            'palette_notes' => 'Emotional atmosphere',
             'target_audience' => 'Target audience',
             'preferred_regions' => 'Preferred regions',
-            'preferred_contexts' => 'Preferred contexts',
-            'forbidden_contexts' => 'Forbidden contexts',
-            'commercial_positioning' => 'Commercial positioning',
+            'preferred_contexts' => 'Preferred mockup contexts',
+            'forbidden_contexts' => 'Excluded contexts',
+            'commercial_positioning' => 'Forbidden language',
+            'conceptual_keywords' => 'Conceptual keywords',
+            'tone_of_voice' => 'Tone of voice',
+            'marketplace_strategy' => 'Marketplace strategy',
+            'social_strategy' => 'Social media strategy',
+            'pinterest_strategy' => 'Pinterest strategy',
         ];
 
         foreach ($fields as $key => $label) {
@@ -121,6 +135,11 @@ class ArtistProfile
             'preferred_contexts',
             'forbidden_contexts',
             'commercial_positioning',
+            'conceptual_keywords',
+            'tone_of_voice',
+            'marketplace_strategy',
+            'social_strategy',
+            'pinterest_strategy',
         ];
     }
 

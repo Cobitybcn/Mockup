@@ -113,10 +113,10 @@ class MockArtworkAnalyzer implements ArtworkAnalyzerInterface
 
         return [
             'style_summary' => $artistProfilePrompt !== ''
-                ? 'Perfil simulado: obra contemporanea leida desde estilo, perfil del artista, materialidad, temperatura emocional y potencial comercial.'
-                : 'Perfil simulado: obra contemporanea leida desde estilo, materialidad, temperatura emocional y potencial comercial.',
+                ? 'Mock profile: contemporary artwork read from visible style, artist context, materiality, emotional temperature and buyer fit.'
+                : 'Mock profile: contemporary artwork read from visible style, materiality, emotional temperature and buyer fit.',
             'style_tags' => array_values(array_unique($styleTags)),
-            'mood_tags' => ['calm', 'contemplative', 'premium', 'quiet'],
+            'mood_tags' => ['calm', 'contemplative', 'sober', 'quiet'],
             'palette' => ['simulated dominant palette', 'artist-provided notes pending'],
             'palette_family' => array_values(array_unique($paletteFamily)),
             'luminosity' => 'medium',
@@ -124,18 +124,18 @@ class MockArtworkAnalyzer implements ArtworkAnalyzerInterface
             'detail_density' => 'medium',
             'texture_visibility' => 'high',
             'structure_tags' => ['surface', 'gesture', 'composition', 'materiality'],
-            'commercial_fit' => ['collector', 'gallery', 'designer_home', 'premium', $season],
+            'commercial_fit' => ['collector', 'gallery', 'designer_home', $season],
             'seasonality' => [$season],
             'recommended_shot_needs' => ['front', 'scale proof', 'material detail', 'collector context'],
             'avoid' => ['generic room', 'cheap decor', 'visual clutter', 'reinterpretation'],
-            'one_line_curatorial_read' => 'Lectura mock: la obra debe presentarse como pieza fiel, material y comercialmente deseable sin alterar su identidad visual.',
+            'one_line_curatorial_read' => 'Mock reading: describe the work through its visible color, surface, composition and emotional atmosphere.',
             'style_interpretation' => [
                 'dominant_language' => $styleTags,
                 'reads_through' => ['color vibration', 'surface', 'trace', 'material presence'],
             ],
             'emotional_palette' => [
                 'temperature' => in_array('warm', $paletteFamily, true) ? 'warm' : (in_array('cool', $paletteFamily, true) ? 'cool' : 'balanced'),
-                'psychological_associations' => ['contemplation', 'premium calm', 'collector confidence'],
+                'psychological_associations' => ['contemplation', 'quiet focus', 'collector confidence'],
             ],
             'audience_profile' => [
                 'primary' => $targetAudience !== '' ? $targetAudience : 'collector or premium interior buyer',

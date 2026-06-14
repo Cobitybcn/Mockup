@@ -1,0 +1,168 @@
+{
+    "artwork_analysis": {
+        "visual_language": [
+            "surreal",
+            "narrative",
+            "figurative",
+            "architectural",
+            "symbolic",
+            "expressive"
+        ],
+        "emotional_energy": [
+            "mysterious",
+            "melancholic",
+            "introspective",
+            "dreamlike",
+            "eerie",
+            "contemplative",
+            "somber",
+            "uncanny"
+        ],
+        "dominant_colors": [
+            "dark greys",
+            "muted blues",
+            "earthy browns",
+            "deep blacks"
+        ],
+        "secondary_colors": [
+            "pale yellow",
+            "off-white",
+            "beige"
+        ],
+        "color_temperature": "cool-neutral with warm accents",
+        "contrast_level": "high",
+        "composition_type": "deep perspective, balanced asymmetry, leading lines",
+        "spatial_presence": "expansive yet intimate, inviting exploration",
+        "artwork_function": "focal point, conversation starter, atmospheric piece, thought-provoking",
+        "suggested_audience": [
+            "collectors of dark surrealism",
+            "fantasy art enthusiasts",
+            "admirers of narrative and psychological art",
+            "sophisticated urban and country homeowners"
+        ],
+        "commercial_positioning": "high-end, unique statement piece, investment art",
+        "one_line_curatorial_read": "A haunting nocturnal dreamscape where ancient architectures meet cryptic figures, inviting deep introspection into the subconscious.",
+        "style_summary": "Dark Surrealism with Architectural and Narrative Depth",
+        "seasonal_strategy": {
+            "primary_season": "neutral"
+        },
+        "audience_profile": {
+            "primary": "discerning collectors and art enthusiasts who appreciate mysterious, psychological, and uniquely narrative works."
+        }
+    },
+    "recommended_number_of_contexts": 7,
+    "contextual_proposals": [
+        {
+            "context_name": "Moonlit Collector's Study",
+            "context_role": "collector positioning",
+            "space_type": "high-end residential study/library",
+            "atmosphere": "intimate, nocturnal, contemplative, intellectual",
+            "materials": [
+                "dark wood paneling",
+                "rich leather armchair",
+                "antique rug"
+            ],
+            "lighting": "soft, focused lamplight on artwork, subtle moonlight through large window",
+            "camera_angle": "eye-level, slightly angled, capturing a corner of the room",
+            "human_presence": "none",
+            "curatorial_reason": "The artwork's mysterious depth is perfectly suited for an intimate, contemplative study, allowing for prolonged engagement and intellectual reflection, echoing its internal narrative.",
+            "commercial_reason": "This setting targets sophisticated collectors who seek art for private contemplation and to enrich their personal, high-end environments, positioning it as a valued acquisition."
+        },
+        {
+            "context_name": "Ethereal Gallery Archway",
+            "context_role": "primary presentation",
+            "space_type": "professional art gallery with architectural elements",
+            "atmosphere": "clean, spacious, reverent, art-focused",
+            "materials": [
+                "smooth light grey plaster walls",
+                "polished concrete floor"
+            ],
+            "lighting": "diffused natural light from skylights, subtle gallery spotlights",
+            "camera_angle": "wide shot, placing the artwork centrally within a larger gallery space",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "Presenting the artwork in a clean, gallery-like setting with architectural elements allows its surreal forms and deep perspective to resonate with the space, emphasizing its artistic merit and universal appeal.",
+            "commercial_reason": "This context elevates the artwork's status, appealing to institutional buyers, curators, and serious collectors, while the human figure provides essential scale for a monumental piece."
+        },
+        {
+            "context_name": "Ancient Stone Hearth",
+            "context_role": "atmospheric integration",
+            "space_type": "high-end residential living room with fireplace",
+            "atmosphere": "cozy, old-world charm, rustic elegance, warm",
+            "materials": [
+                "rough-hewn stone fireplace surround",
+                "dark oak beams",
+                "soft linen textiles"
+            ],
+            "lighting": "warm glow from a fire, subtle overhead recessed lights",
+            "camera_angle": "slightly low, capturing the artwork above the mantle or adjacent to the fireplace",
+            "human_presence": "none",
+            "curatorial_reason": "The artwork's ancient architectural motifs and narrative quality find a natural echo beside a stone hearth, evoking timeless storytelling and a sense of enduring mystery within a cozy, yet refined, domestic setting.",
+            "commercial_reason": "This positions the artwork for homeowners seeking to imbue their living spaces with unique character and a connection to historical or mythological aesthetics, enhancing its emotional appeal."
+        },
+        {
+            "context_name": "Contemporary Minimalist Alcove",
+            "context_role": "architectural study",
+            "space_type": "high-end residential, minimalist modern home, dedicated art alcove",
+            "atmosphere": "clean, calm, focused, understated luxury",
+            "materials": [
+                "smooth white plaster walls",
+                "light oak flooring",
+                "simple built-in bench"
+            ],
+            "lighting": "soft, even, diffused daylight from an unseen window",
+            "camera_angle": "straight-on, slightly wide, showing the artwork as the sole focal point",
+            "human_presence": "none",
+            "curatorial_reason": "The stark clarity of a minimalist alcove allows the artwork's complex details and dark palette to command full attention, creating a powerful contrast that highlights its depth and artistic intensity.",
+            "commercial_reason": "This context appeals to modernists and collectors who value clean aesthetics and want a single, impactful art piece to define a space, emphasizing the artwork's sculptural and contemplative presence."
+        },
+        {
+            "context_name": "Velvet Noir Lounge",
+            "context_role": "commercial alternative",
+            "space_type": "high-end residential, sophisticated living room or lounge",
+            "atmosphere": "luxurious, mysterious, slightly dramatic, evening setting",
+            "materials": [
+                "dark velvet sofa",
+                "deep rich-toned walls (charcoal or deep blue)",
+                "dark wood coffee table"
+            ],
+            "lighting": "warm, intimate accent lighting on the artwork, ambient low light in the room",
+            "camera_angle": "medium shot, showing the artwork integrated into the seating area",
+            "human_presence": "none",
+            "curatorial_reason": "The artwork's enigmatic quality thrives in a dramatic, luxurious lounge, where its dark tones and surreal imagery can create an immersive, atmospheric experience for evening contemplation and conversation.",
+            "commercial_reason": "This scene targets interior designers and homeowners looking for a statement piece that complements a bold, sophisticated, and intimate aesthetic, showcasing its ability to define a high-end social space."
+        },
+        {
+            "context_name": "Artist's Retreat Studio",
+            "context_role": "professional inspiration",
+            "space_type": "high-end design studio or artist's private viewing space",
+            "atmosphere": "creative, inspiring, organized, natural materials",
+            "materials": [
+                "light-colored raw concrete walls",
+                "large industrial-style window",
+                "simple wooden easel/plinth"
+            ],
+            "lighting": "bright, clear, even natural light from a large north-facing window",
+            "camera_angle": "slightly elevated, looking down into the space, showcasing the artwork as a source of inspiration",
+            "human_presence": "none",
+            "curatorial_reason": "Placing the artwork in a well-lit studio emphasizes its craftsmanship and the thought process behind its creation, appealing to those who appreciate art from a creator's perspective.",
+            "commercial_reason": "This context appeals to professional creatives, gallerists, and collectors interested in the provenance and artistic integrity of the work, highlighting its potential as a muse or an object of study."
+        },
+        {
+            "context_name": "Timeless Estate Corridor",
+            "context_role": "curatorial depth",
+            "space_type": "hallway or gallery space in a restored historic manor or chateau",
+            "atmosphere": "old-world grandeur, elegant, echoing gothic/mysterious feel",
+            "materials": [
+                "ornate dark wood paneling",
+                "faded damask wallpaper",
+                "antique console table"
+            ],
+            "lighting": "dramatic, warm candlelight from wall sconces mixed with distant soft natural light",
+            "camera_angle": "long shot, leading the eye down a corridor towards the artwork",
+            "human_presence": "none",
+            "curatorial_reason": "The artwork's blend of ancient architecture and enigmatic figures finds a resonant home within a historic estate corridor, reinforcing its timeless quality and narrative power within a grand, yet subtly mysterious, environment.",
+            "commercial_reason": "This scenario targets collectors who appreciate art that bridges historical aesthetics with contemporary surrealism, making it an ideal acquisition for period properties seeking unique, thought-provoking art."
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1781412061_8665_v1.png"
+}

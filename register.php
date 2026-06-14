@@ -31,39 +31,39 @@ function h($v): string
 }
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Crear cuenta</title>
+    <title>Register - The Artwork Curator</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main class="auth-layout">
     <section class="auth-panel">
-        <a class="brand" href="login.php">ARTMOCK <span class="brand-mark"></span></a>
+        <a class="brand" href="login.php">The Artwork Curator <span class="brand-mark"></span></a>
 
-        <h1 style="margin-top:56px;">Crear cuenta</h1>
-        <p class="page-kicker">Crea tu area privada para generar obras raiz y construir mockups curatoriales.</p>
+        <h1 style="margin-top:56px;">Register</h1>
+        <p class="page-kicker">Create your private workspace to generate root images and build curatorial mockups.</p>
 
         <?php if ($error): ?>
             <p class="notice error"><?= h($error) ?></p>
         <?php endif; ?>
 
         <form class="auth-card" method="post">
-            <label>Nombre</label>
+            <label>Name</label>
             <input type="text" name="name" autocomplete="name">
 
             <label>Email</label>
             <input type="email" name="email" required autocomplete="email">
 
-            <label>Contrasena</label>
+            <label>Password</label>
             <input type="password" name="password" required autocomplete="new-password">
 
-            <button type="submit">Crear cuenta</button>
+            <button type="submit">Register</button>
         </form>
 
         <p class="auth-links">
-            Ya tienes cuenta? <a href="login.php">Ingresar</a>
+            Already have an account? <a href="login.php">Login</a>
         </p>
     </section>
 

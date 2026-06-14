@@ -40,7 +40,7 @@ function selected_provider_settings(): array
 }
 
 if (empty($_FILES['main_artwork']) || $_FILES['main_artwork']['error'] !== UPLOAD_ERR_OK) {
-    fail('No se recibió la imagen principal correctamente.');
+    fail('Did not receive the main artwork correctly.');
 }
 
 $jobsDir = __DIR__ . '/jobs';
@@ -58,7 +58,7 @@ $jobId = 'job_' . time() . '_' . random_int(1000, 9999);
 $jobDir = $jobsDir . '/' . $jobId;
 
 if (!mkdir($jobDir, 0775, true)) {
-    fail('No se pudo crear la carpeta del trabajo.');
+    fail('Could not create the job directory.');
 }
 
 /* =========================
@@ -69,7 +69,7 @@ $mainExt = safe_ext($_FILES['main_artwork']['name']);
 $mainInputFile = $jobDir . '/main_artwork.' . $mainExt;
 
 if (!save_uploaded_file($_FILES['main_artwork'], $mainInputFile)) {
-    fail('No se pudo guardar la imagen principal.');
+    fail('Could not save the main artwork.');
 }
 
 /* =========================
@@ -100,7 +100,7 @@ $status = [
     'status' => 'queued',
     'created_at' => date('c'),
     'updated_at' => date('c'),
-    'message' => 'Trabajo creado. Preparando generación.',
+    'message' => 'Job created. Preparing generation.',
     'main_file' => basename($mainInputFile),
     'extra_files' => $extraFiles,
     'result_file' => null,
@@ -154,33 +154,37 @@ if (str_contains(strtolower($phpPath), 'httpd') || str_contains(strtolower($phpP
 $phpPath = str_replace(['php-cgi.exe', 'php-cgi'], ['php.exe', 'php'], $phpPath);
 
 if ($phpPath === 'php' || $phpPath === 'php.exe') {
-    $candidates = [
-        'C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe',
-        'C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php-win.exe',
-    ];
-    $found = false;
-    foreach ($candidates as $candidate) {
-        if (is_file($candidate)) {
-            $phpPath = $candidate;
-            $found = true;
-            break;
-        }
-    }
-    
-    if (!$found) {
-        $baseDir = 'C:\laragon\bin\php';
+    // Punto #2: PHP_BINARY_PATH configurado en .env tiene prioridad total
+    $envPhpPath = defined('PHP_BINARY_PATH') ? trim((string)PHP_BINARY_PATH) : '';
+    if ($envPhpPath !== '' && is_file($envPhpPath)) {
+        $phpPath = $envPhpPath;
+    } else {
+        // Auto-detección: busca cualquier versión de PHP en Laragon sin hardcodear la versión exacta
+        $baseDir = 'C:\\laragon\\bin\\php';
+        $found = false;
+
         if (is_dir($baseDir)) {
-            $folders = scandir($baseDir);
-            foreach ($folders as $folder) {
-                if ($folder === '.' || $folder === '..') {
-                    continue;
-                }
-                $exe = $baseDir . DIRECTORY_SEPARATOR . $folder . DIRECTORY_SEPARATOR . 'php.exe';
-                if (is_file($exe)) {
-                    $phpPath = $exe;
-                    break;
+            $folders = @scandir($baseDir);
+            if (is_array($folders)) {
+                // Ordenar descendente para preferir versiones más recientes
+                rsort($folders);
+                foreach ($folders as $folder) {
+                    if ($folder === '.' || $folder === '..') {
+                        continue;
+                    }
+                    $exe = $baseDir . DIRECTORY_SEPARATOR . $folder . DIRECTORY_SEPARATOR . 'php.exe';
+                    if (is_file($exe)) {
+                        $phpPath = $exe;
+                        $found = true;
+                        break;
+                    }
                 }
             }
+        }
+
+        // Fallback final: php del PATH del sistema
+        if (!$found) {
+            $phpPath = 'php';
         }
     }
 }
@@ -190,21 +194,84 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     session_write_close();
 }
 
-// Ejecutar en segundo plano desacoplado usando WMIC (evita heredar handles de Apache y colapsar FastCGI)
-$innerCmd = sprintf(
-    'cmd.exe /c %s %s %s > %s 2> %s',
-    $phpPath,
-    __DIR__ . '/process_generate.php',
-    $jobId,
-    $jobDir . '/process_out.log',
-    $jobDir . '/process_err.log'
-);
+// Ejecutar en segundo plano desacoplado usando un cascade de fallbacks para Windows (evitando heredar handles y congelar Apache)
+$scriptPath = __DIR__ . DIRECTORY_SEPARATOR . 'process_generate.php';
+$logOut = $jobDir . DIRECTORY_SEPARATOR . 'process_out.log';
+$logErr = $jobDir . DIRECTORY_SEPARATOR . 'process_err.log';
 
-$cmd = sprintf(
-    'wmic process call create "%s"',
-    $innerCmd
-);
+$started = false;
 
-pclose(popen($cmd, "r"));
+// Método 1: COM (WScript.Shell) - Excelente para Windows bajo Apache ya que no hereda handles ni bloquea FastCGI
+if (class_exists('COM')) {
+    try {
+        $wsh = new COM("WScript.Shell");
+        $command = sprintf(
+            'cmd.exe /c "%s" "%s" "%s" > "%s" 2> "%s"',
+            $phpPath,
+            $scriptPath,
+            $jobId,
+            $logOut,
+            $logErr
+        );
+        // 0 = Ocultar ventana, false = ejecutar de forma asíncrona
+        $wsh->Run($command, 0, false);
+        $started = true;
+        file_put_contents($jobDir . '/start_method.txt', 'COM WScript.Shell');
+    } catch (Throwable $e) {
+        // Fallback al siguiente método
+    }
+}
+
+// Método 2: popen con "start /B" (Comando nativo de Windows para ejecutar en segundo plano)
+if (!$started) {
+    try {
+        $cmd = sprintf(
+            'start /B "" "%s" "%s" "%s" > "%s" 2> "%s"',
+            $phpPath,
+            $scriptPath,
+            $jobId,
+            $logOut,
+            $logErr
+        );
+        $handle = @popen($cmd, "r");
+        if ($handle) {
+            pclose($handle);
+            $started = true;
+            file_put_contents($jobDir . '/start_method.txt', 'start /B popen');
+        }
+    } catch (Throwable $e) {
+        // Fallback al siguiente método
+    }
+}
+
+// Método 3: WMIC (Legacy / Windows 10 y anteriores)
+if (!$started) {
+    try {
+        $wmicEscape = function (string $val): string {
+            return '\"' . str_replace('"', '\"', $val) . '\"';
+        };
+        $innerCmd = sprintf(
+            'cmd.exe /c %s %s %s > %s 2> %s',
+            $wmicEscape($phpPath),
+            $wmicEscape($scriptPath),
+            $wmicEscape($jobId),
+            $wmicEscape($logOut),
+            $wmicEscape($logErr)
+        );
+        $cmd = sprintf(
+            'wmic process call create "%s"',
+            $innerCmd
+        );
+        $handle = @popen($cmd, "r");
+        if ($handle) {
+            pclose($handle);
+            $started = true;
+            file_put_contents($jobDir . '/start_method.txt', 'WMIC');
+        }
+    } catch (Throwable $e) {
+        // Fallback final
+    }
+}
+
 exit;
 

@@ -1,0 +1,50 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 3 cm deep.
+
+MOCKUP ART DIRECTION:
+- Camera: three-quarter view from the left, slight side angle, eye-level, natural perspective
+- Scene Name: Urban Gallery Threshold
+- Purpose: institutional display, commercial appeal for galleries
+- Scene Description: A contemporary art gallery entrance/hallway with clean, professional, inviting, focused on art atmosphere. Materials: white gallery walls, polished concrete floor, minimalist dark metal accents
+- Lighting: luminous natural daylight, bright and clear
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult white woman, 1.55 meters tall.
+- Curatorial Mood: A primal genesis where deep earth tones meet fiery consciousness, sculpted by silent, structural forms, evoking a profound geological and internal landscape.
+
+CAMERA SELECTION RULES:
+DO NOT USE ANY OTHER CAMERA ANGLES.
+
+Do not use:
+front-wide
+wide shot
+ultra-wide
+fisheye
+top view
+overhead view
+low angle
+high angle
+detail close-up
+extreme close-up
+extreme side angle
+dramatic perspective
+cropped-only view
+
+GENERAL RULE:
+The artwork must always remain the main subject of the image. The camera must present the artwork in a realistic, premium, well-proportioned and commercially desirable way, without distortion and without making the room more important than the artwork.
+
+DEFAULT PRIORITY:
+1. Front View
+2. Three-Quarter Left View
+3. Three-Quarter Right View
+
+NEGATIVE RULES:
+No kitchens.
+No common bedrooms.
+No cheap decor.
+No generic stock interiors.
+No logos.
+No visible text.
+No letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.
+No shoes or footwear as scale reference.
+No distorted perspective.

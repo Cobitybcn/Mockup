@@ -7,7 +7,7 @@ $user = Auth::requireUser();
 
 if (!Auth::isAdmin($user)) {
     http_response_code(403);
-    exit('No tienes acceso a esta seccion.');
+    exit('You do not have access to this section.');
 }
 
 $saved = false;
@@ -27,10 +27,10 @@ function h($v): string
 }
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Admin prompts</title>
+    <title>System Prompts - The Artwork Curator</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .prompt-admin-grid {
@@ -47,30 +47,33 @@ function h($v): string
         }
 
         .admin-note {
-            border-left: 4px solid var(--accent);
+            border-left: 3px solid var(--accent);
             background: var(--surface-soft);
-            padding: 14px;
+            padding: 14px 18px;
             margin-bottom: 22px;
             color: var(--ink);
+            border-radius: 0 var(--radius) var(--radius) 0;
+            font-size: 13px;
         }
 
         details.directive-reference {
             margin-top: 12px;
             border: 1px solid var(--line);
-            background: #fff;
+            background: var(--surface);
             padding: 12px;
+            border-radius: var(--radius);
         }
 
         details.directive-reference summary {
             cursor: pointer;
-            font-weight: 700;
+            font-weight: 600;
         }
 
         .directive-reference textarea {
             min-height: 220px;
             margin-top: 10px;
-            background: #f8f8f6;
-            color: #333;
+            background: var(--surface-soft);
+            color: var(--muted);
         }
 
         @media (max-width: 980px) {
@@ -82,30 +85,7 @@ function h($v): string
 </head>
 <body>
 <div class="app-shell">
-    <aside class="sidebar">
-        <div class="sidebar-head">
-            <a class="brand" href="dashboard.php">ARTMOCK <span class="brand-mark"></span></a>
-        </div>
-
-        <div class="sidebar-action">
-            <a class="button-link" href="artwork_new.php">+ Nueva obra</a>
-        </div>
-
-        <ul class="nav">
-            <li><a href="dashboard.php">Dashboard</a></li>
-            <li><a href="artwork_new.php">Crear obra raiz</a></li>
-            <li><a href="artist_profile.php">Perfil de artista</a></li>
-            <li><a class="active" href="admin_prompts.php">Admin prompts</a></li>
-            <li><a href="admin_api_keys.php">API keys</a></li>
-            <li><a href="account.php">Cuenta y pagos</a></li>
-        </ul>
-
-        <div class="nav-section">Archivo</div>
-        <ul class="nav">
-            <li><a href="mockups.php">Mockups</a></li>
-            <li><a href="logout.php">Salir</a></li>
-        </ul>
-    </aside>
+    <?php include __DIR__ . '/sidebar.php'; ?>
 
     <main class="main-area">
         <header class="app-header">
@@ -113,14 +93,14 @@ function h($v): string
         </header>
 
         <div class="alert-strip">
-            Parametros administrativos de prompts. Estos textos se inyectan en futuras generaciones.
+            Administrative prompt parameters. These directives are injected into future generation processes.
         </div>
 
         <div class="workspace">
             <div class="workspace-header">
                 <div>
-                    <h1>Admin prompts</h1>
-                    <p>Ajusta reglas manuales sin modificar codigo.</p>
+                    <h1>System Prompts</h1>
+                    <p>Adjust prompt rulesets without modifying the source code.</p>
                 </div>
                 <div class="topbar-actions">
                     <a class="button-link secondary" href="dashboard.php">Dashboard</a>
@@ -128,11 +108,11 @@ function h($v): string
             </div>
 
             <?php if ($saved): ?>
-                <div class="notice">Parametros guardados.</div>
+                <div class="notice">Parameters saved successfully.</div>
             <?php endif; ?>
 
             <div class="admin-note">
-                Los cambios afectan prompts nuevos. Estos campos son las directivas activas del sistema. Para propuestas ya analizadas, usa <strong>Actualizar analisis</strong> en la ficha de obra antes de generar nuevos mockups.
+                Changes apply to new prompts. These fields serve as the active system directives. For already analyzed proposals, click <strong>Recalculate Analysis</strong> on the artwork page before generating new mockups.
             </div>
 
             <form method="post" class="form">
@@ -146,7 +126,7 @@ function h($v): string
                             <?php else: ?>
                                 <textarea id="<?= h($key) ?>" name="<?= h($key) ?>"><?= h($settings[$key] ?? '') ?></textarea>
                                 <details class="directive-reference">
-                                    <summary>Ver valor por defecto para restaurar</summary>
+                                    <summary>View default directive for restoration</summary>
                                     <textarea readonly><?= h($defaultDirectives[$key] ?? '') ?></textarea>
                                 </details>
                             <?php endif; ?>
@@ -154,7 +134,7 @@ function h($v): string
                     <?php endforeach; ?>
                 </div>
 
-                <button type="submit">Guardar parametros</button>
+                <button type="submit">Save Prompt Settings</button>
             </form>
         </div>
     </main>

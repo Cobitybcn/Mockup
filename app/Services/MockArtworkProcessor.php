@@ -7,6 +7,7 @@ class MockArtworkProcessor implements ArtworkProcessorInterface
     {
         $mainFile = basename((string)($status['main_file'] ?? ''));
         $source = rtrim($jobDir, '/\\') . DIRECTORY_SEPARATOR . $mainFile;
+        $jobId = basename($jobDir);
 
         if (!$mainFile || !is_file($source)) {
             throw new RuntimeException('No se encontro la imagen principal del job.');
@@ -23,22 +24,81 @@ class MockArtworkProcessor implements ArtworkProcessorInterface
             $ext = 'jpg';
         }
 
-        $outputName = 'base_artwork_mock_' . time() . '_' . random_int(1000, 9999) . '.' . $ext;
-        $outputPath = $resultsDir . DIRECTORY_SEPARATOR . $outputName;
+        $files = [];
+        $paths = [];
 
-        if (!copy($source, $outputPath)) {
-            throw new RuntimeException('No se pudo crear la imagen raiz simulada.');
+        for ($i = 1; $i <= 3; $i++) {
+            $outputName = 'base_artwork_mock_' . $jobId . '_v' . $i . '.' . $ext;
+            $outputPath = $resultsDir . DIRECTORY_SEPARATOR . $outputName;
+
+            if (extension_loaded('gd')) {
+                $img = $this->loadGdImage($source);
+                if ($img) {
+                    imagepalettetotruecolor($img);
+                    $w = imagesx($img);
+                    $h = imagesy($img);
+
+                    // Version 2: Crop slightly horizontally
+                    // Version 3: Crop slightly vertically
+                    if ($i === 2) {
+                        $cropped = imagecrop($img, ['x' => (int)($w * 0.05), 'y' => 0, 'width' => (int)($w * 0.9), 'height' => $h]);
+                        if ($cropped) {
+                            imagedestroy($img);
+                            $img = $cropped;
+                        }
+                    } elseif ($i === 3) {
+                        $cropped = imagecrop($img, ['x' => 0, 'y' => (int)($h * 0.05), 'width' => $w, 'height' => (int)($h * 0.9)]);
+                        if ($cropped) {
+                            imagedestroy($img);
+                            $img = $cropped;
+                        }
+                    }
+
+                    // Draw a visual indicator overlay box in the top-left corner
+                    $white = imagecolorallocate($img, 255, 255, 255);
+                    $black = imagecolorallocate($img, 0, 0, 0);
+                    imagefilledrectangle($img, 10, 10, 190, 40, $black);
+                    imagestring($img, 4, 20, 17, "Candidate V{$i} (Mock)", $white);
+
+                    if ($ext === 'png') {
+                        imagepng($img, $outputPath);
+                    } elseif ($ext === 'webp' && function_exists('imagewebp')) {
+                        imagewebp($img, $outputPath, 85);
+                    } else {
+                        imagejpeg($img, $outputPath, 85);
+                    }
+                    imagedestroy($img);
+                } else {
+                    copy($source, $outputPath);
+                }
+            } else {
+                copy($source, $outputPath);
+            }
+
+            $files[] = $outputName;
+            $paths[] = $outputPath;
         }
 
-        $meta = $this->imageMeta($outputPath);
+        $meta = $this->imageMeta($paths[0]);
 
         return [
-            'file' => $outputName,
-            'path' => $outputPath,
+            'files' => $files,
+            'paths' => $paths,
             'mock' => true,
-            'message' => 'Imagen raiz simulada creada localmente. No se uso API.',
+            'message' => 'Simulated root image candidates created (3 versions).',
             'meta' => $meta,
         ];
+    }
+
+    private function loadGdImage(string $path): mixed
+    {
+        $mime = @mime_content_type($path);
+        return match ($mime) {
+            'image/jpeg' => @imagecreatefromjpeg($path),
+            'image/png' => @imagecreatefrompng($path),
+            'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : false,
+            default => false,
+        };
     }
 
     private function imageMeta(string $path): array
