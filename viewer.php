@@ -43,6 +43,10 @@ if (!$mockup) {
 }
 
 $backUrl = 'mockups.php';
+$requestedBack = trim((string)($_GET['back'] ?? ''));
+if ($requestedBack !== '' && preg_match('/^(form2\.php|artwork\.php|mockups\.php|dashboard\.php)(\?|#|$)/', $requestedBack)) {
+    $backUrl = $requestedBack;
+}
 $artworkStmt = $pdo->prepare('
     SELECT *
     FROM artworks
@@ -57,9 +61,10 @@ $artworkStmt->execute([
 $artwork = $artworkStmt->fetch();
 $artworkId = is_array($artwork) ? (int)$artwork['id'] : 0;
 
-if ($artworkId) {
+if ($artworkId && $requestedBack === '') {
     $backUrl = 'artwork.php?id=' . rawurlencode((string)$artworkId);
 }
+$viewerBackParam = $backUrl !== '' ? '&back=' . rawurlencode($backUrl) : '';
 
 $prevStmt = $pdo->prepare('
     SELECT id
@@ -307,7 +312,7 @@ $otherSocial = [
             background: var(--bg);
             color: var(--ink);
             font-family: var(--font-sans);
-            zoom: 0.7;
+            zoom: 1;
         }
 
         .viewer-top {
@@ -437,13 +442,13 @@ $otherSocial = [
             min-height: calc(100vh - 64px);
             display: grid;
             place-items: center;
-            padding: 42px 86px;
+            padding: 24px 56px;
             background: #111;
         }
 
         .stage img {
             max-width: 100%;
-            max-height: calc(100vh - 130px);
+            max-height: calc(100vh - 112px);
             object-fit: contain;
             box-shadow: 0 28px 80px rgba(0,0,0,.6);
             border-radius: 4px;
@@ -684,7 +689,7 @@ $otherSocial = [
     </header>
 
     <?php if ($prevId): ?>
-        <a class="nav-arrow prev" href="viewer.php?id=<?= h($prevId) ?>" aria-label="Previous image">&lsaquo;</a>
+        <a class="nav-arrow prev" href="viewer.php?id=<?= h($prevId) ?><?= h($viewerBackParam) ?>" aria-label="Previous image">&lsaquo;</a>
     <?php endif; ?>
 
     <main class="stage">
@@ -692,7 +697,7 @@ $otherSocial = [
     </main>
 
     <?php if ($nextId): ?>
-        <a class="nav-arrow next" href="viewer.php?id=<?= h($nextId) ?>" aria-label="Next image">&rsaquo;</a>
+        <a class="nav-arrow next" href="viewer.php?id=<?= h($nextId) ?><?= h($viewerBackParam) ?>" aria-label="Next image">&rsaquo;</a>
     <?php endif; ?>
 
     <footer class="viewer-caption">

@@ -65,7 +65,10 @@ class GeminiArtworkAnalyzer implements ArtworkAnalyzerInterface
         $notes = trim((string)($metadata['artist_notes'] ?? ''));
         $region = trim((string)($metadata['region'] ?? ''));
         $scaleText = trim((string)($metadata['scale_text'] ?? ''));
+        $artistProfile = is_array($metadata['artist_profile'] ?? null) ? $metadata['artist_profile'] : [];
         $artistProfilePrompt = trim((string)($metadata['artist_profile_prompt'] ?? ''));
+        $targetMarket = trim((string)($metadata['target_market'] ?? 'collectors'));
+        $preferredStyle = trim((string)($metadata['preferred_style'] ?? ''));
 
         $contextCount = PromptSettings::mockupContextCount();
         $template = PromptSettings::artworkAnalysisPrompt();
@@ -81,21 +84,41 @@ class GeminiArtworkAnalyzer implements ArtworkAnalyzerInterface
         $prompt = str_replace(
             [
                 '{artist_profile_prompt}',
+                '{artist_statement}',
+                '{visual_language}',
+                '{recurring_symbols}',
+                '{preferred_atmospheres}',
+                '{title}',
+                '{width_cm}',
+                '{height_cm}',
+                '{depth_cm}',
                 '{region}',
                 '{scale_text}',
                 '{orientation}',
                 '{width_px}',
                 '{height_px}',
-                '{notes}'
+                '{notes}',
+                '{preferred_style}',
+                '{target_market}'
             ],
             [
                 $artistProfilePrompt,
+                (string)($artistProfile['statement'] ?? ''),
+                (string)($artistProfile['visual_language'] ?? ''),
+                (string)($artistProfile['recurring_themes'] ?? ''),
+                (string)($artistProfile['palette_notes'] ?? ''),
+                $metadata['title'] ?? 'Untitled',
+                (string)($imageMeta['physical_size']['width_cm'] ?? ''),
+                (string)($imageMeta['physical_size']['height_cm'] ?? ''),
+                (string)($imageMeta['physical_size']['depth_cm'] ?? ''),
                 $region,
                 $scaleText,
                 $imageMeta['orientation'],
                 (string)$imageMeta['width_px'],
                 (string)$imageMeta['height_px'],
-                $notes
+                $notes,
+                $preferredStyle,
+                $targetMarket
             ],
             $template
         );
@@ -108,7 +131,7 @@ class GeminiArtworkAnalyzer implements ArtworkAnalyzerInterface
 
         $lastError = null;
 
-        foreach (['gemini-2.5-flash', 'gemini-2-flash', 'gemini-2-flash-lite'] as $model) {
+        foreach (['gemini-2.5-flash'] as $model) {
             try {
                 $text = $this->client->generateText($parts, $model);
                 $json = $this->extractJson($text);

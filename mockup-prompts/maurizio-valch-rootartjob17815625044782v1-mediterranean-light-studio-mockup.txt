@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Mediterranean Light Studio
+- Purpose: Inspiring environment, creative space for an artist or designer
+- Scene Description: A Bright artist studio or design studio with natural elements with Airy, inspiring, natural, calm, slightly rustic-modern, tranquil atmosphere. Materials: White stucco walls with subtle texture, Light terracotta floor tiles, A few artisanal ceramic pieces or natural raw wood elements, Large, simple window frames
+- Lighting: Abundant, soft Mediterranean daylight flooding the space from a large, south-facing window, creating gentle shadows.
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult white woman, 1.55 meters tall.
+
+- Structured Camera View: front view
+- Structured Camera Distance: medium-close view
+- Camera Rationale: A frontal, medium-close view presents the artwork directly and clearly, showcasing its vibrant red against the deep green in a bright, yet calm, natural light. This highlights the artwork's contemplative silence and structural forms in an environment that suggests creativity and connection to natural elements, making it commercially appealing for artists, designers, and collectors who value natural light and inspiration. The female figure adds a human touch, emphasizing interaction and scale.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A bright, airy artist studio with textured white stucco walls and light terracotta floor tiles. The artwork 'Sin título' by Maurizio Valch is centrally mounted on a prominent wall. Abundant, soft Mediterranean daylight streams in from an unseen large window, gently illuminating the artwork. An optional standing female figure (1.55m) in casual, artistic attire stands a few steps back, appreciating the artwork. Camera is a front view, medium-close, capturing the artwork and the figure within the serene, naturally lit studio.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+Dark, cluttered, industrial, generic office, distracting art, harsh fluorescent lights, low-quality furniture, overly minimalist to the point of sterility.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

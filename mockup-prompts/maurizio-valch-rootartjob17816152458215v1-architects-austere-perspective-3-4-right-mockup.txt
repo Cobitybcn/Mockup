@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Architect's Austere Perspective
+- Purpose: professional design studio or private architectural office
+- Scene Description: A architect's private office or design studio with austere, intellectual, structured, inspiring focus atmosphere. Materials: raw concrete walls, dark metal accents, minimalist dark wood or steel furniture, polished concrete floor
+- Lighting: even ambient light from large windows, complemented by discreet integrated strip lighting along the wall
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A three-quarter right view provides an architectural perspective that aligns with the artwork's structural themes, placing it within a context of design and precision. This angle allows the viewer to appreciate the texture and depth of the artwork as it interacts with the material reality of the space. The vertical orientation is clearly presented, underscoring its role as an object of contemplation and structural inspiration.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A modern, austere architect's private office with raw concrete walls, minimalist dark wood and steel furniture, and a polished concrete floor. Maurizio Valch's large vertical abstract painting 'Sin título' is elegantly displayed on a prominent wall. Even, clean ambient light filters in from large windows, augmented by subtle integrated strip lighting, highlighting the artwork's precise details. Close-up view, three-quarter right view, intellectual, structured, inspiring.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cluttered desk, messy papers, generic office plants, old technology, overly colorful, soft furnishings, traditional decor, warm colors on walls
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

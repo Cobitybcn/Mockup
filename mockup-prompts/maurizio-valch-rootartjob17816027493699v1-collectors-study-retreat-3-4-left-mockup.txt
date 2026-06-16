@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 110 cm wide × 70 cm high × 2 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Collector's Study Retreat
+- Purpose: Integration into a sophisticated private living space
+- Scene Description: A Luxury private study or library with Refined, contemplative, warm, intellectual atmosphere. Materials: dark wood paneling, leather armchair, subtle brass accents, wool rug
+- Lighting: Soft, diffused light from a large window combined with an elegant floor lamp providing warm ambient glow.
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The three-quarter left view adds depth to the scene, allowing a glimpse of the refined study environment while keeping the artwork dominant. This angle subtly frames the painting within a luxurious, intellectual context, enhancing its appeal for private collectors. The close-up ensures the artwork’s presence is undeniable.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A luxurious private study with dark, rich wood paneling, a classic leather armchair, and a warm wool rug. Maurizio Valch's 'Sin título' (110cm wide x 70cm high) hangs on a central wall, beautifully lit by soft natural light from a tall window and an elegant floor lamp. Subtle brass accents on furniture. Three-quarter left view, close-up view.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+modern office, cheap furniture, bright colors, distracting clutter, empty room, unkempt space, computer screens.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

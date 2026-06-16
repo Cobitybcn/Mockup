@@ -1,0 +1,51 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 70 cm wide × 120 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Camera: three-quarter view from the left, slight side angle, eye-level, natural perspective
+- Scene Name: Architect's Structural Reflection
+- Purpose: architectural study, scale reference
+- Scene Description: A elegant open-plan architect's studio with creative, inspiring, intellectual, focused atmosphere. Materials: raw concrete wall, polished concrete floor, black steel window frame (partial), minimalist dark wood desk (partial)
+- Lighting: warm afternoon light, golden hour, soft shadows
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult hispanic man, 1.80 meters tall.
+
+CAMERA SELECTION RULES:
+Use only front view, three-quarter left view, or three-quarter right view. Always show the artwork in near close-up, large and dominant in the frame. Do not use wide or open room views. The environment should only suggest context and must never be more important than the artwork.
+
+QUALITY RULES:
+Never modify the root artwork.
+The root artwork must remain exactly unchanged.
+Preserve the original artwork exactly as provided, including its composition, proportions, orientation, internal structure, edges, and visual content.
+Do not redraw, repaint, reinterpret, enhance, stylize, extend, crop, simplify, clean up, or alter the artwork in any way.
+The mockup must integrate the artwork into the space without changing the artwork itself.
+
+NEGATIVE RULES:
+Do not modify the artwork composition.
+Do not redraw, repaint, reinterpret, restyle, extend, crop, simplify, enhance, or alter the artwork in any way.
+Do not add, remove, rearrange, or invent elements inside the artwork.
+Preserve the original composition, proportions, orientation, and internal structure of the artwork exactly as provided.No kitchens.
+No common bedrooms.
+No cheap decor.
+No generic stock interiors.
+No logos.
+No visible text.
+No letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.
+No shoes or footwear as scale reference.
+No distorted perspective.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:
+TECHNICAL RENDERER CONTROLS
+These values control the pre-composed reference image sent to the image model. Edit only after visual testing.
+
+mockup_fill_default=0.50
+mockup_fill_long_side_le_45=0.32
+mockup_fill_long_side_le_80=0.42
+mockup_fill_long_side_le_120=0.52
+mockup_fill_long_side_le_160=0.58
+mockup_fill_long_side_le_220=0.64
+mockup_fill_long_side_gt_220=0.70
+mockup_human_scale_multiplier=0.78
+mockup_fill_min=0.05
+mockup_fill_max=0.95

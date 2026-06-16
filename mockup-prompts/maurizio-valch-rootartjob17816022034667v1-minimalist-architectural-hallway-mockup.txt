@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 70 cm wide × 120 cm high × 2 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Minimalist Architectural Hallway
+- Purpose: Emphasizing the artwork's powerful verticality and command of space within a grand, modern passage.
+- Scene Description: A Contemporary architectural hallway / entrance foyer with Austerely elegant, contemplative, spacious atmosphere. Materials: smooth off-white plastered walls, polished light grey concrete floor, minimalist flush ceiling lighting
+- Lighting: Even, bright ambient light with subtle directional emphasis
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult black woman, 1.55 meters tall.
+
+- Structured Camera View: front view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A front view provides a direct, impactful presentation of the artwork, highlighting its strong vertical composition and formal qualities against the clean lines of the hallway. The close-up view ensures visual dominance, allowing the artwork's scale and detail to be fully appreciated while still conveying the spaciousness and minimalist elegance of the architectural context. This view is optimal for formal clarity and marketplace presentation.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+Maurizio Valch 'Sin título' (70x120cm) centered on a smooth off-white plastered wall in a minimalist architectural hallway, polished light grey concrete floor, minimalist flush ceiling lighting, optional standing female figure 1.55m admiring the art from a respectful distance, front view, close-up view.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+clutter, ornate details, warm tones, busy background, wide shot, distorted perspective
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

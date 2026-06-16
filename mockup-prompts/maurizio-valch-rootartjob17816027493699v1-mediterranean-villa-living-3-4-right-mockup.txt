@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 110 cm wide × 70 cm high × 2 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Mediterranean Villa Living
+- Purpose: Harmonious integration into a light-filled, earthy architectural setting
+- Scene Description: A Spacious living room in a modern Mediterranean villa with Bright, airy, natural, elegant, relaxed luxury atmosphere. Materials: textured white plaster walls, terracotta floor tiles, natural wood beam, linen sofa
+- Lighting: Abundant, warm Mediterranean sunlight streaming through large arched windows, creating gentle shadows.
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The three-quarter right view allows the artwork to be seen within a sun-drenched, textured Mediterranean context, showcasing its earthy tones and structural lines against a rustic yet refined backdrop. This angle provides a sense of the room's character while highlighting the painting's harmonious fit. The close-up maintains its visual dominance.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A sun-drenched living room in a modern Mediterranean villa. Walls are textured white plaster, terracotta floor tiles visible. Maurizio Valch's 'Sin título' (110cm wide x 70cm high) hangs on a central wall, beautifully illuminated by warm Mediterranean sunlight streaming through a large arched window. A segment of a natural linen sofa is visible in the foreground. Three-quarter right view, close-up view.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cold light, dark room, cluttered space, overly rustic decor, industrial setting, traditional ornate furniture.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

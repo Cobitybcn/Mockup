@@ -4,6 +4,7 @@ declare(strict_types=1);
 class Database
 {
     private static ?PDO $pdo = null;
+    private static string $driver = 'sqlite';
 
     public static function connection(): PDO
     {
@@ -11,27 +12,73 @@ class Database
             return self::$pdo;
         }
 
-        $storageDir = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage';
+        self::$driver = self::configuredDriver();
+        self::$pdo = self::$driver === 'mysql'
+            ? self::createMysqlConnection()
+            : self::createSqliteConnection();
 
-        if (!is_dir($storageDir)) {
-            mkdir($storageDir, 0775, true);
-        }
-
-        self::$pdo = new PDO('sqlite:' . $storageDir . DIRECTORY_SEPARATOR . 'app.sqlite');
         self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         self::$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        self::$pdo->setAttribute(PDO::ATTR_TIMEOUT, 30);
-        self::$pdo->exec('PRAGMA foreign_keys = ON');
-        // WAL permite lecturas concurrentes mientras un job escribe (punto #8)
-        self::$pdo->exec('PRAGMA journal_mode = WAL');
-        self::$pdo->exec('PRAGMA synchronous = NORMAL');
-        // Esperar hasta 30 s antes de fallar por database lock (punto #8)
-        self::$pdo->exec('PRAGMA busy_timeout = 30000');
 
-        // Run migration to check and add columns as needed.
         self::migrate(self::$pdo);
 
         return self::$pdo;
+    }
+
+    public static function driver(): string
+    {
+        if (self::$pdo instanceof PDO) {
+            return self::$driver;
+        }
+
+        return self::configuredDriver();
+    }
+
+    public static function isMysql(): bool
+    {
+        return self::driver() === 'mysql';
+    }
+
+    public static function randomOrderSql(): string
+    {
+        return self::isMysql() ? 'RAND()' : 'RANDOM()';
+    }
+
+    public static function dateOrderSql(string $column, string $direction = 'DESC'): string
+    {
+        $direction = strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC';
+        return self::isMysql() ? "{$column} {$direction}" : "datetime({$column}) {$direction}";
+    }
+
+    public static function appSettingUpsertSql(): string
+    {
+        if (self::isMysql()) {
+            return '
+                INSERT INTO app_settings (`key`, value, updated_at)
+                VALUES (:key, :value, :updated_at)
+                ON DUPLICATE KEY UPDATE
+                    value = VALUES(value),
+                    updated_at = VALUES(updated_at)
+            ';
+        }
+
+        return '
+            INSERT INTO app_settings (key, value, updated_at)
+            VALUES (:key, :value, :updated_at)
+            ON CONFLICT(key) DO UPDATE SET
+                value = excluded.value,
+                updated_at = excluded.updated_at
+        ';
+    }
+
+    public static function beginWriteTransaction(PDO $pdo): void
+    {
+        if (self::isMysql()) {
+            $pdo->beginTransaction();
+            return;
+        }
+
+        $pdo->exec('BEGIN IMMEDIATE TRANSACTION');
     }
 
     public static function withBusyRetry(callable $callback, int $attempts = 8)
@@ -59,11 +106,61 @@ class Database
         return null;
     }
 
+    private static function configuredDriver(): string
+    {
+        $driver = strtolower(trim(app_env('DB_CONNECTION', 'sqlite')));
+        return $driver === 'mysql' ? 'mysql' : 'sqlite';
+    }
+
+    private static function createSqliteConnection(): PDO
+    {
+        $storageDir = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage';
+
+        if (!is_dir($storageDir)) {
+            mkdir($storageDir, 0775, true);
+        }
+
+        $pdo = new PDO('sqlite:' . $storageDir . DIRECTORY_SEPARATOR . 'app.sqlite');
+        $pdo->setAttribute(PDO::ATTR_TIMEOUT, 30);
+        $pdo->exec('PRAGMA foreign_keys = ON');
+        $pdo->exec('PRAGMA journal_mode = WAL');
+        $pdo->exec('PRAGMA synchronous = NORMAL');
+        $pdo->exec('PRAGMA busy_timeout = 30000');
+
+        return $pdo;
+    }
+
+    private static function createMysqlConnection(): PDO
+    {
+        $host = app_env('DB_HOST', '127.0.0.1');
+        $port = app_env('DB_PORT', '3306');
+        $database = app_env('DB_DATABASE', 'mockups');
+        $username = app_env('DB_USERNAME', 'root');
+        $password = app_env('DB_PASSWORD', '');
+        $charset = app_env('DB_CHARSET', 'utf8mb4');
+
+        $serverDsn = "mysql:host={$host};port={$port};charset={$charset}";
+        $server = new PDO($serverDsn, $username, $password, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]);
+        $server->exec(
+            'CREATE DATABASE IF NOT EXISTS `' . str_replace('`', '``', $database) . '` ' .
+            "CHARACTER SET {$charset} COLLATE {$charset}_unicode_ci"
+        );
+
+        $dsn = "mysql:host={$host};port={$port};dbname={$database};charset={$charset}";
+        return new PDO($dsn, $username, $password, [
+            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$charset}",
+        ]);
+    }
+
     private static function isBusyError(Throwable $e): bool
     {
         if ($e instanceof PDOException) {
             $errorInfo = $e->errorInfo;
-            if (($errorInfo[1] ?? null) === 5 || ($errorInfo[1] ?? null) === 6) {
+            $vendorCode = (int)($errorInfo[1] ?? 0);
+            if (in_array($vendorCode, [5, 6, 1205, 1213], true)) {
                 return true;
             }
         }
@@ -72,10 +169,22 @@ class Database
 
         return str_contains($message, 'database is locked') ||
             str_contains($message, 'database table is locked') ||
-            str_contains($message, 'database is busy');
+            str_contains($message, 'database is busy') ||
+            str_contains($message, 'lock wait timeout') ||
+            str_contains($message, 'deadlock');
     }
 
     private static function migrate(PDO $pdo): void
+    {
+        if (self::isMysql()) {
+            self::migrateMysql($pdo);
+            return;
+        }
+
+        self::migrateSqlite($pdo);
+    }
+
+    private static function migrateSqlite(PDO $pdo): void
     {
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS users (
@@ -89,7 +198,6 @@ class Database
                 updated_at TEXT NOT NULL
             )
         ");
-
         self::addColumnIfMissing($pdo, 'users', 'is_admin', 'INTEGER NOT NULL DEFAULT 0');
 
         $pdo->exec("
@@ -114,7 +222,6 @@ class Database
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         ");
-
         self::addColumnIfMissing($pdo, 'artworks', 'final_title', "TEXT NOT NULL DEFAULT ''");
         self::addColumnIfMissing($pdo, 'artworks', 'subtitle', "TEXT NOT NULL DEFAULT ''");
         self::addColumnIfMissing($pdo, 'artworks', 'medium', "TEXT NOT NULL DEFAULT ''");
@@ -129,10 +236,12 @@ class Database
                 mockup_file TEXT NOT NULL,
                 context_id TEXT,
                 prompt_file TEXT,
+                selector_state_json TEXT NOT NULL DEFAULT '',
                 created_at TEXT NOT NULL,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         ");
+        self::addColumnIfMissing($pdo, 'mockups', 'selector_state_json', "TEXT NOT NULL DEFAULT ''");
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS artist_profiles (
@@ -160,7 +269,6 @@ class Database
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         ");
-
         self::addColumnIfMissing($pdo, 'artist_profiles', 'conceptual_keywords', "TEXT NOT NULL DEFAULT ''");
         self::addColumnIfMissing($pdo, 'artist_profiles', 'tone_of_voice', "TEXT NOT NULL DEFAULT ''");
         self::addColumnIfMissing($pdo, 'artist_profiles', 'marketplace_strategy', "TEXT NOT NULL DEFAULT ''");
@@ -210,10 +318,228 @@ class Database
                 FOREIGN KEY (analysis_id) REFERENCES artwork_analysis(id) ON DELETE CASCADE
             )
         ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS mockup_generation_jobs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                artwork_id INTEGER NOT NULL,
+                artwork_file TEXT NOT NULL,
+                context_id TEXT NOT NULL,
+                prompt TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'queued',
+                mockup_id INTEGER,
+                mockup_file TEXT,
+                prompt_file TEXT,
+                error TEXT,
+                attempts INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
+            )
+        ");
+
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_mockup_generation_jobs_artwork ON mockup_generation_jobs (artwork_id, status)");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_mockup_generation_jobs_context ON mockup_generation_jobs (artwork_id, context_id)");
+    }
+
+    private static function migrateMysql(PDO $pdo): void
+    {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS users (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                email VARCHAR(255) NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                name VARCHAR(255) NOT NULL DEFAULT '',
+                credits INT NOT NULL DEFAULT 10,
+                is_admin TINYINT(1) NOT NULL DEFAULT 0,
+                created_at VARCHAR(40) NOT NULL,
+                updated_at VARCHAR(40) NOT NULL,
+                PRIMARY KEY (id),
+                UNIQUE KEY users_email_unique (email)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        self::addColumnIfMissing($pdo, 'users', 'is_admin', 'TINYINT(1) NOT NULL DEFAULT 0');
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS artworks (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                user_id INT UNSIGNED NOT NULL,
+                job_id VARCHAR(255) NOT NULL,
+                root_file VARCHAR(255) NULL,
+                main_file VARCHAR(255) NULL,
+                final_title VARCHAR(255) NOT NULL DEFAULT '',
+                subtitle VARCHAR(255) NOT NULL DEFAULT '',
+                medium VARCHAR(255) NOT NULL DEFAULT '',
+                artwork_year VARCHAR(80) NOT NULL DEFAULT '',
+                series VARCHAR(255) NOT NULL DEFAULT '',
+                status VARCHAR(80) NOT NULL DEFAULT 'queued',
+                width VARCHAR(80) NULL,
+                height VARCHAR(80) NULL,
+                depth VARCHAR(80) NULL,
+                unit VARCHAR(20) NOT NULL DEFAULT 'cm',
+                created_at VARCHAR(40) NOT NULL,
+                updated_at VARCHAR(40) NOT NULL,
+                PRIMARY KEY (id),
+                UNIQUE KEY artworks_job_id_unique (job_id),
+                KEY artworks_user_status_idx (user_id, status),
+                CONSTRAINT artworks_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        self::addColumnIfMissing($pdo, 'artworks', 'final_title', "VARCHAR(255) NOT NULL DEFAULT ''");
+        self::addColumnIfMissing($pdo, 'artworks', 'subtitle', "VARCHAR(255) NOT NULL DEFAULT ''");
+        self::addColumnIfMissing($pdo, 'artworks', 'medium', "VARCHAR(255) NOT NULL DEFAULT ''");
+        self::addColumnIfMissing($pdo, 'artworks', 'artwork_year', "VARCHAR(80) NOT NULL DEFAULT ''");
+        self::addColumnIfMissing($pdo, 'artworks', 'series', "VARCHAR(255) NOT NULL DEFAULT ''");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS mockups (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                user_id INT UNSIGNED NOT NULL,
+                artwork_file VARCHAR(255) NOT NULL,
+                mockup_file VARCHAR(255) NOT NULL,
+                context_id VARCHAR(80) NULL,
+                prompt_file VARCHAR(255) NULL,
+                selector_state_json MEDIUMTEXT NULL,
+                created_at VARCHAR(40) NOT NULL,
+                PRIMARY KEY (id),
+                KEY mockups_user_artwork_idx (user_id, artwork_file),
+                CONSTRAINT mockups_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        self::addColumnIfMissing($pdo, 'mockups', 'selector_state_json', "MEDIUMTEXT NOT NULL");
+        $pdo->exec('ALTER TABLE mockups MODIFY selector_state_json MEDIUMTEXT NULL');
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS artist_profiles (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                user_id INT UNSIGNED NOT NULL,
+                artist_name VARCHAR(255) NOT NULL DEFAULT '',
+                short_bio TEXT NOT NULL,
+                statement TEXT NOT NULL,
+                visual_language TEXT NOT NULL,
+                materials TEXT NOT NULL,
+                recurring_themes TEXT NOT NULL,
+                palette_notes TEXT NOT NULL,
+                target_audience TEXT NOT NULL,
+                preferred_regions TEXT NOT NULL,
+                preferred_contexts TEXT NOT NULL,
+                forbidden_contexts TEXT NOT NULL,
+                commercial_positioning TEXT NOT NULL,
+                conceptual_keywords TEXT NOT NULL,
+                tone_of_voice TEXT NOT NULL,
+                marketplace_strategy TEXT NOT NULL,
+                social_strategy TEXT NOT NULL,
+                pinterest_strategy TEXT NOT NULL,
+                created_at VARCHAR(40) NOT NULL,
+                updated_at VARCHAR(40) NOT NULL,
+                PRIMARY KEY (id),
+                UNIQUE KEY artist_profiles_user_unique (user_id),
+                CONSTRAINT artist_profiles_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        self::addColumnIfMissing($pdo, 'artist_profiles', 'conceptual_keywords', "TEXT NOT NULL");
+        self::addColumnIfMissing($pdo, 'artist_profiles', 'tone_of_voice', "TEXT NOT NULL");
+        self::addColumnIfMissing($pdo, 'artist_profiles', 'marketplace_strategy', "TEXT NOT NULL");
+        self::addColumnIfMissing($pdo, 'artist_profiles', 'social_strategy', "TEXT NOT NULL");
+        self::addColumnIfMissing($pdo, 'artist_profiles', 'pinterest_strategy', "TEXT NOT NULL");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS credit_transactions (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                user_id INT UNSIGNED NOT NULL,
+                amount INT NOT NULL,
+                reason VARCHAR(255) NOT NULL,
+                created_at VARCHAR(40) NOT NULL,
+                PRIMARY KEY (id),
+                KEY credit_transactions_user_idx (user_id),
+                CONSTRAINT credit_transactions_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS app_settings (
+                `key` VARCHAR(190) NOT NULL,
+                value MEDIUMTEXT NOT NULL,
+                updated_at VARCHAR(40) NOT NULL,
+                PRIMARY KEY (`key`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS artwork_analysis (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                artwork_id INT UNSIGNED NOT NULL,
+                provider VARCHAR(80) NOT NULL,
+                analysis_json MEDIUMTEXT NOT NULL,
+                created_at VARCHAR(40) NOT NULL,
+                PRIMARY KEY (id),
+                KEY artwork_analysis_artwork_idx (artwork_id),
+                CONSTRAINT artwork_analysis_artwork_fk FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS mockup_contexts (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                artwork_id INT UNSIGNED NOT NULL,
+                analysis_id INT UNSIGNED NOT NULL,
+                context_name VARCHAR(255) NOT NULL,
+                context_json MEDIUMTEXT NOT NULL,
+                prompt MEDIUMTEXT NOT NULL,
+                created_at VARCHAR(40) NOT NULL,
+                PRIMARY KEY (id),
+                KEY mockup_contexts_artwork_idx (artwork_id),
+                KEY mockup_contexts_analysis_idx (analysis_id),
+                CONSTRAINT mockup_contexts_artwork_fk FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE,
+                CONSTRAINT mockup_contexts_analysis_fk FOREIGN KEY (analysis_id) REFERENCES artwork_analysis(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS mockup_generation_jobs (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                user_id INT UNSIGNED NOT NULL,
+                artwork_id INT UNSIGNED NOT NULL,
+                artwork_file VARCHAR(255) NOT NULL,
+                context_id VARCHAR(80) NOT NULL,
+                prompt MEDIUMTEXT NOT NULL,
+                status VARCHAR(40) NOT NULL DEFAULT 'queued',
+                mockup_id INT UNSIGNED NULL,
+                mockup_file VARCHAR(255) NULL,
+                prompt_file VARCHAR(255) NULL,
+                error TEXT NULL,
+                attempts INT NOT NULL DEFAULT 0,
+                created_at VARCHAR(40) NOT NULL,
+                updated_at VARCHAR(40) NOT NULL,
+                PRIMARY KEY (id),
+                KEY idx_mockup_generation_jobs_artwork (artwork_id, status),
+                KEY idx_mockup_generation_jobs_context (artwork_id, context_id),
+                KEY mockup_generation_jobs_user_idx (user_id),
+                CONSTRAINT mockup_generation_jobs_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                CONSTRAINT mockup_generation_jobs_artwork_fk FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
     }
 
     private static function addColumnIfMissing(PDO $pdo, string $table, string $column, string $definition): void
     {
+        if (self::isMysql()) {
+            $stmt = $pdo->prepare('
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                AND TABLE_NAME = :table
+                AND COLUMN_NAME = :column
+            ');
+            $stmt->execute(['table' => $table, 'column' => $column]);
+            if ((int)$stmt->fetchColumn() === 0) {
+                $pdo->exec("ALTER TABLE `{$table}` ADD COLUMN `{$column}` {$definition}");
+            }
+            return;
+        }
+
         $stmt = $pdo->query("PRAGMA table_info({$table})");
         $columns = array_map(fn(array $row): string => (string)$row['name'], $stmt->fetchAll());
 
@@ -222,12 +548,6 @@ class Database
         }
     }
 
-    /**
-     * Descuenta 1 crédito del usuario de forma atómica.
-     * Registra la transacción en credit_transactions.
-     * Retorna false si no hay créditos suficientes (sin lanzar excepción).
-     * Punto #10: sistema de créditos real.
-     */
     public static function deductCredit(int $userId, string $reason): bool
     {
         return (bool)self::withBusyRetry(function () use ($userId, $reason): bool {
@@ -235,12 +555,14 @@ class Database
             $inTransaction = false;
 
             try {
-                // Use IMMEDIATE transaction for SQLite to avoid write upgrade locks/deadlocks (SQLITE_BUSY)
-                $pdo->exec('BEGIN IMMEDIATE TRANSACTION');
+                self::beginWriteTransaction($pdo);
                 $inTransaction = true;
 
-                // Leer créditos con bloqueo implícito de la fila
-                $stmt = $pdo->prepare('SELECT credits FROM users WHERE id = :id');
+                $sql = 'SELECT credits FROM users WHERE id = :id';
+                if (self::isMysql()) {
+                    $sql .= ' FOR UPDATE';
+                }
+                $stmt = $pdo->prepare($sql);
                 $stmt->execute(['id' => $userId]);
                 $credits = (int)$stmt->fetchColumn();
 
@@ -250,17 +572,15 @@ class Database
                     return false;
                 }
 
-                // Descontar crédito
                 $pdo->prepare('UPDATE users SET credits = credits - 1, updated_at = :now WHERE id = :id')
                     ->execute(['now' => date('c'), 'id' => $userId]);
 
-                // Registrar transacción
                 $pdo->prepare("
                     INSERT INTO credit_transactions (user_id, amount, reason, created_at)
                     VALUES (:user_id, -1, :reason, :created_at)
                 ")->execute([
-                    'user_id'    => $userId,
-                    'reason'     => $reason,
+                    'user_id' => $userId,
+                    'reason' => $reason,
                     'created_at' => date('c'),
                 ]);
 
@@ -272,7 +592,6 @@ class Database
                     try {
                         $pdo->exec('ROLLBACK');
                     } catch (Throwable $rollbackErr) {
-                        // Ignore rollback exception to propagate original error
                     }
                 }
                 throw $e;
@@ -280,10 +599,6 @@ class Database
         }, 12);
     }
 
-    /**
-     * Reembolsa 1 crédito al usuario (usado cuando una generación falla tras deducir).
-     * Punto #10: reembolso automático en caso de error.
-     */
     public static function refundCredit(int $userId, string $reason): void
     {
         self::withBusyRetry(function () use ($userId, $reason): void {
@@ -291,7 +606,7 @@ class Database
             $inTransaction = false;
 
             try {
-                $pdo->exec('BEGIN IMMEDIATE TRANSACTION');
+                self::beginWriteTransaction($pdo);
                 $inTransaction = true;
 
                 $pdo->prepare('UPDATE users SET credits = credits + 1, updated_at = :now WHERE id = :id')
@@ -301,8 +616,8 @@ class Database
                     INSERT INTO credit_transactions (user_id, amount, reason, created_at)
                     VALUES (:user_id, 1, :reason, :created_at)
                 ")->execute([
-                    'user_id'    => $userId,
-                    'reason'     => $reason . ' [refund]',
+                    'user_id' => $userId,
+                    'reason' => $reason . ' [refund]',
                     'created_at' => date('c'),
                 ]);
 
@@ -313,7 +628,6 @@ class Database
                     try {
                         $pdo->exec('ROLLBACK');
                     } catch (Throwable $rollbackErr) {
-                        // Ignore rollback exception to propagate original error
                     }
                 }
                 throw $e;
@@ -321,18 +635,14 @@ class Database
         });
     }
 
-    /**
-     * Establece los créditos de un usuario a un valor exacto.
-     * Registra la diferencia en credit_transactions.
-     */
     public static function setCredits(int $userId, int $targetCredits, string $reason): void
     {
         $pdo = self::connection();
-        
+
         $stmt = $pdo->prepare('SELECT credits FROM users WHERE id = :id');
         $stmt->execute(['id' => $userId]);
         $currentCredits = (int)$stmt->fetchColumn();
-        
+
         $diff = $targetCredits - $currentCredits;
         if ($diff === 0) {
             return;
@@ -342,16 +652,16 @@ class Database
             ->execute([
                 'credits' => $targetCredits,
                 'now' => date('c'),
-                'id' => $userId
+                'id' => $userId,
             ]);
 
         $pdo->prepare("
             INSERT INTO credit_transactions (user_id, amount, reason, created_at)
             VALUES (:user_id, :amount, :reason, :created_at)
         ")->execute([
-            'user_id'    => $userId,
-            'amount'     => $diff,
-            'reason'     => $reason,
+            'user_id' => $userId,
+            'amount' => $diff,
+            'reason' => $reason,
             'created_at' => date('c'),
         ]);
     }

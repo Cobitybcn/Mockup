@@ -1,0 +1,29 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Camera: three-quarter view from the right, slight side angle, eye-level, natural perspective
+- Scene Name: Structural Dialogue Gallery
+- Purpose: Primary exhibition, architectural integration
+- Scene Description: A Contemporary art gallery with polished concrete floors and minimalist white plaster walls. with Clean, expansive, contemplative, silent, with an emphasis on architectural rigor. atmosphere. Materials: polished concrete, white plaster, raw steel accents, glass
+- Lighting: warm afternoon light, golden hour, soft shadows
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult hispanic woman, 1.55 meters tall.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:
+
+EDIT EXISTING MOCKUP BASE:
+- Use the first attached image as the current mockup to revise, not as a blank starting point.
+- Preserve the existing room identity, composition, artwork placement, wall contact, shadows, furniture relationship, and overall commercial presentation unless the selected control explicitly requires a change.
+- Use the original root artwork reference to keep the artwork surface faithful and unchanged.
+- Apply only the requested selector changes: camera angle, time of day, human scale, or artwork size correction.

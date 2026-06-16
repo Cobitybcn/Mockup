@@ -10,6 +10,13 @@ function h($v): string
     return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 }
 
+function form2_normalize_size_override(?string $value): int
+{
+    $size = (int)trim((string)$value);
+
+    return $size >= -50 && $size <= 50 ? $size : 0;
+}
+
 function find_file(string $name): ?string
 {
     $safe = basename($name);
@@ -43,6 +50,111 @@ function public_path(string $file): string
     }
 
     return rawurlencode($base);
+}
+
+function form2_string_list($value): array
+{
+    if (!is_array($value)) {
+        $value = $value !== null && trim((string)$value) !== '' ? [$value] : [];
+    }
+
+    $items = [];
+    foreach ($value as $item) {
+        if (is_array($item) || is_object($item)) {
+            continue;
+        }
+
+        $text = trim((string)$item);
+        if ($text !== '') {
+            $items[] = $text;
+        }
+    }
+
+    return array_values(array_unique($items));
+}
+
+function form2_has_text($value): bool
+{
+    return trim((string)$value) !== '';
+}
+
+function form2_normalize_publishing_metadata(array $source): array
+{
+    $metadata = is_array($source['publishing_metadata'] ?? null) ? $source['publishing_metadata'] : [];
+    $titleOptions = [];
+    $rawTitles = $metadata['suggested_titles'] ?? [];
+
+    if (is_array($rawTitles)) {
+        $isList = array_keys($rawTitles) === range(0, count($rawTitles) - 1);
+
+        if ($isList) {
+            foreach ($rawTitles as $option) {
+                if (!is_array($option)) {
+                    continue;
+                }
+
+                $title = trim((string)($option['title'] ?? ''));
+                if ($title === '') {
+                    continue;
+                }
+
+                $titleOptions[] = [
+                    'title' => $title,
+                    'subtitle' => trim((string)($option['subtitle'] ?? '')),
+                    'short_description' => trim((string)($option['short_description'] ?? '')),
+                    'curatorial_description' => trim((string)($option['curatorial_description'] ?? '')),
+                    'commercial_description' => trim((string)($option['commercial_description'] ?? '')),
+                ];
+            }
+        } else {
+            foreach ($rawTitles as $label => $title) {
+                $title = trim((string)$title);
+                if ($title === '') {
+                    continue;
+                }
+
+                $titleOptions[] = [
+                    'title' => $title,
+                    'subtitle' => ucwords(str_replace('_', ' ', (string)$label)),
+                    'short_description' => '',
+                    'curatorial_description' => '',
+                    'commercial_description' => '',
+                ];
+            }
+        }
+    }
+
+    $descriptions = is_array($metadata['descriptions'] ?? null) ? $metadata['descriptions'] : [];
+    $catawiki = is_array($metadata['catawiki_listing'] ?? null) ? $metadata['catawiki_listing'] : [];
+
+    return [
+        'title_options' => $titleOptions,
+        'descriptions' => [
+            'poetic_focus' => trim((string)($descriptions['poetic_focus'] ?? '')),
+            'formal_focus' => trim((string)($descriptions['formal_focus'] ?? '')),
+            'commercial_focus' => trim((string)($descriptions['commercial_focus'] ?? '')),
+        ],
+        'marketplace' => [
+            'title' => trim((string)($metadata['marketplace_title'] ?? '')),
+            'short_description' => trim((string)($metadata['marketplace_short_description'] ?? '')),
+            'long_description' => trim((string)($metadata['marketplace_long_description'] ?? '')),
+        ],
+        'catawiki' => [
+            'recommended_title' => trim((string)($catawiki['recommended_title'] ?? '')),
+            'alternative_titles' => form2_string_list($catawiki['alternative_titles'] ?? []),
+            'subtitle' => trim((string)($catawiki['subtitle'] ?? '')),
+            'short_description' => trim((string)($catawiki['short_description'] ?? '')),
+            'long_description' => trim((string)($catawiki['long_description'] ?? '')),
+            'technical_details' => trim((string)($catawiki['technical_details'] ?? '')),
+            'condition_statement' => trim((string)($catawiki['condition_statement'] ?? '')),
+            'shipping_statement' => trim((string)($catawiki['shipping_statement'] ?? '')),
+            'seo_keywords' => form2_string_list($catawiki['seo_keywords'] ?? []),
+            'tags' => form2_string_list($catawiki['tags'] ?? []),
+        ],
+        'seo_keywords' => form2_string_list($metadata['seo_keywords'] ?? []),
+        'seo_tags' => form2_string_list($metadata['seo_tags'] ?? []),
+        'pinterest_boards' => form2_string_list($metadata['pinterest_boards'] ?? []),
+    ];
 }
 
 function assert_root_owner(string $imagePath, array $user): void
@@ -175,6 +287,7 @@ $artworkId = $artworkRow ? (int)$artworkRow['id'] : null;
 $dbContexts = [];
 $dbAnalysis = null;
 $dbMockups = [];
+$dbQueueJobs = [];
 if ($artworkId) {
     $stmtContexts = $db->prepare("SELECT * FROM mockup_contexts WHERE artwork_id = :artwork_id ORDER BY id ASC");
     $stmtContexts->execute(['artwork_id' => $artworkId]);
@@ -184,19 +297,24 @@ if ($artworkId) {
     $stmtAnalysis->execute(['artwork_id' => $artworkId]);
     $dbAnalysis = $stmtAnalysis->fetch();
 
-    $stmtMockups = $db->prepare("SELECT * FROM mockups WHERE user_id = :user_id AND artwork_file = :artwork_file");
+    $mockupDateOrder = Database::dateOrderSql('created_at', 'DESC');
+    $stmtMockups = $db->prepare("SELECT * FROM mockups WHERE user_id = :user_id AND artwork_file = :artwork_file ORDER BY {$mockupDateOrder}, id DESC");
     $stmtMockups->execute([
         'user_id' => (int)$currentUser['id'],
         'artwork_file' => basename($imagePath)
     ]);
     $dbMockups = $stmtMockups->fetchAll();
+
+    $dbQueueJobs = MockupBatchQueue::rowsForArtwork($artworkId);
 }
 
 $useClassicMode = isset($_GET['classic']) && $_GET['classic'] === '1';
+$analysisForPublishing = [];
 
 if (!empty($dbContexts) && $dbAnalysis && !$useClassicMode) {
     // ---- MODO DINÁMICO IMPULSADO POR LA OBRA (BETA) ----
     $dbAnalysisData = json_decode($dbAnalysis['analysis_json'], true);
+    $analysisForPublishing = is_array($dbAnalysisData) ? $dbAnalysisData : [];
     
     // Mapear el análisis de la base de datos al formato esperado por la UI
     $profile = [
@@ -224,7 +342,10 @@ if (!empty($dbContexts) && $dbAnalysis && !$useClassicMode) {
         'avoid' => [],
         'materiality_strategy' => [
             'show' => []
-        ]
+        ],
+        'format_and_scale' => $dbAnalysisData['format_and_scale'] ?? [],
+        'artist_profile_relation' => $dbAnalysisData['artist_profile_relation'] ?? [],
+        'publishing_metadata' => $dbAnalysisData['publishing_metadata'] ?? [],
     ];
 
     // Mapear contextos dinámicos
@@ -239,14 +360,19 @@ if (!empty($dbContexts) && $dbAnalysis && !$useClassicMode) {
             'atmosphere' => $ctxJson['atmosphere'] ?? '',
             'materials' => $ctxJson['materials'] ?? [],
             'lighting' => $ctxJson['lighting'] ?? '',
-            'camera' => $ctxJson['camera_angle'] ?? '',
+            'camera' => $ctxJson['camera_view'] ?? ($ctxJson['camera_angle'] ?? ''),
+            'camera_angle' => $ctxJson['camera_angle'] ?? '',
             'camera_group' => $ctxJson['camera_group'] ?? '',
+            'camera_view' => $ctxJson['camera_view'] ?? '',
+            'camera_distance' => $ctxJson['camera_distance'] ?? '',
+            'camera_angle_notes' => $ctxJson['camera_angle_notes'] ?? '',
             'time_of_day' => $ctxJson['time_of_day'] ?? '',
             'placement' => $ctxJson['placement'] ?? 'hanging',
             'with_human' => (isset($ctxJson['human_presence']) && strtolower(trim($ctxJson['human_presence'])) !== 'none'),
             'human_profile' => $ctxJson['human_profile'] ?? null,
             'why' => $ctxJson['curatorial_reason'] ?? '',
             'commercial_reason' => $ctxJson['commercial_reason'] ?? '',
+            'pinterest_marketing' => $ctxJson['pinterest_marketing'] ?? [],
             'prompt' => $dbCtx['prompt'],
             'score' => 20, // default placeholder score
         ];
@@ -297,6 +423,7 @@ if (!empty($dbContexts) && $dbAnalysis && !$useClassicMode) {
     }
 
     $profile = $analysis['artwork_profile'] ?? [];
+    $analysisForPublishing = $analysis['artwork_analysis'] ?? $profile;
     $contexts = $analysis['recommended_contexts'] ?? [];
     $isAdmin = Auth::isAdmin($currentUser);
     $mode = $analysis['mode'] ?? ServiceFactory::appMode();
@@ -324,6 +451,19 @@ if ($widthCm && $heightCm) {
         $sizeText .= ' × ' . $depthCm . ' cm';
     }
 }
+$publishing = form2_normalize_publishing_metadata($analysisForPublishing);
+$hasPublishingTitles = !empty($publishing['title_options']);
+$hasPublishingDescriptions = count(array_filter($publishing['descriptions'], 'form2_has_text')) > 0;
+$hasMarketplace = count(array_filter($publishing['marketplace'], 'form2_has_text')) > 0;
+$hasCatawiki = count(array_filter([
+    $publishing['catawiki']['recommended_title'],
+    $publishing['catawiki']['subtitle'],
+    $publishing['catawiki']['short_description'],
+    $publishing['catawiki']['long_description'],
+    $publishing['catawiki']['technical_details'],
+], 'form2_has_text')) > 0;
+$hasSeo = !empty($publishing['seo_keywords']) || !empty($publishing['seo_tags']) || !empty($publishing['pinterest_boards']);
+$hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarketplace || $hasCatawiki || $hasSeo;
 ?>
 <!doctype html>
 <html lang="es">
@@ -730,6 +870,97 @@ if ($widthCm && $heightCm) {
             padding-bottom: 12px;
         }
 
+        .publishing-panel {
+            margin: 28px 0 34px;
+            border-top: 1px solid var(--gal-border);
+            border-bottom: 1px solid var(--gal-border);
+            padding: 22px 0;
+        }
+
+        .publishing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .publishing-card {
+            border: 1px solid var(--gal-border);
+            background: var(--gal-surface);
+            border-radius: var(--gal-radius);
+            padding: 14px;
+            min-width: 0;
+        }
+
+        .publishing-card h3 {
+            margin: 0 0 4px;
+            font-family: var(--font-serif);
+            font-size: 18px;
+            font-weight: 500;
+            line-height: 1.25;
+        }
+
+        .publishing-card .pub-subtitle,
+        .publishing-label {
+            color: var(--gal-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .publishing-text {
+            margin-top: 10px;
+            font-size: 13px;
+            line-height: 1.55;
+            color: var(--gal-ink);
+        }
+
+        .publishing-stack {
+            display: grid;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .publishing-stack details {
+            border: 1px solid var(--gal-border);
+            border-radius: var(--gal-radius);
+            background: var(--gal-surface);
+            padding: 12px 14px;
+        }
+
+        .publishing-stack summary {
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .publishing-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .publishing-tags span {
+            border: 1px solid var(--gal-border);
+            border-radius: 999px;
+            padding: 4px 8px;
+            color: var(--gal-muted);
+            font-size: 11px;
+            background: var(--gal-bg);
+        }
+
+        .publishing-context-details {
+            margin-top: 14px;
+            border-top: 1px solid var(--gal-border);
+            padding-top: 12px;
+        }
+
+        .publishing-context-details summary {
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
         /* Context cards grid */
         .contexts {
             display: grid;
@@ -917,19 +1148,27 @@ if ($widthCm && $heightCm) {
 
         .inline-loader {
             display: flex;
-            align-items: flex-start;
-            gap: 12px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            height: 100%;
+            min-height: 160px;
+            background: var(--gal-bg);
+            color: var(--gal-ink);
+            text-align: center;
         }
 
         .spinner {
-            width: 16px;
-            height: 16px;
+            width: 32px;
+            height: 32px;
             border: 2px solid var(--gal-border);
             border-top-color: var(--gal-accent);
             border-radius: 50%;
             animation: spin 0.85s linear infinite;
             flex-shrink: 0;
-            margin-top: 2px;
+            margin-top: 0;
         }
 
         .loader-track {
@@ -1131,6 +1370,81 @@ if ($widthCm && $heightCm) {
             color: var(--gal-muted);
         }
 
+        .admin-mockup-prompts {
+            margin: 0 0 28px;
+            padding: 18px;
+            background: var(--gal-surface);
+            border: 1px solid var(--gal-border);
+            border-radius: 8px;
+            box-shadow: var(--gal-shadow);
+        }
+
+        .admin-mockup-prompts h3 {
+            margin: 0 0 4px;
+            font-family: var(--font-serif);
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--gal-ink);
+        }
+
+        .admin-mockup-prompts > p {
+            margin: 0 0 14px;
+            color: var(--gal-muted);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .admin-mockup-prompt {
+            margin-top: 10px;
+            padding-top: 0;
+            border: 1px solid var(--gal-border);
+            border-radius: 6px;
+            background: var(--gal-bg);
+            overflow: hidden;
+        }
+
+        .admin-mockup-prompt summary {
+            margin: 0;
+            padding: 10px 12px;
+            color: var(--gal-ink);
+            font-size: 12px;
+            font-weight: 600;
+            list-style-position: inside;
+        }
+
+        .admin-mockup-meta {
+            display: grid;
+            gap: 3px;
+            padding: 0 12px 10px;
+            color: var(--gal-muted);
+            font-size: 11px;
+            line-height: 1.35;
+        }
+
+        .admin-mockup-actions {
+            display: flex;
+            justify-content: flex-end;
+            padding: 0 12px 10px;
+        }
+
+        .admin-mockup-actions button {
+            width: auto;
+            margin: 0;
+            padding: 7px 10px;
+            font-size: 11px;
+        }
+
+        .admin-mockup-prompt textarea {
+            display: block;
+            width: calc(100% - 24px);
+            min-height: 320px;
+            margin: 0 12px 12px;
+            background: #fbfaf7;
+            color: var(--gal-ink);
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
         .back {
             margin-top: 48px;
             padding-top: 24px;
@@ -1168,10 +1482,16 @@ if ($widthCm && $heightCm) {
             .contexts {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
+            .publishing-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
         }
 
         @media (max-width: 768px) {
             .contexts {
+                grid-template-columns: 1fr;
+            }
+            .publishing-grid {
                 grid-template-columns: 1fr;
             }
             body {
@@ -1407,7 +1727,7 @@ if ($widthCm && $heightCm) {
         </header>
 
         <div class="alert-strip">
-            Step 2 · Curatorial Direction: Choose the most suitable visual context to present the artwork with scale, atmosphere and intention.
+            Curatorial Direction: Choose the most suitable visual context to present the artwork with scale, atmosphere and intention.
         </div>
 
         <div class="workspace">
@@ -1559,7 +1879,7 @@ if ($widthCm && $heightCm) {
         <!-- Main Workspace Area -->
         <div class="contexts-area">
             <div class="contexts-header">
-                <h1>Step 2 · Curatorial Direction</h1>
+                <h1>Curatorial Direction</h1>
                 <div class="subtitle">
                     Choose the most suitable visual context to present the artwork with scale, atmosphere and intention.
                 </div>
@@ -1585,9 +1905,137 @@ if ($widthCm && $heightCm) {
                 <?php endif; ?>
             </div>
 
+            <?php if ($hasPublishing): ?>
+                <section class="publishing-panel" aria-label="Publishing metadata">
+                    <h2>Editorial & Marketplace Texts</h2>
+
+                    <?php if ($hasPublishingTitles): ?>
+                        <div class="publishing-grid">
+                            <?php foreach ($publishing['title_options'] as $optionIndex => $option): ?>
+                                <article class="publishing-card">
+                                    <div class="publishing-label">Option <?= h((string)($optionIndex + 1)) ?></div>
+                                    <h3><?= h($option['title']) ?></h3>
+                                    <?php if ($option['subtitle'] !== ''): ?>
+                                        <div class="pub-subtitle"><?= h($option['subtitle']) ?></div>
+                                    <?php endif; ?>
+                                    <?php if ($option['short_description'] !== ''): ?>
+                                        <p class="publishing-text"><?= h($option['short_description']) ?></p>
+                                    <?php endif; ?>
+                                    <?php if ($option['curatorial_description'] !== ''): ?>
+                                        <details>
+                                            <summary>Curatorial description</summary>
+                                            <p class="publishing-text"><?= h($option['curatorial_description']) ?></p>
+                                        </details>
+                                    <?php endif; ?>
+                                    <?php if ($option['commercial_description'] !== ''): ?>
+                                        <details>
+                                            <summary>Commercial description</summary>
+                                            <p class="publishing-text"><?= h($option['commercial_description']) ?></p>
+                                        </details>
+                                    <?php endif; ?>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="publishing-stack">
+                        <?php if ($hasPublishingDescriptions): ?>
+                            <details open>
+                                <summary>Public descriptions</summary>
+                                <?php foreach ($publishing['descriptions'] as $label => $text): ?>
+                                    <?php if ($text !== ''): ?>
+                                        <div class="publishing-text">
+                                            <strong><?= h(ucwords(str_replace('_', ' ', $label))) ?></strong><br>
+                                            <?= h($text) ?>
+                                        </div>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </details>
+                        <?php endif; ?>
+
+                        <?php if ($hasMarketplace): ?>
+                            <details>
+                                <summary>Marketplace listing</summary>
+                                <?php if ($publishing['marketplace']['title'] !== ''): ?>
+                                    <div class="publishing-text"><strong>Title</strong><br><?= h($publishing['marketplace']['title']) ?></div>
+                                <?php endif; ?>
+                                <?php if ($publishing['marketplace']['short_description'] !== ''): ?>
+                                    <div class="publishing-text"><strong>Short description</strong><br><?= h($publishing['marketplace']['short_description']) ?></div>
+                                <?php endif; ?>
+                                <?php if ($publishing['marketplace']['long_description'] !== ''): ?>
+                                    <div class="publishing-text"><strong>Long description</strong><br><?= h($publishing['marketplace']['long_description']) ?></div>
+                                <?php endif; ?>
+                            </details>
+                        <?php endif; ?>
+
+                        <?php if ($hasCatawiki): ?>
+                            <details>
+                                <summary>Catawiki listing</summary>
+                                <?php foreach (['recommended_title' => 'Recommended title', 'subtitle' => 'Subtitle', 'short_description' => 'Short description', 'long_description' => 'Long description', 'technical_details' => 'Technical details', 'condition_statement' => 'Condition', 'shipping_statement' => 'Shipping'] as $field => $label): ?>
+                                    <?php if (($publishing['catawiki'][$field] ?? '') !== ''): ?>
+                                        <div class="publishing-text"><strong><?= h($label) ?></strong><br><?= h($publishing['catawiki'][$field]) ?></div>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                                <?php if (!empty($publishing['catawiki']['alternative_titles'])): ?>
+                                    <div class="publishing-tags">
+                                        <?php foreach ($publishing['catawiki']['alternative_titles'] as $tag): ?>
+                                            <span><?= h($tag) ?></span>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </details>
+                        <?php endif; ?>
+
+                        <?php if ($hasSeo): ?>
+                            <details>
+                                <summary>SEO & Pinterest boards</summary>
+                                <?php foreach ([['SEO Keywords', $publishing['seo_keywords']], ['SEO Tags', $publishing['seo_tags']], ['Pinterest Boards', $publishing['pinterest_boards']]] as $tagGroup): ?>
+                                    <?php if (!empty($tagGroup[1])): ?>
+                                        <div class="publishing-label"><?= h($tagGroup[0]) ?></div>
+                                        <div class="publishing-tags">
+                                            <?php foreach ($tagGroup[1] as $tag): ?>
+                                                <span><?= h($tag) ?></span>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </details>
+                        <?php endif; ?>
+                    </div>
+                </section>
+            <?php endif; ?>
+
             <h2><?= h(count($contexts)) ?> contextual proposals for this artwork</h2>
 
-            <?php $usedCombinations = []; ?>
+            <?php if ($isAdmin && !empty($contexts)): ?>
+                <aside class="admin-mockup-prompts" aria-label="Admin mockup prompts">
+                    <h3>Admin - Mockup Prompts</h3>
+                    <p>Prompts completos preparados para generar mockups desde esta obra raiz. Solo visible para administradores.</p>
+
+                    <?php foreach ($contexts as $promptIndex => $promptContext): ?>
+                        <?php
+                            $adminPromptId = 'adminMockupPrompt' . $promptIndex;
+                            $adminCtxId = (string)($promptContext['id'] ?? ('ctx_' . ($promptIndex + 1)));
+                            $adminPromptText = (string)($promptContext['prompt'] ?? '');
+                        ?>
+                        <details class="admin-mockup-prompt" <?= $promptIndex === 0 ? 'open' : '' ?>>
+                            <summary>Proposal <?= h((string)($promptIndex + 1)) ?> - <?= h((string)($promptContext['name'] ?? 'Context')) ?></summary>
+                            <div class="admin-mockup-meta">
+                                <span>Context ID: <?= h($adminCtxId) ?></span>
+                                <span>Purpose: <?= h(str_replace('_', ' ', (string)($promptContext['purpose'] ?? ''))) ?></span>
+                                <span>Camera: <?= h((string)($promptContext['camera'] ?? '')) ?></span>
+                                <span>Time: <?= h((string)($promptContext['time_of_day'] ?? '')) ?></span>
+                            </div>
+                            <div class="admin-mockup-actions">
+                                <button type="button" class="button secondary admin-copy-mockup-prompt" data-target="<?= h($adminPromptId) ?>">Copy prompt</button>
+                            </div>
+                            <textarea id="<?= h($adminPromptId) ?>" readonly><?= h($adminPromptText) ?></textarea>
+                        </details>
+                    <?php endforeach; ?>
+                </aside>
+            <?php endif; ?>
+
+            <?php $form2BackUrl = 'form2.php?image=' . rawurlencode(basename($imagePath)) . ($json ? '&json=' . rawurlencode(basename($json)) : ''); ?>
             <div class="contexts">
                 <?php foreach ($contexts as $i => $ctx): ?>
                     <?php
@@ -1603,14 +2051,29 @@ if ($widthCm && $heightCm) {
                         // Check if a mockup has already been generated for this context
                         $existingMockup = null;
                         foreach ($dbMockups as $m) {
-                            if ($m['context_id'] === $ctxId) {
+                            if ((string)$m['context_id'] === (string)$ctxId) {
                                 $existingMockup = $m;
                                 break;
                             }
                         }
+                        $selectorState = [];
+                        if ($existingMockup && !empty($existingMockup['selector_state_json'])) {
+                            $decodedSelectorState = json_decode((string)$existingMockup['selector_state_json'], true);
+                            $selectorState = is_array($decodedSelectorState) ? $decodedSelectorState : [];
+                        }
+
+                        $queueJob = null;
+                        foreach ($dbQueueJobs as $job) {
+                            if ((string)$job['context_id'] === (string)$ctxId) {
+                                $queueJob = $job;
+                                break;
+                            }
+                        }
+                        $queueStatus = $queueJob ? (string)$queueJob['status'] : '';
+                        $isAutoPending = !$existingMockup && in_array($queueStatus, ['queued', 'processing'], true);
                     ?>
 
-                    <div class="card <?= $existingMockup ? 'generated' : '' ?>">
+                    <div class="card <?= $existingMockup ? 'generated' : '' ?> <?= $isAutoPending ? 'auto-pending' : '' ?>" id="context-<?= h($ctxId) ?>" data-context-id="<?= h($ctxId) ?>">
                         <div class="number">Proposal <?= $i + 1 ?></div>
 
                         <h3><?= h($ctx['name'] ?? 'Context') ?></h3>
@@ -1624,7 +2087,7 @@ if ($widthCm && $heightCm) {
                                 <?php
                                     $mFile = basename((string)$existingMockup['mockup_file']);
                                     $mUrl = public_path($mFile);
-                                    $mViewerUrl = 'viewer.php?id=' . rawurlencode((string)$existingMockup['id']);
+                                    $mViewerUrl = 'viewer.php?id=' . rawurlencode((string)$existingMockup['id']) . '&back=' . rawurlencode($form2BackUrl . '#context-' . $ctxId);
                                     $mDownloadUrl = $mUrl . '&download=1';
                                 ?>
                                 <a class="inline-thumb" href="<?= h($mViewerUrl) ?>" aria-label="Open generated mockup">
@@ -1639,11 +2102,22 @@ if ($widthCm && $heightCm) {
                                     <?php endif; ?>
                                 </div>
                             <?php else: ?>
-                                <svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--gal-muted)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                    <polyline points="21 15 16 10 5 21"></polyline>
-                                </svg>
+                                <?php if ($isAutoPending): ?>
+                                    <div class="inline-loader" data-auto-status="<?= h($queueStatus) ?>">
+                                        <div class="spinner" aria-hidden="true"></div>
+                                        <div class="inline-status">Generating mockup...</div>
+                                    </div>
+                                <?php elseif ($queueStatus === 'error'): ?>
+                                    <div class="inline-status" style="color: var(--gal-danger); font-size: 11px; padding: 10px; text-align: center;">
+                                        Error: <?= h($queueJob['error'] ?? 'Automatic generation failed.') ?>
+                                    </div>
+                                <?php else: ?>
+                                    <svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--gal-muted)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                        <polyline points="21 15 16 10 5 21"></polyline>
+                                    </svg>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
 
@@ -1653,15 +2127,21 @@ if ($widthCm && $heightCm) {
                             <input type="hidden" name="context_id" value="<?= h($ctxId) ?>">
                             <input type="hidden" name="prompt" value="<?= h($prompt) ?>">
                             <input type="hidden" name="ajax" value="1">
+                            <?php if ($existingMockup): ?>
+                                <input type="hidden" name="current_mockup_file" value="<?= h(basename((string)$existingMockup['mockup_file'])) ?>">
+                            <?php endif; ?>
 
                             <?php
                             $defaultCamera = 'front';
                             $cameraGroup = $ctx['camera_group'] ?? '';
-                            $cameraRaw = $ctx['camera'] ?? '';
+                            $cameraRaw = trim((string)($ctx['camera_view'] ?? $ctx['camera'] ?? $ctx['camera_angle'] ?? ''));
                             if (str_contains($cameraGroup, 'left') || str_contains($cameraRaw, 'left')) {
                                 $defaultCamera = '3_4_left';
                             } elseif (str_contains($cameraGroup, 'right') || str_contains($cameraRaw, 'right')) {
                                 $defaultCamera = '3_4_right';
+                            }
+                            if (in_array(($selectorState['camera_override'] ?? ''), ['front', '3_4_left', '3_4_right'], true)) {
+                                $defaultCamera = (string)$selectorState['camera_override'];
                             }
 
                             $defaultTime = 'day';
@@ -1670,6 +2150,9 @@ if ($widthCm && $heightCm) {
                                 $defaultTime = 'afternoon';
                             } elseif (str_contains($timeOfDay, 'night') || str_contains($timeOfDay, 'evening') || str_contains($timeOfDay, 'noche')) {
                                 $defaultTime = 'night';
+                            }
+                            if (in_array(($selectorState['time_override'] ?? ''), ['day', 'afternoon', 'night'], true)) {
+                                $defaultTime = (string)$selectorState['time_override'];
                             }
 
                             // Human default selection
@@ -1682,57 +2165,11 @@ if ($widthCm && $heightCm) {
                             } elseif (!empty($ctx['with_human'])) {
                                 $defaultHuman = 'female_155'; // Fallback
                             }
-
-                            // Ensure unique default combination of selectors across proposals
-                            $combo = "$defaultCamera|$defaultTime|$defaultHuman";
-                            if (in_array($combo, $usedCombinations, true)) {
-                                $resolved = false;
-                                $camerasList = ['front', '3_4_left', '3_4_right'];
-                                $timesList = ['day', 'afternoon', 'night'];
-                                $humansList = ['none', 'female_155', 'male_180'];
-                                
-                                foreach ($humansList as $h) {
-                                    $candidate = "$defaultCamera|$defaultTime|$h";
-                                    if (!in_array($candidate, $usedCombinations, true)) {
-                                        $defaultHuman = $h;
-                                        $combo = $candidate;
-                                        $resolved = true;
-                                        break;
-                                    }
-                                }
-                                if (!$resolved) {
-                                    foreach ($timesList as $t) {
-                                        foreach ($humansList as $h) {
-                                            $candidate = "$defaultCamera|$t|$h";
-                                            if (!in_array($candidate, $usedCombinations, true)) {
-                                                $defaultTime = $t;
-                                                $defaultHuman = $h;
-                                                $combo = $candidate;
-                                                $resolved = true;
-                                                break 2;
-                                            }
-                                        }
-                                    }
-                                }
-                                if (!$resolved) {
-                                    foreach ($camerasList as $c) {
-                                        foreach ($timesList as $t) {
-                                            foreach ($humansList as $h) {
-                                                $candidate = "$c|$t|$h";
-                                                if (!in_array($candidate, $usedCombinations, true)) {
-                                                    $defaultCamera = $c;
-                                                    $defaultTime = $t;
-                                                    $defaultHuman = $h;
-                                                    $combo = $candidate;
-                                                    $resolved = true;
-                                                    break 3;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+                            if (in_array(($selectorState['human_override'] ?? ''), ['none', 'female_155', 'male_180'], true)) {
+                                $defaultHuman = (string)$selectorState['human_override'];
                             }
-                            $usedCombinations[] = $combo;
+
+                            $defaultSizeOverride = form2_normalize_size_override((string)($selectorState['size_override'] ?? '0'));
                             ?>
 
                             <div class="customizer-options">
@@ -1748,13 +2185,13 @@ if ($widthCm && $heightCm) {
                                         </button>
                                         <button type="button" class="icon-btn <?= $defaultCamera === '3_4_left' ? 'active' : '' ?>" data-value="3_4_left" title="3/4 Left">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M4 8l10-3v14l-10-3z"></path>
+                                                <path d="M20 8l-10-3v14l10-3z"></path>
                                             </svg>
                                             <span>3/4 Left</span>
                                         </button>
                                         <button type="button" class="icon-btn <?= $defaultCamera === '3_4_right' ? 'active' : '' ?>" data-value="3_4_right" title="3/4 Right">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M20 8l-10-3v14l10-3z"></path>
+                                                <path d="M4 8l10-3v14l-10-3z"></path>
                                             </svg>
                                             <span>3/4 Right</span>
                                         </button>
@@ -1839,6 +2276,9 @@ if ($widthCm && $heightCm) {
                                     <div class="card-copy">
                                         <div class="meta-grid">
                                             <div class="meta-item"><span>Camera Angle</span><strong><?= h($ctx['camera'] ?? '-') ?></strong></div>
+                                            <?php if (!empty($ctx['camera_distance'])): ?>
+                                                <div class="meta-item"><span>Camera Distance</span><strong><?= h($ctx['camera_distance']) ?></strong></div>
+                                            <?php endif; ?>
                                             <div class="meta-item"><span>Time of Day</span><strong><?= h($ctx['time_of_day'] ?? '-') ?></strong></div>
                                             <div class="meta-item"><span>Placement</span><strong><?= h($ctx['placement'] ?? '-') ?></strong></div>
                                             <div class="meta-item"><span>Human Scale</span><strong><?= h($humanText) ?></strong></div>
@@ -1867,10 +2307,47 @@ if ($widthCm && $heightCm) {
                                             <?= h($ctx['lighting'] ?? '-') ?>
                                         </div>
 
+                                        <?php if (!empty($ctx['camera_angle_notes'])): ?>
+                                            <div class="lighting-text">
+                                                <strong>Camera Notes</strong>
+                                                <?= h($ctx['camera_angle_notes']) ?>
+                                            </div>
+                                        <?php endif; ?>
+
                                         <?php if (!empty($ctx['why'])): ?>
                                             <div class="why">
                                                 <?= h($ctx['why']) ?>
                                             </div>
+                                        <?php endif; ?>
+
+                                        <?php
+                                        $pinterest = is_array($ctx['pinterest_marketing'] ?? null) ? $ctx['pinterest_marketing'] : [];
+                                        $hasPinterest = count(array_filter([
+                                            $pinterest['board_suggestion'] ?? '',
+                                            $pinterest['pin_title'] ?? '',
+                                            $pinterest['pin_description'] ?? '',
+                                            $pinterest['alt_text'] ?? '',
+                                        ], 'form2_has_text')) > 0 || !empty($pinterest['seo_keywords']) || !empty($pinterest['hashtags']);
+                                        ?>
+                                        <?php if ($hasPinterest): ?>
+                                            <details class="publishing-context-details">
+                                                <summary>Pinterest & alt text</summary>
+                                                <?php foreach (['board_suggestion' => 'Board', 'pin_title' => 'Pin title', 'pin_description' => 'Pin description', 'alt_text' => 'Alt text'] as $field => $label): ?>
+                                                    <?php if (trim((string)($pinterest[$field] ?? '')) !== ''): ?>
+                                                        <div class="publishing-text"><strong><?= h($label) ?></strong><br><?= h($pinterest[$field]) ?></div>
+                                                    <?php endif; ?>
+                                                <?php endforeach; ?>
+                                                <?php foreach ([['Keywords', form2_string_list($pinterest['seo_keywords'] ?? [])], ['Hashtags', form2_string_list($pinterest['hashtags'] ?? [])]] as $tagGroup): ?>
+                                                    <?php if (!empty($tagGroup[1])): ?>
+                                                        <div class="publishing-label"><?= h($tagGroup[0]) ?></div>
+                                                        <div class="publishing-tags">
+                                                            <?php foreach ($tagGroup[1] as $tag): ?>
+                                                                <span><?= h($tag) ?></span>
+                                                            <?php endforeach; ?>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                <?php endforeach; ?>
+                                            </details>
                                         <?php endif; ?>
                                     </div>
 
@@ -1882,7 +2359,7 @@ if ($widthCm && $heightCm) {
                                             </div>
                                             <div class="scale-slider-wrapper">
                                                 <span class="slider-side-label smaller">Smaller</span>
-                                                <input type="range" name="size_override" min="-50" max="50" step="5" value="0" class="premium-slider">
+                                                <input type="range" name="size_override" min="-50" max="50" step="5" value="<?= h((string)$defaultSizeOverride) ?>" class="premium-slider">
                                                 <span class="slider-side-label larger">Larger</span>
                                             </div>
                                             <div class="scale-slider-ticks">
@@ -1897,8 +2374,8 @@ if ($widthCm && $heightCm) {
                                 </div>
                             </details>
 
-                            <button type="submit" style="margin-top: 18px;">
-                                <?= $existingMockup ? 'Regenerate' : 'Generate Mockup' ?>
+                            <button type="submit" style="margin-top: 18px;" <?= $isAutoPending ? 'disabled' : '' ?>>
+                                <?= $existingMockup ? 'Regenerate' : ($isAutoPending ? 'Generating...' : 'Generate Mockup') ?>
                             </button>
                         </form>
 
@@ -1925,6 +2402,75 @@ if ($widthCm && $heightCm) {
 
 <script>
     const isAdmin = <?= $isAdmin ? 'true' : 'false' ?>;
+    const batchStatusUrl = 'mockup_batch_status.php?image=<?= rawurlencode(basename($imagePath)) ?>';
+    const form2BackUrl = <?= json_encode($form2BackUrl, JSON_UNESCAPED_SLASHES) ?>;
+
+    document.querySelectorAll('.admin-copy-mockup-prompt').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const target = document.getElementById(button.dataset.target);
+            if (!target) return;
+
+            target.select();
+            target.setSelectionRange(0, target.value.length);
+
+            try {
+                await navigator.clipboard.writeText(target.value);
+            } catch (e) {
+                document.execCommand('copy');
+            }
+
+            const originalText = button.textContent;
+            button.textContent = 'Copied';
+            setTimeout(() => {
+                button.textContent = originalText;
+            }, 1400);
+        });
+    });
+
+    function renderGeneratedMockup(card, resultBox, data) {
+        card.classList.add('generated');
+        card.classList.remove('auto-pending');
+
+        const promptLink = isAdmin && data.prompt_url
+            ? `<a href="${escapeAttribute(data.prompt_url)}" target="_blank" rel="noopener">Prompt</a>`
+            : '';
+
+        const contextAnchor = data.context_id ? `#context-${encodeURIComponent(String(data.context_id))}` : '';
+        const backUrl = form2BackUrl + contextAnchor;
+        const viewerUrl = data.viewer_url
+            ? `${data.viewer_url}${String(data.viewer_url).includes('?') ? '&' : '?'}back=${encodeURIComponent(backUrl)}`
+            : data.image_url;
+
+        resultBox.innerHTML = `
+            <a class="inline-thumb" href="${escapeAttribute(viewerUrl)}" aria-label="Open generated mockup">
+                <img src="${escapeAttribute(data.image_url)}" alt="Generated mockup">
+            </a>
+            <div class="inline-actions">
+                <a href="${escapeAttribute(data.download_url)}" aria-label="Download mockup" title="Download">
+                    <span class="download-icon" aria-hidden="true"></span>
+                </a>
+                ${promptLink}
+            </div>
+        `;
+
+        const button = card.querySelector('.inline-mockup-form button[type="submit"]');
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = 'Regenerate';
+        }
+
+        const form = card.querySelector('.inline-mockup-form');
+        if (form && data.mockup_file) {
+            let currentInput = form.querySelector('input[name="current_mockup_file"]');
+            if (!currentInput) {
+                currentInput = document.createElement('input');
+                currentInput.type = 'hidden';
+                currentInput.name = 'current_mockup_file';
+                form.appendChild(currentInput);
+            }
+            currentInput.value = data.mockup_file;
+        }
+    }
 
     // Toggle active class and update hidden inputs in customizer groups
     document.querySelectorAll('.selector-icons .icon-btn').forEach((btn) => {
@@ -1939,74 +2485,83 @@ if ($widthCm && $heightCm) {
         });
     });
 
+    let mockupGenerationQueue = Promise.resolve();
+    let pendingManualGenerations = 0;
+
+    async function runMockupGeneration(form, formData, card, resultBox, button, originalHtml) {
+        resultBox.innerHTML = `
+            <div class="inline-loader">
+                <div class="spinner" aria-hidden="true"></div>
+                <div class="inline-status">Generating mockup...</div>
+            </div>
+        `;
+        button.innerHTML = '<svg class="spinner-btn" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" style="animation: spin 0.85s linear infinite; display: inline-block; vertical-align: middle;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>';
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const rawText = await response.text();
+            let data;
+            try {
+                data = JSON.parse(rawText);
+            } catch (parseError) {
+                const readable = rawText
+                    .replace(/<br\s*\/?>/gi, '\n')
+                    .replace(/<[^>]+>/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                throw new Error(readable || 'The server returned an invalid response while generating the mockup.');
+            }
+
+            if (!response.ok || !data.ok) {
+                throw new Error(data.error || 'Could not generate mockup.');
+            }
+
+            renderGeneratedMockup(card, resultBox, data);
+        } catch (error) {
+            resultBox.innerHTML = `<div class="inline-status" style="color: var(--gal-danger); font-size: 11px; padding: 10px; text-align: center;">Error: ${escapeHtml(error.message)}</div>`;
+            button.innerHTML = originalHtml;
+            button.disabled = false;
+        } finally {
+            pendingManualGenerations = Math.max(0, pendingManualGenerations - 1);
+            if (!card.classList.contains('generated')) {
+                button.disabled = false;
+            }
+        }
+    }
+
     document.querySelectorAll('.inline-mockup-form').forEach((form) => {
-        form.addEventListener('submit', async (event) => {
+        form.addEventListener('submit', (event) => {
             event.preventDefault();
 
             const card = form.closest('.card');
             const resultBox = card.querySelector('.inline-result');
             const button = form.querySelector('button[type="submit"]');
             const originalHtml = button.innerHTML;
+            const formData = new FormData(form);
 
             card.classList.remove('generated');
             resultBox.classList.add('active');
+            button.disabled = true;
+            pendingManualGenerations++;
+
             resultBox.innerHTML = `
-                <div class="inline-loader" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
-                    <div class="spinner" style="width: 32px; height: 32px;" aria-hidden="true"></div>
+                <div class="inline-loader">
+                    <div class="spinner" aria-hidden="true"></div>
+                <div class="inline-status">${pendingManualGenerations > 1 ? 'Waiting in queue...' : 'Generating mockup...'}</div>
                 </div>
             `;
-            button.disabled = true;
-            button.innerHTML = '<svg class="spinner-btn" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" style="animation: spin 0.85s linear infinite; display: inline-block; vertical-align: middle;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>';
 
-            try {
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    body: new FormData(form),
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-
-                const rawText = await response.text();
-                let data;
-                try {
-                    data = JSON.parse(rawText);
-                } catch (parseError) {
-                    const readable = rawText
-                        .replace(/<br\s*\/?>/gi, '\n')
-                        .replace(/<[^>]+>/g, ' ')
-                        .replace(/\s+/g, ' ')
-                        .trim();
-                    throw new Error(readable || 'The server returned an invalid response while generating the mockup.');
-                }
-
-                if (!response.ok || !data.ok) {
-                    throw new Error(data.error || 'Could not generate mockup.');
-                }
-
-                card.classList.add('generated');
-                const promptLink = isAdmin
-                    ? `<a href="${escapeAttribute(data.prompt_url)}" target="_blank" rel="noopener">Prompt</a>`
-                    : '';
-                resultBox.innerHTML = `
-                    <a class="inline-thumb" href="${escapeAttribute(data.viewer_url)}" aria-label="Open generated mockup">
-                        <img src="${escapeAttribute(data.image_url)}" alt="Generated mockup">
-                    </a>
-                    <div class="inline-actions">
-                        <a href="${escapeAttribute(data.download_url)}" aria-label="Download mockup" title="Download">
-                            <span class="download-icon" aria-hidden="true"></span>
-                        </a>
-                        ${promptLink}
-                    </div>
-                `;
-                button.innerHTML = 'Regenerate';
-            } catch (error) {
-                resultBox.innerHTML = `<div class="inline-status" style="color: var(--gal-danger); font-size: 11px; padding: 10px; text-align: center;">Error: ${escapeHtml(error.message)}</div>`;
-                button.innerHTML = originalHtml;
-            } finally {
-                button.disabled = false;
-            }
+            mockupGenerationQueue = mockupGenerationQueue
+                .catch(() => undefined)
+                .then(() => runMockupGeneration(form, formData, card, resultBox, button, originalHtml));
         });
     });
 
@@ -2047,6 +2602,84 @@ if ($widthCm && $heightCm) {
             });
         });
     });
+
+    let batchPollingActive = Boolean(document.querySelector('[data-auto-status]'));
+    let batchPollingTimer = null;
+
+    async function pollBatchStatus() {
+        if (!batchPollingActive) {
+            return;
+        }
+
+        try {
+            const response = await fetch(batchStatusUrl, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const data = await response.json();
+            if (!response.ok || !data.ok) {
+                throw new Error(data.error || 'Could not read automatic mockup status.');
+            }
+
+            let hasPending = false;
+            (data.jobs || []).forEach((job) => {
+                const card = document.querySelector(`.card[data-context-id="${CSS.escape(String(job.context_id))}"]`);
+                if (!card) {
+                    return;
+                }
+
+                const resultBox = card.querySelector('.inline-result');
+                const button = card.querySelector('.inline-mockup-form button[type="submit"]');
+
+                if (job.status === 'done' && job.image_url) {
+                    renderGeneratedMockup(card, resultBox, job);
+                    return;
+                }
+
+                if (job.status === 'queued' || job.status === 'processing') {
+                    hasPending = true;
+                    card.classList.add('auto-pending');
+                    if (button) {
+                        button.disabled = true;
+                        button.innerHTML = 'Generating...';
+                    }
+                    resultBox.innerHTML = `
+                        <div class="inline-loader" data-auto-status="${escapeAttribute(job.status)}">
+                            <div class="spinner" aria-hidden="true"></div>
+                            <div class="inline-status">Generating mockup...</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (job.status === 'error') {
+                    card.classList.remove('auto-pending');
+                    if (button) {
+                        button.disabled = false;
+                        button.innerHTML = 'Generate Mockup';
+                    }
+                    resultBox.innerHTML = `<div class="inline-status" style="color: var(--gal-danger); font-size: 11px; padding: 10px; text-align: center;">Error: ${escapeHtml(job.error || 'Automatic generation failed.')}</div>`;
+                }
+            });
+
+            batchPollingActive = hasPending;
+        } catch (error) {
+            batchPollingActive = false;
+            console.warn(error);
+        }
+
+        if (batchPollingActive) {
+            batchPollingTimer = window.setTimeout(pollBatchStatus, 3500);
+        } else if (batchPollingTimer) {
+            window.clearTimeout(batchPollingTimer);
+        }
+    }
+
+    if (batchPollingActive) {
+        window.setTimeout(pollBatchStatus, 1200);
+    }
 
     function escapeHtml(value) {
         return String(value)

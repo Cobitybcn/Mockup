@@ -21,6 +21,7 @@ class MockupContextEngine
 
         $imageMeta = $this->imageMeta($imagePath, $metadata);
         $prompt = $this->buildAnalysisPrompt($metadata, $imageMeta);
+        $this->saveDebugPrompt($imagePath, $prompt);
 
         $parts = [
             $this->client->textPart($prompt),
@@ -31,9 +32,10 @@ class MockupContextEngine
         $rawText = '';
 
         // Intentar la llamada usando los modelos de Gemini con reintento implícito
-        foreach (['gemini-2.5-flash', 'gemini-2-flash', 'gemini-2-flash-lite'] as $model) {
+        foreach (['gemini-2.5-flash'] as $model) {
             try {
                 $rawText = $this->client->generateText($parts, $model);
+                $this->saveDebugText($imagePath, $rawText, 'raw');
                 $json = $this->extractJson($rawText);
                 $profile = json_decode($json, true);
 
@@ -41,7 +43,14 @@ class MockupContextEngine
                     throw new RuntimeException('Gemini no devolvió un JSON con propuestas válidas.');
                 }
 
-                return $this->normalizeAnalysisResponse($profile, $imageMeta);
+                $normalized = $this->normalizeAnalysisResponse($profile, $imageMeta);
+                $expectedCount = PromptSettings::mockupContextCount();
+                $actualCount = count((array)($normalized['contextual_proposals'] ?? []));
+                if ($actualCount < $expectedCount) {
+                    throw new RuntimeException("Gemini devolvio {$actualCount} propuestas, pero ADMIN solicita {$expectedCount}.");
+                }
+
+                return $normalized;
             } catch (Throwable $e) {
                 error_log("Model {$model} failed in analyzeArtworkContext: " . $e->getMessage() . "\nTrace: " . $e->getTraceAsString());
                 $lastError = $e;
@@ -70,18 +79,29 @@ class MockupContextEngine
         $promptBuilder = new MockPromptBuilder();
 
         foreach ($proposals as $prop) {
+            $cameraView = trim((string)($prop['camera_view'] ?? $prop['camera_angle'] ?? 'front view'));
+            $cameraDistance = trim((string)($prop['camera_distance'] ?? 'medium-close view'));
+            $cameraNotes = trim((string)($prop['camera_angle_notes'] ?? ''));
+            $mockupPrompt = trim((string)($prop['mockup_prompt'] ?? ''));
+            $negativePrompt = trim((string)($prop['negative_prompt'] ?? ''));
+
             // Mapear la propuesta dinámica de la IA al formato de MockPromptBuilder
             $mappedContext = [
                 'name' => $prop['context_name'] ?? 'Custom Context',
                 'purpose' => $prop['context_role'] ?? 'presentation',
                 'scene' => "A " . ($prop['space_type'] ?? 'interior') . " with " . ($prop['atmosphere'] ?? 'neutral') . " atmosphere. Materials: " . implode(', ', (array)($prop['materials'] ?? [])),
                 'lighting' => $prop['lighting'] ?? 'soft light',
-                'camera' => $this->mapCameraAngle($prop['camera_angle'] ?? 'frontal'),
-                'camera_group' => $this->mapCameraGroup($prop['camera_angle'] ?? 'frontal'),
+                'camera' => $this->mapCameraAngle($cameraView, $cameraDistance),
+                'camera_group' => $this->mapCameraGroup($cameraView),
+                'camera_view' => $cameraView,
+                'camera_distance' => $cameraDistance,
+                'camera_angle_notes' => $cameraNotes,
                 'time_of_day' => $this->mapTimeOfDay($prop['lighting'] ?? 'day'),
                 'placement' => $this->mapPlacement($prop['space_type'] ?? 'wall'),
                 'with_human' => (isset($prop['human_presence']) && strtolower(trim($prop['human_presence'])) !== 'none'),
                 'human_profile' => $this->mapHumanProfile($prop['human_presence'] ?? 'none'),
+                'mockup_prompt' => $mockupPrompt,
+                'negative_prompt' => $negativePrompt,
             ];
 
             $mappedProfile = [
@@ -118,12 +138,14 @@ class MockupContextEngine
     private function buildAnalysisPrompt(array $metadata, array $imageMeta): string
     {
         $notes = trim((string)($metadata['artist_notes'] ?? ''));
+        $artistProfile = is_array($metadata['artist_profile'] ?? null) ? $metadata['artist_profile'] : [];
         $artistProfilePrompt = trim((string)($metadata['artist_profile_prompt'] ?? ''));
         $targetMarket = trim((string)($metadata['target_market'] ?? 'collectors'));
         $preferredStyle = trim((string)($metadata['preferred_style'] ?? ''));
 
         $width = $imageMeta['physical_size']['width_cm'] ?? '';
         $height = $imageMeta['physical_size']['height_cm'] ?? '';
+        $depth = $imageMeta['physical_size']['depth_cm'] ?? '';
 
         $contextCount = PromptSettings::mockupContextCount();
         $template = PromptSettings::artworkAnalysisPrompt();
@@ -139,35 +161,84 @@ class MockupContextEngine
         return str_replace(
             [
                 '{artist_profile_prompt}',
+                '{artist_statement}',
+                '{visual_language}',
+                '{recurring_symbols}',
+                '{preferred_atmospheres}',
                 '{title}',
                 '{width_cm}',
                 '{height_cm}',
+                '{depth_cm}',
                 '{notes}',
                 '{preferred_style}',
                 '{target_market}',
-                '{orientation}'
+                '{orientation}',
+                '{region}',
+                '{scale_text}'
             ],
             [
                 $artistProfilePrompt,
+                (string)($artistProfile['statement'] ?? ''),
+                (string)($artistProfile['visual_language'] ?? ''),
+                (string)($artistProfile['recurring_themes'] ?? ''),
+                (string)($artistProfile['palette_notes'] ?? ''),
                 $metadata['title'] ?? 'Untitled',
                 (string)$width,
                 (string)$height,
+                (string)$depth,
                 $notes,
                 $preferredStyle,
                 $targetMarket,
-                $imageMeta['orientation'] ?? 'unknown'
+                $imageMeta['orientation'] ?? 'unknown',
+                (string)($metadata['region'] ?? ''),
+                (string)($metadata['scale_text'] ?? '')
             ],
             $template
         );
     }
 
-    private function mapCameraAngle(string $angle): string
+    private function saveDebugPrompt(string $imagePath, string $prompt): void
+    {
+        if (!defined('ANALYSIS_DIR')) {
+            return;
+        }
+
+        if (!is_dir(ANALYSIS_DIR)) {
+            @mkdir(ANALYSIS_DIR, 0775, true);
+        }
+
+        $name = pathinfo(basename($imagePath), PATHINFO_FILENAME) . '.analysis-prompt.txt';
+        @file_put_contents(ANALYSIS_DIR . DIRECTORY_SEPARATOR . $name, $prompt);
+    }
+
+    private function saveDebugText(string $imagePath, string $text, string $suffix): void
+    {
+        if (!defined('ANALYSIS_DIR')) {
+            return;
+        }
+
+        if (!is_dir(ANALYSIS_DIR)) {
+            @mkdir(ANALYSIS_DIR, 0775, true);
+        }
+
+        $name = pathinfo(basename($imagePath), PATHINFO_FILENAME) . '.analysis-' . $suffix . '.txt';
+        @file_put_contents(ANALYSIS_DIR . DIRECTORY_SEPARATOR . $name, $text);
+    }
+
+    private function mapCameraAngle(string $angle, string $distance = ''): string
     {
         $angle = strtolower(trim($angle));
+        $distance = strtolower(trim($distance));
+        $distanceText = match (true) {
+            str_contains($distance, 'close-up') || str_contains($distance, 'close up') => 'close-up view, artwork dominant, room only suggested',
+            str_contains($distance, 'medium') => 'medium-close view, enough space for context and scale while keeping artwork dominant',
+            default => 'medium-close view, artwork dominant in frame',
+        };
+
         if (str_contains($angle, 'three-quarter') || str_contains($angle, '3/4') || str_contains($angle, 'quarter')) {
-            if (str_contains($angle, 'left')) return 'three-quarter view from the left, slight side angle, eye-level, natural perspective';
-            if (str_contains($angle, 'right')) return 'three-quarter view from the right, slight side angle, eye-level, natural perspective';
-            return 'three-quarter view from the left, slight side angle, eye-level, natural perspective';
+            if (str_contains($angle, 'left')) return 'three-quarter view from the left, slight side angle, eye-level, natural perspective, ' . $distanceText;
+            if (str_contains($angle, 'right')) return 'three-quarter view from the right, slight side angle, eye-level, natural perspective, ' . $distanceText;
+            return 'three-quarter view from the left, slight side angle, eye-level, natural perspective, ' . $distanceText;
         }
         if (str_contains($angle, 'close') || str_contains($angle, 'detail') || str_contains($angle, 'texture')) {
             return 'close-up detail shot of canvas texture, painted surface, brushwork and artwork edge';
@@ -178,7 +249,7 @@ class MockupContextEngine
         if (str_contains($angle, 'human') || str_contains($angle, 'figure') || str_contains($angle, 'scale')) {
             return 'medium interior shot with discreet human figure for scale, artwork remains the main subject';
         }
-        return 'front-facing medium shot, eye-level, balanced interior context, artwork dominant in frame';
+        return 'front-facing shot, eye-level, balanced interior context, artwork dominant in frame, ' . $distanceText;
     }
 
     private function mapCameraGroup(string $angle): string
@@ -188,15 +259,6 @@ class MockupContextEngine
             if (str_contains($angle, 'left')) return 'three_quarter_left';
             if (str_contains($angle, 'right')) return 'three_quarter_right';
             return 'three_quarter_left';
-        }
-        if (str_contains($angle, 'close') || str_contains($angle, 'detail') || str_contains($angle, 'texture')) {
-            return 'detail_close';
-        }
-        if (str_contains($angle, 'low') || str_contains($angle, 'hero')) {
-            return 'low_angle';
-        }
-        if (str_contains($angle, 'human') || str_contains($angle, 'figure') || str_contains($angle, 'scale')) {
-            return 'human_scale';
         }
         return 'front_medium';
     }
@@ -255,9 +317,7 @@ class MockupContextEngine
 
     private function normalizeAnalysisResponse(array $profile, array $imageMeta): array
     {
-        $count = (int)($profile['recommended_number_of_contexts'] ?? 7);
-        if ($count < 5) $count = 5;
-        if ($count > 10) $count = 10;
+        $count = PromptSettings::mockupContextCount();
         $profile['recommended_number_of_contexts'] = $count;
 
         $proposals = is_array($profile['contextual_proposals'] ?? null) ? $profile['contextual_proposals'] : [];
@@ -324,12 +384,17 @@ class MockupContextEngine
                 'lighting' => $prop['lighting'] ?? '',
                 'camera_angle' => $mapped['camera'] ?? ($prop['camera_angle'] ?? ''),
                 'camera_group' => $mapped['camera_group'] ?? '',
+                'camera_view' => $mapped['camera_view'] ?? ($prop['camera_view'] ?? ''),
+                'camera_distance' => $mapped['camera_distance'] ?? ($prop['camera_distance'] ?? ''),
+                'camera_angle_notes' => $mapped['camera_angle_notes'] ?? ($prop['camera_angle_notes'] ?? ''),
                 'time_of_day' => $mapped['time_of_day'] ?? '',
                 'placement' => $mapped['placement'] ?? 'hanging',
                 'human_presence' => $prop['human_presence'] ?? 'none',
                 'human_profile' => $mapped['human_profile'] ?? null,
                 'curatorial_reason' => $prop['curatorial_reason'] ?? '',
                 'commercial_reason' => $prop['commercial_reason'] ?? '',
+                'mockup_prompt' => $mapped['mockup_prompt'] ?? ($prop['mockup_prompt'] ?? ''),
+                'negative_prompt' => $mapped['negative_prompt'] ?? ($prop['negative_prompt'] ?? ''),
                 'pinterest_marketing' => $prop['pinterest_marketing'] ?? [],
             ];
 

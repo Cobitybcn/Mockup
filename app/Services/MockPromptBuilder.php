@@ -16,11 +16,32 @@ class MockPromptBuilder
         $orientation = $imageMeta['orientation'] ?? 'unknown';
         $scaleText = $this->scaleText($imageMeta, $context);
         $timeOfDay = $context['time_of_day'] ?? 'day';
+        $cameraView = trim((string)($context['camera_view'] ?? ''));
+        $cameraDistance = trim((string)($context['camera_distance'] ?? ''));
+        $cameraNotes = trim((string)($context['camera_angle_notes'] ?? ''));
+        $mockupPrompt = trim((string)($context['mockup_prompt'] ?? ''));
+        $contextNegativePrompt = trim((string)($context['negative_prompt'] ?? ''));
         
         $scaleRules = PromptSettings::mockupScaleRules();
         $negativeRules = PromptSettings::mockupNegativeRules();
         $qualityRules = PromptSettings::mockupQualityRules();
         $cameraRules = PromptSettings::mockupCameraRules();
+        $renderingRules = PromptSettings::mockupRenderingRules();
+        $finalRequest = PromptSettings::mockupFinalRequest();
+        $finalRequestBlock = $finalRequest !== ''
+            ? "\n\nADMIN FINAL MOCKUP REQUEST:\n{$finalRequest}"
+            : '';
+        $cameraStructuredBlock = $cameraView !== '' || $cameraDistance !== '' || $cameraNotes !== ''
+            ? "\n- Structured Camera View: " . ($cameraView !== '' ? $cameraView : 'not specified')
+                . "\n- Structured Camera Distance: " . ($cameraDistance !== '' ? $cameraDistance : 'not specified')
+                . ($cameraNotes !== '' ? "\n- Camera Rationale: {$cameraNotes}" : '')
+            : '';
+        $creativePromptBlock = $mockupPrompt !== ''
+            ? "\n\nAI PROPOSED MOCKUP DIRECTION:\n{$mockupPrompt}"
+            : '';
+        $contextNegativeBlock = $contextNegativePrompt !== ''
+            ? "\n\nCONTEXT-SPECIFIC NEGATIVE PROMPT:\n{$contextNegativePrompt}"
+            : '';
 
         $physical = $imageMeta['physical_size'] ?? [];
         $width = $physical['width_cm'] ?? null;
@@ -49,12 +70,21 @@ MOCKUP ART DIRECTION:
 - Time of Day: {$timeOfDay}
 - Placement: {$placement}
 - Human Figure: {$humanRule}
+{$cameraStructuredBlock}
+{$creativePromptBlock}
 
 CAMERA SELECTION RULES:
 {$cameraRules}
 
+QUALITY RULES:
+{$qualityRules}
+
 NEGATIVE RULES:
 {$negativeRules}
+{$contextNegativeBlock}
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:
+{$renderingRules}{$finalRequestBlock}
 PROMPT;
     }
 

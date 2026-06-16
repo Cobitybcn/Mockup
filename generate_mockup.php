@@ -339,6 +339,63 @@ function normalize_size_override(?string $value): int
     return $size;
 }
 
+function build_selector_edit_instruction(string $camera, string $time, string $human, string $sizeOverride, array $previousState = []): string
+{
+    $changes = [];
+    $previousCamera = (string)($previousState['camera_override'] ?? '');
+    $previousTime = (string)($previousState['time_override'] ?? '');
+    $previousHuman = (string)($previousState['human_override'] ?? '');
+    $previousSize = normalize_size_override((string)($previousState['size_override'] ?? '0'));
+    $currentSize = normalize_size_override($sizeOverride);
+
+    $cameraText = match ($camera) {
+        'front' => 'change only the ANGULO DE CAMARA / CAMERA ANGLE to a straight front view',
+        '3_4_left' => 'change only the ANGULO DE CAMARA / CAMERA ANGLE to a left three-quarter view',
+        '3_4_right' => 'change only the ANGULO DE CAMARA / CAMERA ANGLE to a right three-quarter view',
+        default => '',
+    };
+
+    if ($cameraText !== '' && ($previousCamera === '' || $previousCamera !== $camera)) {
+        $changes[] = $cameraText;
+    }
+
+    $timeText = match ($time) {
+        'day' => 'change the lighting to clear natural daytime light',
+        'afternoon' => 'change the lighting to warm afternoon light',
+        'night' => 'change the lighting to refined evening or night gallery light',
+        default => '',
+    };
+
+    if ($timeText !== '' && ($previousTime === '' || $previousTime !== $time)) {
+        $changes[] = $timeText;
+    }
+
+    $humanText = match ($human) {
+        'none' => 'remove any human figure',
+        'female_155' => 'include one discreet standing woman, 1.55 m tall, as a scale reference',
+        'male_180' => 'include one discreet standing man, 1.80 m tall, as a scale reference',
+        default => '',
+    };
+
+    if ($humanText !== '' && ($previousHuman === '' || $previousHuman !== $human)) {
+        $changes[] = $humanText;
+    }
+
+    if ($currentSize !== $previousSize) {
+        $delta = $currentSize - $previousSize;
+        $direction = $delta > 0 ? 'larger' : 'smaller';
+        $changes[] = 'make only the artwork appear ' . abs($delta) . '% ' . $direction;
+    }
+
+    if ($changes === []) {
+        $changes[] = 'make a subtle faithful refinement while preserving the current mockup';
+    }
+
+    return "Edit the provided generated mockup image. Apply only this requested change: "
+        . implode('; ', $changes)
+        . ". Preserve the existing artwork identity, room, composition, wall contact, shadows, furniture relationship, and premium presentation as much as possible. Do not redraw, reinterpret, crop, recolor, or alter the artwork surface.";
+}
+
 $image = trim((string)($_POST['image'] ?? $_GET['image'] ?? ''));
 $json = trim((string)($_POST['json'] ?? $_GET['json'] ?? ''));
 $contextId = trim((string)($_POST['context_id'] ?? $_GET['context_id'] ?? ''));
@@ -347,8 +404,15 @@ $cameraOverride = trim((string)($_POST['camera_override'] ?? ''));
 $timeOverride = trim((string)($_POST['time_override'] ?? ''));
 $humanOverride = trim((string)($_POST['human_override'] ?? ''));
 $sizeOverride = trim((string)($_POST['size_override'] ?? '0'));
+$currentMockupFile = basename((string)($_POST['current_mockup_file'] ?? ''));
+$selectorState = [
+    'camera_override' => in_array($cameraOverride, ['front', '3_4_left', '3_4_right'], true) ? $cameraOverride : '',
+    'time_override' => in_array($timeOverride, ['day', 'afternoon', 'night'], true) ? $timeOverride : '',
+    'human_override' => in_array($humanOverride, ['none', 'female_155', 'male_180'], true) ? $humanOverride : '',
+    'size_override' => normalize_size_override($sizeOverride),
+];
 
-if ($cameraOverride !== '' || $timeOverride !== '' || $humanOverride !== '' || normalize_size_override($sizeOverride) !== 0) {
+if ($currentMockupFile === '' && ($cameraOverride !== '' || $timeOverride !== '' || $humanOverride !== '' || normalize_size_override($sizeOverride) !== 0)) {
     $imagePath = find_image($image);
     if ($imagePath) {
         $prompt = override_prompt_directives($prompt, $cameraOverride, $timeOverride, $humanOverride, $imagePath, $json, $sizeOverride);
@@ -419,6 +483,40 @@ try {
         $cameraAngle = $cameraOverride;
     }
 
+    $generationImagePath = $imagePath;
+    $editBaseFile = '';
+
+    if ($currentMockupFile !== '' && $artwork) {
+        $stmtExistingMockup = $pdo->prepare("
+            SELECT *
+            FROM mockups
+            WHERE user_id = :user_id
+            AND artwork_file = :artwork_file
+            AND context_id = :context_id
+            AND mockup_file = :mockup_file
+            LIMIT 1
+        ");
+        $stmtExistingMockup->execute([
+            'user_id' => (int)$currentUser['id'],
+            'artwork_file' => basename($imagePath),
+            'context_id' => $contextId,
+            'mockup_file' => $currentMockupFile,
+        ]);
+
+        $existingMockupRow = $stmtExistingMockup->fetch();
+
+        if ($existingMockupRow) {
+            $existingMockupPath = find_image($currentMockupFile);
+            if ($existingMockupPath && is_file($existingMockupPath)) {
+                $previousSelectorState = json_decode((string)($existingMockupRow['selector_state_json'] ?? ''), true);
+                $previousSelectorState = is_array($previousSelectorState) ? $previousSelectorState : [];
+                $generationImagePath = $existingMockupPath;
+                $editBaseFile = $currentMockupFile;
+                $prompt = build_selector_edit_instruction($cameraOverride, $timeOverride, $humanOverride, $sizeOverride, $previousSelectorState);
+            }
+        }
+    }
+
     $seoParams = [
         'artistName' => $artistName,
         'artworkTitle' => $artworkTitle,
@@ -430,16 +528,20 @@ try {
 
     ProviderSettings::set(read_provider_settings_for_root($imagePath));
     $generator = ServiceFactory::mockupGenerator();
-    $result = $generator->generate($imagePath, $contextId, $prompt, [
+    $result = $generator->generate($generationImagePath, $contextId, $prompt, [
         'json' => $json,
         'seo_params' => $seoParams,
+        'root_reference_path' => $imagePath,
+        'edit_base_file' => $editBaseFile,
     ]);
 
-    $mockupId = (int)Database::withBusyRetry(function () use ($currentUser, $imagePath, $result, $contextId): int {
+    $selectorStateJson = json_encode($selectorState, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+    $mockupId = (int)Database::withBusyRetry(function () use ($currentUser, $imagePath, $result, $contextId, $selectorStateJson): int {
         $pdo = Database::connection();
         $stmt = $pdo->prepare("
-            INSERT INTO mockups (user_id, artwork_file, mockup_file, context_id, prompt_file, created_at)
-            VALUES (:user_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :created_at)
+            INSERT INTO mockups (user_id, artwork_file, mockup_file, context_id, prompt_file, selector_state_json, created_at)
+            VALUES (:user_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :selector_state_json, :created_at)
         ");
         $stmt->execute([
             'user_id' => (int)$currentUser['id'],
@@ -447,6 +549,7 @@ try {
             'mockup_file' => basename((string)$result['file']),
             'context_id' => $contextId,
             'prompt_file' => basename((string)$result['prompt_file']),
+            'selector_state_json' => $selectorStateJson,
             'created_at' => date('c'),
         ]);
 
@@ -470,6 +573,7 @@ try {
             'message' => (string)($result['message'] ?? 'Mockup generated.'),
             'context_id' => $contextId,
             'mockup_id' => null,
+            'mockup_file' => basename((string)($result['file'] ?? '')),
             'image_url' => $resultUrl,
             'viewer_url' => $resultUrl,
             'download_url' => $resultUrl . '&download=1',
@@ -508,6 +612,7 @@ if (wants_json_response()) {
         'message' => (string)$result['message'],
         'context_id' => $contextId,
         'mockup_id' => $mockupId,
+        'mockup_file' => basename((string)$result['file']),
         'image_url' => $resultUrl,
         'viewer_url' => $viewerUrl,
         'download_url' => $resultDownloadUrl,

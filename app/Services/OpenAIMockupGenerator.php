@@ -25,7 +25,7 @@ class OpenAIMockupGenerator implements MockupGeneratorInterface
         $finalPrompt = $this->finalPrompt($contextId, $prompt);
         
         try {
-            $b64 = $this->callImageEdit($imagePath, $finalPrompt);
+            $b64 = $this->callImageEdit($imagePath, $finalPrompt, (string)($metadata['root_reference_path'] ?? ''));
             $imageData = base64_decode($b64);
 
             if ($imageData === false) {
@@ -73,7 +73,7 @@ class OpenAIMockupGenerator implements MockupGeneratorInterface
         return $contextPrompt;
     }
 
-    private function callImageEdit(string $imagePath, string $prompt): string
+    private function callImageEdit(string $imagePath, string $prompt, string $rootReferencePath = ''): string
     {
         $fields = [
             'model' => ProviderSettings::openAIImageModel(),
@@ -83,6 +83,10 @@ class OpenAIMockupGenerator implements MockupGeneratorInterface
             'n' => '1',
             'image[0]' => new CURLFile($imagePath, $this->mime($imagePath), basename($imagePath)),
         ];
+
+        if ($rootReferencePath !== '' && is_file($rootReferencePath) && realpath($rootReferencePath) !== realpath($imagePath)) {
+            $fields['image[1]'] = new CURLFile($rootReferencePath, $this->mime($rootReferencePath), basename($rootReferencePath));
+        }
 
         $ch = curl_init('https://api.openai.com/v1/images/edits');
         curl_setopt_array($ch, [

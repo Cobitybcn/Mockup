@@ -36,11 +36,13 @@ class OpenAIArtworkAnalyzer implements ArtworkAnalyzerInterface
         $profile['_artist_profile_prompt'] = trim((string)($metadata['artist_profile_prompt'] ?? ''));
         $profile['_artist_profile_updated_at'] = (string)($profile['_artist_profile']['updated_at'] ?? '');
 
-        $contexts = $this->contextSelector->select($profile, $imageMeta, 10);
+        $contextCount = PromptSettings::mockupContextCount();
+        $contexts = $this->contextSelector->select($profile, $imageMeta, $contextCount);
 
         return [
             'ok' => true,
             'mode' => 'openai',
+            'context_count' => $contextCount,
             'analysis_warning' => $analysisWarning,
             'image' => [
                 'file' => basename($imagePath),
@@ -61,28 +63,59 @@ class OpenAIArtworkAnalyzer implements ArtworkAnalyzerInterface
         $dataUrl = $this->dataUrl($imagePath);
         $notes = trim((string)($metadata['artist_notes'] ?? ''));
         $region = trim((string)($metadata['region'] ?? ''));
+        $artistProfile = is_array($metadata['artist_profile'] ?? null) ? $metadata['artist_profile'] : [];
         $artistProfilePrompt = trim((string)($metadata['artist_profile_prompt'] ?? ''));
         $scaleText = trim((string)($metadata['scale_text'] ?? ''));
+        $targetMarket = trim((string)($metadata['target_market'] ?? 'collectors'));
+        $preferredStyle = trim((string)($metadata['preferred_style'] ?? ''));
 
+        $contextCount = PromptSettings::mockupContextCount();
         $template = PromptSettings::artworkAnalysisPrompt();
+        $template = preg_replace(
+            '/"recommended_number_of_contexts":\s*\d+/',
+            '"recommended_number_of_contexts": ' . $contextCount,
+            $template
+        );
+        $template = str_replace('{context_count}', (string)$contextCount, $template);
+
         $prompt = str_replace(
             [
                 '{artist_profile_prompt}',
+                '{artist_statement}',
+                '{visual_language}',
+                '{recurring_symbols}',
+                '{preferred_atmospheres}',
+                '{title}',
+                '{width_cm}',
+                '{height_cm}',
+                '{depth_cm}',
                 '{region}',
                 '{scale_text}',
                 '{orientation}',
                 '{width_px}',
                 '{height_px}',
-                '{notes}'
+                '{notes}',
+                '{preferred_style}',
+                '{target_market}'
             ],
             [
                 $artistProfilePrompt,
+                (string)($artistProfile['statement'] ?? ''),
+                (string)($artistProfile['visual_language'] ?? ''),
+                (string)($artistProfile['recurring_themes'] ?? ''),
+                (string)($artistProfile['palette_notes'] ?? ''),
+                $metadata['title'] ?? 'Untitled',
+                (string)($imageMeta['physical_size']['width_cm'] ?? ''),
+                (string)($imageMeta['physical_size']['height_cm'] ?? ''),
+                (string)($imageMeta['physical_size']['depth_cm'] ?? ''),
                 $region,
                 $scaleText,
                 $imageMeta['orientation'],
                 (string)$imageMeta['width_px'],
                 (string)$imageMeta['height_px'],
-                $notes
+                $notes,
+                $preferredStyle,
+                $targetMarket
             ],
             $template
         );

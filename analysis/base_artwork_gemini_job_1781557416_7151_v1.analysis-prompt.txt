@@ -1,0 +1,398 @@
+Analyze this artwork visually first and propose dynamic contextual mockup recommendations following the principle:
+
+"The artwork determines the space, not the space determines the artwork."
+
+Return only a valid JSON object. Do not include markdown formatting, comments, explanations, or any text outside the JSON object.
+
+ARTIST PROFILE CONTEXT:
+Artist name: Maurizio Valch
+Short bio: Maurizio Valch is a visual artist and writer whose work explores the relationship between landscape, consciousness and inner structure. His paintings move between abstraction, symbolic territory and contemplative silence, using fields of color, incisions, monoliths, horizons and suspended forms as signs of presence, transition and perception.
+Preferred description tone: Clear, poetic, sober, elegant, human and public-facing. The descriptions should be visually grounded and understandable for real viewers, collectors and buyers. Avoid academic, overly curatorial, decorative or generic language.
+Core artistic language: Abstract, contemporary, structural, symbolic and metaphysical. The visual language is built through fields of color, horizons, tectonic lines, divided territories, monoliths, incisions, subtle stairs, suspended signs and spatial relationships. The work seeks a tension between silence, presence, depth and inner order.
+Materials and process: Primarily acrylic on canvas. The process combines layers of color, palette knife work, brushwork, veils, scraping, reduction and surface incisions. The painting is built as a territory: adding matter, organizing planes, removing visual noise and allowing the essential structure to emerge.
+Recurring symbols and motifs: Territory, silence, monoliths, horizons, tectonic lines, incisions, subtle stairs, divided fields, suspended forms, red structures, nocturnal atmospheres, geological time, thresholds, presence, distance and the relationship between the individual and the earth.
+Emotional atmosphere: Silent, deep, sober, contemplative and slightly melancholic. The emotional temperature often moves between nocturnal calm, restrained tension, austerity, distance and quiet intensity.
+Target audience: Coleccionistas de arte contemporáneo, galerías, arquitectos, interioristas, decoradores de alto nivel, curadores, compradores internacionales y personas interesadas en obras abstractas, minimalistas, simbólicas, silenciosas y de gran presencia espacial.
+Preferred regions: Europa, Estados Unidos, Reino Unido, Francia, Alemania, Suiza, Bélgica, Países Bajos, Italia, España, Miami, New York, Londres, París y mercados internacionales vinculados al coleccionismo contemporáneo.
+Preferred mockup contexts: Galerías de arte contemporáneo, museos, colecciones privadas, townhouses, residencias de lujo, interiores minimalistas, estudios de arquitectura, hoteles boutique, espacios mediterráneos, casas con diseño sobrio, salones amplios y ambientes donde la obra pueda respirar con silencio y presencia.
+Excluded contexts: Generic bedrooms, kitchens, cheap decoration interiors, cluttered rooms, cold corporate offices, banal wall decor spaces, overly ornate luxury, childish interiors, spaces with too many objects, and any context that reduces the artwork to simple decoration.
+Forbidden language: Do not use phrases such as “This artwork is presented as…”, “This version positions the piece…”, “collector-grade silence”, “curatorial narrative”, “commercial presentation”, “publication-ready”, “for galleries, curators and interior designers”. Avoid academic language, internal marketing language, generic marketplace filler and descriptions that sound copied from the artist profile.
+
+ARTWORK DETAILS:
+
+* Title: Sin título
+* Physical dimensions: 120 cm wide x 80 cm high x 4 cm deep
+* Artist notes: 
+* User preferred style: 
+* Target market: Coleccionistas de arte contemporáneo, galerías, arquitectos, interioristas, decoradores de alto nivel, curadores, compradores internacionales y personas interesadas en obras abstractas, minimalistas, simbólicas, silenciosas y de gran presencia espacial.
+* Image orientation: horizontal
+
+RELEVANT ARTIST DATA:
+Analyze the artwork in relation to the artist profile.
+
+ARTIST PROFILE VARIABLES:
+
+* Artist statement: Clear, poetic, sober, elegant, human and public-facing. The descriptions should be visually grounded and understandable for real viewers, collectors and buyers. Avoid academic, overly curatorial, decorative or generic language.
+* Visual language: Abstract, contemporary, structural, symbolic and metaphysical. The visual language is built through fields of color, horizons, tectonic lines, divided territories, monoliths, incisions, subtle stairs, suspended signs and spatial relationships. The work seeks a tension between silence, presence, depth and inner order.
+* Recurring symbols / motifs: Territory, silence, monoliths, horizons, tectonic lines, incisions, subtle stairs, divided fields, suspended forms, red structures, nocturnal atmospheres, geological time, thresholds, presence, distance and the relationship between the individual and the earth.
+* Preferred atmospheres: Silent, deep, sober, contemplative and slightly melancholic. The emotional temperature often moves between nocturnal calm, restrained tension, austerity, distance and quiet intensity.
+
+Use these artist profile variables as background context only. Do not copy them literally into public-facing descriptions. Relate them only to what is actually visible in the artwork: composition, color, texture, symbols, atmosphere, scale, and commercial positioning.
+
+If one variable is empty or not relevant to the artwork, ignore it naturally. Do not invent artist biography, symbolism, or intention beyond the provided profile and the visible artwork.
+
+LANGUAGE RULES:
+
+* The artwork determines the language.
+* Treat the artist profile as background context only.
+* Do not copy the artist profile literally into public-facing descriptions.
+* The preferred description tone in the artist profile guides all public text.
+* Default tone if none is provided: clear, poetic, sober, elegant, human, public-facing, not academic, not overly curatorial, not decorative, not generic.
+* Avoid these phrases and attitudes:
+
+  * "This artwork is presented as..."
+  * "This version positions the piece..."
+  * "collector-grade silence"
+  * "curatorial narrative"
+  * "commercial presentation"
+  * "publication-ready"
+  * "for galleries, curators and interior designers"
+  * overly academic language
+  * generic marketplace filler text
+
+GRAPHIC / VISUAL ANALYSIS:
+
+1. DOMINANT VISUAL LANGUAGE:
+   Identify whether the artwork relates to categories such as abstract, surrealist, Mediterranean, minimalist, architectural, organic, geometric, expressive, symbolic, metaphysical, or other relevant categories. Do not force categories if they do not apply.
+
+2. COMPOSITION:
+   Analyze structure, balance, rhythm, visual tension, density, silence, main focal point, movement, depth, negative space, verticality, horizontality, and internal organization.
+
+3. COLOR:
+   Describe dominant palette, secondary colors, level of contrast, temperature, chromatic harmony, and possible emotional or psychological associations of the main colors.
+
+4. TEXTURE AND MATERIAL PRESENCE:
+   Analyze surface, brushstroke, gesture, layers, roughness, softness, visible physical presence, and sense of depth or flatness.
+
+5. FORMAT AND SCALE:
+   Use the dimensions entered by the user:
+   120 cm wide x 80 cm high x 4 cm deep.
+
+Interpret the impact of the physical dimensions, orientation, proportion, wall presence, monumentality or intimacy, and how the artwork can modify the perception of a space.
+
+6. VISUAL ATMOSPHERE:
+   Describe emotional tone, psychological climate, calm, tension, mystery, silence, energy, refinement, and dramatic quality.
+
+7. TARGET AUDIENCE:
+   Identify suggested audience, buyer profile, type of collector, relevance for interior design, gallery potential, and marketplace positioning.
+
+REPORTS FOR CREATING PROMPTS AND FOR SOCIAL MEDIA OR MARKETPLACE PUBLICATIONS:
+
+Generate 3 suggested title options for the artwork.
+
+Each option must include:
+
+* title
+* subtitle
+* short_description
+* curatorial_description
+* commercial_description
+
+RULES FOR TITLES:
+
+* Do not invent generic titles, descriptions, or contexts.
+* Everything must arise from the visual, curatorial, symbolic, chromatic, compositional, material, dimensional, and commercial identity detected in the artwork.
+* Titles must be related to the identity of the artwork.
+* Titles may connect with the artist profile only when relevant.
+* Titles must sound evocative, curatorial, and commercially elegant.
+* Titles must not be generic.
+* Titles must not sound automatic.
+* Titles must not repeat the same structure among themselves.
+* Each title must propose a different reading of the artwork.
+
+RULES FOR DESCRIPTIONS:
+
+* Each option must begin from a different angle.
+* Do not repeat the same approach in the three options.
+* One description may begin with composition.
+* Another may begin with color.
+* Another may begin with atmosphere, texture, scale, symbol, or spatial relationship.
+* Avoid empty phrases such as "this artwork invites the viewer" if they do not add anything specific.
+* Maintain a refined, clear, curatorial, and commercially useful tone.
+
+MOCKUP PROMPTS — NARRATED CONTEXTS:
+
+Generate 4 narrated contexts that arise directly from the previous layers of analysis.
+
+ALLOWED TYPES OF SPACES:
+
+* high-end residential interiors
+* professional art galleries
+* refined artist studios
+* elegant hallways
+* collectors’ rooms
+* sophisticated dining rooms
+* design studios
+* impeccable museum spaces
+* European interiors
+* recognizable historic interiors, only if they are sophisticated, realistic, and commercially useful
+
+FORBIDDEN CONTEXTS:
+
+* subterranean spaces
+* industrial basements
+* underground vaults
+* warehouses
+* garages
+* dark caverns
+* cheap decor
+* ordinary bedrooms
+* generic stock interiors
+* visually noisy environments
+* artificial or fantastical spaces, unless the artwork clearly justifies it and the result remains commercially useful
+
+RULES FOR THE CONTEXTS:
+
+* All spaces must convey sophistication, plausibility, good lighting, and commercial functionality.
+* Contexts must feel premium, realistic, and first-rate.
+* The space must arise from the artwork, not the other way around.
+* The artwork must remain the conceptual and visual center of the context.
+* Do not repeat the same type of room with only minimal changes.
+* Do not repeat the same justification across different contexts.
+* Do not repeat names with similar structures.
+* Each context must have a different visual, curatorial, or commercial reason.
+
+MANDATORY ORIGINALITY:
+The contexts must be varied from one another.
+
+Vary:
+
+* type of space
+* atmosphere
+* lighting
+* relationship to the scale of the artwork
+* commercial reading
+* curatorial reading
+* architectural style
+* possible buyer audience
+* narrative point of view
+* materials
+* camera angle
+* human presence
+
+Avoid repetitive formulas such as:
+
+* "minimalist gallery"
+* "luxury living room"
+* "collector’s room"
+* "elegant hallway"
+
+If these types of spaces are used, they must have a specific identity and must be clearly related to the artwork.
+
+HUMAN PRESENCE RULE:
+For human presence, use only one of these values:
+
+* "none"
+* "optional standing male figure 1.80m"
+* "optional standing female figure 1.55m"
+
+At least 1 proposal must include a human figure for scale reference.
+
+CONTEXT NAME RULE:
+The names of the contexts must be dynamically generated to suit the artwork's identity.
+
+Avoid rigid placeholders like:
+
+* "Main Sales Mockup"
+* "Human Scale Mockup"
+* "Gallery Mockup"
+* "Luxury Room"
+
+Use evocative, specific names such as:
+
+* "Silent Mineral Interior"
+* "Collector's Evening Room"
+* "Warm Mediterranean Threshold"
+* "Linen and Morning Light Interior"
+
+Each context must include:
+
+* context_name
+* context_role
+* space_type
+* atmosphere
+* materials
+* lighting
+* camera_angle
+* human_presence
+* curatorial_reason
+* commercial_reason
+* pinterest_marketing
+
+PINTEREST AND MARKETPLACE OUTPUT:
+Generate SEO-optimized titles, alt texts, board suggestions, pin titles, pin descriptions, marketplace descriptions, and tags.
+
+The output must include different public-facing description tones:
+
+* poetic / emotional focus
+* formal / structure focus
+* commercial / collectible focus
+
+ADMIN CUSTOM ANALYSIS LAYERS:
+
+CAPA A - ANALISIS DE LA OBRA:
+GRAPHIC / VISUAL ANALYSIS. 1. DOMINANT VISUAL LANGUAGE: Identify whether the artwork relates to categories such as: abstract, surrealist, Mediterranean, minimalist, architectural, organic, geometric, expressive, symbolic, metaphysical, or other relevant categories. Do not force categories if they do not apply. 2. COMPOSITION: Analyze: structure, balance, rhythm, visual tension, density, silence, main focal point, movement, depth, negative space, verticality, horizontality, internal organization. 3. COLOR: Describe: dominant palette, secondary colors, level of contrast, temperature, chromatic harmony, possible emotional or psychological associations of the main colors. 4. TEXTURE AND MATERIAL PRESENCE: Analyze: surface, brushstroke, gesture, layers, roughness, softness, visible physical presence, sense of depth or flatness. 5. FORMAT AND SCALE: Dimensions entered by the user: 120 cm wide, 80 cm high, 4 cm deep. Interpret: impact of the physical dimensions, orientation, proportion, wall presence, monumentality or intimacy, how the artwork can modify the perception of a space. 6. VISUAL ATMOSPHERE: Describe: emotional tone, psychological climate, calm, tension, mystery, silence, energy, refinement, dramatic quality. 7. TARGET AUDIENCE: Identify: suggested audience, buyer profile, type of collector, relevance for interior design, gallery potential, marketplace positioning.
+
+CAPA B - DATOS RELEVANTES DEL ARTISTA:
+ELEVANT ARTIST DATA
+
+Analyze the artwork in relation to the artist profile.
+
+ARTIST PROFILE VARIABLES:
+- Artist statement: Clear, poetic, sober, elegant, human and public-facing. The descriptions should be visually grounded and understandable for real viewers, collectors and buyers. Avoid academic, overly curatorial, decorative or generic language.
+- Visual language: Abstract, contemporary, structural, symbolic and metaphysical. The visual language is built through fields of color, horizons, tectonic lines, divided territories, monoliths, incisions, subtle stairs, suspended signs and spatial relationships. The work seeks a tension between silence, presence, depth and inner order.
+- Recurring symbols / motifs: Territory, silence, monoliths, horizons, tectonic lines, incisions, subtle stairs, divided fields, suspended forms, red structures, nocturnal atmospheres, geological time, thresholds, presence, distance and the relationship between the individual and the earth.
+- Preferred atmospheres: Silent, deep, sober, contemplative and slightly melancholic. The emotional temperature often moves between nocturnal calm, restrained tension, austerity, distance and quiet intensity.
+
+Use these artist profile variables as background context only. Do not copy them literally into the final public text. Relate them to what is actually visible in the artwork: composition, color, texture, symbols, atmosphere, scale, and commercial positioning.
+
+If one variable is empty or not relevant to the artwork, ignore it naturally. Do not invent artist biography, symbolism, or intention beyond the provided profile and the visible artwork.
+
+CAPA C - INFORMES PARA PROMPTS Y PUBLICACIONES:
+REPORTS FOR CREATING PROMPTS AND FOR SOCIAL MEDIA OR MARKETPLACE PUBLICATIONS. 1. SUGGESTED TITLES FOR THE ARTWORK: Do not invent generic titles, descriptions, or contexts. Everything must arise from the visual, curatorial, symbolic, chromatic, compositional, material, dimensional, and commercial identity detected in the artwork. Generate 3 options of: title, subtitle, short_description, curatorial_description, commercial_description. RULES FOR TITLES: They must be related to the identity of the artwork. They must connect, when relevant, with the artist profile. They must sound evocative, curatorial, and commercially elegant. They must not be generic. They must not sound like automatic titles. They must not repeat the same structure among themselves. Each title must propose a different reading of the artwork. RULES FOR DESCRIPTIONS: Each option must begin from a different angle. Do not repeat the same approach in the three options. One description may begin with the composition. Another may begin with color. Another may begin with atmosphere, texture, scale, symbol, or spatial relationship. Avoid empty phrases such as “this artwork invites the viewer” if they do not add anything specific. Maintain a refined, clear, curatorial, and commercially useful tone.
+
+CAPA D - PROMPTS PARA MOCKUPS:
+MOCKUP PROMPTS. NARRATED CONTEXTS: Generate 10 —or as many as I decide in ADMIN— narrated contexts that arise directly from the analysis of THE OTHER LAYERS. ALLOWED TYPES OF SPACES: high-end residential interiors, professional art galleries, refined artist studios, elegant hallways, collectors’ rooms, sophisticated dining rooms, design studios, impeccable museum spaces, European interiors, recognizable historic interiors, only if they are sophisticated, realistic, and commercially useful. RULES FOR THE CONTEXTS: All spaces must convey sophistication, plausibility, good lighting, and commercial functionality. The contexts must feel premium, realistic, and first-rate. The space must arise from the artwork, not the other way around. The artwork must remain the conceptual and visual center of the context. Do not use generic stock interiors. Do not use cheap decor. Do not use ordinary bedrooms. Do not use visually noisy environments. Do not use artificial or fantastical spaces, unless the artwork clearly justifies it and the result remains commercially useful. Do not repeat the same type of room with only minimal changes. Do not repeat the same justification across different contexts. Do not repeat names with similar structures. Each context must have a different visual, curatorial, or commercial reason. MANDATORY ORIGINALITY: The 10 contexts must be varied from one another. Vary: type of space, atmosphere, lighting, relationship to the scale of the artwork, commercial reading, curatorial reading, architectural style, possible buyer audience, narrative point of view. Avoid repetitive formulas such as: “minimalist gallery”, “luxury living room”, “collector’s room”, “elegant hallway”. If these types of spaces are used, they must have a specific identity and be related to the artwork.
+
+ADMIN EFFECTIVE SETTINGS:
+- Generate exactly 4 contextual proposals.
+- If any custom layer mentions another number of contexts or mockups, ignore that number and obey 4.
+- Keep the final response as one valid JSON object matching the schema below.
+
+Return exactly this JSON schema:
+
+{
+"artwork_analysis": {
+"visual_language": [],
+"emotional_energy": [],
+"dominant_colors": [],
+"secondary_colors": [],
+"visible_elements": [],
+"visible_symbols": [],
+"color_temperature": "",
+"contrast_level": "",
+"composition_type": "",
+"balance": "",
+"visual_tension": "",
+"density": "",
+"silence": "",
+"main_focal_point": "",
+"movement": "",
+"depth": "",
+"negative_space": "",
+"verticality_or_horizontality": "",
+"internal_organization": "",
+"rhythm": "",
+"surface": "",
+"brushstroke": "",
+"gesture": "",
+"layers": "",
+"material_presence": "",
+"sense_of_depth_or_flatness": "",
+"format_and_scale": {
+"width_cm": "120",
+"height_cm": "80",
+"depth_cm": "4",
+"orientation": "horizontal",
+"scale_impact": "",
+"wall_presence": "",
+"monumentality_or_intimacy": "",
+"spatial_effect": ""
+},
+"spatial_presence": "",
+"visual_atmosphere": "",
+"artwork_function": "",
+"suggested_audience": [],
+"audience_profile": {
+"primary": "",
+"secondary": "",
+"buyer_profile": "",
+"collector_type": "",
+"interior_design_relevance": "",
+"gallery_potential": ""
+},
+"commercial_positioning": "",
+"one_line_curatorial_read": "",
+"style_summary": "",
+"artist_profile_relation": {
+"relevant_statement_connection": "",
+"relevant_visual_language_connection": "",
+"relevant_symbol_connection": "",
+"relevant_atmosphere_connection": ""
+},
+"seasonal_strategy": {
+"primary_season": "neutral"
+},
+"publishing_metadata": {
+"suggested_titles": [
+{
+"title": "",
+"subtitle": "",
+"short_description": "",
+"curatorial_description": "",
+"commercial_description": ""
+},
+{
+"title": "",
+"subtitle": "",
+"short_description": "",
+"curatorial_description": "",
+"commercial_description": ""
+},
+{
+"title": "",
+"subtitle": "",
+"short_description": "",
+"curatorial_description": "",
+"commercial_description": ""
+}
+],
+"descriptions": {
+"poetic_focus": "",
+"formal_focus": "",
+"commercial_focus": ""
+},
+"seo_keywords": [],
+"seo_tags": [],
+"marketplace_title": "",
+"marketplace_short_description": "",
+"marketplace_long_description": "",
+"pinterest_boards": []
+}
+},
+"recommended_number_of_contexts": "4",
+"contextual_proposals": [
+{
+"context_name": "",
+"context_role": "",
+"space_type": "",
+"atmosphere": "",
+"materials": [],
+"lighting": "",
+"camera_angle": "",
+"human_presence": "",
+"curatorial_reason": "",
+"commercial_reason": "",
+"mockup_prompt": "",
+"negative_prompt": "",
+"pinterest_marketing": {
+"board_suggestion": "",
+"pin_title": "",
+"pin_description": "",
+"alt_text": "",
+"seo_keywords": [],
+"hashtags": []
+}
+}
+]
+}

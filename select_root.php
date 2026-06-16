@@ -46,6 +46,10 @@ if ((int)($status['user_id'] ?? 0) !== (int)$currentUser['id']) {
     exit;
 }
 
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
+}
+
 // Verify the selected filename is a valid candidate for this job
 $candidates = $status['candidates'] ?? [];
 if (!in_array($filename, $candidates, true)) {
@@ -56,10 +60,7 @@ if (!in_array($filename, $candidates, true)) {
 
 try {
     $db = Database::connection();
-    $stmtArtwork = $db->prepare("SELECT id FROM artworks WHERE job_id = :job_id LIMIT 1");
-    $stmtArtwork->execute(['job_id' => $jobId]);
-    $artworkRow = $stmtArtwork->fetch();
-    $artworkId = $artworkRow ? (int)$artworkRow['id'] : null;
+    $artworkId = find_or_recover_artwork_record($db, $jobId, $status);
 
     if ($artworkId === null) {
         throw new RuntimeException('Artwork record not found in database.');
@@ -70,6 +71,14 @@ try {
         throw new RuntimeException('Selected candidate file does not exist on disk.');
     }
 
+    $db->prepare('UPDATE artworks SET status = :status, root_file = :root_file, updated_at = :now WHERE id = :id')
+        ->execute([
+            'status' => 'done',
+            'root_file' => $filename,
+            'now' => date('c'),
+            'id' => $artworkId
+        ]);
+
     // --- RUN ANALYSIS AND CONTEXT GENERATION ON SELECTED IMAGE ---
     $measurements = $status['measurements'] ?? [];
     $artistProfile = ArtistProfile::findForUser((int)$status['user_id']);
@@ -77,7 +86,7 @@ try {
     $metadata = [
         'title' => $status['title'] ?? 'Sin título',
         'artist_notes' => $status['artist_notes'] ?? '',
-        'region' => '',
+        'region' => trim((string)($artistProfile['preferred_regions'] ?? '')),
         'artist_profile' => $artistProfile,
         'artist_profile_prompt' => ArtistProfile::forPrompt($artistProfile),
         'width_cm' => $measurements['unit'] === 'cm' ? ($measurements['width'] ?? null) : null,
@@ -208,9 +217,25 @@ try {
         'id' => $artworkId
     ]);
 
+    $initialMockupLimit = PromptSettings::mockupContextCount();
+    $queuedMockups = MockupBatchQueue::enqueueInitialBatch(
+        $artworkId,
+        (int)$status['user_id'],
+        $filename,
+        $initialMockupLimit
+    );
+
+    if ($queuedMockups > 0) {
+        start_mockup_queue_workers($artworkId, $initialMockupLimit, ProviderSettings::mockupWorkerCount());
+    }
+
+    $redirect = $queuedMockups > 0
+        ? 'mockup_batch_wait.php?image=' . rawurlencode($filename)
+        : 'form2.php?image=' . rawurlencode($filename);
+
     echo json_encode([
         'ok' => true,
-        'redirect' => 'form2.php?image=' . rawurlencode($filename)
+        'redirect' => $redirect
     ]);
     exit;
 
@@ -240,4 +265,86 @@ function build_scale_text_for_meta_select(array $measurements): string
     }
 
     return $text;
+}
+
+function find_or_recover_artwork_record(PDO $db, string $jobId, array $status): ?int
+{
+    $stmtArtwork = $db->prepare("SELECT id FROM artworks WHERE job_id = :job_id LIMIT 1");
+    $stmtArtwork->execute(['job_id' => $jobId]);
+    $artworkId = $stmtArtwork->fetchColumn();
+
+    if ($artworkId) {
+        return (int)$artworkId;
+    }
+
+    $userId = (int)($status['user_id'] ?? 0);
+    if ($userId <= 0) {
+        return null;
+    }
+
+    $measurements = is_array($status['measurements'] ?? null) ? $status['measurements'] : [];
+    $now = date('c');
+
+    try {
+        $stmt = $db->prepare("
+            INSERT INTO artworks (user_id, job_id, main_file, status, width, height, depth, unit, created_at, updated_at)
+            VALUES (:user_id, :job_id, :main_file, :status, :width, :height, :depth, :unit, :created_at, :updated_at)
+        ");
+        $stmt->execute([
+            'user_id' => $userId,
+            'job_id' => $jobId,
+            'main_file' => basename((string)($status['main_file'] ?? '')),
+            'status' => 'awaiting_selection',
+            'width' => (string)($measurements['width'] ?? ''),
+            'height' => (string)($measurements['height'] ?? ''),
+            'depth' => (string)($measurements['depth'] ?? ''),
+            'unit' => (string)($measurements['unit'] ?? 'cm'),
+            'created_at' => (string)($status['created_at'] ?? $now),
+            'updated_at' => $now,
+        ]);
+
+        return (int)$db->lastInsertId();
+    } catch (Throwable $e) {
+        $stmtArtwork->execute(['job_id' => $jobId]);
+        $artworkId = $stmtArtwork->fetchColumn();
+        return $artworkId ? (int)$artworkId : null;
+    }
+}
+
+function start_mockup_queue_workers(int $artworkId, int $limit, int $workerCount): void
+{
+    $workerCount = max(1, min(8, $workerCount));
+
+    for ($i = 0; $i < $workerCount; $i++) {
+        start_mockup_queue_worker($artworkId, $limit);
+    }
+}
+
+function start_mockup_queue_worker(int $artworkId, int $limit): void
+{
+    $script = __DIR__ . DIRECTORY_SEPARATOR . 'process_mockup_queue.php';
+    $php = resolve_php_binary_for_worker();
+
+    if (PHP_OS_FAMILY === 'Windows') {
+        $cmd = 'start /B "" ' . escapeshellarg($php) . ' ' . escapeshellarg($script) . ' ' . (int)$artworkId . ' ' . (int)$limit . ' > NUL 2>&1';
+        @pclose(@popen($cmd, 'r'));
+        return;
+    }
+
+    $cmd = escapeshellarg($php) . ' ' . escapeshellarg($script) . ' ' . (int)$artworkId . ' ' . (int)$limit . ' > /dev/null 2>&1 &';
+    @exec($cmd);
+}
+
+function resolve_php_binary_for_worker(): string
+{
+    if (is_file(PHP_BINARY) && stripos(basename(PHP_BINARY), 'php') !== false) {
+        return PHP_BINARY;
+    }
+
+    $laragonMatches = glob('C:\\laragon\\bin\\php\\*\\php.exe') ?: [];
+    if (!empty($laragonMatches) && is_file((string)$laragonMatches[0])) {
+        return (string)$laragonMatches[0];
+    }
+
+    return 'php';
 }

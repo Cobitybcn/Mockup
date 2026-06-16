@@ -43,6 +43,14 @@ define('IMAGE_PROVIDER', app_env('IMAGE_PROVIDER', 'openai'));
 define('GEMINI_API_KEY', app_env('GEMINI_API_KEY', ''));
 define('GEMINI_IMAGE_MODEL', app_env('GEMINI_IMAGE_MODEL', 'gemini-3.1-flash-image'));
 define('ADMIN_EMAILS', app_env('ADMIN_EMAILS', ''));
+define('DB_CONNECTION', app_env('DB_CONNECTION', 'sqlite'));
+define('DB_HOST', app_env('DB_HOST', '127.0.0.1'));
+define('DB_PORT', app_env('DB_PORT', '3306'));
+define('DB_DATABASE', app_env('DB_DATABASE', 'mockups'));
+define('DB_USERNAME', app_env('DB_USERNAME', 'root'));
+define('DB_PASSWORD', app_env('DB_PASSWORD', ''));
+define('DB_CHARSET', app_env('DB_CHARSET', 'utf8mb4'));
+define('MOCKUP_WORKER_COUNT', app_env('MOCKUP_WORKER_COUNT', '4'));
 
 // Punto #2: ruta configurable al ejecutable PHP (evita rutas hardcodeadas a versiones específicas)
 define('PHP_BINARY_PATH', app_env('PHP_BINARY_PATH', ''));
@@ -56,4 +64,3 @@ define('VERTEX_PROJECT_ID', app_env('VERTEX_PROJECT_ID', 'project-3c7fb926-f021-
 define('ANALYSIS_DIR', __DIR__ . DIRECTORY_SEPARATOR . 'analysis');
 define('PROMPTS_DIR', __DIR__ . DIRECTORY_SEPARATOR . 'mockup-prompts');
 define('RESULTS_DIR', __DIR__ . DIRECTORY_SEPARATOR . 'results');
-

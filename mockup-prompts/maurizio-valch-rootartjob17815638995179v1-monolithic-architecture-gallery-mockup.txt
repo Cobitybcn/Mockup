@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Monolithic Architecture Gallery
+- Purpose: Emphasizes the artwork's structural, architectural quality in a stark, modern setting
+- Scene Description: A minimalist architectural interior / art gallery with austere, expansive, silent, conceptual atmosphere. Materials: smooth pale grey concrete walls, light oak floor, recessed ceiling lighting
+- Lighting: uniform, indirect ambient light, creating soft gradients on surfaces
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: front view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A front view emphasizes the artwork's strong verticality and structured composition, mirroring the clean, monumental lines of the concrete architectural space. The close-up view focuses entirely on the artwork, allowing its precise forms and deep colors to stand out against the stark, minimalist backdrop, reinforcing its role as a central conceptual element in a contemporary setting.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+Expansive minimalist architectural interior, smooth pale grey concrete wall with subtle texture, light oak flooring, uniform indirect ambient lighting with no harsh shadows, a large vertical abstract painting as a central feature, pristine, silent, conceptual, front view, close-up view
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+clutter, ornate details, vibrant colors, warm lighting, traditional architecture, reflections, busy space
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

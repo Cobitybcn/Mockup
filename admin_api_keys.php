@@ -198,6 +198,25 @@ $geminiImagePlans = [
                         </p>
 
                     </section>
+
+                    <section class="settings-card">
+                        <h2>Batch Performance</h2>
+                        <p>Control how many automatic mockups are generated at the same time.</p>
+
+                        <label for="mockup_worker_count">Parallel Mockup Workers</label>
+                        <input
+                            id="mockup_worker_count"
+                            name="mockup_worker_count"
+                            type="number"
+                            min="1"
+                            max="8"
+                            step="1"
+                            value="<?= h($settings['mockup_worker_count'] ?? '4') ?>"
+                        >
+                        <p class="checkbox-line" style="margin-top: 14px;">
+                            Recommended testing path: 4, then 5 or 6 if Vertex remains stable. Use 8 only if there are no quota or timeout errors.
+                        </p>
+                    </section>
                 </div>
 
                 <button type="submit">Save API Settings</button>

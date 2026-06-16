@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Architect's Design Studio
+- Purpose: Inspirational piece for a creative, professional environment
+- Scene Description: A Architectural design studio or office with Modern, functional, intellectual, subtly industrial atmosphere. Materials: exposed concrete wall, dark metal fixtures, light wood desk, minimalist furniture
+- Lighting: Bright, even natural light from a large window combined with focused track lighting on the artwork
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: medium-close view
+- Camera Rationale: The three-quarter right view highlights the artwork's structural qualities against an architectural backdrop, demonstrating its resonance within a design context. A medium-close distance allows for a glimpse into the professional space without detracting from the artwork's prominence, emphasizing its intellectual and aesthetic appeal.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A modern architectural design studio with an exposed concrete wall and dark metal fixtures. A Maurizio Valch abstract painting, 'Veridian Ascent,' is prominently displayed on the concrete wall, its deep green and red forms contrasting sharply yet harmoniously with the raw texture. Bright, even natural light from a large window fills the space, complemented by a focused track light highlighting the artwork. A minimalist light wood desk with a few design tools is subtly visible in the foreground to the right.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+clutter, old office, generic cubicles, distracting equipment, low light, messy environment, poor resolution, overly warm colors, reflections
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

@@ -12,11 +12,10 @@ $queryString = $_SERVER['QUERY_STRING'] ?? '';
 $step1Active = ($currentPage === 'artwork_new.php');
 $step2Active = ($currentPage === 'root_select.php' || $currentPage === 'waiting.php');
 $step3Active = ($currentPage === 'form2.php');
-$step4Active = ($currentPage === 'publish.php');
+$step4Active = ($currentPage === 'artwork.php' || $currentPage === 'publish.php');
 
 // Menu active states
 $dashboardActive = ($currentPage === 'dashboard.php');
-$rootImagesActive = ($currentPage === 'root_images.php');
 $mockupsActive = ($currentPage === 'mockups.php' || $currentPage === 'viewer.php');
 $profileActive = ($currentPage === 'artist_profile.php');
 $usersActive = ($currentPage === 'admin_users.php');
@@ -74,6 +73,42 @@ if ($step3Disabled && $sidebarUser) {
         if ($latestArtwork && !empty($latestArtwork['root_file'])) {
             $step3Url = 'form2.php?image=' . urlencode(basename($latestArtwork['root_file']));
             $step3Disabled = false;
+        }
+    } catch (Throwable $e) {
+        // Fallback silently if DB is not ready
+    }
+}
+
+// Step 4 link determination (Publish = Artwork details)
+$step4Url = '#';
+$step4Disabled = true;
+
+if ($currentPage === 'artwork.php') {
+    $artworkId = (int)($_GET['id'] ?? 0);
+    if ($artworkId > 0) {
+        $step4Url = 'artwork.php?id=' . urlencode((string)$artworkId);
+        $step4Disabled = false;
+    }
+}
+
+if ($step4Disabled && $sidebarUser) {
+    try {
+        $db = Database::connection();
+        $stmt = $db->prepare("
+            SELECT id
+            FROM artworks
+            WHERE user_id = :user_id
+            AND status = 'done'
+            AND root_file IS NOT NULL
+            AND root_file != ''
+            ORDER BY updated_at DESC, created_at DESC
+            LIMIT 1
+        ");
+        $stmt->execute(['user_id' => $sidebarUser['id']]);
+        $latestArtworkId = $stmt->fetchColumn();
+        if ($latestArtworkId) {
+            $step4Url = 'artwork.php?id=' . urlencode((string)$latestArtworkId);
+            $step4Disabled = false;
         }
     } catch (Throwable $e) {
         // Fallback silently if DB is not ready
@@ -152,16 +187,28 @@ if ($step3Disabled && $sidebarUser) {
         <?php endif; ?>
 
         <!-- Step 4: Publish -->
-        <a href="publish.php" class="step-item <?= $step4Active ? 'active' : '' ?>">
-            <div class="step-num-container">
-                <span class="step-number">4</span>
-                <?php if ($step4Active): ?><span class="step-indicator"></span><?php endif; ?>
+        <?php if ($step4Disabled && !$step4Active): ?>
+            <div class="step-item disabled" title="No artwork ready to publish yet. Create/select a root artwork first.">
+                <div class="step-num-container">
+                    <span class="step-number">4</span>
+                </div>
+                <div class="step-details">
+                    <span class="step-label">Publish</span>
+                    <span class="step-subtitle">Ficha artwork.</span>
+                </div>
             </div>
-            <div class="step-details">
-                <span class="step-label">Publish</span>
-                <span class="step-subtitle">Marketplaces y redes.</span>
-            </div>
-        </a>
+        <?php else: ?>
+            <a href="<?= htmlspecialchars($step4Url, ENT_QUOTES, 'UTF-8') ?>" class="step-item <?= $step4Active ? 'active' : '' ?>">
+                <div class="step-num-container">
+                    <span class="step-number">4</span>
+                    <?php if ($step4Active): ?><span class="step-indicator"></span><?php endif; ?>
+                </div>
+                <div class="step-details">
+                    <span class="step-label">Publish</span>
+                    <span class="step-subtitle">Ficha artwork.</span>
+                </div>
+            </a>
+        <?php endif; ?>
     </div>
 
     <!-- SECTION 2: MENU -->
@@ -170,11 +217,6 @@ if ($step3Disabled && $sidebarUser) {
         <li>
             <a class="<?= $dashboardActive ? 'active' : '' ?>" href="dashboard.php">
                 Dashboard
-            </a>
-        </li>
-        <li>
-            <a class="<?= $rootImagesActive ? 'active' : '' ?>" href="root_images.php">
-                Root Images
             </a>
         </li>
         <li>

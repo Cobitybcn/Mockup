@@ -15,13 +15,7 @@ class ProviderSettings
     {
         $pdo = Database::connection();
         $existing = self::allStored();
-        $stmt = $pdo->prepare('
-            INSERT INTO app_settings (key, value, updated_at)
-            VALUES (:key, :value, :updated_at)
-            ON CONFLICT(key) DO UPDATE SET
-                value = excluded.value,
-                updated_at = excluded.updated_at
-        ');
+        $stmt = $pdo->prepare(Database::appSettingUpsertSql());
         $now = date('c');
 
         $settings = self::sanitize([
@@ -33,6 +27,7 @@ class ProviderSettings
             'openai_analysis_model' => $input['openai_analysis_model'] ?? '',
             'openai_image_quality' => $input['openai_image_quality'] ?? '',
             'openai_image_size' => $input['openai_image_size'] ?? '',
+            'mockup_worker_count' => $input['mockup_worker_count'] ?? '',
         ]);
 
         foreach (['openai_api_key', 'gemini_api_key'] as $key) {
@@ -71,6 +66,7 @@ class ProviderSettings
             'openai_analysis_model' => self::openAIAnalysisModel(),
             'openai_image_quality' => self::openAIImageQuality(),
             'openai_image_size' => self::openAIImageSize(),
+            'mockup_worker_count' => (string)self::mockupWorkerCount(),
         ];
     }
 
@@ -141,6 +137,13 @@ class ProviderSettings
         return self::value('openai_image_size', defined('OPENAI_IMAGE_SIZE') ? (string)OPENAI_IMAGE_SIZE : '1024x1024');
     }
 
+    public static function mockupWorkerCount(): int
+    {
+        return self::normalizeWorkerCount(
+            self::value('mockup_worker_count', defined('MOCKUP_WORKER_COUNT') ? (string)MOCKUP_WORKER_COUNT : '4')
+        );
+    }
+
     private static function value(string $key, string $fallback): string
     {
         self::load();
@@ -161,7 +164,7 @@ class ProviderSettings
     private static function allStored(): array
     {
         try {
-            $stmt = Database::connection()->query('SELECT key, value FROM app_settings');
+            $stmt = Database::connection()->query('SELECT `key`, value FROM app_settings');
             $settings = [];
 
             foreach ($stmt->fetchAll() as $row) {
@@ -204,6 +207,10 @@ class ProviderSettings
             $clean['gemini_image_model'] = self::normalizeGeminiModel($clean['gemini_image_model']);
         }
 
+        if (isset($clean['mockup_worker_count'])) {
+            $clean['mockup_worker_count'] = (string)self::normalizeWorkerCount($clean['mockup_worker_count']);
+        }
+
         return $clean;
     }
 
@@ -220,6 +227,7 @@ class ProviderSettings
             'openai_analysis_model',
             'openai_image_quality',
             'openai_image_size',
+            'mockup_worker_count',
         ];
     }
 
@@ -260,5 +268,11 @@ class ProviderSettings
         }
 
         return 'gemini-3.1-flash-image';
+    }
+
+    private static function normalizeWorkerCount(string $value): int
+    {
+        $workers = (int)trim($value);
+        return max(1, min(8, $workers));
     }
 }

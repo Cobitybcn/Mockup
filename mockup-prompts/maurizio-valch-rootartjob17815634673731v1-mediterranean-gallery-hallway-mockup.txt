@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Mediterranean Gallery Hallway
+- Purpose: Demonstrate the artwork's ability to punctuate and define space within a bright, airy, yet structurally rich environment.
+- Scene Description: A An elegant, sun-drenched hallway within a Mediterranean-style contemporary art gallery with Bright, airy, serene, subtly warm, artistic atmosphere. Materials: textured white plaster walls, light limestone or terracotta floor, filtered sunlight
+- Lighting: soft, filtered natural light from a nearby large arched window, gentle spotlight from above
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: front view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The front view offers a direct, powerful presentation of the artwork, maximizing its visual impact as a central element in the hallway. The close-up perspective allows the textural richness of both the painting and the plaster wall to be appreciated, integrating the art seamlessly into the sophisticated Mediterranean context. This ensures commercial clarity and curatorial focus on the artwork itself.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+Bright, airy hallway of a contemporary Mediterranean art gallery. A Maurizio Valch abstract painting, vertical orientation, featuring a vibrant red monolith on a dark green field, is centered on a textured white plaster wall. Light limestone floor, subtle shadows from a nearby arched window. Soft, filtered natural light, focused spotlight on the artwork. Elegant, refined. front view, close-up view.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+dark, cluttered, industrial, cold, modern office, ornate, traditional, old-fashioned, generic furniture, bad lighting, blurry, distorted, empty room, no artwork
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

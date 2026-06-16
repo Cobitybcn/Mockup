@@ -34,6 +34,10 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
             $this->client->textPart($finalPrompt),
             $this->client->imagePart($imagePath),
         ];
+        $rootReferencePath = (string)($metadata['root_reference_path'] ?? '');
+        if ($rootReferencePath !== '' && is_file($rootReferencePath) && realpath($rootReferencePath) !== realpath($imagePath)) {
+            $parts[] = $this->client->imagePart($rootReferencePath);
+        }
 
         try {
             $b64 = $this->client->generateImage($parts);

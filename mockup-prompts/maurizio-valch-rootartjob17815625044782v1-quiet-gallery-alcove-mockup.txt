@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Quiet Gallery Alcove
+- Purpose: Professional gallery presentation
+- Scene Description: A Contemporary art gallery with Serene, focused, clean, sophisticated, contemplative atmosphere. Materials: Smooth white gallery walls, Polished light grey concrete floor, Subtle track lighting, Invisible baseboards
+- Lighting: Soft, even, museum-quality spotlights highlighting the artwork, ambient natural light from a distant, unseen window.
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: front view
+- Structured Camera Distance: medium-close view
+- Camera Rationale: A direct frontal view emphasizes the artwork's symmetry, strong verticality, and monumental presence, crucial for a gallery setting. The medium-close distance allows the artwork to dominate the frame while offering enough context of the pristine gallery environment to convey its professional presentation and scale. This angle maximizes commercial readability and impact.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A large, clean contemporary art gallery alcove with smooth matte white walls and a polished light grey concrete floor. The artwork 'Sin título' by Maurizio Valch is centrally mounted on the main wall. Soft, precise museum-quality track lighting highlights the artwork from above. The camera is positioned frontally, at a medium-close distance, capturing the artwork prominently with subtle environmental context of the pristine gallery interior.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+Cluttered, messy, distracting objects, harsh shadows, generic office, cheap decor, busy patterns, distorted art, low-quality lighting, overly busy gallery furniture.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

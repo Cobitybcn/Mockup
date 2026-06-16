@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Minimalist Residential Entry
+- Purpose: First impression and welcome
+- Scene Description: A Entryway of a contemporary home with Clean, welcoming, striking atmosphere. Materials: off-white matte walls, light oak parquet flooring, minimalist console table
+- Lighting: Bright, even ambient light with a subtle art light directed at the painting.
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: front view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The front view creates an immediate and impactful impression, perfect for an entryway. The close-up ensures the artwork's vibrant color and structural details are the primary focus, establishing a sophisticated tone upon arrival. The vertical format is clearly presented.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A clean, minimalist entryway of a contemporary home. Off-white matte walls, light oak parquet flooring, a subtle minimalist console table. A Maurizio Valch painting 'Tectonic Crimson' centrally mounted on the wall, illuminated by a discreet art light. Front view, close-up view.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+clutter, shoes, coats, mail, generic decor, traditional entryway, dark lighting
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

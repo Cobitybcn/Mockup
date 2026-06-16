@@ -5,8 +5,8 @@ class PromptSettings
 {
     public static function all(): array
     {
-        $settings = self::defaultDirectives();
-        $stmt = Database::connection()->query('SELECT key, value FROM app_settings');
+        $settings = self::defaults();
+        $stmt = Database::connection()->query('SELECT `key`, value FROM app_settings');
 
         foreach ($stmt->fetchAll() as $row) {
             $key = (string)($row['key'] ?? '');
@@ -22,24 +22,42 @@ class PromptSettings
     public static function save(array $input): void
     {
         $pdo = Database::connection();
-        $stmt = $pdo->prepare('
-            INSERT INTO app_settings (key, value, updated_at)
-            VALUES (:key, :value, :updated_at)
-            ON CONFLICT(key) DO UPDATE SET
-                value = excluded.value,
-                updated_at = excluded.updated_at
-        ');
+        $stmt = $pdo->prepare(Database::appSettingUpsertSql());
         $now = date('c');
 
-        foreach (array_keys(self::defaults()) as $key) {
-            $value = trim((string)($input[$key] ?? self::defaultDirectives()[$key] ?? ''));
+        foreach (array_keys(self::labels()) as $key) {
+            if (!array_key_exists($key, $input)) {
+                continue;
+            }
+
+            $value = trim((string)($input[$key] ?? self::defaults()[$key] ?? ''));
 
             if ($key === 'mockup_context_count') {
                 $value = (string)self::normalizeContextCount($value);
             }
 
+            if ($key === 'root_artwork_count') {
+                $value = (string)self::normalizeRootArtworkCount($value);
+            }
+
             $stmt->execute([
                 'key' => $key,
+                'value' => $value,
+                'updated_at' => $now,
+            ]);
+        }
+
+        $defaultDirectives = is_array($input['default_directives'] ?? null) ? $input['default_directives'] : [];
+
+        foreach (array_keys(self::labels()) as $key) {
+            if (!array_key_exists($key, $defaultDirectives)) {
+                continue;
+            }
+
+            $value = trim((string)($defaultDirectives[$key] ?? self::builtInDefaultDirectives()[$key] ?? ''));
+
+            $stmt->execute([
+                'key' => 'prompt_default_' . $key,
                 'value' => $value,
                 'updated_at' => $now,
             ]);
@@ -53,7 +71,52 @@ class PromptSettings
 
     public static function artworkAnalysisPrompt(): string
     {
-        return trim(self::all()['artwork_analysis_prompt'] ?? '');
+        $settings = self::all();
+        $prompt = trim($settings['artwork_analysis_prompt'] ?? '');
+
+        if ($prompt === '') {
+            $prompt = self::artworkAnalysisContract();
+        }
+
+        $layers = [
+            'CAPA A - ANALISIS DE LA OBRA' => trim($settings['artwork_analysis_layer_a'] ?? ''),
+            'CAPA B - DATOS RELEVANTES DEL ARTISTA' => trim($settings['artwork_analysis_layer_b'] ?? ''),
+            'CAPA C - INFORMES PARA PROMPTS Y PUBLICACIONES' => trim($settings['artwork_analysis_layer_c'] ?? ''),
+            'CAPA D - PROMPTS PARA MOCKUPS' => trim($settings['artwork_analysis_layer_d'] ?? ''),
+        ];
+
+        $customLayers = [];
+        foreach ($layers as $title => $text) {
+            if ($text !== '') {
+                $customLayers[] = $title . ":\n" . $text;
+            }
+        }
+
+        $instructionBlocks = [];
+
+        if ($customLayers !== []) {
+            $instructionBlocks[] = "ADMIN CUSTOM ANALYSIS LAYERS:\n\n" . implode("\n\n", $customLayers);
+        }
+
+        $instructionBlocks[] = <<<'TEXT'
+ADMIN EFFECTIVE SETTINGS:
+- Generate exactly {context_count} contextual proposals.
+- If any custom layer mentions another number of contexts or mockups, ignore that number and obey {context_count}.
+- Keep the final response as one valid JSON object matching the schema below.
+TEXT;
+
+        $injectedInstructions = implode("\n\n", $instructionBlocks);
+        $schemaMarker = 'Return exactly this JSON schema:';
+
+        if (str_contains($prompt, $schemaMarker)) {
+            return trim(str_replace(
+                $schemaMarker,
+                $injectedInstructions . "\n\n" . $schemaMarker,
+                $prompt
+            ));
+        }
+
+        return trim($prompt . "\n\n" . $injectedInstructions);
     }
 
     public static function mockupScaleRules(): string
@@ -76,9 +139,24 @@ class PromptSettings
         return trim(self::all()['mockup_camera_rules'] ?? '');
     }
 
+    public static function mockupRenderingRules(): string
+    {
+        return trim(self::all()['mockup_rendering_rules'] ?? '');
+    }
+
+    public static function mockupFinalRequest(): string
+    {
+        return trim(self::all()['mockup_final_request'] ?? '');
+    }
+
     public static function mockupContextCount(): int
     {
         return self::normalizeContextCount(self::all()['mockup_context_count'] ?? '10');
+    }
+
+    public static function rootArtworkCount(): int
+    {
+        return self::normalizeRootArtworkCount(self::all()['root_artwork_count'] ?? '3');
     }
 
     public static function defaults(): array
@@ -86,11 +164,18 @@ class PromptSettings
         return [
             'root_artwork_rules' => '',
             'artwork_analysis_prompt' => '',
+            'artwork_analysis_layer_a' => '',
+            'artwork_analysis_layer_b' => '',
+            'artwork_analysis_layer_c' => '',
+            'artwork_analysis_layer_d' => '',
             'mockup_scale_rules' => '',
             'mockup_negative_rules' => '',
             'mockup_quality_rules' => '',
             'mockup_camera_rules' => '',
+            'mockup_rendering_rules' => '',
+            'mockup_final_request' => '',
             'mockup_context_count' => '10',
+            'root_artwork_count' => '3',
         ];
     }
 
@@ -104,6 +189,22 @@ class PromptSettings
             'artwork_analysis_prompt' => [
                 'title' => 'Análisis de Obra (Sugerencias y Fichas)',
                 'help' => 'Instrucciones para que la IA analice la obra y sugiera contextos. Mantener los marcadores {placeholder} y la estructura de salida JSON intacta.',
+            ],
+            'artwork_analysis_layer_a' => [
+                'title' => 'Capa A - Analisis de la obra',
+                'help' => 'Bloque editable para lenguaje visual, composicion, color, textura, formato, escala, atmosfera y publico objetivo.',
+            ],
+            'artwork_analysis_layer_b' => [
+                'title' => 'Capa B - Perfil del artista',
+                'help' => 'Bloque editable para relacionar la obra con statement, lenguaje visual, simbolos, motivos y atmosferas del artista.',
+            ],
+            'artwork_analysis_layer_c' => [
+                'title' => 'Capa C - Titulos y publicaciones',
+                'help' => 'Bloque editable para titulos, subtitulos, descripciones curatoriales, comerciales, SEO, redes y marketplaces.',
+            ],
+            'artwork_analysis_layer_d' => [
+                'title' => 'Capa D - Contextos para mockups',
+                'help' => 'Bloque editable para reglas de contextos narrados, tipos de espacios permitidos, prohibiciones y variedad obligatoria.',
             ],
             'mockup_scale_rules' => [
                 'title' => 'Escala y proporciones',
@@ -121,9 +222,22 @@ class PromptSettings
                 'title' => 'Cámara y ángulos de toma',
                 'help' => 'Reglas sobre qué ángulos de cámara utilizar y cuáles evitar para la generación de mockups.',
             ],
+            'mockup_rendering_rules' => [
+                'title' => 'Render tecnico del mockup',
+                'help' => 'Controles verificables por ADMIN para tamano visual, primer plano, limites de escala y figura humana. Mantener formato key=value.',
+            ],
+            'mockup_final_request' => [
+                'title' => 'Peticion final de mockups',
+                'help' => 'Instrucciones finales editables por ADMIN que se agregan al prompt que recibe el generador de imagenes.',
+            ],
             'mockup_context_count' => [
                 'title' => 'Cantidad de propuestas',
                 'help' => 'Numero de direcciones curatoriales sugeridas en Formulario 2. Recomendado: 5, 7 o 10.',
+                'type' => 'number',
+            ],
+            'root_artwork_count' => [
+                'title' => 'Cantidad de obras raiz',
+                'help' => 'Numero de versiones de obra raiz generadas en Formulario 1 antes de elegir la definitiva. Recomendado: 3.',
                 'type' => 'number',
             ],
         ];
@@ -131,10 +245,32 @@ class PromptSettings
 
     public static function builtInDirectives(): array
     {
-        return self::defaultDirectives();
+        return self::builtInDefaultDirectives();
     }
 
     public static function defaultDirectives(): array
+    {
+        $directives = self::builtInDefaultDirectives();
+
+        try {
+            $stmt = Database::connection()->query("SELECT `key`, value FROM app_settings WHERE `key` LIKE 'prompt_default_%'");
+
+            foreach ($stmt->fetchAll() as $row) {
+                $settingKey = (string)($row['key'] ?? '');
+                $directiveKey = substr($settingKey, strlen('prompt_default_'));
+
+                if (array_key_exists($directiveKey, $directives)) {
+                    $directives[$directiveKey] = (string)($row['value'] ?? '');
+                }
+            }
+        } catch (Throwable $e) {
+            return $directives;
+        }
+
+        return $directives;
+    }
+
+    private static function builtInDefaultDirectives(): array
     {
         return [
             'root_artwork_rules' => <<<'TEXT'
@@ -263,6 +399,10 @@ Return exactly this JSON schema:
   ]
 }
 TEXT,
+            'artwork_analysis_layer_a' => '',
+            'artwork_analysis_layer_b' => '',
+            'artwork_analysis_layer_c' => '',
+            'artwork_analysis_layer_d' => '',
             'mockup_scale_rules' => <<<'TEXT'
 Respect the physical dimensions of the artwork relative to furniture, doors, windows, ceilings, pedestals, and human figures.
 Do not enlarge the artwork for dramatic effect.
@@ -274,11 +414,14 @@ No kitchens.
 No common bedrooms.
 No cheap decor.
 No generic stock interiors.
+No additional artworks, paintings, framed prints, posters, murals, canvases, or competing wall art anywhere in the scene.
 No logos.
 No visible text.
 No letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.
 No shoes or footwear as scale reference.
 No distorted perspective.
+Do not redraw, repaint, reinterpret, crop, mirror, rotate, recolor, simplify, extend, or alter the artwork surface.
+Do not change the artwork's internal composition, visible symbols, brushstrokes, marks, texture, colors, proportions, orientation, or edge shape.
 TEXT,
             'mockup_quality_rules' => <<<'TEXT'
 Create an integrated mockup, not a photo pasted on a generic background.
@@ -286,6 +429,8 @@ Add realistic contact shadows, wall contact, depth, the canvas physical edge, an
 The environment must feel sophisticated, European or American collector style, gallery, museum, art fair, or high-end interior.
 The emotional impact should come from the scene, lighting, and context, not from false scaling.
 The artwork must feel placed, collected, and desired.
+The provided artwork image must remain visually identical inside the mockup. Preserve its exact composition, colors, symbols, lines, surface texture, brushwork, proportions, orientation, and edges.
+Create a close, artwork-dominant mockup, not a distant interior view. The artwork must be the clear main subject and should occupy roughly 50-70% of the final image area when visually plausible.
 TEXT,
             'mockup_camera_rules' => <<<'TEXT'
 CAMERA SELECTION RULES FOR MOCKUP GENERATION
@@ -299,13 +444,73 @@ ALLOWED CAMERAS:
 
 CAMERAS TO AVOID (DO NOT USE):
 - Do not use wide-angle, distant room shots, or full-room views. The room must feel close, cropped, and intimate around the artwork.
+- Do not add other paintings, artworks, framed prints, posters, murals, canvases, or visual competitors on surrounding walls.
 - Do not use low-angle hero shots, fisheye, birds-eye, or extreme diagonal perspective views.
 TEXT,
+            'mockup_rendering_rules' => <<<'TEXT'
+TECHNICAL RENDERER CONTROLS
+These values control the pre-composed reference image sent to the image model. Edit only after visual testing.
+
+mockup_fill_default=0.50
+mockup_fill_long_side_le_45=0.32
+mockup_fill_long_side_le_80=0.42
+mockup_fill_long_side_le_120=0.52
+mockup_fill_long_side_le_160=0.58
+mockup_fill_long_side_le_220=0.64
+mockup_fill_long_side_gt_220=0.70
+mockup_human_scale_multiplier=0.78
+mockup_fill_min=0.05
+mockup_fill_max=0.95
+TEXT,
+            'mockup_final_request' => '',
             'mockup_context_count' => '10',
+            'root_artwork_count' => '3',
         ];
     }
 
     private static function normalizeContextCount(string $value): int
+    {
+        $count = (int)$value;
+
+        if ($count < 1) {
+            return 1;
+        }
+
+        if ($count > 10) {
+            return 10;
+        }
+
+        return $count;
+    }
+
+    private static function artworkAnalysisContract(): string
+    {
+        $default = self::defaultDirectives()['artwork_analysis_prompt'] ?? '';
+        $schemaMarker = 'Return exactly this JSON schema:';
+        $schemaPos = strpos($default, $schemaMarker);
+        $schema = $schemaPos !== false ? substr($default, $schemaPos) : '';
+
+        return trim(<<<TEXT
+Return only a valid JSON object. Do not include markdown formatting or comments.
+Use the ADMIN custom analysis layers as the creative, curatorial, commercial and mockup-context instructions.
+Use the artist profile and artwork details as source context only.
+
+ARTIST PROFILE CONTEXT:
+{artist_profile_prompt}
+
+ARTWORK DETAILS:
+- Title: {title}
+- Physical dimensions: {width_cm} cm wide x {height_cm} cm high
+- Artist notes: {notes}
+- User preferred style: {preferred_style}
+- Target market: {target_market}
+- Image orientation: {orientation}
+
+{$schema}
+TEXT);
+    }
+
+    private static function normalizeRootArtworkCount(string $value): int
     {
         $count = (int)$value;
 

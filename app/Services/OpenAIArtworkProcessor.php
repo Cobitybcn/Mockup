@@ -22,11 +22,12 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
         $outputNameTemplate = 'base_artwork_ai_' . $jobId . '_v';
         $prompt = $this->buildPrompt($status, $source);
         $targetSize = $this->targetSize($status, $source);
+        $rootCount = PromptSettings::rootArtworkCount();
 
         file_put_contents($jobDir . '/prompt.txt', $prompt);
         file_put_contents($jobDir . '/target_size.txt', $targetSize);
 
-        $images = $this->callImageEditCandidates($jobDir, $source, $status, $prompt, $targetSize);
+        $images = $this->callImageEditCandidates($jobDir, $source, $status, $prompt, $targetSize, $rootCount);
 
         $files = [];
         $paths = [];
@@ -45,17 +46,17 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
             'paths' => $paths,
             'mock' => false,
             'ai_root_enhancement' => true,
-            'message' => 'Root image enhanced (3 versions). Please select one.',
+            'message' => "Root image enhanced ({$rootCount} versions). Please select one.",
             'meta' => $this->imageMeta($paths[0]),
         ];
     }
 
     private function buildPrompt(array $status, string $source): string
     {
-        return PromptSettings::rootArtworkRules();
+        return trim(PromptSettings::rootArtworkRules());
     }
 
-    private function callImageEditCandidates(string $jobDir, string $source, array $status, string $prompt, string $targetSize): array
+    private function callImageEditCandidates(string $jobDir, string $source, array $status, string $prompt, string $targetSize, int $rootCount): array
     {
         $apiDir = rtrim($jobDir, '/\\') . DIRECTORY_SEPARATOR . 'api_inputs';
         if (!is_dir($apiDir)) {
@@ -69,7 +70,7 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
             'prompt' => $prompt,
             'size' => $targetSize,
             'quality' => ProviderSettings::openAIImageQuality(),
-            'n' => '3',
+            'n' => (string)$rootCount,
             'response_format' => 'b64_json',
             'image' => new CURLFile($mainApiPath, $this->mime($mainApiPath), basename($mainApiPath)),
         ];
@@ -213,49 +214,6 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
             'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : false,
             default => false,
         };
-    }
-
-    private function dimensionText(array $measurements, string $source): string
-    {
-        $width = trim((string)($measurements['width'] ?? ''));
-        $height = trim((string)($measurements['height'] ?? ''));
-        $depth = trim((string)($measurements['depth'] ?? ''));
-        $unit = trim((string)($measurements['unit'] ?? 'cm'));
-
-        if ($width !== '' && $height !== '') {
-            $text = "The provided dimensions refer ONLY to the physical artwork itself: {$width} {$unit} wide x {$height} {$unit} high.";
-            $text .= " They do not refer to the full photograph, background, table, wall, support board, margins, or surrounding objects.";
-            $ratio = (float)str_replace(',', '.', $width) / max(0.01, (float)str_replace(',', '.', $height));
-            $orientation = $ratio >= 1 ? 'landscape' : 'portrait';
-            $fraction = $this->getRatioFraction($ratio);
-            $text .= " Use these dimensions to preserve the real artwork proportion. Required output orientation: {$orientation}. Required aspect ratio: {$fraction}.";
-
-            if ($depth !== '') {
-                $text .= " Stretcher/support depth of the artwork: {$depth} {$unit}.";
-            }
-
-            return $text;
-        }
-
-        $meta = $this->imageMeta($source);
-        return 'No physical artwork measurements were provided. Preserve the visible artwork proportion from the main image: ' . ($meta['aspect_ratio'] ?? 'unknown') . '.';
-    }
-
-    private function getRatioFraction(float $ratio): string
-    {
-        $best_num = 1;
-        $best_den = 1;
-        $best_diff = 999.0;
-        for ($den = 1; $den <= 16; $den++) {
-            $num = (int)round($ratio * $den);
-            $diff = abs($ratio - ($num / $den));
-            if ($diff < $best_diff) {
-                $best_diff = $diff;
-                $best_num = $num;
-                $best_den = $den;
-            }
-        }
-        return "{$best_num}:{$best_den}";
     }
 
     private function targetSize(array $status, string $source): string

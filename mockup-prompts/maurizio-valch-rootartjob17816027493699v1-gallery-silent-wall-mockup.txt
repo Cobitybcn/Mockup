@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 110 cm wide × 70 cm high × 2 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Gallery Silent Wall
+- Purpose: Primary display for formal presentation
+- Scene Description: A Contemporary art gallery with Pristine, focused, silent, contemplative atmosphere. Materials: white gallery walls, polished concrete floor, natural light
+- Lighting: Even, soft natural daylight combined with subtle gallery track lighting highlighting the artwork's surface.
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: front view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The front view maximizes the artwork's formal composition and direct visual impact, allowing for a clear appreciation of its structural lines and color fields. The close-up ensures the painting's texture and detail are discernible, maintaining its visual dominance against the clean gallery wall.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A modern art gallery interior, pristine white walls, polished concrete floor, abundant soft natural light from a skylight and subtle track lighting. A minimalist display of Maurizio Valch's 'Sin título' (110cm wide x 70cm high) prominently centered on a large, empty wall. The artwork is the sole focus, surrounded by quiet, elegant space. Front view, close-up view.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+clutter, distracting elements, poor lighting, ornate decor, people, excessive furniture, framed artwork, reflections.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

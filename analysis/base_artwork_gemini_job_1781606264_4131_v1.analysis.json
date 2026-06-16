@@ -1,0 +1,518 @@
+{
+    "artwork_analysis": {
+        "visual_language": [
+            "abstract",
+            "architectural",
+            "structural",
+            "symbolic",
+            "metaphysical",
+            "geometric"
+        ],
+        "emotional_energy": [
+            "contemplative",
+            "dynamic tension",
+            "introspective",
+            "structured",
+            "silent intensity"
+        ],
+        "dominant_colors": [
+            "primary yellow",
+            "deep red",
+            "serene blue (sky)"
+        ],
+        "secondary_colors": [
+            "olive green",
+            "dark brown",
+            "off-white",
+            "subtle blue-green"
+        ],
+        "visible_elements": [
+            "geometric planes",
+            "angular forms",
+            "pathways",
+            "ladder-like incision",
+            "horizon line",
+            "monolithic structures",
+            "divided territories"
+        ],
+        "visible_symbols": [
+            "territory",
+            "monoliths",
+            "horizon",
+            "tectonic lines",
+            "incisions",
+            "subtle stairs (ladder)",
+            "divided fields",
+            "suspended signs (ladder)",
+            "thresholds"
+        ],
+        "color_temperature": "predominantly warm (yellow, red) balanced by cool (blue sky)",
+        "contrast_level": "high contrast between warm/cool, light/dark, and saturated colors",
+        "composition_type": "diagonal, structured, linear perspective",
+        "balance": "asymmetrical balance, dynamic tension",
+        "visual_tension": "created by converging lines, color contrast, and implied depth leading to abstract forms",
+        "density": "moderately dense in the lower two-thirds, open and expansive in the upper third (sky)",
+        "silence": "profound, contemplative silence, an internal reflection despite dynamic forms",
+        "main_focal_point": "the dark, recessed areas and the subtle ladder-like incision",
+        "movement": "implied movement along the central pathway, leading the eye into the composition's depth",
+        "depth": "strong sense of constructed depth through linear perspective, converging forms, and color layering",
+        "negative_space": "the expansive, clear blue sky provides significant negative space, offering visual respite",
+        "verticality_or_horizontality": "strong horizontality (implied horizon) with dominant diagonal and vertical elements (structures)",
+        "internal_organization": "highly organized through geometric division, linear perspective, and careful placement of color blocks",
+        "rhythm": "created by the repetition and variation of angular planes and distinct color fields",
+        "surface": "varied, with visible brushstrokes, palette knife textures, and some scraping",
+        "brushstroke": "evident and intentional, contributing to the artwork's material and tactile presence",
+        "gesture": "controlled, deliberate, and structural, emphasizing form and composition",
+        "layers": "clearly visible layers of paint, suggesting a process of building up and reduction",
+        "material_presence": "strong, tactile, and painterly, highlighting the physical application of acrylic",
+        "sense_of_depth_or_flatness": "strong sense of constructed, architectural depth within the geometric forms",
+        "format_and_scale": {
+            "width_cm": "107",
+            "height_cm": "75",
+            "depth_cm": "2",
+            "orientation": "horizontal",
+            "scale_impact": "significant wall presence, capable of anchoring a space without overwhelming it",
+            "wall_presence": "strong, definitive presence, designed to command attention in a considered placement",
+            "monumentality_or_intimacy": "more of a contemplative presence than monumental, inviting quiet, sustained engagement",
+            "spatial_effect": "defines a focal point in a larger room, adding depth, structure, and a sense of psychological space"
+        },
+        "spatial_presence": "deep, structured, and psychologically inviting, suggesting an inner landscape or journey",
+        "visual_atmosphere": "contemplative, sober, structured, with a vibrant underlying energy and restrained tension",
+        "artwork_function": "a focal point for quiet reflection, a statement piece of contemporary abstract art that provokes thought",
+        "suggested_audience": [
+            "contemporary art collectors",
+            "architects",
+            "interior designers",
+            "individuals interested in symbolic and structural art",
+            "high-level decorators"
+        ],
+        "audience_profile": {
+            "primary": "established contemporary art collectors, design-conscious individuals",
+            "secondary": "art consultants, institutional buyers for modern spaces",
+            "buyer_profile": "appreciates structural abstraction, vibrant color, and symbolic depth; values quality, unique presence, and intellectual engagement",
+            "collector_type": "discerning, sophisticated, prefers unique and thought-provoking pieces over purely decorative ones",
+            "interior_design_relevance": "excellent for minimalist, contemporary, architectural, and Mediterranean-influenced interiors, especially those with clean lines and natural light",
+            "gallery_potential": "high potential for display in galleries focused on contemporary abstraction, structural art, or works with metaphysical undertones"
+        },
+        "commercial_positioning": "high-end contemporary abstract art, suitable for private collections, corporate collections, and luxury residential/commercial design projects",
+        "one_line_curatorial_read": "A structural landscape of vibrant territories and silent thresholds, inviting reflection on journey and inner order.",
+        "style_summary": "abstract, geometric, structural, symbolic, contemporary, contemplative",
+        "artist_profile_relation": {
+            "relevant_statement_connection": "The artwork profoundly embodies Valch's exploration of 'landscape, consciousness and inner structure' through 'abstraction, symbolic territory and contemplative silence' using 'fields of color, incisions, monoliths, horizons and suspended forms as signs of presence, transition and perception.'",
+            "relevant_visual_language_connection": "Directly aligns with the artist's core visual language, exhibiting 'fields of color, horizons, tectonic lines, divided territories, monoliths, incisions, subtle stairs, suspended signs and spatial relationships.' The tension between silence, presence, depth, and inner order is vividly conveyed.",
+            "relevant_symbol_connection": "Clearly features Valch's recurring symbols and motifs: 'territory, monoliths, horizons, tectonic lines, incisions, subtle stairs (the ladder), divided fields, red structures,' and evokes a sense of 'presence, distance and the relationship between the individual and the earth.'",
+            "relevant_atmosphere_connection": "Evokes a 'silent, deep, sober, contemplative' mood, with 'restrained tension, austerity, distance and quiet intensity,' perfectly matching the artist's preferred emotional atmosphere."
+        },
+        "seasonal_strategy": {
+            "primary_season": "neutral"
+        },
+        "publishing_metadata": {
+            "suggested_titles": [
+                {
+                    "title": "Tectonic Threshold",
+                    "subtitle": "A Study in Spatial Division",
+                    "short_description": "Dynamic planes of color converge, creating a structured landscape of profound depth and quiet order.",
+                    "curatorial_description": "This work presents a rigorously structured composition where vibrant fields of red and yellow define angular, tectonic forms. A central pathway leads the eye through divided territories, while subtle incisions and a distant horizon suggest thresholds and an expansive inner space. The interplay of bold color and precise geometry evokes a sense of journey within a controlled, silent realm.",
+                    "commercial_description": "An impactful abstract composition perfect for architectural interiors, 'Tectonic Threshold' offers both vibrant color and intellectual depth. Its strong lines and spatial dynamics will command attention in a contemporary setting, appealing to collectors who appreciate structural elegance and a contemplative presence."
+                },
+                {
+                    "title": "Red Ascent Under Blue Sky",
+                    "subtitle": "Contemplative Fields of Hue and Form",
+                    "short_description": "Vivid red and yellow structures meet a serene blue sky, creating a visually striking and introspective atmosphere.",
+                    "curatorial_description": "Bathed in a clear blue sky, this painting uses a powerful palette of primary yellow and deep red to construct a landscape of stark contrasts. The cool expanse above provides a counterpoint to the warm, earthbound structures, instilling a contemplative calm. The atmosphere is one of serene tension, where vibrant color is channeled into architectural silence, inviting viewers into its emotional depth.",
+                    "commercial_description": "With its arresting combination of bold primary colors and tranquil blue, 'Red Ascent Under Blue Sky' is a captivating piece that brings sophisticated energy to any room. Ideal for modern collectors, its serene yet vibrant presence enhances environments seeking both warmth and intellectual poise."
+                },
+                {
+                    "title": "Pathway to Inner Order",
+                    "subtitle": "A Dialogue of Form and Consciousness",
+                    "short_description": "Converging lines and symbolic forms define a psychological landscape, mapping a journey towards internal harmony.",
+                    "curatorial_description": "Here, the artist articulates a symbolic territory through a dynamic interplay of forms and spatial relationships. A prominent white pathway guides the gaze towards enigmatic dark incisions and a small ladder, hinting at thresholds and aspirations within a vast, color-blocked world. This work functions as a visual metaphor for the mind's construction of reality and the quest for inner order amidst external structures.",
+                    "commercial_description": "'Pathway to Inner Order' offers a profound statement for those drawn to art that transcends mere aesthetics. Its symbolic depth and meticulously crafted spatial dynamics make it an exceptional acquisition for collectors seeking works that resonate with metaphysical inquiry and a sense of personal exploration."
+                }
+            ],
+            "descriptions": {
+                "poetic_focus": "Within a realm of structured silence, vibrant hues chart a journey across defined territories and towards hidden thresholds. This painting speaks of inner landscapes and the profound quietude found in form, color, and the subtle ascent.",
+                "formal_focus": "A rigorous composition of intersecting planes and vibrant color fields defines this abstract work. Tectonic lines delineate depth and structure, with a prominent horizon and central pathway guiding the eye through a carefully organized spatial relationship, typical of Valch's signature visual language.",
+                "commercial_focus": "An exceptional abstract piece by Maurizio Valch, this artwork commands attention with its bold color and architectural precision. Ideal for discerning collectors and sophisticated interiors, it offers both significant visual presence and an intellectually engaging narrative, making it a valuable acquisition for any contemporary art collection."
+            },
+            "seo_keywords": [
+                "Maurizio Valch",
+                "abstract painting",
+                "contemporary art",
+                "structural abstraction",
+                "geometric art",
+                "symbolic landscape",
+                "modern art",
+                "colorful abstract",
+                "metaphysical art",
+                "fine art",
+                "art collector",
+                "interior design art",
+                "architectural art",
+                "gallery art",
+                "collectible art",
+                "large abstract canvas",
+                "textured painting",
+                "minimalist abstraction",
+                "modern home decor",
+                "art for luxury spaces"
+            ],
+            "seo_tags": [
+                "AbstractArt",
+                "ContemporaryPainting",
+                "StructuralAbstraction",
+                "GeometricForms",
+                "MaurizioValch",
+                "SymbolicArt",
+                "ModernInteriors",
+                "ArtCollection",
+                "ColorField",
+                "TectonicArt",
+                "CanvasArt",
+                "AbstractLandscape",
+                "ThoughtProvoking",
+                "HighEndArt",
+                "GalleryQuality"
+            ],
+            "marketplace_title": "Maurizio Valch – Abstract 'Tectonic Threshold' – Vibrant Structural Painting",
+            "marketplace_short_description": "Experience Maurizio Valch's 'Tectonic Threshold,' a vibrant abstract painting with geometric forms, rich texture, and symbolic depth. Perfect for contemporary collectors and luxury interiors.",
+            "marketplace_long_description": "This untitled work by Maurizio Valch is a powerful example of his unique approach to abstract painting, exploring the relationship between landscape, consciousness, and inner structure. Bold fields of primary yellow and deep red delineate angular, 'tectonic' forms, creating a dynamic sense of depth. A serene blue sky, a guiding pathway, and subtle incisions (including a small ladder) hint at thresholds and journeys within a meticulously organized space. The artist's signature technique, combining layers of acrylic, palette knife work, and surface incisions, results in a rich, tactile surface. This piece embodies a contemplative silence and restrained tension, making it an ideal acquisition for collectors seeking art with significant visual presence and profound intellectual resonance. Measuring 107 cm wide x 75 cm high, it offers a commanding yet refined statement for high-end residential, architectural, or gallery settings.",
+            "pinterest_boards": [
+                "Contemporary Abstract Art",
+                "Maurizio Valch Paintings",
+                "Geometric & Structural Art",
+                "Luxury Interior Design Art",
+                "Art for Modern Spaces",
+                "Collector's Fine Art Picks"
+            ]
+        }
+    },
+    "recommended_number_of_contexts": 8,
+    "contextual_proposals": [
+        {
+            "context_name": "Gallery Entrance, Morning Light",
+            "context_role": "Primary presentation",
+            "space_type": "Professional art gallery",
+            "atmosphere": "Crisp, inviting, focused",
+            "materials": [
+                "polished concrete floor",
+                "pristine white walls",
+                "natural light"
+            ],
+            "lighting": "Soft, diffused natural daylight from above, complemented by subtle gallery track lighting focused on the artwork",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A direct front view ensures maximum fidelity to the artwork's composition and color, highlighting its structural symmetry and vibrant palette without distortion. This angle provides optimal commercial readability, making the piece the absolute focal point against the clean gallery wall. The horizontal orientation is perfectly framed, emphasizing its width and expansive sky.",
+            "human_presence": "none",
+            "curatorial_reason": "Showcases the artwork's formal qualities, structural integrity, and vibrant color impact in a pristine, focused exhibition environment.",
+            "commercial_reason": "Ideal for initial gallery presentation, emphasizing clarity and allowing potential buyers to appreciate the artwork's detail and scale without distraction, positioning it as a serious collectible.",
+            "mockup_prompt": "A Maurizio Valch original abstract painting, 'Tectonic Threshold,' mounted on a pristine white wall in a professional art gallery entrance. The space features polished concrete floors and tall ceilings. Soft, diffused natural morning light illuminates the artwork, with subtle gallery track lighting adding emphasis. The overall atmosphere is crisp and inviting. The camera angle is a front view, focusing closely on the artwork, showing just enough of the surrounding wall and floor to establish context.",
+            "negative_prompt": "blurry, grainy, oversaturated, dark, cramped, cluttered, dirty, cheap materials, low quality, bad lighting, people, frames, text, logos, reflections, shadows obscuring artwork, too far, wide shot",
+            "pinterest_marketing": {
+                "board_suggestion": "Gallery Exhibitions & Art Installations",
+                "pin_title": "Maurizio Valch: 'Tectonic Threshold' - Gallery View",
+                "pin_description": "Experience the vibrant abstraction of Maurizio Valch's 'Tectonic Threshold' in a pristine gallery setting. A compelling study in geometric forms and color, perfect for discerning collectors.",
+                "alt_text": "Abstract painting 'Tectonic Threshold' by Maurizio Valch, featuring red, yellow, and blue geometric forms, displayed in a white art gallery.",
+                "seo_keywords": [
+                    "Maurizio Valch gallery",
+                    "abstract art exhibition",
+                    "contemporary painting",
+                    "structural art gallery",
+                    "geometric abstraction"
+                ],
+                "hashtags": [
+                    "#MaurizioValch",
+                    "#AbstractArt",
+                    "#GalleryExhibit",
+                    "#ContemporaryPainting",
+                    "#ArtCollector"
+                ]
+            }
+        },
+        {
+            "context_name": "Architectural Residence Lounge",
+            "context_role": "High-end residential integration",
+            "space_type": "Luxury open-plan living room",
+            "atmosphere": "Sophisticated, tranquil, design-conscious",
+            "materials": [
+                "light oak flooring",
+                "matte white walls",
+                "linen sofa",
+                "minimalist dark wood coffee table"
+            ],
+            "lighting": "Balanced indirect natural light from a large window, creating soft shadows and even illumination",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter left view provides spatial depth, demonstrating how the artwork integrates into an architectural interior. It allows a glimpse of the room's elegant design while keeping the artwork dominant. This angle is ideal for showcasing the artwork's relationship with the wall and a subtle play of light across its textured surface, enhancing its commercial appeal to interior designers.",
+            "human_presence": "optional standing female figure 1.55m",
+            "curatorial_reason": "Highlights the artwork's ability to anchor and define a sophisticated residential space, emphasizing its structural harmony within modern architecture.",
+            "commercial_reason": "Appeals to high-end residential buyers and interior designers, showcasing livability and design impact, with the human figure providing scale and aspirational context.",
+            "mockup_prompt": "A Maurizio Valch abstract painting, 'Red Ascent Under Blue Sky,' mounted centrally on a matte white wall in a luxury open-plan living room. The room features light oak flooring, a low-slung linen sofa, and a minimalist dark wood coffee table in the foreground. Balanced indirect natural light from a large window illuminates the scene. An optional standing female figure 1.55m is subtly present in the mid-ground. The camera is positioned at a three-quarter left view, maintaining a close-up focus on the artwork, revealing the elegant interaction between the art and its refined surroundings.",
+            "negative_prompt": "blurry, grainy, cluttered, cheap furniture, ugly decor, harsh shadows, reflections, bad lighting, text, logos, distorted perspective, overly ornate, small room, distracting elements",
+            "pinterest_marketing": {
+                "board_suggestion": "Luxury Living Room Art Ideas",
+                "pin_title": "Abstract Art for Modern Homes: Valch's 'Red Ascent'",
+                "pin_description": "Elevate your space with Maurizio Valch's 'Red Ascent Under Blue Sky'. A stunning abstract piece that brings structural elegance and vibrant calm to any luxury living room.",
+                "alt_text": "Maurizio Valch's abstract painting 'Red Ascent Under Blue Sky' in a modern luxury living room with a female figure for scale.",
+                "seo_keywords": [
+                    "luxury home art",
+                    "modern living room art",
+                    "abstract art large",
+                    "interior design inspiration",
+                    "Maurizio Valch residence"
+                ],
+                "hashtags": [
+                    "#LuxuryInteriors",
+                    "#AbstractHomeDecor",
+                    "#MaurizioValch",
+                    "#ModernArt",
+                    "#DesignLiving"
+                ]
+            }
+        },
+        {
+            "context_name": "Contemplative Study Nook",
+            "context_role": "Private reflective space",
+            "space_type": "Collector's home office or study",
+            "atmosphere": "Quiet, intellectual, inspiring",
+            "materials": [
+                "dark wood paneled wall",
+                "leather armchair",
+                "bronze desk lamp",
+                "wool rug"
+            ],
+            "lighting": "Warm, focused artificial light from a desk lamp, casting gentle highlights and shadows",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "The three-quarter right view adds an intimate, contemplative perspective, suiting the artwork's symbolic depth for a private study. This angle naturally captures the interplay of light and shadow across the artwork's texture and its framed relationship with the surrounding darker, rich materials. It ensures commercial readability for a specific collector profile.",
+            "human_presence": "none",
+            "curatorial_reason": "Evokes the contemplative and introspective atmosphere central to Valch's work, suggesting a space for intellectual engagement and quiet reflection.",
+            "commercial_reason": "Targets discerning collectors seeking a personal, reflective piece for their private study, library, or home office, emphasizing depth and symbolic narrative.",
+            "mockup_prompt": "A Maurizio Valch abstract painting, 'Pathway to Inner Order,' centrally displayed on a dark wood-paneled wall within a collector's intimate study nook. A classic leather armchair and a glowing bronze desk lamp are subtly visible in the foreground. Warm, focused artificial light from the lamp casts gentle highlights and shadows across the artwork. The camera is at a three-quarter right view, maintaining a close-up on the painting, suggesting a quiet, intellectual ambiance.",
+            "negative_prompt": "blurry, grainy, bright, harsh light, modern, sterile, cluttered, messy, cheap materials, reflections, text, logos, people, wide shot, distant view",
+            "pinterest_marketing": {
+                "board_suggestion": "Art for Home Offices & Libraries",
+                "pin_title": "Maurizio Valch: 'Pathway to Inner Order' - Study Inspiration",
+                "pin_description": "Find inspiration in Maurizio Valch's 'Pathway to Inner Order.' This profound abstract painting enhances a contemplative study, inviting introspection and intellectual engagement.",
+                "alt_text": "Maurizio Valch abstract painting 'Pathway to Inner Order' with red, yellow, and blue geometric forms, displayed in a dark wood-paneled study.",
+                "seo_keywords": [
+                    "abstract art for study",
+                    "collector's art office",
+                    "Maurizio Valch metaphysical",
+                    "contemplative painting",
+                    "luxury home library art"
+                ],
+                "hashtags": [
+                    "#ArtForStudy",
+                    "#MaurizioValch",
+                    "#CollectorArt",
+                    "#HomeOfficeDesign",
+                    "#IntellectualArt"
+                ]
+            }
+        },
+        {
+            "context_name": "Architectural Loft Wall",
+            "context_role": "Statement piece in a modern dwelling",
+            "space_type": "Contemporary loft apartment living area",
+            "atmosphere": "Open, urban, sophisticated",
+            "materials": [
+                "exposed light concrete wall",
+                "polished concrete floor",
+                "minimalist black steel furniture accents"
+            ],
+            "lighting": "Bright, even ambient light from large industrial-style windows",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A front view provides optimal clarity and symmetry, emphasizing the artwork's strong structural elements against the raw texture of the concrete wall. This angle showcases the artwork's bold composition and vibrant color, ensuring it dominates the frame and reinforces its commercial position as a powerful statement piece in a modern, open environment.",
+            "human_presence": "none",
+            "curatorial_reason": "Demonstrates the artwork's ability to define and complement an expansive modern space, highlighting its architectural relevance and strong visual language.",
+            "commercial_reason": "Targets urban contemporary collectors and high-end loft owners, showing how the art integrates seamlessly into an industrial-chic aesthetic.",
+            "mockup_prompt": "A Maurizio Valch abstract painting, 'Tectonic Threshold,' prominently displayed on an exposed light concrete wall in a contemporary loft apartment living area. The room features polished concrete floors and minimalist black steel furniture accents. Bright, even ambient light streams in from large industrial-style windows. The camera is at a direct front view, keeping a close-up focus on the artwork, allowing its structural forms and vibrant colors to make a powerful statement within the modern, open space.",
+            "negative_prompt": "blurry, grainy, cluttered, messy, old-fashioned, ornate, dark, dim, bad lighting, text, logos, reflections, people, too far, wide shot, distracting elements",
+            "pinterest_marketing": {
+                "board_suggestion": "Abstract Art for Loft Apartments",
+                "pin_title": "Urban Abstract: Maurizio Valch in a Modern Loft",
+                "pin_description": "Discover Maurizio Valch's 'Tectonic Threshold' enhancing an urban loft. Its vibrant structure and contemporary feel are perfect for modern, open-plan living.",
+                "alt_text": "Abstract painting by Maurizio Valch, 'Tectonic Threshold,' featuring red, yellow, and blue geometric forms, displayed on an exposed concrete wall in a modern loft.",
+                "seo_keywords": [
+                    "abstract art loft",
+                    "Maurizio Valch urban",
+                    "contemporary loft decor",
+                    "industrial chic art",
+                    "geometric art concrete"
+                ],
+                "hashtags": [
+                    "#LoftLiving",
+                    "#UrbanArt",
+                    "#AbstractDesign",
+                    "#MaurizioValch",
+                    "#ConcreteWalls"
+                ]
+            }
+        },
+        {
+            "context_name": "Mediterranean Sunset Interior",
+            "context_role": "Atmospheric residential accent",
+            "space_type": "Elegant Mediterranean-style home, living room",
+            "atmosphere": "Warm, serene, evocative of a tranquil evening",
+            "materials": [
+                "plastered ochre walls",
+                "terracotta floor tiles",
+                "wrought iron details",
+                "natural linen fabrics"
+            ],
+            "lighting": "Warm, golden hour light filtering through windows, creating a soft glow",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "The three-quarter left view allows the golden hour light to gently graze the artwork's surface, enhancing its texture and warm colors while integrating it into the Mediterranean atmosphere. This angle provides a sense of the room's character and the artwork's harmonious fit, proving commercially appealing to buyers in specific warm regions.",
+            "human_presence": "none",
+            "curatorial_reason": "Aligns the artwork's vibrant colors and structured forms with a warm, elegant regional aesthetic, creating a resonant atmosphere.",
+            "commercial_reason": "Broadens market appeal to luxury homeowners in preferred regions like Spain, Italy, or Miami, showcasing the artwork's versatility within sophisticated residential styles.",
+            "mockup_prompt": "A Maurizio Valch abstract painting, 'Red Ascent Under Blue Sky,' mounted on a softly plastered ochre wall in an elegant Mediterranean-style living room. The room features terracotta floor tiles, subtle wrought iron details, and natural linen fabrics. Warm, golden hour light filters through arched windows, casting a soft, inviting glow. The camera is at a three-quarter left view, with a close-up focus on the artwork, highlighting its vibrant colors against the warm, earthy tones of the interior.",
+            "negative_prompt": "blurry, grainy, harsh light, modern sterile, cold, cluttered, cheap decor, reflections, text, logos, people, wide shot, distant view, unfinished",
+            "pinterest_marketing": {
+                "board_suggestion": "Mediterranean Art & Decor",
+                "pin_title": "Valch's Abstract Art in a Mediterranean Home",
+                "pin_description": "Embrace the warmth with Maurizio Valch's 'Red Ascent Under Blue Sky' in a Mediterranean-inspired living room. Perfect for serene, evocative interiors.",
+                "alt_text": "Maurizio Valch abstract painting 'Red Ascent Under Blue Sky' featuring red, yellow, and blue geometric forms, displayed in a Mediterranean-style living room with ochre walls.",
+                "seo_keywords": [
+                    "Mediterranean art",
+                    "Maurizio Valch Mediterranean",
+                    "warm abstract painting",
+                    "luxury villa art",
+                    "terracotta decor art"
+                ],
+                "hashtags": [
+                    "#MediterraneanStyle",
+                    "#AbstractDecor",
+                    "#MaurizioValch",
+                    "#WarmInteriors",
+                    "#VillaArt"
+                ]
+            }
+        },
+        {
+            "context_name": "International Design Studio",
+            "context_role": "Creative professional environment",
+            "space_type": "High-end interior design studio consultation room",
+            "atmosphere": "Inspiring, creative, refined",
+            "materials": [
+                "pale grey textured wall",
+                "minimalist dark metal table",
+                "architectural models (subtle background)"
+            ],
+            "lighting": "Even, bright overhead LED lighting, typical of a professional studio, with no harsh shadows",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A front view is chosen for its directness and clarity, crucial for a professional setting where the artwork's formal qualities are being evaluated. This angle ensures the structured composition and vibrant colors are presented without spatial distortion, maintaining commercial readability for design professionals. The artwork's horizontal format is well-suited to this direct presentation.",
+            "human_presence": "none",
+            "curatorial_reason": "Positions the artwork as a source of inspiration and a high-quality example of structural abstraction suitable for professional design projects.",
+            "commercial_reason": "Directly targets interior designers and architects, showcasing the artwork's aesthetic appeal and quality for their client projects, emphasizing its sophisticated design value.",
+            "mockup_prompt": "A Maurizio Valch abstract painting, 'Pathway to Inner Order,' mounted on a pale grey textured wall in a high-end interior design studio consultation room. The space features a minimalist dark metal table in the foreground and subtle architectural models in the blurred background. Even, bright overhead LED lighting illuminates the scene, typical of a professional studio. The camera is at a direct front view, with a close-up focus on the artwork, highlighting its inspiring presence within a creative professional environment.",
+            "negative_prompt": "blurry, grainy, dark, cluttered, messy, cheap, generic, residential, harsh shadows, reflections, text, logos, people, wide shot, distant view, unprofessional",
+            "pinterest_marketing": {
+                "board_suggestion": "Art for Interior Designers & Architects",
+                "pin_title": "Maurizio Valch: Abstract for Design Studios",
+                "pin_description": "Inspire creativity with Maurizio Valch's 'Pathway to Inner Order.' A sophisticated abstract piece perfect for high-end interior design studio and architectural projects.",
+                "alt_text": "Maurizio Valch abstract painting 'Pathway to Inner Order' featuring geometric forms in red, yellow, and blue, displayed in a modern interior design studio.",
+                "seo_keywords": [
+                    "art for architects",
+                    "interior design studio art",
+                    "Maurizio Valch design",
+                    "professional art",
+                    "abstract art commercial"
+                ],
+                "hashtags": [
+                    "#DesignStudioArt",
+                    "#ArchitecturalArt",
+                    "#MaurizioValch",
+                    "#InteriorDesign",
+                    "#CreativeSpace"
+                ]
+            }
+        },
+        {
+            "context_name": "Refined Dining Room",
+            "context_role": "Elegant social focal point",
+            "space_type": "Sophisticated private dining room",
+            "atmosphere": "Elegant, composed, quietly engaging",
+            "materials": [
+                "subtle warm grey walls",
+                "dark polished wood dining table",
+                "velvet dining chairs",
+                "minimalist chandelier"
+            ],
+            "lighting": "Soft, ambient overhead lighting creating a warm, inviting glow",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter right view offers an elegant perspective that integrates the artwork into the dining room's composed atmosphere. This angle allows for subtle architectural lines and furniture to frame the artwork, enhancing its visual prominence without being overly direct, ensuring commercial appeal for luxury residential placements.",
+            "human_presence": "none",
+            "curatorial_reason": "Shows how the artwork can anchor a sophisticated social space with quiet elegance and depth, offering a point of contemplation during gathering.",
+            "commercial_reason": "Appeals to homeowners seeking a statement piece for a primary living or dining area, demonstrating its ability to elevate and refine a high-traffic social space.",
+            "mockup_prompt": "A Maurizio Valch abstract painting, 'Tectonic Threshold,' elegantly mounted on a subtle warm grey wall in a sophisticated private dining room. A dark polished wood dining table with two velvet dining chairs and a minimalist chandelier are subtly visible. Soft, ambient overhead lighting creates a warm, inviting glow. The camera is positioned at a three-quarter right view, with a close-up focus on the artwork, integrating it seamlessly into the refined and composed atmosphere of the room.",
+            "negative_prompt": "blurry, grainy, cluttered, messy, casual, bright kitchen, cheap decor, harsh shadows, reflections, text, logos, people, wide shot, distant view, industrial",
+            "pinterest_marketing": {
+                "board_suggestion": "Elegant Dining Room Art",
+                "pin_title": "Dining in Style: Valch's 'Tectonic Threshold'",
+                "pin_description": "Elevate your dining experience with Maurizio Valch's 'Tectonic Threshold.' This elegant abstract painting brings sophistication and a quiet presence to any refined dining room.",
+                "alt_text": "Maurizio Valch abstract painting 'Tectonic Threshold' with red, yellow, and blue geometric forms, displayed in a sophisticated dining room with warm grey walls.",
+                "seo_keywords": [
+                    "dining room art",
+                    "elegant abstract painting",
+                    "Maurizio Valch dining",
+                    "luxury dining room decor",
+                    "statement art piece"
+                ],
+                "hashtags": [
+                    "#DiningRoomArt",
+                    "#ElegantInteriors",
+                    "#MaurizioValch",
+                    "#AbstractDining",
+                    "#LuxuryHome"
+                ]
+            }
+        },
+        {
+            "context_name": "Townhouse Stairwell Landing",
+            "context_role": "Transitional space accent",
+            "space_type": "Multi-level townhouse hallway or landing",
+            "atmosphere": "Refined, directional, architectural journey",
+            "materials": [
+                "crisp white walls",
+                "dark stained wood banister",
+                "natural fiber runner rug"
+            ],
+            "lighting": "Clear, even natural light from a skylight or strategically placed window, highlighting the wall",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "The three-quarter left view is chosen to emphasize the artwork's horizontal orientation and its dynamic perspective as a focal point in a transitional space. This angle allows the subtle inclusion of architectural elements like a banister, enhancing the 'journey' aspect suggested by the artwork, and providing excellent commercial readability for townhouse or multi-level home buyers.",
+            "human_presence": "none",
+            "curatorial_reason": "Highlights the artwork's 'pathway' and 'threshold' motifs within a transitional architectural space, creating a moment of contemplation between levels.",
+            "commercial_reason": "Ideal for townhouses or multi-level residences, showcasing how the art can define and elevate a connecting space, transforming it from utilitarian to artistic.",
+            "mockup_prompt": "A Maurizio Valch abstract painting, 'Pathway to Inner Order,' mounted on a crisp white wall on a stairwell landing in a modern townhouse. A dark stained wood banister and a natural fiber runner rug are subtly visible. Clear, even natural light from a skylight illuminates the wall. The camera is at a three-quarter left view, maintaining a close-up focus on the artwork, emphasizing its role as a refined, directional accent within the architectural flow.",
+            "negative_prompt": "blurry, grainy, cluttered, dark, messy, cheap, generic, harsh shadows, reflections, text, logos, people, wide shot, distant view, ornate, small cramped room",
+            "pinterest_marketing": {
+                "board_suggestion": "Art for Stairwells & Hallways",
+                "pin_title": "Maurizio Valch: 'Pathway' in a Townhouse Stairwell",
+                "pin_description": "Transform your transitional spaces with Maurizio Valch's 'Pathway to Inner Order.' A powerful abstract painting perfect for a modern townhouse stairwell or landing.",
+                "alt_text": "Maurizio Valch abstract painting 'Pathway to Inner Order' featuring red, yellow, and blue geometric forms, displayed on a white wall in a townhouse stairwell landing.",
+                "seo_keywords": [
+                    "stairwell art",
+                    "hallway art modern",
+                    "Maurizio Valch townhouse",
+                    "abstract art transitional space",
+                    "luxury townhouse decor"
+                ],
+                "hashtags": [
+                    "#StairwellArt",
+                    "#TownhouseDesign",
+                    "#AbstractHallway",
+                    "#MaurizioValch",
+                    "#ModernTransitions"
+                ]
+            }
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1781606264_4131_v1.png"
+}

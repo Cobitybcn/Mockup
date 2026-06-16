@@ -1,0 +1,535 @@
+{
+    "artwork_analysis": {
+        "visual_language": [
+            "Abstract",
+            "Contemporary",
+            "Structural",
+            "Symbolic",
+            "Geometric",
+            "Architectural",
+            "Minimalist"
+        ],
+        "emotional_energy": [
+            "Contemplative",
+            "Dynamic",
+            "Structured tension",
+            "Quiet intensity",
+            "Profound",
+            "Vibrant"
+        ],
+        "dominant_colors": [
+            "Blue",
+            "Yellow",
+            "Red",
+            "White"
+        ],
+        "secondary_colors": [
+            "Dark Green",
+            "Orange",
+            "Ochre",
+            "Brown"
+        ],
+        "visible_elements": [
+            "Large blue field (sky)",
+            "Geometric blocks (red, yellow, orange, green)",
+            "White diagonal path",
+            "Horizontal segmented planes",
+            "Small ladder",
+            "Tiny red cube"
+        ],
+        "visible_symbols": [
+            "Horizons",
+            "Tectonic lines",
+            "Divided fields",
+            "Monoliths",
+            "Incisions",
+            "Subtle stairs (ladder)",
+            "Suspended forms (red cube)",
+            "Territory",
+            "Thresholds",
+            "Paths"
+        ],
+        "color_temperature": "Balanced, dynamic equilibrium of warm (red, yellow, orange) and cool (blue, dark green) elements.",
+        "contrast_level": "High, between vivid colors and between light (sky blue, white) and dark (dark green, deep red).",
+        "composition_type": "Dynamic, asymmetrical, structured, diagonal, horizontal.",
+        "balance": "Asymmetrical, with visual weight on the left and foreground, counterbalanced by the expansive sky and receding elements on the right.",
+        "visual_tension": "Present in the sharp angles, contrasting color fields, and implied division of space, creating a dynamic stillness.",
+        "density": "Moderate to high in the structured terrestrial elements, light and open in the sky.",
+        "silence": "A strong sense of contemplative silence emerges from the clear divisions, expansive sky, and ordered forms.",
+        "main_focal_point": "The intersection of the white diagonal path with the vibrant, layered structures on the left, drawing the eye into the depth.",
+        "movement": "Strong diagonal movement from the bottom left guiding the eye toward the mid-right, complemented by the sweeping horizontal of the horizon.",
+        "depth": "Significant depth created by converging diagonals, overlapping planes, and the receding horizon line.",
+        "negative_space": "The broad, serene blue sky serves as a vast negative space, providing balance to the structured forms below.",
+        "verticality_or_horizontality": "Predominantly horizontal due to its format and the strong horizon, yet punctuated by the verticality of the block-like structures.",
+        "internal_organization": "Highly organized through precise geometric forms, distinct color fields, and sharp linear divisions.",
+        "rhythm": "Created by the repetition and variation of vertical blocks, diagonal lines, and horizontal segments across the composition.",
+        "surface": "Textured, painterly, with visible brushstrokes and palette knife marks, particularly in the robust colored blocks.",
+        "brushstroke": "Evident and controlled, contributing significantly to the tactile quality and material presence of the paint.",
+        "gesture": "Deliberate and structured, yet imbued with expressive energy in the application of color and form.",
+        "layers": "Visible layering of paint, suggesting depth and contributing to the construction of the forms and implied geological strata.",
+        "material_presence": "Strong, emphasizing the physical qualities of acrylic paint on canvas, giving the artwork a robust and tactile character.",
+        "sense_of_depth_or_flatness": "A strong sense of architectural and territorial depth is created, while individual color fields retain a bold, defined flatness.",
+        "format_and_scale": {
+            "width_cm": "110",
+            "height_cm": "70",
+            "depth_cm": "2",
+            "orientation": "horizontal",
+            "scale_impact": "Commands significant attention, establishing a powerful visual presence without being overwhelming.",
+            "wall_presence": "Strong and definitive, making a clear statement within its environment.",
+            "monumentality_or_intimacy": "Leans towards monumentality due to its bold forms and structural clarity, yet subtle human-scale elements like the ladder introduce a touch of intimacy.",
+            "spatial_effect": "Extends the perception of space, drawing the viewer into an imagined, structured landscape and inviting an expansive internal dialogue."
+        },
+        "spatial_presence": "Dominant and immersive, inviting the viewer to explore its constructed reality and conceptual depth.",
+        "visual_atmosphere": "Contemplative, serene, structured, vibrant, symbolic, and subtly introspective.",
+        "artwork_function": "Statement piece, focal point, catalyst for contemplation, and aesthetic anchor.",
+        "suggested_audience": [
+            "Contemporary art collectors",
+            "Architects",
+            "Interior designers",
+            "High-net-worth individuals",
+            "Curators",
+            "Art enthusiasts interested in abstract and structural art"
+        ],
+        "audience_profile": {
+            "primary": "Collectors of contemporary abstract art who value structural clarity, symbolic depth, and vibrant compositions.",
+            "secondary": "Interior designers and architects seeking impactful, sophisticated, and culturally resonant pieces for high-end residential and commercial projects.",
+            "buyer_profile": "Individuals who appreciate art that merges aesthetic beauty with intellectual engagement, valuing unique artistic vision and material quality.",
+            "collector_type": "Discerning, international collectors with an interest in established and emerging artists pushing the boundaries of abstract and symbolic expression.",
+            "interior_design_relevance": "Highly relevant for minimalist, modern, industrial-chic, and even traditionally elegant interiors requiring a contemporary and contemplative anchor piece."
+        },
+        "commercial_positioning": "High-value contemporary abstract art, ideal for display in prestigious galleries, private collections, and upscale interior design projects.",
+        "one_line_curatorial_read": "A vibrant abstract landscape that geometrically maps inner and outer territories, exploring thresholds and vast horizons through structured color and powerful forms.",
+        "style_summary": "Abstract, structural, symbolic, and contemplative, presented with a bold and contemporary palette.",
+        "artist_profile_relation": {
+            "relevant_statement_connection": "Directly embodies Valch's exploration of 'landscape, consciousness and inner structure,' moving 'between abstraction, symbolic territory and contemplative silence,' utilizing 'fields of color, incisions, monoliths, horizons and suspended forms as signs of presence, transition and perception.'",
+            "relevant_visual_language_connection": "Exemplifies the artist's visual language built through 'fields of color, horizons, tectonic lines, divided territories, monoliths, incisions, subtle stairs, suspended signs and spatial relationships,' achieving a clear 'tension between silence, presence, depth and inner order.'",
+            "relevant_symbol_connection": "Features prominently the recurring motifs of 'territory, monoliths, horizons, tectonic lines, incisions, subtle stairs (the ladder), divided fields, suspended forms (the small red cube), presence, distance, and thresholds.'",
+            "relevant_atmosphere_connection": "Aligns perfectly with the preferred atmospheres of 'silent, deep, sober, contemplative,' and successfully captures 'restrained tension, austerity, distance and quiet intensity' despite the vibrant palette."
+        },
+        "seasonal_strategy": {
+            "primary_season": "neutral"
+        },
+        "publishing_metadata": {
+            "suggested_titles": [
+                {
+                    "title": "Tectonic Horizon",
+                    "subtitle": "A Landscape of Inner Planes",
+                    "short_description": "Dynamic abstract composition exploring segmented territories and expansive skies through bold color and structural forms.",
+                    "curatorial_description": "This painting constructs a stratified landscape through bold color blocks and sharp geometric divisions, revealing a structured world where horizons meet the earth in a tension of constructed forms and open space. The composition guides the eye through a series of planes, suggesting a journey across a symbolic territory.",
+                    "commercial_description": "An impactful abstract work for collectors seeking structural clarity and profound depth. Its vivid yet balanced palette makes it a commanding focal point in contemporary interiors, inviting contemplation on boundaries and vistas. An investment-grade piece for discerning collections."
+                },
+                {
+                    "title": "Chromatic Threshold",
+                    "subtitle": "Where Earth Meets Sky in Bold Divisions",
+                    "short_description": "A vibrant and contemplative abstract with striking color fields and a subtle ladder hinting at new perspectives.",
+                    "curatorial_description": "Dominant primary colors sculpt a landscape of deep red, vital yellow, and expansive blue, framed by tectonic lines and shadowed green. The artwork's chromatic intensity is balanced by its precise architectural structure, creating an atmosphere of quiet intensity where earth and sky engage in a vibrant dialogue of forms and potential ascensions.",
+                    "commercial_description": "This painting offers a striking visual anchor for sophisticated spaces. Its compelling interplay of color and form, combined with subtle symbolic elements like the ladder, appeals to collectors desiring a work that is both visually engaging and intellectually resonant, perfect for a high-end residential or gallery setting."
+                },
+                {
+                    "title": "Divided Paths",
+                    "subtitle": "Geometry of Presence and Distance",
+                    "short_description": "An abstract vision of structured land, infinite sky, and a path toward unknown spaces, evoking both presence and profound distance.",
+                    "curatorial_description": "The artwork delineates a complex symbolic terrain, where stark white paths intersect with vast fields of color and looming monoliths. A small ladder and a distant red structure hint at human presence and thresholds within an otherwise silent and geometrically ordered landscape, inviting a meditation on inner journeys and external horizons.",
+                    "commercial_description": "An exceptional piece for discerning collectors, this painting transforms a space with its powerful abstract language. It presents a dialogue between architectural precision and atmospheric depth, making it an ideal acquisition for those who value art that sparks both visual intrigue and thoughtful introspection, enhancing any contemporary collection."
+                }
+            ],
+            "descriptions": {
+                "poetic_focus": "Through a symphony of structured color and form, this artwork unveils a landscape of the mind, where vibrant territories meet a contemplative sky. It's a silent journey across defined planes and boundless horizons, inviting a deep gaze into the essence of presence and the allure of distance.",
+                "formal_focus": "The composition is a rigorous study in geometric abstraction, utilizing sharp diagonals and distinct color fields to create a layered sense of depth. Its horizontal orientation emphasizes an expansive horizon, while monumental blocks and subtle incisions define an internal order and structural rhythm. The texture, built through acrylic layers, reinforces its material presence.",
+                "commercial_focus": "A museum-quality abstract painting that offers significant visual impact and intellectual depth, ideal for the serious collector. Its bold aesthetic and sophisticated composition make it a standout acquisition, perfect for anchoring a contemporary interior or enhancing an established collection. This piece represents an astute investment in fine art."
+            },
+            "seo_keywords": [
+                "Maurizio Valch abstract art",
+                "Contemporary geometric painting",
+                "Structural landscape artwork",
+                "Symbolic abstract painting",
+                "Modern color field art",
+                "High-end abstract canvas",
+                "Art for collectors",
+                "Architectural abstract",
+                "Vibrant abstract wall art",
+                "Abstract painting with horizon",
+                "Tectonic art",
+                "Minimalist abstract art",
+                "Large abstract painting horizontal",
+                "Abstract art interior design",
+                "Gallery quality abstract",
+                "Art investment contemporary",
+                "Acrylic on canvas abstract"
+            ],
+            "seo_tags": [
+                "abstractart",
+                "contemporaryart",
+                "geometricabstraction",
+                "mauriziovalch",
+                "artcollector",
+                "interiordesign",
+                "modernart",
+                "structuralism",
+                "symbolicart",
+                "colorfield",
+                "fineart",
+                "galleryart",
+                "luxuryhomes",
+                "wallart",
+                "abstractlandscape"
+            ],
+            "marketplace_title": "Maurizio Valch: Tectonic Horizon - Large Abstract Structural Painting, 110x70cm",
+            "marketplace_short_description": "An impactful abstract acrylic painting by Maurizio Valch, featuring vibrant color fields, geometric structures, and a contemplative horizon. Ideal for modern collectors and sophisticated interiors.",
+            "marketplace_long_description": "Maurizio Valch's 'Tectonic Horizon' is a powerful abstract work that masterfully combines fields of vivid color with sharp, structural forms to create a landscape of profound depth and symbolic resonance. The horizontal composition, measuring 110 cm wide by 70 cm high, invites viewers into a geometrically divided territory, defined by striking red, yellow, and blue planes, accented with dark green and a subtle white path. Visible textures from palette knife work and layering enhance its material presence, echoing geological formations and constructed spaces. This piece embodies a silent, contemplative atmosphere, reflecting the artist's exploration of consciousness, presence, and distance. It is an exceptional choice for contemporary art collectors, architects, and interior designers seeking a statement artwork that offers both visual dynamism and intellectual introspection.",
+            "pinterest_boards": [
+                "Contemporary Abstract Art",
+                "Modern Art for Luxury Interiors",
+                "Geometric Abstraction & Structural Art",
+                "Maurizio Valch Collection",
+                "Collector's Choice: Abstract Landscapes"
+            ]
+        }
+    },
+    "recommended_number_of_contexts": 8,
+    "contextual_proposals": [
+        {
+            "context_name": "Gallery Dialogue Space",
+            "context_role": "Primary sales and exhibition context for formal presentation.",
+            "space_type": "Contemporary Art Gallery",
+            "atmosphere": "Clean, minimalist, focused, bright, contemplative.",
+            "materials": [
+                "Matte white walls",
+                "Polished concrete floor",
+                "Recessed gallery lighting"
+            ],
+            "lighting": "Bright, even, diffused overhead lighting, emphasizing artwork colors.",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A direct front view ensures maximum fidelity and clear reading of the artwork's precise composition and vibrant colors. The close-up distance allows the artwork to dominate, while enough context is shown to convey a premium gallery setting, crucial for formal presentation and marketplace clarity.",
+            "human_presence": "none",
+            "curatorial_reason": "Presents the artwork in its purest form, allowing its structural integrity and color relationships to be the sole focus, typical of a serious gallery exhibit.",
+            "commercial_reason": "Optimizes visual clarity for online presentation, providing collectors with an unobstructed and faithful representation of the piece in a professional setting.",
+            "mockup_prompt": "A pristine, minimalist contemporary art gallery interior with matte white walls and polished concrete flooring. The artwork 'Tectonic Horizon' by Maurizio Valch is centrally displayed on a large, clean white wall. Bright, diffused overhead track lighting illuminates the painting evenly. The space is uncluttered and serene, emphasizing the artwork's vibrant colors and geometric forms. close-up view, front view.",
+            "negative_prompt": "Cluttered space, distracting elements, dark lighting, blurry image, generic decor, ornate frames, reflections, people.",
+            "pinterest_marketing": {
+                "board_suggestion": "Gallery Exhibitions: Modern Abstract",
+                "pin_title": "Maurizio Valch: Tectonic Horizon - Geometric Abstract Art in Gallery Setting",
+                "pin_description": "Experience the structured beauty of Maurizio Valch's 'Tectonic Horizon,' a compelling abstract painting presented in a pristine contemporary art gallery. Perfect for serious collectors and art enthusiasts seeking vibrant, architectural art.",
+                "alt_text": "Maurizio Valch 'Tectonic Horizon' abstract painting in a minimalist white art gallery with polished concrete floor and bright lighting.",
+                "seo_keywords": [
+                    "abstract art gallery",
+                    "contemporary art exhibit",
+                    "geometric abstract painting",
+                    "maurizio valch art",
+                    "modern art display",
+                    "art for collectors"
+                ],
+                "hashtags": [
+                    "#AbstractArt",
+                    "#ContemporaryPainting",
+                    "#ArtGallery",
+                    "#GeometricAbstraction",
+                    "#MaurizioValch",
+                    "#ArtCollector"
+                ]
+            }
+        },
+        {
+            "context_name": "Collector's Refined Study",
+            "context_role": "Demonstrates integration into a sophisticated private residential collection, providing scale.",
+            "space_type": "Private Collector's Study",
+            "atmosphere": "Refined, serene, intellectual, warm, distinguished.",
+            "materials": [
+                "Dark wood paneling",
+                "Leather armchair (partially visible)",
+                "Antique brass desk lamp",
+                "Herringbone wood floor"
+            ],
+            "lighting": "Soft, ambient light from a window and warm lamp light, creating a cozy evening atmosphere.",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter left view adds spatial depth, showing the artwork's integration into a luxurious residential interior. The close-up distance maintains the artwork's visual dominance. The presence of a standing male figure provides an immediate sense of scale, highlighting the painting's significant yet approachable dimensions within a private setting.",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "Positions the artwork as a cherished possession within a personal, curated environment, emphasizing its role in inspiring reflection and intellectual engagement.",
+            "commercial_reason": "Appeals to high-net-worth collectors by showcasing the artwork's ability to elevate a private, distinguished space and complement other fine objects.",
+            "mockup_prompt": "An elegant private collector's study, featuring rich dark wood paneling on the walls and a classic herringbone wood floor. The artwork 'Tectonic Horizon' by Maurizio Valch hangs prominently. A sophisticated leather armchair is partially visible on the right, and an antique brass desk lamp casts a warm glow. An optional standing male figure (1.80m) stands contemplatively nearby, providing scale. The room is bathed in soft, ambient evening light. close-up view, three-quarter left view.",
+            "negative_prompt": "Cluttered shelves, modern furniture, harsh lighting, office cubicles, distracting patterns, casual decor.",
+            "pinterest_marketing": {
+                "board_suggestion": "Luxury Home Art & Decor",
+                "pin_title": "Maurizio Valch Abstract in a Sophisticated Collector's Study",
+                "pin_description": "Discover 'Tectonic Horizon' by Maurizio Valch, perfectly placed in a refined study. This striking abstract piece enhances intellectual spaces, offering profound depth and vibrant structure. Ideal for discerning art collectors.",
+                "alt_text": "Maurizio Valch 'Tectonic Horizon' abstract painting in a luxurious study with dark wood paneling, leather armchair, and a male figure for scale.",
+                "seo_keywords": [
+                    "luxury art for home",
+                    "collector's study decor",
+                    "abstract art private collection",
+                    "maurizio valch painting",
+                    "sophisticated interior design",
+                    "art and architecture"
+                ],
+                "hashtags": [
+                    "#LuxuryInteriors",
+                    "#ArtCollector",
+                    "#HomeDecor",
+                    "#AbstractPainting",
+                    "#StudyDecor",
+                    "#FineArt"
+                ]
+            }
+        },
+        {
+            "context_name": "Architectural Residence Focal Point",
+            "context_role": "Highlights the artwork's structural harmony within a modern architectural environment.",
+            "space_type": "Foyer of a modern architectural residence",
+            "atmosphere": "Grand, open, light-filled, elegant, minimalist.",
+            "materials": [
+                "Light grey textured concrete wall",
+                "Large format porcelain floor tiles",
+                "Black steel frame windows (blurred in background)"
+            ],
+            "lighting": "Abundant natural light from large windows, creating soft shadows and bright areas.",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A front view emphasizes the artwork's clean lines and structural composition against a complementary architectural backdrop. The close-up ensures the painting's dominance, while the textured concrete wall provides a subtle yet rich context, highlighting its integration into a high-design interior.",
+            "human_presence": "none",
+            "curatorial_reason": "Showcases the artwork's resonance with contemporary architectural principles, where form, space, and light converge.",
+            "commercial_reason": "Appeals to architects and interior designers by demonstrating how the piece integrates seamlessly into a high-design, minimalist environment, acting as a powerful focal point.",
+            "mockup_prompt": "The spacious foyer of a modern architectural residence. The artwork 'Tectonic Horizon' by Maurizio Valch is impeccably displayed on a light grey textured concrete wall. Large format light grey porcelain floor tiles extend beneath. Natural light streams in from large, blurred black steel frame windows in the background, illuminating the artwork with a gentle, even glow. close-up view, front view.",
+            "negative_prompt": "Ornate details, cluttered walls, traditional architecture, dim lighting, reflections, busy decor.",
+            "pinterest_marketing": {
+                "board_suggestion": "Modern Architectural Interiors with Art",
+                "pin_title": "Maurizio Valch Abstract Art in a Minimalist Architectural Foyer",
+                "pin_description": "See 'Tectonic Horizon' by Maurizio Valch transform a modern architectural foyer. Its structural clarity and vibrant palette are perfectly suited for high-design, minimalist spaces. An essential piece for contemporary homes.",
+                "alt_text": "Maurizio Valch 'Tectonic Horizon' abstract painting on a textured concrete wall in a modern architectural foyer with natural light.",
+                "seo_keywords": [
+                    "abstract art architectural",
+                    "modern foyer art",
+                    "minimalist home decor",
+                    "maurizio valch",
+                    "contemporary art large",
+                    "design forward interiors"
+                ],
+                "hashtags": [
+                    "#ArchitecturalDesign",
+                    "#ModernArt",
+                    "#MinimalistHome",
+                    "#AbstractPainting",
+                    "#FoyerDesign",
+                    "#DesignArt"
+                ]
+            }
+        },
+        {
+            "context_name": "Mediterranean Light & Texture",
+            "context_role": "Connects the artwork's warm tones and geological texture with a refined, natural Mediterranean aesthetic.",
+            "space_type": "Living area of a Mediterranean-style villa",
+            "atmosphere": "Bright, airy, warm, organic modern, tranquil.",
+            "materials": [
+                "Off-white plaster walls",
+                "Natural linen sofa (partially visible)",
+                "Terracotta floor tiles",
+                "Olive wood accent table"
+            ],
+            "lighting": "Soft, diffused natural light characteristic of a Mediterranean setting.",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter right view provides an engaging perspective, showing the artwork's dynamic composition within a softly lit, organic environment. The close-up allows the painting's textures and warm colors to be appreciated, while the plaster wall and natural linen suggest a refined Mediterranean aesthetic without distracting from the art.",
+            "human_presence": "none",
+            "curatorial_reason": "Highlights the artwork's versatility, showing how its vibrant earth tones and structured forms can complement and elevate natural, sun-drenched interiors.",
+            "commercial_reason": "Expands market appeal to luxury homeowners in Mediterranean regions or those who favor an organic modern aesthetic, demonstrating a harmonious fit.",
+            "mockup_prompt": "The sun-drenched living area of a luxurious Mediterranean-style villa. The artwork 'Tectonic Horizon' by Maurizio Valch is beautifully displayed on an off-white, subtly textured plaster wall. Soft, diffused natural light bathes the room. Terracotta floor tiles are visible, and a glimpse of a natural linen sofa and an olive wood accent table suggest a relaxed, sophisticated atmosphere. close-up view, three-quarter right view.",
+            "negative_prompt": "Cluttered, rustic decor, harsh sunlight, cheap materials, cold colors, overly ornate, touristy items.",
+            "pinterest_marketing": {
+                "board_suggestion": "Mediterranean Modern Art & Interiors",
+                "pin_title": "Maurizio Valch 'Tectonic Horizon' in Mediterranean Villa Living",
+                "pin_description": "Embrace the warmth of Maurizio Valch's 'Tectonic Horizon' in a stunning Mediterranean villa setting. Its vibrant colors and structural elegance blend seamlessly with organic modern decor, creating a tranquil yet dynamic space.",
+                "alt_text": "Maurizio Valch 'Tectonic Horizon' abstract painting on off-white plaster wall in a Mediterranean living room with terracotta tiles and soft natural light.",
+                "seo_keywords": [
+                    "mediterranean art",
+                    "organic modern decor",
+                    "abstract painting warm colors",
+                    "maurizio valch",
+                    "luxury villa art",
+                    "terracotta interiors",
+                    "natural aesthetic"
+                ],
+                "hashtags": [
+                    "#MediterraneanStyle",
+                    "#AbstractArt",
+                    "#LuxuryLiving",
+                    "#OrganicModern",
+                    "#VillaDecor",
+                    "#MaurizioValch"
+                ]
+            }
+        },
+        {
+            "context_name": "Design Studio Showcase",
+            "context_role": "Positions the artwork as a key element for innovative interior design concepts and professional projects.",
+            "space_type": "High-end Interior Design Studio Showroom",
+            "atmosphere": "Curated, innovative, professional, inspiring, contemporary.",
+            "materials": [
+                "Neutral grey wall",
+                "Light oak wood flooring",
+                "Minimalist designer chair (subtly visible)",
+                "Metal shelving unit (blurred)"
+            ],
+            "lighting": "Clean, crisp, balanced artificial and natural light emphasizing design elements.",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter left view provides dynamic visual entry, allowing the artwork to interact with a professional design environment. The close-up ensures the artwork remains the central focus, while the presence of an optional standing female figure helps establish scale and human connection within a curated design space.",
+            "human_presence": "optional standing female figure 1.55m",
+            "curatorial_reason": "Showcases the artwork's compelling design elements—color, form, and texture—making it an ideal reference for design professionals and their clients.",
+            "commercial_reason": "Targets interior designers and design firms by illustrating the artwork's potential to anchor and elevate a sophisticated, contemporary design project, offering inspiration and unique appeal.",
+            "mockup_prompt": "A sophisticated interior design studio showroom with a neutral grey accent wall and light oak wood flooring. The artwork 'Tectonic Horizon' by Maurizio Valch is elegantly mounted. A minimalist designer chair in a neutral tone is subtly visible, along with a blurred metal shelving unit in the background, suggesting a workspace. An optional standing female figure (1.55m) observes the artwork, providing scale. The space is filled with clean, balanced light. close-up view, three-quarter left view.",
+            "negative_prompt": "Cluttered office, cheap furniture, unprofessional setting, harsh fluorescent lights, distracting objects, busy patterns.",
+            "pinterest_marketing": {
+                "board_suggestion": "Art for Interior Design Projects",
+                "pin_title": "Maurizio Valch Abstract: Design Studio Showcase Piece",
+                "pin_description": "Inspire your next project with Maurizio Valch's 'Tectonic Horizon,' a bold abstract artwork. See how it anchors a high-end interior design studio showroom, perfect for architects and designers seeking impactful contemporary art.",
+                "alt_text": "Maurizio Valch 'Tectonic Horizon' abstract painting in a modern interior design studio with a neutral grey wall, light oak floor, and female figure for scale.",
+                "seo_keywords": [
+                    "interior design art",
+                    "design studio art",
+                    "architectural art projects",
+                    "maurizio valch",
+                    "contemporary art for firms",
+                    "minimalist design inspiration"
+                ],
+                "hashtags": [
+                    "#InteriorDesign",
+                    "#DesignInspiration",
+                    "#AbstractArt",
+                    "#Architects",
+                    "#DesignStudio",
+                    "#ContemporaryDecor"
+                ]
+            }
+        },
+        {
+            "context_name": "Townhouse Dining Salon",
+            "context_role": "Highlights the artwork as a sophisticated centerpiece in an intimate, elegant residential dining space.",
+            "space_type": "Formal Dining Salon in a modern townhouse",
+            "atmosphere": "Sophisticated, intimate, understated luxury, evening calm.",
+            "materials": [
+                "Deep charcoal painted wall",
+                "Dark polished wooden dining table",
+                "Minimalist chandelier (blurred above)",
+                "Velvet dining chairs (partially visible)"
+            ],
+            "lighting": "Soft, directed ambient light, mimicking evening dining atmosphere.",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A direct front view ensures the artwork is the central visual element, framed by the deep charcoal wall. The close-up distance allows the painting's vibrant colors to pop against the darker background, making it a powerful focal point in a refined dining setting, perfect for clear presentation.",
+            "human_presence": "none",
+            "curatorial_reason": "Illustrates how the artwork's strong visual presence and contemplative nature can elevate a personal, intimate space meant for gathering and quiet appreciation.",
+            "commercial_reason": "Appeals to homeowners looking to invest in impactful art that enhances their living and entertaining spaces, providing a sense of cultivated elegance and modern sophistication.",
+            "mockup_prompt": "A sophisticated formal dining salon in a modern townhouse. The artwork 'Tectonic Horizon' by Maurizio Valch is centrally mounted on a deep charcoal painted wall. A dark polished wooden dining table is partially visible below, with blurred minimalist velvet dining chairs around it. A minimalist chandelier hangs softly blurred above. Soft, directed ambient light creates an intimate evening atmosphere. close-up view, front view.",
+            "negative_prompt": "Casual kitchen, bright restaurant, cluttered table, traditional wallpaper, harsh overhead lights, cheap furniture.",
+            "pinterest_marketing": {
+                "board_suggestion": "Dining Room Art & Elegant Interiors",
+                "pin_title": "Maurizio Valch Abstract: Elegant Dining Salon Statement",
+                "pin_description": "Elevate your dining experience with Maurizio Valch's 'Tectonic Horizon.' This vibrant abstract painting makes a sophisticated statement in a modern townhouse dining salon, blending bold color with refined ambiance.",
+                "alt_text": "Maurizio Valch 'Tectonic Horizon' abstract painting on a deep charcoal wall in an elegant dining salon with a dark polished table.",
+                "seo_keywords": [
+                    "dining room art luxury",
+                    "abstract art modern home",
+                    "maurizio valch",
+                    "elegant interior design",
+                    "statement art piece",
+                    "contemporary dining decor"
+                ],
+                "hashtags": [
+                    "#DiningRoomDecor",
+                    "#AbstractArt",
+                    "#LuxuryHome",
+                    "#ModernInterior",
+                    "#StatementPiece",
+                    "#TownhouseDesign"
+                ]
+            }
+        },
+        {
+            "context_name": "Museum Passage Serenity",
+            "context_role": "Positions the artwork within an institutional context, emphasizing its timelessness and cultural significance.",
+            "space_type": "Museum corridor or transitional space",
+            "atmosphere": "Quiet, respectful, educational, timeless, serene.",
+            "materials": [
+                "Smooth, light gray wall",
+                "Stone floor",
+                "Subtle museum downlighting"
+            ],
+            "lighting": "Controlled, subtle downlighting characteristic of museum environments, highlighting textures.",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter right view offers a slightly angled perspective that implies movement through a museum space, while keeping the artwork dominant. The close-up ensures its detail is visible, and the light gray wall and stone floor subtly convey a revered institutional setting, fitting for a culturally significant piece.",
+            "human_presence": "none",
+            "curatorial_reason": "Suggests the artwork's enduring artistic value and its potential for inclusion in significant public or private collections, aligning with museum-level quality.",
+            "commercial_reason": "Enhances the artwork's prestige and perceived value, appealing to collectors and institutions who recognize and invest in pieces with significant cultural and artistic merit.",
+            "mockup_prompt": "A quiet, contemplative museum corridor, featuring a smooth, light gray wall and a minimalist stone floor. The artwork 'Tectonic Horizon' by Maurizio Valch is elegantly mounted. Subtle museum downlighting softly illuminates the painting, emphasizing its textures and colors without creating harsh shadows. The space feels serene and timeless. close-up view, three-quarter right view.",
+            "negative_prompt": "Crowded museum, gift shop, bright exhibition hall, distracting signage, cheap lighting, modern tech, ornate frames.",
+            "pinterest_marketing": {
+                "board_suggestion": "Museum Quality Art & Exhibitions",
+                "pin_title": "Maurizio Valch Abstract: Serenity in a Museum Passage",
+                "pin_description": "Discover Maurizio Valch's 'Tectonic Horizon' in a serene museum passage. This timeless abstract piece speaks to structural beauty and profound contemplation, worthy of any prestigious collection.",
+                "alt_text": "Maurizio Valch 'Tectonic Horizon' abstract painting on a light gray museum wall with stone floor and soft downlighting.",
+                "seo_keywords": [
+                    "museum quality art",
+                    "abstract art institutional",
+                    "maurizio valch",
+                    "contemporary art investment",
+                    "curated art",
+                    "timeless abstract"
+                ],
+                "hashtags": [
+                    "#MuseumArt",
+                    "#FineArt",
+                    "#AbstractPainting",
+                    "#ArtInvestment",
+                    "#ContemporaryArt",
+                    "#MaurizioValch"
+                ]
+            }
+        },
+        {
+            "context_name": "Minimalist Penthouse Vista",
+            "context_role": "Showcases the artwork's ability to thrive in a spacious, contemporary, and highly edited luxury environment.",
+            "space_type": "Living room of a minimalist penthouse",
+            "atmosphere": "Spacious, uncluttered, light-filled, contemporary luxury, serene.",
+            "materials": [
+                "White matte walls",
+                "Light oak hardwood floors",
+                "Low-slung minimalist sofa (partial view)",
+                "Expansive city view (blurred in background)"
+            ],
+            "lighting": "Abundant natural daylight, bright and airy.",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter left view offers an engaging, open perspective, showing how the artwork's clean lines and bold colors complement a vast, minimalist space. The close-up ensures the painting's visual impact, while the subtle hints of luxury and natural light enhance its appeal for discerning penthouse owners.",
+            "human_presence": "none",
+            "curatorial_reason": "Emphasizes the artwork's strong visual presence and clean aesthetic, which aligns perfectly with the refined and uncluttered ethos of minimalist luxury design.",
+            "commercial_reason": "Targets high-end buyers and luxury real estate developers, demonstrating the artwork's capacity to be a central, defining element in a premium, architecturally driven living space.",
+            "mockup_prompt": "The spacious living room of a minimalist penthouse, characterized by immaculate white matte walls and light oak hardwood floors. The artwork 'Tectonic Horizon' by Maurizio Valch is mounted prominently. A low-slung, neutral-toned minimalist sofa is partially visible in the foreground. Abundant natural daylight fills the room, and a blurred expansive city view is visible through large windows in the background. close-up view, three-quarter left view.",
+            "negative_prompt": "Cluttered rooms, cheap decor, traditional furniture, busy patterns, dark interiors, reflections, small apartment.",
+            "pinterest_marketing": {
+                "board_suggestion": "Penthouse Decor & Contemporary Art",
+                "pin_title": "Maurizio Valch Abstract in Minimalist Penthouse Living Room",
+                "pin_description": "Transform your penthouse with Maurizio Valch's 'Tectonic Horizon.' This captivating abstract piece perfectly suits minimalist luxury interiors, adding structural beauty and vibrant contemplation to an uncluttered, light-filled space.",
+                "alt_text": "Maurizio Valch 'Tectonic Horizon' abstract painting on a white wall in a minimalist penthouse living room with light oak floors and city view.",
+                "seo_keywords": [
+                    "penthouse art",
+                    "minimalist luxury interior",
+                    "abstract painting large",
+                    "maurizio valch",
+                    "contemporary art for penthouse",
+                    "high end modern decor"
+                ],
+                "hashtags": [
+                    "#PenthouseDesign",
+                    "#MinimalistDecor",
+                    "#AbstractArt",
+                    "#LuxuryLiving",
+                    "#ContemporaryHome",
+                    "#MaurizioValch"
+                ]
+            }
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1781605380_2869_v1.png"
+}

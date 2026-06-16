@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Collector's Nocturnal Study
+- Purpose: Private, contemplative setting, showcasing personal integration
+- Scene Description: A private study / library with sophisticated, intimate, contemplative, slightly formal atmosphere. Materials: dark walnut wood paneling, rich leather armchair, wool rug, muted brass details
+- Lighting: soft ambient light, subtle brass table lamp, evening glow
+- Time of Day: night
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult asian man, 1.80 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A three-quarter left view adds spatial depth to the study, allowing the rich textures of the room (wood, leather) to subtly frame the artwork. This perspective enhances the feeling of intimacy and contemplation. The inclusion of an optional human figure provides a scale reference, emphasizing the artwork's imposing yet approachable size, and positions the viewer within a lived, luxurious environment.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+Sophisticated collector's private study, dark walnut wood paneled wall, a comfortable dark leather armchair and a subtle brass table lamp visible on the right, soft evening ambient lighting, a large vertical abstract painting hanging prominently, three-quarter left view, close-up view, optional standing male figure 1.80m observing the artwork from a distance, refined, elegant
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+clutter, modern office, bright colors, casual, generic, harsh lighting
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

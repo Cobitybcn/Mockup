@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 110 cm wide × 70 cm high × 2 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Sophisticated Townhouse Salon
+- Purpose: Elevating a formal yet personal social space
+- Scene Description: A Elegant salon or dining area in a contemporary townhouse with Refined, intimate, art-centric, understated luxury atmosphere. Materials: muted gray painted wall, herringbone wood floor, minimalist dining table, designer chairs
+- Lighting: Soft, ambient light from large windows, supplemented by a discreet, adjustable art light.
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: front view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The front view offers a direct, uncluttered presentation of the artwork, suitable for a formal dining or salon area where clarity and aesthetic precision are paramount. The close-up ensures the painting's details and refined finish are clearly visible, making it a compelling focal point in the space.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+An elegant salon in a contemporary townhouse, featuring muted gray painted walls and a classic herringbone wood floor. Maurizio Valch's 'Sin título' (110cm wide x 70cm high) is prominently displayed on the wall, subtly illuminated by a discreet art light and soft ambient window light. A minimalist dining table with two designer chairs is partially visible in the foreground. Front view, close-up view.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cluttered room, overly busy decor, traditional style, bright primary colors, cheap furniture, harsh lighting.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

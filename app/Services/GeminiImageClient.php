@@ -185,17 +185,28 @@ class GeminiImageClient
         }
 
         // Candidatos de auto-detección (sin rutas específicas de usuario)
-        $candidates = [
-            'python',
+        $localAppData = rtrim((string)getenv('LOCALAPPDATA'), '/\\');
+        $userPythonCandidates = [];
+        if ($localAppData !== '') {
+            foreach (['Python313', 'Python312', 'Python311'] as $versionDir) {
+                $userPythonCandidates[] = $localAppData . '\\Programs\\Python\\' . $versionDir . '\\python.exe';
+            }
+        }
+
+        $candidates = array_merge($userPythonCandidates, [
             'C:\laragon\bin\python\python-3.13\python.exe',
             'C:\laragon\bin\python\python-3.12\python.exe',
             'C:\laragon\bin\python\python-3.11\python.exe',
-        ];
+            'python',
+        ]);
 
         // Primero buscar candidatos que tengan google.genai instalado
         foreach ($candidates as $cand) {
             $output = [];
             $exitCode = -1;
+            if ($cand !== 'python' && !is_file($cand)) {
+                continue;
+            }
             $cmd = ($cand === 'python') ? 'python' : '"' . $cand . '"';
             @exec($cmd . ' -c "import google.genai" 2>&1', $output, $exitCode);
             if ($exitCode === 0) {
@@ -205,7 +216,7 @@ class GeminiImageClient
 
         // Si ninguno tiene google.genai, devolver el primero que exista
         foreach ($candidates as $cand) {
-            if ($cand === 'python' || is_file($cand)) {
+            if ($cand !== 'python' && is_file($cand)) {
                 return $cand;
             }
         }
@@ -222,4 +233,3 @@ class GeminiImageClient
         return realpath($dir) ?: $dir;
     }
 }
-

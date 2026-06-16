@@ -1,0 +1,357 @@
+```json
+{
+  "artwork_analysis": {
+    "visual_language": [
+      "abstract",
+      "contemporary",
+      "structural",
+      "symbolic",
+      "metaphysical"
+    ],
+    "emotional_energy": [
+      "silent",
+      "deep",
+      "sober",
+      "contemplative",
+      "restrained tension",
+      "austerity",
+      "nocturnal calm"
+    ],
+    "dominant_colors": [
+      "deep maroon",
+      "dark red",
+      "brown",
+      "black"
+    ],
+    "secondary_colors": [
+      "vibrant red",
+      "turquoise blue",
+      "white"
+    ],
+    "visible_elements": [
+      "expansive fields of dark color",
+      "horizontal lines",
+      "three rectangular forms (monoliths)",
+      "textured color blocks"
+    ],
+    "visible_symbols": [
+      "territory",
+      "silence",
+      "monoliths",
+      "horizons",
+      "tectonic lines",
+      "incisions",
+      "divided fields",
+      "suspended forms",
+      "red structures",
+      "nocturnal atmospheres",
+      "presence",
+      "distance"
+    ],
+    "color_temperature": "predominantly warm with striking cool accents",
+    "contrast_level": "low in main fields, high in focal elements",
+    "composition_type": "structured, layered, horizontal",
+    "balance": "asymmetrical, thoughtfully weighted",
+    "visual_tension": "present in contrasting elements and structural divisions",
+    "density": "high, deep, absorbing",
+    "silence": "profound",
+    "main_focal_point": "the three luminous, rectangular forms, particularly the largest",
+    "movement": "subtle, implied horizontal sweep, gentle pull towards luminous blocks",
+    "depth": "significant, created by layers of color and foreground/background interplay",
+    "negative_space": "expansive dark fields enhancing the forms",
+    "verticality_or_horizontality": "strongly horizontal",
+    "internal_organization": "grid-like but organic, with defined territories",
+    "rhythm": "slow, deliberate, contemplative",
+    "surface": "varied, smooth color fields contrasting with rougher texture",
+    "brushstroke": "visible in layers and textured areas, controlled",
+    "gesture": "controlled, intentional, structural",
+    "layers": "clearly visible, contributing to depth",
+    "material_presence": "strong, due to depth of color and implied texture",
+    "sense_of_depth_or_flatness": "strong sense of depth",
+    "format_and_scale": {
+      "width_cm": "120",
+      "height_cm": "80",
+      "depth_cm": "4",
+      "orientation": "horizontal",
+      "scale_impact": "significant yet allows for intimate contemplation",
+      "wall_presence": "commanding, grounding, elegant",
+      "monumentality_or_intimacy": "contemplative monumentality",
+      "spatial_effect": "anchors a space, draws the eye, creates a focal point of quiet intensity"
+    },
+    "spatial_presence": "deep, absorbing, a window into an inner or distant landscape",
+    "visual_atmosphere": "silent, nocturnal, profound, contemplative, austere, deeply structured",
+    "artwork_function": "statement piece, focal point, object of contemplation, complements sophisticated interiors",
+    "suggested_audience": [
+      "Coleccionistas de arte contemporáneo",
+      "galerías",
+      "arquitectos",
+      "interioristas",
+      "decoradores de alto nivel",
+      "curadores",
+      "compradores internacionales",
+      "personas interesadas en obras abstractas, minimalistas, simbólicas, silenciosas y de gran presencia espacial"
+    ],
+    "audience_profile": {
+      "primary": "High-net-worth individuals, discerning collectors, institutions",
+      "secondary": "Art consultants, luxury interior designers",
+      "buyer_profile": "Appreciates intellectual depth, aesthetic refinement, and quiet power",
+      "collector_type": "Values abstract, structural, and symbolic art; seeking meditative presence",
+      "interior_design_relevance": "Perfect for minimalist, contemporary, luxury, and architecturally driven spaces seeking a visually engaging and emotionally resonant focal point",
+      "gallery_potential": "High, due to strong visual identity, clear artistic language, and broad appeal to the contemporary art market"
+    },
+    "commercial_positioning": "High-end contemporary art market, investment-grade art",
+    "one_line_curatorial_read": "A nocturnal landscape of profound silence and structural presence, where luminous forms emerge from deep fields of color, marking thresholds within an inner territory.",
+    "style_summary": "Abstract, structural, symbolic, contemplative, nocturnal",
+    "artist_profile_relation": {
+      "relevant_statement_connection": "Artwork embodies the exploration of 'landscape, consciousness and inner structure,' moving between 'abstraction, symbolic territory and contemplative silence,' using 'fields of color, incisions, monoliths, horizons and suspended forms as signs of presence, transition and perception.' It is visually grounded and poetic.",
+      "relevant_visual_language_connection": "Directly uses fields of color, horizons (implied lines), tectonic lines (structural divisions), divided territories, monoliths (red/blue blocks), incisions (white lines), suspended signs (the blocks). Tension between silence, presence, depth, and inner order is evident.",
+      "relevant_symbol_connection": "Territory, silence, monoliths, horizons, tectonic lines, incisions, divided fields, suspended forms, red structures, nocturnal atmospheres, presence, distance are all present and central to the piece.",
+      "relevant_atmosphere_connection": "Silent, deep, sober, contemplative, slightly melancholic, nocturnal calm, restrained tension, austerity, distance, quiet intensity – the piece perfectly aligns with these atmospheric descriptions."
+    },
+    "seasonal_strategy": {
+      "primary_season": "neutral"
+    },
+    "publishing_metadata": {
+      "suggested_titles": [
+        {
+          "title": "Tectonic Threshold",
+          "subtitle": "A nocturnal field divided by light.",
+          "short_description": "Deep fields of color are cut by fine white lines, revealing luminous red and blue structures within a vast, silent landscape.",
+          "curatorial_description": "This work presents a structural abstraction where horizontal incisions define a perceived territory, evoking horizons and internal divisions. Vibrant, monolithic forms, suspended within the deep, nocturnal palette, act as points of concentrated energy and symbolic presence, inviting a contemplative gaze into an ordered yet expansive space.",
+          "commercial_description": "An exceptional abstract piece for contemporary collections, its rich, layered surface and striking composition bring a profound sense of depth and contemplative elegance to any distinguished interior. Ideal for spaces seeking a statement of quiet power."
+        },
+        {
+          "title": "Nocturne / Infra-Red",
+          "subtitle": "Deep silence, vibrant forms.",
+          "short_description": "A rich, dark canvas reveals fields of deep red and maroon, punctuated by glowing red and turquoise monoliths under a vast, unseen sky.",
+          "curatorial_description": "Valch navigates a nocturnal atmosphere, where the profound depth of the dark palette creates a stage for symbolic forms. The luminous red and blue elements, appearing as suspended structures, break the silence with an internal vibration, creating a dialogue between the observed and the felt, anchored by subtle horizon lines that suggest vastness.",
+          "commercial_description": "Elevate your space with this captivating artwork, an evocative study in color and quiet presence. Its sophisticated palette and dynamic, yet controlled, forms make it a compelling focal point for luxury residences, private collections, or architectural settings, offering a timeless aesthetic appeal."
+        },
+        {
+          "title": "Inner Monoliths",
+          "subtitle": "Signs of presence in a vast territory.",
+          "short_description": "Against a sweeping dark landscape, three vibrant, cube-like forms stand as silent sentinels, marked by the artist's distinctive incisions.",
+          "curatorial_description": "This painting engages with the artist’s recurring motifs of territory and monoliths, manifesting a deep, inner landscape. The distinct, suspended forms, imbued with contrasting red and blue, function as symbolic markers or points of consciousness within a vast, contemplative field, drawing the viewer into a space of quiet reflection and structural integrity.",
+          "commercial_description": "A powerful addition for the discerning collector, this artwork by Maurizio Valch offers a unique blend of abstract expression and symbolic depth. Its commanding presence and nuanced composition ensure it will be a cornerstone of any collection, bringing an air of sophisticated contemplation to upscale environments."
+        }
+      ],
+      "descriptions": {
+        "poetic_focus": "Across a vast, nocturnal expanse, deep fields of color unfold, subtly divided by fine, incised lines that whisper of distant horizons. Within this profound silence, vibrant forms emerge—monoliths glowing with an inner light of red and turquoise, suspended as signs of presence and memory in an inner landscape.",
+        "formal_focus": "The artwork is structured by expansive, layered fields of deep maroon and earthy reds, horizontally bisected by delicate, luminous white incisions. Three distinct rectangular forms, rendered in striking vermillion and turquoise, introduce high chromatic contrast and act as focal points, creating a dynamic tension within an otherwise austere and balanced composition.",
+        "commercial_focus": "An exquisite abstract painting, distinguished by its sophisticated palette and strong structural presence. This piece offers a compelling visual dialogue through its deep color fields, subtle linear elements, and vibrant, suspended forms. It is designed to be a significant focal point in contemporary luxury interiors, art galleries, or private collections, appealing to those who seek art with profound depth and elegant visual impact."
+      },
+      "seo_keywords": [
+        "Abstract art",
+        "contemporary painting",
+        "Maurizio Valch",
+        "structural abstraction",
+        "symbolic art",
+        "metaphysical art",
+        "minimalist art",
+        "contemplative art",
+        "color field painting",
+        "red art",
+        "modern landscape",
+        "gallery art",
+        "collector art",
+        "luxury art",
+        "architect art",
+        "interior design art",
+        "large abstract",
+        "horizontal art",
+        "maroon",
+        "turquoise",
+        "monoliths",
+        "horizons",
+        "silence",
+        "deep art",
+        "European art",
+        "New York art",
+        "London art",
+        "Paris art"
+      ],
+      "seo_tags": [
+        "#MaurizioValch",
+        "#AbstractArt",
+        "#ContemporaryPainting",
+        "#StructuralArt",
+        "#SymbolicArt",
+        "#Metaphysical",
+        "#MinimalistArt",
+        "#ColorField",
+        "#RedArt",
+        "#LuxuryArt",
+        "#CollectorGrade",
+        "#InteriorDesign",
+        "#GalleryReady",
+        "#ModernAbstract",
+        "#HorizontalArt",
+        "#DeepColor",
+        "#ContemplativeArt",
+        "#ArtForSale",
+        "#InvestmentArt",
+        "#FineArt"
+      ],
+      "marketplace_title": "Maurizio Valch: Tectonic Threshold - Large Abstract Canvas",
+      "marketplace_short_description": "A compelling abstract painting by Maurizio Valch, featuring deep nocturnal fields, subtle incisions, and vibrant red-blue monolithic forms. Ideal for discerning collectors and luxury interiors.",
+      "marketplace_long_description": "'Sin título' by Maurizio Valch is a striking abstract work (120x80 cm) that draws the viewer into a world of profound structural beauty and contemplative silence. The artist masterfully employs deep, rich maroon and earthy red fields, layered with a unique textural depth, and punctuated by delicate white incised lines that evoke distant horizons and internal divides. Three distinct, luminous forms—rendered in vibrant red and turquoise blue—emerge from this vastness, acting as symbolic monoliths or suspended signs. These elements introduce a captivating tension and a focused energy against the painting's otherwise serene and deep atmosphere. Created with acrylic on canvas, the piece showcases Valch's signature process of building and reducing, allowing the essential structure to surface. This artwork is a testament to the relationship between landscape, consciousness, and inner order, making it an exceptional acquisition for contemporary art collectors, galleries, architects, and luxury interior designers seeking a piece with significant presence and intellectual depth.",
+      "pinterest_boards": []
+    }
+  },
+  "recommended_number_of_contexts": "4",
+  "contextual_proposals": [
+    {
+      "context_name": "Gallery Aperture",
+      "context_role": "Showcase the artwork's artistic merit and commanding presence.",
+      "space_type": "Minimalist contemporary art gallery space with high ceilings.",
+      "atmosphere": "Clean, bright, sophisticated, focused.",
+      "materials": [
+        "white walls",
+        "polished concrete floor",
+        "track lighting"
+      ],
+      "lighting": "Directed gallery spot lighting highlighting the artwork, soft ambient light from skylights.",
+      "camera_angle": "Straight on, eye-level, slightly wide to show surrounding clean space.",
+      "human_presence": "None, or a subtly blurred figure admiring from a distance.",
+      "curatorial_reason": "Emphasizes the artwork's structural integrity and contemplative power without distraction, allowing its visual language to speak clearly. Its scale is perfectly suited for a prominent gallery wall.",
+      "commercial_reason": "Positions the artwork as a serious art investment, highlighting its aesthetic quality and suitability for institutional or high-end private collections.",
+      "mockup_prompt": "A large abstract painting by Maurizio Valch, 120x80cm, featuring deep maroon fields and vibrant red-blue forms with white incisions, displayed centrally on a pristine white wall in a minimalist contemporary art gallery. Polished concrete floor, high ceiling. Focused gallery spot lighting from above, soft natural light from a distant skylight. Wide shot, clean lines, sophisticated ambiance.",
+      "negative_prompt": "Cluttered, cheap decor, distracting elements, poor lighting, low quality, residential feel.",
+      "pinterest_marketing": {
+        "board_suggestion": "Contemporary Gallery Showcases",
+        "pin_title": "Maurizio Valch: Tectonic Threshold - Gallery Installation",
+        "pin_description": "Experience the commanding presence of Maurizio Valch's abstract work 'Tectonic Threshold' in a minimalist gallery setting. Ideal for collectors and curators.",
+        "alt_text": "Large abstract painting with deep maroon and red-blue forms in a contemporary art gallery.",
+        "seo_keywords": [
+          "Gallery art",
+          "contemporary art",
+          "Maurizio Valch",
+          "abstract painting",
+          "art exhibition"
+        ],
+        "hashtags": [
+          "#GalleryArt",
+          "#ContemporaryAbstract",
+          "#ArtExhibition",
+          "#MaurizioValch",
+          "#ArtCollector"
+        ]
+      }
+    },
+    {
+      "context_name": "Urban Sanctuary",
+      "context_role": "Integrate the artwork as a central, grounding element in a refined home.",
+      "space_type": "Expansive living room in a luxury townhouse or penthouse.",
+      "atmosphere": "Serene, elegant, warm, inviting, yet sophisticated.",
+      "materials": [
+        "textured plaster wall (light neutral)",
+        "natural wood flooring",
+        "minimalist, high-end furniture (neutral-toned sofa)"
+      ],
+      "lighting": "Soft, indirect ambient lighting, supplemented by a subtle accent light on the artwork.",
+      "camera_angle": "Medium shot, slightly angled to show part of the minimalist furniture, creating a sense of scale and livability.",
+      "human_presence": "None.",
+      "curatorial_reason": "Demonstrates how the artwork's contemplative depth and elegant color palette can enrich a personal living environment, creating a focal point that encourages quiet reflection.",
+      "commercial_reason": "Appeals to high-net-worth individuals and interior designers looking for a statement piece that complements sophisticated, understated luxury.",
+      "mockup_prompt": "Maurizio Valch's 'Sin título' abstract painting, 120x80cm, with its deep reds and luminous forms, hanging above a long, low-profile minimalist sofa in an elegant, contemporary luxury living room. The wall is a warm, textured light grey plaster. Natural light filters gently from large windows, complemented by subtle ceiling downlights. Warm wooden floor. Medium shot, refined and spacious.",
+      "negative_prompt": "Clutter, busy patterns, excessive decoration, cheap furniture, harsh lighting, office environment.",
+      "pinterest_marketing": {
+        "board_suggestion": "Luxury Living Room Art Ideas",
+        "pin_title": "Abstract Masterpiece for Luxury Living by Maurizio Valch",
+        "pin_description": "Transform your living space with this captivating abstract painting, a focal point of quiet intensity for refined urban homes.",
+        "alt_text": "Large abstract painting in deep reds and blues above a sofa in a luxury living room.",
+        "seo_keywords": [
+          "Luxury home decor",
+          "abstract art living room",
+          "high-end interior design",
+          "Maurizio Valch art",
+          "modern luxury"
+        ],
+        "hashtags": [
+          "#LuxuryInteriors",
+          "#AbstractArt",
+          "#HomeDecor",
+          "#ModernLiving",
+          "#InteriorDesignInspiration"
+        ]
+      }
+    },
+    {
+      "context_name": "Structured Vision",
+      "context_role": "Highlight the artwork's structural and intellectual qualities in a professional, design-oriented setting.",
+      "space_type": "Sophisticated architectural office or a high-level executive suite.",
+      "atmosphere": "Modern, intellectual, organized, inspiring.",
+      "materials": [
+        "exposed concrete or dark wood paneling",
+        "sleek metal accents",
+        "contemporary desk/conference table"
+      ],
+      "lighting": "Integrated architectural lighting, task lighting, and subtle, focused illumination on the artwork.",
+      "camera_angle": "Slightly elevated, looking down into the space, showing the artwork as a source of inspiration.",
+      "human_presence": "None.",
+      "curatorial_reason": "Emphasizes the artwork's resonance with architectural principles—structure, space, form, and material—making it a natural fit for environments where design and thought are paramount.",
+      "commercial_reason": "Targets architects, designers, and corporate collectors seeking art that embodies modern elegance and intellectual depth, enhancing a professional, high-end workspace.",
+      "mockup_prompt": "Maurizio Valch's abstract painting, 120x80cm, with its deep maroon, red, and blue geometric forms and fine lines, centrally positioned on a dark, polished concrete wall in a high-end architectural design studio. A minimalist black executive desk and chair are visible in the foreground. Integrated ceiling lighting and a dedicated art light illuminate the piece. Elevated perspective, sharp and clean.",
+      "negative_prompt": "Messy, generic office, distracting equipment, low quality furniture, bright colors in background, traditional decor.",
+      "pinterest_marketing": {
+        "board_suggestion": "Art for Modern Workspaces",
+        "pin_title": "Maurizio Valch: Abstract Art for Architectural Studios",
+        "pin_description": "Elevate an executive office or design studio with this structurally profound abstract painting by Maurizio Valch, inspiring focus and intellectual depth.",
+        "alt_text": "Abstract painting in deep reds and blues on a concrete wall in an architectural office.",
+        "seo_keywords": [
+          "Office art",
+          "corporate art collection",
+          "architectural interiors",
+          "modern office design",
+          "Maurizio Valch artwork"
+        ],
+        "hashtags": [
+          "#OfficeArt",
+          "#CorporateCollection",
+          "#ArchitecturalDesign",
+          "#ExecutiveOffice",
+          "#ModernWorkspace"
+        ]
+      }
+    },
+    {
+      "context_name": "Timeless Contemplation",
+      "context_role": "Show the artwork's ability to create a harmonious dialogue between modern art and classic architecture.",
+      "space_type": "Elegant dining room in a renovated historic European townhouse.",
+      "atmosphere": "Refined, cultured, serene, blend of old and new.",
+      "materials": [
+        "richly textured wall (deep charcoal or plaster)",
+        "ornate but understated ceiling details",
+        "antique wooden dining table with contemporary chairs"
+      ],
+      "lighting": "Chandelier with dimmable light, focused art light, natural light from tall windows.",
+      "camera_angle": "Eye-level, focused on the artwork with a glimpse of the refined dining setting.",
+      "human_presence": "None.",
+      "curatorial_reason": "Illustrates how Valch's work, with its depth and timeless structural qualities, can transcend stylistic boundaries and bring a contemporary meditative quality to historically rich environments.",
+      "commercial_reason": "Targets collectors who appreciate mixing periods and seek sophisticated, impactful art for their unique, high-value properties, appealing to European and international buyers.",
+      "mockup_prompt": "Maurizio Valch's horizontal abstract painting, 120x80cm, featuring deep reds, maroons, and vibrant red-blue elements with white incisions, hanging prominently on a dark, textured wall in an elegant dining room of a renovated historic European townhouse. An antique wooden dining table with minimalist chairs is visible. Soft ambient light from a classic chandelier and natural light from tall windows. Focused art light on the painting. Eye-level shot, sophisticated and harmonious.",
+      "negative_prompt": "Overly ornate, cluttered, cheap reproduction, modern building, plain walls, poor lighting, busy wallpaper.",
+      "pinterest_marketing": {
+        "board_suggestion": "Historic Homes & Modern Art",
+        "pin_title": "Maurizio Valch Abstract in European Townhouse Dining Room",
+        "pin_description": "Discover how Maurizio Valch's deep abstract art perfectly complements the timeless elegance of a renovated historic European dining space.",
+        "alt_text": "Abstract painting in deep red and blue tones in a classic European dining room.",
+        "seo_keywords": [
+          "Historic interior design",
+          "contemporary art in old homes",
+          "European luxury homes",
+          "Maurizio Valch art",
+          "dining room art"
+        ],
+        "hashtags": [
+          "#HistoricInteriors",
+          "#ModernArt",
+          "#EuropeanDesign",
+          "#DiningRoomDecor",
+          "#ArtAndAntiques"
+        ]
+      }
+    }
+  ]
+}
+```

@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 70 cm wide × 120 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Architect's Contemplative Study
+- Purpose: A focal point for intellectual contemplation and design inspiration.
+- Scene Description: A minimalist home office/study in a modern residence with serene, focused, intellectually stimulating, sophisticated atmosphere. Materials: polished concrete floor, smooth white plaster walls, dark wood minimalist desk, black leather Eames chair, subtle metal accents
+- Lighting: soft, indirect natural light from a large window slightly to the left, complemented by recessed ceiling lights highlighting the artwork
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult asian man, 1.80 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: medium-close view
+- Camera Rationale: The three-quarter left view provides depth to the room, showing the artwork slightly angled yet still prominent. The medium-close view captures enough of the minimalist architectural context (desk, chair implied) to establish the refined intellectual setting without distracting from the artwork. This angle works well with the vertical orientation of the piece, allowing it to command the wall segment.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A Maurizio Valch abstract painting, 'Sin título' (70x120cm), prominently displayed on a clean white wall in a sophisticated, minimalist architect's home office. Polished concrete floor, a dark wooden minimalist desk to the right, and a sleek black leather Eames chair partially visible. Soft, even natural light from a large window to the left. An optional standing male figure (1.80m) in a tailored dark suit stands observing the artwork, creating a sense of scale and contemplation. Camera is in a three-quarter left view, medium-close, focusing on the artwork but showing the architectural context.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+clutter, cheap furniture, busy patterns, excessive decor, warm light, bright colors, traditional architecture, industrial elements, casual wear.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

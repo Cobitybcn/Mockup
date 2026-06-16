@@ -2,7 +2,20 @@
 /results/
 /uploads/
 /logs/
+/storage/
+/backups/
+/scratch/
 *.log
 .env
 .idea/
 .vscode/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+app/Services/__pycache__/
+
+# Temp files
+wmi_outer_err.txt
+test.txt

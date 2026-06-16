@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Gallery Alcove: Isolated Contemplation
+- Purpose: Featured artwork in a gallery alcove, inviting focused contemplation.
+- Scene Description: A Contemporary art gallery with a dedicated alcove for a significant piece. with Focused, minimalist, respectful, with intentional silence. atmosphere. Materials: smooth gallery white walls, polished concrete floor, minimalist plinth, subtle shadow gaps
+- Lighting: Precise, focused track lighting from above, creating a soft halo around the artwork and emphasizing its texture, with ambient light in the surrounding space.
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: front view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A front view in a gallery setting provides the most direct and purest presentation of the artwork, simulating how a viewer would encounter it in a dedicated exhibition space. The close-up shot ensures the artwork's details and scale are paramount, reinforcing its gallery-grade quality and allowing the surrounding minimalist space to serve as an unobtrusive frame.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+Contemporary art gallery alcove, smooth gallery white walls, polished concrete floor, precise track lighting illuminating a 120x80cm horizontal artwork by Maurizio Valch, minimalist, focused, front view, close-up view, intentional silence, high resolution, museum quality.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cluttered gallery, people, distracting elements, bad lighting, shadows on artwork, generic background, busy room, other art, reflections, distortions.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

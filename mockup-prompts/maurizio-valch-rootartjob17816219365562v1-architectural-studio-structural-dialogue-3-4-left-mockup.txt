@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Architectural Studio: Structural Dialogue
+- Purpose: Inspiring element within a contemporary architectural or design office, promoting creative thought.
+- Scene Description: A Modern architectural studio or design firm reception area. with Clean, functional, intelligent, inspiring, with natural light and a focus on form. atmosphere. Materials: exposed concrete walls, light oak wood desks, black steel accents, large windows with natural light, sleek, comfortable chairs
+- Lighting: Abundant natural daylight from large windows, complemented by discreet recessed ceiling lights.
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult hispanic man, 1.80 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A three-quarter left view provides depth and context to the architectural space while keeping the artwork dominant. It allows the viewer to appreciate the art's structural qualities in relation to the clean lines of the studio, making the artwork appear integrated within a professional design environment. The close-up ensures detail and visual presence.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+Modern architectural studio interior, exposed concrete wall, large floor-to-ceiling windows with soft daylight, light oak desk, black steel framed chair, a 120x80cm horizontal artwork by Maurizio Valch on the wall, optional standing male figure 1.80m observing the art, three-quarter left view, close-up view, clean lines, professional atmosphere, highly realistic.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+clutter, old office, bad lighting, generic decor, distracting elements, artificial plants, excessive furniture, reflections on artwork, distortions, people talking, blurry.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

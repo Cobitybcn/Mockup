@@ -26,8 +26,9 @@ class MockArtworkProcessor implements ArtworkProcessorInterface
 
         $files = [];
         $paths = [];
+        $rootCount = PromptSettings::rootArtworkCount();
 
-        for ($i = 1; $i <= 3; $i++) {
+        for ($i = 1; $i <= $rootCount; $i++) {
             $outputName = 'base_artwork_mock_' . $jobId . '_v' . $i . '.' . $ext;
             $outputPath = $resultsDir . DIRECTORY_SEPARATOR . $outputName;
 
@@ -38,16 +39,27 @@ class MockArtworkProcessor implements ArtworkProcessorInterface
                     $w = imagesx($img);
                     $h = imagesy($img);
 
-                    // Version 2: Crop slightly horizontally
-                    // Version 3: Crop slightly vertically
+                    // Alternate simple crops so test candidates remain visually distinct.
                     if ($i === 2) {
                         $cropped = imagecrop($img, ['x' => (int)($w * 0.05), 'y' => 0, 'width' => (int)($w * 0.9), 'height' => $h]);
                         if ($cropped) {
                             imagedestroy($img);
                             $img = $cropped;
                         }
-                    } elseif ($i === 3) {
+                    } elseif ($i % 3 === 0) {
                         $cropped = imagecrop($img, ['x' => 0, 'y' => (int)($h * 0.05), 'width' => $w, 'height' => (int)($h * 0.9)]);
+                        if ($cropped) {
+                            imagedestroy($img);
+                            $img = $cropped;
+                        }
+                    } elseif ($i > 3) {
+                        $cropInset = min(0.12, 0.02 * $i);
+                        $cropped = imagecrop($img, [
+                            'x' => (int)($w * $cropInset / 2),
+                            'y' => (int)($h * $cropInset / 2),
+                            'width' => (int)($w * (1 - $cropInset)),
+                            'height' => (int)($h * (1 - $cropInset)),
+                        ]);
                         if ($cropped) {
                             imagedestroy($img);
                             $img = $cropped;
@@ -85,7 +97,7 @@ class MockArtworkProcessor implements ArtworkProcessorInterface
             'files' => $files,
             'paths' => $paths,
             'mock' => true,
-            'message' => 'Simulated root image candidates created (3 versions).',
+            'message' => "Simulated root image candidates created ({$rootCount} versions).",
             'meta' => $meta,
         ];
     }

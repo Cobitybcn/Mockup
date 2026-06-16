@@ -5,6 +5,7 @@ require_once __DIR__ . '/app/bootstrap.php';
 
 $user = Auth::requireUser();
 $isAdmin = Auth::isAdmin($user);
+$rootArtworkCount = PromptSettings::rootArtworkCount();
 
 function h($v): string
 {
@@ -23,7 +24,7 @@ function h($v): string
   <link rel="stylesheet" href="style.css">
   <style>
       .form-container {
-          max-width: 700px;
+          max-width: 860px;
           margin: 30px auto;
       }
       .dropzone-container {
@@ -31,7 +32,8 @@ function h($v): string
           border: 1.5px dashed var(--line);
           border-radius: var(--radius);
           background: var(--surface-soft);
-          padding: 40px 20px;
+          min-height: 360px;
+          padding: 32px 24px;
           text-align: center;
           cursor: pointer;
           transition: all 0.3s ease;
@@ -78,13 +80,27 @@ function h($v): string
       }
       .dropzone-preview {
           display: none;
-          max-width: 150px;
-          max-height: 150px;
+          width: auto;
+          max-width: min(100%, 720px);
+          height: auto;
+          max-height: 520px;
           object-fit: contain;
           border: 1px solid var(--line);
           border-radius: 2px;
-          margin-top: 10px;
+          margin-top: 14px;
           box-shadow: var(--shadow);
+          background: var(--surface);
+      }
+      .dropzone-container.has-preview {
+          min-height: 540px;
+          background: #f8f6f1;
+      }
+      .dropzone-container.has-preview .dropzone-icon {
+          width: 34px;
+          height: 34px;
+      }
+      .dropzone-container.has-preview .dropzone-info {
+          margin-bottom: 4px;
       }
       .dim-input-group {
           display: grid;
@@ -152,7 +168,7 @@ function h($v): string
       </div>
 
       <p class="page-kicker">
-        The system uses creative models to generate 3 candidates of your artwork isolated from its environment. 
+        The system uses creative models to generate <?= h($rootArtworkCount) ?> candidates of your artwork isolated from its environment. 
         It is critical to specify the exact canvas sizes to maintain realistic scaling in future mockups.
       </p>
 
@@ -250,6 +266,7 @@ function h($v): string
     });
 
     function updateDropzoneWithFile(file) {
+        dropzone.classList.add('has-preview');
         dropzoneText.innerHTML = `Selected: <strong>${file.name}</strong> (Click to replace)`;
         const reader = new FileReader();
         reader.onload = function(e) {

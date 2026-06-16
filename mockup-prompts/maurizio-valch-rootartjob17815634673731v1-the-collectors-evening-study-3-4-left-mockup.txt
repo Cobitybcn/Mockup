@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: The Collector's Evening Study
+- Purpose: Illustrate the artwork's contemplative depth and elegant presence within a refined private collection setting.
+- Scene Description: A Luxurious, quiet study or library in a contemporary townhouse with Intimate, sophisticated, contemplative, soft evening warmth atmosphere. Materials: dark wood paneling, rich leather armchair, soft wool rug, antique bronze lamp, textured wall
+- Lighting: warm, dim evening light from a table lamp, subtle overhead lighting, concealed art light
+- Time of Day: night
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult middle eastern woman, 1.55 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The three-quarter left view adds depth and a sense of inviting perspective to the private study. The close-up distance ensures the artwork's intricate textures and powerful colors are prominent. A standing female figure to the left provides a scale reference, emphasizing the artwork's commanding yet personal presence within the room. This angle effectively combines intimacy with a clear view of the art.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+Luxurious, dimly lit private study in a contemporary townhouse. A Maurizio Valch abstract painting, vertical orientation, featuring a vibrant red monolith on a dark green field, is mounted on a subtly textured dark gray wall. Rich dark wood paneling, a classic leather armchair, a soft wool rug. A warm light emanates from an antique bronze table lamp. A refined female figure (1.55m) stands contemplatively to the left of the artwork, providing scale. Soft art lighting illuminates the painting. three-quarter left view, close-up view.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+bright, cluttered, cheap furniture, modern office, sterile, garish, distracting objects, no texture, bad lighting, generic, blurry, distorted, empty room, no artwork
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

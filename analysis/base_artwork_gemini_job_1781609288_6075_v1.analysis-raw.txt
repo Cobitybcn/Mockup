@@ -1,0 +1,562 @@
+```json
+{
+  "artwork_analysis": {
+    "visual_language": [
+      "abstract",
+      "contemporary",
+      "structural",
+      "symbolic",
+      "metaphysical"
+    ],
+    "emotional_energy": [
+      "silent",
+      "deep",
+      "sober",
+      "contemplative",
+      "restrained tension",
+      "austerity",
+      "quiet intensity"
+    ],
+    "dominant_colors": [
+      "deep indigo blue",
+      "dark navy blue",
+      "black"
+    ],
+    "secondary_colors": [
+      "white",
+      "ochre-orange",
+      "deep red"
+    ],
+    "visible_elements": [
+      "fields of color",
+      "curvilinear horizons",
+      "tectonic lines",
+      "geometric shapes",
+      "suspended forms",
+      "incisions (implied by lines)",
+      "color drips"
+    ],
+    "visible_symbols": [
+      "territory",
+      "silence",
+      "monoliths (geometric shapes)",
+      "horizons",
+      "tectonic lines",
+      "divided fields",
+      "suspended forms",
+      "red structures",
+      "nocturnal atmospheres",
+      "thresholds (implied by divisions)",
+      "presence",
+      "distance"
+    ],
+    "color_temperature": "cool with warm accents",
+    "contrast_level": "high contrast",
+    "composition_type": "layered",
+    "balance": "asymmetrical balance through stratification",
+    "visual_tension": "present, between expansive dark fields and sharp, vibrant geometric elements",
+    "density": "dense, immersive fields of color",
+    "silence": "profound, evoked by the deep blues and blacks",
+    "main_focal_point": "the prominent white square at the upper center",
+    "movement": "implied upward progression through layers, subtle undulation of horizon lines",
+    "depth": "significant, created by overlapping color fields and tonal variation",
+    "negative_space": "minimal, integrated into the deep color fields",
+    "verticality_or_horizontality": "strong verticality",
+    "internal_organization": "structured by curvilinear and rectilinear divisions, creating distinct territories",
+    "rhythm": "slow, contemplative rhythm defined by layered forms",
+    "surface": "largely smooth, with areas suggesting textural build-up and fluid application (drips)",
+    "brushstroke": "controlled and clean in color fields, with visible fluidity in white drips",
+    "gesture": "restrained, precise, with a hint of spontaneous mark-making",
+    "layers": "evident, through overlapping color fields and defined boundaries",
+    "material_presence": "substantial, suggesting acrylic on canvas with deliberate surface treatment",
+    "sense_of_depth_or_flatness": "pronounced depth through layering and tonal shifts",
+    "format_and_scale": {
+      "width_cm": "80",
+      "height_cm": "120",
+      "depth_cm": "3",
+      "orientation": "vertical",
+      "scale_impact": "commanding, yet intimately engaging",
+      "wall_presence": "significant, capable of anchoring a distinct area",
+      "monumentality_or_intimacy": "intimate monumentality",
+      "spatial_effect": "transforms a space into a contemplative field, inviting introspection"
+    },
+    "spatial_presence": "strong, acting as a portal to an inner landscape",
+    "visual_atmosphere": "nocturnal, contemplative, profoundly silent with an underlying tension",
+    "artwork_function": "a reflective anchor for a sophisticated interior, a point of quiet intensity",
+    "suggested_audience": [
+      "contemporary art collectors",
+      "galleries",
+      "architects",
+      "interior designers",
+      "high-level decorators",
+      "international buyers"
+    ],
+    "audience_profile": {
+      "primary": "collectors seeking abstract, symbolic, and structurally rich works",
+      "secondary": "design professionals integrating art into high-end, minimalist, or contemplative spaces",
+      "buyer_profile": "discerning individuals with an appreciation for depth, silence, and intellectual engagement in art",
+      "collector_type": "established collectors of contemporary abstraction, new collectors seeking impactful yet refined pieces",
+      "interior_design_relevance": "highly relevant for creating focal points in minimalist, modern, and classic contemporary interiors",
+      "gallery_potential": "high, aligns with galleries specializing in structural abstraction and contemplative art"
+    },
+    "commercial_positioning": "premium segment of contemporary abstract art, suitable for major art markets",
+    "one_line_curatorial_read": "A profound layered abstraction exploring nocturnal territories and the emergence of structural presence through fields of color and symbolic forms.",
+    "style_summary": "Maurizio Valch's 'Sin título' is a vertical abstract painting characterized by deep, nocturnal color fields, curvilinear horizons, and precise white tectonic lines that divide the canvas into stratified territories. Juxtaposed against these expansive forms are small, vibrant geometric shapes—white, ochre, and red—acting as silent monoliths or suspended signs. The work evokes a contemplative atmosphere, blending structural precision with emotional depth and a sense of quiet intensity.",
+    "artist_profile_relation": {
+      "relevant_statement_connection": "The analysis adheres to a clear, poetic, sober tone, grounded in visual elements, avoiding academic jargon, consistent with Valch's stated preference.",
+      "relevant_visual_language_connection": "The artwork directly embodies Valch's visual language: fields of color, horizons, tectonic lines, divided territories, monoliths, incisions (white lines), suspended signs, and spatial relationships. It clearly seeks tension between silence, presence, depth, and inner order.",
+      "relevant_symbol_connection": "Key recurring symbols like territory, silence, monoliths (the squares), horizons, tectonic lines (the white divisions), incisions, divided fields, suspended forms, red structures (the red squares), and nocturnal atmospheres (dark blues/blacks) are all visually present and central to the artwork.",
+      "relevant_atmosphere_connection": "The painting strongly conveys Valch's preferred atmosphere: silent, deep, sober, contemplative, and slightly melancholic, moving between nocturnal calm, restrained tension, austerity, distance, and quiet intensity through its color and composition."
+    },
+    "seasonal_strategy": {
+      "primary_season": "neutral"
+    },
+    "publishing_metadata": {
+      "suggested_titles": [
+        {
+          "title": "Nocturnal Strata",
+          "subtitle": "Blue Fields and Inner Horizons",
+          "short_description": "Deep blue and black layers define a contemplative landscape, punctuated by vibrant structural forms.",
+          "curatorial_description": "This vertical abstraction reveals a journey through stratified fields of deep blues and blacks, articulated by crisp white lines that suggest geological horizons. Vibrant ochre, white, and red geometric forms emerge as monoliths within this nocturnal territory, invoking a profound silence and an internal sense of order.",
+          "commercial_description": "A striking abstract work by Maurizio Valch, 'Nocturnal Strata' offers a sophisticated visual experience. Its commanding presence, defined by rich color fields and symbolic shapes, makes it an ideal acquisition for collectors seeking art that balances contemporary elegance with contemplative depth."
+        },
+        {
+          "title": "Tectonic Blue",
+          "subtitle": "Divided Fields, Silent Forms",
+          "short_description": "Layers of blue and black are cut by white lines, featuring floating, vibrant shapes.",
+          "curatorial_description": "Through dynamic tectonic lines and expansive fields of intense blue and black, the canvas is organized into a series of divided territories. Small, luminous geometric forms—a white square with expressive drips, bold ochre, and deep red—act as suspended signs, creating a silent dialogue between landscape and consciousness.",
+          "commercial_description": "Maurizio Valch's 'Tectonic Blue' is an investment in powerful abstraction. Its structural integrity and profound color palette command attention, offering a unique opportunity for collectors and design professionals to enhance any space with a work of significant visual and conceptual weight."
+        },
+        {
+          "title": "Thresholds of Night",
+          "subtitle": "Contemplating the Inner Landscape",
+          "short_description": "A dark, layered composition with unexpected points of light and color, inviting deep thought.",
+          "curatorial_description": "This artwork plunges into a nocturnal atmosphere, where deep blue and black forms coalesce into sweeping horizons, hinting at geological time and inner structures. White lines delineate thresholds, while small, vibrant blocks of red, ochre, and white serve as meditative presences, guiding the viewer through a landscape of quiet introspection.",
+          "commercial_description": "An exquisite piece, 'Thresholds of Night' by Maurizio Valch offers a contemplative focal point for any discerning collection. Its evocative depths and elegant composition resonate with those who value art for its ability to transform an environment into a space of profound reflection and sophisticated aesthetic appeal."
+        }
+      ],
+      "descriptions": {
+        "poetic_focus": "Within a vast, silent expanse of midnight blues and profound blacks, the earth's ancient rhythms find form. Curving horizons delineate hidden territories, while solitary monoliths—a luminous white, a warm ochre, a quiet red—emerge from the depths, suspended between layers of consciousness and raw ground. This is a landscape not merely seen, but felt, a journey into the soul's quietest reaches.",
+        "formal_focus": "The artwork presents a vertically oriented, abstract composition structured by bold fields of deep blues and blacks. White linear incisions delineate a series of curvilinear and rectilinear forms, creating a stratified visual rhythm. Strategically placed geometric elements in white, ochre-orange, and red introduce points of high chromatic contrast and act as compositional anchors, contributing to a sense of internal order and spatial depth.",
+        "commercial_focus": "Maurizio Valch's artwork is a compelling acquisition for collectors of contemporary abstraction. Its refined aesthetic, characterized by a sophisticated palette and structural precision, ensures its prominence in any high-end interior or curated collection. The piece offers both significant visual impact and intellectual depth, representing a valuable long-term asset."
+      },
+      "seo_keywords": [
+        "Maurizio Valch",
+        "abstract painting",
+        "contemporary art",
+        "structural abstraction",
+        "symbolic art",
+        "metaphysical art",
+        "blue art",
+        "dark art",
+        "geometric abstraction",
+        "monoliths art",
+        "horizon art",
+        "layered painting",
+        "contemplative art",
+        "minimalist painting",
+        "modern art",
+        "gallery art",
+        "collectible art",
+        "high-end art",
+        "interior design art",
+        "architectural art",
+        "large abstract painting",
+        "vertical art"
+      ],
+      "seo_tags": [
+        "AbstractExpressionism",
+        "ContemporaryPainting",
+        "ArtCollector",
+        "MaurizioValch",
+        "StructuralArt",
+        "SymbolicAbstraction",
+        "BluePainting",
+        "MinimalistArt",
+        "ModernDecor",
+        "GalleryReady",
+        "InteriorDesign",
+        "MetaphysicalArt",
+        "TexturalPainting",
+        "VerticalFormat",
+        "ArtInvestment"
+      ],
+      "marketplace_title": "Maurizio Valch: Nocturnal Strata - Abstract Blue Landscape",
+      "marketplace_short_description": "A profound abstract painting by Maurizio Valch, featuring deep blue and black fields, white tectonic lines, and striking red, ochre, and white geometric forms. Evokes a contemplative, nocturnal landscape. Perfect for contemporary interiors and discerning collectors.",
+      "marketplace_long_description": "Maurizio Valch's 'Nocturnal Strata' is an arresting abstract work that explores the relationship between landscape and inner consciousness. The painting is dominated by expansive fields of deep indigo and black, layered and divided by crisp white lines that suggest horizons and geological strata. Luminous geometric shapes—a stark white square with expressive drips, warm ochre rectangles, and a deep red block—emerge as symbolic monoliths, creating points of focus within the silent, nocturnal atmosphere. Valch's signature style, combining structural precision with poetic depth, makes this piece a powerful statement. Its vertical format (80x120 cm) ensures a commanding presence, ideal for a refined living space, a collector's study, or a prominent gallery wall. Acrylic on canvas, original artwork. A valuable acquisition for those seeking contemporary art with a meditative and sophisticated aesthetic.",
+      "pinterest_boards": [
+        "Contemporary Abstract Art",
+        "Minimalist Home Decor",
+        "Maurizio Valch Art",
+        "Blue & Black Aesthetic",
+        "Art for Luxury Interiors",
+        "Structural Abstract Painting"
+      ]
+    }
+  },
+  "recommended_number_of_contexts": "8",
+  "contextual_proposals": [
+    {
+      "context_name": "Gallery Ascent",
+      "context_role": "Primary sales presentation in a refined art setting",
+      "space_type": "Contemporary art gallery",
+      "atmosphere": "Pristine, focused, reflective",
+      "materials": [
+        "white gallery walls",
+        "polished light concrete floor",
+        "subtle architectural details"
+      ],
+      "lighting": "Soft, diffused overhead gallery lighting, enhancing color depth",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The front view maximizes the artwork's formal clarity and direct visual impact, essential for a gallery presentation. The close-up distance ensures the viewer focuses entirely on the artwork's composition, color, and texture, allowing its silent presence to dominate the frame.",
+      "human_presence": "optional standing female figure 1.55m",
+      "curatorial_reason": "Highlights the artwork's structural integrity and contemplative scale within a neutral, professional environment, emphasizing its gallery-ready quality and intrinsic artistic value.",
+      "commercial_reason": "Presents the artwork in an unadulterated, authoritative context, instilling confidence in serious collectors and institutions by showcasing its museum-quality presence.",
+      "mockup_prompt": "A pristine contemporary art gallery with smooth white walls and polished light concrete floor, showcasing Maurizio Valch's abstract painting, 'Nocturnal Strata'. The artwork is centered on a clean wall. Soft, even overhead gallery lighting illuminates the painting, highlighting its deep blues, blacks, and vibrant accents. A subtle corner of the room is visible, emphasizing the expansive, clean gallery space. close-up view, front view, optional standing female figure 1.55m for scale.",
+      "negative_prompt": "clutter, distracting elements, harsh shadows, poor lighting, busy background, cheap decor, furniture, people interacting with art, wide shot",
+      "pinterest_marketing": {
+        "board_suggestion": "Contemporary Gallery Art",
+        "pin_title": "Maurizio Valch: Nocturnal Strata - Gallery Presentation",
+        "pin_description": "Experience the quiet intensity of Maurizio Valch's 'Nocturnal Strata' in a pristine gallery setting. A commanding abstract piece for serious collectors.",
+        "alt_text": "Maurizio Valch abstract painting in a contemporary art gallery, vertical, deep blue, black, white, ochre, red, formal presentation",
+        "seo_keywords": [
+          "gallery art",
+          "contemporary art",
+          "abstract painting",
+          "Maurizio Valch",
+          "art collector",
+          "minimalist gallery"
+        ],
+        "hashtags": [
+          "#MaurizioValch",
+          "#GalleryArt",
+          "#AbstractPainting",
+          "#ContemporaryArt",
+          "#ArtCollector"
+        ]
+      }
+    },
+    {
+      "context_name": "Architect's Contemplation Space",
+      "context_role": "Showcasing integration into a high-design professional environment",
+      "space_type": "Architectural studio or design firm office",
+      "atmosphere": "Intellectual, refined, inspiring",
+      "materials": [
+        "exposed concrete wall",
+        "dark wood credenza",
+        "minimalist furniture"
+      ],
+      "lighting": "Bright, diffused daylight from a large window to the left, complemented by subtle recessed lighting",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view adds architectural depth to the scene, emphasizing the artwork's structural qualities within a sophisticated professional environment. The close-up distance ensures the painting remains the visual anchor, demonstrating its seamless integration into a high-design context while allowing enough of the room to define its purpose.",
+      "human_presence": "optional standing male figure 1.80m",
+      "curatorial_reason": "Illustrates how the artwork's structural language and contemplative depth resonate within an environment focused on design, form, and spatial harmony, appealing to a professional audience.",
+      "commercial_reason": "Positions the artwork as an essential element in high-end design projects, attracting architects, interior designers, and corporate collectors who seek art that aligns with modern, sophisticated aesthetics.",
+      "mockup_prompt": "A sophisticated architectural studio office with an exposed light grey concrete wall, featuring Maurizio Valch's 'Nocturnal Strata' abstract painting. A minimalist dark wood credenza is subtly visible below. Bright, diffused daylight streams from a large window to the left, casting soft light on the painting. The scene is clean, orderly, and inspiring. close-up view, three-quarter left view, optional standing male figure 1.80m standing to the right of the painting.",
+      "negative_prompt": "clutter, messy desk, generic office, distracting objects, harsh glare, poor composition, busy patterns, low quality, wide shot",
+      "pinterest_marketing": {
+        "board_suggestion": "Art for Architects & Designers",
+        "pin_title": "Maurizio Valch Abstract in Architect's Studio",
+        "pin_description": "Elevate design spaces with Maurizio Valch's 'Nocturnal Strata.' Perfect for architectural firms seeking art that embodies structural elegance.",
+        "alt_text": "Maurizio Valch abstract painting on concrete wall in an architectural studio, vertical, blue, black, modern, inspiring",
+        "seo_keywords": [
+          "architectural art",
+          "design studio art",
+          "Maurizio Valch",
+          "abstract office decor",
+          "contemporary workspace"
+        ],
+        "hashtags": [
+          "#ArchitectureDesign",
+          "#StudioArt",
+          "#MaurizioValch",
+          "#CorporateArt",
+          "#ModernOffice"
+        ]
+      }
+    },
+    {
+      "context_name": "Townhouse Serenity",
+      "context_role": "Demonstrating refined residential integration for a private collector",
+      "space_type": "Luxury townhouse living room",
+      "atmosphere": "Sophisticated, tranquil, personal",
+      "materials": [
+        "textured off-white wall",
+        "light oak herringbone floor",
+        "minimalist side table"
+      ],
+      "lighting": "Soft, natural ambient light from an unseen window, creating subtle luminosity",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter right view offers a glimpse into a spacious yet intimate residential setting, highlighting the artwork's adaptability to elegant home environments. The close-up perspective maintains the artwork's dominance, allowing its nuanced details and depth to engage the viewer personally within a domestic context.",
+      "human_presence": "none",
+      "curatorial_reason": "Emphasizes the artwork's capacity to create a focal point and foster a sense of calm and introspection within a high-end private residence, aligning with a collector's personal aesthetic.",
+      "commercial_reason": "Appeals directly to high-net-worth individuals and interior decorators looking for significant abstract works that enhance luxury residential spaces with understated elegance and artistic depth.",
+      "mockup_prompt": "A serene living room within a luxury townhouse, featuring Maurizio Valch's 'Nocturnal Strata' abstract painting on a textured off-white wall. A subtle corner of a light oak herringbone floor and a minimalist brass-accented side table are visible. Soft, natural ambient light fills the space, creating a quiet, sophisticated atmosphere. close-up view, three-quarter right view.",
+      "negative_prompt": "cluttered living room, generic sofa, bright colors in room, uninspired decor, bad lighting, busy patterns, cheap materials, wide room shot",
+      "pinterest_marketing": {
+        "board_suggestion": "Luxury Home Art & Decor",
+        "pin_title": "Maurizio Valch Abstract in Elegant Townhouse",
+        "pin_description": "Discover 'Nocturnal Strata' by Maurizio Valch, transforming a luxury townhouse living room with its profound abstract beauty and quiet intensity.",
+        "alt_text": "Maurizio Valch abstract painting in a luxury townhouse living room, vertical, blue, black, white, ochre, sophisticated interior",
+        "seo_keywords": [
+          "luxury home art",
+          "townhouse decor",
+          "Maurizio Valch",
+          "abstract art living room",
+          "high-end residential art"
+        ],
+        "hashtags": [
+          "#LuxuryInteriors",
+          "#TownhouseDecor",
+          "#MaurizioValch",
+          "#AbstractHome",
+          "#ElegantLiving"
+        ]
+      }
+    },
+    {
+      "context_name": "Mediterranean Light Threshold",
+      "context_role": "Highlighting the artwork's resonance with specific architectural styles and natural light",
+      "space_type": "Mediterranean-style villa hallway or transition space",
+      "atmosphere": "Tranquil, sun-drenched, rustic elegance",
+      "materials": [
+        "white stucco walls",
+        "terracotta floor tiles",
+        "arched doorway"
+      ],
+      "lighting": "Soft, warm Mediterranean sunlight filtering through an arched opening",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A front view provides a clear, balanced presentation of the artwork, allowing its deep blues and rich accents to stand out against the warm, textured backdrop. The close-up distance ensures the artwork remains the central focus, while the natural light enhances its colors and textures in a culturally specific, elegant setting.",
+      "human_presence": "none",
+      "curatorial_reason": "Connects the artwork's inherent sense of territory and horizon to the architectural landscape of a Mediterranean villa, suggesting a dialogue between abstract form and traditional elegance.",
+      "commercial_reason": "Expands the potential market to buyers with Mediterranean-style properties or those seeking art that complements natural textures and warm, sunlit interiors, broadening its appeal beyond strictly minimalist aesthetics.",
+      "mockup_prompt": "A tranquil hallway in a Mediterranean-style villa, featuring Maurizio Valch's 'Nocturnal Strata' abstract painting centered on a textured white stucco wall. The warm glow of Mediterranean sunlight filters through a subtle arched doorway to the side, illuminating terracotta floor tiles. The atmosphere is calm and elegantly rustic. close-up view, front view.",
+      "negative_prompt": "clutter, ornate decor, busy patterns, cold lighting, harsh shadows, generic room, low quality, wide shot",
+      "pinterest_marketing": {
+        "board_suggestion": "Mediterranean Art & Interiors",
+        "pin_title": "Maurizio Valch Abstract in Mediterranean Villa",
+        "pin_description": "See how Maurizio Valch's 'Nocturnal Strata' perfectly complements the rustic elegance of a Mediterranean villa, bathed in natural light.",
+        "alt_text": "Maurizio Valch abstract painting on white stucco wall in a Mediterranean villa, vertical, blue, black, terracotta, natural light",
+        "seo_keywords": [
+          "Mediterranean art",
+          "villa decor",
+          "Maurizio Valch",
+          "abstract painting Mediterranean",
+          "rustic elegant art"
+        ],
+        "hashtags": [
+          "#MediterraneanStyle",
+          "#VillaDecor",
+          "#MaurizioValch",
+          "#AbstractArt",
+          "#RusticChic"
+        ]
+      }
+    },
+    {
+      "context_name": "Curated Collector's Salon",
+      "context_role": "Showcasing the artwork within a highly personalized, sophisticated private collection",
+      "space_type": "Private art salon or collector's study",
+      "atmosphere": "Intimate, discerning, richly textured",
+      "materials": [
+        "deep charcoal wall",
+        "dark polished wood flooring",
+        "subtle antique side table"
+      ],
+      "lighting": "Targeted, warm spotlight on the artwork, with ambient low light in the room",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view creates depth and intimacy, allowing the deep hues of the artwork to resonate with the rich backdrop of a collector's salon. The close-up distance emphasizes the artwork's detail and materiality, showcasing its quality and impact within a thoughtfully curated, personal space.",
+      "human_presence": "none",
+      "curatorial_reason": "Highlights the artwork's ability to hold its own among other significant pieces, demonstrating its depth and emotional resonance in a highly personalized and discerning environment.",
+      "commercial_reason": "Appeals to experienced collectors seeking to integrate a powerful abstract work into an existing high-value collection, emphasizing its curatorial significance and aesthetic compatibility with refined interiors.",
+      "mockup_prompt": "A richly appointed private art salon, featuring Maurizio Valch's 'Nocturnal Strata' abstract painting on a deep charcoal-painted wall. Dark polished wood flooring and a subtle antique side table are visible, hinting at a curated collection. A warm, focused spotlight illuminates the artwork, making its colors glow against the subdued ambient lighting of the room. close-up view, three-quarter left view.",
+      "negative_prompt": "cluttered room, generic decor, bright overhead lights, modern furniture, low quality, wide shot",
+      "pinterest_marketing": {
+        "board_suggestion": "Private Art Collections",
+        "pin_title": "Maurizio Valch Abstract in Collector's Salon",
+        "pin_description": "Maurizio Valch's 'Nocturnal Strata' shines in a discerning private art salon, with targeted lighting enhancing its profound beauty and deep tones.",
+        "alt_text": "Maurizio Valch abstract painting in a collector's salon, vertical, deep blue, black, charcoal wall, spotlighted",
+        "seo_keywords": [
+          "private collection art",
+          "art salon",
+          "Maurizio Valch",
+          "curated art",
+          "luxury art display"
+        ],
+        "hashtags": [
+          "#ArtCollectorLife",
+          "#PrivateCollection",
+          "#MaurizioValch",
+          "#AbstractArt",
+          "#LuxuryArt"
+        ]
+      }
+    },
+    {
+      "context_name": "Minimalist Loft Presence",
+      "context_role": "Demonstrating the artwork as a focal point in a contemporary, expansive living space",
+      "space_type": "Minimalist loft apartment living area",
+      "atmosphere": "Spacious, calm, understated luxury",
+      "materials": [
+        "smooth light grey wall",
+        "blonde wood flooring",
+        "low-profile minimalist seating"
+      ],
+      "lighting": "Even, bright natural light from large windows, creating a soft, airy feel",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter right view subtly introduces the spaciousness of a loft, allowing the artwork to interact with the minimalist architecture. The close-up view ensures the painting's detailed surface and color dynamics are paramount, showing its commanding presence even within an open, airy environment.",
+      "human_presence": "none",
+      "curatorial_reason": "Highlights the artwork's ability to provide depth and a central meditative point within expansive, uncluttered modern living spaces, enhancing their architectural simplicity.",
+      "commercial_reason": "Targets buyers with minimalist, contemporary homes and interior designers specializing in open-plan spaces, showcasing how the artwork brings soul and sophisticated aesthetic to clean lines.",
+      "mockup_prompt": "A bright, minimalist loft apartment living area, showcasing Maurizio Valch's 'Nocturnal Strata' abstract painting on a smooth light grey wall. Blonde wood flooring and a glimpse of low-profile minimalist seating are visible. Even, bright natural light fills the space from large windows, creating an airy and calm atmosphere. close-up view, three-quarter right view.",
+      "negative_prompt": "clutter, overly stark white walls, harsh shadows, generic furniture, busy patterns, low quality, wide room shot",
+      "pinterest_marketing": {
+        "board_suggestion": "Minimalist Loft Interiors",
+        "pin_title": "Maurizio Valch Art in Minimalist Loft",
+        "pin_description": "Enhance a minimalist loft with the serene presence of Maurizio Valch's 'Nocturnal Strata.' Perfect abstract art for contemporary, open spaces.",
+        "alt_text": "Maurizio Valch abstract painting in a minimalist loft living room, vertical, blue, black, grey wall, blonde wood floor",
+        "seo_keywords": [
+          "minimalist loft art",
+          "contemporary living room",
+          "Maurizio Valch",
+          "abstract art minimalist",
+          "open plan decor"
+        ],
+        "hashtags": [
+          "#MinimalistInterior",
+          "#LoftLiving",
+          "#MaurizioValch",
+          "#AbstractDecor",
+          "#ContemporaryHome"
+        ]
+      }
+    },
+    {
+      "context_name": "Boutique Hotel Reflection",
+      "context_role": "Positioning the artwork in a high-end commercial hospitality environment",
+      "space_type": "Boutique hotel lounge or reception area",
+      "atmosphere": "Refined, welcoming, subtly luxurious",
+      "materials": [
+        "dark textured wallpaper",
+        "velvet lounge chairs",
+        "marble accent table"
+      ],
+      "lighting": "Soft, warm, indirect lighting, creating an inviting evening ambiance",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A front view provides a direct and elegant presentation suitable for public, high-end spaces like a hotel lounge. The close-up distance ensures the artwork’s details and visual power are immediately apparent, making it a sophisticated focal point for guests.",
+      "human_presence": "none",
+      "curatorial_reason": "Highlights the artwork’s ability to imbue a public space with a sense of calm sophistication and artistic depth, elevating the overall guest experience through thoughtful design.",
+      "commercial_reason": "Targets hospitality designers and hotel owners seeking distinctive, high-quality art that defines the aesthetic of luxury boutique hotels, adding value and exclusivity to their spaces.",
+      "mockup_prompt": "A sophisticated lounge area in a boutique hotel, featuring Maurizio Valch's 'Nocturnal Strata' abstract painting centered on a dark textured wallpapered wall. A glimpse of elegant velvet lounge chairs and a marble accent table adds to the luxurious atmosphere. Soft, warm indirect lighting creates an inviting evening ambiance. close-up view, front view.",
+      "negative_prompt": "bright lights, generic lobby, busy hotel guests, clutter, cheap decor, wide shot, poor quality, bad composition",
+      "pinterest_marketing": {
+        "board_suggestion": "Hotel Art & Hospitality Design",
+        "pin_title": "Maurizio Valch Art in Luxury Hotel Lounge",
+        "pin_description": "Maurizio Valch's 'Nocturnal Strata' brings a touch of contemplative luxury to a boutique hotel lounge, enhancing its sophisticated ambiance.",
+        "alt_text": "Maurizio Valch abstract painting in a boutique hotel lounge, vertical, blue, black, dark textured wall, luxury hospitality",
+        "seo_keywords": [
+          "hotel art",
+          "hospitality design",
+          "Maurizio Valch",
+          "luxury lounge art",
+          "boutique hotel decor"
+        ],
+        "hashtags": [
+          "#HotelArt",
+          "#HospitalityDesign",
+          "#MaurizioValch",
+          "#LuxuryHotel",
+          "#BoutiqueDesign"
+        ]
+      }
+    },
+    {
+      "context_name": "Evolving Studio Insight",
+      "context_role": "Authentic context showing the artwork within the artist's creative realm",
+      "space_type": "Artist's clean and functional studio",
+      "atmosphere": "Creative, authentic, focused",
+      "materials": [
+        "plain light grey wall (subtly textured)",
+        "wooden easel",
+        "minimalist studio tools"
+      ],
+      "lighting": "Bright, even north-facing natural light, highlighting textures and colors realistically",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter left view offers an authentic glimpse into the creative process, relating the artwork to its origin. The close-up perspective emphasizes the raw beauty of the canvas and paint, appealing to collectors interested in the artist's journey and material truth.",
+      "human_presence": "none",
+      "curatorial_reason": "Provides a direct link to the artist's space and process, enhancing the understanding of the work's genesis and material qualities for a more profound appreciation.",
+      "commercial_reason": "Offers an authentic, relatable context that can connect with collectors who value the story and environment behind the artwork, lending credibility and an intimate view of the artist's world.",
+      "mockup_prompt": "A clean, well-organized artist's studio, featuring Maurizio Valch's 'Nocturnal Strata' abstract painting leaning against a plain, subtly textured light grey wall. A hint of a wooden easel and minimalist studio tools are visible nearby, suggesting an active creative space. Bright, even natural light from an unseen north-facing window illuminates the scene, highlighting the painting's textures. close-up view, three-quarter left view.",
+      "negative_prompt": "messy studio, clutter, harsh shadows, dirty floor, generic room, low quality, wide shot",
+      "pinterest_marketing": {
+        "board_suggestion": "Artist Studio Inspiration",
+        "pin_title": "Maurizio Valch Painting in Studio",
+        "pin_description": "A view into Maurizio Valch's studio, where 'Nocturnal Strata' comes to life. Experience the authentic context of abstract creation.",
+        "alt_text": "Maurizio Valch abstract painting in artist's studio, vertical, blue, black, grey wall, creative space",
+        "seo_keywords": [
+          "artist studio",
+          "Maurizio Valch",
+          "abstract art process",
+          "painting in studio",
+          "creative space"
+        ],
+        "hashtags": [
+          "#ArtistStudio",
+          "#MaurizioValch",
+          "#ArtProcess",
+          "#AbstractArt",
+          "#CreativeSpace"
+        ]
+      }
+    },
+    {
+      "context_name": "Nordic Gallery Threshold",
+      "context_role": "Presenting the artwork in a clean, minimalist European gallery setting",
+      "space_type": "Contemporary art gallery with Nordic aesthetic",
+      "atmosphere": "Bright, serene, highly aesthetic",
+      "materials": [
+        "smooth white walls",
+        "light wood flooring",
+        "minimalist bench"
+      ],
+      "lighting": "Soft, even natural light from large windows, creating a bright yet subtle illumination",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A direct front view ensures the artwork's formal presence is paramount, perfect for a clean gallery aesthetic. The close-up emphasizes its strong compositional elements and colors against the bright, minimalist backdrop, making it visually impactful.",
+      "human_presence": "none",
+      "curatorial_reason": "Showcases the artwork's capacity to command attention in a pure, unadorned space, underscoring its inherent strength and minimalist appeal within a recognized design aesthetic.",
+      "commercial_reason": "Appeals to European and international buyers who appreciate art within clean, contemporary, and often Scandinavian-influenced design contexts, broadening its market reach.",
+      "mockup_prompt": "A modern contemporary art gallery with a distinct Nordic aesthetic, featuring Maurizio Valch's 'Nocturnal Strata' abstract painting on a smooth white wall. Light wood flooring and a minimalist wooden bench are subtly visible. Soft, even natural light streams in from large windows, creating a bright and serene atmosphere. close-up view, front view.",
+      "negative_prompt": "clutter, ornate details, harsh shadows, busy patterns, dark room, low quality, wide shot",
+      "pinterest_marketing": {
+        "board_suggestion": "Nordic Art & Minimalism",
+        "pin_title": "Maurizio Valch Abstract in Nordic Gallery",
+        "pin_description": "Maurizio Valch's 'Nocturnal Strata' finds its place in a bright, minimalist Nordic gallery, embodying serene sophistication.",
+        "alt_text": "Maurizio Valch abstract painting in a Nordic style art gallery, vertical, blue, black, white wall, minimalist",
+        "seo_keywords": [
+          "Nordic art",
+          "minimalist gallery",
+          "Maurizio Valch",
+          "contemporary European art",
+          "Scandinavian interior art"
+        ],
+        "hashtags": [
+          "#NordicDesign",
+          "#MinimalistArt",
+          "#MaurizioValch",
+          "#GalleryVibes",
+          "#EuropeanArt"
+        ]
+      }
+    }
+  ]
+}
+```

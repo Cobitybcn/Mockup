@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Executive Cityscape Suite
+- Purpose: Corporate collection context, professional and inspiring
+- Scene Description: A high-end executive office suite with professional, authoritative, inspiring, refined atmosphere. Materials: dark polished wood desk, white walls, subtly visible glass partition, high-quality rug
+- Lighting: integrated architectural lighting, natural light from a cityscape window off-frame
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult black woman, 1.55 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A three-quarter left view effectively integrates the artwork into a high-end executive environment, allowing glimpses of a sophisticated desk and architectural elements. The inclusion of an optional human figure provides a sense of scale and a professional context. The close-up ensures the artwork remains the central focus, showcasing its ability to provide gravitas and inspiration in a corporate setting.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+Sleek, high-end executive office suite, a modern dark polished wood desk corner visible in the foreground left, pristine white walls, integrated architectural lighting, large vertical abstract painting as a focal point, subtle cityscape view from a window off-frame right, professional, authoritative, three-quarter left view, close-up view, optional standing female figure 1.55m contemplating the artwork
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+generic office, cubicles, clutter, cheap furniture, distracting views, overly bright colors, cold lighting
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

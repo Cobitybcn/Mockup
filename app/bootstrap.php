@@ -20,6 +20,7 @@ require_once __DIR__ . '/Services/MockContextSelector.php';
 require_once __DIR__ . '/Services/MockArtworkProcessor.php';
 require_once __DIR__ . '/Services/MockArtworkAnalyzer.php';
 require_once __DIR__ . '/Services/MockMockupGenerator.php';
+require_once __DIR__ . '/Services/MockupBatchQueue.php';
 require_once __DIR__ . '/Services/MockupContextEngine.php';
 require_once __DIR__ . '/Services/GeminiImageClient.php';
 require_once __DIR__ . '/Services/GeminiArtworkProcessor.php';

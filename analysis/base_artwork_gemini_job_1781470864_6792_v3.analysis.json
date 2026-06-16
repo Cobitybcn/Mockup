@@ -1,0 +1,252 @@
+{
+    "artwork_analysis": {
+        "visual_language": [
+            "abstract",
+            "structural",
+            "symbolic",
+            "metaphysical",
+            "minimal"
+        ],
+        "emotional_energy": [
+            "silent",
+            "deep",
+            "contemplative",
+            "restrained tension",
+            "austerity",
+            "quiet intensity",
+            "nocturnal calm"
+        ],
+        "dominant_colors": [
+            "deep ultramarine blue",
+            "indigo"
+        ],
+        "secondary_colors": [
+            "vibrant scarlet red",
+            "luminous vermilion"
+        ],
+        "color_temperature": "predominantly cool with vital warm accents",
+        "contrast_level": "high",
+        "composition_type": "field painting with structured elements and linear incisions",
+        "spatial_presence": "immersive and expansive, creating a sense of deep, boundless space",
+        "artwork_function": "focal point for introspection, structural anchor, symbolic narrative",
+        "suggested_audience": [
+            "collectors of profound abstract works",
+            "interior designers for minimalist luxury",
+            "contemporary art galleries",
+            "individuals interested in art exploring consciousness and landscape"
+        ],
+        "commercial_positioning": "a significant acquisition for discerning private collections or a prominent feature in design-led architectural projects",
+        "one_line_curatorial_read": "A stark yet luminous dialogue between vast blue fields and potent red forms, charting an inner topography of presence and silence.",
+        "style_summary": "minimalist abstraction, symbolic, contemplative, structural",
+        "seasonal_strategy": {
+            "primary_season": "neutral"
+        },
+        "audience_profile": {
+            "primary": "discerning contemporary art collectors and high-end design professionals"
+        }
+    },
+    "recommended_number_of_contexts": 7,
+    "contextual_proposals": [
+        {
+            "context_name": "Deep Horizon Living",
+            "context_role": "primary residential showcase, emphasizing contemplative integration",
+            "space_type": "minimalist living area with high ceilings",
+            "atmosphere": "serene, sophisticated, intimate",
+            "materials": [
+                "textured white plaster wall",
+                "polished concrete floor",
+                "dark wood console table"
+            ],
+            "lighting": "soft, diffused natural light from a large, subtly blurred window, suggesting a quiet afternoon",
+            "camera_angle": "frontal view",
+            "human_presence": "none",
+            "curatorial_reason": "This setting allows the painting's deep blue and red forms to resonate with the quiet austerity of the space, inviting a personal and extended contemplation, reinforcing its role as a focal point for inner experience.",
+            "commercial_reason": "Positions the artwork as an essential element in a high-design, luxury home, appealing directly to affluent private collectors and interior designers seeking impactful, yet serene, statement pieces.",
+            "prompt": "ARTWORK TECHNICAL DATA:\n- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 5 cm deep.\n\nARTWORK FIDELITY RULES:\n- The artwork itself is not creative material for reinterpretation.\n- Preserve the exact visible composition, colors, marks, brushstrokes, lines, symbols, texture, proportions, orientation, and edge shape of the provided root artwork.\n- Do not redraw, repaint, crop, simplify, extend, mirror, rotate, recolor, stylize, blur, add marks to, remove marks from, or alter the artwork surface.\n- Only the surrounding room, wall, lighting, scale context, shadows, furniture, and atmosphere may be generated or changed.\n\nMOCKUP ART DIRECTION:\n- Scene Name: Deep Horizon Living\n- Purpose: primary residential showcase, emphasizing contemplative integration\n- Scene Description: A minimalist living area with high ceilings with serene, sophisticated, intimate atmosphere. Materials: textured white plaster wall, polished concrete floor, dark wood console table\n- Lighting: soft, diffused natural light from a large, subtly blurred window, suggesting a quiet afternoon\n- Time of Day: afternoon\n- Placement: Hang the artwork naturally on the wall at a believable height.\n- Human Figure: Do not include any human figure.\n\nCAMERA SELECTION RULES:\nUse only front view, three-quarter left view, or three-quarter right view. Always show the artwork in near close-up, large and dominant in the frame. Do not use wide or open room views. The environment should only suggest context and must never be more important than the artwork.\n\nNEGATIVE RULES:\nDo not modify the artwork composition.\r\nDo not redraw, repaint, reinterpret, restyle, extend, crop, simplify, enhance, or alter the artwork in any way.\r\nDo not add, remove, rearrange, or invent elements inside the artwork.\r\nPreserve the original composition, proportions, orientation, and internal structure of the artwork exactly as provided.No kitchens.\r\nNo common bedrooms.\r\nNo cheap decor.\r\nNo generic stock interiors.\r\nNo logos.\r\nNo visible text.\r\nNo letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.\r\nNo shoes or footwear as scale reference.\r\nNo distorted perspective.",
+            "mapped_context": {
+                "name": "Deep Horizon Living",
+                "purpose": "primary residential showcase, emphasizing contemplative integration",
+                "scene": "A minimalist living area with high ceilings with serene, sophisticated, intimate atmosphere. Materials: textured white plaster wall, polished concrete floor, dark wood console table",
+                "lighting": "soft, diffused natural light from a large, subtly blurred window, suggesting a quiet afternoon",
+                "camera": "front-facing medium shot, eye-level, balanced interior context, artwork dominant in frame",
+                "camera_group": "front_medium",
+                "time_of_day": "afternoon",
+                "placement": "hanging",
+                "with_human": false,
+                "human_profile": null
+            }
+        },
+        {
+            "context_name": "Gallery of Incised Silence",
+            "context_role": "professional validation and scale reference for public display",
+            "space_type": "contemporary art gallery, expansive white walls",
+            "atmosphere": "pure, focused, subtly formal",
+            "materials": [
+                "matte white gallery walls",
+                "light grey polished concrete floor"
+            ],
+            "lighting": "crisp, directional track lighting illuminating the artwork, highlighting its texture and color vibrancy, with ambient overhead light",
+            "camera_angle": "three-quarter left view, providing depth and showing a glimpse of the gallery's scale",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "Placing the work in a clean gallery setting validates its artistic merit and allows for an unadulterated appreciation of its structural purity and visual impact, highlighting its dialogue with the architectural space.",
+            "commercial_reason": "Essential for gallery representation and institutional consideration, this mockup provides crucial scale context for international buyers and curators, demonstrating its ability to command presence in a formal art environment.",
+            "prompt": "ARTWORK TECHNICAL DATA:\n- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 5 cm deep.\n\nARTWORK FIDELITY RULES:\n- The artwork itself is not creative material for reinterpretation.\n- Preserve the exact visible composition, colors, marks, brushstrokes, lines, symbols, texture, proportions, orientation, and edge shape of the provided root artwork.\n- Do not redraw, repaint, crop, simplify, extend, mirror, rotate, recolor, stylize, blur, add marks to, remove marks from, or alter the artwork surface.\n- Only the surrounding room, wall, lighting, scale context, shadows, furniture, and atmosphere may be generated or changed.\n\nMOCKUP ART DIRECTION:\n- Scene Name: Gallery of Incised Silence\n- Purpose: professional validation and scale reference for public display\n- Scene Description: A contemporary art gallery, expansive white walls with pure, focused, subtly formal atmosphere. Materials: matte white gallery walls, light grey polished concrete floor\n- Lighting: crisp, directional track lighting illuminating the artwork, highlighting its texture and color vibrancy, with ambient overhead light\n- Time of Day: day\n- Placement: Hang the artwork naturally on the wall at a believable height.\n- Human Figure: Include one standing adult asian man, 1.80 meters tall.\n\nCAMERA SELECTION RULES:\nUse only front view, three-quarter left view, or three-quarter right view. Always show the artwork in near close-up, large and dominant in the frame. Do not use wide or open room views. The environment should only suggest context and must never be more important than the artwork.\n\nNEGATIVE RULES:\nDo not modify the artwork composition.\r\nDo not redraw, repaint, reinterpret, restyle, extend, crop, simplify, enhance, or alter the artwork in any way.\r\nDo not add, remove, rearrange, or invent elements inside the artwork.\r\nPreserve the original composition, proportions, orientation, and internal structure of the artwork exactly as provided.No kitchens.\r\nNo common bedrooms.\r\nNo cheap decor.\r\nNo generic stock interiors.\r\nNo logos.\r\nNo visible text.\r\nNo letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.\r\nNo shoes or footwear as scale reference.\r\nNo distorted perspective.",
+            "mapped_context": {
+                "name": "Gallery of Incised Silence",
+                "purpose": "professional validation and scale reference for public display",
+                "scene": "A contemporary art gallery, expansive white walls with pure, focused, subtly formal atmosphere. Materials: matte white gallery walls, light grey polished concrete floor",
+                "lighting": "crisp, directional track lighting illuminating the artwork, highlighting its texture and color vibrancy, with ambient overhead light",
+                "camera": "three-quarter view from the left, slight side angle, eye-level, natural perspective",
+                "camera_group": "three_quarter_left",
+                "time_of_day": "day",
+                "placement": "hanging",
+                "with_human": true,
+                "human_profile": "male_180"
+            }
+        },
+        {
+            "context_name": "Architect's Nocturnal Study",
+            "context_role": "appeal to architectural and design professionals, highlighting structural affinity",
+            "space_type": "refined architect's private study or library",
+            "atmosphere": "intellectual, focused, warm, and sophisticated",
+            "materials": [
+                "dark wood paneling",
+                "sleek modern desk (partially visible)",
+                "leather chair"
+            ],
+            "lighting": "soft, localized lamplight creating warm pools, combined with ambient twilight glow from a window, suggesting an evening work session",
+            "camera_angle": "three-quarter right view, integrating the artwork into a sophisticated, functional context without distraction",
+            "human_presence": "none",
+            "curatorial_reason": "The structural lines and deep meditative quality of the artwork align with the disciplined elegance of an architect's space, suggesting a piece that inspires thought and contemplation on form and space.",
+            "commercial_reason": "Targets architects and high-end interior designers, showcasing the artwork's seamless integration into a conceptually rich, professional environment, ideal for project specification.",
+            "prompt": "ARTWORK TECHNICAL DATA:\n- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 5 cm deep.\n\nARTWORK FIDELITY RULES:\n- The artwork itself is not creative material for reinterpretation.\n- Preserve the exact visible composition, colors, marks, brushstrokes, lines, symbols, texture, proportions, orientation, and edge shape of the provided root artwork.\n- Do not redraw, repaint, crop, simplify, extend, mirror, rotate, recolor, stylize, blur, add marks to, remove marks from, or alter the artwork surface.\n- Only the surrounding room, wall, lighting, scale context, shadows, furniture, and atmosphere may be generated or changed.\n\nMOCKUP ART DIRECTION:\n- Scene Name: Architect's Nocturnal Study\n- Purpose: appeal to architectural and design professionals, highlighting structural affinity\n- Scene Description: A refined architect's private study or library with intellectual, focused, warm, and sophisticated atmosphere. Materials: dark wood paneling, sleek modern desk (partially visible), leather chair\n- Lighting: soft, localized lamplight creating warm pools, combined with ambient twilight glow from a window, suggesting an evening work session\n- Time of Day: night\n- Placement: Hang the artwork naturally on the wall at a believable height.\n- Human Figure: Do not include any human figure.\n\nCAMERA SELECTION RULES:\nUse only front view, three-quarter left view, or three-quarter right view. Always show the artwork in near close-up, large and dominant in the frame. Do not use wide or open room views. The environment should only suggest context and must never be more important than the artwork.\n\nNEGATIVE RULES:\nDo not modify the artwork composition.\r\nDo not redraw, repaint, reinterpret, restyle, extend, crop, simplify, enhance, or alter the artwork in any way.\r\nDo not add, remove, rearrange, or invent elements inside the artwork.\r\nPreserve the original composition, proportions, orientation, and internal structure of the artwork exactly as provided.No kitchens.\r\nNo common bedrooms.\r\nNo cheap decor.\r\nNo generic stock interiors.\r\nNo logos.\r\nNo visible text.\r\nNo letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.\r\nNo shoes or footwear as scale reference.\r\nNo distorted perspective.",
+            "mapped_context": {
+                "name": "Architect's Nocturnal Study",
+                "purpose": "appeal to architectural and design professionals, highlighting structural affinity",
+                "scene": "A refined architect's private study or library with intellectual, focused, warm, and sophisticated atmosphere. Materials: dark wood paneling, sleek modern desk (partially visible), leather chair",
+                "lighting": "soft, localized lamplight creating warm pools, combined with ambient twilight glow from a window, suggesting an evening work session",
+                "camera": "three-quarter view from the right, slight side angle, eye-level, natural perspective",
+                "camera_group": "three_quarter_right",
+                "time_of_day": "night",
+                "placement": "hanging",
+                "with_human": false,
+                "human_profile": null
+            }
+        },
+        {
+            "context_name": "Tectonic Threshold Entry",
+            "context_role": "high-impact residential entry or luxurious transitional space",
+            "space_type": "wide, minimalist entryway or grand hallway in a luxury residence",
+            "atmosphere": "impressive, welcoming, quietly dramatic",
+            "materials": [
+                "light natural stone flooring",
+                "smoothly rendered wall in a neutral tone"
+            ],
+            "lighting": "discreet recessed lighting providing an even wash, emphasizing the artwork's verticality and presence, with a subtle ambient glow from a distant, unseen source",
+            "camera_angle": "frontal view, slightly pulled back to show a sense of the expansive wall, but artwork still dominant",
+            "human_presence": "none",
+            "curatorial_reason": "Positioned as a powerful statement piece in a transitional area, the artwork becomes a 'threshold' reflecting the artist's thematic explorations of presence and division, setting a contemplative tone for the entire residence.",
+            "commercial_reason": "This context appeals to collectors seeking an immediate, sophisticated aesthetic impact upon entering a home, suitable for showcasing the artwork's ability to define and elevate a premium residential space.",
+            "prompt": "ARTWORK TECHNICAL DATA:\n- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 5 cm deep.\n\nARTWORK FIDELITY RULES:\n- The artwork itself is not creative material for reinterpretation.\n- Preserve the exact visible composition, colors, marks, brushstrokes, lines, symbols, texture, proportions, orientation, and edge shape of the provided root artwork.\n- Do not redraw, repaint, crop, simplify, extend, mirror, rotate, recolor, stylize, blur, add marks to, remove marks from, or alter the artwork surface.\n- Only the surrounding room, wall, lighting, scale context, shadows, furniture, and atmosphere may be generated or changed.\n\nMOCKUP ART DIRECTION:\n- Scene Name: Tectonic Threshold Entry\n- Purpose: high-impact residential entry or luxurious transitional space\n- Scene Description: A wide, minimalist entryway or grand hallway in a luxury residence with impressive, welcoming, quietly dramatic atmosphere. Materials: light natural stone flooring, smoothly rendered wall in a neutral tone\n- Lighting: discreet recessed lighting providing an even wash, emphasizing the artwork's verticality and presence, with a subtle ambient glow from a distant, unseen source\n- Time of Day: day\n- Placement: Hang the artwork naturally on the wall at a believable height.\n- Human Figure: Do not include any human figure.\n\nCAMERA SELECTION RULES:\nUse only front view, three-quarter left view, or three-quarter right view. Always show the artwork in near close-up, large and dominant in the frame. Do not use wide or open room views. The environment should only suggest context and must never be more important than the artwork.\n\nNEGATIVE RULES:\nDo not modify the artwork composition.\r\nDo not redraw, repaint, reinterpret, restyle, extend, crop, simplify, enhance, or alter the artwork in any way.\r\nDo not add, remove, rearrange, or invent elements inside the artwork.\r\nPreserve the original composition, proportions, orientation, and internal structure of the artwork exactly as provided.No kitchens.\r\nNo common bedrooms.\r\nNo cheap decor.\r\nNo generic stock interiors.\r\nNo logos.\r\nNo visible text.\r\nNo letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.\r\nNo shoes or footwear as scale reference.\r\nNo distorted perspective.",
+            "mapped_context": {
+                "name": "Tectonic Threshold Entry",
+                "purpose": "high-impact residential entry or luxurious transitional space",
+                "scene": "A wide, minimalist entryway or grand hallway in a luxury residence with impressive, welcoming, quietly dramatic atmosphere. Materials: light natural stone flooring, smoothly rendered wall in a neutral tone",
+                "lighting": "discreet recessed lighting providing an even wash, emphasizing the artwork's verticality and presence, with a subtle ambient glow from a distant, unseen source",
+                "camera": "front-facing medium shot, eye-level, balanced interior context, artwork dominant in frame",
+                "camera_group": "front_medium",
+                "time_of_day": "day",
+                "placement": "hanging",
+                "with_human": false,
+                "human_profile": null
+            }
+        },
+        {
+            "context_name": "Contemplative Boutique Suite",
+            "context_role": "hospitality and design-forward commercial placement",
+            "space_type": "elegant lounge area within a high-end boutique hotel suite",
+            "atmosphere": "luxurious, calming, inviting, design-conscious",
+            "materials": [
+                "deep grey or navy wall",
+                "natural wood paneling",
+                "tactile fabrics on an armchair or sofa (partially visible)"
+            ],
+            "lighting": "warm, soft ambient lighting from a floor lamp and indirect sources, creating an intimate evening mood",
+            "camera_angle": "three-quarter left, revealing a glimpse of the curated comfort of the suite",
+            "human_presence": "none",
+            "curatorial_reason": "The artwork's deep, silent presence offers a profound visual anchor in a refined hospitality setting, providing guests with a moment of serene contemplation and enhancing the sophisticated design narrative of the space.",
+            "commercial_reason": "Ideal for attracting hotel developers, luxury interior designers, and high-end hospitality projects, demonstrating the artwork's capacity to elevate bespoke commercial spaces.",
+            "prompt": "ARTWORK TECHNICAL DATA:\n- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 5 cm deep.\n\nARTWORK FIDELITY RULES:\n- The artwork itself is not creative material for reinterpretation.\n- Preserve the exact visible composition, colors, marks, brushstrokes, lines, symbols, texture, proportions, orientation, and edge shape of the provided root artwork.\n- Do not redraw, repaint, crop, simplify, extend, mirror, rotate, recolor, stylize, blur, add marks to, remove marks from, or alter the artwork surface.\n- Only the surrounding room, wall, lighting, scale context, shadows, furniture, and atmosphere may be generated or changed.\n\nMOCKUP ART DIRECTION:\n- Scene Name: Contemplative Boutique Suite\n- Purpose: hospitality and design-forward commercial placement\n- Scene Description: A elegant lounge area within a high-end boutique hotel suite with luxurious, calming, inviting, design-conscious atmosphere. Materials: deep grey or navy wall, natural wood paneling, tactile fabrics on an armchair or sofa (partially visible)\n- Lighting: warm, soft ambient lighting from a floor lamp and indirect sources, creating an intimate evening mood\n- Time of Day: night\n- Placement: Hang the artwork naturally on the wall at a believable height.\n- Human Figure: Do not include any human figure.\n\nCAMERA SELECTION RULES:\nUse only front view, three-quarter left view, or three-quarter right view. Always show the artwork in near close-up, large and dominant in the frame. Do not use wide or open room views. The environment should only suggest context and must never be more important than the artwork.\n\nNEGATIVE RULES:\nDo not modify the artwork composition.\r\nDo not redraw, repaint, reinterpret, restyle, extend, crop, simplify, enhance, or alter the artwork in any way.\r\nDo not add, remove, rearrange, or invent elements inside the artwork.\r\nPreserve the original composition, proportions, orientation, and internal structure of the artwork exactly as provided.No kitchens.\r\nNo common bedrooms.\r\nNo cheap decor.\r\nNo generic stock interiors.\r\nNo logos.\r\nNo visible text.\r\nNo letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.\r\nNo shoes or footwear as scale reference.\r\nNo distorted perspective.",
+            "mapped_context": {
+                "name": "Contemplative Boutique Suite",
+                "purpose": "hospitality and design-forward commercial placement",
+                "scene": "A elegant lounge area within a high-end boutique hotel suite with luxurious, calming, inviting, design-conscious atmosphere. Materials: deep grey or navy wall, natural wood paneling, tactile fabrics on an armchair or sofa (partially visible)",
+                "lighting": "warm, soft ambient lighting from a floor lamp and indirect sources, creating an intimate evening mood",
+                "camera": "three-quarter view from the left, slight side angle, eye-level, natural perspective",
+                "camera_group": "three_quarter_left",
+                "time_of_day": "night",
+                "placement": "hanging",
+                "with_human": false,
+                "human_profile": null
+            }
+        },
+        {
+            "context_name": "Mediterranean Depths Villa",
+            "context_role": "targeted regional market appeal and showcasing natural light interaction",
+            "space_type": "bright, minimalist living space in a contemporary Mediterranean villa",
+            "atmosphere": "airy, serene, organic, bright",
+            "materials": [
+                "white stucco or lime-washed walls",
+                "light terracotta or polished concrete floor",
+                "natural linen textiles"
+            ],
+            "lighting": "abundant, soft natural daylight flooding the space, highlighting the artwork's texture and color nuances",
+            "camera_angle": "frontal view, slightly wider to suggest the light and openness of the space without diminishing the artwork's prominence",
+            "human_presence": "optional standing female figure 1.55m",
+            "curatorial_reason": "The deep blues echo the Mediterranean sea and sky, while the red elements evoke the warmth of the sun-drenched landscape, connecting the abstract work to a specific, culturally rich natural environment.",
+            "commercial_reason": "Highly effective for attracting buyers in Mediterranean regions (e.g., Spain, Italy, South of France, Miami) and interior designers specializing in serene, natural luxury, resonating with a lifestyle aesthetic.",
+            "prompt": "ARTWORK TECHNICAL DATA:\n- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 5 cm deep.\n\nARTWORK FIDELITY RULES:\n- The artwork itself is not creative material for reinterpretation.\n- Preserve the exact visible composition, colors, marks, brushstrokes, lines, symbols, texture, proportions, orientation, and edge shape of the provided root artwork.\n- Do not redraw, repaint, crop, simplify, extend, mirror, rotate, recolor, stylize, blur, add marks to, remove marks from, or alter the artwork surface.\n- Only the surrounding room, wall, lighting, scale context, shadows, furniture, and atmosphere may be generated or changed.\n\nMOCKUP ART DIRECTION:\n- Scene Name: Mediterranean Depths Villa\n- Purpose: targeted regional market appeal and showcasing natural light interaction\n- Scene Description: A bright, minimalist living space in a contemporary Mediterranean villa with airy, serene, organic, bright atmosphere. Materials: white stucco or lime-washed walls, light terracotta or polished concrete floor, natural linen textiles\n- Lighting: abundant, soft natural daylight flooding the space, highlighting the artwork's texture and color nuances\n- Time of Day: day\n- Placement: Hang the artwork naturally on the wall at a believable height.\n- Human Figure: Include one standing adult black woman, 1.55 meters tall.\n\nCAMERA SELECTION RULES:\nUse only front view, three-quarter left view, or three-quarter right view. Always show the artwork in near close-up, large and dominant in the frame. Do not use wide or open room views. The environment should only suggest context and must never be more important than the artwork.\n\nNEGATIVE RULES:\nDo not modify the artwork composition.\r\nDo not redraw, repaint, reinterpret, restyle, extend, crop, simplify, enhance, or alter the artwork in any way.\r\nDo not add, remove, rearrange, or invent elements inside the artwork.\r\nPreserve the original composition, proportions, orientation, and internal structure of the artwork exactly as provided.No kitchens.\r\nNo common bedrooms.\r\nNo cheap decor.\r\nNo generic stock interiors.\r\nNo logos.\r\nNo visible text.\r\nNo letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.\r\nNo shoes or footwear as scale reference.\r\nNo distorted perspective.",
+            "mapped_context": {
+                "name": "Mediterranean Depths Villa",
+                "purpose": "targeted regional market appeal and showcasing natural light interaction",
+                "scene": "A bright, minimalist living space in a contemporary Mediterranean villa with airy, serene, organic, bright atmosphere. Materials: white stucco or lime-washed walls, light terracotta or polished concrete floor, natural linen textiles",
+                "lighting": "abundant, soft natural daylight flooding the space, highlighting the artwork's texture and color nuances",
+                "camera": "front-facing medium shot, eye-level, balanced interior context, artwork dominant in frame",
+                "camera_group": "front_medium",
+                "time_of_day": "day",
+                "placement": "hanging",
+                "with_human": true,
+                "human_profile": "female_155"
+            }
+        },
+        {
+            "context_name": "Private Museum Salon",
+            "context_role": "elite collector positioning and institutional aspiration",
+            "space_type": "elegant, curated salon within a private museum or an esteemed collector's personal viewing room",
+            "atmosphere": "exclusive, scholarly, deeply appreciative of art, quiet luxury",
+            "materials": [
+                "dark, rich wall (e.g., charcoal or deep grey velvet)",
+                "fine wooden parquet floor",
+                "classic modern bench (out of focus)"
+            ],
+            "lighting": "sophisticated, museum-grade lighting, precise spots highlighting specific textures and the painting's depth, coupled with a warm, ambient glow",
+            "camera_angle": "three-quarter right view, offering a glimpse into a cultivated, private art appreciation space",
+            "human_presence": "none",
+            "curatorial_reason": "This setting positions the artwork within a context of serious art collection and study, suggesting its lasting value and profound artistic statement, inviting scholarly engagement.",
+            "commercial_reason": "Appeals to high-net-worth collectors, private foundations, and institutional buyers, affirming the artwork's status as a significant piece worthy of a distinguished collection.",
+            "prompt": "ARTWORK TECHNICAL DATA:\n- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 5 cm deep.\n\nARTWORK FIDELITY RULES:\n- The artwork itself is not creative material for reinterpretation.\n- Preserve the exact visible composition, colors, marks, brushstrokes, lines, symbols, texture, proportions, orientation, and edge shape of the provided root artwork.\n- Do not redraw, repaint, crop, simplify, extend, mirror, rotate, recolor, stylize, blur, add marks to, remove marks from, or alter the artwork surface.\n- Only the surrounding room, wall, lighting, scale context, shadows, furniture, and atmosphere may be generated or changed.\n\nMOCKUP ART DIRECTION:\n- Scene Name: Private Museum Salon\n- Purpose: elite collector positioning and institutional aspiration\n- Scene Description: A elegant, curated salon within a private museum or an esteemed collector's personal viewing room with exclusive, scholarly, deeply appreciative of art, quiet luxury atmosphere. Materials: dark, rich wall (e.g., charcoal or deep grey velvet), fine wooden parquet floor, classic modern bench (out of focus)\n- Lighting: sophisticated, museum-grade lighting, precise spots highlighting specific textures and the painting's depth, coupled with a warm, ambient glow\n- Time of Day: afternoon\n- Placement: Hang the artwork naturally on the wall at a believable height.\n- Human Figure: Do not include any human figure.\n\nCAMERA SELECTION RULES:\nUse only front view, three-quarter left view, or three-quarter right view. Always show the artwork in near close-up, large and dominant in the frame. Do not use wide or open room views. The environment should only suggest context and must never be more important than the artwork.\n\nNEGATIVE RULES:\nDo not modify the artwork composition.\r\nDo not redraw, repaint, reinterpret, restyle, extend, crop, simplify, enhance, or alter the artwork in any way.\r\nDo not add, remove, rearrange, or invent elements inside the artwork.\r\nPreserve the original composition, proportions, orientation, and internal structure of the artwork exactly as provided.No kitchens.\r\nNo common bedrooms.\r\nNo cheap decor.\r\nNo generic stock interiors.\r\nNo logos.\r\nNo visible text.\r\nNo letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.\r\nNo shoes or footwear as scale reference.\r\nNo distorted perspective.",
+            "mapped_context": {
+                "name": "Private Museum Salon",
+                "purpose": "elite collector positioning and institutional aspiration",
+                "scene": "A elegant, curated salon within a private museum or an esteemed collector's personal viewing room with exclusive, scholarly, deeply appreciative of art, quiet luxury atmosphere. Materials: dark, rich wall (e.g., charcoal or deep grey velvet), fine wooden parquet floor, classic modern bench (out of focus)",
+                "lighting": "sophisticated, museum-grade lighting, precise spots highlighting specific textures and the painting's depth, coupled with a warm, ambient glow",
+                "camera": "three-quarter view from the right, slight side angle, eye-level, natural perspective",
+                "camera_group": "three_quarter_right",
+                "time_of_day": "afternoon",
+                "placement": "hanging",
+                "with_human": false,
+                "human_profile": null
+            }
+        }
+    ]
+}

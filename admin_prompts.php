@@ -18,8 +18,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $settings = PromptSettings::all();
-$labels = PromptSettings::labels();
+$adminPromptKeys = [
+    'root_artwork_rules',
+    'artwork_analysis_prompt',
+    'root_artwork_count',
+    'mockup_context_count',
+];
+$labels = array_intersect_key(PromptSettings::labels(), array_flip($adminPromptKeys));
 $defaultDirectives = PromptSettings::defaultDirectives();
+$storedDefaultKeys = [];
+
+try {
+    $stmt = Database::connection()->query("SELECT `key` FROM app_settings WHERE `key` LIKE 'prompt_default_%'");
+
+    foreach ($stmt->fetchAll() as $row) {
+        $settingKey = (string)($row['key'] ?? '');
+        $storedDefaultKeys[substr($settingKey, strlen('prompt_default_'))] = true;
+    }
+} catch (Throwable $e) {
+    $storedDefaultKeys = [];
+}
+
+foreach ($adminPromptKeys as $key) {
+    $currentValue = trim((string)($settings[$key] ?? ''));
+
+    if (!isset($storedDefaultKeys[$key]) && $currentValue !== '') {
+        $defaultDirectives[$key] = $currentValue;
+    }
+}
 
 function h($v): string
 {
@@ -56,7 +82,22 @@ function h($v): string
             font-size: 13px;
         }
 
-        details.directive-reference {
+        .placeholder-reference {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: -8px 0 22px;
+        }
+
+        .placeholder-reference code {
+            border: 1px solid var(--line);
+            background: var(--surface);
+            border-radius: 4px;
+            padding: 5px 7px;
+            font-size: 12px;
+        }
+
+        .default-directive-editor {
             margin-top: 12px;
             border: 1px solid var(--line);
             background: var(--surface);
@@ -64,16 +105,26 @@ function h($v): string
             border-radius: var(--radius);
         }
 
-        details.directive-reference summary {
-            cursor: pointer;
+        .default-directive-editor strong {
+            display: block;
             font-weight: 600;
+            margin-bottom: 4px;
         }
 
-        .directive-reference textarea {
+        .default-directive-editor textarea {
             min-height: 220px;
             margin-top: 10px;
             background: var(--surface-soft);
-            color: var(--muted);
+        }
+
+        .directive-actions {
+            display: flex;
+            justify-content: flex-start;
+            margin-top: 10px;
+        }
+
+        .directive-actions button {
+            width: auto;
         }
 
         @media (max-width: 980px) {
@@ -115,6 +166,12 @@ function h($v): string
                 Changes apply to new prompts. These fields serve as the active system directives. For already analyzed proposals, click <strong>Recalculate Analysis</strong> on the artwork page before generating new mockups.
             </div>
 
+            <div class="placeholder-reference" aria-label="Available prompt placeholders">
+                <?php foreach (['{artist_profile_prompt}', '{artist_statement}', '{visual_language}', '{recurring_symbols}', '{preferred_atmospheres}', '{title}', '{width_cm}', '{height_cm}', '{depth_cm}', '{notes}', '{preferred_style}', '{target_market}', '{orientation}', '{region}', '{scale_text}', '{context_count}'] as $placeholder): ?>
+                    <code><?= h($placeholder) ?></code>
+                <?php endforeach; ?>
+            </div>
+
             <form method="post" class="form">
                 <div class="prompt-admin-grid">
                     <?php foreach ($labels as $key => $info): ?>
@@ -125,10 +182,16 @@ function h($v): string
                                 <input id="<?= h($key) ?>" name="<?= h($key) ?>" type="number" min="1" max="10" step="1" value="<?= h($settings[$key] ?? '10') ?>">
                             <?php else: ?>
                                 <textarea id="<?= h($key) ?>" name="<?= h($key) ?>"><?= h($settings[$key] ?? '') ?></textarea>
-                                <details class="directive-reference">
-                                    <summary>View default directive for restoration</summary>
-                                    <textarea readonly><?= h($defaultDirectives[$key] ?? '') ?></textarea>
-                                </details>
+                                <?php if (trim((string)($defaultDirectives[$key] ?? '')) !== ''): ?>
+                                    <div class="directive-actions">
+                                        <button type="button" class="secondary use-default-directive" data-target="<?= h($key) ?>" data-source="<?= h($key) ?>_default">Restaurar desde el valor por defecto</button>
+                                    </div>
+                                <?php endif; ?>
+                                <div class="default-directive-editor">
+                                    <strong>Valor por defecto editable</strong>
+                                    <small>Este texto se guarda como referencia de restauracion para este bloque.</small>
+                                    <textarea id="<?= h($key) ?>_default" name="default_directives[<?= h($key) ?>]"><?= h($defaultDirectives[$key] ?? '') ?></textarea>
+                                </div>
                             <?php endif; ?>
                         </section>
                     <?php endforeach; ?>
@@ -139,5 +202,18 @@ function h($v): string
         </div>
     </main>
 </div>
+<script>
+document.querySelectorAll('.use-default-directive').forEach((button) => {
+    button.addEventListener('click', () => {
+        const target = document.getElementById(button.dataset.target || '');
+        const source = document.getElementById(button.dataset.source || '');
+
+        if (target && source) {
+            target.value = source.value;
+            target.focus();
+        }
+    });
+});
+</script>
 </body>
 </html>

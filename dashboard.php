@@ -6,6 +6,48 @@ require_once __DIR__ . '/app/bootstrap.php';
 $user = Auth::requireUser();
 $isAdmin = Auth::isAdmin($user);
 $pdo = Database::connection();
+$query = trim((string)($_GET['q'] ?? ''));
+$page = max(1, (int)($_GET['page'] ?? 1));
+$perPage = 24;
+$offset = ($page - 1) * $perPage;
+
+function delete_artwork_job_assets(string $jobId): void
+{
+    $jobId = basename($jobId);
+
+    if ($jobId === '' || !preg_match('/^job_[0-9]+_[0-9]+$/', $jobId)) {
+        return;
+    }
+
+    $jobDir = __DIR__ . DIRECTORY_SEPARATOR . 'jobs' . DIRECTORY_SEPARATOR . $jobId;
+    if (is_dir($jobDir)) {
+        $deleteDirFunc = function (string $dir) use (&$deleteDirFunc): bool {
+            if (!is_dir($dir)) return false;
+            $items = @scandir($dir);
+            if (!is_array($items)) return false;
+            foreach ($items as $item) {
+                if ($item === '.' || $item === '..') continue;
+                $path = $dir . DIRECTORY_SEPARATOR . $item;
+                if (is_dir($path)) {
+                    $deleteDirFunc($path);
+                } else {
+                    @unlink($path);
+                }
+            }
+            return @rmdir($dir);
+        };
+        $deleteDirFunc($jobDir);
+    }
+
+    $matchedFiles = glob(RESULTS_DIR . DIRECTORY_SEPARATOR . '*' . $jobId . '*');
+    if (is_array($matchedFiles)) {
+        foreach ($matchedFiles as $resFile) {
+            if (is_file($resFile)) {
+                @unlink($resFile);
+            }
+        }
+    }
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'clear_stuck') {
     $stmtJobs = $pdo->prepare("
@@ -29,39 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'clear
             $idsToDelete[] = (int)$c['id'];
             $jobId = basename((string)$c['job_id']);
             
-            if ($jobId !== '' && preg_match('/^job_[0-9]+_[0-9]+$/', $jobId)) {
-                // Delete job directory
-                $jobDir = __DIR__ . DIRECTORY_SEPARATOR . 'jobs' . DIRECTORY_SEPARATOR . $jobId;
-                if (is_dir($jobDir)) {
-                    $deleteDirFunc = function (string $dir) use (&$deleteDirFunc): bool {
-                        if (!is_dir($dir)) return false;
-                        $items = @scandir($dir);
-                        if (!is_array($items)) return false;
-                        foreach ($items as $item) {
-                            if ($item === '.' || $item === '..') continue;
-                            $path = $dir . DIRECTORY_SEPARATOR . $item;
-                            if (is_dir($path)) {
-                                $deleteDirFunc($path);
-                            } else {
-                                @unlink($path);
-                            }
-                        }
-                        return @rmdir($dir);
-                    };
-                    $deleteDirFunc($jobDir);
-                }
-                
-                // Delete results candidates & meta files
-                $resultsPattern = RESULTS_DIR . DIRECTORY_SEPARATOR . '*' . $jobId . '*';
-                $matchedFiles = glob($resultsPattern);
-                if (is_array($matchedFiles)) {
-                    foreach ($matchedFiles as $resFile) {
-                        if (is_file($resFile)) {
-                            @unlink($resFile);
-                        }
-                    }
-                }
-            }
+            delete_artwork_job_assets($jobId);
         }
     }
 
@@ -76,16 +86,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'clear
     exit;
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'discard_pending') {
+    $artworkId = (int)($_POST['artwork_id'] ?? 0);
+
+    if ($artworkId > 0) {
+        $stmtPending = $pdo->prepare("
+            SELECT id, job_id
+            FROM artworks
+            WHERE id = :id
+            AND user_id = :user_id
+            AND status != 'done'
+            LIMIT 1
+        ");
+        $stmtPending->execute([
+            'id' => $artworkId,
+            'user_id' => (int)$user['id'],
+        ]);
+        $pending = $stmtPending->fetch();
+
+        if ($pending) {
+            delete_artwork_job_assets((string)($pending['job_id'] ?? ''));
+            $stmtDelete = $pdo->prepare("DELETE FROM artworks WHERE id = :id AND user_id = :user_id AND status != 'done'");
+            $stmtDelete->execute([
+                'id' => $artworkId,
+                'user_id' => (int)$user['id'],
+            ]);
+        }
+    }
+
+    header('Location: dashboard.php#pendientes');
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'discard_all_pending') {
+    $stmtPending = $pdo->prepare("
+        SELECT id, job_id
+        FROM artworks
+        WHERE user_id = :user_id
+        AND status != 'done'
+    ");
+    $stmtPending->execute(['user_id' => (int)$user['id']]);
+    $pendingRows = $stmtPending->fetchAll();
+
+    foreach ($pendingRows as $pending) {
+        delete_artwork_job_assets((string)($pending['job_id'] ?? ''));
+    }
+
+    $stmtDelete = $pdo->prepare("DELETE FROM artworks WHERE user_id = :user_id AND status != 'done'");
+    $stmtDelete->execute(['user_id' => (int)$user['id']]);
+
+    header('Location: dashboard.php#pendientes');
+    exit;
+}
+
+$where = "WHERE user_id = :user_id AND status = 'done' AND root_file IS NOT NULL AND root_file != ''";
+$params = ['user_id' => (int)$user['id']];
+
+if ($query !== '') {
+    $where .= ' AND (final_title LIKE :query OR root_file LIKE :query OR series LIKE :query)';
+    $params['query'] = '%' . $query . '%';
+}
+
+$rootCountStmt = $pdo->prepare("SELECT COUNT(*) FROM artworks {$where}");
+$rootCountStmt->execute($params);
+$rootTotal = (int)$rootCountStmt->fetchColumn();
+$totalPages = max(1, (int)ceil($rootTotal / $perPage));
+
 $stmt = $pdo->prepare("
     SELECT *
     FROM artworks
-    WHERE user_id = :user_id
-    AND status = 'done'
-    AND root_file IS NOT NULL
-    AND root_file != ''
+    {$where}
     ORDER BY created_at DESC
+    LIMIT :limit OFFSET :offset
 ");
-$stmt->execute(['user_id' => $user['id']]);
+
+foreach ($params as $key => $value) {
+    $stmt->bindValue(':' . $key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+}
+
+$stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$stmt->execute();
 $artworks = $stmt->fetchAll();
 
 $pendingStmt = $pdo->prepare("
@@ -130,6 +211,17 @@ function download_url(?string $file): string
 {
     return $file ? 'media.php?file=' . rawurlencode(basename($file)) . '&download=1' : '';
 }
+
+function dashboard_page_url(int $page, string $query): string
+{
+    $params = ['page' => $page];
+
+    if ($query !== '') {
+        $params['q'] = $query;
+    }
+
+    return 'dashboard.php?' . http_build_query($params) . '#obras';
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -166,7 +258,7 @@ function download_url(?string $file): string
             <section class="stats">
                 <div class="stat-card">
                     <span>Root Images</span>
-                    <strong><?= count($artworks) ?></strong>
+                    <strong><?= h($rootTotal) ?></strong>
                 </div>
                 <div class="stat-card">
                     <span>Mockups</span>
@@ -207,6 +299,10 @@ function download_url(?string $file): string
                                 <button type="submit" class="button-link secondary" style="font-size: 11px; padding: 6px 12px; border: 1px solid #e53e3e; color: #e53e3e; background: transparent; cursor: pointer; border-radius: 4px; transition: all 0.2s;">Limpiar atascados</button>
                             </form>
                         <?php endif; ?>
+                        <form method="post" onsubmit="return confirm('Discard all pending artworks and selections? This cannot be undone.');" style="margin: 0;">
+                            <input type="hidden" name="action" value="discard_all_pending">
+                            <button type="submit" class="button-link secondary" style="width: auto; margin: 0; font-size: 11px; padding: 6px 12px; border-color: var(--danger); color: var(--danger); background: transparent;">Discard all pending</button>
+                        </form>
                     </div>
                     <div class="grid">
                         <?php foreach ($pendingArtworks as $pending): ?>
@@ -228,6 +324,11 @@ function download_url(?string $file): string
                                     <?php else: ?>
                                         <a href="waiting.php?job=<?= rawurlencode((string)$pending['job_id']) ?>">View Status</a>
                                     <?php endif; ?>
+                                    <form method="post" onsubmit="return confirm('Discard this pending artwork? This cannot be undone.');" style="margin: 0;">
+                                        <input type="hidden" name="action" value="discard_pending">
+                                        <input type="hidden" name="artwork_id" value="<?= h($pending['id']) ?>">
+                                        <button type="submit" class="button-link secondary" style="width: auto; margin: 0; font-size: 11px; padding: 6px 12px; border-color: var(--danger); color: var(--danger); background: transparent;">Discard</button>
+                                    </form>
                                 </div>
                             </article>
                         <?php endforeach; ?>
@@ -238,11 +339,19 @@ function download_url(?string $file): string
             <section class="panel" id="obras">
                 <div class="section-heading">
                     <h2>Root Images</h2>
-                    <p><?= count($artworks) ?> pieces</p>
+                    <p><?= h($rootTotal) ?> pieces</p>
                 </div>
 
+                <form class="toolbar-form" method="get" action="dashboard.php">
+                    <input type="text" name="q" value="<?= h($query) ?>" placeholder="Search by title, series, or filename">
+                    <button type="submit">Search</button>
+                    <?php if ($query !== ''): ?>
+                        <a class="button-link secondary" href="dashboard.php#obras">Clear</a>
+                    <?php endif; ?>
+                </form>
+
                 <?php if (!$artworks): ?>
-                    <div class="empty-state">You have no root images uploaded yet.</div>
+                    <div class="empty-state"><?= $query !== '' ? 'No root images found for this search.' : 'You have no root images uploaded yet.' ?></div>
                 <?php else: ?>
                     <div class="grid">
                         <?php foreach ($artworks as $artwork): ?>
@@ -271,6 +380,20 @@ function download_url(?string $file): string
                             </article>
                         <?php endforeach; ?>
                     </div>
+                <?php endif; ?>
+
+                <?php if ($totalPages > 1): ?>
+                    <nav class="pagination" aria-label="Root images pagination">
+                        <?php if ($page > 1): ?>
+                            <a class="button-link secondary" href="<?= h(dashboard_page_url($page - 1, $query)) ?>">Previous</a>
+                        <?php endif; ?>
+
+                        <span>Page <?= h($page) ?> / <?= h($totalPages) ?></span>
+
+                        <?php if ($page < $totalPages): ?>
+                            <a class="button-link secondary" href="<?= h(dashboard_page_url($page + 1, $query)) ?>">Next</a>
+                        <?php endif; ?>
+                    </nav>
                 <?php endif; ?>
             </section>
 

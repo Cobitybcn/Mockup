@@ -1,0 +1,517 @@
+```json
+{
+  "artwork_analysis": {
+    "visual_language": [
+      "abstract",
+      "structural",
+      "minimalist",
+      "symbolic",
+      "metaphysical",
+      "architectural"
+    ],
+    "emotional_energy": [
+      "silent",
+      "contemplative",
+      "austere",
+      "quiet intensity",
+      "deep",
+      "restrained tension"
+    ],
+    "dominant_colors": [
+      "deep ochre",
+      "burnt sienna",
+      "golden yellow"
+    ],
+    "secondary_colors": [
+      "pale cream",
+      "dark brown (horizon line)"
+    ],
+    "visible_elements": [
+      "large color fields",
+      "horizontal dividing line (horizon)",
+      "thin incised lines",
+      "small geometric forms (monoliths)"
+    ],
+    "visible_symbols": [
+      "territory",
+      "horizon",
+      "monoliths",
+      "incisions",
+      "divided fields",
+      "presence",
+      "distance"
+    ],
+    "color_temperature": "warm",
+    "contrast_level": "tonal contrast with subtle high contrast elements",
+    "composition_type": "bipartite",
+    "balance": "asymmetrical, yet harmoniously balanced by weight of color fields and precision of elements",
+    "visual_tension": "subtle, between the expansive silence and the precise structural elements",
+    "density": "varied; dense in texture, sparse in overt elements",
+    "silence": "dominant and profound",
+    "main_focal_point": "the horizontal dividing line and the small, light geometric forms",
+    "movement": "implied, through the slightly angled incised lines, suggesting geological or atmospheric shifts",
+    "depth": "subtle, created by layering, texture, and tonal shifts",
+    "negative_space": "significant, especially in the upper ochre field, contributing to silence and vastness",
+    "verticality_or_horizontality": "vertical emphasizing expanse, horizontal defining structure",
+    "internal_organization": "stratified, with precise placement of elements within expansive fields",
+    "rhythm": "slow, deliberate, established by the incised lines and spaced forms",
+    "surface": "textured, layered, with visible handwork",
+    "brushstroke": "varied, from broad sweeps to fine incisions",
+    "gesture": "controlled, deliberate, suggesting carving and layering",
+    "layers": "visible, creating subtle depth and geological quality",
+    "material_presence": "strong, evidenced by texture, incisions, and built-up forms",
+    "sense_of_depth_or_flatness": "subtle depth, derived from layering and texture rather than illusionistic perspective",
+    "format_and_scale": {
+      "width_cm": "80",
+      "height_cm": "120",
+      "depth_cm": "4",
+      "orientation": "vertical",
+      "scale_impact": "medium-large, commands significant wall presence without being overwhelming",
+      "wall_presence": "strong and contemplative",
+      "monumentality_or_intimacy": "monumental in its quiet presence, yet invites intimate contemplation",
+      "spatial_effect": "modifies space by introducing a contemplative focal point and a sense of layered vastness"
+    },
+    "spatial_presence": "commanding, yet understated",
+    "visual_atmosphere": "silent, deep, sober, contemplative, slightly melancholic, with a quiet intensity",
+    "artwork_function": "contemplative focal point, aesthetic anchor, statement piece",
+    "suggested_audience": [
+      "contemporary art collectors",
+      "galleries",
+      "architects",
+      "interior designers",
+      "high-level decorators",
+      "curators",
+      "international buyers"
+    ],
+    "audience_profile": {
+      "primary": "discerning collectors of abstract and minimalist art",
+      "secondary": "professionals in high-end design and architecture",
+      "buyer_profile": "individuals seeking profound, non-decorative art for refined residential or curated professional spaces",
+      "collector_type": "collectors interested in structural abstraction, symbolic depth, and contemplative works",
+      "interior_design_relevance": "highly relevant for minimalist, contemporary, and architecturally driven interiors",
+      "gallery_potential": "high, for contemporary and modern art galleries focusing on abstract or structural practices"
+    },
+    "commercial_positioning": "premium contemporary abstract art, investment-grade, appealing to an international sophisticated market",
+    "one_line_curatorial_read": "A profound abstract landscape articulating vast color fields, tectonic incisions, and silent monolithic forms, evoking a contemplative dialogue between inner structure and geological time.",
+    "style_summary": "Abstract, structural, contemplative, minimalist with symbolic depth, marked by earthy tones and precise linear/geometric elements.",
+    "artist_profile_relation": {
+      "relevant_statement_connection": "The artwork directly reflects the artist's exploration of 'landscape, consciousness and inner structure' through 'abstraction, symbolic territory and contemplative silence,' using 'fields of color, incisions, monoliths, horizons and suspended forms as signs of presence, transition and perception.'",
+      "relevant_visual_language_connection": "It perfectly embodies the 'abstract, contemporary, structural, symbolic and metaphysical' language, built with 'fields of color, horizons, tectonic lines, divided territories, monoliths, incisions, suspended signs and spatial relationships,' and achieves the desired 'tension between silence, presence, depth and inner order.'",
+      "relevant_symbol_connection": "Clearly visible motifs include 'territory,' 'silence,' 'monoliths,' 'horizons,' 'tectonic lines,' 'incisions,' 'divided fields,' 'suspended forms,' 'geological time' (implied by earthy palette and layers), 'presence,' and 'distance.'",
+      "relevant_atmosphere_connection": "The artwork fully conveys the preferred atmosphere: 'silent, deep, sober, contemplative and slightly melancholic,' moving between 'nocturnal calm, restrained tension, austerity, distance and quiet intensity.'"
+    },
+    "seasonal_strategy": {
+      "primary_season": "neutral"
+    },
+    "publishing_metadata": {
+      "suggested_titles": [
+        {
+          "title": "Stratified Presence",
+          "subtitle": "A Dialogue of Earth and Horizon",
+          "short_description": "Expansive earthy fields articulate a profound horizon, marked by subtle forms and incised lines.",
+          "curatorial_description": "This work orchestrates a bipartite composition where vast ochre territories meet a defining horizon, punctuated by delicate, architectural forms and tectonic incisions. The verticality emphasizes a layered landscape, suggesting both geological depth and an inner topography of consciousness.",
+          "commercial_description": "An impactful abstract work whose carefully composed fields and subtle structures offer a tranquil yet profound presence, ideal for discerning collectors seeking quiet sophistication and structural integrity in their environments."
+        },
+        {
+          "title": "Ochre Horizon",
+          "subtitle": "Contemplative Fields of Light and Shadow",
+          "short_description": "A contemplative landscape of ochre and golden hues, evoking silent territories and distant forms.",
+          "curatorial_description": "Bathed in a palette of warm ochre and luminous gold, the painting evokes a nocturnal calm or an ancient, sun-baked landscape. The subtle interplay of light and shadow across its layered fields creates a deeply contemplative atmosphere, where minimal forms stand as quiet guardians of a vast inner world.",
+          "commercial_description": "With its rich, earthy tones and serene atmosphere, this piece is a compelling acquisition for spaces designed for reflection and understated elegance, offering enduring visual depth and emotional resonance to any collection."
+        },
+        {
+          "title": "Tectonic Forms",
+          "subtitle": "Incisions and Silent Monoliths",
+          "short_description": "Incised lines and small, monolithic forms mark a timeless, textural landscape.",
+          "curatorial_description": "Through a meticulous interplay of texture and incision, the artist reveals a landscape built on geological time. Delicate lines traverse the surface, while small, suspended forms emerge as silent monoliths, anchoring the vastness and inviting a meditation on presence and the elemental structure of being.",
+          "commercial_description": "A masterful example of structural abstraction, this painting's tactile surface and symbolic forms make it a significant addition to any collection emphasizing craftsmanship, metaphysical inquiry, and timeless aesthetic appeal for elevated interiors."
+        }
+      ],
+      "descriptions": {
+        "poetic_focus": "In silent fields of ochre and gold, profound incisions carve pathways across distant horizons, where solitary forms stand as whispers of ancient earth and inner stillness. A quiet dialogue between vastness and presence, inviting contemplation.",
+        "formal_focus": "A bipartite abstract composition defined by stratified color fields and a distinct horizon line. Delicate incised lines and minimal geometric forms introduce structural tension and symbolic depth, executed with textural layering and a restrained palette.",
+        "commercial_focus": "An exceptional contemporary abstract painting by Maurizio Valch, offering significant visual depth and contemplative presence. Its refined structural elements and sophisticated earthy palette make it an ideal acquisition for discerning collectors and high-end design projects."
+      },
+      "seo_keywords": [
+        "Maurizio Valch",
+        "abstract painting",
+        "contemporary art",
+        "structural abstraction",
+        "minimalist art",
+        "symbolic landscape",
+        "earth tones",
+        "ochre art",
+        "contemplative art",
+        "monolith art",
+        "gallery art",
+        "luxury interior art",
+        "collectible art",
+        "metaphysical art",
+        "textured painting"
+      ],
+      "seo_tags": [
+        "MaurizioValch",
+        "AbstractArt",
+        "ContemporaryPainting",
+        "StructuralArt",
+        "MinimalistDecor",
+        "SymbolicLandscape",
+        "EarthPalette",
+        "OchreArt",
+        "Contemplative",
+        "Monoliths",
+        "GalleryWall",
+        "LuxuryArt",
+        "InvestmentArt",
+        "Metaphysical",
+        "TexturedCanvas"
+      ],
+      "marketplace_title": "Maurizio Valch: 'Sin título' – Abstract Ochre Landscape with Incised Forms",
+      "marketplace_short_description": "A profound abstract painting by Maurizio Valch, featuring expansive ochre fields, subtle incisions, and monolithic forms evoking silent territories and inner landscapes.",
+      "marketplace_long_description": "This powerful vertical abstract painting by Maurizio Valch, 'Sin título,' presents a masterful exploration of color fields, structural divisions, and symbolic forms. Dominant ochre and golden yellow hues create a warm, earthy palette, while a distinct horizon line and delicate incised textures define an expansive, contemplative landscape. Small, geometric 'monoliths' punctuate the composition, serving as signs of presence and transition. The artwork's quiet intensity, deep contemplation, and austere elegance make it a significant piece for contemporary art collectors, luxury residential projects, and sophisticated commercial spaces. Crafted with layers of acrylic on canvas, the visible texture and meticulous composition invite prolonged engagement, embodying silence, depth, and inner order.",
+      "pinterest_boards": [
+        "Abstract Art for Modern Homes",
+        "Contemporary Landscape Paintings",
+        "Minimalist Decor Inspiration",
+        "Art Collection Investment",
+        "Luxury Interior Design with Art"
+      ]
+    }
+  },
+  "recommended_number_of_contexts": "8",
+  "contextual_proposals": [
+    {
+      "context_name": "Gallery of Quiet Resonance",
+      "context_role": "Showcase artwork in a pristine, focused museum-like setting.",
+      "space_type": "Contemporary art gallery",
+      "atmosphere": "Serene, minimalist, academic, focused",
+      "materials": [
+        "white plaster walls",
+        "polished light gray concrete floor",
+        "minimalist natural wood bench"
+      ],
+      "lighting": "Soft, even gallery lighting, overhead spotlights highlighting texture",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The front view offers maximum fidelity, directly showcasing the artwork's precise composition, subtle textures, and color fields. It emphasizes the structural integrity and contemplative silence, making the artwork the undeniable focal point in a clean, professional gallery setting, ideal for commercial clarity and formal presentation.",
+      "human_presence": "none",
+      "curatorial_reason": "Positions the artwork as a significant piece of contemporary abstraction, demanding focused attention and highlighting its formal qualities and structural integrity.",
+      "commercial_reason": "Presents the artwork in a highly professional and collectible context, validating its artistic merit and appealing to institutional buyers and serious collectors.",
+      "mockup_prompt": "Contemporary art gallery interior, pristine white walls, polished light gray concrete floor, minimalist wood bench, soft overhead gallery lighting, artwork 'Sin título' by Maurizio Valch, front view, close-up view, masterpiece quality, natural light, no harsh shadows, subtle textures on the wall, bright and clean, inviting atmosphere.",
+      "negative_prompt": "clutter, distracting elements, poor lighting, dirty walls, generic furniture, blurry, low resolution, bad composition, frame.",
+      "pinterest_marketing": {
+        "board_suggestion": "Contemporary Art Gallery Aesthetics",
+        "pin_title": "Maurizio Valch: Silent Structures in Gallery Setting",
+        "pin_description": "Experience the profound calm of Maurizio Valch's 'Sin título' in a pristine gallery. Abstract fields and incised forms evoke contemplation, perfect for collectors.",
+        "alt_text": "Abstract painting by Maurizio Valch in a contemporary art gallery setting.",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "abstract art",
+          "contemporary gallery",
+          "minimalist painting",
+          "structural art",
+          "art exhibition"
+        ],
+        "hashtags": [
+          "#MaurizioValch",
+          "#AbstractArt",
+          "#ContemporaryGallery",
+          "#ArtCollector",
+          "#MinimalistPainting"
+        ]
+      }
+    },
+    {
+      "context_name": "Modernist Study in Earth Tones",
+      "context_role": "Integrate the artwork into a sophisticated, personal living space.",
+      "space_type": "Modernist living room or study",
+      "atmosphere": "Refined, contemplative, warm, intellectual",
+      "materials": [
+        "light oak wood flooring",
+        "off-white painted walls",
+        "linen upholstery",
+        "dark metal accents"
+      ],
+      "lighting": "Soft natural light from a large window to the left, ambient lamp light",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view adds spatial depth and architectural integration, allowing a subtle glimpse of the refined interior to frame the artwork. This perspective showcases the artwork's ability to be a central, contemplative element within a sophisticated home, enhanced by the optional human figure for scale and a sense of lived-in elegance.",
+      "human_presence": "optional standing male figure 1.80m",
+      "curatorial_reason": "Highlights the artwork's capacity to create a deeply personal and reflective atmosphere within a private, curated setting, emphasizing its profound engagement rather than mere decoration.",
+      "commercial_reason": "Shows the artwork's suitability for high-end residential interiors, directly appealing to discerning collectors who integrate art seamlessly into their daily lives and surroundings.",
+      "mockup_prompt": "Modernist living room and study, large minimalist windows on the left allowing soft natural light, light oak wooden floor, off-white textured walls, a classic mid-century modern armchair in linen fabric, a subtle dark metal floor lamp, artwork 'Sin título' by Maurizio Valch centered on the main wall, three-quarter left view, close-up view, 1.80m standing male figure observing the art, sophisticated, warm, contemplative, clean lines, high-quality materials.",
+      "negative_prompt": "clutter, generic furniture, bright colors, harsh shadows, poor lighting, low resolution, bad composition, frame, ugly people.",
+      "pinterest_marketing": {
+        "board_suggestion": "Art in Modern Interiors",
+        "pin_title": "Maurizio Valch: Earth Tones in a Modernist Home",
+        "pin_description": "Maurizio Valch's 'Sin título' anchors a refined modernist study, blending abstract forms with warm, natural materials. Perfect for contemporary collectors.",
+        "alt_text": "Abstract painting by Maurizio Valch in a modernist living room with a man standing.",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "modernist interior",
+          "luxury home decor",
+          "abstract art",
+          "earth tones",
+          "art collector's home"
+        ],
+        "hashtags": [
+          "#MaurizioValch",
+          "#ModernDesign",
+          "#LuxuryInteriors",
+          "#AbstractPainting",
+          "#HomeDecor",
+          "#ArtInContext"
+        ]
+      }
+    },
+    {
+      "context_name": "Threshold of Quiet Passage",
+      "context_role": "Demonstrate the artwork's ability to define an architectural transitional space.",
+      "space_type": "Minimalist architectural hallway",
+      "atmosphere": "Serene, guiding, ordered, silent",
+      "materials": [
+        "smooth light gray plaster walls",
+        "light natural stone flooring",
+        "recessed lighting"
+      ],
+      "lighting": "Even, recessed lighting, creating subtle shadows that enhance depth",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The front view maximizes the artwork's direct visual impact and structural presence within a clean, linear architectural setting. This perspective positions the artwork as a powerful focal point in a space of movement, ensuring clear readability and emphasizing its commanding, yet silent, presence.",
+      "human_presence": "none",
+      "curatorial_reason": "Showcases the artwork's power to transform a functional space into a contemplative journey, aligning with its structural and symbolic qualities.",
+      "commercial_reason": "Appeals directly to architects and designers seeking impactful, non-decorative art for high-end residential or commercial projects where thoughtful transitions are key.",
+      "mockup_prompt": "Minimalist architectural hallway, long clean lines, smooth light gray plaster walls, light natural stone flooring, discreet recessed ceiling lights, artwork 'Sin título' by Maurizio Valch centered on a prominent wall, front view, close-up view, subtle play of light and shadow, quiet and refined atmosphere, high design, gallery-like feel.",
+      "negative_prompt": "clutter, wires, generic corridor, harsh lighting, poor quality materials, low resolution, bad composition, frame.",
+      "pinterest_marketing": {
+        "board_suggestion": "Architectural Art Integration",
+        "pin_title": "Maurizio Valch: Art in Minimalist Hallways",
+        "pin_description": "Discover how Maurizio Valch's 'Sin título' brings profound presence to minimalist hallways, creating a moment of quiet contemplation and structural elegance.",
+        "alt_text": "Abstract painting by Maurizio Valch in a minimalist architectural hallway.",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "architectural art",
+          "minimalist hallway",
+          "contemporary design",
+          "art for architects",
+          "sophisticated interiors"
+        ],
+        "hashtags": [
+          "#MaurizioValch",
+          "#ArchitecturalDesign",
+          "#MinimalistArt",
+          "#HallwayDecor",
+          "#ContemporaryArt"
+        ]
+      }
+    },
+    {
+      "context_name": "Private Reflection Room",
+      "context_role": "Present the artwork in an intimate, curated collector's environment.",
+      "space_type": "Collector's private viewing room",
+      "atmosphere": "Exclusive, intimate, refined, rich",
+      "materials": [
+        "dark walnut wood paneling",
+        "deep pile rug",
+        "subtle brass accents"
+      ],
+      "lighting": "Focused spotlight on the artwork, ambient low lighting in the room",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter right view adds an element of exclusivity and intimacy, drawing the viewer into a personal discovery of the artwork within a luxurious yet contemplative setting. The focused lighting enhances the texture and depth of the painting, allowing the human figure to provide a sense of scale and engagement.",
+      "human_presence": "optional standing female figure 1.55m",
+      "curatorial_reason": "Emphasizes the artwork's value as a private collection piece, appreciated for its depth, subtlety, and ability to foster deep, personal engagement in a quiet sanctuary.",
+      "commercial_reason": "Targets high-net-worth collectors, showcasing the artwork's appeal in a discerning, luxurious private context, suggesting its prestige and investment value.",
+      "mockup_prompt": "Exclusive collector's private viewing room, rich dark walnut wood paneling on walls, a plush deep gray rug, subtle brass decorative elements, artwork 'Sin título' by Maurizio Valch prominently displayed, focused spotlight on the artwork, low ambient room lighting, three-quarter right view, close-up view, 1.55m standing female figure admiring the art, luxurious, intimate, sophisticated, timeless design.",
+      "negative_prompt": "clutter, bright lights, generic decor, modern glass elements, poor quality materials, low resolution, bad composition, frame, ugly people.",
+      "pinterest_marketing": {
+        "board_suggestion": "Private Art Collections",
+        "pin_title": "Maurizio Valch: Art in a Collector's Sanctuary",
+        "pin_description": "Maurizio Valch's 'Sin título' commands attention in a private collector's room, a testament to discerning taste and quiet luxury.",
+        "alt_text": "Abstract painting by Maurizio Valch in a luxurious private collection room with a woman.",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "private collection",
+          "luxury art",
+          "dark interiors",
+          "sophisticated collector",
+          "art investment"
+        ],
+        "hashtags": [
+          "#MaurizioValch",
+          "#ArtCollection",
+          "#LuxuryArt",
+          "#CollectorLife",
+          "#TimelessDesign"
+        ]
+      }
+    },
+    {
+      "context_name": "Mediterranean Light and Form",
+      "context_role": "Place the artwork in a sun-drenched, natural, yet refined setting.",
+      "space_type": "Bright, airy Mediterranean villa interior",
+      "atmosphere": "Calm, warm, authentic, serene",
+      "materials": [
+        "white washed textured plaster walls",
+        "terracotta tiles",
+        "natural linen"
+      ],
+      "lighting": "Abundant natural light from large archways, soft and diffused",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The front view highlights the artwork's central presence amidst the bright, earthy tones of a Mediterranean space. This perspective allows the artwork to resonate with the interior's own palette and structural simplicity, ensuring clear visual dominance and a harmonious blend with the natural, warm environment.",
+      "human_presence": "none",
+      "curatorial_reason": "Connects the artwork's earthy palette and structural elements to natural, ancient landscapes, demonstrating its universal resonance beyond strict contemporary settings.",
+      "commercial_reason": "Appeals to buyers with properties in Mediterranean regions or those who appreciate a rustic yet refined aesthetic that values grounded, natural materials and light.",
+      "mockup_prompt": "Bright Mediterranean villa interior, white washed textured walls, warm terracotta tile floor, large open archway in the background allowing diffused natural light, minimalist built-in seating with natural linen cushions, artwork 'Sin título' by Maurizio Valch prominently displayed on a central wall, front view, close-up view, serene, authentic, sun-drenched, clean, natural materials, warm ambiance.",
+      "negative_prompt": "clutter, generic furniture, harsh direct sun, modern industrial elements, poor quality, low resolution, bad composition, frame.",
+      "pinterest_marketing": {
+        "board_suggestion": "Mediterranean Interiors Art",
+        "pin_title": "Maurizio Valch: Abstract Art in a Mediterranean Villa",
+        "pin_description": "Maurizio Valch's 'Sin título' brings a grounded, contemplative spirit to a sun-filled Mediterranean villa, complementing its natural textures and serene atmosphere.",
+        "alt_text": "Abstract painting by Maurizio Valch in a bright Mediterranean villa interior.",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "Mediterranean design",
+          "villa interiors",
+          "abstract art",
+          "terracotta",
+          "natural decor",
+          "calm aesthetic"
+        ],
+        "hashtags": [
+          "#MaurizioValch",
+          "#MediterraneanStyle",
+          "#VillaDecor",
+          "#AbstractPainting",
+          "#NaturalInteriors"
+        ]
+      }
+    },
+    {
+      "context_name": "Architect's Contemplative Space",
+      "context_role": "Show the artwork inspiring creativity in a professional design environment.",
+      "space_type": "Architect's clean, minimalist studio",
+      "atmosphere": "Industrial chic, focused, inspiring, functional",
+      "materials": [
+        "raw concrete walls",
+        "polished concrete floor",
+        "steel",
+        "minimalist wood furniture"
+      ],
+      "lighting": "Bright, even overhead studio lighting, some natural light",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view subtly includes elements of an architect's studio, framing the artwork within a professional context. This perspective reinforces the artwork's structural and compositional strength, highlighting its potential to inspire and resonate with a design-oriented audience while maintaining its visual dominance.",
+      "human_presence": "none",
+      "curatorial_reason": "Emphasizes the artwork's structural integrity and its ability to resonate with architectural principles, positioning it as a source of intellectual and aesthetic inspiration.",
+      "commercial_reason": "Specifically targets architects and interior designers as direct buyers or specifiers for their projects, showcasing the artwork's fit within sophisticated professional environments.",
+      "mockup_prompt": "Architect's minimalist studio, raw concrete walls, polished concrete floor, large minimalist drafting table with a few architectural models, a sleek steel chair, bright even overhead studio lighting, artwork 'Sin título' by Maurizio Valch on the main wall, three-quarter left view, close-up view, focused, inspiring, clean, functional, industrial chic aesthetic.",
+      "negative_prompt": "clutter, messy desk, generic office, distracting elements, poor lighting, low resolution, bad composition, frame.",
+      "pinterest_marketing": {
+        "board_suggestion": "Art for Design Studios",
+        "pin_title": "Maurizio Valch: Inspiration in an Architect's Studio",
+        "pin_description": "Maurizio Valch's 'Sin título' in an architect's studio, offering structural depth and contemplative silence to a creative space, inspiring modern design.",
+        "alt_text": "Abstract painting by Maurizio Valch in a modern architect's studio.",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "architect studio",
+          "industrial interior",
+          "structural art",
+          "design inspiration",
+          "concrete decor"
+        ],
+        "hashtags": [
+          "#MaurizioValch",
+          "#ArchitecturalStudio",
+          "#IndustrialChic",
+          "#DesignArt",
+          "#ContemporaryArchitecture"
+        ]
+      }
+    },
+    {
+      "context_name": "Parisian Salon of Subtle Forms",
+      "context_role": "Integrate the artwork into a classic yet updated European luxury setting.",
+      "space_type": "Elegant townhouse salon",
+      "atmosphere": "Sophisticated, elegant, timeless, intimate luxury",
+      "materials": [
+        "off-white painted walls with subtle decorative moldings",
+        "dark herringbone parquet flooring",
+        "velvet upholstery (minimal)"
+      ],
+      "lighting": "Soft ambient light, a classic wall sconce adding warmth",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The direct front view positions the artwork as the central, modern focal point within a room that blends classic elegance with contemporary taste. This ensures the artwork's visual dominance and highlights its ability to integrate seamlessly into a refined, luxurious setting, offering a clear commercial presentation.",
+      "human_presence": "none",
+      "curatorial_reason": "Demonstrates the artwork's versatility across different eras of design, holding its own with timeless elegance and introducing a contemporary, contemplative dimension to a historic space.",
+      "commercial_reason": "Targets buyers with sophisticated urban residences and those who appreciate a harmonious fusion of classic architectural elements and contemporary abstract art.",
+      "mockup_prompt": "Elegant Parisian townhouse salon, very tall off-white painted walls with subtle decorative moldings, rich dark herringbone parquet flooring, a discreet classic wall sconce providing warm ambient light, a plush velvet armchair (minimalist design) partly visible, artwork 'Sin título' by Maurizio Valch centered on the main wall, front view, close-up view, sophisticated, timeless, luxurious, quiet intensity, refined.",
+      "negative_prompt": "clutter, ornate gold frames, generic living room, modern furniture, poor quality, low resolution, bad composition, frame, overly decorated.",
+      "pinterest_marketing": {
+        "board_suggestion": "Luxury Townhouse Interiors",
+        "pin_title": "Maurizio Valch: Abstract Art in a Parisian Salon",
+        "pin_description": "Maurizio Valch's 'Sin título' brings a contemporary, quiet intensity to a luxurious Parisian townhouse salon, blending seamlessly with classic elegance.",
+        "alt_text": "Abstract painting by Maurizio Valch in an elegant Parisian townhouse salon.",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "townhouse interior",
+          "Parisian style",
+          "luxury salon",
+          "contemporary classic",
+          "elegant decor"
+        ],
+        "hashtags": [
+          "#MaurizioValch",
+          "#TownhouseDesign",
+          "#LuxuryInteriors",
+          "#ParisianChic",
+          "#AbstractPainting"
+        ]
+      }
+    },
+    {
+      "context_name": "Boutique Hotel Silent Narrative",
+      "context_role": "Showcase the artwork's public appeal in a high-end hospitality setting.",
+      "space_type": "Modern boutique hotel lobby",
+      "atmosphere": "Chic, welcoming, exclusive, artistic",
+      "materials": [
+        "dark textured wall paneling",
+        "light marble flooring",
+        "minimalist custom furniture"
+      ],
+      "lighting": "Strategically placed accent lighting on the artwork, general diffused ambient light",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter right view subtly includes elements of the lobby, presenting the artwork as a key design feature that elevates the guest experience. This perspective demonstrates its commercial and aesthetic value in a public, high-end hospitality setting, while maintaining the artwork's visual prominence.",
+      "human_presence": "none",
+      "curatorial_reason": "Demonstrates the artwork's capacity to create a unique and memorable identity for a high-end public space, infusing it with a contemplative and artistic narrative.",
+      "commercial_reason": "Targets hotel groups, interior designers for hospitality projects, and corporate collections seeking distinctive art pieces to define luxury guest experiences.",
+      "mockup_prompt": "Chic modern boutique hotel lobby, dark textured wall paneling, polished light marble flooring, sleek custom-designed lounge chair in a neutral tone, strategic accent lighting on the artwork, diffused ambient light, artwork 'Sin título' by Maurizio Valch prominently displayed, three-quarter right view, close-up view, exclusive, artistic, welcoming, high-end hospitality design.",
+      "negative_prompt": "clutter, generic hotel lobby, bright harsh lights, poor quality furniture, low resolution, bad composition, frame, busy patterns.",
+      "pinterest_marketing": {
+        "board_suggestion": "Art in Hospitality Design",
+        "pin_title": "Maurizio Valch: Elevating Boutique Hotel Interiors",
+        "pin_description": "Maurizio Valch's 'Sin título' creates a compelling focal point in a modern boutique hotel lobby, offering guests a moment of quiet contemplation and refined aesthetic.",
+        "alt_text": "Abstract painting by Maurizio Valch in a chic boutique hotel lobby.",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "boutique hotel art",
+          "hospitality design",
+          "modern lobby",
+          "contract art",
+          "luxury hotel decor"
+        ],
+        "hashtags": [
+          "#MaurizioValch",
+          "#HotelDesign",
+          "#HospitalityArt",
+          "#LuxuryLobby",
+          "#ContemporaryArt"
+        ]
+      }
+    }
+  ]
+}
+```

@@ -13,6 +13,7 @@ import random
 from google import genai
 from google.genai import types
 from google.genai.errors import ClientError
+from google.auth.exceptions import TransportError
 from PIL import Image
 
 def get_client():
@@ -47,7 +48,28 @@ def call_with_retry(client_call_fn, max_retries=5):
                 last_error = e
                 continue
             raise e
+        except TransportError as e:
+            if attempt < max_retries - 1:
+                sleep_time = (2 ** attempt) * 5 + random.uniform(1, 5)
+                print(f"Google auth transport error. Retrying in {sleep_time:.2f} seconds (attempt {attempt + 1}/{max_retries})...", file=sys.stderr)
+                time.sleep(sleep_time)
+                last_error = e
+                continue
+            raise e
         except Exception as e:
+            message = str(e).lower()
+            is_transient_network = (
+                "winerror 10013" in message
+                or "failed to establish a new connection" in message
+                or "max retries exceeded" in message
+                or "transporterror" in message
+            )
+            if is_transient_network and attempt < max_retries - 1:
+                sleep_time = (2 ** attempt) * 5 + random.uniform(1, 5)
+                print(f"Transient network error. Retrying in {sleep_time:.2f} seconds (attempt {attempt + 1}/{max_retries})...", file=sys.stderr)
+                time.sleep(sleep_time)
+                last_error = e
+                continue
             raise e
     if last_error:
         raise last_error
@@ -71,6 +93,16 @@ def image_model_fallback_chain(selected_model, model_map):
             chain.append(model)
 
     return chain
+
+def prompt_float_control(prompt, key, default):
+    import re
+    match = re.search(rf"^\s*{re.escape(key)}\s*=\s*([0-9]+(?:\.[0-9]+)?)\s*$", prompt, re.IGNORECASE | re.MULTILINE)
+    if not match:
+        return default
+    try:
+        return float(match.group(1))
+    except Exception:
+        return default
 
 def handle_generate_text(args):
     client = get_client()
@@ -150,6 +182,8 @@ def handle_generate_image(args):
     if not args.output:
         raise ValueError("Must provide --output path for image generation.")
         
+    is_mockup = "mockup" in args.prompt.lower()
+
     # Check if the model is a Gemini multimodal image generation model
     model_name = args.model if args.model else ""
     model_lower = model_name.lower()
@@ -157,7 +191,6 @@ def handle_generate_image(args):
     
     pil_img = None
     mask_bytes = None
-    is_mockup = "mockup" in args.prompt.lower()
     
     if args.image:
         base_image_path = args.image[0]
@@ -211,7 +244,7 @@ def handle_generate_image(args):
             import re
             match = re.search(r"(\d+(?:\.\d+)?)\s*cm\s+wide\s*x\s*(\d+(?:\.\d+)?)\s*cm\s+high", args.prompt)
             
-            fill_ratio = 0.35
+            fill_ratio = prompt_float_control(args.prompt, "mockup_fill_default", 0.35)
             if match:
                 try:
                     width_cm = float(match.group(1))
@@ -219,17 +252,17 @@ def handle_generate_image(args):
                     long_side_cm = max(width_cm, height_cm)
                     
                     if long_side_cm <= 45:
-                        fill_ratio = 0.18
+                        fill_ratio = prompt_float_control(args.prompt, "mockup_fill_long_side_le_45", 0.18)
                     elif long_side_cm <= 80:
-                        fill_ratio = 0.25
+                        fill_ratio = prompt_float_control(args.prompt, "mockup_fill_long_side_le_80", 0.25)
                     elif long_side_cm <= 120:
-                        fill_ratio = 0.32
+                        fill_ratio = prompt_float_control(args.prompt, "mockup_fill_long_side_le_120", 0.32)
                     elif long_side_cm <= 160:
-                        fill_ratio = 0.38
+                        fill_ratio = prompt_float_control(args.prompt, "mockup_fill_long_side_le_160", 0.38)
                     elif long_side_cm <= 220:
-                        fill_ratio = 0.48
+                        fill_ratio = prompt_float_control(args.prompt, "mockup_fill_long_side_le_220", 0.48)
                     else:
-                        fill_ratio = 0.58
+                        fill_ratio = prompt_float_control(args.prompt, "mockup_fill_long_side_gt_220", 0.58)
                 except Exception:
                     pass
             
@@ -244,7 +277,7 @@ def handle_generate_image(args):
                 except Exception as e:
                     print(f"[WARN] Failed to apply scale correction: {e}", file=sys.stderr)
             
-            # Apply 50% reduction (multiplier 0.50) if a human scale figure is present to resolve the remaining 20-25% size gap
+            # Keep human scale useful without turning the mockup into a distant room shot.
             prompt_lower = args.prompt.lower()
             # Punto #11: detección robusta de figura humana con múltiples keywords
             HUMAN_PRESENCE_KEYWORDS = [
@@ -256,11 +289,18 @@ def handle_generate_image(args):
                 "discreet standing", "standing person",
             ]
             has_human = any(kw in prompt_lower for kw in HUMAN_PRESENCE_KEYWORDS)
+            human_line = re.search(r"^\s*-\s*Human Figure:\s*(.+?)\s*$", args.prompt, re.IGNORECASE | re.MULTILINE)
+            human_text = human_line.group(1).lower() if human_line else ""
+            has_human = human_text != "" and "do not include" not in human_text and "none" not in human_text
             if has_human:
-                fill_ratio *= 0.50
+                fill_ratio *= prompt_float_control(args.prompt, "mockup_human_scale_multiplier", 0.50)
                 
-            # Keep fill_ratio within realistic limits (5% to 95%) to avoid layout breakage
-            fill_ratio = max(0.05, min(0.95, fill_ratio))
+            # Internal safety limits keep the pre-composed reference valid even when ADMIN leaves renderer fields empty.
+            fill_min = prompt_float_control(args.prompt, "mockup_fill_min", 0.05)
+            fill_max = prompt_float_control(args.prompt, "mockup_fill_max", 0.95)
+            if fill_min > fill_max:
+                fill_min, fill_max = fill_max, fill_min
+            fill_ratio = max(fill_min, min(fill_max, fill_ratio))
             
             max_art_dim = int(canvas_size * fill_ratio)
             
@@ -304,6 +344,7 @@ def handle_generate_image(args):
             # Append critical harmonization directives to the prompt
             args.prompt += (
                 "\n\nHARMONIZATION AND INTEGRATION DIRECTIVES:\n"
+                "- Keep the artwork surface itself unchanged. Do not repaint, reinterpret, alter, crop, mirror, rotate, recolor, simplify, extend, or replace the artwork.\n"
                 "- The newly generated background room/gallery must harmonize beautifully with the artwork's color palette, tone, style, and mood.\n"
                 "- Render realistic lighting on the wall and the artwork boundaries, matching the natural light sources in the room.\n"
                 "- Add subtle, soft contact shadows and realistic depth at the edges where the artwork meets the wall.\n"
@@ -496,7 +537,7 @@ def handle_generate_image(args):
         
     # Save the first generated image to the output path
     image_bytes = response.generated_images[0].image.image_bytes
-    
+
     # Create parent directories if they don't exist
     out_dir = os.path.dirname(args.output)
     if out_dir and not os.path.exists(out_dir):

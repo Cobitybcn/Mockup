@@ -1241,7 +1241,7 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                 <div class="topbar-actions">
                     <?php if ($rootFile): ?>
                         <a class="button-link" href="form2.php?image=<?= rawurlencode($rootFile) ?>">Curatorial Direction</a>
-                        <a class="button-link secondary" href="analyze.php?image=<?= rawurlencode($rootFile) ?>&redirect=1">Recalculate Analysis</a>
+                        <a class="button-link secondary" href="analyze_wait.php?image=<?= rawurlencode($rootFile) ?>">Recalculate Analysis</a>
                         <a class="button-link secondary" href="<?= h(media_url($rootFile, true)) ?>">Download Root</a>
                     <?php endif; ?>
                 </div>
@@ -1403,36 +1403,6 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                                 <span style="line-height: 1.4;"><strong>Long-tail (Hyphenated):</strong> <?= h(implode(', ', $hyphenatedLongTails)) ?></span>
                                 <button class="copy-button secondary" type="button" data-copy="<?= h(implode(', ', $hyphenatedLongTails)) ?>" aria-label="Copy Hyphenated Long-tail Keywords" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
                             </div>
-                        </div>
-                    </section>
-
-                    <section class="panel">
-                        <div class="section-heading">
-                            <h2>Generated Publishing Metadata</h2>
-                            <p>Main, short, marketplace, SEO and accessibility copy</p>
-                        </div>
-                        <div class="publishing-grid" style="gap: 16px;">
-                            <article class="copy-card" style="position: relative;">
-                                <button class="copy-button secondary" type="button" data-copy="<?= h($package['description']) ?>" aria-label="Copy Main Description" style="position: absolute; top: 12px; right: 12px; padding: 6px 8px; width: auto; margin: 0;"><?= $copyIconSvg ?></button>
-                                <h3 style="font-size: 15px; margin-bottom: 8px;">Main Artwork Description</h3>
-                                <p class="copy-block" style="font-size: 13px; padding-right: 34px;"><?= h($package['description']) ?></p>
-                            </article>
-                            <article class="copy-card" style="position: relative;">
-                                <button class="copy-button secondary" type="button" data-copy="<?= h($package['short_description']) ?>" aria-label="Copy Short Description" style="position: absolute; top: 12px; right: 12px; padding: 6px 8px; width: auto; margin: 0;"><?= $copyIconSvg ?></button>
-                                <h3 style="font-size: 15px; margin-bottom: 8px;">Short Description</h3>
-                                <p class="copy-block" style="font-size: 13px; padding-right: 34px;"><?= h($package['short_description']) ?></p>
-                            </article>
-                            <article class="copy-card" style="position: relative;">
-                                <button class="copy-button secondary" type="button" data-copy="<?= h($package['marketplace']['description']) ?>" aria-label="Copy Marketplace Description" style="position: absolute; top: 12px; right: 12px; padding: 6px 8px; width: auto; margin: 0;"><?= $copyIconSvg ?></button>
-                                <h3 style="font-size: 15px; margin-bottom: 8px;">Marketplace Description</h3>
-                                <p class="copy-block" style="font-size: 13px; padding-right: 34px;"><?= h($package['marketplace']['description']) ?></p>
-                            </article>
-                        </div>
-                        <div class="metadata-grid" style="margin-top: 14px;">
-                            <div class="spec-card"><strong>Pinterest Title</strong><?= h($package['pinterest_pins'][0]['title'] ?? '') ?></div>
-                            <div class="spec-card"><strong>Instagram Caption</strong><?= h($package['social']['Instagram'] ?? '') ?></div>
-                            <div class="spec-card"><strong>Alt Text</strong><?= h($package['alt_texts'][0] ?? '') ?></div>
-                            <div class="spec-card"><strong>SEO Slug</strong><?= h($package['seo_slug']) ?></div>
                         </div>
                     </section>
 
