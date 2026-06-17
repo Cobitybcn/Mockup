@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 class MockupBatchQueue
 {
-    public const INITIAL_BATCH_LIMIT = 8;
+    public const INITIAL_BATCH_LIMIT = 5; // Aumentado de 3 a 5 para mejor paralelismo
 
     public static function enqueueInitialBatch(int $artworkId, int $userId, string $rootFile, int $limit = self::INITIAL_BATCH_LIMIT): int
     {
@@ -74,6 +74,71 @@ class MockupBatchQueue
         }
 
         return $created;
+    }
+
+    /**
+     * Pre-claim all queued jobs for an artwork in a single transaction.
+     * Returns an array of claimed job IDs. Each ID is then passed to a
+     * dedicated worker, eliminating competition between workers.
+     */
+    public static function claimBatch(int $artworkId, int $limit): array
+    {
+        return Database::withBusyRetry(function () use ($artworkId, $limit): array {
+            $pdo = Database::connection();
+            self::requeueStaleProcessing($artworkId);
+            Database::beginWriteTransaction($pdo);
+
+            try {
+                $stmt = $pdo->prepare('
+                    SELECT id FROM mockup_generation_jobs
+                    WHERE artwork_id = :artwork_id AND status = "queued"
+                    ORDER BY id ASC
+                    LIMIT :limit
+                ');
+                $stmt->bindValue(':artwork_id', $artworkId, PDO::PARAM_INT);
+                $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+                $stmt->execute();
+                $rows = $stmt->fetchAll();
+
+                $now = date('c');
+                $claimedIds = [];
+
+                foreach ($rows as $row) {
+                    $jobId = (int)$row['id'];
+                    $update = $pdo->prepare('
+                        UPDATE mockup_generation_jobs
+                        SET status = "processing", attempts = attempts + 1, error = NULL, updated_at = :updated_at
+                        WHERE id = :id AND status = "queued"
+                    ');
+                    $update->execute(['updated_at' => $now, 'id' => $jobId]);
+                    if ($update->rowCount() > 0) {
+                        $claimedIds[] = $jobId;
+                    }
+                }
+
+                $pdo->exec('COMMIT');
+                return $claimedIds;
+            } catch (Throwable $e) {
+                $pdo->exec('ROLLBACK');
+                throw $e;
+            }
+        }, 18);
+    }
+
+    /**
+     * Claim a specific job by ID (already marked "processing" by claimBatch).
+     * Fetches full job data for a pre-assigned worker.
+     */
+    public static function claimById(int $jobId): ?array
+    {
+        $stmt = Database::connection()->prepare('
+            SELECT * FROM mockup_generation_jobs
+            WHERE id = :id AND status = "processing"
+            LIMIT 1
+        ');
+        $stmt->execute(['id' => $jobId]);
+        $job = $stmt->fetch();
+        return $job ?: null;
     }
 
     public static function claimNext(?int $artworkId = null): ?array

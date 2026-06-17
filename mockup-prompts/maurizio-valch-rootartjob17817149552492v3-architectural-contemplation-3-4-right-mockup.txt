@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Architectural Contemplation
+- Purpose: highlight the artwork's structural qualities within a clean, modern architectural setting
+- Scene Description: A modern architectural hallway or an open-plan living area with clean, minimalist, contemplative, serene atmosphere. Materials: smooth, light grey plaster walls, light oak flooring, large minimalist window (out of frame)
+- Lighting: bright, natural diffused daylight, creating soft shadows
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The three-quarter right view offers a dynamic perspective that emphasizes the artwork's verticality and interaction with strong, clean architectural lines. The 'close-up view' maintains artwork dominance while integrating it seamlessly into the minimalist environment. No human figure supports the serene, contemplative mood.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A modern architectural interior, featuring clean lines, light grey plaster walls, and a warm, natural light oak floor. Diffused natural daylight illuminates the space, creating soft, subtle shadows. The vertical abstract artwork by Maurizio Valch, 'Crimson Architectonics', is centrally placed on a prominent wall. The camera is positioned three-quarter right, capturing the interplay of the artwork with the room's elegant geometry, close-up view. No human figures.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+Distorted, dark, busy, traditional, heavy furniture, ornate, text, frames, blurry, wide room view, distant shot.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

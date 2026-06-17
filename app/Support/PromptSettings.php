@@ -151,7 +151,7 @@ TEXT;
 
     public static function mockupContextCount(): int
     {
-        return self::normalizeContextCount(self::all()['mockup_context_count'] ?? '10');
+        return self::normalizeContextCount(self::all()['mockup_context_count'] ?? '8');
     }
 
     public static function rootArtworkCount(): int
@@ -174,7 +174,7 @@ TEXT;
             'mockup_camera_rules' => '',
             'mockup_rendering_rules' => '',
             'mockup_final_request' => '',
-            'mockup_context_count' => '10',
+            'mockup_context_count' => '6',
             'root_artwork_count' => '3',
         ];
     }
@@ -350,30 +350,32 @@ Return exactly this JSON schema:
     "rhythm": "",
     "surface": "",
     "spatial_presence": "",
-    "artwork_function": "",
-    "suggested_audience": [],
-    "commercial_positioning": "",
     "one_line_curatorial_read": "",
     "style_summary": "",
-    "seasonal_strategy": {
-      "primary_season": "neutral"
-    },
-    "audience_profile": {
-      "primary": ""
-    },
     "publishing_metadata": {
-      "suggested_titles": {
-        "poetic": "A poetic, evocative title",
-        "descriptive": "A descriptive, structure-focused title",
-        "marketplace_friendly": "A clear, commercial-friendly title"
-      },
-      "descriptions": {
-        "poetic_focus": "A deep curatorial description (100-150 words) that starts with the emotional or conceptual aspect, following the artist preferred tone.",
-        "formal_focus": "A structured description (100-150 words) focusing on color, line weight, composition, and physical textures.",
-        "commercial_focus": "A commercial listing description (100-150 words) focusing on collectibility, target market fit, and physical spaces where it belongs."
-      },
-      "seo_keywords": ["keyword1", "keyword2"],
-      "seo_tags": ["tag1", "tag2"]
+      "suggested_titles": [
+        {
+          "title": "A premium, rich, non-generic title 1 matching the artist statement",
+          "subtitle": "An artistic and meaningful subtitle 1",
+          "description": "A rich, premium, artistic curatorial description (100-150 words) linked to title 1."
+        },
+        {
+          "title": "A premium, rich, non-generic title 2 matching the artist statement",
+          "subtitle": "An artistic and meaningful subtitle 2",
+          "description": "A rich, premium, artistic curatorial description (100-150 words) linked to title 2."
+        },
+        {
+          "title": "A premium, rich, non-generic title 3 matching the artist statement",
+          "subtitle": "An artistic and meaningful subtitle 3",
+          "description": "A rich, premium, artistic curatorial description (100-150 words) linked to title 3."
+        }
+      ],
+      "keywords": ["exactly 15 style-relevant keywords"],
+      "long_tail_keywords": ["exactly 15 long tail keywords containing multiple words"],
+      "root_image_metadata": {
+        "alt_text": "Detailed alt text describing the clean root painting image, flat, centered, detailing surface, colors, and composition.",
+        "caption": "Sober caption for the root image containing title, dimensions, medium and artist name."
+      }
     }
   },
   "recommended_number_of_contexts": {context_count},
@@ -389,11 +391,9 @@ Return exactly this JSON schema:
       "human_presence": "none",
       "curatorial_reason": "The artwork has a silent architectural presence and needs a clean mineral space that reinforces its contemplative tension.",
       "commercial_reason": "This context positions the artwork for collectors, architects and interior designers looking for a strong but sober contemporary piece.",
-      "pinterest_marketing": {
-        "board_suggestion": "Modern Minimalist Painting",
-        "pin_title": "SEO-friendly pin title representing this mockup setting and the painting",
-        "pin_description": "SEO pin description with descriptive elements, alt pointers, and hashtags",
-        "alt_text": "Detailed alt text describing the painting hung on the wall in this mockup room layout"
+      "mockup_metadata": {
+        "alt_text": "Detailed alt text describing the painting hung on the wall in this mockup room layout, showing surrounding scale and room details.",
+        "caption": "A clean caption for this mockup showcasing the artwork title in this specific setting."
       }
     }
   ]
@@ -463,7 +463,7 @@ mockup_fill_min=0.05
 mockup_fill_max=0.95
 TEXT,
             'mockup_final_request' => '',
-            'mockup_context_count' => '10',
+            'mockup_context_count' => '6',
             'root_artwork_count' => '3',
         ];
     }

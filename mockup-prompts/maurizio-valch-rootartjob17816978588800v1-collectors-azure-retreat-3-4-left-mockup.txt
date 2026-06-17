@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 3 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Collector's Azure Retreat
+- Purpose: Highlighting its dramatic presence in a refined residential space.
+- Scene Description: A high-end residential interior with sophisticated, contemplative, inviting atmosphere. Materials: light oak flooring, textured off-white wall, minimalist dark wood furniture, subtle brass accents
+- Lighting: soft, indirect ambient light from a large window, with a focused spotlight on the artwork
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult hispanic woman, 1.55 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The three-quarter left view allows for a sense of room depth, showing the artwork prominently on a textured wall, with soft light falling from the right. This angle captures the verticality of the piece while subtly hinting at the surrounding luxurious space. The close-up ensures the artwork's details and scale remain dominant and clearly readable.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+Close-up view, three-quarter left shot of a Maurizio Valch abstract painting, 80x120cm, 'Abyssal Structures', mounted on a textured off-white wall in a sophisticated high-end residential living room. Artwork is well-lit by a focused spotlight. In the foreground, a minimalist dark wood console table with a subtle brass decorative object. Light oak flooring. Soft, natural ambient light from a large window to the right. An optional standing female figure 1.55m subtly admiring the art.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+clutter, cheap furniture, ugly, noisy, blurry, low resolution, bad lighting, reflections, distorted art, low-end interior
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

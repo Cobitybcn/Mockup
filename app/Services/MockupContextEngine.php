@@ -395,7 +395,8 @@ class MockupContextEngine
                 'commercial_reason' => $prop['commercial_reason'] ?? '',
                 'mockup_prompt' => $mapped['mockup_prompt'] ?? ($prop['mockup_prompt'] ?? ''),
                 'negative_prompt' => $mapped['negative_prompt'] ?? ($prop['negative_prompt'] ?? ''),
-                'pinterest_marketing' => $prop['pinterest_marketing'] ?? [],
+                'mockup_metadata' => $prop['mockup_metadata'] ?? [],
+                'pinterest_marketing' => $prop['mockup_metadata'] ?? $prop['pinterest_marketing'] ?? [],
             ];
 
             $stmtContext->execute([

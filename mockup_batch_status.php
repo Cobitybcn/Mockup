@@ -60,6 +60,28 @@ foreach ($jobs as $job) {
     ];
 }
 
+$stmtContexts = $pdo->prepare('SELECT * FROM mockup_contexts WHERE artwork_id = :artwork_id ORDER BY id ASC');
+$stmtContexts->execute(['artwork_id' => (int)$artwork['id']]);
+$dbContexts = $stmtContexts->fetchAll();
+$payloadProposals = [];
+
+foreach ($dbContexts as $ctxRow) {
+    $ctxJson = json_decode((string)$ctxRow['context_json'], true);
+    $ctxJson = is_array($ctxJson) ? $ctxJson : [];
+    $payloadProposals[] = [
+        'id' => (string)$ctxRow['id'],
+        'context_name' => (string)$ctxRow['context_name'],
+        'space_type' => (string)($ctxJson['space_type'] ?? ''),
+        'atmosphere' => (string)($ctxJson['atmosphere'] ?? ''),
+        'materials' => (array)($ctxJson['materials'] ?? []),
+        'lighting' => (string)($ctxJson['lighting'] ?? ''),
+        'camera_view' => (string)($ctxJson['camera_view'] ?? ''),
+        'human_presence' => (string)($ctxJson['human_presence'] ?? 'none'),
+        'curatorial_reason' => (string)($ctxJson['curatorial_reason'] ?? ''),
+        'commercial_reason' => (string)($ctxJson['commercial_reason'] ?? ''),
+    ];
+}
+
 echo json_encode([
     'ok' => true,
     'total' => count($jobs),
@@ -68,4 +90,5 @@ echo json_encode([
     'done' => $counts['done'],
     'error' => $counts['error'],
     'jobs' => $payloadJobs,
+    'proposals' => $payloadProposals,
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

@@ -125,7 +125,7 @@ function h($v): string
                 throw new Error(data.error || 'Could not recalculate analysis.');
             }
 
-            window.location.href = 'form2.php?image=' + encodeURIComponent(image);
+            window.location.href = 'report.php?image=' + encodeURIComponent(image);
         } catch (error) {
             errorBox.style.display = 'block';
             errorBox.textContent = error.message;

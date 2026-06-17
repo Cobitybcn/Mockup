@@ -45,21 +45,52 @@ class GeminiArtworkProcessor implements ArtworkProcessorInterface
         $paths = [];
         $rootCount = PromptSettings::rootArtworkCount();
 
-        for ($i = 1; $i <= $rootCount; $i++) {
-            $b64 = $this->client->generateImage($parts, $model);
-            $imageData = base64_decode($b64);
+        $python = $this->client->getPythonExecutable();
+        $bridgeScript = __DIR__ . '/vertex_bridge.py';
+        $model = ProviderSettings::geminiImageModel();
 
-            if ($imageData === false) {
-                throw new RuntimeException('Gemini no devolvio una imagen base64 valida para la version ' . $i);
+        // Build base command for generating image
+        $baseCmd = '"' . $python . '" ' . escapeshellarg($bridgeScript) . ' generate-image';
+        // Add main file
+        $baseCmd .= ' --image ' . escapeshellarg($source);
+        // Add extra files if any
+        foreach (($status['extra_files'] ?? []) as $extraFile) {
+            $extraPath = rtrim($jobDir, '/\\') . DIRECTORY_SEPARATOR . basename((string)$extraFile);
+            if (is_file($extraPath)) {
+                $baseCmd .= ' --image ' . escapeshellarg($extraPath);
             }
+        }
+        if ($model !== '') {
+            $baseCmd .= ' --model ' . escapeshellarg($model);
+        }
 
+        $cmds = [];
+        $prompts = [];
+
+        for ($i = 1; $i <= $rootCount; $i++) {
             $outputName = 'base_artwork_gemini_' . $jobId . '_v' . $i . '.png';
             $outputPath = $resultsDir . DIRECTORY_SEPARATOR . $outputName;
-            file_put_contents($outputPath, $imageData);
-
+            
+            $cmd = $baseCmd . ' --output ' . escapeshellarg($outputPath);
+            
+            $cmds[] = $cmd;
+            $prompts[] = $prompt;
             $files[] = $outputName;
             $paths[] = $outputPath;
-            sleep(1);
+        }
+
+        // Run all commands in parallel
+        $results = $this->client->runCommandsParallel($cmds, $prompts, 150);
+
+        // Validate results
+        foreach ($results as $index => $res) {
+            $v = $index + 1;
+            if ($res['exit_code'] !== 0) {
+                throw new RuntimeException("Error al generar la version {$v} de la imagen base: " . trim($res['stderr']));
+            }
+            if (!is_file($paths[$index])) {
+                throw new RuntimeException("La version {$v} de la imagen base no fue creada por el subproceso.");
+            }
         }
 
         return [

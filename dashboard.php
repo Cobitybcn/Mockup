@@ -369,7 +369,7 @@ function dashboard_page_url(int $page, string $query): string
                                 <div class="card-actions">
                                     <a href="artwork.php?id=<?= h($artwork['id']) ?>">Details</a>
                                     <?php if (!empty($artwork['root_file'])): ?>
-                                        <a href="form2.php?image=<?= rawurlencode(basename((string)$artwork['root_file'])) ?>">Mockups</a>
+                                        <a href="report.php?image=<?= rawurlencode(basename((string)$artwork['root_file'])) ?>">Mockups</a>
                                         <a href="<?= h(download_url($artwork['root_file'])) ?>" aria-label="Download root image" title="Download">
                                             <span class="download-icon" aria-hidden="true"></span>
                                         </a>

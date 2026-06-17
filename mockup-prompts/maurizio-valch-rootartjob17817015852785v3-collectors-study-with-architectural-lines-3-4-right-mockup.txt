@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 3 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Collector's Study with Architectural Lines
+- Purpose: Present the artwork in a sophisticated private study, emphasizing its intellectual depth and harmony with structured, contemporary design.
+- Scene Description: A Private collector's study or library with modern architectural elements with Thoughtful, focused, intellectually stimulating, calm with understated elegance atmosphere. Materials: dark wood paneling or deep grey walls, minimalist desk, iconic design chair
+- Lighting: Focused, subtle downlighting on the artwork, supplemented by soft ambient light
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The three-quarter right view allows for a more dynamic composition, hinting at the architectural lines of the study while keeping the artwork paramount. The 'close-up view' focuses on the artwork's texture and detail, showing how it integrates seamlessly into a refined, intellectually-charged private space.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A large vertical abstract painting by Maurizio Valch, featuring deep blues, white lines, and orange/red forms, hanging on a dark wood-paneled wall in a private collector's study. Subtle downlighting illuminates the artwork. A minimalist design desk and an iconic chair are subtly visible in the foreground to the right. No people. Three-quarter right view, close-up view.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+Cluttered, office environment, cheap furniture, distracting objects, bright lights, generic decor, blurry, distorted, crowded, low quality.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

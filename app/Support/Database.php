@@ -125,7 +125,9 @@ class Database
         $pdo->exec('PRAGMA foreign_keys = ON');
         $pdo->exec('PRAGMA journal_mode = WAL');
         $pdo->exec('PRAGMA synchronous = NORMAL');
-        $pdo->exec('PRAGMA busy_timeout = 30000');
+        $pdo->exec('PRAGMA busy_timeout = 5000'); // Reducido de 30000ms a 5000ms (fallos rápidos)
+        $pdo->exec('PRAGMA wal_autocheckpoint = 5000'); // 5MB antes de checkpoint
+        $pdo->exec('PRAGMA cache_size = -64000'); // 64MB cache
 
         return $pdo;
     }

@@ -174,6 +174,7 @@ function assert_root_owner(string $imagePath, array $user): void
     }
 }
 
+$copyIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
 $image = $_GET['image'] ?? $_POST['image'] ?? '';
 $json = $_GET['json'] ?? $_POST['json'] ?? '';
 
@@ -964,7 +965,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
         /* Context cards grid */
         .contexts {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 20px;
             margin-top: 20px;
         }
@@ -1880,9 +1881,6 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
         <div class="contexts-area">
             <div class="contexts-header">
                 <h1>Curatorial Direction</h1>
-                <div class="subtitle">
-                    Choose the most suitable visual context to present the artwork with scale, atmosphere and intention.
-                </div>
                 
                 <?php if ($mockNotice): ?>
                     <div class="mock-warning">
@@ -1891,117 +1889,50 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                 <?php endif; ?>
             </div>
 
-            <?php
-            $classicUrl = 'form2.php?image=' . rawurlencode(basename($imagePath)) . '&classic=1';
-            $dynamicUrl = 'form2.php?image=' . rawurlencode(basename($imagePath));
-            ?>
-            <div style="margin-bottom: 24px; display: flex; gap: 16px; align-items: center;">
-                <?php if (!$useClassicMode && !empty($dbContexts)): ?>
-                    <span style="font-weight: 600; color: var(--gal-ink); font-size: 13px;">Mode: Dynamic Contexts (Beta)</span>
-                    <a href="<?= h($classicUrl) ?>" style="color: var(--gal-accent); font-size: 13px; text-decoration: underline;">Switch to Static Classic Templates</a>
-                <?php elseif ($useClassicMode && !empty($dbContexts)): ?>
-                    <span style="font-weight: 600; color: var(--gal-ink); font-size: 13px;">Mode: Static Classic Templates</span>
-                    <a href="<?= h($dynamicUrl) ?>" style="color: var(--gal-accent); font-size: 13px; text-decoration: underline;">Switch to Dynamic Contexts (Artwork-driven)</a>
-                <?php endif; ?>
-            </div>
-
             <?php if ($hasPublishing): ?>
-                <section class="publishing-panel" aria-label="Publishing metadata">
-                    <h2>Editorial & Marketplace Texts</h2>
-
+                <section class="publishing-panel" aria-label="Publishing metadata" style="margin-bottom: 30px;">
                     <?php if ($hasPublishingTitles): ?>
-                        <div class="publishing-grid">
+                        <div class="publishing-grid" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px;">
                             <?php foreach ($publishing['title_options'] as $optionIndex => $option): ?>
-                                <article class="publishing-card">
-                                    <div class="publishing-label">Option <?= h((string)($optionIndex + 1)) ?></div>
-                                    <h3><?= h($option['title']) ?></h3>
-                                    <?php if ($option['subtitle'] !== ''): ?>
-                                        <div class="pub-subtitle"><?= h($option['subtitle']) ?></div>
+                                <?php
+                                    $altTitle = $option['title'] ?? '';
+                                    $altSub = $option['subtitle'] ?? '';
+                                    $altDesc = $option['short_description'] ?? '';
+                                ?>
+                                <article class="publishing-card" style="background: var(--gal-surface); border: 1px solid var(--gal-border); border-radius: var(--gal-radius); padding: 18px; display: flex; flex-direction: column; gap: 14px;">
+                                    <div class="publishing-label" style="font-size: 11px; text-transform: uppercase; color: var(--gal-muted); font-weight: 600; letter-spacing: 0.05em;">Alternativa <?= h((string)($optionIndex + 1)) ?></div>
+                                    
+                                    <div class="field-item">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                            <strong style="font-size: 10px; text-transform: uppercase; color: var(--gal-muted); font-weight: 700; letter-spacing: 0.05em;">Título</strong>
+                                            <button class="copy-button secondary" type="button" data-copy="<?= h($altTitle) ?>" aria-label="Copy Title" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--gal-muted); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                        </div>
+                                        <div style="font-size: 16px; font-weight: 600; color: var(--gal-ink); line-height: 1.4;"><?= h($altTitle) ?></div>
+                                    </div>
+                                    
+                                    <?php if ($altSub !== ''): ?>
+                                        <div class="field-item">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                                <strong style="font-size: 10px; text-transform: uppercase; color: var(--gal-muted); font-weight: 700; letter-spacing: 0.05em;">Subtítulo</strong>
+                                                <button class="copy-button secondary" type="button" data-copy="<?= h($altSub) ?>" aria-label="Copy Subtitle" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--gal-muted); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                            </div>
+                                            <div style="font-size: 13px; color: var(--gal-accent); font-family: var(--font-serif); line-height: 1.4;"><?= h($altSub) ?></div>
+                                        </div>
                                     <?php endif; ?>
-                                    <?php if ($option['short_description'] !== ''): ?>
-                                        <p class="publishing-text"><?= h($option['short_description']) ?></p>
-                                    <?php endif; ?>
-                                    <?php if ($option['curatorial_description'] !== ''): ?>
-                                        <details>
-                                            <summary>Curatorial description</summary>
-                                            <p class="publishing-text"><?= h($option['curatorial_description']) ?></p>
-                                        </details>
-                                    <?php endif; ?>
-                                    <?php if ($option['commercial_description'] !== ''): ?>
-                                        <details>
-                                            <summary>Commercial description</summary>
-                                            <p class="publishing-text"><?= h($option['commercial_description']) ?></p>
-                                        </details>
+                                    
+                                    <?php if ($altDesc !== ''): ?>
+                                        <div class="field-item" style="margin-top: auto; padding-top: 10px; border-top: 1px dashed var(--gal-border);">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                                <strong style="font-size: 10px; text-transform: uppercase; color: var(--gal-muted); font-weight: 700; letter-spacing: 0.05em;">Descripción</strong>
+                                                <button class="copy-button secondary" type="button" data-copy="<?= h($altDesc) ?>" aria-label="Copy Description" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--gal-muted); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                            </div>
+                                            <p class="publishing-text" style="font-size: 13px; line-height: 1.5; color: var(--gal-ink); margin: 0;"><?= h($altDesc) ?></p>
+                                        </div>
                                     <?php endif; ?>
                                 </article>
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
-
-                    <div class="publishing-stack">
-                        <?php if ($hasPublishingDescriptions): ?>
-                            <details open>
-                                <summary>Public descriptions</summary>
-                                <?php foreach ($publishing['descriptions'] as $label => $text): ?>
-                                    <?php if ($text !== ''): ?>
-                                        <div class="publishing-text">
-                                            <strong><?= h(ucwords(str_replace('_', ' ', $label))) ?></strong><br>
-                                            <?= h($text) ?>
-                                        </div>
-                                    <?php endif; ?>
-                                <?php endforeach; ?>
-                            </details>
-                        <?php endif; ?>
-
-                        <?php if ($hasMarketplace): ?>
-                            <details>
-                                <summary>Marketplace listing</summary>
-                                <?php if ($publishing['marketplace']['title'] !== ''): ?>
-                                    <div class="publishing-text"><strong>Title</strong><br><?= h($publishing['marketplace']['title']) ?></div>
-                                <?php endif; ?>
-                                <?php if ($publishing['marketplace']['short_description'] !== ''): ?>
-                                    <div class="publishing-text"><strong>Short description</strong><br><?= h($publishing['marketplace']['short_description']) ?></div>
-                                <?php endif; ?>
-                                <?php if ($publishing['marketplace']['long_description'] !== ''): ?>
-                                    <div class="publishing-text"><strong>Long description</strong><br><?= h($publishing['marketplace']['long_description']) ?></div>
-                                <?php endif; ?>
-                            </details>
-                        <?php endif; ?>
-
-                        <?php if ($hasCatawiki): ?>
-                            <details>
-                                <summary>Catawiki listing</summary>
-                                <?php foreach (['recommended_title' => 'Recommended title', 'subtitle' => 'Subtitle', 'short_description' => 'Short description', 'long_description' => 'Long description', 'technical_details' => 'Technical details', 'condition_statement' => 'Condition', 'shipping_statement' => 'Shipping'] as $field => $label): ?>
-                                    <?php if (($publishing['catawiki'][$field] ?? '') !== ''): ?>
-                                        <div class="publishing-text"><strong><?= h($label) ?></strong><br><?= h($publishing['catawiki'][$field]) ?></div>
-                                    <?php endif; ?>
-                                <?php endforeach; ?>
-                                <?php if (!empty($publishing['catawiki']['alternative_titles'])): ?>
-                                    <div class="publishing-tags">
-                                        <?php foreach ($publishing['catawiki']['alternative_titles'] as $tag): ?>
-                                            <span><?= h($tag) ?></span>
-                                        <?php endforeach; ?>
-                                    </div>
-                                <?php endif; ?>
-                            </details>
-                        <?php endif; ?>
-
-                        <?php if ($hasSeo): ?>
-                            <details>
-                                <summary>SEO & Pinterest boards</summary>
-                                <?php foreach ([['SEO Keywords', $publishing['seo_keywords']], ['SEO Tags', $publishing['seo_tags']], ['Pinterest Boards', $publishing['pinterest_boards']]] as $tagGroup): ?>
-                                    <?php if (!empty($tagGroup[1])): ?>
-                                        <div class="publishing-label"><?= h($tagGroup[0]) ?></div>
-                                        <div class="publishing-tags">
-                                            <?php foreach ($tagGroup[1] as $tag): ?>
-                                                <span><?= h($tag) ?></span>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php endif; ?>
-                                <?php endforeach; ?>
-                            </details>
-                        <?php endif; ?>
-                    </div>
                 </section>
             <?php endif; ?>
 
@@ -2036,8 +1967,38 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
             <?php endif; ?>
 
             <?php $form2BackUrl = 'form2.php?image=' . rawurlencode(basename($imagePath)) . ($json ? '&json=' . rawurlencode(basename($json)) : ''); ?>
+
+            <?php
+            // Pre-calculate generated vs pending state for each context
+            $generatedContexts = [];
+            $pendingContexts   = [];
+            foreach ($contexts as $i => $ctx) {
+                $ctxId = $ctx['id'] ?? ('ctx_' . ($i + 1));
+                $existingMockupCheck = null;
+                foreach ($dbMockups as $m) {
+                    if ((string)$m['context_id'] === (string)$ctxId) {
+                        $existingMockupCheck = $m;
+                        break;
+                    }
+                }
+                if ($existingMockupCheck) {
+                    $generatedContexts[] = ['i' => $i, 'ctx' => $ctx];
+                } else {
+                    $pendingContexts[] = ['i' => $i, 'ctx' => $ctx];
+                }
+            }
+            ?>
+
             <div class="contexts">
-                <?php foreach ($contexts as $i => $ctx): ?>
+                <!-- Row 1: Generated mockups -->
+                <?php if (!empty($generatedContexts)): ?>
+                    <div class="contexts-row-header" style="grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+                        <span style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; color: var(--gal-accent);">Mockups Generados</span>
+                        <div style="flex: 1; height: 1px; background: var(--gal-border);"></div>
+                    </div>
+                <?php endif; ?>
+                <?php foreach ($generatedContexts as $entry): ?>
+                <?php $i = $entry['i']; $ctx = $entry['ctx']; ?>
                     <?php
                         $prompt = $ctx['prompt'] ?? '';
                         $ctxId = $ctx['id'] ?? ('ctx_' . ($i + 1));
@@ -2093,13 +2054,22 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                                 <a class="inline-thumb" href="<?= h($mViewerUrl) ?>" aria-label="Open generated mockup">
                                     <img src="<?= h($mUrl) ?>" alt="Generated mockup">
                                 </a>
-                                <div class="inline-actions">
+                                <div class="inline-actions" style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
                                     <a href="<?= h($mDownloadUrl) ?>" aria-label="Download mockup" title="Download">
                                         <span class="download-icon" aria-hidden="true"></span>
                                     </a>
                                     <?php if ($isAdmin): ?>
                                         <a href="media.php?file=<?= rawurlencode(basename((string)$existingMockup['prompt_file'])) ?>" target="_blank" rel="noopener">Prompt</a>
                                     <?php endif; ?>
+                                    <button type="button" class="btn-delete-mockup" data-mockup-id="<?= h((string)$existingMockup['id']) ?>" title="Eliminar Mockup" style="background: transparent; border: none; color: var(--gal-danger); cursor: pointer; padding: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                                        </svg>
+                                        Eliminar
+                                    </button>
                                 </div>
                             <?php else: ?>
                                 <?php if ($isAutoPending): ?>
@@ -2120,6 +2090,12 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                                 <?php endif; ?>
                             <?php endif; ?>
                         </div>
+
+                        <?php if (!empty($ctx['why'])): ?>
+                            <p class="why-rationale" style="font-size: 12px; line-height: 1.45; color: var(--gal-ink); margin: 12px 0 0 0; font-style: italic;">
+                                <strong>Razón curatorial:</strong> <?= h($ctx['why']) ?>
+                            </p>
+                        <?php endif; ?>
 
                         <form class="inline-mockup-form" action="generate_mockup.php" method="post">
                             <input type="hidden" name="image" value="<?= h(basename($imagePath)) ?>">
@@ -2144,18 +2120,19 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                                 $defaultCamera = (string)$selectorState['camera_override'];
                             }
 
-                            $defaultTime = 'day';
-                            $timeOfDay = $ctx['time_of_day'] ?? '';
-                            if (str_contains($timeOfDay, 'afternoon') || str_contains($timeOfDay, 'sunset') || str_contains($timeOfDay, 'tarde')) {
+                            $defaultTime = 'sunny_day';
+                            $timeOfDay = strtolower($ctx['time_of_day'] ?? '');
+                            if (str_contains($timeOfDay, 'cloudy') || str_contains($timeOfDay, 'nublado') || str_contains($timeOfDay, 'overcast')) {
+                                $defaultTime = 'cloudy_day';
+                            } elseif (str_contains($timeOfDay, 'afternoon') || str_contains($timeOfDay, 'sunset') || str_contains($timeOfDay, 'tarde') || str_contains($timeOfDay, 'golden')) {
                                 $defaultTime = 'afternoon';
-                            } elseif (str_contains($timeOfDay, 'night') || str_contains($timeOfDay, 'evening') || str_contains($timeOfDay, 'noche')) {
+                            } elseif (str_contains($timeOfDay, 'night') || str_contains($timeOfDay, 'evening') || str_contains($timeOfDay, 'noche') || str_contains($timeOfDay, 'nocturnal')) {
                                 $defaultTime = 'night';
                             }
-                            if (in_array(($selectorState['time_override'] ?? ''), ['day', 'afternoon', 'night'], true)) {
+                            if (in_array(($selectorState['time_override'] ?? ''), ['sunny_day', 'cloudy_day', 'afternoon', 'night'], true)) {
                                 $defaultTime = (string)$selectorState['time_override'];
                             }
 
-                            // Human default selection
                             $defaultHuman = 'none';
                             $humanProfile = $ctx['human_profile'] ?? null;
                             if ($humanProfile === 'male_180') {
@@ -2174,34 +2151,34 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
 
                             <div class="customizer-options">
                                 <div class="opt-group">
-                                    <label>Camera Angle</label>
+                                    <label>Ángulo de cámara</label>
                                     <div class="selector-icons camera-selector">
-                                        <button type="button" class="icon-btn <?= $defaultCamera === 'front' ? 'active' : '' ?>" data-value="front" title="Front">
+                                        <button type="button" class="icon-btn <?= $defaultCamera === 'front' ? 'active' : '' ?>" data-value="front" title="Frontal">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <rect x="4" y="6" width="16" height="12" rx="1.5"></rect>
                                                 <line x1="12" y1="6" x2="12" y2="18" stroke-dasharray="2 2"></line>
                                             </svg>
-                                            <span>Front</span>
+                                            <span>Frontal</span>
                                         </button>
-                                        <button type="button" class="icon-btn <?= $defaultCamera === '3_4_left' ? 'active' : '' ?>" data-value="3_4_left" title="3/4 Left">
+                                        <button type="button" class="icon-btn <?= $defaultCamera === '3_4_left' ? 'active' : '' ?>" data-value="3_4_left" title="3/4 izquierdo">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <path d="M20 8l-10-3v14l10-3z"></path>
                                             </svg>
-                                            <span>3/4 Left</span>
+                                            <span>3/4 izquierdo</span>
                                         </button>
-                                        <button type="button" class="icon-btn <?= $defaultCamera === '3_4_right' ? 'active' : '' ?>" data-value="3_4_right" title="3/4 Right">
+                                        <button type="button" class="icon-btn <?= $defaultCamera === '3_4_right' ? 'active' : '' ?>" data-value="3_4_right" title="3/4 derecho">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <path d="M4 8l10-3v14l-10-3z"></path>
                                             </svg>
-                                            <span>3/4 Right</span>
+                                            <span>3/4 derecho</span>
                                         </button>
                                     </div>
                                     <input type="hidden" name="camera_override" value="<?= $defaultCamera ?>">
                                 </div>
                                 <div class="opt-group">
-                                    <label>Time of Day</label>
+                                    <label>Clima / Iluminación</label>
                                     <div class="selector-icons time-selector">
-                                        <button type="button" class="icon-btn <?= $defaultTime === 'day' ? 'active' : '' ?>" data-value="day" title="Day">
+                                        <button type="button" class="icon-btn <?= $defaultTime === 'sunny_day' ? 'active' : '' ?>" data-value="sunny_day" title="Día soleado">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <circle cx="12" cy="12" r="5"></circle>
                                                 <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -2213,181 +2190,328 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                                                 <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
                                                 <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                                             </svg>
-                                            <span>Day</span>
+                                            <span>Día soleado</span>
                                         </button>
-                                        <button type="button" class="icon-btn <?= $defaultTime === 'afternoon' ? 'active' : '' ?>" data-value="afternoon" title="Afternoon">
+                                        <button type="button" class="icon-btn <?= $defaultTime === 'cloudy_day' ? 'active' : '' ?>" data-value="cloudy_day" title="Día nublado">
+                                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+                                            </svg>
+                                            <span>Día nublado</span>
+                                        </button>
+                                        <button type="button" class="icon-btn <?= $defaultTime === 'afternoon' ? 'active' : '' ?>" data-value="afternoon" title="Tarde">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <path d="M17 18a5 5 0 0 0-10 0"></path>
                                                 <line x1="12" y1="2" x2="12" y2="9"></line>
                                                 <line x1="2" y1="18" x2="22" y2="18"></line>
                                                 <line x1="2" y1="21" x2="22" y2="21"></line>
                                             </svg>
-                                            <span>Afternoon</span>
+                                            <span>Tarde</span>
                                         </button>
-                                        <button type="button" class="icon-btn <?= $defaultTime === 'night' ? 'active' : '' ?>" data-value="night" title="Night">
+                                        <button type="button" class="icon-btn <?= $defaultTime === 'night' ? 'active' : '' ?>" data-value="night" title="Noche">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                                             </svg>
-                                            <span>Night</span>
+                                            <span>Noche</span>
                                         </button>
                                     </div>
                                     <input type="hidden" name="time_override" value="<?= $defaultTime ?>">
                                 </div>
                                 <div class="opt-group full-width">
-                                    <label>Human Scale</label>
+                                    <label>Figura humana</label>
                                     <div class="selector-icons human-selector">
-                                        <button type="button" class="icon-btn <?= $defaultHuman === 'none' ? 'active' : '' ?>" data-value="none" title="No human figure">
+                                        <button type="button" class="icon-btn <?= $defaultHuman === 'none' ? 'active' : '' ?>" data-value="none" title="Sin figura humana">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <path d="M18 18c0-1.7-1.3-3-3-3H9c-1.7 0-3 1.3-3 3"></path>
                                                 <circle cx="12" cy="7" r="4"></circle>
                                                 <line x1="2" y1="2" x2="22" y2="22"></line>
                                             </svg>
-                                            <span>No Figure</span>
+                                            <span>Sin figura</span>
                                         </button>
-                                        <button type="button" class="icon-btn <?= $defaultHuman === 'female_155' ? 'active' : '' ?>" data-value="female_155" title="Woman (1.55 m)">
+                                        <button type="button" class="icon-btn <?= $defaultHuman === 'female_155' ? 'active' : '' ?>" data-value="female_155" title="Figura humana femenina">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <circle cx="12" cy="6" r="3.5"></circle>
                                                 <path d="M12 9.5l-4 8h8z"></path>
                                                 <line x1="10" y1="17.5" x2="10" y2="21"></line>
                                                 <line x1="14" y1="17.5" x2="14" y2="21"></line>
                                             </svg>
-                                            <span>Female 1.55m</span>
+                                            <span>Femenina</span>
                                         </button>
-                                        <button type="button" class="icon-btn <?= $defaultHuman === 'male_180' ? 'active' : '' ?>" data-value="male_180" title="Man (1.80 m)">
+                                        <button type="button" class="icon-btn <?= $defaultHuman === 'male_180' ? 'active' : '' ?>" data-value="male_180" title="Figura humana masculina">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <circle cx="12" cy="5.5" r="2.5"></circle>
                                                 <path d="M9 9.5h6v7h-2v5h-2v-5H9z"></path>
                                             </svg>
-                                            <span>Male 1.80m</span>
+                                            <span>Masculina</span>
                                         </button>
                                     </div>
                                     <input type="hidden" name="human_override" value="<?= $defaultHuman ?>">
                                 </div>
+
+                                <div class="opt-group full-width" style="margin-top: 8px;">
+                                    <label>DISTANCIA DE CÁMARA</label>
+                                    <div class="selector-icons distance-selector">
+                                        <button type="button" class="icon-btn <?= ($selectorState['distance_override'] ?? 'medium') === 'close' ? 'active' : '' ?>" data-value="close" title="Acercar (Zoom In)">
+                                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="11" cy="11" r="8"></circle>
+                                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                                <line x1="11" y1="8" x2="11" y2="14"></line>
+                                                <line x1="8" y1="11" x2="14" y2="11"></line>
+                                            </svg>
+                                            <span>Acercar (Zoom In)</span>
+                                        </button>
+                                        <button type="button" class="icon-btn <?= ($selectorState['distance_override'] ?? 'medium') === 'medium' ? 'active' : '' ?>" data-value="medium" title="Alejar (Zoom Out)">
+                                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="11" cy="11" r="8"></circle>
+                                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                                <line x1="8" y1="11" x2="14" y2="11"></line>
+                                            </svg>
+                                            <span>Alejar (Zoom Out)</span>
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="distance_override" value="<?= h($selectorState['distance_override'] ?? 'medium') ?>">
+                                </div>
+
+                                <div class="opt-group full-width scale-customizer-container" style="margin-top: 8px;">
+                                    <label style="display:block; margin-bottom:6px;">ARTWORK SIZE</label>
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <button type="button" class="size-adjust-btn size-minus" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; cursor: pointer; border: 1px solid var(--gal-border); background: var(--gal-surface-soft); border-radius: var(--gal-radius); color: var(--gal-ink);">-</button>
+                                        <span class="scale-badge neutral" style="font-family: monospace; font-size: 13px; font-weight: 600; min-width: 140px; text-align: center; display: inline-block;">Sin corrección (0%)</span>
+                                        <button type="button" class="size-adjust-btn size-plus" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; cursor: pointer; border: 1px solid var(--gal-border); background: var(--gal-surface-soft); border-radius: var(--gal-radius); color: var(--gal-ink);">+</button>
+                                    </div>
+                                    <input type="hidden" name="size_override" value="<?= h((string)$defaultSizeOverride) ?>" class="premium-size-override">
+                                </div>
                             </div>
 
-                            <details class="card-details-toggle">
-                                <summary class="card-details-summary">
-                                    <span>Technical Details & Scale Correction</span>
-                                    <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="6 9 12 15 18 9"></polyline>
-                                    </svg>
-                                </summary>
-                                <div class="card-details-content">
-                                    <div class="card-copy">
-                                        <div class="meta-grid">
-                                            <div class="meta-item"><span>Camera Angle</span><strong><?= h($ctx['camera'] ?? '-') ?></strong></div>
-                                            <?php if (!empty($ctx['camera_distance'])): ?>
-                                                <div class="meta-item"><span>Camera Distance</span><strong><?= h($ctx['camera_distance']) ?></strong></div>
-                                            <?php endif; ?>
-                                            <div class="meta-item"><span>Time of Day</span><strong><?= h($ctx['time_of_day'] ?? '-') ?></strong></div>
-                                            <div class="meta-item"><span>Placement</span><strong><?= h($ctx['placement'] ?? '-') ?></strong></div>
-                                            <div class="meta-item"><span>Human Scale</span><strong><?= h($humanText) ?></strong></div>
-                                            <div class="meta-item" style="grid-column: span 2;">
-                                                <span>Curatorial Score</span>
-                                                <div class="score-indicator">
-                                                    <strong><?= h($ctx['score'] ?? '-') ?> pts</strong>
-                                                    <div class="score-bar-track">
-                                                        <?php
-                                                        $scoreVal = (int)($ctx['score'] ?? 0);
-                                                        $scorePct = min(100, max(0, ($scoreVal / 25) * 100));
-                                                        ?>
-                                                        <div class="score-bar-fill" style="width: <?= $scorePct ?>%;"></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="scene-text">
-                                            <strong>Scene</strong>
-                                            <?= h($ctx['scene'] ?? '-') ?>
-                                        </div>
-
-                                        <div class="lighting-text">
-                                            <strong>Lighting & Atmosphere</strong>
-                                            <?= h($ctx['lighting'] ?? '-') ?>
-                                        </div>
-
-                                        <?php if (!empty($ctx['camera_angle_notes'])): ?>
-                                            <div class="lighting-text">
-                                                <strong>Camera Notes</strong>
-                                                <?= h($ctx['camera_angle_notes']) ?>
-                                            </div>
-                                        <?php endif; ?>
-
-                                        <?php if (!empty($ctx['why'])): ?>
-                                            <div class="why">
-                                                <?= h($ctx['why']) ?>
-                                            </div>
-                                        <?php endif; ?>
-
-                                        <?php
-                                        $pinterest = is_array($ctx['pinterest_marketing'] ?? null) ? $ctx['pinterest_marketing'] : [];
-                                        $hasPinterest = count(array_filter([
-                                            $pinterest['board_suggestion'] ?? '',
-                                            $pinterest['pin_title'] ?? '',
-                                            $pinterest['pin_description'] ?? '',
-                                            $pinterest['alt_text'] ?? '',
-                                        ], 'form2_has_text')) > 0 || !empty($pinterest['seo_keywords']) || !empty($pinterest['hashtags']);
-                                        ?>
-                                        <?php if ($hasPinterest): ?>
-                                            <details class="publishing-context-details">
-                                                <summary>Pinterest & alt text</summary>
-                                                <?php foreach (['board_suggestion' => 'Board', 'pin_title' => 'Pin title', 'pin_description' => 'Pin description', 'alt_text' => 'Alt text'] as $field => $label): ?>
-                                                    <?php if (trim((string)($pinterest[$field] ?? '')) !== ''): ?>
-                                                        <div class="publishing-text"><strong><?= h($label) ?></strong><br><?= h($pinterest[$field]) ?></div>
-                                                    <?php endif; ?>
-                                                <?php endforeach; ?>
-                                                <?php foreach ([['Keywords', form2_string_list($pinterest['seo_keywords'] ?? [])], ['Hashtags', form2_string_list($pinterest['hashtags'] ?? [])]] as $tagGroup): ?>
-                                                    <?php if (!empty($tagGroup[1])): ?>
-                                                        <div class="publishing-label"><?= h($tagGroup[0]) ?></div>
-                                                        <div class="publishing-tags">
-                                                            <?php foreach ($tagGroup[1] as $tag): ?>
-                                                                <span><?= h($tag) ?></span>
-                                                            <?php endforeach; ?>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                <?php endforeach; ?>
-                                            </details>
-                                        <?php endif; ?>
-                                    </div>
-
-                                    <div class="scale-correction-options" style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--gal-border);">
-                                        <div class="opt-group full-width scale-slider-container">
-                                            <div class="scale-slider-header">
-                                                <label>Artwork Scale Correction</label>
-                                                <span class="scale-badge">No correction (0%)</span>
-                                            </div>
-                                            <div class="scale-slider-wrapper">
-                                                <span class="slider-side-label smaller">Smaller</span>
-                                                <input type="range" name="size_override" min="-50" max="50" step="5" value="<?= h((string)$defaultSizeOverride) ?>" class="premium-slider">
-                                                <span class="slider-side-label larger">Larger</span>
-                                            </div>
-                                            <div class="scale-slider-ticks">
-                                                <span class="tick" data-val="-50">-50%</span>
-                                                <span class="tick" data-val="-25">-25%</span>
-                                                <span class="tick tick-center" data-val="0">0%</span>
-                                                <span class="tick" data-val="25">+25%</span>
-                                                <span class="tick" data-val="50">+50%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </details>
-
                             <button type="submit" style="margin-top: 18px;" <?= $isAutoPending ? 'disabled' : '' ?>>
-                                <?= $existingMockup ? 'Regenerate' : ($isAutoPending ? 'Generating...' : 'Generate Mockup') ?>
+                                <?= $existingMockup ? 'Regenerar' : ($isAutoPending ? 'Generating...' : 'Generate Mockup') ?>
                             </button>
                         </form>
 
                         <?php if ($isAdmin): ?>
-                            <details>
-                                <summary>View Technical Prompt</summary>
-                                <textarea readonly><?= h($prompt) ?></textarea>
+                            <details style="margin-top: 10px;">
+                                <summary style="font-size: 11px; font-weight: 600; cursor: pointer; color: var(--gal-muted);">Ver Prompt Técnico</summary>
+                                <textarea style="width: 100%; min-height: 100px; font-size: 10px; font-family: monospace; background: var(--gal-bg); color: var(--gal-ink); margin-top: 6px;" readonly><?= h($prompt) ?></textarea>
                             </details>
                         <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
+
+                <!-- Row 2: Pending proposals -->
+                <?php if (!empty($pendingContexts)): ?>
+                    <div class="contexts-row-header" style="grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; margin-top: 20px; margin-bottom: 4px;">
+                        <span style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; color: var(--gal-muted);">Propuestas Pendientes</span>
+                        <div style="flex: 1; height: 1px; background: var(--gal-border);"></div>
+                        <span style="font-size: 9px; color: var(--gal-muted); font-style: italic;">Contexto listo — generación manual o automática</span>
+                    </div>
+                    <?php foreach ($pendingContexts as $entry): ?>
+                    <?php $i = $entry['i']; $ctx = $entry['ctx']; ?>
+                    <?php
+                        $prompt = $ctx['prompt'] ?? '';
+                        $ctxId = $ctx['id'] ?? ('ctx_' . ($i + 1));
+                        $humanProfile = $ctx['human_profile'] ?? null;
+                        $humanText = match ($humanProfile) {
+                            'male_180' => 'male 1.80 m',
+                            'female_155' => 'female 1.55 m',
+                            default => (!empty($ctx['with_human']) ? 'discreet figure' : 'none'),
+                        };
+
+                        $existingMockup = null;
+                        foreach ($dbMockups as $m) {
+                            if ((string)$m['context_id'] === (string)$ctxId) {
+                                $existingMockup = $m;
+                                break;
+                            }
+                        }
+                        $selectorState = [];
+                        if ($existingMockup && !empty($existingMockup['selector_state_json'])) {
+                            $decodedSelectorState = json_decode((string)$existingMockup['selector_state_json'], true);
+                            $selectorState = is_array($decodedSelectorState) ? $decodedSelectorState : [];
+                        }
+
+                        $queueJob = null;
+                        foreach ($dbQueueJobs as $job) {
+                            if ((string)$job['context_id'] === (string)$ctxId) {
+                                $queueJob = $job;
+                                break;
+                            }
+                        }
+                        $queueStatus = $queueJob ? (string)$queueJob['status'] : '';
+                        $isAutoPending = !$existingMockup && in_array($queueStatus, ['queued', 'processing'], true);
+
+                        $defaultCamera = 'front';
+                        $cameraGroup = $ctx['camera_group'] ?? '';
+                        $cameraRaw = trim((string)($ctx['camera_view'] ?? $ctx['camera'] ?? $ctx['camera_angle'] ?? ''));
+                        if (str_contains($cameraGroup, 'left') || str_contains($cameraRaw, 'left')) {
+                            $defaultCamera = '3_4_left';
+                        } elseif (str_contains($cameraGroup, 'right') || str_contains($cameraRaw, 'right')) {
+                            $defaultCamera = '3_4_right';
+                        }
+                        if (in_array(($selectorState['camera_override'] ?? ''), ['front', '3_4_left', '3_4_right'], true)) {
+                            $defaultCamera = (string)$selectorState['camera_override'];
+                        }
+                        $defaultTime = 'sunny_day';
+                        $timeOfDay = strtolower($ctx['time_of_day'] ?? '');
+                        if (str_contains($timeOfDay, 'cloudy') || str_contains($timeOfDay, 'nublado') || str_contains($timeOfDay, 'overcast')) {
+                            $defaultTime = 'cloudy_day';
+                        } elseif (str_contains($timeOfDay, 'afternoon') || str_contains($timeOfDay, 'sunset') || str_contains($timeOfDay, 'tarde') || str_contains($timeOfDay, 'golden')) {
+                            $defaultTime = 'afternoon';
+                        } elseif (str_contains($timeOfDay, 'night') || str_contains($timeOfDay, 'evening') || str_contains($timeOfDay, 'noche') || str_contains($timeOfDay, 'nocturnal')) {
+                            $defaultTime = 'night';
+                        }
+                        if (in_array(($selectorState['time_override'] ?? ''), ['sunny_day', 'cloudy_day', 'afternoon', 'night'], true)) {
+                            $defaultTime = (string)$selectorState['time_override'];
+                        }
+                        $defaultHuman = 'none';
+                        if ($humanProfile === 'male_180') {
+                            $defaultHuman = 'male_180';
+                        } elseif ($humanProfile === 'female_155') {
+                            $defaultHuman = 'female_155';
+                        } elseif (!empty($ctx['with_human'])) {
+                            $defaultHuman = 'female_155';
+                        }
+                        if (in_array(($selectorState['human_override'] ?? ''), ['none', 'female_155', 'male_180'], true)) {
+                            $defaultHuman = (string)$selectorState['human_override'];
+                        }
+                        $defaultSizeOverride = form2_normalize_size_override((string)($selectorState['size_override'] ?? '0'));
+                    ?>
+
+                    <div class="card <?= $existingMockup ? 'generated' : '' ?> <?= $isAutoPending ? 'auto-pending' : '' ?>" id="context-<?= h($ctxId) ?>" data-context-id="<?= h($ctxId) ?>" style="opacity: 0.85;">
+                        <div class="number">Proposal <?= $i + 1 ?></div>
+                        <h3><?= h($ctx['name'] ?? 'Context') ?></h3>
+                        <span class="purpose"><?= h(str_replace('_', ' ', $ctx['purpose'] ?? '')) ?></span>
+
+                        <div class="inline-result" aria-live="polite">
+                            <?php if ($isAutoPending): ?>
+                                <div class="inline-loader" data-auto-status="<?= h($queueStatus) ?>">
+                                    <div class="spinner" aria-hidden="true"></div>
+                                    <div class="inline-status">Generating mockup...</div>
+                                </div>
+                            <?php elseif ($queueStatus === 'error'): ?>
+                                <div class="inline-status" style="color: var(--gal-danger); font-size: 11px; padding: 10px; text-align: center;">
+                                    Error: <?= h($queueJob['error'] ?? 'Automatic generation failed.') ?>
+                                </div>
+                            <?php else: ?>
+                                <svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--gal-muted)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                            <?php endif; ?>
+                        </div>
+
+                        <?php if (!empty($ctx['why'])): ?>
+                            <p class="why-rationale" style="font-size: 12px; line-height: 1.45; color: var(--gal-ink); margin: 12px 0 0 0; font-style: italic;">
+                                <strong>Razón curatorial:</strong> <?= h($ctx['why']) ?>
+                            </p>
+                        <?php endif; ?>
+
+                        <form class="inline-mockup-form" action="generate_mockup.php" method="post">
+                            <input type="hidden" name="image" value="<?= h(basename($imagePath)) ?>">
+                            <input type="hidden" name="json" value="<?= h($jsonPublic) ?>">
+                            <input type="hidden" name="context_id" value="<?= h($ctxId) ?>">
+                            <input type="hidden" name="prompt" value="<?= h($prompt) ?>">
+                            <input type="hidden" name="ajax" value="1">
+
+                            <div class="customizer-options">
+                                <div class="opt-group">
+                                    <label>Ángulo de cámara</label>
+                                    <div class="selector-icons camera-selector">
+                                        <button type="button" class="icon-btn <?= $defaultCamera === 'front' ? 'active' : '' ?>" data-value="front" title="Frontal">
+                                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="6" width="16" height="12" rx="1.5"></rect><line x1="12" y1="6" x2="12" y2="18" stroke-dasharray="2 2"></line></svg>
+                                            <span>Frontal</span>
+                                        </button>
+                                        <button type="button" class="icon-btn <?= $defaultCamera === '3_4_left' ? 'active' : '' ?>" data-value="3_4_left" title="3/4 izquierdo">
+                                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 8l-10-3v14l10-3z"></path></svg>
+                                            <span>3/4 izquierdo</span>
+                                        </button>
+                                        <button type="button" class="icon-btn <?= $defaultCamera === '3_4_right' ? 'active' : '' ?>" data-value="3_4_right" title="3/4 derecho">
+                                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8l10-3v14l-10-3z"></path></svg>
+                                            <span>3/4 derecho</span>
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="camera_override" value="<?= $defaultCamera ?>">
+                                </div>
+                                <div class="opt-group">
+                                    <label>Clima / Iluminación</label>
+                                    <div class="selector-icons time-selector">
+                                        <button type="button" class="icon-btn <?= $defaultTime === 'sunny_day' ? 'active' : '' ?>" data-value="sunny_day" title="Día soleado">
+                                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                                            <span>Día soleado</span>
+                                        </button>
+                                        <button type="button" class="icon-btn <?= $defaultTime === 'cloudy_day' ? 'active' : '' ?>" data-value="cloudy_day" title="Día nublado">
+                                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+                                            <span>Día nublado</span>
+                                        </button>
+                                        <button type="button" class="icon-btn <?= $defaultTime === 'afternoon' ? 'active' : '' ?>" data-value="afternoon" title="Tarde">
+                                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 18a5 5 0 0 0-10 0"></path><line x1="12" y1="2" x2="12" y2="9"></line><line x1="2" y1="18" x2="22" y2="18"></line><line x1="2" y1="21" x2="22" y2="21"></line></svg>
+                                            <span>Tarde</span>
+                                        </button>
+                                        <button type="button" class="icon-btn <?= $defaultTime === 'night' ? 'active' : '' ?>" data-value="night" title="Noche">
+                                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                                            <span>Noche</span>
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="time_override" value="<?= $defaultTime ?>">
+                                </div>
+                                <div class="opt-group full-width">
+                                    <label>Figura humana</label>
+                                    <div class="selector-icons human-selector">
+                                        <button type="button" class="icon-btn <?= $defaultHuman === 'none' ? 'active' : '' ?>" data-value="none" title="Sin figura humana">
+                                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 18c0-1.7-1.3-3-3-3H9c-1.7 0-3 1.3-3 3"></path><circle cx="12" cy="7" r="4"></circle><line x1="2" y1="2" x2="22" y2="22"></line></svg>
+                                            <span>Sin figura</span>
+                                        </button>
+                                        <button type="button" class="icon-btn <?= $defaultHuman === 'female_155' ? 'active' : '' ?>" data-value="female_155" title="Figura humana femenina">
+                                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="3.5"></circle><path d="M12 9.5l-4 8h8z"></path><line x1="10" y1="17.5" x2="10" y2="21"></line><line x1="14" y1="17.5" x2="14" y2="21"></line></svg>
+                                            <span>Femenina</span>
+                                        </button>
+                                        <button type="button" class="icon-btn <?= $defaultHuman === 'male_180' ? 'active' : '' ?>" data-value="male_180" title="Figura humana masculina">
+                                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5.5" r="2.5"></circle><path d="M9 9.5h6v7h-2v5h-2v-5H9z"></path></svg>
+                                            <span>Masculina</span>
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="human_override" value="<?= $defaultHuman ?>">
+                                </div>
+                                <div class="opt-group full-width" style="margin-top: 8px;">
+                                    <label>DISTANCIA DE CÁMARA</label>
+                                    <div class="selector-icons distance-selector">
+                                        <button type="button" class="icon-btn <?= ($selectorState['distance_override'] ?? 'medium') === 'close' ? 'active' : '' ?>" data-value="close" title="Acercar (Zoom In)">
+                                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                            <span>Acercar (Zoom In)</span>
+                                        </button>
+                                        <button type="button" class="icon-btn <?= ($selectorState['distance_override'] ?? 'medium') === 'medium' ? 'active' : '' ?>" data-value="medium" title="Alejar (Zoom Out)">
+                                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                            <span>Alejar (Zoom Out)</span>
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="distance_override" value="<?= h($selectorState['distance_override'] ?? 'medium') ?>">
+                                </div>
+                                <div class="opt-group full-width scale-customizer-container" style="margin-top: 8px;">
+                                    <label style="display:block; margin-bottom:6px;">ARTWORK SIZE</label>
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <button type="button" class="size-adjust-btn size-minus" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; cursor: pointer; border: 1px solid var(--gal-border); background: var(--gal-surface-soft); border-radius: var(--gal-radius); color: var(--gal-ink);">-</button>
+                                        <span class="scale-badge neutral" style="font-family: monospace; font-size: 13px; font-weight: 600; min-width: 140px; text-align: center; display: inline-block;">Sin corrección (0%)</span>
+                                        <button type="button" class="size-adjust-btn size-plus" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; cursor: pointer; border: 1px solid var(--gal-border); background: var(--gal-surface-soft); border-radius: var(--gal-radius); color: var(--gal-ink);">+</button>
+                                    </div>
+                                    <input type="hidden" name="size_override" value="<?= h((string)$defaultSizeOverride) ?>" class="premium-size-override">
+                                </div>
+                            </div>
+
+                            <button type="submit" style="margin-top: 18px;" <?= $isAutoPending ? 'disabled' : '' ?>>
+                                <?= $isAutoPending ? 'Generating...' : 'Generate Mockup' ?>
+                            </button>
+                        </form>
+
+                        <?php if ($isAdmin): ?>
+                            <details style="margin-top: 10px;">
+                                <summary style="font-size: 11px; font-weight: 600; cursor: pointer; color: var(--gal-muted);">Ver Prompt Técnico</summary>
+                                <textarea style="width: 100%; min-height: 100px; font-size: 10px; font-family: monospace; background: var(--gal-bg); color: var(--gal-ink); margin-top: 6px;" readonly><?= h($prompt) ?></textarea>
+                            </details>
+                        <?php endif; ?>
+                    </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
+        </div>
 
             <div class="back">
                 <a href="artwork_new.php">Back to step 1</a>
@@ -2399,6 +2523,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
         </div>
     </main>
 </div>
+
 
 <script>
     const isAdmin = <?= $isAdmin ? 'true' : 'false' ?>;
@@ -2441,15 +2566,29 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
             ? `${data.viewer_url}${String(data.viewer_url).includes('?') ? '&' : '?'}back=${encodeURIComponent(backUrl)}`
             : data.image_url;
 
+        const mockupId = data.mockup_id || data.id;
+        const deleteButton = mockupId
+            ? `<button type="button" class="btn-delete-mockup" data-mockup-id="${escapeAttribute(mockupId)}" title="Eliminar Mockup" style="background: transparent; border: none; color: var(--gal-danger); cursor: pointer; padding: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+                Eliminar
+               </button>`
+            : '';
+
         resultBox.innerHTML = `
             <a class="inline-thumb" href="${escapeAttribute(viewerUrl)}" aria-label="Open generated mockup">
                 <img src="${escapeAttribute(data.image_url)}" alt="Generated mockup">
             </a>
-            <div class="inline-actions">
+            <div class="inline-actions" style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
                 <a href="${escapeAttribute(data.download_url)}" aria-label="Download mockup" title="Download">
                     <span class="download-icon" aria-hidden="true"></span>
                 </a>
                 ${promptLink}
+                ${deleteButton}
             </div>
         `;
 
@@ -2565,41 +2704,64 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
         });
     });
 
-    // Update range slider badge dynamically
-    document.querySelectorAll('.premium-slider').forEach((slider) => {
-        const parent = slider.closest('.scale-slider-container');
-        const badge = parent.querySelector('.scale-badge');
+    // Update size buttons dynamically
+    document.querySelectorAll('.scale-customizer-container').forEach((container) => {
+        const minusBtn = container.querySelector('.size-minus');
+        const plusBtn = container.querySelector('.size-plus');
+        const badge = container.querySelector('.scale-badge');
+        const hiddenInput = container.querySelector('.premium-size-override');
         
         const updateBadge = (val) => {
-            const numVal = parseInt(val, 10);
+            const numVal = parseInt(val, 10) || 0;
             if (numVal === 0) {
-                badge.textContent = 'No correction (0%)';
+                badge.textContent = 'Sin corrección (0%)';
                 badge.className = 'scale-badge neutral';
             } else if (numVal > 0) {
-                badge.textContent = `Larger (+${numVal}%)`;
+                badge.textContent = `Más grande (+${numVal}%)`;
                 badge.className = 'scale-badge positive';
             } else {
-                badge.textContent = `Smaller (${numVal}%)`;
+                badge.textContent = `Más pequeña (${numVal}%)`;
                 badge.className = 'scale-badge negative';
             }
+            hiddenInput.value = numVal;
         };
 
         // Initialize
-        updateBadge(slider.value);
+        updateBadge(hiddenInput.value);
 
-        // Input event listener (as user drags)
-        slider.addEventListener('input', (e) => {
-            updateBadge(e.target.value);
+        minusBtn.addEventListener('click', () => {
+            let val = parseInt(hiddenInput.value, 10) || 0;
+            val = Math.max(-50, val - 5);
+            updateBadge(val);
         });
-        
-        // Tick markers click listener
-        parent.querySelectorAll('.scale-slider-ticks .tick').forEach((tick) => {
-            tick.addEventListener('click', () => {
-                const val = tick.dataset.val;
-                slider.value = val;
-                updateBadge(val);
-                slider.dispatchEvent(new Event('change', { bubbles: true }));
-            });
+
+        plusBtn.addEventListener('click', () => {
+            let val = parseInt(hiddenInput.value, 10) || 0;
+            val = Math.min(50, val + 5);
+            updateBadge(val);
+        });
+    });
+
+    // Generic copy buttons
+    document.querySelectorAll('.copy-button').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            const text = btn.dataset.copy;
+            if (!text) return;
+            const original = btn.innerHTML;
+            try {
+                await navigator.clipboard.writeText(text);
+                btn.innerHTML = 'Copiado';
+                btn.classList.add('success');
+                setTimeout(() => {
+                    btn.innerHTML = original;
+                    btn.classList.remove('success');
+                }, 1200);
+            } catch (e) {
+                btn.innerHTML = 'Error';
+                setTimeout(() => {
+                    btn.innerHTML = original;
+                }, 1200);
+            }
         });
     });
 
@@ -2693,6 +2855,67 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
     function escapeAttribute(value) {
         return escapeHtml(value);
     }
+
+    document.addEventListener('click', async (event) => {
+        const deleteBtn = event.target.closest('.btn-delete-mockup');
+        if (!deleteBtn) return;
+
+        if (!confirm('¿Seguro que desea eliminar este mockup?')) {
+            return;
+        }
+
+        const mockupId = deleteBtn.getAttribute('data-mockup-id');
+        const card = deleteBtn.closest('.card') || deleteBtn.closest('article');
+        
+        deleteBtn.disabled = true;
+
+        try {
+            const response = await fetch('delete_mockup.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'mockup_id=' + encodeURIComponent(mockupId)
+            });
+
+            const data = await response.json();
+            if (data.ok) {
+                if (card) {
+                    if (card.classList.contains('card')) {
+                        // Reset card UI in form2.php
+                        card.classList.remove('generated');
+                        const resultBox = card.querySelector('.inline-result');
+                        if (resultBox) {
+                            resultBox.innerHTML = `
+                                <svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--gal-muted)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                            `;
+                        }
+                        const button = card.querySelector('.inline-mockup-form button[type="submit"]');
+                        if (button) {
+                            button.disabled = false;
+                            button.innerHTML = 'Generate Mockup';
+                        }
+                        const currentInput = card.querySelector('input[name="current_mockup_file"]');
+                        if (currentInput) {
+                            currentInput.remove();
+                        }
+                    } else {
+                        card.remove();
+                    }
+                }
+            } else {
+                alert('Error: ' + (data.error || 'No se pudo eliminar el mockup.'));
+                deleteBtn.disabled = false;
+            }
+        } catch (err) {
+            alert('Error de red al intentar eliminar.');
+            deleteBtn.disabled = false;
+        }
+    });
 </script>
 
 </body>

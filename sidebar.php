@@ -11,7 +11,7 @@ $queryString = $_SERVER['QUERY_STRING'] ?? '';
 // Step active states
 $step1Active = ($currentPage === 'artwork_new.php');
 $step2Active = ($currentPage === 'root_select.php' || $currentPage === 'waiting.php');
-$step3Active = ($currentPage === 'form2.php');
+$step3Active = ($currentPage === 'report.php');
 $step4Active = ($currentPage === 'artwork.php' || $currentPage === 'publish.php');
 
 // Menu active states
@@ -56,10 +56,10 @@ if ($step2Disabled && $sidebarUser) {
 $step3Url = '#';
 $step3Disabled = true;
 
-if ($currentPage === 'form2.php') {
+if ($currentPage === 'report.php') {
     $imageParam = $_GET['image'] ?? $_POST['image'] ?? '';
     if ($imageParam !== '') {
-        $step3Url = 'form2.php?image=' . urlencode(basename($imageParam));
+        $step3Url = 'report.php?image=' . urlencode(basename($imageParam));
         $step3Disabled = false;
     }
 }
@@ -71,7 +71,7 @@ if ($step3Disabled && $sidebarUser) {
         $stmt->execute(['user_id' => $sidebarUser['id']]);
         $latestArtwork = $stmt->fetch();
         if ($latestArtwork && !empty($latestArtwork['root_file'])) {
-            $step3Url = 'form2.php?image=' . urlencode(basename($latestArtwork['root_file']));
+            $step3Url = 'report.php?image=' . urlencode(basename($latestArtwork['root_file']));
             $step3Disabled = false;
         }
     } catch (Throwable $e) {

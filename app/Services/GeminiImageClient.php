@@ -28,7 +28,7 @@ class GeminiImageClient
             putenv('VERTEX_PROJECT_ID=' . VERTEX_PROJECT_ID);
         }
 
-        return $this->runCommand($cmd, $prompt, 90); // punto #7: 90 s (era 60 s)
+        return $this->runCommand($cmd, $prompt, 180); // aumentado de 90s a 180s para permitir reintentos
     }
 
     public function generateImage(array $parts, ?string $model = null): string
@@ -64,7 +64,7 @@ class GeminiImageClient
             putenv('VERTEX_PROJECT_ID=' . VERTEX_PROJECT_ID);
         }
 
-        $this->runCommand($cmd, $prompt, 150); // punto #7: 150 s (era 120 s)
+        $this->runCommand($cmd, $prompt, 200); // aumentado de 150s a 200s para permitir reintentos
 
         if (!is_file($tempOutput)) {
             throw new RuntimeException("Vertex bridge did not create output image file at: " . $tempOutput);
@@ -176,7 +176,7 @@ class GeminiImageClient
         return in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true) ? $mime : 'image/png';
     }
 
-    private function getPythonExecutable(): string
+    public function getPythonExecutable(): string
     {
         // Punto #3: PYTHON_BINARY_PATH del .env tiene prioridad total
         $envPath = defined('PYTHON_BINARY_PATH') ? trim((string)PYTHON_BINARY_PATH) : '';
@@ -222,6 +222,110 @@ class GeminiImageClient
         }
 
         return 'python'; // Fallback
+    }
+
+    public function runCommandsParallel(array $cmds, array $prompts, int $timeout = 150): array
+    {
+        putenv('PYTHONIOENCODING=utf-8');
+        putenv('PYTHONUTF8=1');
+
+        if (defined('VERTEX_PROJECT_ID') && VERTEX_PROJECT_ID !== '') {
+            putenv('VERTEX_PROJECT_ID=' . VERTEX_PROJECT_ID);
+        }
+
+        $tempDir = $this->getTempDir();
+        $processes = [];
+        $tempFiles = [];
+
+        foreach ($cmds as $index => $cmd) {
+            $promptText = $prompts[$index] ?? '';
+            $tempPromptFile = tempnam($tempDir, 'gemini_prompt_p_');
+            if ($tempPromptFile === false) {
+                throw new RuntimeException("Failed to create temporary prompt file for parallel index {$index}.");
+            }
+            file_put_contents($tempPromptFile, $promptText);
+            $tempFiles[] = $tempPromptFile;
+
+            // Append --prompt-file to the command
+            $fullCmd = $cmd . ' --prompt-file ' . escapeshellarg($tempPromptFile);
+
+            $tempOutFile = tempnam($tempDir, 'gemini_out_p_');
+            $tempErrFile = tempnam($tempDir, 'gemini_err_p_');
+            $tempFiles[] = $tempOutFile;
+            $tempFiles[] = $tempErrFile;
+
+            $descriptorspec = [
+                0 => ["pipe", "r"], // stdin
+                1 => ["file", $tempOutFile, "w"], // stdout
+                2 => ["file", $tempErrFile, "w"]  // stderr
+            ];
+
+            $process = proc_open($fullCmd, $descriptorspec, $pipes);
+            if (!is_resource($process)) {
+                // Clean up what we created so far and throw
+                foreach ($tempFiles as $f) { @unlink($f); }
+                throw new RuntimeException("Failed to start parallel process index {$index}.");
+            }
+            fclose($pipes[0]); // Close stdin immediately
+
+            $processes[$index] = [
+                'process' => $process,
+                'out_file' => $tempOutFile,
+                'err_file' => $tempErrFile,
+                'cmd' => $fullCmd,
+            ];
+        }
+
+        // Wait for all processes to finish
+        $startTime = time();
+        $activeCount = count($processes);
+
+        while ($activeCount > 0) {
+            if (time() - $startTime > $timeout) {
+                // Terminate all active processes
+                foreach ($processes as $index => $pData) {
+                    $status = proc_get_status($pData['process']);
+                    if ($status['running']) {
+                        proc_terminate($pData['process'], 9);
+                    }
+                    proc_close($pData['process']);
+                }
+                foreach ($tempFiles as $f) { @unlink($f); }
+                throw new RuntimeException("Parallel processes timed out after {$timeout} seconds.");
+            }
+
+            $activeCount = 0;
+            foreach ($processes as $index => $pData) {
+                $status = proc_get_status($pData['process']);
+                if ($status['running']) {
+                    $activeCount++;
+                }
+            }
+            if ($activeCount > 0) {
+                usleep(100000); // 100ms
+            }
+        }
+
+        // Collect exit codes and outputs
+        $results = [];
+        foreach ($processes as $index => $pData) {
+            $exitCode = proc_close($pData['process']);
+            $stdout = (string)@file_get_contents($pData['out_file']);
+            $stderr = (string)@file_get_contents($pData['err_file']);
+
+            $results[$index] = [
+                'exit_code' => $exitCode,
+                'stdout' => $stdout,
+                'stderr' => $stderr,
+            ];
+        }
+
+        // Clean up temp files
+        foreach ($tempFiles as $f) {
+            @unlink($f);
+        }
+
+        return $results;
     }
 
     private function getTempDir(): string

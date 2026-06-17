@@ -173,7 +173,7 @@ function assert_root_owner(string $imagePath, array $user): void
     }
 }
 
-function override_prompt_directives(string $prompt, ?string $camera, ?string $time, ?string $human, ?string $imagePath, ?string $json, ?string $sizeOverride = null): string
+function override_prompt_directives(string $prompt, ?string $camera, ?string $time, ?string $human, ?string $imagePath, ?string $json, ?string $sizeOverride = null, ?string $distance = null): string
 {
     if ($camera) {
         $cameraVal = match ($camera) {
@@ -207,9 +207,10 @@ function override_prompt_directives(string $prompt, ?string $camera, ?string $ti
 
     if ($time) {
         $lightingVal = match ($time) {
-            'day' => 'luminous natural daylight, bright and clear',
-            'afternoon' => 'warm afternoon light, golden hour, soft shadows',
-            'night' => 'dramatic evening light, spot art lamps, nocturnal gallery ambiance (evening/night)',
+            'sunny_day' => 'luminous natural daylight, bright, sunny day, clear blue sky reflections, clean direct sunlight',
+            'cloudy_day' => 'soft diffused natural daylight, overcast cloudy day, muted shadows, soft white sky reflection',
+            'afternoon' => 'warm afternoon light, golden hour, long soft shadows, amber interior ambiance',
+            'night' => 'dramatic evening light, spot art lamps, nocturnal gallery ambiance (evening/night), subtle warm spot lighting',
             default => null
         };
 
@@ -218,12 +219,14 @@ function override_prompt_directives(string $prompt, ?string $camera, ?string $ti
             $prompt = preg_replace('/-\s*Lighting:[^\r\n]*/i', '- Lighting: ' . $lightingVal, $prompt);
 
             // Reemplazar términos en el resto del prompt para mantener la consistencia
-            if ($time === 'day') {
-                $prompt = str_ireplace(['afternoon', 'golden hour', 'evening', 'night', 'nocturnal'], 'day', $prompt);
+            if ($time === 'sunny_day') {
+                $prompt = str_ireplace(['cloudy', 'afternoon', 'golden hour', 'evening', 'night', 'nocturnal'], 'sunny day', $prompt);
+            } elseif ($time === 'cloudy_day') {
+                $prompt = str_ireplace(['sunny', 'afternoon', 'golden hour', 'evening', 'night', 'nocturnal'], 'cloudy day', $prompt);
             } elseif ($time === 'afternoon') {
-                $prompt = str_ireplace(['daylight', 'evening', 'night', 'nocturnal'], 'afternoon', $prompt);
+                $prompt = str_ireplace(['daylight', 'sunny', 'cloudy', 'evening', 'night', 'nocturnal'], 'afternoon', $prompt);
             } elseif ($time === 'night') {
-                $prompt = str_ireplace(['daylight', 'afternoon', 'golden hour'], 'evening', $prompt);
+                $prompt = str_ireplace(['daylight', 'sunny', 'cloudy', 'afternoon', 'golden hour'], 'evening', $prompt);
             }
         }
     }
@@ -315,6 +318,26 @@ function override_prompt_directives(string $prompt, ?string $camera, ?string $ti
         }
     }
 
+    if ($distance) {
+        $distanceVal = match ($distance) {
+            'close' => '- Structured Camera Distance: close-up view, artwork dominant, room only suggested',
+            'medium' => '- Structured Camera Distance: medium-close view, enough space for context and scale while keeping artwork dominant',
+            default => null
+        };
+
+        if ($distanceVal) {
+            if (preg_match('/-\s*Structured Camera Distance:[^\r\n]*/i', $prompt)) {
+                $prompt = preg_replace('/-\s*Structured Camera Distance:[^\r\n]*/i', $distanceVal, $prompt);
+            } else {
+                if (preg_match('/MOCKUP ART DIRECTION:[^\r\n]*/i', $prompt)) {
+                    $prompt = preg_replace('/(MOCKUP ART DIRECTION:[^\r\n]*)/i', "$1\n" . $distanceVal, $prompt);
+                } else {
+                    $prompt .= "\n" . $distanceVal;
+                }
+            }
+        }
+    }
+
     $sizePercent = normalize_size_override($sizeOverride);
     if ($sizePercent !== 0) {
         $direction = $sizePercent > 0 ? 'larger' : 'smaller';
@@ -339,12 +362,13 @@ function normalize_size_override(?string $value): int
     return $size;
 }
 
-function build_selector_edit_instruction(string $camera, string $time, string $human, string $sizeOverride, array $previousState = []): string
+function build_selector_edit_instruction(string $camera, string $time, string $human, string $sizeOverride, string $distanceOverride, array $previousState = []): string
 {
     $changes = [];
     $previousCamera = (string)($previousState['camera_override'] ?? '');
     $previousTime = (string)($previousState['time_override'] ?? '');
     $previousHuman = (string)($previousState['human_override'] ?? '');
+    $previousDistance = (string)($previousState['distance_override'] ?? '');
     $previousSize = normalize_size_override((string)($previousState['size_override'] ?? '0'));
     $currentSize = normalize_size_override($sizeOverride);
 
@@ -360,9 +384,10 @@ function build_selector_edit_instruction(string $camera, string $time, string $h
     }
 
     $timeText = match ($time) {
-        'day' => 'change the lighting to clear natural daytime light',
-        'afternoon' => 'change the lighting to warm afternoon light',
-        'night' => 'change the lighting to refined evening or night gallery light',
+        'sunny_day' => 'change the lighting to luminous natural sunny day light',
+        'cloudy_day' => 'change the lighting to soft diffused overcast cloudy day light',
+        'afternoon' => 'change the lighting to warm golden hour afternoon light',
+        'night' => 'change the lighting to refined evening or night gallery light with spot lamps',
         default => '',
     };
 
@@ -379,6 +404,16 @@ function build_selector_edit_instruction(string $camera, string $time, string $h
 
     if ($humanText !== '' && ($previousHuman === '' || $previousHuman !== $human)) {
         $changes[] = $humanText;
+    }
+
+    $distanceText = match ($distanceOverride) {
+        'close' => 'change camera distance to close-up view where artwork is dominant',
+        'medium' => 'change camera distance to medium-close view showing more of the context room and furniture',
+        default => '',
+    };
+
+    if ($distanceText !== '' && ($previousDistance === '' || $previousDistance !== $distanceOverride)) {
+        $changes[] = $distanceText;
     }
 
     if ($currentSize !== $previousSize) {
@@ -403,19 +438,21 @@ $prompt = trim((string)($_POST['prompt'] ?? $_GET['prompt'] ?? ''));
 $cameraOverride = trim((string)($_POST['camera_override'] ?? ''));
 $timeOverride = trim((string)($_POST['time_override'] ?? ''));
 $humanOverride = trim((string)($_POST['human_override'] ?? ''));
+$distanceOverride = trim((string)($_POST['distance_override'] ?? ''));
 $sizeOverride = trim((string)($_POST['size_override'] ?? '0'));
 $currentMockupFile = basename((string)($_POST['current_mockup_file'] ?? ''));
 $selectorState = [
     'camera_override' => in_array($cameraOverride, ['front', '3_4_left', '3_4_right'], true) ? $cameraOverride : '',
-    'time_override' => in_array($timeOverride, ['day', 'afternoon', 'night'], true) ? $timeOverride : '',
+    'time_override' => in_array($timeOverride, ['sunny_day', 'cloudy_day', 'afternoon', 'night'], true) ? $timeOverride : '',
     'human_override' => in_array($humanOverride, ['none', 'female_155', 'male_180'], true) ? $humanOverride : '',
+    'distance_override' => in_array($distanceOverride, ['close', 'medium'], true) ? $distanceOverride : '',
     'size_override' => normalize_size_override($sizeOverride),
 ];
 
-if ($currentMockupFile === '' && ($cameraOverride !== '' || $timeOverride !== '' || $humanOverride !== '' || normalize_size_override($sizeOverride) !== 0)) {
+if ($currentMockupFile === '' && ($cameraOverride !== '' || $timeOverride !== '' || $humanOverride !== '' || $distanceOverride !== '' || normalize_size_override($sizeOverride) !== 0)) {
     $imagePath = find_image($image);
     if ($imagePath) {
-        $prompt = override_prompt_directives($prompt, $cameraOverride, $timeOverride, $humanOverride, $imagePath, $json, $sizeOverride);
+        $prompt = override_prompt_directives($prompt, $cameraOverride, $timeOverride, $humanOverride, $imagePath, $json, $sizeOverride, $distanceOverride);
     }
 }
 
@@ -512,7 +549,7 @@ try {
                 $previousSelectorState = is_array($previousSelectorState) ? $previousSelectorState : [];
                 $generationImagePath = $existingMockupPath;
                 $editBaseFile = $currentMockupFile;
-                $prompt = build_selector_edit_instruction($cameraOverride, $timeOverride, $humanOverride, $sizeOverride, $previousSelectorState);
+                $prompt = build_selector_edit_instruction($cameraOverride, $timeOverride, $humanOverride, $sizeOverride, $distanceOverride, $previousSelectorState);
             }
         }
     }
@@ -744,7 +781,7 @@ if (wants_json_response()) {
             View Root Image
         </a>
 
-        <a class="button secondary" href="form2.php?image=<?= rawurlencode(basename($imagePath)) ?>&json=<?= rawurlencode($json) ?>">
+        <a class="button secondary" href="report.php?image=<?= rawurlencode(basename($imagePath)) ?>&json=<?= rawurlencode($json) ?>">
             Back to Step 2
         </a>
 

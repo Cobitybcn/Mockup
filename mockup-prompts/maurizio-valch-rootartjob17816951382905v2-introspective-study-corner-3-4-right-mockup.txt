@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 2 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Introspective Study Corner
+- Purpose: Personal contemplation piece in a refined private space
+- Scene Description: A collector's private study or elegant home office with thoughtful, refined, quiet, intellectual atmosphere. Materials: dark wood paneling, leather armchair, brass desk lamp, bookshelves (blurred)
+- Lighting: warm, directional task lighting from a brass lamp, subtle ambient light
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A three-quarter right view provides an engaging perspective, allowing the artwork to be seen in a natural, lived-in context while maintaining its prominence. The close-up distance ensures the intricate textures and color play are appreciated, and the warm, directional lighting from the right highlights the artwork's material presence, complementing its horizontal orientation within an introspective setting.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+Close-up, three-quarter right view of Maurizio Valch's 'Sin título' (120x80cm) mounted on a wall with elegant dark wood paneling, possibly in a collector's study. A luxurious dark leather armchair is partially visible in the foreground, facing the artwork, suggesting a place for quiet reflection. A vintage brass desk lamp provides warm, directional light onto the artwork's surface from the right, highlighting its texture. Blurred bookshelves line the distant wall. Camera is three-quarter right view, close-up, emphasizing the artwork's integration into a sophisticated, introspective space.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+bright, sterile office, generic furniture, harsh lighting, artwork not central, distracting clutter, modern minimalist office
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

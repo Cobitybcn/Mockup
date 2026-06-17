@@ -196,7 +196,7 @@ try {
 
     if (isset($_GET['redirect']) && $_GET['redirect'] === '1') {
         header(
-            'Location: form2.php?image=' . rawurlencode(basename($imagePath)) .
+            'Location: report.php?image=' . rawurlencode(basename($imagePath)) .
             '&json=' . rawurlencode($jsonName)
         );
         exit;

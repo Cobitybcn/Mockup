@@ -964,7 +964,7 @@ function h($v): string {
                     <img class="root-preview" src="<?= h($resultUrl) ?>" alt="Generated root artwork">
 
                     <div class="topbar-actions">
-                        <a class="button-link" href="form2.php?image=<?= rawurlencode(basename($resultFile)) ?>">
+                        <a class="button-link" href="report.php?image=<?= rawurlencode(basename($resultFile)) ?>">
                             Proceed to Step 2 · Curatorial Direction
                         </a>
 

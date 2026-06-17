@@ -217,7 +217,7 @@ try {
         'id' => $artworkId
     ]);
 
-    $initialMockupLimit = PromptSettings::mockupContextCount();
+    $initialMockupLimit = 3;
     $queuedMockups = MockupBatchQueue::enqueueInitialBatch(
         $artworkId,
         (int)$status['user_id'],
@@ -226,12 +226,17 @@ try {
     );
 
     if ($queuedMockups > 0) {
-        start_mockup_queue_workers($artworkId, $initialMockupLimit, ProviderSettings::mockupWorkerCount());
+        // Pre-assign: claim all jobs in one transaction, launch one dedicated worker per job.
+        // This eliminates SQLite write-lock competition between workers.
+        $claimedJobIds = MockupBatchQueue::claimBatch($artworkId, $initialMockupLimit);
+        foreach ($claimedJobIds as $jobId) {
+            start_mockup_queue_worker_for_job($jobId);
+        }
     }
 
     $redirect = $queuedMockups > 0
         ? 'mockup_batch_wait.php?image=' . rawurlencode($filename)
-        : 'form2.php?image=' . rawurlencode($filename);
+        : 'report.php?image=' . rawurlencode($filename);
 
     echo json_encode([
         'ok' => true,
@@ -313,6 +318,7 @@ function find_or_recover_artwork_record(PDO $db, string $jobId, array $status): 
 
 function start_mockup_queue_workers(int $artworkId, int $limit, int $workerCount): void
 {
+    // Legacy fallback: used when job IDs are not pre-assigned.
     $workerCount = max(1, min(8, $workerCount));
 
     for ($i = 0; $i < $workerCount; $i++) {
@@ -332,6 +338,29 @@ function start_mockup_queue_worker(int $artworkId, int $limit): void
     }
 
     $cmd = escapeshellarg($php) . ' ' . escapeshellarg($script) . ' ' . (int)$artworkId . ' ' . (int)$limit . ' > /dev/null 2>&1 &';
+    @exec($cmd);
+}
+
+/**
+ * Launch one worker bound to a specific pre-assigned job ID.
+ * The worker will process only that job — no claimNext() race condition.
+ */
+function start_mockup_queue_worker_for_job(int $jobId): void
+{
+    $script = __DIR__ . DIRECTORY_SEPARATOR . 'process_mockup_queue.php';
+    $php = resolve_php_binary_for_worker();
+
+    if (PHP_OS_FAMILY === 'Windows') {
+        // Pass job_id as 4th argument: php process_mockup_queue.php 0 1 {jobId}
+        // artworkId=0 limit=1 means fallback, but jobId overrides both.
+        $cmd = 'start /B "" ' . escapeshellarg($php) . ' ' . escapeshellarg($script)
+            . ' 0 1 ' . (int)$jobId . ' > NUL 2>&1';
+        @pclose(@popen($cmd, 'r'));
+        return;
+    }
+
+    $cmd = escapeshellarg($php) . ' ' . escapeshellarg($script)
+        . ' 0 1 ' . (int)$jobId . ' > /dev/null 2>&1 &';
     @exec($cmd);
 }
 

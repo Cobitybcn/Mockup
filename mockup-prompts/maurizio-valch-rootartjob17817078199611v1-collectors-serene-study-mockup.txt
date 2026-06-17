@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Collector's Serene Study
+- Purpose: Showcase for a focal art piece in a private, contemplative setting.
+- Scene Description: A High-end residential study or private library. with Refined, intellectual, calm, sophisticated. atmosphere. Materials: dark wood shelving, leather armchair, muted grey wall, subtle natural light
+- Lighting: Soft, diffused natural light from a large window, complemented by adjustable art lighting.
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: front view
+- Structured Camera Distance: close-up view
+- Camera Rationale: Front view highlights the artwork's direct compositional power and color contrast, essential for commercial readability. Close-up view keeps the artwork dominant, showing just enough of the sophisticated study environment to convey context and quality without distracting. The vertical orientation of the artwork is perfectly aligned with the frame, maximizing its impact.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+Close-up front view of Maurizio Valch's 'Verdant Ascent' centered on a clean, muted grey wall in a high-end residential study. To the left and right, out of focus, are rich, dark wood built-in bookshelves. A corner of a luxurious leather armchair is visible in the bottom right. Soft, indirect natural light illuminates the artwork, with a discreet art light overhead. Artwork is perfectly straight, dominant.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+Clutter, messy, vibrant colors in room, distracting elements, artificial lighting, harsh shadows, empty room, generic decor, low quality.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

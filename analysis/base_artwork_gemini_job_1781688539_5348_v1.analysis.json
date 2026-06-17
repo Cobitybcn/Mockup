@@ -1,0 +1,418 @@
+{
+    "artwork_analysis": {
+        "visual_language": [
+            "abstract",
+            "contemporary",
+            "structural",
+            "symbolic",
+            "metaphysical",
+            "fields of color",
+            "horizons",
+            "tectonic lines",
+            "divided territories",
+            "monoliths",
+            "suspended forms",
+            "spatial"
+        ],
+        "emotional_energy": [
+            "silent",
+            "deep",
+            "sober",
+            "contemplative",
+            "slightly melancholic",
+            "nocturnal calm",
+            "restrained tension",
+            "austerity",
+            "distance",
+            "quiet intensity"
+        ],
+        "dominant_colors": [
+            "aquamarine",
+            "teal",
+            "mint green",
+            "desaturated blue-grey"
+        ],
+        "secondary_colors": [
+            "intense red",
+            "light blue",
+            "turquoise",
+            "soft lavender",
+            "white"
+        ],
+        "visible_elements": [
+            "color fields",
+            "horizontal dividing line",
+            "three red rectangular forms",
+            "white linear incisions",
+            "subtle color shifts"
+        ],
+        "visible_symbols": [
+            "monoliths (red forms)",
+            "horizons (dividing line)",
+            "tectonic lines (white incisions)",
+            "divided fields",
+            "suspended forms (red rectangles)",
+            "territory"
+        ],
+        "color_temperature": "cool",
+        "contrast_level": "medium",
+        "composition_type": "horizontal field composition with focal elements",
+        "balance": "asymmetrical, yet visually balanced by the distribution and weight of the red forms against the expansive fields",
+        "visual_tension": "subtle tension between the expansive, calm fields and the vivid, structured red forms",
+        "density": "low to medium, with vast open fields punctuated by denser, textured elements",
+        "silence": "high, central to the artwork's atmosphere",
+        "main_focal_point": "the three red rectangular forms, particularly the larger one on the right",
+        "movement": "implied slow, horizontal movement across the 'horizon' and subtle textural shifts",
+        "depth": "significant, achieved through color layering, atmospheric perspective in the fields, and the placement of forms",
+        "negative_space": "expansive fields of aquamarine and blue-grey function as primary negative space, emphasizing the red forms",
+        "verticality_or_horizontality": "horizontality dominates, reinforced by the orientation and the dividing line",
+        "internal_organization": "layered fields structured by a subtle horizon line and linear incisions, with three distinct symbolic forms placed within this spatial framework",
+        "rhythm": "slow, contemplative rhythm established by the horizontal lines and the measured placement of the red forms",
+        "surface": "textured, varied, with visible layers and subtle imperfections",
+        "brushstroke": "varied, from smooth veils to more defined, palpable strokes and palette knife textures",
+        "gesture": "controlled, deliberate, with evidence of scraping and layering",
+        "layers": "multiple, visible through subtle color shifts and texture variations",
+        "material_presence": "strong, palpable acrylic presence, suggesting build-up and reduction",
+        "sense_of_depth_or_flatness": "pronounced sense of depth within a generally flattened, abstract space",
+        "format_and_scale": {
+            "width_cm": "120",
+            "height_cm": "80",
+            "depth_cm": "2",
+            "orientation": "horizontal",
+            "scale_impact": "provides a significant visual window, commanding attention without overwhelming",
+            "wall_presence": "strong, its horizontal spread creates a dominant line across a wall",
+            "monumentality_or_intimacy": "offers an intimate, contemplative view while suggesting expansive, monumental territories",
+            "spatial_effect": "can visually broaden a space, evoking a sense of calm vastness"
+        },
+        "spatial_presence": "expansive and contemplative, suggesting vast inner or outer landscapes",
+        "visual_atmosphere": "serene, reflective, and subtly profound, inviting prolonged observation",
+        "artwork_function": "a focal point for contemplation, a visual anchor for refined spaces, a bridge between interior and inner landscape",
+        "suggested_audience": [
+            "contemporary art collectors",
+            "galleries",
+            "architects",
+            "interior designers",
+            "high-level decorators",
+            "international buyers"
+        ],
+        "audience_profile": {
+            "primary": "collectors and professionals seeking abstract, structural, and symbolic art",
+            "secondary": "individuals interested in contemplative, minimalist, and spatially resonant works",
+            "buyer_profile": "discerning, appreciative of artistic process, material quality, and profound aesthetic statements",
+            "collector_type": "modernist, abstract expressionist, minimal art collectors",
+            "interior_design_relevance": "ideal for enhancing sophisticated, minimalist, and architecturally driven interiors, creating a focal point of quiet strength",
+            "gallery_potential": "high, suitable for contemporary art galleries with a focus on abstract and conceptual work"
+        },
+        "commercial_positioning": "premium contemporary abstract art, suitable for serious collections and high-design environments",
+        "one_line_curatorial_read": "A profound horizontal composition where serene aquamarine fields meet vivid red forms, evoking a silent dialogue between presence and vastness.",
+        "style_summary": "Abstract expressionist with minimalist and symbolic undertones, characterized by layered color fields, tactile surfaces, and contemplative forms.",
+        "artist_profile_relation": {
+            "relevant_statement_connection": "Directly explores the relationship between landscape and inner structure, manifesting abstraction, symbolic territory, and contemplative silence through fields of color, incisions, monoliths, and suspended forms.",
+            "relevant_visual_language_connection": "Employs fields of color (aquamarine/blue-grey), horizons (dividing line), tectonic lines (white incisions), divided territories, and suspended forms (red rectangles), all contributing to a visual language seeking silence, presence, depth, and inner order.",
+            "relevant_symbol_connection": "Features 'territory,' 'silence,' 'monoliths' (red forms), 'horizons,' 'tectonic lines' (white incisions), 'divided fields,' and 'suspended forms' as recurring motifs, embodying presence and distance.",
+            "relevant_atmosphere_connection": "Exudes a silent, deep, sober, contemplative, and slightly melancholic emotional atmosphere, reflecting nocturnal calm, restrained tension, and quiet intensity through its palette and composition."
+        },
+        "seasonal_strategy": {
+            "primary_season": "neutral"
+        },
+        "publishing_metadata": {
+            "suggested_titles": [
+                {
+                    "title": "Silent Territories",
+                    "subtitle": "An abstract landscape in aquamarine and red",
+                    "short_description": "Expansive aquamarine fields are punctuated by vivid red forms, exploring the geometry of inner and outer landscapes.",
+                    "curatorial_description": "This composition unfolds as a silent dialogue between vast atmospheric fields and structured red forms, suggesting an abstract territory defined by subtle horizons and incisions. The work invites a contemplative engagement with space and presence.",
+                    "commercial_description": "A striking abstract artwork featuring serene aquamarine and deep red, perfect for modern interiors seeking a statement piece of quiet intensity and sophisticated visual impact."
+                },
+                {
+                    "title": "Threshold of Presence",
+                    "subtitle": "Fields of aquamarine with red structural elements",
+                    "short_description": "Layered fields of aquamarine and grey form a horizon, against which red structures emerge as focal points.",
+                    "curatorial_description": "Through a sophisticated interplay of cool color fields and dynamic red elements, the artist crafts a visual territory that embodies contemplation. Subtle linear incisions articulate a deep sense of order within the atmospheric expanse.",
+                    "commercial_description": "Elevate your space with this captivating abstract painting. Its harmonious cool tones and vibrant red accents offer both visual tranquility and a powerful focal point for any discerning collection or interior."
+                },
+                {
+                    "title": "Nocturnal Horizon",
+                    "subtitle": "Abstract composition with suspended red forms",
+                    "short_description": "A muted, cool-toned sky meets a tranquil earth, punctuated by three striking red, monolith-like forms.",
+                    "curatorial_description": "The artwork presents a distilled vision of a landscape at a contemplative moment, using atmospheric color fields and precise, symbolic red forms to evoke geological time and the relationship between silence and structure. The subtle white lines act as tectonic incisions, guiding the eye through implied depths.",
+                    "commercial_description": "An elegant and evocative abstract piece, ideal for contemporary settings. Its serene palette and distinct forms create an atmosphere of profound calm and intellectual depth, appealing to collectors of sophisticated, minimalist art."
+                }
+            ],
+            "catawiki_listing": {
+                "recommended_title": "Silent Territories",
+                "alternative_titles": [
+                    "Threshold of Presence",
+                    "Nocturnal Horizon"
+                ],
+                "subtitle": "Original abstract painting by Maurizio Valch, with fields of aquamarine and red forms",
+                "short_description": "An evocative abstract artwork by Maurizio Valch, featuring expansive aquamarine fields punctuated by striking red forms and subtle linear incisions, inviting contemplation.",
+                "long_description": "This horizontal composition by Maurizio Valch unfolds with vast, layered fields of cool aquamarine and desaturated blue-grey, structured by a subtle horizon line. Three distinct red rectangular forms, highlighted with hints of light blue and lavender, punctuate this serene landscape, acting as visual anchors or symbolic monoliths. Delicate white linear incisions traverse the surface, adding textural complexity and suggesting tectonic shifts or silent pathways within the atmospheric space.\n\nThe painting's surface reveals a rich material presence, characterized by visible brushstrokes, layered acrylic, and subtle scraping, creating a sense of depth and tactile engagement. The interplay of cool, expansive fields and warm, concentrated red forms creates a restrained tension, inviting viewers into a state of quiet contemplation.\n\nTechnical details: Maurizio Valch, Silent Territories, 120 x 80 x 2 cm.\nThe piece is in excellent condition, with no damage or restorations.\nThe artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+                "technical_details": "Maurizio Valch, Silent Territories, 120 x 80 x 2 cm.",
+                "condition_statement": "The piece is in excellent condition, with no damage or restorations.",
+                "shipping_statement": "The artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+                "seo_keywords": [
+                    "Maurizio Valch",
+                    "abstract art",
+                    "contemporary painting",
+                    "aquamarine",
+                    "red abstract",
+                    "landscape abstraction",
+                    "minimalist art",
+                    "symbolic painting",
+                    "structural art",
+                    "contemplative art",
+                    "large abstract art",
+                    "modern art for sale",
+                    "gallery art",
+                    "collector art",
+                    "interior design art"
+                ],
+                "tags": [
+                    "Abstract",
+                    "Contemporary",
+                    "Acrylic",
+                    "Landscape",
+                    "Minimalist",
+                    "Symbolic",
+                    "Structural",
+                    "Red",
+                    "Blue-green",
+                    "Horizon",
+                    "Monolith",
+                    "Contemplative"
+                ]
+            },
+            "descriptions": {
+                "poetic_focus": "Within a vast expanse of aquamarine and deep blue-grey, silent structures of red emerge, like ancient markers on a forgotten landscape. This artwork is a meditation on presence, distance, and the quiet architecture of inner vision, where subtle incisions mark the passage of time across a serene, atmospheric field.",
+                "formal_focus": "A horizontal composition features two distinct color fields—a dominant aquamarine lower field and a desaturated blue-grey upper field—separated by a nuanced horizon. Three geometrically defined red forms, varying in scale and saturation, are strategically placed, creating a visual rhythm. Fine white linear elements act as incisions, introducing textural and structural tension against the layered acrylic surface.",
+                "commercial_focus": "A distinguished abstract painting by Maurizio Valch, this work offers a powerful yet serene visual experience. Its sophisticated palette of deep aquamarine and striking red, combined with masterful textural application, makes it an ideal acquisition for collectors seeking a refined, impactful piece for contemporary residential or commercial spaces."
+            },
+            "seo_keywords": [
+                "Maurizio Valch abstract",
+                "contemporary art",
+                "abstract landscape",
+                "red and blue painting",
+                "minimalist abstraction",
+                "structural art",
+                "symbolic painting",
+                "large format art",
+                "modern art",
+                "fine art",
+                "collectible art",
+                "abstract painting for sale",
+                "gallery quality art",
+                "interior design art"
+            ],
+            "seo_tags": [
+                "Abstract",
+                "Contemporary",
+                "Acrylic",
+                "Painting",
+                "Art",
+                "Landscape",
+                "Minimalist",
+                "Symbolic",
+                "Red",
+                "Blue",
+                "Green",
+                "Horizon",
+                "Monolith",
+                "Structural",
+                "Contemplative"
+            ],
+            "marketplace_title": "Maurizio Valch: Silent Territories – Abstract Aquamarine and Red Landscape",
+            "marketplace_short_description": "An evocative horizontal abstract painting by Maurizio Valch, featuring serene aquamarine fields, subtle horizons, and striking red monolithic forms. Acrylic on canvas, 120 x 80 cm.",
+            "marketplace_long_description": "Maurizio Valch's 'Silent Territories' is a captivating abstract work that invites profound contemplation. The painting is dominated by expansive fields of cool aquamarine and deep blue-grey, subtly divided by a horizontal line that suggests a distant horizon. Within this tranquil expanse, three vibrant red rectangular forms emerge, each with unique textural details and underlying washes of light blue and lavender. These forms act as powerful focal points, reminiscent of ancient monoliths or suspended signs in a vast, quiet landscape. The artist employs delicate white linear incisions across the surface, introducing a subtle structural rhythm and a sense of geological time. The layered acrylic technique, visible brushstrokes, and nuanced textures create a rich material presence, enhancing the artwork's depth and tactile quality. This piece perfectly embodies Valch's exploration of landscape, consciousness, and inner order, balancing serene expansiveness with moments of restrained tension. Its profound silence and striking visual elements make it an exceptional addition to any contemporary art collection or high-design interior. Signed by the artist.",
+            "pinterest_boards": [
+                "Contemporary Abstract Art",
+                "Minimalist Home Decor",
+                "Gallery Wall Inspiration",
+                "Maurizio Valch Art",
+                "Calm & Serene Interiors"
+            ]
+        }
+    },
+    "recommended_number_of_contexts": 4,
+    "contextual_proposals": [
+        {
+            "context_name": "Collector's Study in Mediterranean Light",
+            "context_role": "Showcasing the artwork as a contemplative focal point in a high-end private collection.",
+            "space_type": "private study or library in a luxurious Mediterranean-style residence",
+            "atmosphere": "serene, intelligent, contemplative, filled with soft natural light",
+            "materials": [
+                "light plaster walls",
+                "warm natural wood shelving",
+                "linen curtains",
+                "terracotta floor tiles"
+            ],
+            "lighting": "soft, diffused natural light from a large window to the left, highlighting the artwork's textures",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter left view allows for a sense of the room's depth and architectural details, framing the horizontally oriented artwork beautifully on a clean wall section. The natural light from the left emphasizes the subtle textures and layered colors without harsh reflections, maintaining the artwork's contemplative mood and visual dominance.",
+            "human_presence": "none",
+            "curatorial_reason": "Positions the artwork within a private, intellectual space, emphasizing its capacity for deep contemplation and its sophisticated integration into an art-conscious environment. The Mediterranean context subtly echoes the artwork's implied elemental vastness.",
+            "commercial_reason": "Appeals directly to collectors and high-end interior designers seeking art that integrates seamlessly into a luxurious, thoughtfully designed home, demonstrating its aesthetic value and suitability for discerning private collections.",
+            "mockup_prompt": "Abstract painting by Maurizio Valch 'Silent Territories', 120x80cm, on a pristine light plaster wall in a luxurious Mediterranean-style private study. Soft, diffused natural light from a large window to the left. Warm natural wood built-in shelving, elegant linen curtains, terracotta floor. Focus on the artwork, with a hint of the sophisticated interior. three-quarter left view, close-up view.",
+            "negative_prompt": "clutter, modern generic furniture, harsh shadows, artificial light, cold colors, overly ornate, cheap materials, empty room, dark, reflections on artwork",
+            "pinterest_marketing": {
+                "board_suggestion": "Luxury Home Art & Decor",
+                "pin_title": "Maurizio Valch Abstract in a Mediterranean Collector's Study",
+                "pin_description": "Elevate your home with 'Silent Territories' by Maurizio Valch. This abstract aquamarine and red painting brings contemplative elegance to a sophisticated Mediterranean-inspired study. Perfect for discerning art collectors.",
+                "alt_text": "Abstract painting Silent Territories by Maurizio Valch in a Mediterranean study with warm wood and plaster walls",
+                "seo_keywords": [
+                    "Maurizio Valch",
+                    "abstract art",
+                    "Mediterranean decor",
+                    "luxury home art",
+                    "collector's study",
+                    "contemporary painting",
+                    "aquamarine red art"
+                ],
+                "hashtags": [
+                    "#MaurizioValch",
+                    "#AbstractArt",
+                    "#MediterraneanDesign",
+                    "#LuxuryInteriors",
+                    "#ArtCollector",
+                    "#ContemplativeArt"
+                ]
+            }
+        },
+        {
+            "context_name": "Gallery Dialogue with a View",
+            "context_role": "Highlighting the artwork's presence and scale in a professional gallery setting, suggesting a dialogue with the outside world.",
+            "space_type": "contemporary art gallery with large windows overlooking an urban landscape",
+            "atmosphere": "open, expansive, architectural, serious art viewing environment",
+            "materials": [
+                "smooth concrete floor",
+                "white gallery walls",
+                "minimalist bench",
+                "large glass windows"
+            ],
+            "lighting": "bright, even gallery lighting combined with natural ambient light from large windows",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A direct front view maximizes the artwork's clarity and formal impact, ideal for a gallery presentation. The horizontal orientation is perfectly framed by the camera, making it visually dominant. The even gallery lighting ensures all textural nuances are visible, while suggesting the presence of a window allows for a curatorial connection to external 'horizons', reinforcing the artwork's thematic depth.",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "Emphasizes the artwork's inherent gallery quality and its ability to hold a prominent position. The urban view creates a modern contrast, underscoring the artwork's connection to both inner and outer landscapes.",
+            "commercial_reason": "Presents the artwork in a professional, high-value context, signaling its appeal to galleries and serious collectors. The human figure provides scale, reassuring buyers about its significant wall presence.",
+            "mockup_prompt": "Abstract painting by Maurizio Valch 'Silent Territories', 120x80cm, mounted on a pristine white gallery wall. Smooth concrete floor. In the background, out of focus, a large window reveals a soft urban landscape. Bright, even gallery lighting. An optional standing male figure 1.80m observes the artwork from a respectful distance. front view, close-up view.",
+            "negative_prompt": "cluttered gallery, poor lighting, distracting elements, bad framing, empty space, overly sterile, art not centered, distorted artwork",
+            "pinterest_marketing": {
+                "board_suggestion": "Contemporary Gallery Art",
+                "pin_title": "Maurizio Valch Abstract in Modern Gallery Setting",
+                "pin_description": "Experience Maurizio Valch's 'Silent Territories' in a contemporary gallery. This compelling abstract painting (120x80cm) is perfectly scaled for impactful display, offering deep contemplation against an urban backdrop.",
+                "alt_text": "Maurizio Valch abstract painting 'Silent Territories' in a modern art gallery with concrete floors and large window",
+                "seo_keywords": [
+                    "Maurizio Valch art",
+                    "contemporary art gallery",
+                    "large abstract painting",
+                    "art for collectors",
+                    "gallery display",
+                    "abstract expressionism",
+                    "fine art display"
+                ],
+                "hashtags": [
+                    "#GalleryArt",
+                    "#ContemporaryPainting",
+                    "#ArtExhibition",
+                    "#MaurizioValch",
+                    "#AbstractLandscape",
+                    "#ArtMarket"
+                ]
+            }
+        },
+        {
+            "context_name": "Architectural Residence with Horizon Lines",
+            "context_role": "Illustrating how the artwork integrates into and enhances a meticulously designed contemporary living space.",
+            "space_type": "minimalist living room in a modern architectural residence",
+            "atmosphere": "clean, spacious, sophisticated, tranquil, with strong geometric lines",
+            "materials": [
+                "polished concrete walls",
+                "integrated linear fireplace",
+                "neutral tone bespoke furniture",
+                "large format tile flooring"
+            ],
+            "lighting": "subtle recessed ceiling lights and soft, indirect daylight emphasizing clean surfaces",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter right view provides dynamic spatial context, aligning the artwork with the architectural lines of the room. The horizontal orientation of the artwork naturally extends the visual horizon established by the integrated fireplace, showcasing how the piece harmonizes with and elevates a minimalist design. The close-up view ensures the artwork remains the central focus, while hinting at the elegant surroundings.",
+            "human_presence": "none",
+            "curatorial_reason": "Connects the artwork's structural and spatial qualities directly to a modern architectural context, showing its relevance for sophisticated interiors where art is integral to the design vision.",
+            "commercial_reason": "Targets architects, interior designers, and homeowners of luxury properties, demonstrating the artwork's ability to complete and define a high-design living space with its clean lines, striking colors, and contemplative depth.",
+            "mockup_prompt": "Abstract painting by Maurizio Valch 'Silent Territories', 120x80cm, mounted on a polished concrete wall above a sleek, integrated linear fireplace in a minimalist living room. Neutral tone bespoke furniture. Soft, indirect daylight and subtle recessed ceiling lights. Clean geometric lines throughout the space. three-quarter right view, close-up view.",
+            "negative_prompt": "clutter, traditional decor, harsh lighting, warm color palette in room, busy patterns, small room, empty wall, mismatched style, reflections",
+            "pinterest_marketing": {
+                "board_suggestion": "Minimalist Interior Design Art",
+                "pin_title": "Maurizio Valch Abstract in a Modern Architectural Living Room",
+                "pin_description": "Discover 'Silent Territories' by Maurizio Valch, harmonizing with the clean lines of a minimalist architectural residence. This abstract painting is a perfect fit for modern luxury living rooms, adding depth and color.",
+                "alt_text": "Abstract painting by Maurizio Valch on a concrete wall in a minimalist living room with linear fireplace",
+                "seo_keywords": [
+                    "Maurizio Valch",
+                    "architectural art",
+                    "minimalist living room",
+                    "modern abstract",
+                    "concrete walls",
+                    "designer art",
+                    "luxury interiors",
+                    "horizontal artwork"
+                ],
+                "hashtags": [
+                    "#ArchitecturalDesign",
+                    "#MinimalistArt",
+                    "#ModernLivingRoom",
+                    "#MaurizioValch",
+                    "#LuxuryDesign",
+                    "#ContemporaryArt"
+                ]
+            }
+        },
+        {
+            "context_name": "Contemplative Studio Corner",
+            "context_role": "Presenting the artwork in a refined studio or creative workspace, emphasizing its role in inspiring reflection and focus.",
+            "space_type": "artist's studio or designer's creative workspace, elegantly organized",
+            "atmosphere": "focused, reflective, inspirational, quiet intensity",
+            "materials": [
+                "subtle textured white walls",
+                "light oak wood floor",
+                "minimalist dark metal desk",
+                "simple ceramic planter with green foliage"
+            ],
+            "lighting": "soft, even overhead lighting with a gentle natural light filtering from an unseen window",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter left view naturally draws the eye towards the artwork, positioned as a central source of inspiration within a creative corner. The horizontal format of the piece complements the calm, organized lines of the studio, making the artwork appear like a window into a different realm. The close-up view maintains the artwork's dominance, allowing viewers to appreciate its details while understanding its contextual resonance within a reflective space.",
+            "human_presence": "none",
+            "curatorial_reason": "Positions the artwork as a source of intellectual and aesthetic inspiration, reflecting the artist's own focus on consciousness and inner structure. It suggests the artwork's value beyond decoration, as a catalyst for thought.",
+            "commercial_reason": "Appeals to creative professionals, architects, and designers who value art as a tool for inspiration and a reflection of sophisticated taste. Shows the artwork's versatility in a refined professional environment.",
+            "mockup_prompt": "Abstract painting by Maurizio Valch 'Silent Territories', 120x80cm, displayed on a subtle textured white wall in an elegantly organized artist's studio. Light oak wood floor. A minimalist dark metal desk with a simple ceramic planter containing subtle green foliage is partially visible to the side. Soft, even overhead lighting and gentle natural light. three-quarter left view, close-up view.",
+            "negative_prompt": "messy studio, harsh fluorescent lights, bright colors, cluttered desk, uninspired space, industrial, distracting art supplies, poor composition",
+            "pinterest_marketing": {
+                "board_suggestion": "Inspiring Studio & Office Art",
+                "pin_title": "Maurizio Valch Abstract for Creative Studio Inspiration",
+                "pin_description": "Inspire creativity with Maurizio Valch's 'Silent Territories'. This striking abstract artwork (120x80cm) is perfect for a sophisticated studio or office, fostering contemplation and focus.",
+                "alt_text": "Abstract painting by Maurizio Valch in an elegant artist's studio with light wood floors and minimalist desk",
+                "seo_keywords": [
+                    "Maurizio Valch",
+                    "studio art",
+                    "office art",
+                    "creative workspace",
+                    "abstract inspiration",
+                    "designer studio",
+                    "contemporary abstract",
+                    "art for creative professionals"
+                ],
+                "hashtags": [
+                    "#ArtistStudio",
+                    "#CreativeSpace",
+                    "#AbstractInspiration",
+                    "#MaurizioValch",
+                    "#OfficeDecor",
+                    "#DesignerArt"
+                ]
+            }
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1781688539_5348_v1.png"
+}

@@ -40,14 +40,20 @@ def call_with_retry(client_call_fn, max_retries=5):
             elif "429" in str(e) or "exhausted" in str(e).lower():
                 is_rate_limit = True
                 
-            if is_rate_limit and attempt < max_retries - 1:
-                # Exponential backoff: 5s, 10s, 20s, 40s... plus jitter
-                sleep_time = (2 ** attempt) * 5 + random.uniform(1, 5)
-                print(f"Rate limited (429). Retrying in {sleep_time:.2f} seconds (attempt {attempt + 1}/{max_retries})...", file=sys.stderr)
-                time.sleep(sleep_time)
-                last_error = e
-                continue
-            raise e
+            if is_rate_limit:
+                if attempt < max_retries - 1:
+                    # Para error 429, usar backoff más corto: 3s, 6s, 12s, 24s máximo
+                    sleep_time = min(24, (2 ** attempt) * 3) + random.uniform(0.5, 2)
+                    print(f"Rate limited (429). Retrying in {sleep_time:.2f} seconds (attempt {attempt + 1}/{max_retries})...", file=sys.stderr)
+                    time.sleep(sleep_time)
+                    last_error = e
+                    continue
+                else:
+                    # En último intento, fallar inmediatamente sin reintentar
+                    print(f"Rate limit exhausted after {max_retries} attempts. Failing.", file=sys.stderr)
+                    raise e
+            else:
+                raise e
         except TransportError as e:
             if attempt < max_retries - 1:
                 sleep_time = (2 ** attempt) * 5 + random.uniform(1, 5)
@@ -586,6 +592,13 @@ def main():
         elif args.command == "generate-image":
             handle_generate_image(args)
     except Exception as e:
+        error_msg = str(e)
+        is_rate_limit = "429" in error_msg or "resource has been exhausted" in error_msg.lower()
+        
+        if is_rate_limit:
+            print(f"FATAL: API rate limit (429 RESOURCE_EXHAUSTED). Cannot continue.", file=sys.stderr)
+            print(f"This usually means the quota has been exceeded. Check Google Cloud console.", file=sys.stderr)
+        
         import traceback
         traceback.print_exc(file=sys.stderr)
         sys.exit(1)

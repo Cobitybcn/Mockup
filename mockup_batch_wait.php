@@ -21,7 +21,7 @@ if ($image === '') {
     exit;
 }
 
-$form2Url = 'form2.php?image=' . rawurlencode($image) . '&auto=1';
+$reportUrl = 'report.php?image=' . rawurlencode($image) . '&auto=1';
 $mockupCount = 0;
 $albumSlides = [];
 
@@ -111,8 +111,24 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
         html,
         body {
             zoom: 1;
-            height: 100%;
-            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            background: #080807;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(185, 144, 85, 0.2) transparent;
+        }
+
+        body::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        body::-webkit-scrollbar-thumb {
+            background: rgba(185, 144, 85, 0.25);
+            border-radius: 99px;
         }
 
         .wait-wrap {
@@ -296,9 +312,9 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
             }
         }
 
+        /* Second block: dream gallery layout - background only, layout handled by third block */
         .wait-wrap {
             background: #020202;
-            padding: 0;
         }
 
         .wait-wrap::before {
@@ -486,33 +502,18 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
         }
 
         .wait-panel {
-            position: absolute;
-            right: 22px;
-            bottom: 18px;
-            width: min(330px, calc(100vw - 44px));
-            padding: 8px 10px;
-            opacity: 0.24;
-            transition: opacity 0.35s ease;
-            background: rgba(8, 6, 4, 0.22);
-            border-color: rgba(226, 193, 131, 0.13);
-            box-shadow: none;
+            /* overridden by full-layout block below — kept for cascade safety */
+            opacity: 1;
         }
 
         .wait-panel:hover,
         .wait-panel:focus-within {
-            opacity: 0.88;
+            opacity: 1;
         }
 
         .wait-title {
             font-size: 14px;
             margin: 0;
-        }
-
-        .wait-copy,
-        .wait-meta,
-        .wait-tip,
-        .wait-actions {
-            display: none;
         }
 
         .wait-bar {
@@ -590,70 +591,231 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
 
         .wait-wrap {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 24px;
-            background: var(--bg);
-        }
-
-        .wait-wrap::before,
-        .wait-wrap::after,
-        .album-stage {
-            display: none;
+            justify-content: flex-start;
+            padding: 40px 24px;
+            background: #080807;
+            min-height: 100vh;
+            color: #f7f2ea;
+            box-sizing: border-box;
+            overflow-y: visible;
         }
 
         .wait-panel {
+            width: 100%;
+            max-width: 1400px;
+            background: rgba(18, 16, 14, 0.6);
+            border: 1px solid rgba(214, 178, 122, 0.2);
+            border-radius: 8px;
+            padding: 24px 30px;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(14px);
+            margin-bottom: 24px;
+            box-sizing: border-box;
             position: relative;
-            inset: auto;
-            width: min(360px, calc(100vw - 48px));
-            padding: 26px 24px;
-            opacity: 1;
-            text-align: center;
-            background: transparent;
-            border: 0;
-            box-shadow: none;
+            z-index: 4;
         }
 
-        .wait-panel::before {
-            content: "";
-            display: block;
-            width: 34px;
-            height: 34px;
-            margin: 0 auto 18px;
-            border-radius: 50%;
-            border: 2px solid var(--line);
-            border-top-color: var(--accent);
-            animation: simpleSpin 0.9s linear infinite;
+        .wait-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
         }
 
         .wait-title {
-            margin: 0 0 8px;
-            color: var(--ink);
-            font-size: 22px;
-        }
-
-        .wait-copy {
-            display: block;
-            margin: 0 0 14px;
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .wait-meta,
-        .wait-tip,
-        .wait-actions {
-            display: none;
+            margin: 0;
+            font-size: 26px;
+            font-weight: 500;
+            color: #f7f2ea;
+            font-family: var(--font-serif);
         }
 
         .wait-bar {
-            display: block;
-            height: 3px;
-            margin-top: 0;
-            background: var(--line);
+            height: 6px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            flex: 1;
+            max-width: 320px;
+            margin: 0 20px;
         }
 
-        @keyframes simpleSpin {
-            to { transform: rotate(360deg); }
+        .wait-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #b99055, #e2c183);
+            box-shadow: 0 0 12px rgba(214, 178, 122, 0.3);
+            transition: width 0.35s ease;
+        }
+
+        .wait-meta {
+            font-size: 13px;
+            color: rgba(247, 242, 234, 0.75);
+            white-space: nowrap;
+        }
+
+        .wait-actions a {
+            color: #e2c183;
+            text-decoration: underline;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        /* Proposals Grid */
+        .proposals-heading {
+            width: 100%;
+            max-width: 1400px;
+            margin: 10px 0 14px;
+            font-family: var(--font-serif);
+            font-size: 20px;
+            color: #e2c183;
+            border-bottom: 1px solid rgba(214, 178, 122, 0.15);
+            padding-bottom: 8px;
+            text-align: left;
+            position: relative;
+            z-index: 4;
+        }
+
+        .proposals-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1400px;
+            margin-bottom: 40px;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 4;
+        }
+
+        .proposal-card {
+            background: rgba(22, 20, 18, 0.85);
+            border: 1px solid rgba(214, 178, 122, 0.12);
+            border-radius: 6px;
+            padding: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            min-height: 260px;
+            box-sizing: border-box;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .proposal-card:hover {
+            border-color: rgba(214, 178, 122, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .proposal-card h3 {
+            margin: 0 0 6px 0;
+            font-family: var(--font-serif);
+            font-size: 20px;
+            font-weight: 500;
+            color: #f7f2ea;
+            line-height: 1.25;
+        }
+
+        .proposal-meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .proposal-kicker {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #b99055;
+            font-weight: 600;
+        }
+
+        .proposal-badge {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 3px 7px;
+            border-radius: 3px;
+        }
+        .proposal-badge.queued {
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .proposal-badge.processing {
+            background: rgba(214, 178, 122, 0.15);
+            color: #e2c183;
+            border: 1px solid rgba(214, 178, 122, 0.3);
+        }
+        .proposal-badge.done {
+            background: rgba(46, 117, 89, 0.15);
+            color: #8adcb3;
+            border: 1px solid rgba(46, 117, 89, 0.35);
+        }
+        .proposal-badge.error {
+            background: rgba(166, 60, 60, 0.15);
+            color: #f2a8a8;
+            border: 1px solid rgba(166, 60, 60, 0.35);
+        }
+        .proposal-badge.optional {
+            background: rgba(255, 255, 255, 0.03);
+            color: rgba(255, 255, 255, 0.35);
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .proposal-desc {
+            font-size: 12.5px;
+            line-height: 1.5;
+            color: rgba(247, 242, 234, 0.75);
+            margin: 0 0 10px 0;
+            min-height: 48px;
+        }
+
+        .proposal-desc strong {
+            display: block;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #e2c183;
+            margin-bottom: 2px;
+        }
+
+        .proposal-reason-box {
+            background: rgba(214, 178, 122, 0.03);
+            border-left: 2px solid #b99055;
+            padding: 8px 10px;
+            border-radius: 0 4px 4px 0;
+            font-size: 12px;
+            line-height: 1.45;
+            color: rgba(247, 242, 234, 0.85);
+            font-style: italic;
+            margin-top: auto;
+        }
+
+        .proposal-reason-box strong {
+            display: block;
+            font-style: normal;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #e2c183;
+            margin-bottom: 2px;
+        }
+
+        .typewriter-cursor::after {
+            content: "|";
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
         }
 
         .admin-wait-prompts {
@@ -665,11 +827,12 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
             width: min(560px, calc(100vw - 48px));
             overflow: auto;
             padding: 16px;
-            background: rgba(255, 255, 255, 0.96);
-            border: 1px solid #e5e3dd;
+            background: rgba(18, 16, 14, 0.98);
+            border: 1px solid rgba(214, 178, 122, 0.2);
             border-radius: 8px;
-            box-shadow: 0 20px 70px rgba(20, 20, 18, 0.16);
+            box-shadow: 0 20px 70px rgba(0, 0, 0, 0.7);
             text-align: left;
+            color: #f7f2ea;
         }
 
         .admin-wait-prompts h2 {
@@ -677,13 +840,13 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
             font-family: var(--font-serif);
             font-size: 22px;
             font-weight: 500;
-            color: #141412;
+            color: #e2c183;
         }
 
         .admin-wait-prompts > p,
         .admin-wait-empty {
             margin: 0 0 14px;
-            color: #7a7872;
+            color: rgba(247, 242, 234, 0.6);
             font-size: 12px;
             line-height: 1.45;
         }
@@ -691,15 +854,15 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
         .admin-wait-prompt {
             display: block;
             margin-top: 10px;
-            border: 1px solid #e5e3dd;
+            border: 1px solid rgba(214, 178, 122, 0.15);
             border-radius: 6px;
-            background: #faf9f6;
+            background: rgba(255, 255, 255, 0.02);
             overflow: hidden;
         }
 
         .admin-wait-prompt summary {
             padding: 10px 12px;
-            color: #141412;
+            color: #f7f2ea;
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
@@ -710,7 +873,7 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
             display: grid;
             gap: 3px;
             padding: 0 12px 10px;
-            color: #7a7872;
+            color: rgba(247, 242, 234, 0.6);
             font-size: 11px;
             line-height: 1.35;
         }
@@ -725,13 +888,20 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
             width: auto;
             margin: 0;
             padding: 7px 10px;
-            border: 1px solid #9a7b56;
-            background: #fff;
-            color: #141412;
+            border: 1px solid #b99055;
+            background: transparent;
+            color: #e2c183;
             font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.08em;
             cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .admin-wait-actions button:hover {
+            background: #b99055;
+            color: #080807;
         }
 
         .admin-wait-prompt textarea {
@@ -741,77 +911,58 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
             margin: 0 12px 12px;
             padding: 10px;
             resize: vertical;
-            border: 1px solid #e5e3dd;
+            border: 1px solid rgba(214, 178, 122, 0.15);
             border-radius: 4px;
-            background: #fbfaf7;
-            color: #141412;
+            background: rgba(0,0,0,0.3);
+            color: #f7f2ea;
             font-family: Consolas, Monaco, monospace;
             font-size: 11px;
             line-height: 1.45;
             box-sizing: border-box;
         }
+
+        @media (max-width: 1200px) {
+            .proposals-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .proposals-grid {
+                grid-template-columns: 1fr;
+            }
+            .wait-header-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .wait-bar {
+                margin: 10px 0;
+                width: 100%;
+                max-width: none;
+            }
+        }
     </style>
 </head>
 <body>
 <div class="wait-wrap">
-    <div class="album-stage" aria-hidden="true">
-        <?php if (!empty($albumSlides)): ?>
-            <div class="album-track dream-a">
-                <?php foreach (array_merge($albumSlides, $albumSlides) as $slide): ?>
-                    <img class="album-slide" src="<?= h($slide['url']) ?>" alt="">
-                <?php endforeach; ?>
-            </div>
-            <div class="album-track dream-b">
-                <?php foreach (array_merge(array_reverse($albumSlides), array_reverse($albumSlides)) as $slide): ?>
-                    <img class="album-slide" src="<?= h($slide['url']) ?>" alt="">
-                <?php endforeach; ?>
-            </div>
-            <div class="album-track dream-c">
-                <?php foreach (array_merge($albumSlides, array_reverse($albumSlides)) as $slide): ?>
-                    <img class="album-slide" src="<?= h($slide['url']) ?>" alt="">
-                <?php endforeach; ?>
-            </div>
-            <div class="album-track dream-d">
-                <?php foreach (array_merge($albumSlides, $albumSlides) as $slide): ?>
-                    <img class="album-slide" src="<?= h($slide['url']) ?>" alt="">
-                <?php endforeach; ?>
-            </div>
-            <div class="album-track dream-e">
-                <?php foreach (array_merge(array_reverse($albumSlides), $albumSlides) as $slide): ?>
-                    <img class="album-slide" src="<?= h($slide['url']) ?>" alt="">
-                <?php endforeach; ?>
-            </div>
-            <div class="album-track dream-f">
-                <?php foreach (array_merge($albumSlides, $albumSlides) as $slide): ?>
-                    <img class="album-slide" src="<?= h($slide['url']) ?>" alt="">
-                <?php endforeach; ?>
-            </div>
-            <div class="album-track dream-g">
-                <?php foreach (array_merge(array_reverse($albumSlides), array_reverse($albumSlides)) as $slide): ?>
-                    <img class="album-slide" src="<?= h($slide['url']) ?>" alt="">
-                <?php endforeach; ?>
-            </div>
-            <div class="album-track dream-h">
-                <?php foreach (array_merge($albumSlides, array_reverse($albumSlides)) as $slide): ?>
-                    <img class="album-slide" src="<?= h($slide['url']) ?>" alt="">
-                <?php endforeach; ?>
-            </div>
-        <?php else: ?>
-            <div class="album-empty"></div>
-        <?php endif; ?>
-    </div>
     <main class="wait-panel">
-        <h1 class="wait-title" id="waitTitle">Preparing your <?= h($mockupCountLabel) ?></h1>
-        <p class="wait-copy">The initial proposal set is being generated now. Your mockup proposals will open automatically when the batch is ready.</p>
-        <div class="wait-bar" aria-hidden="true">
-            <div class="wait-fill" id="waitFill"></div>
-        </div>
-        <div class="wait-meta" id="waitMeta">Starting automatic generation...</div>
-        <div class="wait-tip" id="waitTip"></div>
-        <div class="wait-actions">
-            <a href="<?= h($form2Url) ?>">Open proposals now</a>
+        <div class="wait-header-row">
+            <h1 class="wait-title" id="waitTitle">Generando lote de Mockups</h1>
+            <div class="wait-bar" aria-hidden="true">
+                <div class="wait-fill" id="waitFill"></div>
+            </div>
+            <div class="wait-meta" id="waitMeta">Iniciando generación automática...</div>
+            <div class="wait-actions">
+                <a href="<?= h($reportUrl) ?>">Abrir report ahora</a>
+            </div>
         </div>
     </main>
+
+    <h2 class="proposals-heading">Propuestas de Contexto Curatorial</h2>
+    <div class="proposals-grid" id="proposalsGrid">
+        <!-- Renders dynamically with poll() -->
+    </div>
+
     <?php if ($isAdmin): ?>
         <aside class="admin-wait-prompts" aria-label="Admin mockup prompts">
             <h2>Admin - Mockup Prompts</h2>
@@ -826,18 +977,13 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
     const statusUrl = 'mockup_batch_status.php?image=<?= rawurlencode($image) ?>';
     const isAdmin = <?= $isAdmin ? 'true' : 'false' ?>;
     const adminPromptStatusUrl = 'admin_mockup_prompts_status.php?image=<?= rawurlencode($image) ?>';
-    const form2Url = '<?= h($form2Url) ?>';
+    const reportUrl = '<?= h($reportUrl) ?>';
     const fill = document.getElementById('waitFill');
     const meta = document.getElementById('waitMeta');
     const waitTitle = document.getElementById('waitTitle');
-    const waitTip = document.getElementById('waitTip');
-    const waitTips = [
-        ['Artist profile', 'The richer the profile, the more precise the room, audience and atmosphere choices become.'],
-        ['If a mockup misses', 'Use the prompt button to inspect the direction, then regenerate with a cleaner context or root image.'],
-        ['Best mockups', 'Scale, wall contact, light and color fidelity matter more than a dramatic room.'],
-        ['Ready to publish', 'A strong title, dimensions and short artwork text turn the mockup into a sales tool.']
-    ];
-    let waitTipIndex = 0;
+    const proposalsGrid = document.getElementById('proposalsGrid');
+    
+    const typedProposals = new Set();
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -846,6 +992,117 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
             .replaceAll('>', '&gt;')
             .replaceAll('"', '&quot;')
             .replaceAll("'", '&#039;');
+    }
+
+    function typeText(el, text, speed = 8, onDone = null) {
+        el.textContent = '';
+        el.style.opacity = '1';
+        el.classList.add('typewriter-cursor');
+        let i = 0;
+        function type() {
+            if (i < text.length) {
+                el.textContent += text.charAt(i);
+                i++;
+                setTimeout(type, speed);
+            } else {
+                el.classList.remove('typewriter-cursor');
+                if (onDone) onDone();
+            }
+        }
+        type();
+    }
+
+    function triggerTypewriter(card, prop) {
+        if (typedProposals.has(prop.id)) return;
+        typedProposals.add(prop.id);
+
+        const textQueue = [];
+        
+        const spaceText = `${prop.space_type}. Materiales: ${prop.materials.join(', ')}. Iluminación: ${prop.lighting}.`;
+        const descEl = card.querySelector('.prop-desc-content');
+        if (descEl) {
+            textQueue.push({ el: descEl, text: spaceText });
+        }
+
+        const whyEl = card.querySelector('.prop-why-content');
+        if (whyEl && prop.curatorial_reason) {
+            textQueue.push({ el: whyEl, text: prop.curatorial_reason });
+        }
+
+        function runNext() {
+            if (textQueue.length === 0) return;
+            const item = textQueue.shift();
+            typeText(item.el, item.text, 8, runNext);
+        }
+        runNext();
+    }
+
+    function renderProposals(proposals, jobs) {
+        if (!proposalsGrid || !Array.isArray(proposals)) return;
+
+        proposals.forEach((prop, idx) => {
+            let card = document.getElementById(`prop-card-${prop.id}`);
+            const isInitialBatch = idx < 3;
+            
+            // Find job status if initial batch
+            let status = 'optional';
+            let label = 'Opcional';
+            if (isInitialBatch) {
+                const job = (jobs || []).find(j => String(j.context_id) === String(prop.id));
+                status = job ? String(job.status) : 'queued';
+                label = matchStatusLabel(status);
+            }
+
+            if (!card) {
+                card = document.createElement('div');
+                card.id = `prop-card-${prop.id}`;
+                card.className = 'proposal-card';
+                card.innerHTML = `
+                    <div class="proposal-meta-row">
+                        <span class="proposal-kicker">Propuesta ${idx + 1}</span>
+                        <span class="proposal-badge ${status}" id="badge-${prop.id}">${label}</span>
+                    </div>
+                    <h3>${escapeHtml(prop.context_name)}</h3>
+                    
+                    <p class="proposal-desc">
+                        <strong>Espacio y Atmósfera</strong>
+                        <span class="prop-desc-content" style="opacity: 0;">Cargando...</span>
+                    </p>
+                    
+                    <div class="proposal-reason-box">
+                        <strong>Justificación Curatorial</strong>
+                        <span class="prop-why-content" style="opacity: 0;">Cargando...</span>
+                    </div>
+                `;
+                proposalsGrid.appendChild(card);
+                triggerTypewriter(card, prop);
+            } else {
+                // Update badge if changed
+                const badge = document.getElementById(`badge-${prop.id}`);
+                if (badge) {
+                    badge.className = `proposal-badge ${status}`;
+                    badge.textContent = label;
+                }
+            }
+        });
+    }
+
+    function matchStatusLabel(status) {
+        return matchStatusLabelEs(status);
+    }
+
+    function matchStatusLabelEs(status) {
+        return matchStatus(status);
+    }
+
+    function matchStatus(status) {
+        switch (status) {
+            case 'queued': return 'En cola';
+            case 'processing': return 'Generando';
+            case 'done': return 'Listo';
+            case 'error': return 'Error';
+            default: return 'En espera';
+        }
     }
 
     function bindAdminPromptCopyButtons(scope = document) {
@@ -923,13 +1180,6 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
         }
     }
 
-    function rotateWaitTip() {
-        if (!waitTip) return;
-        const tip = waitTips[waitTipIndex % waitTips.length];
-        waitTip.innerHTML = '<strong>' + tip[0] + ':</strong> ' + tip[1];
-        waitTipIndex++;
-    }
-
     async function poll() {
         try {
             const response = await fetch(statusUrl, {
@@ -952,27 +1202,29 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
 
             fill.style.width = `${pct}%`;
             if (waitTitle && total > 0) {
-                waitTitle.textContent = `Preparing your ${total} ${total === 1 ? 'mockup' : 'mockups'}`;
+                waitTitle.textContent = `Generando lote de Mockups (${complete} de ${total} listos)`;
             }
             meta.textContent = total > 0
-                ? `${complete} of ${total} mockups ready${error > 0 ? `, ${error} with errors` : ''}.`
-                : 'Preparing automatic generation...';
+                ? `${complete} de ${total} mockups listos${error > 0 ? `, ${error} con errores` : ''}.`
+                : 'Iniciando generación automática...';
+
+            if (data.proposals) {
+                renderProposals(data.proposals, data.jobs);
+            }
 
             if (total > 0 && pending === 0) {
-                window.location.href = form2Url;
+                window.location.href = reportUrl;
                 return;
             }
         } catch (error) {
             meta.textContent = error.message;
         }
 
-        window.setTimeout(poll, 3500);
+        window.setTimeout(poll, 3000);
     }
 
-    window.setTimeout(poll, 900);
+    window.setTimeout(poll, 600);
     pollAdminMockupPrompts();
-    setInterval(rotateWaitTip, 6200);
-    rotateWaitTip();
 </script>
 </body>
 </html>

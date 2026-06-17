@@ -162,7 +162,7 @@ try {
     echo json_encode([
         'ok'       => true,
         'message'  => 'Artwork re-analyzed successfully. New contexts are ready.',
-        'redirect' => 'form2.php?image=' . rawurlencode($safeImage),
+        'redirect' => 'report.php?image=' . rawurlencode($safeImage),
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (Throwable $e) {
     Logger::log("Error en re-análisis de $safeImage: " . $e->getMessage(), 'error');

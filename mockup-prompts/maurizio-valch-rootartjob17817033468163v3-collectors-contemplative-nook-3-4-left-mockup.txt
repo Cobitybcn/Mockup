@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 3 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Collector's Contemplative Nook
+- Purpose: Showcasing the artwork's integration into a personal, intellectually engaging space.
+- Scene Description: A private study / library with quiet, intellectual, sophisticated, contemplative atmosphere. Materials: textured off-white wall, polished dark oak flooring, dark wood desk, minimalist lamp
+- Lighting: natural light from a large window, soft ambient light
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult hispanic man, 1.80 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A three-quarter left view provides spatial depth, allowing the viewer to perceive the artwork's physical presence within a refined interior. The close-up view ensures the artwork remains dominant, while the surrounding elements offer context. The human figure helps establish scale naturally.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A refined private study in a contemporary townhouse. The artwork by Maurizio Valch is mounted on a textured, off-white wall. To the left, a subtle dark wood desk with a single minimalist lamp provides a quiet workspace. In the foreground, an optional standing male figure (1.80m) in a dark blazer is contemplating the artwork. Natural light filters in from a large window to the left, creating soft shadows that enhance the room's depth. The flooring is polished dark oak. The atmosphere is quiet, intellectual, and deeply personal.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+messy desk, bright distractions, low quality furniture, generic decor, too much direct sunlight, harsh shadows, overly busy shelves
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

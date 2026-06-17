@@ -298,18 +298,52 @@ function build_artwork_package_v2(array $artwork, array $profile, array $artistP
 
     // Parse dynamic AI metadata if present
     $aiMeta = $profile['publishing_metadata'] ?? [];
-    $aiDescriptions = [];
     $titles = [];
-    
-    if (!empty($aiMeta['suggested_titles'])) {
-        $titles = [
-            $aiMeta['suggested_titles']['poetic'] ?? '',
-            $aiMeta['suggested_titles']['descriptive'] ?? '',
-            $aiMeta['suggested_titles']['marketplace_friendly'] ?? ''
-        ];
-        $titles = array_filter(array_map('trim', $titles));
+    $titleSubtitles = [];
+    $titleDescriptions = [];
+    $titleLabels = [];
+
+    $rawSuggestedTitles = $aiMeta['suggested_titles'] ?? [];
+    if (is_array($rawSuggestedTitles) && isset($rawSuggestedTitles[0])) {
+        // New array of objects form
+        foreach ($rawSuggestedTitles as $idx => $tObj) {
+            if (is_array($tObj)) {
+                $title = trim((string)($tObj['title'] ?? ''));
+                $sub = trim((string)($tObj['subtitle'] ?? ''));
+                $desc = trim((string)($tObj['description'] ?? ''));
+                if ($title !== '') {
+                    $titles[] = $title;
+                    $titleSubtitles[$title] = $sub;
+                    $titleDescriptions[$title] = $desc;
+                    $label = match($idx) {
+                        0 => 'Poetic',
+                        1 => 'Descriptive',
+                        2 => 'Marketplace-friendly',
+                        default => 'Option ' . ($idx + 1)
+                    };
+                    $titleLabels[$title] = $label;
+                }
+            }
+        }
+    } elseif (is_array($rawSuggestedTitles)) {
+        // Old key-value object form
+        foreach ($rawSuggestedTitles as $label => $titleVal) {
+            $title = trim((string)$titleVal);
+            if ($title !== '') {
+                $titles[] = $title;
+                $titleSubtitles[$title] = '';
+                $oldDescKey = match($label) {
+                    'poetic' => 'poetic_focus',
+                    'descriptive' => 'formal_focus',
+                    'marketplace_friendly' => 'commercial_focus',
+                    default => ''
+                };
+                $titleDescriptions[$title] = $aiMeta['descriptions'][$oldDescKey] ?? $aiMeta['descriptions'][$label] ?? '';
+                $titleLabels[$title] = ucfirst(str_replace('_', ' ', $label));
+            }
+        }
     }
-    
+
     if (empty($titles) || count($titles) < 3) {
         $baseTitleTerms = unique_limited(array_merge($palette, $mood, $style, $structure, $themes), 8, ['quiet', 'field', 'surface']);
         $titleSeedA = $baseTitleTerms[0] ?? 'quiet';
@@ -320,33 +354,30 @@ function build_artwork_package_v2(array $artwork, array $profile, array $artistP
             title_case_soft(sentence_from([$visual['composition'], $titleSeedA, $medium], 'Abstract Composition')),
             title_case_soft(($medium !== '' ? $medium : 'Original Artwork') . ' in ' . $titleSeedA),
         ], 3, ['Quiet Field', 'Abstract Composition in Balanced Tones', 'Original Artwork in Sober Color']);
+
+        $titleLabels = [
+            $titles[0] => 'Poetic',
+            $titles[1] => 'Descriptive',
+            $titles[2] => 'Marketplace-friendly',
+        ];
     }
-    
-    $titleLabels = [
-        $titles[0] => 'Poetic',
-        $titles[1] => 'Descriptive',
-        $titles[2] => 'Marketplace-friendly',
-    ];
 
     $storedTitle = trim((string)($artwork['final_title'] ?? ''));
     $storedSubtitle = trim((string)($artwork['subtitle'] ?? ''));
     $titleForCopy = ($storedTitle !== '' && !looks_spanish($storedTitle)) ? $storedTitle : $titles[0];
-    $suggestedSubtitle = title_case_soft(($medium !== '' ? $medium : 'original artwork') . ' with ' . sentence_from([$visual['composition'], $visual['atmosphere']], 'visual presence'));
+    
+    // Subtitle fallback or stored
+    $suggestedSubtitle = $titleSubtitles[$titleForCopy] ?? '';
+    if ($suggestedSubtitle === '') {
+        $suggestedSubtitle = title_case_soft(($medium !== '' ? $medium : 'original artwork') . ' with ' . sentence_from([$visual['composition'], $visual['atmosphere']], 'visual presence'));
+    }
     $subtitle = ($storedSubtitle !== '' && !looks_spanish($storedSubtitle)) ? $storedSubtitle : $suggestedSubtitle;
     $titleLine = $titleForCopy . ($subtitle !== '' ? ': ' . $subtitle : '');
     $specLine = trim(implode(', ', array_filter([$medium, $sizeText !== 'No dimensions specified' ? $sizeText : '', $year])));
     $fileSlug = slugify(($artist !== '' ? $artist . '-' : '') . $titleForCopy);
 
-    if (!empty($aiMeta['descriptions'])) {
-        $aiDescriptions = [
-            'poetic_focus' => $aiMeta['descriptions']['poetic_focus'] ?? '',
-            'formal_focus' => $aiMeta['descriptions']['formal_focus'] ?? '',
-            'commercial_focus' => $aiMeta['descriptions']['commercial_focus'] ?? ''
-        ];
-    }
-
-    $description = !empty($aiDescriptions['poetic_focus']) 
-        ? clean_public_copy($aiDescriptions['poetic_focus'], $artistProfile)
+    $description = !empty($titleDescriptions[$titleForCopy]) 
+        ? clean_public_copy($titleDescriptions[$titleForCopy], $artistProfile)
         : null;
 
     if (empty($description)) {
@@ -376,17 +407,11 @@ function build_artwork_package_v2(array $artwork, array $profile, array $artistP
         return 'Technical details: ' . trim(($artist !== '' ? $artist . ', ' : '') . $titleOption . ($specLine !== '' ? ', ' . $specLine : '')) . '.';
     };
 
+    $premiumDescriptions = [];
     $publicationDescriptions = [];
     foreach ($titles as $index => $titleOption) {
-        if (!empty($aiDescriptions)) {
-            if ($index === 0) {
-                $copy = $aiDescriptions['poetic_focus'] ?? '';
-            } elseif ($index === 1) {
-                $copy = $aiDescriptions['formal_focus'] ?? '';
-            } else {
-                $copy = $aiDescriptions['commercial_focus'] ?? '';
-            }
-        } else {
+        $copy = $titleDescriptions[$titleOption] ?? '';
+        if ($copy === '') {
             if ($index === 0) {
                 $copy = $description;
             } elseif ($index === 1) {
@@ -395,10 +420,15 @@ function build_artwork_package_v2(array $artwork, array $profile, array $artistP
                 $copy = '"' . $titleOption . '" gives buyers a direct way to understand the piece: an original ' . strtolower($medium !== '' ? $medium : 'artwork') . ' with ' . sentence_from($palette, 'a balanced palette') . ', ' . sentence_from($mood, 'a quiet mood') . ', and a strong visual presence for ' . $visual['audience'] . '.';
             }
         }
-        $publicationDescriptions[$titleOption] = trim(clean_public_copy($copy, $artistProfile) . "\n\n" . $technicalDetailsForTitle($titleOption));
+        $cleanedCopy = trim(clean_public_copy($copy, $artistProfile));
+        $premiumDescriptions[$titleOption] = $cleanedCopy;
+        $publicationDescriptions[$titleOption] = $cleanedCopy . "\n\n" . $technicalDetailsForTitle($titleOption);
     }
 
-    if (!empty($aiMeta['seo_keywords'])) {
+    $mainKeywords = [];
+    if (!empty($aiMeta['keywords']) && is_array($aiMeta['keywords'])) {
+        $mainKeywords = unique_limited($aiMeta['keywords'], 15);
+    } elseif (!empty($aiMeta['seo_keywords']) && is_array($aiMeta['seo_keywords'])) {
         $mainKeywords = unique_limited($aiMeta['seo_keywords'], 20);
     } else {
         $mainKeywords = unique_limited(array_merge([
@@ -409,38 +439,33 @@ function build_artwork_package_v2(array $artwork, array $profile, array $artistP
             'art for collectors',
             $medium,
             $series,
-        ], $style, $palette, $themes, $mood, $materials, $commercial), 20, [
-            'abstract art',
-            'contemporary artwork',
-            'artist-made artwork',
-            'art for interiors',
-            'symbolic art',
-            'collectible artwork',
-            'art for Catawiki',
-            'art for Saatchi Art',
-            'gallery wall art',
-            'quiet art',
-            'sophisticated art',
+        ], $style, $palette, $themes, $mood, $materials, $commercial), 15, [
+            'abstract art', 'contemporary artwork', 'artist-made artwork', 'art for interiors', 'symbolic art'
         ]);
     }
 
-    $longTailKeywords = unique_limited([
-        ($artist ? $artist . ' original artwork' : 'original contemporary artwork') . ' for collectors',
-        sentence_from($style, 'abstract contemporary') . ' artwork for interiors',
-        sentence_from($palette, 'sober palette') . ' artwork for collectors',
-        'artwork ready to publish on Catawiki',
-        'artwork ready to publish on Saatchi Art',
-        'contemporary art for homes and collections',
-        'original artwork with clear description and SEO',
-        'Pinterest-ready artwork with title description and keywords',
-        sentence_from($mood, 'quiet contemplative') . ' artwork for private collections',
-        'artist-made artwork for sophisticated spaces',
-        'online listing for contemporary artwork',
-        'mockups for selling art online',
-        'art description for international marketplace listing',
-        'artwork for collectors of contemporary abstract art',
-        'complete artwork sheet for online art sales',
-    ], 15);
+    $longTailKeywords = [];
+    if (!empty($aiMeta['long_tail_keywords']) && is_array($aiMeta['long_tail_keywords'])) {
+        $longTailKeywords = unique_limited($aiMeta['long_tail_keywords'], 15);
+    } else {
+        $longTailKeywords = unique_limited([
+            ($artist ? $artist . ' original artwork' : 'original contemporary artwork') . ' for collectors',
+            sentence_from($style, 'abstract contemporary') . ' artwork for interiors',
+            sentence_from($palette, 'sober palette') . ' artwork for collectors',
+            'artwork ready to publish on Catawiki',
+            'artwork ready to publish on Saatchi Art',
+            'contemporary art for homes and collections',
+            'original artwork with clear description and SEO',
+            'Pinterest-ready artwork with title description and keywords',
+            sentence_from($mood, 'quiet contemplative') . ' artwork for private collections',
+            'artist-made artwork for sophisticated spaces',
+            'online listing for contemporary artwork',
+            'mockups for selling art online',
+            'art description for international marketplace listing',
+            'artwork for collectors of contemporary abstract art',
+            'complete artwork sheet for online art sales',
+        ], 15);
+    }
 
     if (!empty($aiMeta['seo_tags'])) {
         $tags = unique_limited($aiMeta['seo_tags'], 16);
@@ -534,10 +559,23 @@ function build_artwork_package_v2(array $artwork, array $profile, array $artistP
         ];
     }
 
+    $rootAlt = $aiMeta['root_image_metadata']['alt_text'] ?? '';
+    $rootCaption = $aiMeta['root_image_metadata']['caption'] ?? '';
+    if (trim($rootAlt) === '') {
+        $rootAlt = 'Clean root image of ' . $titleForCopy . ', an original artwork with ' . sentence_from($palette, 'balanced') . ' colors and ' . $visual['composition'] . ' composition.';
+    }
+    if (trim($rootCaption) === '') {
+        $rootCaption = $titleLine . ' - ' . sentence_from($style, 'contemporary artwork') . ' with ' . sentence_from($mood, 'quiet presence') . '.';
+    }
+
     return [
+        'root_alt' => $rootAlt,
+        'root_caption' => $rootCaption,
         'visual_analysis' => $visual,
         'titles' => $titles,
         'title_labels' => $titleLabels,
+        'title_subtitles' => $titleSubtitles,
+        'premium_descriptions' => $premiumDescriptions,
         'suggested_subtitle' => $suggestedSubtitle,
         'description' => $description,
         'short_description' => $shortDescription,
@@ -676,6 +714,7 @@ if (!$contexts) {
             'time_of_day' => $contextJson['time_of_day'] ?? '',
             'prompt' => $contextRow['prompt'],
             'pinterest_marketing' => $contextJson['pinterest_marketing'] ?? [],
+            'mockup_metadata' => $contextJson['mockup_metadata'] ?? [],
         ];
     }
 }
@@ -1240,7 +1279,7 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                 </div>
                 <div class="topbar-actions">
                     <?php if ($rootFile): ?>
-                        <a class="button-link" href="form2.php?image=<?= rawurlencode($rootFile) ?>">Curatorial Direction</a>
+                        <a class="button-link" href="report.php?image=<?= rawurlencode($rootFile) ?>">Curatorial Direction</a>
                         <a class="button-link secondary" href="analyze_wait.php?image=<?= rawurlencode($rootFile) ?>">Recalculate Analysis</a>
                         <a class="button-link secondary" href="<?= h(media_url($rootFile, true)) ?>">Download Root</a>
                     <?php endif; ?>
@@ -1309,9 +1348,18 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                                 </div>
                             </div>
                         </details>
+                     <details class="details-panel" style="margin-top: 12px; padding: 14px 16px;" open>
+                         <summary style="font-weight: 600; cursor: pointer; color: var(--ink);">Lectura Curatorial</summary>
+                         <div style="margin-top: 10px; line-height: 1.6; font-size: 13px; color: var(--ink);">
+                             <p class="copy-block" style="margin: 0; font-style: italic;"><?= h($package['curatorial_reading']) ?></p>
+                             <div style="margin-top: 8px; text-align: right;">
+                                 <button class="copy-button secondary" type="button" data-copy="<?= h($package['curatorial_reading']) ?>" aria-label="Copiar Lectura Curatorial" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                             </div>
+                         </div>
+                     </details>
                     <?php endif; ?>
 
-                    <details class="details-panel" style="margin-top: 12px; padding: 14px 16px;" <?= isset($_GET['saved']) ? 'open' : '' ?>>
+                     <details class="details-panel" style="margin-top: 12px; padding: 14px 16px;" <?= isset($_GET['saved']) ? 'open' : '' ?>>
                         <summary style="font-weight: 600; cursor: pointer; color: var(--ink);">Sheet Metadata</summary>
                         <form method="post" style="margin-top: 12px;">
                             <input type="hidden" name="action" value="save_sheet">
@@ -1345,271 +1393,324 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                         </form>
                     </details>
                 </aside>
-
-                <div class="sheet-stack">
+                     <div class="sheet-stack">
+                    <!-- SECCIÓN 0: MOCKUPS POR DEFECTO Y OBRA ROOT -->
                     <section class="panel">
                         <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
                             <div>
-                                <h2>Suggested Artwork Titles</h2>
-                                <p>Poetic, descriptive, and marketplace-friendly options</p>
+                                <h2>Sección 0: Mockups por defecto y Obra Root</h2>
+                                <p>Imágenes y metadatos SEO (nombres de archivo, alts y captions)</p>
                             </div>
-                            <button class="copy-button secondary" type="button" data-copy="<?= h($publicationPackageCopy) ?>" aria-label="Copy Suggested Artwork Content" style="padding: 6px 8px; display: inline-flex; align-items: center; justify-content: center; min-height: unset; width: auto; margin: 0; line-height: 1;"><?= $copyIconSvg ?></button>
+                            <button class="copy-button secondary" type="button" id="copy_section_0" aria-label="Copiar Sección 0" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
                         </div>
 
-                        <div class="compact-title-list">
-                            <?php foreach ($package['titles'] as $title): ?>
-                                <?php
-                                    $titleDescription = $package['publication_descriptions'][$title] ?? $selectedPublicationDescription;
-                                    $titleCopy = trim($title . ($selectedSubtitle !== '' ? "\n" . $selectedSubtitle : '') . "\n\n" . $titleDescription);
-                                ?>
-                                <article class="compact-title-row <?= $title === $selectedTitle ? 'selected' : '' ?>">
-                                    <div class="compact-title-main">
-                                        <h3><?= h($title) ?></h3>
-                                        <?php if ($title === $selectedTitle): ?>
-                                            <span class="selected-label">Selected</span>
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 24px; margin-top: 16px;">
+                            <!-- Obra Root -->
+                            <article class="pin-card" style="display: grid; grid-template-columns: 180px 1fr; gap: 20px; align-items: start; padding: 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);">
+                                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                    <div class="root-frame" style="padding: 6px; width: 100%; border: 1px solid var(--line); border-radius: 4px; background: var(--surface-soft);">
+                                        <?php if ($rootFile && is_file($rootPath)): ?>
+                                            <a href="<?= h(media_url($rootFile)) ?>" target="_blank" title="Click to open full size">
+                                                <img src="<?= h(media_url($rootFile)) ?>" alt="Obra Root" style="width: 100%; height: auto; display: block; border-radius: 2px;">
+                                            </a>
+                                        <?php else: ?>
+                                            <div class="empty-state" style="font-size: 11px; padding: 20px 0;">Sin imagen</div>
                                         <?php endif; ?>
                                     </div>
-                                    <p class="meta-line" style="margin: -6px 0 0; font-size: 10px; text-transform: uppercase; letter-spacing: .08em;"><?= h($package['title_labels'][$title] ?? 'Title option') ?></p>
-                                    <?php if ($selectedSubtitle !== ''): ?>
-                                        <p class="title-option-subtitle"><?= h($selectedSubtitle) ?></p>
+                                </div>
+
+                                <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+                                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; border-bottom: 1px dashed var(--line); padding-bottom: 4px;">
+                                        <h3 style="font-size: 16px; margin: 0;">Obra Root</h3>
+                                        <span style="font-size: 10px; text-transform: uppercase; color: var(--muted); font-weight: 700; letter-spacing: 0.05em;">Imagen Principal</span>
+                                    </div>
+
+                                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
+                                        <div class="pin-field" style="padding: 8px 10px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius);">
+                                            <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Nombre de Archivo SEO</label>
+                                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                                                <span class="seo-root-filename" style="font-family: monospace; font-size: 11px; font-weight: 500;"><?= h($package['file_names'][0]) ?></span>
+                                                <button class="copy-button secondary" type="button" data-copy="<?= h($package['file_names'][0]) ?>" id="copy_root_filename" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                            </div>
+                                        </div>
+
+                                        <div class="pin-field" style="padding: 8px 10px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius);">
+                                            <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Texto Alt</label>
+                                            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                                                <span class="seo-root-alt" style="line-height: 1.4;"><?= h($package['root_alt']) ?></span>
+                                                <button class="copy-button secondary" type="button" data-copy="<?= h($package['root_alt']) ?>" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                            </div>
+                                        </div>
+
+                                        <div class="pin-field" style="padding: 8px 10px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius);">
+                                            <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Caption</label>
+                                            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                                                <span class="seo-root-caption" style="line-height: 1.4;"><?= h($package['root_caption']) ?></span>
+                                                <button class="copy-button secondary" type="button" data-copy="<?= h($package['root_caption']) ?>" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+
+                            <!-- 4 Mockups por defecto -->
+                            <?php foreach ($contexts as $i => $ctx): ?>
+                                <?php
+                                    $ctxId = $ctx['id'] ?? ('ctx_' . ($i + 1));
+                                    $ctxSlug = slugify($ctx['name']);
+                                    
+                                    // Find mockup
+                                    $existingMockup = null;
+                                    foreach ($mockups as $m) {
+                                        if ((string)$m['context_id'] === (string)$ctxId || (string)$m['context_id'] === (string)($i + 1)) {
+                                            $existingMockup = $m;
+                                            break;
+                                        }
+                                    }
+
+                                    // Alt & Caption fallback/custom
+                                    $mAlt = $ctx['mockup_metadata']['alt_text'] ?? '';
+                                    if (trim($mAlt) === '') {
+                                        $mAlt = 'Mockup of the artwork "' . $selectedTitle . '" presented in a ' . strtolower($ctx['name']) . ' environment.';
+                                    }
+                                    $mCaption = $ctx['mockup_metadata']['caption'] ?? '';
+                                    if (trim($mCaption) === '') {
+                                        $mCaption = '“' . $selectedTitle . '” mockup in ' . $ctx['name'] . '.';
+                                    }
+
+                                    $expectedFilename = $package['seo_slug'] . '-mockup-' . $ctxSlug . '.jpg';
+                                ?>
+                                <article class="pin-card mockup-card-container <?= $existingMockup ? 'generated' : '' ?>" id="mockup-card-<?= h($ctxId) ?>" data-context-name="<?= h($ctx['name']) ?>" data-context-id="<?= h($ctxId) ?>" style="display: grid; grid-template-columns: 180px 1fr; gap: 20px; align-items: start; padding: 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);">
+                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                        <div class="root-frame inline-result-box" style="padding: 6px; width: 100%; border: 1px solid var(--line); border-radius: 4px; background: var(--surface-soft); aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center;">
+                                            <?php if ($existingMockup): ?>
+                                                <?php
+                                                    $mFile = basename((string)$existingMockup['mockup_file']);
+                                                    $mUrl = 'media.php?file=' . rawurlencode($mFile);
+                                                ?>
+                                                <a class="inline-thumb" href="<?= h($mUrl) ?>" target="_blank" title="Click to open full size" style="width: 100%;">
+                                                    <img src="<?= h($mUrl) ?>" alt="<?= h($ctx['name']) ?>" style="width: 100%; height: auto; display: block; border-radius: 2px;">
+                                                </a>
+                                            <?php else: ?>
+                                                <svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--muted)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
+                                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                                </svg>
+                                            <?php endif; ?>
+                                        </div>
+                                        
+                                        <div class="mockup-action-container" style="display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 4px;">
+                                            <!-- Actions for generated state -->
+                                            <div class="generated-actions" style="<?= $existingMockup ? '' : 'display: none;' ?>">
+                                                <a href="<?= $existingMockup ? 'media.php?file=' . rawurlencode(basename((string)$existingMockup['mockup_file'])) . '&download=1' : '#' ?>" class="download-mockup-link button secondary" data-base-file="<?= $existingMockup ? h(basename((string)$existingMockup['mockup_file'])) : '' ?>" data-context="<?= h($ctxSlug) ?>" style="font-size: 11px; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; width: 100%; box-sizing: border-box; margin-bottom: 6px;">
+                                                    <?= $downloadIconSvg ?> Descargar
+                                                </a>
+                                                <button type="button" class="btn-delete-mockup button secondary danger" data-mockup-id="<?= $existingMockup ? h($existingMockup['id']) : '' ?>" style="font-size: 11px; margin: 0; padding: 6px 10px; width: 100%;">
+                                                    Eliminar
+                                                </button>
+                                            </div>
+                                            
+                                            <!-- Form for ungenerated state -->
+                                            <div class="ungenerated-form" style="<?= $existingMockup ? 'display: none;' : '' ?>">
+                                                <?php if ($rootFile && !$analysisNeedsRefresh): ?>
+                                                    <form class="inline-mockup-form" action="generate_mockup.php" method="post" style="margin: 0; width: 100%;">
+                                                        <input type="hidden" name="image" value="<?= h($rootFile) ?>">
+                                                        <input type="hidden" name="json" value="<?= h($rootBase . '.analysis.json') ?>">
+                                                        <input type="hidden" name="context_id" value="<?= h($ctxId) ?>">
+                                                        <input type="hidden" name="prompt" value="<?= h($ctx['prompt'] ?? '') ?>">
+                                                        <input type="hidden" name="ajax" value="1">
+                                                        <button type="submit" class="button" style="font-size: 11px; width: 100%; padding: 6px 10px;">Generar Mockup</button>
+                                                    </form>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+                                        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; border-bottom: 1px dashed var(--line); padding-bottom: 4px;">
+                                            <h3 style="font-size: 16px; margin: 0;"><?= h($ctx['name']) ?></h3>
+                                            <span style="font-size: 10px; text-transform: uppercase; color: var(--muted); font-weight: 700; letter-spacing: 0.05em;">Mockup <?= $i + 1 ?></span>
+                                        </div>
+
+                                        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
+                                            <div class="pin-field" style="padding: 8px 10px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius);">
+                                                <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Nombre de Archivo SEO</label>
+                                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                                                    <span class="seo-mockup-filename" data-context-slug="<?= h($ctxSlug) ?>" style="font-family: monospace; font-size: 11px; font-weight: 500;"><?= h($expectedFilename) ?></span>
+                                                    <button class="copy-button secondary copy-mockup-filename-btn" type="button" data-copy="<?= h($expectedFilename) ?>" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                                </div>
+                                            </div>
+
+                                            <div class="pin-field" style="padding: 8px 10px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius);">
+                                                <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Texto Alt</label>
+                                                <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                                                    <span class="mockup-alt-text" style="line-height: 1.4;"><?= h($mAlt) ?></span>
+                                                    <button class="copy-button secondary" type="button" data-copy="<?= h($mAlt) ?>" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                                </div>
+                                            </div>
+
+                                            <div class="pin-field" style="padding: 8px 10px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius);">
+                                                <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Caption</label>
+                                                <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                                                    <span class="mockup-caption-text" style="line-height: 1.4;"><?= h($mCaption) ?></span>
+                                                    <button class="copy-button secondary" type="button" data-copy="<?= h($mCaption) ?>" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    </section>
+
+                    <!-- SECCIÓN 1: TÍTULOS Y SUBTÍTULOS SUGERIDOS -->
+                    <section class="panel">
+                        <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
+                            <div>
+                                <h2>Sección 1: Títulos y Subtítulos Sugeridos</h2>
+                                <p>Propuestas curatoriales y comerciales</p>
+                            </div>
+                            <button class="copy-button secondary" type="button" id="copy_section_1" aria-label="Copiar Sección 1" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 16px;" class="title-grid-unified">
+                            <?php foreach ($package['titles'] as $idx => $t): ?>
+                                <?php
+                                    $sub = $package['title_subtitles'][$t] ?? '';
+                                    $label = match($idx) {
+                                        0 => 'Enfoque Poético',
+                                        1 => 'Enfoque Descriptivo',
+                                        2 => 'Enfoque Comercial',
+                                        default => 'Opción ' . ($idx + 1)
+                                    };
+                                    $titleCopy = "Título: " . $t . ($sub !== '' ? "\nSubtítulo: " . $sub : '');
+                                ?>
+                                <article class="compact-title-row <?= $t === $selectedTitle ? 'selected' : '' ?>" style="display: flex; flex-direction: column; gap: 10px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                                        <span class="selected-label" style="font-size: 8px; background: var(--surface); color: var(--accent);"><?= h($label) ?></span>
+                                        <?php if ($t === $selectedTitle): ?>
+                                            <span class="selected-label" style="font-size: 8px; background: var(--accent-light); color: var(--accent);">Seleccionado</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <h3 style="font-size: 18px; font-weight: 600; margin: 4px 0 0;"><?= h($t) ?></h3>
+                                    <?php if ($sub !== ''): ?>
+                                        <p class="title-option-subtitle" style="font-size: 14px; color: var(--accent); margin: 0;"><?= h($sub) ?></p>
                                     <?php endif; ?>
-                                    <p class="copy-block title-option-description"><?= h($titleDescription) ?></p>
-                                    <div class="mini-actions" style="display: flex; gap: 6px; align-items: center; margin-top: auto;">
-                                        <button class="copy-button secondary" type="button" data-copy="<?= h($titleCopy) ?>" aria-label="Copy Title Option" style="padding: 6px 8px; display: inline-flex; align-items: center; justify-content: center; min-height: unset; width: auto; margin: 0; line-height: 1;"><?= $copyIconSvg ?></button>
-                                        <form method="post" style="margin: 0;">
+                                    
+                                    <div style="margin-top: auto; display: flex; gap: 8px; align-items: center; padding-top: 10px; border-top: 1px dashed var(--line);">
+                                        <button class="copy-button secondary" type="button" data-copy="<?= h($titleCopy) ?>" aria-label="Copiar" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                        <form method="post" style="margin: 0; flex: 1;">
                                             <input type="hidden" name="action" value="save_sheet">
-                                            <input type="hidden" name="final_title" value="<?= h($title) ?>">
-                                            <input type="hidden" name="subtitle" value="<?= h($selectedSubtitle) ?>">
+                                            <input type="hidden" name="final_title" value="<?= h($t) ?>">
+                                            <input type="hidden" name="subtitle" value="<?= h($sub) ?>">
                                             <input type="hidden" name="medium" value="<?= h($artwork['medium'] ?? '') ?>">
                                             <input type="hidden" name="artwork_year" value="<?= h($artwork['artwork_year'] ?? '') ?>">
                                             <input type="hidden" name="series" value="<?= h($artwork['series'] ?? '') ?>">
-                                            <button type="submit" style="font-size: 11px; padding: 6px 10px; margin: 0;"><?= $title === $selectedTitle ? 'Selected' : 'Select' ?></button>
+                                            <button type="submit" class="button" style="font-size: 10px; padding: 6px 10px; width: 100%;"><?= $t === $selectedTitle ? 'Seleccionado' : 'Seleccionar' ?></button>
                                         </form>
                                     </div>
                                 </article>
                             <?php endforeach; ?>
                         </div>
-
-                        <div class="keywords-box" style="margin-top: 14px; font-size: 11px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 10px;">
-                            <div style="margin-bottom: 6px; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
-                                <span style="line-height: 1.4;"><strong>Keywords:</strong> <?= h(implode(', ', $package['main_keywords'])) ?></span>
-                                <button class="copy-button secondary" type="button" data-copy="<?= h(implode(', ', $package['main_keywords'])) ?>" aria-label="Copy Keywords" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
-                            </div>
-                            <div style="margin-bottom: 6px; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
-                                <span style="line-height: 1.4;"><strong>Long-tail Keywords:</strong> <?= h(implode(', ', $package['long_tail_keywords'])) ?></span>
-                                <button class="copy-button secondary" type="button" data-copy="<?= h(implode(', ', $package['long_tail_keywords'])) ?>" aria-label="Copy Long-tail Keywords" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
-                            </div>
-                            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
-                                <span style="line-height: 1.4;"><strong>Long-tail (Hyphenated):</strong> <?= h(implode(', ', $hyphenatedLongTails)) ?></span>
-                                <button class="copy-button secondary" type="button" data-copy="<?= h(implode(', ', $hyphenatedLongTails)) ?>" aria-label="Copy Hyphenated Long-tail Keywords" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
-                            </div>
-                        </div>
                     </section>
 
-                    <!-- 2. Pinterest Pin Content Panel -->
-                    <section class="panel pinterest-panel">
-                        <div class="section-heading">
-                            <h2>Pinterest Pin Content</h2>
-                            <p>Traffic-ready publishing fields</p>
-                        </div>
-                        <p class="pinterest-intro" style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">
-                            Pinterest is prepared as a strategic external traffic channel. Each generated mockup receives a Pin layout containing optimized SEO titles, descriptions, and alt text. Títulos y descripciones en menú desplegable bajo cada mockup de Pinterest.
-                        </p>
-                        
-                        <div class="pin-stack">
-                            <?php foreach ($package['pinterest_pins'] as $pinIndex => $pin): ?>
-                                <?php
-                                    $destinationId = 'pin_destination_' . $pinIndex;
-                                    $keywordsText = implode(', ', $pin['keywords']);
-                                    $hashtagsText = implode(' ', $pin['hashtags']);
-                                    $mockupFile = basename((string)($pin['mockup_file'] !== '' ? $pin['mockup_file'] : $rootFile));
-                                    $mockupUrl = 'media.php?file=' . rawurlencode($mockupFile);
-                                ?>
-                                <article class="pin-card" style="display: grid; grid-template-columns: 140px 1fr; gap: 20px; align-items: start; padding: 20px;">
-                                    <!-- Thumbnail & Download -->
-                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                                        <div class="root-frame" style="padding: 6px; width: 100%; border: 1px solid var(--line); border-radius: 4px; background: var(--surface);">
-                                            <a href="<?= h($mockupUrl) ?>" target="_blank" title="Click to open full size">
-                                                <img src="<?= h($mockupUrl) ?>" alt="Mockup Pin <?= h($pinIndex + 1) ?>" style="width: 100%; height: auto; display: block; border-radius: 2px;">
-                                            </a>
-                                        </div>
-                                        <a href="<?= h($mockupUrl . '&download=1') ?>" class="download-mockup-link" data-base-file="<?= h($mockupFile) ?>" data-context="<?= h(slugify($pin['label'])) ?>" title="Download Mockup" style="display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--accent); text-decoration: none; font-weight: 500; margin-top: 2px;">
-                                            <span class="download-icon" aria-hidden="true"></span>
-                                            <span style="margin-left: 4px;">Download</span>
-                                        </a>
-                                    </div>
-                                    
-                                    <!-- Collapsible publishing details -->
-                                    <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
-                                        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; border-bottom: 1px dashed var(--line); padding-bottom: 4px;">
-                                            <h3 style="font-size: 18px; font-family: var(--font-serif); margin: 0;"><?= h($pin['label']) ?></h3>
-                                            <span style="font-size: 11px; text-transform: uppercase; color: var(--muted); font-weight: 700; letter-spacing: 0.05em;">Pin <?= h($pinIndex + 1) ?></span>
-                                        </div>
-                                        
-                                        <details class="details-panel" style="margin: 0; padding: 10px 12px; font-size: 12px;" open>
-                                            <summary style="font-size: 12px; font-weight: 600; color: var(--ink);">Show Publishing Fields</summary>
-                                            <div class="pin-fields" style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px; font-size: 12px;">
-                                                <div class="pin-field" style="padding: 10px;">
-                                                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Pinterest Board / Category Suggestion</label>
-                                                    <p style="margin: 0; font-size: 12px;"><?= h($pin['board']) ?></p>
-                                                </div>
-                                                <div class="pin-field" style="padding: 10px;">
-                                                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Pin Title</label>
-                                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
-                                                        <span style="font-size: 12px; font-weight: 500; line-height: 1.4;"><?= h($pin['title']) ?></span>
-                                                        <button class="copy-button secondary" type="button" data-copy="<?= h($pin['title']) ?>" aria-label="Copy Pin Title" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
-                                                    </div>
-                                                </div>
-                                                <div class="pin-field full" style="padding: 10px;">
-                                                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Pin Description</label>
-                                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
-                                                        <span style="font-size: 12px; line-height: 1.4;"><?= h($pin['description']) ?></span>
-                                                        <button class="copy-button secondary" type="button" data-copy="<?= h($pin['description']) ?>" aria-label="Copy Pin Description" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
-                                                    </div>
-                                                </div>
-                                                <div class="pin-field full" style="padding: 10px;">
-                                                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Alt Text / Accessibility Text</label>
-                                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
-                                                        <span style="font-size: 12px; line-height: 1.4;"><?= h($pin['alt']) ?></span>
-                                                        <button class="copy-button secondary" type="button" data-copy="<?= h($pin['alt']) ?>" aria-label="Copy Pin Alt Text" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
-                                                    </div>
-                                                </div>
-                                                <div class="pin-field full" style="padding: 10px;">
-                                                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Destination Link</label>
-                                                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-                                                        <input id="<?= h($destinationId) ?>" type="text" value="<?= h($pin['destination']) ?>" placeholder="Saatchi Art, Catawiki or website URL" style="flex: 1; font-size: 12px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface);">
-                                                        <button class="copy-button secondary" type="button" data-copy-source="<?= h($destinationId) ?>" aria-label="Copy Destination Link" style="padding: 6px; display: inline-flex; align-items: center; justify-content: center; min-height: unset; width: auto; margin: 0; line-height: 1;"><?= $copyIconSvg ?></button>
-                                                    </div>
-                                                </div>
-                                                <div class="pin-field full" style="padding: 10px;">
-                                                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Suggested Pinterest Keywords & Hashtags</label>
-                                                    <div style="margin-bottom: 4px; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
-                                                        <span style="font-size: 12px; line-height: 1.4;"><strong>Keywords:</strong> <?= h($keywordsText) ?></span>
-                                                        <button class="copy-button secondary" type="button" data-copy="<?= h($keywordsText) ?>" aria-label="Copy Pinterest Keywords" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
-                                                    </div>
-                                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
-                                                        <span style="font-size: 12px; line-height: 1.4;"><strong>Hashtags:</strong> <?= h($hashtagsText) ?></span>
-                                                        <button class="copy-button secondary" type="button" data-copy="<?= h($hashtagsText) ?>" aria-label="Copy Pinterest Hashtags" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </details>
-                                    </div>
-                                </article>
-                            <?php endforeach; ?>
-                        </div>
-                    </section>
-
-                    <!-- 4. Generated Mockups Gallery Panel -->
+                    <!-- SECCIÓN 2: DESCRIPCIONES PREMIUM -->
                     <section class="panel">
-                        <div class="section-heading">
-                            <h2>Generated Mockups Gallery</h2>
-                            <p><?= h(count($mockups)) ?> images</p>
+                        <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
+                            <div>
+                                <h2>Sección 2: Descripciones Premium</h2>
+                                <p>Descripciones artísticas y curatoriales asociadas a cada título</p>
+                            </div>
+                            <button class="copy-button secondary" type="button" id="copy_section_2" aria-label="Copiar Sección 2" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
                         </div>
-                        <?php if (!$mockups): ?>
-                            <div class="empty-state">No mockups have been generated for this artwork yet.</div>
-                        <?php else: ?>
-                            <div class="grid">
-                                <?php foreach ($mockups as $mockup): ?>
-                                    <?php 
-                                        $mFile = basename((string)$mockup['mockup_file']);
-                                        $mUrl = 'media.php?file=' . rawurlencode($mFile);
-                                    ?>
-                                    <article class="item-card" style="padding: 14px;">
-                                        <div class="root-frame" style="padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px;">
-                                            <a href="<?= h($mUrl) ?>" target="_blank" title="Click to open full size">
-                                                <img src="<?= h($mUrl) ?>" alt="Generated mockup" style="width: 100%; height: auto; display: block; border-radius: 2px;">
-                                            </a>
-                                        </div>
-                                        <h3 style="margin-top: 10px; font-size: 16px;"><a href="viewer.php?id=<?= h($mockup['id']) ?>" style="text-decoration: none; color: inherit;"><?= h(Display::contextTitle($mockup['context_id'])) ?></a></h3>
-                                        
-                                        <div class="card-actions" style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
-                                            <a href="<?= h($mUrl . '&download=1') ?>" aria-label="Download mockup" title="Download" style="display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--accent); text-decoration: none; font-weight: 500;">
-                                                <span class="download-icon" aria-hidden="true"></span>
-                                                <span style="margin-left: 4px;">Download</span>
-                                            </a>
-                                        </div>
 
-                                        <!-- Collapsible caption/alt under each mockup -->
-                                        <details class="details-panel" style="margin-top: 10px; font-size: 11px; padding: 8px 10px;">
-                                            <summary style="font-size: 11px; font-weight: 600; color: var(--ink);">Caption & Alt</summary>
-                                            <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 8px;">
-                                                <div>
-                                                    <label style="font-size: 9px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; font-weight: 700; letter-spacing: 0.05em;">Caption</label>
-                                                    <?php $m_caption = '“' . $selectedTitle . '” mockup in ' . Display::contextTitle($mockup['context_id']) . '.'; ?>
-                                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 4px;">
-                                                        <span style="line-height: 1.3;"><?= h($m_caption) ?></span>
-                                                        <button class="copy-button secondary" type="button" data-copy="<?= h($m_caption) ?>" aria-label="Copy Caption" style="padding: 2px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <label style="font-size: 9px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; font-weight: 700; letter-spacing: 0.05em;">Alt Text</label>
-                                                    <?php $m_alt = 'A premium mockup showing “' . $selectedTitle . '” in a ' . strtolower(Display::contextTitle($mockup['context_id'])) . ' environment.'; ?>
-                                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 4px;">
-                                                        <span style="line-height: 1.3;"><?= h($m_alt) ?></span>
-                                                        <button class="copy-button secondary" type="button" data-copy="<?= h($m_alt) ?>" aria-label="Copy Alt Text" style="padding: 2px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </details>
-                                    </article>
+                        <div style="display: flex; flex-direction: column; gap: 20px; margin-top: 16px;">
+                            <?php
+                                $idx = array_search($selectedTitle, $package['titles']);
+                                if ($idx === false) {
+                                    $idx = 0;
+                                }
+                                $desc = $package['premium_descriptions'][$selectedTitle] ?? '';
+                                $label = match($idx) {
+                                    0 => 'Descripción Poética',
+                                    1 => 'Descripción Descriptiva',
+                                    2 => 'Descripción Comercial',
+                                    default => 'Descripción Opción ' . ($idx + 1)
+                                };
+                                $descCopy = "[" . $label . " para: " . $selectedTitle . "]\n" . $desc;
+                            ?>
+                            <article class="premium-desc-block" style="background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 8px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <strong style="font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em;"><?= h($label) ?> — para "<?= h($selectedTitle) ?>"</strong>
+                                    <button class="copy-button secondary" type="button" data-copy="<?= h($descCopy) ?>" aria-label="Copiar" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                </div>
+                                <p class="copy-block" style="font-size: 14px; line-height: 1.6; margin: 0; color: var(--ink);"><?= h($desc) ?></p>
+                            </article>
+                        </div>
+                    </section>
+
+                    <!-- SECCIÓN 3: 15 KEYWORDS -->
+                    <section class="panel">
+                        <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
+                            <div>
+                                <h2>Sección 3: 15 Keywords</h2>
+                                <p>Palabras clave principales de búsqueda separadas por comas</p>
+                            </div>
+                            <button class="copy-button secondary" type="button" id="copy_section_3" aria-label="Copiar Sección 3" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                        </div>
+
+                        <div style="background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-top: 16px;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
+                                <?php foreach ($package['main_keywords'] as $kw): ?>
+                                    <span class="keyword-chip" style="background: var(--surface); border: 1px solid var(--line); padding: 4px 10px; border-radius: 999px; font-size: 12px;"><?= h($kw) ?></span>
                                 <?php endforeach; ?>
                             </div>
-                        <?php endif; ?>
+                            <textarea id="section_3_raw_copy" style="width: 100%; min-height: 60px; font-size: 13px; font-family: monospace; padding: 10px; box-sizing: border-box; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);" readonly><?= h(implode(', ', $package['main_keywords'])) ?></textarea>
+                        </div>
                     </section>
 
-                    <!-- 5. Collapsible Specifications Panel -->
-                    <details class="details-panel" style="margin-top: 16px;">
-                        <summary style="font-weight: 600; cursor: pointer; color: var(--ink);">Artwork Specifications</summary>
-                        <div class="metadata-grid" style="margin-top: 14px;">
-                            <div class="spec-card"><strong>Artist</strong><?= h($artistName !== '' ? $artistName : 'Unnamed Artist') ?></div>
-                            <div class="spec-card"><strong>Dimensions</strong><?= h($sizeText) ?></div>
-                            <div class="spec-card"><strong>Medium / Technique</strong><?= h($artwork['medium'] ?: 'Not specified') ?></div>
-                            <div class="spec-card"><strong>Year</strong><?= h($artwork['artwork_year'] ?: 'Not specified') ?></div>
-                            <div class="spec-card"><strong>Series / Body of Work</strong><?= h($artwork['series'] ?: 'Not specified') ?></div>
-                            <div class="spec-card"><strong>Orientation</strong><?= h(labelize_term((string)$orientation)) ?></div>
-                            <div class="spec-card"><strong>Visible Elements</strong><?= h(sentence_from($package['visual_analysis']['symbols'] ?? [], 'forms, marks and fields')) ?></div>
-                            <div class="spec-card"><strong>Dominant Colors</strong><?= h(sentence_from($package['visual_analysis']['dominant_colors'] ?? [], 'balanced tones')) ?></div>
-                            <div class="spec-card"><strong>Emotional Keywords</strong><?= h(sentence_from($package['visual_analysis']['emotions'] ?? [], 'quiet, human, contemplative')) ?></div>
-                            <div class="spec-card"><strong>Intended Use</strong><?= h($package['visual_analysis']['audience'] ?? 'collectors and thoughtful buyers') ?></div>
-                            <div class="spec-card"><strong>Description Style Preference</strong><?= h(public_copy_tone($artistProfile)) ?></div>
-                            <div class="spec-card"><strong>Status</strong><?= h($artwork['status']) ?></div>
-                            <div class="spec-card"><strong>Creation Date</strong><?= h(date('m/d/Y H:i', strtotime((string)$artwork['created_at']))) ?></div>
-                            <div class="spec-card"><strong>Mockups Generated</strong><?= h(count($mockups)) ?></div>
-                        </div>
-                    </details>
-
-                    <!-- 6. Collapsible Visual Reading Panel -->
-                    <details class="details-panel" style="margin-top: 16px;">
-                        <summary style="font-weight: 600; cursor: pointer; color: var(--ink);">Visual Reading</summary>
-                        <div style="margin-top: 14px;">
-                            <p class="copy-block" style="line-height: 1.6; font-size: 14px; margin-bottom: 14px;"><?= h($package['curatorial_reading']) ?></p>
-                            <div class="metadata-grid">
-                                <div class="spec-card"><strong>Visual Language</strong><?= h(sentence_from(labelize_terms(words_from($profile['style_tags'] ?? $artistProfile['visual_language'] ?? [])), 'derived from the root image and artist profile')) ?></div>
-                                <div class="spec-card"><strong>Style</strong><?= h($profile['style_summary'] ?? 'Reading built from the artwork, its technical data and the artist profile.') ?></div>
-                                <div class="spec-card"><strong>Palette</strong><?= h(sentence_from(labelize_terms(words_from($profile['palette'] ?? $artistProfile['palette_notes'] ?? [])), 'palette inferred from the root image')) ?></div>
-                                <div class="spec-card"><strong>Audience</strong><?= h($profile['audience_profile']['primary'] ?? $artistProfile['target_audience'] ?? 'collectors, galleries and interior designers') ?></div>
+                    <!-- SECCIÓN 4: 15 LONG-TAIL KEYWORDS -->
+                    <section class="panel">
+                        <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
+                            <div>
+                                <h2>Sección 4: 15 Long-tail Keywords</h2>
+                                <p>Keywords de cola larga relevantes para SEO y posicionamiento</p>
                             </div>
+                            <button class="copy-button secondary" type="button" id="copy_section_4" aria-label="Copiar Sección 4" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
                         </div>
-                    </details>
 
-                    <!-- 7. Collapsible Social Content Panel -->
-                    <details class="details-panel" style="margin-top: 16px;">
-                        <summary style="font-weight: 600; cursor: pointer; color: var(--ink);">Other Social Media Content (Instagram, Facebook, X, TikTok)</summary>
-                        <div class="publishing-grid" style="margin-top: 14px; gap: 16px;">
-                            <?php foreach ($package['social'] as $platform => $copy): ?>
-                                <article class="copy-card" style="position: relative;">
-                                    <div style="position: absolute; top: 12px; right: 12px;">
-                                        <button class="copy-button secondary" type="button" data-copy="<?= h($copy) ?>" aria-label="Copy Social Text" style="padding: 6px 8px; display: inline-flex; align-items: center; justify-content: center; min-height: unset; width: auto; margin: 0; line-height: 1;"><?= $copyIconSvg ?></button>
-                                    </div>
-                                    <h3 style="font-size: 15px; margin-bottom: 8px; font-weight: 600; color: var(--muted); text-transform: uppercase;"><?= h($platform) ?></h3>
-                                    <p class="copy-block" style="margin: 0; font-size: 13px; line-height: 1.5; padding-right: 32px;"><?= h($copy) ?></p>
-                                </article>
-                            <?php endforeach; ?>
+                        <div style="background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-top: 16px;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
+                                <?php foreach ($package['long_tail_keywords'] as $kw): ?>
+                                    <span class="keyword-chip" style="background: var(--surface); border: 1px solid var(--line); padding: 4px 10px; border-radius: 999px; font-size: 12px;"><?= h($kw) ?></span>
+                                <?php endforeach; ?>
+                            </div>
+                            <textarea id="section_4_raw_copy" style="width: 100%; min-height: 60px; font-size: 13px; font-family: monospace; padding: 10px; box-sizing: border-box; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);" readonly><?= h(implode(', ', $package['long_tail_keywords'])) ?></textarea>
                         </div>
-                    </details>
+                    </section>
 
-                    <!-- 8. Collapsible Raw AI Analysis Panel -->
+                    <!-- SECCIÓN 5: 15 LONG-TAIL (CON GUIONES MEDIOS) -->
+                    <section class="panel">
+                        <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
+                            <div>
+                                <h2>Sección 5: 15 Long-tail (con guiones medios)</h2>
+                                <p>Keywords de cola larga unidas con guón medio</p>
+                            </div>
+                            <button class="copy-button secondary" type="button" id="copy_section_5" aria-label="Copiar Sección 5" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                        </div>
+
+                        <div style="background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-top: 16px;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
+                                <?php foreach ($hyphenatedLongTails as $kw): ?>
+                                    <span class="keyword-chip" style="background: var(--surface); border: 1px solid var(--line); padding: 4px 10px; border-radius: 999px; font-size: 12px; font-family: monospace;"><?= h($kw) ?></span>
+                                <?php endforeach; ?>
+                            </div>
+                            <textarea id="section_5_raw_copy" style="width: 100%; min-height: 60px; font-size: 13px; font-family: monospace; padding: 10px; box-sizing: border-box; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);" readonly><?= h(implode(', ', $hyphenatedLongTails)) ?></textarea>
+                        </div>
+                    </section>
+
+                    <!-- Raw AI Analysis Panel -->
                     <?php
                     $rawAnalysisJson = '';
                     if (is_array($dbAnalysis) && !empty($dbAnalysis['analysis_json'])) {
@@ -1624,132 +1725,13 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                         }
                     ?>
                         <details class="details-panel" style="margin-top: 16px;">
-                            <summary style="font-weight: 600; cursor: pointer; color: var(--ink);">Show Raw AI Analysis (JSON)</summary>
+                            <summary style="font-weight: 600; cursor: pointer; color: var(--ink);">Ver Análisis de IA Crudo (JSON)</summary>
                             <div style="margin-top: 12px;">
                                 <pre style="background: var(--surface-soft); border: 1px solid var(--line); padding: 12px; border-radius: var(--radius); overflow-x: auto; font-family: monospace; font-size: 11px; margin: 0; max-height: 400px; color: var(--ink);"><code class="json"><?= h($rawAnalysisJson) ?></code></pre>
                             </div>
                         </details>
                     <?php endif; ?>
-
-                    <!-- 9. Collapsible Tags, Captions, ALT Panel -->
-                    <details class="details-panel" style="margin-top: 16px;">
-                        <summary>Tags, Captions, ALT Texts and Suggested File Names</summary>
-                        <div class="detail-list" style="margin-top: 12px; display: flex; flex-direction: column; gap: 14px;">
-                            <div>
-                                <h3 style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Tags</h3>
-                                <div class="tag-wrap">
-                                    <?php foreach ($package['tags'] as $tag): ?>
-                                        <span class="tag-chip"><?= h($tag) ?></span>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Captions</h3>
-                                <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    <?php foreach ($package['captions'] as $caption): ?>
-                                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; background: var(--surface-soft); padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px;">
-                                            <span style="font-size: 12px; line-height: 1.4;"><?= h($caption) ?></span>
-                                            <button class="copy-button secondary" type="button" data-copy="<?= h($caption) ?>" aria-label="Copy Caption" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">ALT Texts</h3>
-                                <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    <?php foreach ($package['alt_texts'] as $alt): ?>
-                                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; background: var(--surface-soft); padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px;">
-                                            <span style="font-size: 12px; line-height: 1.4;"><?= h($alt) ?></span>
-                                            <button class="copy-button secondary" type="button" data-copy="<?= h($alt) ?>" aria-label="Copy Alt Text" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Suggested File Names</h3>
-                                <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    <?php foreach ($package['file_names'] as $fileName): ?>
-                                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; background: var(--surface-soft); padding: 8px 12px; border: 1px solid var(--line); border-radius: 4px;">
-                                            <span style="font-size: 12px; font-family: monospace; line-height: 1.4;"><?= h($fileName) ?></span>
-                                            <button class="copy-button secondary" type="button" data-copy="<?= h($fileName) ?>" aria-label="Copy Filename" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                        </div>
-                    </details>
-
-                    <details class="details-panel">
-                        <summary>Technical Prompts and Curatorial Mockup Proposals</summary>
-                        <?php if (!$contexts): ?>
-                            <div class="empty-state" style="margin-top: 16px;">No technical prompts saved yet.</div>
-                        <?php else: ?>
-                            <div class="context-list">
-                                <?php foreach ($contexts as $index => $context): ?>
-                                    <?php
-                                        $ctxId = $context['id'] ?? ('ctx_' . ($index + 1));
-                                        $existingMockup = null;
-                                        foreach ($mockups as $m) {
-                                            if ($m['context_id'] === $ctxId || $m['context_id'] === (string)($index + 1)) {
-                                                $existingMockup = $m;
-                                                break;
-                                            }
-                                        }
-                                    ?>
-                                    <article class="copy-card <?= $existingMockup ? 'generated' : '' ?>">
-                                        <p class="meta-line">Direction <?= h($index + 1) ?> - <?= h($context['camera_group'] ?? '-') ?> - <?= h($context['time_of_day'] ?? '-') ?></p>
-                                        <h3><?= h($context['name'] ?? $context['id'] ?? 'Context') ?></h3>
-                                        <div class="inline-result" aria-live="polite">
-                                            <?php if ($existingMockup): ?>
-                                                <?php
-                                                    $mFile = basename((string)$existingMockup['mockup_file']);
-                                                    $mUrl = 'media.php?file=' . rawurlencode($mFile);
-                                                    $mViewerUrl = 'viewer.php?id=' . rawurlencode((string)$existingMockup['id']);
-                                                    $mDownloadUrl = $mUrl . '&download=1';
-                                                ?>
-                                                <a class="inline-thumb" href="<?= h($mViewerUrl) ?>" aria-label="Open generated mockup" style="display: block; margin-bottom: 8px; overflow: hidden; border-radius: 2px;">
-                                                    <img src="<?= h($mUrl) ?>" alt="Generated mockup" style="width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; border: 1px solid var(--line); border-radius: 2px;">
-                                                </a>
-                                                <div class="inline-actions" style="display: flex; gap: 12px; align-items: center;">
-                                                    <a href="<?= h($mDownloadUrl) ?>" aria-label="Download mockup" title="Download" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 11px; text-decoration: none; color: var(--ink); border: 1px solid var(--line); padding: 6px 12px; border-radius: 4px; background: var(--surface);">
-                                                        <span class="download-icon" aria-hidden="true"></span>
-                                                        <span>Download</span>
-                                                    </a>
-                                                    <?php if ($isAdmin): ?>
-                                                        <a href="media.php?file=<?= rawurlencode(basename((string)$existingMockup['prompt_file'])) ?>" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 11px; text-decoration: none; color: var(--ink); border: 1px solid var(--line); padding: 6px 12px; border-radius: 4px; background: var(--surface);">Prompt</a>
-                                                    <?php endif; ?>
-                                                </div>
-                                            <?php else: ?>
-                                                <svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--muted)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5; transition: all 0.3s ease;">
-                                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                                    <polyline points="21 15 16 10 5 21"></polyline>
-                                                </svg>
-                                            <?php endif; ?>
-                                        </div>
-                                        <p><?= h($context['why'] ?? '') ?></p>
-                                        <?php if ($rootFile && !$analysisNeedsRefresh): ?>
-                                            <form class="inline-mockup-form" action="generate_mockup.php" method="post">
-                                                <input type="hidden" name="image" value="<?= h($rootFile) ?>">
-                                                <input type="hidden" name="json" value="<?= h($rootBase . '.analysis.json') ?>">
-                                                <input type="hidden" name="context_id" value="<?= h($context['id'] ?? '') ?>">
-                                                <input type="hidden" name="prompt" value="<?= h($context['prompt'] ?? '') ?>">
-                                                <input type="hidden" name="ajax" value="1">
-                                                <button type="submit"><?= $existingMockup ? 'Regenerate' : 'Generate Mockup' ?></button>
-                                            </form>
-                                        <?php endif; ?>
-                                        <textarea class="prompt-preview" readonly><?= h($context['prompt'] ?? '') ?></textarea>
-                                    </article>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                    </details>
-                </div>
-            </section>
-        </div>
-    </main>
-</div>
-<script>
+             <script>
     const isAdmin = <?= $isAdmin ? 'true' : 'false' ?>;
 
     const seoInput = document.getElementById('seo_slug_input');
@@ -1767,13 +1749,25 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
         document.querySelectorAll('.download-mockup-link').forEach((link) => {
             const baseFile = link.getAttribute('data-base-file');
             const context = link.getAttribute('data-context');
-            link.href = `media.php?file=${encodeURIComponent(baseFile)}&download=1&name=${encodeURIComponent(slug + '-mockup-' + context)}`;
+            if (baseFile) {
+                link.href = `media.php?file=${encodeURIComponent(baseFile)}&download=1&name=${encodeURIComponent(slug + '-mockup-' + context)}`;
+            }
         });
 
         const filenameDisplay = document.getElementById('suggested_filename_display');
         if (filenameDisplay) {
             filenameDisplay.textContent = slug + '-root-artwork.jpg';
         }
+
+        const seoRootFilename = document.querySelector('.seo-root-filename');
+        if (seoRootFilename) {
+            seoRootFilename.textContent = slug + '-root-artwork.jpg';
+        }
+
+        document.querySelectorAll('.seo-mockup-filename').forEach((span) => {
+            const ctxSlug = span.getAttribute('data-context-slug');
+            span.textContent = slug + '-mockup-' + ctxSlug + '.jpg';
+        });
     }
     
     if (seoInput) {
@@ -1781,6 +1775,7 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
         updateDownloadLinks();
     }
 
+    // Individual copy buttons
     document.querySelectorAll('[data-copy]').forEach((button) => {
         button.addEventListener('click', async () => {
             const original = button.innerHTML;
@@ -1795,91 +1790,263 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
         });
     });
 
-    document.querySelectorAll('[data-copy-source]').forEach((button) => {
-        button.addEventListener('click', async () => {
-            const original = button.innerHTML;
-            const source = document.getElementById(button.dataset.copySource || '');
-            try {
-                await navigator.clipboard.writeText(source ? source.value : '');
-                button.innerHTML = 'Copied';
-                setTimeout(() => button.innerHTML = original, 1200);
-            } catch (error) {
-                button.innerHTML = 'Copy failed';
-                setTimeout(() => button.innerHTML = original, 1200);
+    // Filenames copy buttons (retrieve sibling span text dynamically)
+    document.querySelectorAll('.copy-mockup-filename-btn').forEach((button) => {
+        button.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const span = button.previousElementSibling;
+            if (span) {
+                const original = button.innerHTML;
+                try {
+                    await navigator.clipboard.writeText(span.textContent.trim());
+                    button.innerHTML = 'Copied';
+                    setTimeout(() => button.innerHTML = original, 1200);
+                } catch (error) {
+                    button.innerHTML = 'Copy failed';
+                    setTimeout(() => button.innerHTML = original, 1200);
+                }
             }
         });
     });
 
-    document.querySelectorAll('.inline-mockup-form').forEach((form) => {
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault();
-
-            const card = form.closest('.copy-card');
-            const resultBox = card.querySelector('.inline-result');
-            const button = form.querySelector('button[type="submit"]');
-            const originalHtml = button.innerHTML;
-
-            card.classList.remove('generated');
-            resultBox.classList.add('active');
-            resultBox.innerHTML = `
-                <div class="inline-loader" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
-                    <div class="spinner" style="width: 32px; height: 32px;" aria-hidden="true"></div>
-                </div>
-            `;
-            button.disabled = true;
-            button.innerHTML = '<svg class="spinner-btn" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" style="animation: spin 0.85s linear infinite; display: inline-block; vertical-align: middle;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>';
-
+    document.getElementById('copy_root_filename')?.addEventListener('click', async function(e) {
+        e.stopPropagation();
+        const span = this.previousElementSibling;
+        if (span) {
+            const original = this.innerHTML;
             try {
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    body: new FormData(form),
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-
-                const rawText = await response.text();
-                let data;
-                try {
-                    data = JSON.parse(rawText);
-                } catch (parseError) {
-                    const readable = rawText
-                        .replace(/<br\s*\/?>/gi, '\n')
-                        .replace(/<[^>]+>/g, ' ')
-                        .replace(/\s+/g, ' ')
-                        .trim();
-                    throw new Error(readable || 'The server returned an invalid response while generating the mockup.');
-                }
-
-                if (!response.ok || !data.ok) {
-                    throw new Error(data.error || 'Could not generate mockup.');
-                }
-
-                card.classList.add('generated');
-                const promptLink = isAdmin
-                    ? `<a href="${escapeAttribute(data.prompt_url)}" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 11px; text-decoration: none; color: var(--ink); border: 1px solid var(--line); padding: 6px 12px; border-radius: 4px; background: var(--surface);">Prompt</a>`
-                    : '';
-                resultBox.innerHTML = `
-                    <a class="inline-thumb" href="${escapeAttribute(data.viewer_url)}" aria-label="Open generated mockup" style="display: block; margin-bottom: 8px; overflow: hidden; border-radius: 2px;">
-                        <img src="${escapeAttribute(data.image_url)}" alt="Generated mockup" style="width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; border: 1px solid var(--line); border-radius: 2px;">
-                    </a>
-                    <div class="inline-actions" style="display: flex; gap: 12px; align-items: center;">
-                        <a href="${escapeAttribute(data.download_url)}" aria-label="Download mockup" title="Download" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 11px; text-decoration: none; color: var(--ink); border: 1px solid var(--line); padding: 6px 12px; border-radius: 4px; background: var(--surface);">
-                            <span class="download-icon" aria-hidden="true"></span>
-                            <span>Download</span>
-                        </a>
-                        ${promptLink}
-                    </div>
-                `;
-                button.innerHTML = 'Regenerate';
+                await navigator.clipboard.writeText(span.textContent.trim());
+                this.innerHTML = 'Copied';
+                setTimeout(() => this.innerHTML = original, 1200);
             } catch (error) {
-                resultBox.innerHTML = `<div class="inline-status" style="color: var(--danger); font-size: 11px; padding: 10px; text-align: center;">Error: ${escapeHtml(error.message)}</div>`;
-                button.innerHTML = originalHtml;
-            } finally {
-                button.disabled = false;
+                this.innerHTML = 'Copy failed';
+                setTimeout(() => this.innerHTML = original, 1200);
             }
+        }
+    });
+
+    // Unified report sections copy functions
+    function getSection0Text() {
+        let text = `[Obra Root]\n`;
+        text += `Archivo SEO: ${document.querySelector('.seo-root-filename')?.textContent || ''}\n`;
+        text += `Alt: ${document.querySelector('.seo-root-alt')?.textContent || ''}\n`;
+        text += `Caption: ${document.querySelector('.seo-root-caption')?.textContent || ''}\n\n`;
+
+        document.querySelectorAll('.mockup-card-container').forEach((card, idx) => {
+            const name = card.getAttribute('data-context-name') || `Mockup ${idx + 1}`;
+            text += `[Mockup ${idx + 1}: ${name}]\n`;
+            text += `Archivo SEO: ${card.querySelector('.seo-mockup-filename')?.textContent || ''}\n`;
+            text += `Alt: ${card.querySelector('.mockup-alt-text')?.textContent || ''}\n`;
+            text += `Caption: ${card.querySelector('.mockup-caption-text')?.textContent || ''}\n\n`;
         });
+        return text.trim();
+    }
+
+    function getSection1Text() {
+        let text = '';
+        document.querySelectorAll('.title-grid-unified article').forEach((card, idx) => {
+            const labels = card.querySelectorAll('.selected-label');
+            const label = labels[0]?.textContent || `Opción ${idx + 1}`;
+            const title = card.querySelector('h3')?.textContent || '';
+            const sub = card.querySelector('.title-option-subtitle')?.textContent || '';
+            text += `${label}:\n`;
+            text += `Título: ${title}\n`;
+            if (sub) {
+                text += `Subtítulo: ${sub}\n`;
+            }
+            text += `\n`;
+        });
+        return text.trim();
+    }
+
+    function getSection2Text() {
+        let text = '';
+        document.querySelectorAll('.premium-desc-block').forEach((card) => {
+            const titleLabel = card.querySelector('strong')?.textContent || '';
+            const desc = card.querySelector('.copy-block')?.textContent || '';
+            text += `${titleLabel}\n${desc}\n\n`;
+        });
+        return text.trim();
+    }
+
+    const copySection = async (button, getTextFn) => {
+        const original = button.innerHTML;
+        try {
+            await navigator.clipboard.writeText(getTextFn());
+            button.innerHTML = 'Copied';
+            setTimeout(() => button.innerHTML = original, 1200);
+        } catch (error) {
+            button.innerHTML = 'Copy failed';
+            setTimeout(() => button.innerHTML = original, 1200);
+        }
+    };
+
+    document.getElementById('copy_section_0')?.addEventListener('click', function() {
+        copySection(this, getSection0Text);
+    });
+    document.getElementById('copy_section_1')?.addEventListener('click', function() {
+        copySection(this, getSection1Text);
+    });
+    document.getElementById('copy_section_2')?.addEventListener('click', function() {
+        copySection(this, getSection2Text);
+    });
+    document.getElementById('copy_section_3')?.addEventListener('click', function() {
+        copySection(this, () => document.getElementById('section_3_raw_copy')?.value || '');
+    });
+    document.getElementById('copy_section_4')?.addEventListener('click', function() {
+        copySection(this, () => document.getElementById('section_4_raw_copy')?.value || '');
+    });
+    document.getElementById('copy_section_5')?.addEventListener('click', function() {
+        copySection(this, () => document.getElementById('section_5_raw_copy')?.value || '');
+    });
+
+    // AJAX mockup generation listener
+    document.addEventListener('submit', async (event) => {
+        const form = event.target.closest('.inline-mockup-form');
+        if (!form) return;
+        event.preventDefault();
+
+        const card = form.closest('.mockup-card-container');
+        if (!card) return;
+
+        const resultBox = card.querySelector('.inline-result-box');
+        const button = form.querySelector('button[type="submit"]');
+        const originalHtml = button.innerHTML;
+
+        card.classList.remove('generated');
+        resultBox.innerHTML = `
+            <div class="inline-loader" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                <div class="spinner" style="width: 24px; height: 24px;" aria-hidden="true"></div>
+            </div>
+        `;
+        button.disabled = true;
+        button.innerHTML = 'Generando...';
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const rawText = await response.text();
+            let data;
+            try {
+                data = JSON.parse(rawText);
+            } catch (parseError) {
+                const readable = rawText
+                    .replace(/<br\s*\/?>/gi, '\n')
+                    .replace(/<[^>]+>/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                throw new Error(readable || 'El servidor devolvió una respuesta inválida.');
+            }
+
+            if (!response.ok || !data.ok) {
+                throw new Error(data.error || 'No se pudo generar el mockup.');
+            }
+
+            // Successfully generated!
+            card.classList.add('generated');
+            
+            // Update image preview
+            const ctxName = card.querySelector('h3')?.textContent || 'Mockup';
+            resultBox.innerHTML = `
+                <a class="inline-thumb" href="${escapeAttribute(data.image_url)}" target="_blank" title="Click to open full size" style="width: 100%;">
+                    <img src="${escapeAttribute(data.image_url)}" alt="${escapeAttribute(ctxName)}" style="width: 100%; height: auto; display: block; border-radius: 2px;">
+                </a>
+            `;
+
+            // Update action containers
+            const genActions = card.querySelector('.generated-actions');
+            const ungenForm = card.querySelector('.ungenerated-form');
+            if (genActions) genActions.style.display = 'block';
+            if (ungenForm) ungenForm.style.display = 'none';
+
+            // Update download & delete button attributes
+            const downloadLink = card.querySelector('.download-mockup-link');
+            if (downloadLink) {
+                downloadLink.href = data.download_url;
+                downloadLink.setAttribute('data-base-file', data.mockup_file);
+            }
+            const deleteBtn = card.querySelector('.btn-delete-mockup');
+            if (deleteBtn) {
+                deleteBtn.setAttribute('data-mockup-id', data.mockup_id || data.id);
+            }
+
+            // Update filenames display
+            updateDownloadLinks();
+
+        } catch (error) {
+            resultBox.innerHTML = `<div class="inline-status" style="color: var(--danger); font-size: 11px; padding: 10px; text-align: center;">Error: ${escapeHtml(error.message)}</div>`;
+            button.innerHTML = originalHtml;
+            button.disabled = false;
+        } finally {
+            button.disabled = false;
+        }
+    });
+
+    // AJAX mockup deletion listener
+    document.addEventListener('click', async (event) => {
+        const deleteBtn = event.target.closest('.btn-delete-mockup');
+        if (!deleteBtn) return;
+
+        if (!confirm('¿Seguro que desea eliminar este mockup?')) {
+            return;
+        }
+
+        const mockupId = deleteBtn.getAttribute('data-mockup-id');
+        const card = deleteBtn.closest('.mockup-card-container');
+        
+        deleteBtn.disabled = true;
+
+        try {
+            const response = await fetch('delete_mockup.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'mockup_id=' + encodeURIComponent(mockupId)
+            });
+
+            const data = await response.json();
+            if (data.ok) {
+                if (card) {
+                    card.classList.remove('generated');
+                    
+                    const resultBox = card.querySelector('.inline-result-box');
+                    if (resultBox) {
+                        resultBox.innerHTML = `
+                            <svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--muted)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                        `;
+                    }
+
+                    const genActions = card.querySelector('.generated-actions');
+                    const ungenForm = card.querySelector('.ungenerated-form');
+                    if (genActions) genActions.style.display = 'none';
+                    if (ungenForm) ungenForm.style.display = 'block';
+
+                    const formSubmitBtn = card.querySelector('.inline-mockup-form button[type="submit"]');
+                    if (formSubmitBtn) {
+                        formSubmitBtn.disabled = false;
+                        formSubmitBtn.innerHTML = 'Generar Mockup';
+                    }
+                }
+            } else {
+                alert('Error: ' + (data.error || 'No se pudo eliminar el mockup.'));
+                deleteBtn.disabled = false;
+            }
+        } catch (err) {
+            alert('Error de red al intentar eliminar.');
+            deleteBtn.disabled = false;
+        }
     });
 
     function escapeHtml(value) {

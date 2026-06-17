@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 3 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Minimalist Loft Living
+- Purpose: Central visual anchor in a contemporary residential space
+- Scene Description: A high-end residential interior (loft living room) with airy, modern, light-filled, understated elegance atmosphere. Materials: light gray concrete wall, blonde wood floor, minimalist furniture in neutral tones
+- Lighting: abundant natural daylight from a large window, soft ambient light
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult black man, 1.80 meters tall.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A three-quarter right view provides an architectural perspective, showcasing how the artwork integrates into a spacious, modern loft. The close-up ensures the artwork remains the dominant subject while providing enough context of the sleek environment. Natural daylight beautifully illuminates the texture and vivid colors.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+An abstract painting titled 'Verdant Threshold' by Maurizio Valch, 80x120cm, mounted on a light gray concrete wall in a minimalist loft living room. Ample natural daylight streams in from a large window. A standing male figure (1.80m) is positioned to the left of the artwork, looking towards it. Blonde wood floor. Three-quarter right view, close-up view.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+traditional decor, dark room, clutter, low light, warm tones, outdated furniture
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

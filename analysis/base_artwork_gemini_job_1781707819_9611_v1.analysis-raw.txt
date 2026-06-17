@@ -1,0 +1,466 @@
+```json
+{
+  "artwork_analysis": {
+    "visual_language": [
+      "abstract",
+      "geometric",
+      "expressive",
+      "spatial",
+      "symbolic"
+    ],
+    "emotional_energy": [
+      "contemplative",
+      "energetic",
+      "powerful",
+      "focused",
+      "subtly dramatic"
+    ],
+    "dominant_colors": [
+      "deep green",
+      "vibrant red"
+    ],
+    "secondary_colors": [
+      "dark blue",
+      "black",
+      "ochre",
+      "gray"
+    ],
+    "visible_elements": [
+      "large red rectangular block",
+      "smaller red rectangular blocks",
+      "dark linear ground lines",
+      "textured paint fields",
+      "black block at bottom"
+    ],
+    "visible_symbols": [
+      "architectural forms",
+      "elemental presences",
+      "horizon lines",
+      "stratified layers"
+    ],
+    "color_temperature": "balanced tension between cool (green, blue) and warm (red)",
+    "contrast_level": "high",
+    "composition_type": "structured vertical abstraction",
+    "balance": "asymmetrical, dynamic balance",
+    "visual_tension": "high tension between contrasting colors and forms, between gesture and structure",
+    "density": "moderate in foreground elements, expansive in negative space",
+    "silence": "significant, provided by the vast green field",
+    "main_focal_point": "the large central red rectangular block",
+    "movement": "subtle, implied by expressive brushstrokes and undulating lines",
+    "depth": "suggested by layered colors and spatial arrangement of forms",
+    "negative_space": "the expansive deep green background",
+    "verticality_or_horizontality": "dominant verticality, balanced by horizontal elements",
+    "internal_organization": "clear, distinct elements arranged within a unifying field",
+    "rhythm": "subtle, created by the repetition and placement of forms and lines",
+    "surface": "visible canvas texture beneath paint, some areas of impasto",
+    "brushstroke": "expressive, visible, gestural, particularly in red elements and linear marks",
+    "gesture": "evident in the application of paint on the forms and lines",
+    "layers": "visible in the build-up of paint and color overlays, especially in the ground line",
+    "material_presence": "strong, tactile, due to visible paint texture and canvas depth",
+    "sense_of_depth_or_flatness": "a dynamic interplay, with a relatively flat green field providing depth for the more sculptural, textured forms",
+    "format_and_scale": {
+      "width_cm": "80",
+      "height_cm": "120",
+      "depth_cm": "4",
+      "orientation": "vertical",
+      "scale_impact": "substantial, commanding presence without being overwhelming",
+      "wall_presence": "strong, acts as a visual anchor",
+      "monumentality_or_intimacy": "controlled monumentality with potential for intimate contemplation",
+      "spatial_effect": "enriches a space with bold color and structural focus, enhances verticality"
+    },
+    "spatial_presence": "distinct, commanding, introduces a dynamic focal point",
+    "visual_atmosphere": "refined, contemplative, energetic, quietly dramatic",
+    "artwork_function": "statement piece, focal point, mood setter",
+    "suggested_audience": [
+      "collectors of contemporary abstraction",
+      "interior designers",
+      "art enthusiasts seeking bold color and form"
+    ],
+    "audience_profile": {
+      "primary": "Discerning contemporary art collectors.",
+      "secondary": "Interior designers for upscale residential and commercial projects.",
+      "buyer_profile": "Individuals valuing unique aesthetic statements, bold palettes, and a sophisticated visual impact.",
+      "collector_type": "Collectors focused on modern and contemporary abstract art with expressive qualities.",
+      "interior_design_relevance": "Highly relevant for modern, minimalist, and eclectic interiors seeking a powerful focal point.",
+      "gallery_potential": "Excellent for contemporary art galleries due to its strong visual identity and market appeal."
+    },
+    "commercial_positioning": "Mid to high-end market for original contemporary abstract painting.",
+    "one_line_curatorial_read": "An abstract dialogue of vibrant forms and deep fields, exploring elemental structures and color tension.",
+    "style_summary": "Abstract, expressive-geometric, color field with structural elements.",
+    "artist_profile_relation": {
+      "relevant_statement_connection": "",
+      "relevant_visual_language_connection": "",
+      "relevant_symbol_connection": "",
+      "relevant_atmosphere_connection": ""
+    },
+    "seasonal_strategy": {
+      "primary_season": "neutral"
+    },
+    "publishing_metadata": {
+      "suggested_titles": [
+        {
+          "title": "Verdant Ascent",
+          "subtitle": "A Study in Elemental Forms and Field Dynamics",
+          "short_description": "Dynamic abstract composition featuring a monumental red form ascending from a deep green field, anchored by subtle ground lines.",
+          "curatorial_description": "This vertical canvas presents an intriguing dialogue between a vast, verdant field and robust, gestural red forms. A central, commanding rectangle rises, flanked by smaller, resonant elements, all grounded by complex linear incisions of blue and black. The composition evokes a primordial landscape or a structural presence, exploring the interplay of color and layered texture.",
+          "commercial_description": "An impactful abstract artwork for contemporary spaces, 'Verdant Ascent' offers a striking focal point. Its bold red and deep green palette brings sophisticated energy, while its substantial vertical presence enriches any modern interior. Ideal for collectors seeking a statement piece with both visual power and contemplative depth."
+        },
+        {
+          "title": "Crimson Monolith",
+          "subtitle": "Architectural Abstraction on a Deep Green Horizon",
+          "short_description": "Abstract artwork featuring a powerful crimson block and satellite forms set against an expansive, textured green backdrop.",
+          "curatorial_description": "Maurizio Valch's 'Crimson Monolith' constructs a potent visual narrative through contrasting color and form. The central crimson mass, rich with visible brushwork, commands attention against the profound expanse of green, suggesting a monumental structure emerging from a primal landscape. Subtly articulated lines beneath hint at geological strata or foundational elements, fostering a sense of enduring presence.",
+          "commercial_description": "Elevate your space with this compelling abstract work, 'Crimson Monolith'. The vibrant crimson against a muted green provides a sophisticated color dynamic, making it a powerful addition to any contemporary collection. Its substantial size and architectural simplicity ensure a commanding yet harmonious presence in refined settings."
+        },
+        {
+          "title": "Terra Nova Structure",
+          "subtitle": "Exploration of Color, Form, and Landscape Archetypes",
+          "short_description": "Abstract piece depicting bold red, geometric-expressive forms grounded within a deep green, textural field, creating a sense of new territory or foundation.",
+          "curatorial_description": "In 'Terra Nova Structure', Valch orchestrates an abstract exploration of elemental forms, where vibrant red, almost architectural blocks rise from a deep green, textured ground. The interplay of expressive brushwork within the forms and the expansive, quiet field creates a compelling spatial tension, suggesting nascent structures in an uncharted visual realm. The composition is a thoughtful study of foundational presence and chromatic dialogue.",
+          "commercial_description": "A distinctive choice for collectors of modern art, 'Terra Nova Structure' offers a unique blend of powerful color and structural abstraction. Its rich textures and significant vertical dimensions create a focal point that transforms a room. Perfect for adding a bold, contemplative statement to a sophisticated private residence or a contemporary gallery."
+        }
+      ],
+      "catawiki_listing": {
+        "recommended_title": "Verdant Ascent",
+        "alternative_titles": [
+          "Crimson Monolith",
+          "Terra Nova Structure"
+        ],
+        "subtitle": "Structural Abstraction on a Deep Green Field",
+        "short_description": "Dynamic abstract painting featuring a prominent red form on a textured deep green background, with subtle blue and black linear elements.",
+        "long_description": "This striking vertical composition presents a vibrant dialogue between a deep, textured green field and a series of powerful red forms. The central, dominant red rectangular block, rich with expressive brushwork, rises from a nuanced base of blue and black linear incisions that suggest a horizon or ground. Flanking this central element are smaller red forms, adding to the composition's dynamic yet balanced asymmetry. A distinct black, blue, and red block grounds the bottom edge, adding depth and structural weight. The interplay of bold complementary colors—energetic red against tranquil green—creates a compelling visual tension, while the visible brushstrokes and layering offer a tactile quality. The artwork's vertical orientation and substantial dimensions (80x120x4 cm) ensure a commanding presence.\nThe piece is in excellent condition, with no damage or restorations.\nThe artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+        "technical_details": "Maurizio Valch, Verdant Ascent, 80 x 120 x 4 cm.",
+        "condition_statement": "The piece is in excellent condition, with no damage or restorations.",
+        "shipping_statement": "The artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "abstract art",
+          "contemporary painting",
+          "green red artwork",
+          "geometric abstraction",
+          "expressive art",
+          "color field",
+          "vertical painting",
+          "modern art",
+          "textured artwork"
+        ],
+        "tags": [
+          "abstract",
+          "contemporary",
+          "painting",
+          "green",
+          "red",
+          "geometric",
+          "expressive",
+          "structure",
+          "modern",
+          "vertical"
+        ]
+      },
+      "descriptions": {
+        "poetic_focus": "A silent, vibrant surge from a primordial landscape. Here, deep green holds the breath of earth, while crimson forms rise like ancient monoliths or nascent cities, touched by a blue horizon. It's a whisper of genesis, an elemental dance of color and form, inviting introspection into the spaces where nature meets spirit.",
+        "formal_focus": "This abstract composition employs a robust vertical orientation to explore color and structural tension. A dominant, gestural red rectangle anchors the upper field, offset by smaller, congruent forms. These elements are set against an expansive, deep green plane, traversed by linear incisions in blue and black, establishing a dynamic ground line. The textural application of paint contrasts with the smooth background, articulating a clear spatial hierarchy and formal dialogue.",
+        "commercial_focus": "An exceptional opportunity for collectors of contemporary abstract art, this piece offers a striking balance of bold color and compelling structure. The vibrant interplay of red and deep green, combined with its substantial vertical format, ensures a powerful and sophisticated statement in any high-end interior. Its unique aesthetic and tactile quality make it a valuable acquisition for a discerning collection."
+      },
+      "seo_keywords": [
+        "Maurizio Valch art",
+        "abstract painting for sale",
+        "contemporary art collector",
+        "geometric abstract art",
+        "bold color field",
+        "modern abstract canvas",
+        "textured painting",
+        "green and red artwork",
+        "vertical abstract",
+        "gallery quality art",
+        "fine art abstraction"
+      ],
+      "seo_tags": [
+        "abstraction",
+        "contemporary",
+        "painting",
+        "Valch",
+        "geometric",
+        "expressive",
+        "color",
+        "red",
+        "green",
+        "structure",
+        "modern",
+        "artcollectors"
+      ],
+      "marketplace_title": "Maurizio Valch - Verdant Ascent (Structural Abstraction)",
+      "marketplace_short_description": "Dynamic abstract painting by Maurizio Valch, featuring bold red structural forms against a deep green textured field.",
+      "marketplace_long_description": "This captivating abstract artwork by Maurizio Valch, titled 'Verdant Ascent,' is a powerful exploration of color, form, and spatial relationships. The vertical canvas is dominated by a majestic, textured red rectangular form, which seems to rise from a grounding element composed of nuanced blue, black, and red linear incisions. Smaller complementary red blocks subtly balance the composition, all set against an expansive, deep green background that creates both depth and calm. The visible, expressive brushstrokes within the red forms lend a tactile quality, inviting closer inspection. Measuring 80 cm wide by 120 cm high and 4 cm deep, this piece commands attention, offering a sophisticated and energetic focal point for any contemporary interior or art collection. Its striking visual presence and refined color palette make it an ideal choice for those seeking to make a bold artistic statement.\nThe piece is in excellent condition, with no damage or restorations.\nThe artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+      "pinterest_boards": [
+        "Contemporary Abstract Art",
+        "Modern Art for Interiors",
+        "Bold Color Palettes",
+        "Abstract Landscapes & Forms",
+        "Maurizio Valch Artwork"
+      ]
+    }
+  },
+  "recommended_number_of_contexts": "6",
+  "contextual_proposals": [
+    {
+      "context_name": "Collector's Serene Study",
+      "context_role": "Showcase for a focal art piece in a private, contemplative setting.",
+      "space_type": "High-end residential study or private library.",
+      "atmosphere": "Refined, intellectual, calm, sophisticated.",
+      "materials": [
+        "dark wood shelving",
+        "leather armchair",
+        "muted grey wall",
+        "subtle natural light"
+      ],
+      "lighting": "Soft, diffused natural light from a large window, complemented by adjustable art lighting.",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "Front view highlights the artwork's direct compositional power and color contrast, essential for commercial readability. Close-up view keeps the artwork dominant, showing just enough of the sophisticated study environment to convey context and quality without distracting. The vertical orientation of the artwork is perfectly aligned with the frame, maximizing its impact.",
+      "human_presence": "none",
+      "curatorial_reason": "To emphasize the artwork's contemplative quality and its suitability as a central piece in a thoughtfully curated personal space, inviting prolonged engagement.",
+      "commercial_reason": "Demonstrates the artwork's ability to anchor a sophisticated private interior, appealing to discerning individual collectors who value art for personal enrichment and aesthetic elevation.",
+      "mockup_prompt": "Close-up front view of Maurizio Valch's 'Verdant Ascent' centered on a clean, muted grey wall in a high-end residential study. To the left and right, out of focus, are rich, dark wood built-in bookshelves. A corner of a luxurious leather armchair is visible in the bottom right. Soft, indirect natural light illuminates the artwork, with a discreet art light overhead. Artwork is perfectly straight, dominant.",
+      "negative_prompt": "Clutter, messy, vibrant colors in room, distracting elements, artificial lighting, harsh shadows, empty room, generic decor, low quality.",
+      "pinterest_marketing": {
+        "board_suggestion": "Art for Refined Interiors",
+        "pin_title": "Verdant Ascent: Maurizio Valch Abstract in Serene Study",
+        "pin_description": "Discover Maurizio Valch's 'Verdant Ascent' transforming a sophisticated study. Its vibrant red forms against deep green offer a compelling focal point in a refined, intellectual space. Perfect for contemporary art collectors.",
+        "alt_text": "Maurizio Valch abstract painting, 'Verdant Ascent', hanging in a luxurious, dark wood and leather study with soft lighting.",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "abstract art study",
+          "luxury home art",
+          "contemporary wall art",
+          "red green painting",
+          "collector's art"
+        ],
+        "hashtags": [
+          "#AbstractArt",
+          "#MaurizioValch",
+          "#HomeDecor",
+          "#LuxuryInteriors",
+          "#ContemporaryArt",
+          "#ArtCollector",
+          "#StudyDesign"
+        ]
+      }
+    },
+    {
+      "context_name": "Modern Gallery Vista",
+      "context_role": "Presenting the artwork in a professional exhibition context to convey its scale and impact.",
+      "space_type": "Contemporary art gallery with polished concrete floors and high ceilings.",
+      "atmosphere": "Clean, minimalist, open, professional.",
+      "materials": [
+        "white gallery walls",
+        "polished concrete floor",
+        "minimalist plinth (out of focus)"
+      ],
+      "lighting": "Even, bright gallery lighting from overhead track lights.",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "Three-quarter left view adds architectural context and depth, making the gallery setting more dynamic and realistic. Close-up view ensures the artwork remains the primary focus while hinting at the spaciousness of a professional exhibition. This angle subtly emphasizes the artwork's physical presence and its 4cm depth.",
+      "human_presence": "none",
+      "curatorial_reason": "To demonstrate the artwork's strong exhibition presence and its ability to hold its own within a minimalist gallery environment, highlighting its structured composition and color impact.",
+      "commercial_reason": "Positions the artwork as gallery-ready and appealing to curators, art consultants, and serious collectors who envision pieces within formal exhibition spaces.",
+      "mockup_prompt": "Close-up three-quarter left view of Maurizio Valch's 'Verdant Ascent' mounted on a pristine white gallery wall. The polished concrete floor extends to the bottom, reflecting light. The left edge of the artwork is slightly angled towards the camera, revealing its 4cm depth. The vastness of the gallery space is implied by the clean, empty walls and bright, even overhead lighting. Artwork is visually dominant.",
+      "negative_prompt": "Cluttered gallery, poor lighting, distracting art, people, shadows, low ceiling, generic room.",
+      "pinterest_marketing": {
+        "board_suggestion": "Gallery Exhibition Concepts",
+        "pin_title": "Maurizio Valch: Structural Abstraction in Contemporary Gallery",
+        "pin_description": "See Maurizio Valch's 'Verdant Ascent' command attention in a modern gallery setting. This abstract painting's bold forms and color field offer a powerful curatorial statement. Ideal for gallery features and art acquisitions.",
+        "alt_text": "Abstract painting by Maurizio Valch, 'Verdant Ascent', displayed in a minimalist white-walled art gallery, polished concrete floor.",
+        "seo_keywords": [
+          "contemporary art gallery",
+          "Maurizio Valch",
+          "abstract exhibition",
+          "gallery wall art",
+          "modern art display",
+          "curatorial art"
+        ],
+        "hashtags": [
+          "#ArtGallery",
+          "#ContemporaryArt",
+          "#AbstractPainting",
+          "#ArtExhibition",
+          "#MinimalistDesign",
+          "#MaurizioValch"
+        ]
+      }
+    },
+    {
+      "context_name": "Elegant Dining Statement",
+      "context_role": "Integrating the artwork as a sophisticated focal point in a high-end social and entertaining space.",
+      "space_type": "Sophisticated dining room in a luxurious residence.",
+      "atmosphere": "Inviting, refined, art-centric, warm elegance.",
+      "materials": [
+        "textured off-white wall",
+        "long dark wood dining table",
+        "designer dining chairs",
+        "warm glow from pendant light"
+      ],
+      "lighting": "Warm, focused light from an elegant pendant lamp above the table, and subtle ambient light.",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "Three-quarter right view adds perspective to the dining room setting, creating a natural and inviting scene. Close-up distance keeps the artwork central and dominant, while allowing glimpses of the elegant furniture to define the space. This angle allows the viewer to imagine the artwork as an integral part of a cultivated living environment.",
+      "human_presence": "none",
+      "curatorial_reason": "To highlight the artwork's ability to act as a significant conversation piece and aesthetic anchor within a luxurious social environment, emphasizing its refined visual impact.",
+      "commercial_reason": "Appeals to interior designers and homeowners looking for statement art that enhances dining or entertaining areas, showcasing its versatility beyond pure gallery settings.",
+      "mockup_prompt": "Close-up three-quarter right view of Maurizio Valch's 'Verdant Ascent' hung on a textured off-white wall in an elegant dining room. A part of a sleek, dark wood dining table and the back of a designer dining chair are visible to the bottom left, slightly out of focus. A warm glow from a modern pendant lamp softly illuminates the area, casting a gentle light on the artwork. Artwork is correctly oriented and dominant.",
+      "negative_prompt": "Bright colors in room, casual furniture, distracting decor, harsh lighting, empty room, messy, low quality.",
+      "pinterest_marketing": {
+        "board_suggestion": "Luxury Dining Room Art",
+        "pin_title": "Transform Your Dining Space with Maurizio Valch's Verdant Ascent",
+        "pin_description": "Enhance your dining room with the sophisticated energy of Maurizio Valch's 'Verdant Ascent'. This abstract painting's bold red and deep green hues create an elegant focal point for memorable gatherings.",
+        "alt_text": "Maurizio Valch abstract painting, 'Verdant Ascent', in an elegant dining room with dark wood table and warm lighting.",
+        "seo_keywords": [
+          "dining room art",
+          "luxury interior design",
+          "statement painting",
+          "contemporary dining",
+          "Maurizio Valch art",
+          "home decor inspiration"
+        ],
+        "hashtags": [
+          "#DiningRoomArt",
+          "#LuxuryDesign",
+          "#AbstractPainting",
+          "#InteriorDecor",
+          "#MaurizioValch",
+          "#ElegantInteriors"
+        ]
+      }
+    },
+    {
+      "context_name": "Architectural Entryway Vista",
+      "context_role": "Establishing scale and a sense of welcome with a powerful art piece in a transitional space.",
+      "space_type": "Grand, minimalist architectural foyer or an impressive hallway.",
+      "atmosphere": "Spacious, inviting, modern, imposing yet refined.",
+      "materials": [
+        "smooth concrete walls",
+        "integrated linear lighting",
+        "tall glass door (blurred)",
+        "light wood bench"
+      ],
+      "lighting": "Bright, even architectural lighting, complemented by soft natural light from a distance.",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "Front view offers a clear, direct presentation of the artwork, essential for its structural clarity and strong visual impact. Close-up distance ensures the artwork remains dominant. The inclusion of an optional standing female figure provides a crucial sense of scale for the 120cm high artwork, making its presence in a large architectural space relatable.",
+      "human_presence": "optional standing female figure 1.55m",
+      "curatorial_reason": "To showcase the artwork's commanding presence and its ability to define and elevate a large, transitional architectural space, demonstrating its strong aesthetic anchor.",
+      "commercial_reason": "Highlights its suitability for corporate collections, large private residences, or public spaces where a statement piece is needed for impact and orientation, appealing to a broader, more institutional market.",
+      "mockup_prompt": "Close-up front view of Maurizio Valch's 'Verdant Ascent' centrally mounted on a smooth concrete wall in a grand, minimalist architectural foyer. An optional standing female figure, 1.55m tall, stands slightly to the right of the artwork, providing scale. Integrated linear lighting above casts a subtle glow. A glimpse of a blurred tall glass door or window is visible in the background, implying depth. Artwork is perfectly straight, dominant.",
+      "negative_prompt": "Clutter, distracting art, generic hallway, poor lighting, dark space, small room, excessive furniture.",
+      "pinterest_marketing": {
+        "board_suggestion": "Art for Architectural Spaces",
+        "pin_title": "Maurizio Valch 'Verdant Ascent' in Grand Foyer: Scale & Statement",
+        "pin_description": "Discover Maurizio Valch's 'Verdant Ascent' making a powerful statement in a modern architectural foyer. Its commanding presence and bold colors offer a sophisticated welcome. Ideal for large-scale interiors and corporate collections.",
+        "alt_text": "Maurizio Valch abstract painting, 'Verdant Ascent', in a grand architectural foyer with a female figure for scale, modern concrete walls.",
+        "seo_keywords": [
+          "foyer art",
+          "architectural art",
+          "corporate art collection",
+          "large abstract painting",
+          "Maurizio Valch",
+          "statement art piece"
+        ],
+        "hashtags": [
+          "#ArchitecturalArt",
+          "#CorporateArt",
+          "#AbstractPainting",
+          "#ModernFoyer",
+          "#MaurizioValch",
+          "#StatementArt"
+        ]
+      }
+    },
+    {
+      "context_name": "Artist's Creative Sanctuary",
+      "context_role": "Placing the artwork in a refined, yet functional studio environment to connect it with the creative process and authenticity.",
+      "space_type": "Well-lit, organized, and sophisticated artist's studio.",
+      "atmosphere": "Authentic, inspiring, focused, clean, creative.",
+      "materials": [
+        "white brick wall",
+        "wooden easel (out of focus)",
+        "natural light from skylight",
+        "art supplies (neatly arranged, blurred)"
+      ],
+      "lighting": "Abundant, soft natural light from a large window or skylight.",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "Three-quarter left view naturally frames the artwork within a working studio, providing depth and a sense of its journey from creation to presentation. Close-up distance keeps the artwork clearly legible and dominant, while the blurred studio elements add an authentic, creative background. This angle highlights the texture and material presence of the artwork.",
+      "human_presence": "none",
+      "curatorial_reason": "To emphasize the artwork's materiality and connection to the artist's hand, offering a glimpse into the creative genesis and appealing to collectors who value authenticity and process.",
+      "commercial_reason": "Appeals to collectors seeking a narrative beyond the finished piece, highlighting the art's intrinsic value and connection to the artistic practice. Also ideal for marketing within art communities.",
+      "mockup_prompt": "Close-up three-quarter left view of Maurizio Valch's 'Verdant Ascent' positioned against a white brick wall in a clean, well-lit artist's studio. The artwork's left edge is slightly angled towards the camera, showcasing its depth. In the background, out of focus, a blurred wooden easel and a hint of neatly arranged art supplies. Abundant, soft natural light streams in from an unseen window or skylight. Artwork is the clear focal point.",
+      "negative_prompt": "Messy studio, distracting elements, poor lighting, unfinished work, generic office, shadows, low quality.",
+      "pinterest_marketing": {
+        "board_suggestion": "Artist Studio Inspiration",
+        "pin_title": "Maurizio Valch: Abstract Art in the Studio – Verdant Ascent",
+        "pin_description": "Experience Maurizio Valch's 'Verdant Ascent' in the authentic setting of a creative studio. This abstract piece showcases its rich texture and powerful composition, born from artistic exploration.",
+        "alt_text": "Maurizio Valch's 'Verdant Ascent' abstract painting in a bright artist studio with a white brick wall.",
+        "seo_keywords": [
+          "artist studio art",
+          "Maurizio Valch",
+          "artistic process",
+          "abstract painting creation",
+          "studio decor",
+          "contemporary art studio"
+        ],
+        "hashtags": [
+          "#ArtistStudio",
+          "#AbstractArt",
+          "#MaurizioValch",
+          "#CreativeProcess",
+          "#ArtisticInspiration",
+          "#StudioLife"
+        ]
+      }
+    },
+    {
+      "context_name": "Minimalist Living Accent",
+      "context_role": "Demonstrating the artwork as a key color and form accent in a carefully curated, modern residential living space.",
+      "space_type": "Contemporary, minimalist living room with clean lines.",
+      "atmosphere": "Modern, serene, intentional, chic.",
+      "materials": [
+        "smooth light grey wall",
+        "low-profile beige sofa",
+        "simple concrete side table",
+        "ceramic vase with dried branches"
+      ],
+      "lighting": "Soft, diffused ambient light, creating gentle highlights and shadows.",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "Three-quarter right view integrates the artwork seamlessly into a minimalist living room, allowing spatial context to emerge. Close-up view keeps the artwork visually dominant, highlighting its ability to add a precise splash of color and structured form to an otherwise subdued environment. This angle accentuates the artwork's clean lines and impactful presence.",
+      "human_presence": "none",
+      "curatorial_reason": "To show how the artwork's bold yet controlled aesthetic complements and elevates a minimalist interior, serving as a powerful focal point without disrupting the serene atmosphere.",
+      "commercial_reason": "Appeals directly to homeowners and interior designers seeking a statement piece for modern, minimalist aesthetics, emphasizing its commercial viability in upscale residential settings.",
+      "mockup_prompt": "Close-up three-quarter right view of Maurizio Valch's 'Verdant Ascent' mounted on a smooth, light grey wall in a contemporary minimalist living room. The artwork is dominant. To the bottom left, slightly out of focus, a segment of a low-profile beige sofa. To the far right, a simple concrete side table with a minimalist ceramic vase holding dried branches. Soft, even ambient light fills the room, casting subtle shadows. Artwork is visually prominent.",
+      "negative_prompt": "Clutter, vibrant room colors, ornate furniture, distracting elements, harsh shadows, generic space, low quality, too much white.",
+      "pinterest_marketing": {
+        "board_suggestion": "Minimalist Home Decor & Art",
+        "pin_title": "Maurizio Valch 'Verdant Ascent' – Abstract Art for Minimalist Living",
+        "pin_description": "Discover how Maurizio Valch's 'Verdant Ascent' adds vibrant life and structured beauty to a minimalist living room. A perfect focal point for modern, serene interiors.",
+        "alt_text": "Abstract painting 'Verdant Ascent' by Maurizio Valch in a minimalist living room with a grey wall and beige sofa.",
+        "seo_keywords": [
+          "minimalist living room art",
+          "contemporary minimalist",
+          "Maurizio Valch",
+          "abstract art accent",
+          "modern home decor",
+          "clean design art"
+        ],
+        "hashtags": [
+          "#MinimalistDecor",
+          "#AbstractArt",
+          "#LivingRoomDesign",
+          "#ContemporaryHome",
+          "#MaurizioValch",
+          "#ModernArt"
+        ]
+      }
+    }
+  ]
+}
+```

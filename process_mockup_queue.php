@@ -15,6 +15,105 @@ if (PHP_SAPI !== 'cli') {
 
 $artworkId = isset($argv[1]) ? (int)$argv[1] : null;
 $maxJobs = isset($argv[2]) ? max(1, min(20, (int)$argv[2])) : MockupBatchQueue::INITIAL_BATCH_LIMIT;
+$preAssignedJobId = isset($argv[3]) ? (int)$argv[3] : null;
+
+// --- Pre-assignment mode (Opción A parallel strategy) ---
+// If a specific job ID was pre-assigned by the launcher, process only that job.
+// The job was already marked "processing" by claimBatch() in select_root.php,
+// so no lock competition with other workers.
+if ($preAssignedJobId > 0) {
+    $job = MockupBatchQueue::claimById($preAssignedJobId);
+
+    if ($job) {
+        $creditDeducted = false;
+
+        try {
+            $rootFile = basename((string)$job['artwork_file']);
+            $imagePath = RESULTS_DIR . DIRECTORY_SEPARATOR . $rootFile;
+            if (!is_file($imagePath)) {
+                throw new RuntimeException('No se encontro la imagen raiz para generar el mockup automatico.');
+            }
+
+            $existing = Database::connection()->prepare('
+                SELECT * FROM mockups
+                WHERE user_id = :user_id AND artwork_file = :artwork_file AND context_id = :context_id
+                ORDER BY id DESC
+                LIMIT 1
+            ');
+            $existing->execute([
+                'user_id' => (int)$job['user_id'],
+                'artwork_file' => $rootFile,
+                'context_id' => (string)$job['context_id'],
+            ]);
+            $existingMockup = $existing->fetch();
+            if ($existingMockup) {
+                MockupBatchQueue::markDone(
+                    (int)$job['id'],
+                    (int)$existingMockup['id'],
+                    (string)$existingMockup['mockup_file'],
+                    (string)$existingMockup['prompt_file']
+                );
+                exit(0);
+            }
+
+            ProviderSettings::set(read_provider_settings_for_queue($imagePath));
+
+            if (ProviderSettings::allowRealApi()) {
+                $reason = 'auto_mockup_generation:' . (string)$job['context_id'];
+                if (!Database::deductCredit((int)$job['user_id'], $reason)) {
+                    throw new RuntimeException('No hay creditos suficientes para generar este mockup automatico.');
+                }
+                $creditDeducted = true;
+            }
+
+            $seoParams = seo_params_for_queue_job($job);
+            $generator = ServiceFactory::mockupGenerator();
+            $result = $generator->generate($imagePath, (string)$job['context_id'], (string)$job['prompt'], [
+                'seo_params' => $seoParams,
+            ]);
+
+            $mockupId = (int)Database::withBusyRetry(function () use ($job, $rootFile, $result): int {
+                $pdo = Database::connection();
+                $stmt = $pdo->prepare('
+                    INSERT INTO mockups (user_id, artwork_file, mockup_file, context_id, prompt_file, created_at)
+                    VALUES (:user_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :created_at)
+                ');
+                $stmt->execute([
+                    'user_id' => (int)$job['user_id'],
+                    'artwork_file' => $rootFile,
+                    'mockup_file' => basename((string)$result['file']),
+                    'context_id' => (string)$job['context_id'],
+                    'prompt_file' => basename((string)$result['prompt_file']),
+                    'created_at' => date('c'),
+                ]);
+                return (int)$pdo->lastInsertId();
+            }, 24);
+
+            MockupBatchQueue::markDone(
+                (int)$job['id'],
+                $mockupId,
+                (string)$result['file'],
+                (string)$result['prompt_file']
+            );
+        } catch (Throwable $e) {
+            if ($creditDeducted) {
+                try {
+                    Database::refundCredit((int)$job['user_id'], 'auto_mockup_generation_failed:' . (string)$job['context_id']);
+                } catch (Throwable $refundError) {
+                    Logger::log('Error al reembolsar credito de mockup automatico: ' . $refundError->getMessage(), 'error');
+                }
+            }
+            Logger::log('Error en worker pre-asignado (job ' . $preAssignedJobId . '): ' . $e->getMessage(), 'error');
+            MockupBatchQueue::markError((int)$job['id'], $e->getMessage());
+        }
+    } else {
+        Logger::log('Worker pre-asignado: job ' . $preAssignedJobId . ' no encontrado o no está en estado processing.', 'warn');
+    }
+
+    exit(0);
+}
+
+// --- Legacy fallback mode: claimNext() competition (used if no pre-assigned job ID) ---
 
 for ($i = 0; $i < $maxJobs; $i++) {
     $job = MockupBatchQueue::claimNext($artworkId ?: null);
