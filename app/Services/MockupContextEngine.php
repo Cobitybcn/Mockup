@@ -302,17 +302,54 @@ class MockupContextEngine
     private function extractJson(string $text): string
     {
         $text = trim($text);
-        $text = preg_replace('/^```(?:json)?\s*/i', '', $text);
-        $text = preg_replace('/\s*```$/', '', (string)$text);
-
-        $start = strpos((string)$text, '{');
-        $end = strrpos((string)$text, '}');
-
-        if ($start !== false && $end !== false && $end > $start) {
-            return substr((string)$text, $start, $end - $start + 1);
+        
+        // First, try to extract from markdown code block
+        if (preg_match('/```(?:json)?\s*\n(.*?)\n```/s', $text, $matches)) {
+            $json = trim($matches[1]);
+        } else {
+            // Fallback: look for { and } directly
+            $text = preg_replace('/^```(?:json)?\s*/i', '', $text);
+            $text = preg_replace('/\s*```$/i', '', (string)$text);
+            
+            $start = strpos((string)$text, '{');
+            $end = strpos((string)$text, "\n```");  // Look for the markdown close, not end of file
+            
+            if ($end === false) {
+                $end = strrpos((string)$text, '}');
+            } else {
+                // Find the last } before the markdown close
+                $beforeClose = substr((string)$text, 0, $end);
+                $lastBrace = strrpos($beforeClose, '}');
+                $end = $lastBrace;
+            }
+            
+            if ($start !== false && $end !== false && $end > $start) {
+                $json = substr((string)$text, $start, $end - $start + 1);
+            } else {
+                $json = (string)$text;
+            }
         }
-
-        return (string)$text;
+        
+        // Clean non-ASCII that could break JSON parsing
+        $replacements = [
+            // Smart quotes (UTF-8 encoded)
+            "\xE2\x80\x98" => "'",  // left single quotation mark
+            "\xE2\x80\x99" => "'",  // right single quotation mark / apostrophe
+            "\xE2\x80\x9C" => '"',  // left double quotation mark
+            "\xE2\x80\x9D" => '"',  // right double quotation mark
+            // Dashes
+            "\xE2\x80\x93" => "-",  // en dash
+            "\xE2\x80\x94" => "-",  // em dash
+            // Ellipsis
+            "\xE2\x80\xA6" => "...", // horizontal ellipsis
+        ];
+        
+        $json = strtr($json, $replacements);
+        
+        // Remove any control characters and other problematic bytes
+        $json = preg_replace('/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/u', '', $json);
+        
+        return $json;
     }
 
     private function normalizeAnalysisResponse(array $profile, array $imageMeta): array

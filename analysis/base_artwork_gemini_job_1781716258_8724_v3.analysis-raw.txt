@@ -1,0 +1,886 @@
+```json
+{
+  "artwork_analysis": {
+    "visual_language": [
+      "expressive",
+      "figurative",
+      "abstract",
+      "symbolic",
+      "modern"
+    ],
+    "emotional_energy": [
+      "intense",
+      "contemplative",
+      "mysterious",
+      "dramatic",
+      "bold"
+    ],
+    "dominant_colors": [
+      "gold",
+      "beige",
+      "deep red",
+      "blue",
+      "teal",
+      "aqua",
+      "dark green",
+      "black"
+    ],
+    "secondary_colors": [
+      "purple",
+      "grey-green"
+    ],
+    "visible_elements": [
+      "stylized face",
+      "eyes",
+      "nose",
+      "mouth",
+      "split composition"
+    ],
+    "visible_symbols": [
+      "duality",
+      "internal reflection",
+      "human gaze"
+    ],
+    "color_temperature": "mixed (warm and cool tones in contrast)",
+    "contrast_level": "high",
+    "composition_type": "centralized",
+    "balance": "symmetrical in structure, asymmetrical in color and emotion",
+    "visual_tension": "high, created by the divided face and contrasting palettes",
+    "density": "high visual density within the face, less so in implied background",
+    "silence": "present in the fixed gaze, but juxtaposed with emotional intensity",
+    "main_focal_point": "the eyes and the central division of the face",
+    "movement": "implied by brushstrokes and color shifts, but overall static and confronting",
+    "depth": "moderate, created by layering of color and defined features, but largely planar",
+    "negative_space": "minimal within the primary subject, defined by the edge of the canvas",
+    "verticality_or_horizontality": "strong horizontality due to width, but vertical elements like the nose bisect",
+    "internal_organization": "divided into two distinct halves, yet unified by the central facial features",
+    "rhythm": "implied by repetitive brushstrokes and contrasting color fields",
+    "surface": "textured, painterly",
+    "brushstroke": "visible, gestural, expressive",
+    "gesture": "bold and confident",
+    "layers": "apparent, built up with distinct color zones",
+    "material_presence": "strong, visible paint application",
+    "sense_of_depth_or_flatness": "more flatness in terms of pictorial space, but depth conveyed through facial features",
+    "format_and_scale": {
+      "width_cm": "180",
+      "height_cm": "120",
+      "depth_cm": "5",
+      "orientation": "horizontal",
+      "scale_impact": "monumental, commanding",
+      "wall_presence": "significant, defines the space",
+      "monumentality_or_intimacy": "monumentality through scale, intimacy through the direct gaze",
+      "spatial_effect": "transforms the perception of a room, making it a focal point and a presence"
+    },
+    "spatial_presence": "dominating and absorbing",
+    "visual_atmosphere": "intense, enigmatic, psychologically charged, refined, expressive",
+    "artwork_function": "statement piece, focal point for a sophisticated interior or gallery",
+    "suggested_audience": [
+      "collectors of contemporary figurative art",
+      "aficionados of expressionist and modernist styles",
+      "interior designers seeking bold, impactful pieces",
+      "galleries focused on psychological or expressive portraiture"
+    ],
+    "audience_profile": {
+      "primary": "collectors who appreciate expressive, large-scale figurative works with emotional depth",
+      "secondary": "designers and architects curating art for high-end residential or commercial spaces",
+      "buyer_profile": "individuals with a developed aesthetic sensibility, seeking art that evokes thought and feeling, not just decoration",
+      "collector_type": "discerning, modern art collector",
+      "interior_design_relevance": "high relevance as a dramatic focal point for contemporary, minimalist, or eclectic interiors",
+      "gallery_potential": "strong, suitable for solo or group exhibitions in contemporary art galleries"
+    },
+    "commercial_positioning": "high-value statement piece in the contemporary art market, appealing to both private collectors and public institutions",
+    "one_line_curatorial_read": "A monumental horizontal canvas presenting a dynamically split face, exploring duality through contrasting palettes and bold expressive strokes, inviting profound introspection.",
+    "style_summary": "Expressive figurative abstraction, utilizing bold color contrasts and visible brushwork to create a psychologically charged portrait.",
+    "artist_profile_relation": {
+      "relevant_statement_connection": null,
+      "relevant_visual_language_connection": null,
+      "relevant_symbol_connection": null,
+      "relevant_atmosphere_connection": null
+    },
+    "seasonal_strategy": {
+      "primary_season": "neutral"
+    },
+    "publishing_metadata": {
+      "suggested_titles": [
+        {
+          "title": "Split Gaze",
+          "subtitle": "A Contemplation of Internal Division",
+          "short_description": "A monumental expressive portrait, divided by contrasting color fields, inviting a direct and profound encounter.",
+          "curatorial_description": "Maurizio Valch's 'Split Gaze' explores the complexities of identity through a striking horizontal composition. The monumental face, bisected by a bold central line, presents a compelling dialogue between warm and cool palettes, evoking a sense of internal reflection and psychological depth. Each half, while distinct in its chromatic energy, contributes to a unified yet tension-filled expression.",
+          "commercial_description": "This commanding artwork offers a profound visual statement, perfect for a curated space. Its large horizontal format and intense chromatic contrasts make it an immediate focal point, enriching any modern or contemporary interior with its sophisticated visual language and emotional resonance. A significant acquisition for collectors seeking impactful figurative abstraction."
+        },
+        {
+          "title": "Chromatic Bifurcation",
+          "subtitle": "The Duality of Expression",
+          "short_description": "A large-scale abstract-figurative work where a single face is rendered in a captivating blend of contrasting colors and textures.",
+          "curatorial_description": "'Chromatic Bifurcation' by Maurizio Valch is a powerful study in color and form, presenting a face split into two distinct yet harmonized chromatic zones. The visible brushstrokes and layering of paint create a rich textural surface, enhancing the visual tension between the warm golds and deep reds on one side, and the cool blues and vibrant teals on the other, culminating in a dramatic and introspective atmosphere.",
+          "commercial_description": "An artwork of remarkable presence, 'Chromatic Bifurcation' will elevate any discerning collection or interior. Its sophisticated palette and monumental scale allow for versatile placement within expansive living areas, art galleries, or executive spaces. The piece offers both a powerful aesthetic experience and a compelling visual narrative, embodying artistic daring and refined taste."
+        },
+        {
+          "title": "The Silent Witness",
+          "subtitle": "An Enigmatic Horizon of Self",
+          "short_description": "A striking large-scale portrait that confronts the viewer with an enigmatic gaze across a horizontally divided face.",
+          "curatorial_description": "Maurizio Valch's 'The Silent Witness' is an arresting horizontal composition that commands attention through its direct gaze and monumental scale. The artwork presents a face that is both unified and fragmented, where the expressive brushwork and contrasting segments of warm and cool tones create an atmosphere of profound mystery and contemplation, inviting the viewer to engage in a silent dialogue with the depicted self.",
+          "commercial_description": "This exceptional piece serves as an indelible centerpiece for any serious art collection or interior. Its horizontal orientation and impressive dimensions ensure a powerful wall presence, while the intricate interplay of color and expressive form offers endless visual intrigue. 'The Silent Witness' is ideally suited for spaces that demand a bold, thought-provoking artistic anchor."
+        }
+      ],
+      "catawiki_listing": {
+        "recommended_title": "Split Gaze",
+        "alternative_titles": [
+          "Chromatic Bifurcation",
+          "The Silent Witness",
+          "Abstracted Face"
+        ],
+        "subtitle": "Original artwork with expressive figurative abstraction and contrasting color fields",
+        "short_description": "A monumental horizontal painting presenting a stylized, emotionally charged face divided by distinct chromatic zones.",
+        "long_description": "This monumental horizontal painting by Maurizio Valch presents a powerful, stylized human face, split down its central axis by a prominent nose. The left side is rendered in warm, earthy tones of gold and beige, framed by deep reds, while the right side engages with cooler hues of blue, teal, and aqua, accented by rich dark greens. This deliberate division creates a high visual tension and psychological depth, inviting contemplation on duality and inner reflection. Visible, gestural brushstrokes lend a textured surface and an expressive quality to the work, enhancing its dramatic atmosphere. The intense, direct gaze of the eyes forms the primary focal point, drawing the viewer into a compelling encounter. The piece's substantial dimensions of 180 cm wide by 120 cm high ensure a commanding presence.\n\nThe piece is in excellent condition, with no damage or restorations.\nThe artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+        "technical_details": "Maurizio Valch, Split Gaze, 180 x 120 x 5 cm.",
+        "condition_statement": "The piece is in excellent condition, with no damage or restorations.",
+        "shipping_statement": "The artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "Abstract Face",
+          "Figurative Art",
+          "Expressionism",
+          "Large Painting",
+          "Duality",
+          "Modern Art",
+          "Contemporary Portrait",
+          "Horizontal Artwork",
+          "Emotional Art"
+        ],
+        "tags": [
+          "figurative",
+          "abstract",
+          "expressionist",
+          "portrait",
+          "modern",
+          "large scale",
+          "colorful",
+          "duality",
+          "contemporary",
+          "statement piece"
+        ]
+      },
+      "descriptions": {
+        "poetic_focus": "In 'Sin título', Maurizio Valch crafts an enigmatic gaze, split by an internal horizon of color and emotion. The monumental canvas holds a face that is both mirror and mystery, its cool and warm halves whispering tales of a singular, yet divided, soul. Each brushstroke is a breath, each color a sentiment, inviting a silent dialogue with the depths of human expression.",
+        "formal_focus": "This artwork is a large-scale horizontal composition featuring a central, highly stylized human face. The composition is structured by a strong vertical axis (the nose) which divides the face into two chromatically distinct zones—warm gold and red on the left, cool blue and teal on the right. This creates a balanced yet tense visual dynamic, emphasized by high contrast and visible, gestural brushwork. The eyes serve as the primary focal point, engaging the viewer directly.",
+        "commercial_focus": "A commanding and sophisticated statement piece, this large-scale artwork by Maurizio Valch is an exceptional acquisition for any serious collector or refined interior. Its monumental horizontal format (180 x 120 cm) ensures a significant wall presence, capable of defining a room. The bold use of color, expressive technique, and profound subject matter offer both visual impact and intellectual engagement, making it highly suitable for luxury residences, corporate art collections, or contemporary gallery spaces."
+      },
+      "seo_keywords": [
+        "Maurizio Valch",
+        "Abstract Figurative Art",
+        "Expressive Painting",
+        "Large Scale Art",
+        "Modern Portrait",
+        "Duality in Art",
+        "Contemporary Canvas",
+        "Statement Art Piece",
+        "Emotional Abstraction",
+        "Dynamic Color Palette",
+        "Horizontal Artwork",
+        "Interior Design Art",
+        "Collector's Item"
+      ],
+      "seo_tags": [
+        "figurative",
+        "abstract",
+        "expressionism",
+        "portrait",
+        "modern",
+        "large",
+        "duality",
+        "contemporary",
+        "statement",
+        "colourful",
+        "art"
+      ],
+      "marketplace_title": "Maurizio Valch: Sin título – Monumental Expressive Portrait",
+      "marketplace_short_description": "A powerful 180x120 cm horizontal painting by Maurizio Valch, featuring a stylized, emotionally intense face split by contrasting color fields.",
+      "marketplace_long_description": "Discover this monumental artwork by Maurizio Valch, a captivating expressive portrait presented on a horizontal canvas measuring 180 cm wide by 120 cm high. The piece features a distinctively stylized human face, bisected by a strong central line, creating a compelling dialogue between its two halves. One side glows with warm, earthy golds and deep reds, while the other coolly balances with blues, teals, and aquas, accented by dark greens. This dynamic interplay of color and form, coupled with visible, gestural brushwork, imbues the work with an intense psychological depth and a dramatic visual atmosphere. The direct, unblinking gaze of the eyes anchors the composition, drawing the viewer into an engaging contemplation of duality and inner life. 'Sin título' is more than a painting; it is a commanding presence, perfect for transforming a sophisticated space.",
+      "pinterest_boards": [
+        "Contemporary Figurative Art",
+        "Expressive Portraits & Faces",
+        "Bold Statement Art for Interiors",
+        "Modern Abstract Paintings",
+        "Art for Luxury Homes"
+      ]
+    }
+  },
+  "recommended_number_of_contexts": "6",
+  "contextual_proposals": [
+    {
+      "context_name": "Gallery of Contemplation",
+      "context_role": "Primary display in an exhibition setting",
+      "space_type": "professional art gallery",
+      "atmosphere": "serene, contemplative, modern",
+      "materials": [
+        "polished concrete floor",
+        "matte white walls",
+        "natural wood plinth for sculpture (implied, not in frame)"
+      ],
+      "lighting": "soft, diffused gallery lighting with directional spotlights on the artwork",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A direct front view emphasizes the artwork's monumental scale and symmetrical division, showcasing its full impact and detail. The close-up ensures the expressive brushwork and contrasting color fields are clearly legible, maintaining the artwork's visual dominance against the minimalist gallery backdrop.",
+      "human_presence": "none",
+      "curatorial_reason": "To present the artwork in an unadorned, focused manner, allowing its powerful gaze and chromatic tension to speak directly to the viewer in a formal exhibition context.",
+      "commercial_reason": "Ideal for showcasing the artwork's scale and quality to potential collectors and curators in a pristine, professional setting, highlighting its aesthetic value and suitability for significant art collections.",
+      "mockup_prompt": "A monumental 180x120 cm horizontal painting by Maurizio Valch titled 'Sin título', depicting an expressive, split face with contrasting warm and cool color fields, mounted centrally on a large, seamless matte white gallery wall. The floor is polished light grey concrete. Soft, even diffused gallery lighting illuminates the space, with precise directional spotlights subtly highlighting the textured surface of the painting. Clean, minimalist aesthetic. Front view, close-up.",
+      "negative_prompt": "clutter, distracting elements, poor lighting, reflections, busy background, framed, dark room, empty wall, crooked, small artwork",
+      "pinterest_marketing": {
+        "board_suggestion": "Gallery Exhibition Art",
+        "pin_title": "Maurizio Valch 'Sin título' - Monumental Expressive Portrait in Gallery",
+        "pin_description": "Experience the commanding presence of Maurizio Valch's large-scale expressive portrait, 'Sin título', displayed in a serene, contemporary gallery setting. Its intense gaze and striking color contrasts make it a captivating centerpiece.",
+        "alt_text": "Maurizio Valch 'Sin título' horizontal painting 180x120cm, split face art, expressive portrait, gallery wall, modern art",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "Art Gallery Display",
+          "Large Contemporary Art",
+          "Expressive Portraiture",
+          "Modern Abstract Face",
+          "Minimalist Gallery"
+        ],
+        "hashtags": [
+          "#MaurizioValch #ContemporaryArt #GalleryDisplay #ExpressivePortrait #ModernPainting #ArtCollector"
+        ]
+      }
+    },
+    {
+      "context_name": "Collector's Study Alcove",
+      "context_role": "Integrated into a sophisticated private collection space",
+      "space_type": "high-end residential interior - study/library",
+      "atmosphere": "intimate, intellectual, refined",
+      "materials": [
+        "dark wood paneled walls",
+        "rich leather armchair (partially visible)",
+        "bronze accent lamp"
+      ],
+      "lighting": "warm, soft ambient light from a window and a reading lamp",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter left view adds depth to the study setting while keeping the artwork dominant. This angle allows for a subtle inclusion of rich textures and warm lighting, enhancing the feeling of a private, contemplative space. The close-up ensures the artwork remains the central focus, allowing its intricate details and emotional pull to be clearly seen.",
+      "human_presence": "none",
+      "curatorial_reason": "To demonstrate the artwork's ability to create a profound focal point within a refined, personal environment, inviting quiet reflection and intellectual engagement.",
+      "commercial_reason": "Positions the artwork as a valuable acquisition for private collectors who curate their living spaces with art that resonates personally and aesthetically.",
+      "mockup_prompt": "A monumental 180x120 cm horizontal painting by Maurizio Valch titled 'Sin título', depicting an expressive, split face with contrasting warm and cool color fields, hanging on a sophisticated dark wood-paneled wall in a collector's private study. A classic rich leather armchair is partially visible in the foreground to the left. Warm ambient light filters in from a large window off-frame, supplemented by the soft glow of a small bronze desk lamp. Three-quarter left view, close-up.",
+      "negative_prompt": "clutter, distracting furniture, generic office, bright lights, reflections, busy background, modern, unframed, white walls",
+      "pinterest_marketing": {
+        "board_suggestion": "Art for Luxury Home Libraries",
+        "pin_title": "Maurizio Valch 'Sin título' in Elegant Private Study",
+        "pin_description": "Discover 'Sin título' by Maurizio Valch, a captivating large-scale expressive portrait, bringing depth and character to a sophisticated dark wood-paneled study. An ideal piece for the discerning collector.",
+        "alt_text": "Maurizio Valch 'Sin título' painting 180x120cm, expressive art, split face, dark wood study, luxury home interior, collector's art",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "Private Art Collection",
+          "Luxury Study Interior",
+          "Dark Wood Decor",
+          "Contemporary Art for Home",
+          "Statement Piece Study"
+        ],
+        "hashtags": [
+          "#MaurizioValch #LuxuryInteriors #CollectorsStudy #ExpressiveArt #HomeDecor #ArtInspiration"
+        ]
+      }
+    },
+    {
+      "context_name": "Architectural Dialogue Foyer",
+      "context_role": "Creating a bold first impression in a transitional space",
+      "space_type": "elegant residential foyer/hallway with high ceilings",
+      "atmosphere": "grand, inviting, modern",
+      "materials": [
+        "light stone flooring",
+        "smooth neutral plaster walls",
+        "minimalist console table (subtly visible)"
+      ],
+      "lighting": "bright, even natural light from unseen skylight, subtle integrated wall lights",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter right view adds perspective to the grand foyer, allowing the artwork's horizontal expanse to interact with the architectural lines. The close-up maintains the artwork's visual dominance, while the human figure provides essential scale context against the monumental canvas and high ceilings.",
+      "human_presence": "optional standing male figure 1.80m",
+      "curatorial_reason": "To highlight the artwork's capacity to command attention and define a large transitional space, providing a dramatic focal point upon entry.",
+      "commercial_reason": "Showcases the artwork's suitability for grand, open-plan contemporary homes and its ability to provide a compelling visual anchor in significant architectural settings, appealing to high-net-worth buyers.",
+      "mockup_prompt": "A monumental 180x120 cm horizontal painting by Maurizio Valch titled 'Sin título', depicting an expressive, split face with contrasting warm and cool color fields, mounted on a smooth, neutral plaster wall in a grand, high-ceilinged residential foyer. An optional standing male figure (1.80m tall) stands observing the artwork from a slight distance to the left, offering scale. Bright, even natural light floods the space from an unseen skylight. Light stone flooring. Three-quarter right view, close-up.",
+      "negative_prompt": "clutter, distracting decor, poor lighting, reflections, busy background, small room, crowded, unframed, dark interior, low ceiling",
+      "pinterest_marketing": {
+        "board_suggestion": "Grand Foyer Art & Decor",
+        "pin_title": "Maurizio Valch 'Sin título' - Impactful Art in a Modern Foyer",
+        "pin_description": "Witness the powerful presence of Maurizio Valch's 'Sin título' in a grand contemporary foyer, emphasizing its monumental scale and expressive artistry. An ideal choice for making a bold first impression.",
+        "alt_text": "Maurizio Valch 'Sin título' horizontal painting 180x120cm, expressive abstract face, modern foyer, high ceilings, large wall art, human scale",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "Foyer Art",
+          "Monumental Art",
+          "Contemporary Home Decor",
+          "High Ceilings Design",
+          "Statement Entrance"
+        ],
+        "hashtags": [
+          "#MaurizioValch #FoyerDesign #GrandInteriors #StatementArt #ModernLuxury #ArtForHome"
+        ]
+      }
+    },
+    {
+      "context_name": "Luminous Minimalist Living",
+      "context_role": "Focal point in a serene, contemporary living space",
+      "space_type": "high-end residential interior - living room",
+      "atmosphere": "calm, elegant, spacious",
+      "materials": [
+        "light oak wood floor",
+        "off-white textured walls",
+        "minimalist beige sofa (partially visible)"
+      ],
+      "lighting": "soft, ambient daylight from large windows, creating gentle shadows",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A front view highlights the artwork's direct visual impact and bold horizontal composition within a serene living room. The close-up ensures the expressive details and color contrasts are fully appreciated, while the gentle ambient light flatters the painting's surface and integrates it harmoniously with the minimalist decor.",
+      "human_presence": "none",
+      "curatorial_reason": "To illustrate how the artwork, despite its intensity, can enhance a minimalist environment by providing depth, color, and a strong focal point without overpowering the space.",
+      "commercial_reason": "Appeals to buyers with a preference for contemporary, uncluttered interiors, showcasing the artwork's ability to serve as a significant artistic anchor in a thoughtfully designed living area.",
+      "mockup_prompt": "A monumental 180x120 cm horizontal painting by Maurizio Valch titled 'Sin título', depicting an expressive, split face with contrasting warm and cool color fields, hanging centrally on a pristine off-white textured wall in a minimalist, light-filled living room. A segment of a low-profile, minimalist beige sofa is visible in the bottom right corner. Soft, ambient daylight streams in from large, unseen windows, casting subtle, long shadows. Light oak wood floor. Front view, close-up.",
+      "negative_prompt": "clutter, busy patterns, dark room, harsh lighting, reflections, traditional decor, unframed, small room, crowded, colorful walls",
+      "pinterest_marketing": {
+        "board_suggestion": "Minimalist Living Room Art",
+        "pin_title": "Maurizio Valch 'Sin título' - Art for Modern Minimalist Interiors",
+        "pin_description": "Elevate your minimalist living space with Maurizio Valch's monumental expressive portrait, 'Sin título'. Its striking presence and sophisticated colors provide a captivating focal point in serene, contemporary interiors.",
+        "alt_text": "Maurizio Valch 'Sin título' painting 180x120cm, expressive face art, minimalist living room, modern wall art, light interior, contemporary decor",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "Minimalist Decor",
+          "Modern Living Room Art",
+          "Contemporary Wall Art",
+          "Serene Interior Design",
+          "Statement Art"
+        ],
+        "hashtags": [
+          "#MaurizioValch #MinimalistArt #LivingRoomDecor #ContemporaryDesign #ModernInteriors #ArtForMinimalists"
+        ]
+      }
+    },
+    {
+      "context_name": "Art Studio Reflection",
+      "context_role": "Contextualizing the artwork within a creative, reflective space",
+      "space_type": "refined artist studio/workspace",
+      "atmosphere": "creative, focused, authentic",
+      "materials": [
+        "raw concrete wall",
+        "wooden easel (subtly visible)",
+        "art supplies on a nearby table (out of focus)"
+      ],
+      "lighting": "bright, even northern light from a large studio window",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter left view offers a sense of spatial context within an artist's studio, suggesting the environment of its creation or contemplation. The close-up ensures the artwork remains paramount, allowing its raw energy and material presence to be appreciated in an authentic, creative setting.",
+      "human_presence": "none",
+      "curatorial_reason": "To place the artwork in a context that speaks to its artistic process and conceptual depth, appealing to collectors who appreciate the journey of art creation.",
+      "commercial_reason": "Highlights the authenticity and artistic rigor of the piece, appealing to collectors and institutions interested in the art-making process and the artist's environment.",
+      "mockup_prompt": "A monumental 180x120 cm horizontal painting by Maurizio Valch titled 'Sin título', depicting an expressive, split face with contrasting warm and cool color fields, casually propped against a raw concrete wall in a bright, refined artist's studio. A wooden easel is subtly visible in the background, along with a few out-of-focus art supplies on a nearby table. Bright, even northern light floods the studio from a large window. Three-quarter left view, close-up.",
+      "negative_prompt": "clutter, messy studio, dark room, poor lighting, reflections, framed, generic interior, busy background, small artwork",
+      "pinterest_marketing": {
+        "board_suggestion": "Artist Studio Inspiration",
+        "pin_title": "Maurizio Valch 'Sin título' in the Artist's Studio",
+        "pin_description": "See Maurizio Valch's powerful 'Sin título' in a creative studio setting, highlighting its raw, expressive energy and monumental scale within an authentic artistic environment. Perfect for art lovers and creators.",
+        "alt_text": "Maurizio Valch 'Sin título' painting 180x120cm, expressive face, artist studio, concrete wall, large art, creative space",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "Artist Studio",
+          "Creative Workspace",
+          "Artistic Process",
+          "Raw Aesthetic",
+          "Modern Studio Art"
+        ],
+        "hashtags": [
+          "#MaurizioValch #ArtistStudio #CreativeSpace #ArtInspiration #ExpressiveArt #BehindTheArt"
+        ]
+      }
+    },
+    {
+      "context_name": "Dynamic Dining Vista",
+      "context_role": "Enhancing a sophisticated dining area with artistic drama",
+      "space_type": "sophisticated dining room",
+      "atmosphere": "dramatic, elegant, conversational",
+      "materials": [
+        "dark polished dining table",
+        "designer dining chairs (partially visible)",
+        "charcoal grey accent wall"
+      ],
+      "lighting": "soft, warm ceiling spotlights, creating a focused ambiance",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter right view positions the artwork effectively within a sophisticated dining room, allowing the viewer to imagine its impact during social gatherings. The close-up maintains focus on the artwork's details, while the warm lighting enhances its dramatic qualities against a subtly colored wall, ensuring it remains the centerpiece of the scene.",
+      "human_presence": "none",
+      "curatorial_reason": "To demonstrate the artwork's capacity to serve as a captivating conversation starter and a visually rich backdrop for social interaction in an elegant setting.",
+      "commercial_reason": "Targets collectors who entertain frequently and seek art that enhances their hospitality spaces with sophistication and a unique focal point.",
+      "mockup_prompt": "A monumental 180x120 cm horizontal painting by Maurizio Valch titled 'Sin título', depicting an expressive, split face with contrasting warm and cool color fields, mounted on a charcoal grey accent wall in a sophisticated dining room. A segment of a dark polished dining table with minimalist designer chairs is subtly visible in the foreground. Soft, warm ceiling spotlights illuminate the artwork, creating a focused ambiance. Three-quarter right view, close-up.",
+      "negative_prompt": "clutter, distracting tableware, bright lights, reflections, busy background, traditional decor, unframed, small room, crowded, mismatched furniture",
+      "pinterest_marketing": {
+        "board_suggestion": "Elegant Dining Room Art Ideas",
+        "pin_title": "Maurizio Valch 'Sin título' - Art for Sophisticated Dining Rooms",
+        "pin_description": "Transform your dining experience with Maurizio Valch's 'Sin título'. This monumental, expressive portrait adds dramatic elegance and a compelling focal point to any sophisticated dining room.",
+        "alt_text": "Maurizio Valch 'Sin título' painting 180x120cm, expressive face art, sophisticated dining room, charcoal wall, large contemporary art, elegant interior",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "Dining Room Art",
+          "Sophisticated Interiors",
+          "Dramatic Wall Art",
+          "Contemporary Dining",
+          "Elegant Home Decor"
+        ],
+        "hashtags": [
+          "#MaurizioValch #DiningRoomDecor #ElegantArt #ContemporaryDining #StatementPiece #InteriorDesign"
+        ]
+      }
+    }
+  ]
+}
+```
+Starting with the analysis of the artwork 'Sin título' by Maurizio Valch.
+
+**Visual Analysis:**
+*   **Dominant Visual Language:** The artwork is primarily **expressive figurative abstraction**. It depicts a human face, but highly stylized and abstracted, leaning into a modern, almost cubist interpretation. The use of bold lines and contrasting color fields also gives it a **symbolic** quality, suggesting duality or inner conflict.
+*   **Composition:** The composition is **centralized**, focusing directly on the face. It's broadly **symmetrical** in its structure (two halves of a face divided by a central nose), but **asymmetrical** in its color and emotional presentation, creating a strong **visual tension**. The eyes and the central vertical line of the nose serve as the **main focal point**. There's a sense of **density** within the facial features. The artwork has a strong **horizontal** orientation due to its dimensions. The internal organization clearly splits the face into two distinct halves.
+*   **Color:** The **dominant palette** features warm tones like **gold, beige, and deep red** on one side, contrasting sharply with cool tones of **blue, teal, and aqua**, complemented by **dark green** and **black**. The level of **contrast** is high, contributing to the visual tension. The **temperature** is mixed, creating a dynamic interplay. The chromatic harmony is intentional disharmony, which enhances the emotional impact. The main colors evoke feelings of **mystery, intensity, contemplation, and duality**.
+*   **Texture and Material Presence:** The surface exhibits **visible brushstrokes**, indicating a **gestural** and painterly approach. Layers of paint are apparent, contributing to a slightly **rough** texture. This visible **material presence** gives the artwork a handmade, authentic feel, despite the planar depiction, suggesting moderate depth rather than absolute flatness.
+*   **Format and Scale:** With dimensions of 180 cm wide x 120 cm high x 5 cm deep, the artwork is **monumental** for a portrait and has a very strong **wall presence**. Its horizontal orientation makes it expansive. The large scale commands attention and can significantly **modify the perception of a space**, making it a definitive focal point. It manages to convey both monumentality (due to size) and intimacy (due to the direct gaze of the face).
+*   **Visual Atmosphere:** The atmosphere is **intense, enigmatic, and psychologically charged**. It evokes contemplation and drama, with a refined yet bold emotional tone. There's a certain **silence** in the direct gaze, yet an underlying **energy** from the contrasting colors and expressive brushwork.
+*   **Target Audience:** This artwork would appeal to **collectors of contemporary figurative art**, particularly those who appreciate **expressionist or modern abstract styles**. It has high **relevance for interior design** as a sophisticated statement piece for high-end residential or commercial spaces. Its **gallery potential** is strong, suitable for exhibitions focusing on bold, narrative, or psychologically rich contemporary works. The **marketplace positioning** is as a high-value, impactful piece for discerning buyers.
+
+**Artist Profile Relation:**
+Since the artist profile variables (Artist statement, Visual language, Recurring symbols/motifs, Preferred atmospheres) are all empty, I will not draw any connections to them. The analysis will be solely based on the visual evidence of the artwork.
+
+Now I will generate the JSON output based on this analysis, following all specified rules for titles, descriptions, Catawiki listing, and mockup prompts. I will ensure 6 contextual proposals, distributing camera views (2 front, 2 three-quarter left, 2 three-quarter right) and including at least one human presence.```json
+{
+  "artwork_analysis": {
+    "visual_language": [
+      "expressive",
+      "figurative",
+      "abstract",
+      "symbolic",
+      "modern"
+    ],
+    "emotional_energy": [
+      "intense",
+      "contemplative",
+      "mysterious",
+      "dramatic",
+      "bold"
+    ],
+    "dominant_colors": [
+      "gold",
+      "beige",
+      "deep red",
+      "blue",
+      "teal",
+      "aqua",
+      "dark green",
+      "black"
+    ],
+    "secondary_colors": [
+      "purple",
+      "grey-green"
+    ],
+    "visible_elements": [
+      "stylized face",
+      "eyes",
+      "nose",
+      "mouth",
+      "split composition"
+    ],
+    "visible_symbols": [
+      "duality",
+      "internal reflection",
+      "human gaze"
+    ],
+    "color_temperature": "mixed (warm and cool tones in contrast)",
+    "contrast_level": "high",
+    "composition_type": "centralized",
+    "balance": "symmetrical in structure, asymmetrical in color and emotion",
+    "visual_tension": "high, created by the divided face and contrasting palettes",
+    "density": "high visual density within the face, less so in implied background",
+    "silence": "present in the fixed gaze, but juxtaposed with emotional intensity",
+    "main_focal_point": "the eyes and the central division of the face",
+    "movement": "implied by brushstrokes and color shifts, but overall static and confronting",
+    "depth": "moderate, created by layering of color and defined features, but largely planar",
+    "negative_space": "minimal within the primary subject, defined by the edge of the canvas",
+    "verticality_or_horizontality": "strong horizontality due to width, but vertical elements like the nose bisect",
+    "internal_organization": "divided into two distinct halves, yet unified by the central facial features",
+    "rhythm": "implied by repetitive brushstrokes and contrasting color fields",
+    "surface": "textured, painterly",
+    "brushstroke": "visible, gestural, expressive",
+    "gesture": "bold and confident",
+    "layers": "apparent, built up with distinct color zones",
+    "material_presence": "strong, visible paint application",
+    "sense_of_depth_or_flatness": "more flatness in terms of pictorial space, but depth conveyed through facial features",
+    "format_and_scale": {
+      "width_cm": "180",
+      "height_cm": "120",
+      "depth_cm": "5",
+      "orientation": "horizontal",
+      "scale_impact": "monumental, commanding",
+      "wall_presence": "significant, defines the space",
+      "monumentality_or_intimacy": "monumentality through scale, intimacy through the direct gaze",
+      "spatial_effect": "transforms the perception of a room, making it a focal point and a presence"
+    },
+    "spatial_presence": "dominating and absorbing",
+    "visual_atmosphere": "intense, enigmatic, psychologically charged, refined, expressive",
+    "artwork_function": "statement piece, focal point for a sophisticated interior or gallery",
+    "suggested_audience": [
+      "collectors of contemporary figurative art",
+      "aficionados of expressionist and modernist styles",
+      "interior designers seeking bold, impactful pieces",
+      "galleries focused on psychological or expressive portraiture"
+    ],
+    "audience_profile": {
+      "primary": "collectors who appreciate expressive, large-scale figurative works with emotional depth",
+      "secondary": "designers and architects curating art for high-end residential or commercial spaces",
+      "buyer_profile": "individuals with a developed aesthetic sensibility, seeking art that evokes thought and feeling, not just decoration",
+      "collector_type": "discerning, modern art collector",
+      "interior_design_relevance": "high relevance as a dramatic focal point for contemporary, minimalist, or eclectic interiors",
+      "gallery_potential": "strong, suitable for solo or group exhibitions in contemporary art galleries"
+    },
+    "commercial_positioning": "high-value statement piece in the contemporary art market, appealing to both private collectors and public institutions",
+    "one_line_curatorial_read": "A monumental horizontal canvas presenting a dynamically split face, exploring duality through contrasting palettes and bold expressive strokes, inviting profound introspection.",
+    "style_summary": "Expressive figurative abstraction, utilizing bold color contrasts and visible brushwork to create a psychologically charged portrait.",
+    "artist_profile_relation": {
+      "relevant_statement_connection": null,
+      "relevant_visual_language_connection": null,
+      "relevant_symbol_connection": null,
+      "relevant_atmosphere_connection": null
+    },
+    "seasonal_strategy": {
+      "primary_season": "neutral"
+    },
+    "publishing_metadata": {
+      "suggested_titles": [
+        {
+          "title": "Split Gaze",
+          "subtitle": "A Contemplation of Internal Division",
+          "short_description": "A monumental expressive portrait, divided by contrasting color fields, inviting a direct and profound encounter.",
+          "curatorial_description": "Maurizio Valch's 'Split Gaze' explores the complexities of identity through a striking horizontal composition. The monumental face, bisected by a bold central line, presents a compelling dialogue between warm and cool palettes, evoking a sense of internal reflection and psychological depth. Each half, while distinct in its chromatic energy, contributes to a unified yet tension-filled expression.",
+          "commercial_description": "This commanding artwork offers a profound visual statement, perfect for a curated space. Its large horizontal format and intense chromatic contrasts make it an immediate focal point, enriching any modern or contemporary interior with its sophisticated visual language and emotional resonance. A significant acquisition for collectors seeking impactful figurative abstraction."
+        },
+        {
+          "title": "Chromatic Bifurcation",
+          "subtitle": "The Duality of Expression",
+          "short_description": "A large-scale abstract-figurative work where a single face is rendered in a captivating blend of contrasting colors and textures.",
+          "curatorial_description": "'Chromatic Bifurcation' by Maurizio Valch is a powerful study in color and form, presenting a face split into two distinct yet harmonized chromatic zones. The visible brushstrokes and layering of paint create a rich textural surface, enhancing the visual tension between the warm golds and deep reds on one side, and the cool blues and vibrant teals on the other, culminating in a dramatic and introspective atmosphere.",
+          "commercial_description": "An artwork of remarkable presence, 'Chromatic Bifurcation' will elevate any discerning collection or interior. Its sophisticated palette and monumental scale allow for versatile placement within expansive living areas, art galleries, or executive spaces. The piece offers both a powerful aesthetic experience and a compelling visual narrative, embodying artistic daring and refined taste."
+        },
+        {
+          "title": "The Silent Witness",
+          "subtitle": "An Enigmatic Horizon of Self",
+          "short_description": "A striking large-scale portrait that confronts the viewer with an enigmatic gaze across a horizontally divided face.",
+          "curatorial_description": "Maurizio Valch's 'The Silent Witness' is an arresting horizontal composition that commands attention through its direct gaze and monumental scale. The artwork presents a face that is both unified and fragmented, where the expressive brushwork and contrasting segments of warm and cool tones create an atmosphere of profound mystery and contemplation, inviting the viewer to engage in a silent dialogue with the depicted self.",
+          "commercial_description": "This exceptional piece serves as an indelible centerpiece for any serious art collection or interior. Its horizontal orientation and impressive dimensions ensure a powerful wall presence, while the intricate interplay of color and expressive form offers endless visual intrigue. 'The Silent Witness' is ideally suited for spaces that demand a bold, thought-provoking artistic anchor."
+        }
+      ],
+      "catawiki_listing": {
+        "recommended_title": "Split Gaze",
+        "alternative_titles": [
+          "Chromatic Bifurcation",
+          "The Silent Witness",
+          "Abstracted Face"
+        ],
+        "subtitle": "Original artwork with expressive figurative abstraction and contrasting color fields",
+        "short_description": "A monumental horizontal painting presenting a stylized, emotionally charged face divided by distinct chromatic zones.",
+        "long_description": "This monumental horizontal painting by Maurizio Valch presents a powerful, stylized human face, split down its central axis by a prominent nose. The left side is rendered in warm, earthy tones of gold and beige, framed by deep reds, while the right side engages with cooler hues of blue, teal, and aqua, accented by rich dark greens. This deliberate division creates a high visual tension and psychological depth, inviting contemplation on duality and inner reflection. Visible, gestural brushstrokes lend a textured surface and an expressive quality to the work, enhancing its dramatic atmosphere. The intense, direct gaze of the eyes forms the primary focal point, drawing the viewer into a compelling encounter. The piece's substantial dimensions of 180 cm wide by 120 cm high ensure a commanding presence.\n\nThe piece is in excellent condition, with no damage or restorations.\nThe artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+        "technical_details": "Maurizio Valch, Split Gaze, 180 x 120 x 5 cm.",
+        "condition_statement": "The piece is in excellent condition, with no damage or restorations.",
+        "shipping_statement": "The artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "Abstract Face",
+          "Figurative Art",
+          "Expressionism",
+          "Large Painting",
+          "Duality",
+          "Modern Art",
+          "Contemporary Portrait",
+          "Horizontal Artwork",
+          "Emotional Art"
+        ],
+        "tags": [
+          "figurative",
+          "abstract",
+          "expressionist",
+          "portrait",
+          "modern",
+          "large scale",
+          "colorful",
+          "duality",
+          "contemporary",
+          "statement piece"
+        ]
+      },
+      "descriptions": {
+        "poetic_focus": "In 'Sin título', Maurizio Valch crafts an enigmatic gaze, split by an internal horizon of color and emotion. The monumental canvas holds a face that is both mirror and mystery, its cool and warm halves whispering tales of a singular, yet divided, soul. Each brushstroke is a breath, each color a sentiment, inviting a silent dialogue with the depths of human expression.",
+        "formal_focus": "This artwork is a large-scale horizontal composition featuring a central, highly stylized human face. The composition is structured by a strong vertical axis (the nose) which divides the face into two chromatically distinct zones—warm gold and red on the left, cool blue and teal on the right. This creates a balanced yet tense visual dynamic, emphasized by high contrast and visible, gestural brushwork. The eyes serve as the primary focal point, engaging the viewer directly.",
+        "commercial_focus": "A commanding and sophisticated statement piece, this large-scale artwork by Maurizio Valch is an exceptional acquisition for any serious collector or refined interior. Its monumental horizontal format (180 x 120 cm) ensures a significant wall presence, capable of defining a room. The bold use of color, expressive technique, and profound subject matter offer both visual impact and intellectual engagement, making it highly suitable for luxury residences, corporate art collections, or contemporary gallery spaces."
+      },
+      "seo_keywords": [
+        "Maurizio Valch",
+        "Abstract Figurative Art",
+        "Expressive Painting",
+        "Large Scale Art",
+        "Modern Portrait",
+        "Duality in Art",
+        "Contemporary Canvas",
+        "Statement Art Piece",
+        "Emotional Abstraction",
+        "Dynamic Color Palette",
+        "Horizontal Artwork",
+        "Interior Design Art",
+        "Collector's Item"
+      ],
+      "seo_tags": [
+        "figurative",
+        "abstract",
+        "expressionism",
+        "portrait",
+        "modern",
+        "large",
+        "duality",
+        "contemporary",
+        "statement",
+        "colourful",
+        "art"
+      ],
+      "marketplace_title": "Maurizio Valch: Sin título – Monumental Expressive Portrait",
+      "marketplace_short_description": "A powerful 180x120 cm horizontal painting by Maurizio Valch, featuring a stylized, emotionally intense face split by contrasting color fields.",
+      "marketplace_long_description": "Discover this monumental artwork by Maurizio Valch, a captivating expressive portrait presented on a horizontal canvas measuring 180 cm wide by 120 cm high. The piece features a distinctively stylized human face, bisected by a strong central line, creating a compelling dialogue between its two halves. One side glows with warm, earthy golds and deep reds, while the other coolly balances with blues, teals, and aquas, accented by dark greens. This dynamic interplay of color and form, coupled with visible, gestural brushwork, imbues the work with an intense psychological depth and a dramatic visual atmosphere. The direct, unblinking gaze of the eyes anchors the composition, drawing the viewer into an engaging contemplation of duality and inner life. 'Sin título' is more than a painting; it is a commanding presence, perfect for transforming a sophisticated space.",
+      "pinterest_boards": [
+        "Contemporary Figurative Art",
+        "Expressive Portraits & Faces",
+        "Bold Statement Art for Interiors",
+        "Modern Abstract Paintings",
+        "Art for Luxury Homes"
+      ]
+    }
+  },
+  "recommended_number_of_contexts": "6",
+  "contextual_proposals": [
+    {
+      "context_name": "Gallery of Contemplation",
+      "context_role": "Primary display in an exhibition setting",
+      "space_type": "professional art gallery",
+      "atmosphere": "serene, contemplative, modern",
+      "materials": [
+        "polished concrete floor",
+        "matte white walls",
+        "natural wood plinth for sculpture (implied, not in frame)"
+      ],
+      "lighting": "soft, diffused gallery lighting with directional spotlights on the artwork",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A direct front view emphasizes the artwork's monumental scale and symmetrical division, showcasing its full impact and detail. The close-up ensures the expressive brushwork and contrasting color fields are clearly legible, maintaining the artwork's visual dominance against the minimalist gallery backdrop.",
+      "human_presence": "none",
+      "curatorial_reason": "To present the artwork in an unadorned, focused manner, allowing its powerful gaze and chromatic tension to speak directly to the viewer in a formal exhibition context.",
+      "commercial_reason": "Ideal for showcasing the artwork's scale and quality to potential collectors and curators in a pristine, professional setting, highlighting its aesthetic value and suitability for significant art collections.",
+      "mockup_prompt": "A monumental 180x120 cm horizontal painting by Maurizio Valch titled 'Sin título', depicting an expressive, split face with contrasting warm and cool color fields, mounted centrally on a large, seamless matte white gallery wall. The floor is polished light grey concrete. Soft, even diffused gallery lighting illuminates the space, with precise directional spotlights subtly highlighting the textured surface of the painting. Clean, minimalist aesthetic. Front view, close-up.",
+      "negative_prompt": "clutter, distracting elements, poor lighting, reflections, busy background, framed, dark room, empty wall, crooked, small artwork",
+      "pinterest_marketing": {
+        "board_suggestion": "Gallery Exhibition Art",
+        "pin_title": "Maurizio Valch 'Sin título' - Monumental Expressive Portrait in Gallery",
+        "pin_description": "Experience the commanding presence of Maurizio Valch's large-scale expressive portrait, 'Sin título', displayed in a serene, contemporary gallery setting. Its intense gaze and striking color contrasts make it a captivating centerpiece.",
+        "alt_text": "Maurizio Valch 'Sin título' horizontal painting 180x120cm, split face art, expressive portrait, gallery wall, modern art",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "Art Gallery Display",
+          "Large Contemporary Art",
+          "Expressive Portraiture",
+          "Modern Abstract Face",
+          "Minimalist Gallery"
+        ],
+        "hashtags": [
+          "#MaurizioValch #ContemporaryArt #GalleryDisplay #ExpressivePortrait #ModernPainting #ArtCollector"
+        ]
+      }
+    },
+    {
+      "context_name": "Collector's Study Alcove",
+      "context_role": "Integrated into a sophisticated private collection space",
+      "space_type": "high-end residential interior - study/library",
+      "atmosphere": "intimate, intellectual, refined",
+      "materials": [
+        "dark wood paneled walls",
+        "rich leather armchair (partially visible)",
+        "bronze accent lamp"
+      ],
+      "lighting": "warm, soft ambient light from a window and a reading lamp",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter left view adds depth to the study setting while keeping the artwork dominant. This angle allows for a subtle inclusion of rich textures and warm lighting, enhancing the feeling of a private, contemplative space. The close-up ensures the artwork remains the central focus, allowing its intricate details and emotional pull to be clearly seen.",
+      "human_presence": "none",
+      "curatorial_reason": "To demonstrate the artwork's ability to create a profound focal point within a refined, personal environment, inviting quiet reflection and intellectual engagement.",
+      "commercial_reason": "Positions the artwork as a valuable acquisition for private collectors who curate their living spaces with art that resonates personally and aesthetically.",
+      "mockup_prompt": "A monumental 180x120 cm horizontal painting by Maurizio Valch titled 'Sin título', depicting an expressive, split face with contrasting warm and cool color fields, hanging on a sophisticated dark wood-paneled wall in a collector's private study. A classic rich leather armchair is partially visible in the foreground to the left. Warm ambient light filters in from a large window off-frame, supplemented by the soft glow of a small bronze desk lamp. Three-quarter left view, close-up.",
+      "negative_prompt": "clutter, distracting furniture, generic office, bright lights, reflections, busy background, modern, unframed, white walls",
+      "pinterest_marketing": {
+        "board_suggestion": "Art for Luxury Home Libraries",
+        "pin_title": "Maurizio Valch 'Sin título' in Elegant Private Study",
+        "pin_description": "Discover 'Sin título' by Maurizio Valch, a captivating large-scale expressive portrait, bringing depth and character to a sophisticated dark wood-paneled study. An ideal piece for the discerning collector.",
+        "alt_text": "Maurizio Valch 'Sin título' painting 180x120cm, expressive art, split face, dark wood study, luxury home interior, collector's art",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "Private Art Collection",
+          "Luxury Study Interior",
+          "Dark Wood Decor",
+          "Contemporary Art for Home",
+          "Statement Piece Study"
+        ],
+        "hashtags": [
+          "#MaurizioValch #LuxuryInteriors #CollectorsStudy #ExpressiveArt #HomeDecor #ArtInspiration"
+        ]
+      }
+    },
+    {
+      "context_name": "Architectural Dialogue Foyer",
+      "context_role": "Creating a bold first impression in a transitional space",
+      "space_type": "elegant residential foyer/hallway with high ceilings",
+      "atmosphere": "grand, inviting, modern",
+      "materials": [
+        "light stone flooring",
+        "smooth neutral plaster walls",
+        "minimalist console table (subtly visible)"
+      ],
+      "lighting": "bright, even natural light from unseen skylight, subtle integrated wall lights",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter right view adds perspective to the grand foyer, allowing the artwork's horizontal expanse to interact with the architectural lines. The close-up maintains the artwork's visual dominance, while the human figure provides essential scale context against the monumental canvas and high ceilings.",
+      "human_presence": "optional standing male figure 1.80m",
+      "curatorial_reason": "To highlight the artwork's capacity to command attention and define a large transitional space, providing a dramatic focal point upon entry.",
+      "commercial_reason": "Showcases the artwork's suitability for grand, open-plan contemporary homes and its ability to provide a compelling visual anchor in significant architectural settings, appealing to high-net-worth buyers.",
+      "mockup_prompt": "A monumental 180x120 cm horizontal painting by Maurizio Valch titled 'Sin título', depicting an expressive, split face with contrasting warm and cool color fields, mounted on a smooth, neutral plaster wall in a grand, high-ceilinged residential foyer. An optional standing male figure (1.80m tall) stands observing the artwork from a slight distance to the left, offering scale. Bright, even natural light floods the space from an unseen skylight. Light stone flooring. Three-quarter right view, close-up.",
+      "negative_prompt": "clutter, distracting decor, poor lighting, reflections, busy background, small room, crowded, unframed, dark interior, low ceiling",
+      "pinterest_marketing": {
+        "board_suggestion": "Grand Foyer Art & Decor",
+        "pin_title": "Maurizio Valch 'Sin título' - Impactful Art in a Modern Foyer",
+        "pin_description": "Witness the powerful presence of Maurizio Valch's 'Sin título' in a grand contemporary foyer, emphasizing its monumental scale and expressive artistry. An ideal choice for making a bold first impression.",
+        "alt_text": "Maurizio Valch 'Sin título' horizontal painting 180x120cm, expressive abstract face, modern foyer, high ceilings, large wall art, human scale",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "Foyer Art",
+          "Monumental Art",
+          "Contemporary Home Decor",
+          "High Ceilings Design",
+          "Statement Entrance"
+        ],
+        "hashtags": [
+          "#MaurizioValch #FoyerDesign #GrandInteriors #StatementArt #ModernLuxury #ArtForHome"
+        ]
+      }
+    },
+    {
+      "context_name": "Luminous Minimalist Living",
+      "context_role": "Focal point in a serene, contemporary living space",
+      "space_type": "high-end residential interior - living room",
+      "atmosphere": "calm, elegant, spacious",
+      "materials": [
+        "light oak wood floor",
+        "off-white textured walls",
+        "minimalist beige sofa (partially visible)"
+      ],
+      "lighting": "soft, ambient daylight from large windows, creating gentle shadows",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A front view highlights the artwork's direct visual impact and bold horizontal composition within a serene living room. The close-up ensures the expressive details and color contrasts are fully appreciated, while the gentle ambient light flatters the painting's surface and integrates it harmoniously with the minimalist decor.",
+      "human_presence": "none",
+      "curatorial_reason": "To illustrate how the artwork, despite its intensity, can enhance a minimalist environment by providing depth, color, and a strong focal point without overpowering the space.",
+      "commercial_reason": "Appeals to buyers with a preference for contemporary, uncluttered interiors, showcasing the artwork's ability to serve as a significant artistic anchor in a thoughtfully designed living area.",
+      "mockup_prompt": "A monumental 180x120 cm horizontal painting by Maurizio Valch titled 'Sin título', depicting an expressive, split face with contrasting warm and cool color fields, hanging centrally on a pristine off-white textured wall in a minimalist, light-filled living room. A segment of a low-profile, minimalist beige sofa is visible in the bottom right corner. Soft, ambient daylight streams in from large, unseen windows, casting subtle, long shadows. Light oak wood floor. Front view, close-up.",
+      "negative_prompt": "clutter, busy patterns, dark room, harsh lighting, reflections, traditional decor, unframed, small room, crowded, colorful walls",
+      "pinterest_marketing": {
+        "board_suggestion": "Minimalist Living Room Art",
+        "pin_title": "Maurizio Valch 'Sin título' - Art for Modern Minimalist Interiors",
+        "pin_description": "Elevate your minimalist living space with Maurizio Valch's monumental expressive portrait, 'Sin título'. Its striking presence and sophisticated colors provide a captivating focal point in serene, contemporary interiors.",
+        "alt_text": "Maurizio Valch 'Sin título' painting 180x120cm, expressive face art, minimalist living room, modern wall art, light interior, contemporary decor",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "Minimalist Decor",
+          "Modern Living Room Art",
+          "Contemporary Wall Art",
+          "Serene Interior Design",
+          "Statement Art"
+        ],
+        "hashtags": [
+          "#MaurizioValch #MinimalistArt #LivingRoomDecor #ContemporaryDesign #ModernInteriors #ArtForMinimalists"
+        ]
+      }
+    },
+    {
+      "context_name": "Art Studio Reflection",
+      "context_role": "Contextualizing the artwork within a creative, reflective space",
+      "space_type": "refined artist studio/workspace",
+      "atmosphere": "creative, focused, authentic",
+      "materials": [
+        "raw concrete wall",
+        "wooden easel (subtly visible)",
+        "art supplies on a nearby table (out of focus)"
+      ],
+      "lighting": "bright, even northern light from a large studio window",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter left view offers a sense of spatial context within an artist's studio, suggesting the environment of its creation or contemplation. The close-up ensures the artwork remains paramount, allowing its raw energy and material presence to be appreciated in an authentic, creative setting.",
+      "human_presence": "none",
+      "curatorial_reason": "To place the artwork in a context that speaks to its artistic process and conceptual depth, appealing to collectors who appreciate the journey of art creation.",
+      "commercial_reason": "Highlights the authenticity and artistic rigor of the piece, appealing to collectors and institutions interested in the art-making process and the artist's environment.",
+      "mockup_prompt": "A monumental 180x120 cm horizontal painting by Maurizio Valch titled 'Sin título', depicting an expressive, split face with contrasting warm and cool color fields, casually propped against a raw concrete wall in a bright, refined artist's studio. A wooden easel is subtly visible in the background, along with a few out-of-focus art supplies on a nearby table. Bright, even northern light floods the studio from a large window. Three-quarter left view, close-up.",
+      "negative_prompt": "clutter, messy studio, dark room, poor lighting, reflections, framed, generic interior, busy background, small artwork",
+      "pinterest_marketing": {
+        "board_suggestion": "Artist Studio Inspiration",
+        "pin_title": "Maurizio Valch 'Sin título' in the Artist's Studio",
+        "pin_description": "See Maurizio Valch's powerful 'Sin título' in a creative studio setting, highlighting its raw, expressive energy and monumental scale within an authentic artistic environment. Perfect for art lovers and creators.",
+        "alt_text": "Maurizio Valch 'Sin título' painting 180x120cm, expressive face, artist studio, concrete wall, large art, creative space",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "Artist Studio",
+          "Creative Workspace",
+          "Artistic Process",
+          "Raw Aesthetic",
+          "Modern Studio Art"
+        ],
+        "hashtags": [
+          "#MaurizioValch #ArtistStudio #CreativeSpace #ArtInspiration #ExpressiveArt #BehindTheArt"
+        ]
+      }
+    },
+    {
+      "context_name": "Dynamic Dining Vista",
+      "context_role": "Enhancing a sophisticated dining area with artistic drama",
+      "space_type": "sophisticated dining room",
+      "atmosphere": "dramatic, elegant, conversational",
+      "materials": [
+        "dark polished dining table",
+        "designer dining chairs (partially visible)",
+        "charcoal grey accent wall"
+      ],
+      "lighting": "soft, warm ceiling spotlights, creating a focused ambiance",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter right view positions the artwork effectively within a sophisticated dining room, allowing the viewer to imagine its impact during social gatherings. The close-up maintains focus on the artwork's details, while the warm lighting enhances its dramatic qualities against a subtly colored wall, ensuring it remains the centerpiece of the scene.",
+      "human_presence": "none",
+      "curatorial_reason": "To demonstrate the artwork's capacity to serve as a captivating conversation starter and a visually rich backdrop for social interaction in an elegant setting.",
+      "commercial_reason": "Targets collectors who entertain frequently and seek art that enhances their hospitality spaces with sophistication and a unique focal point.",
+      "mockup_prompt": "A monumental 180x120 cm horizontal painting by Maurizio Valch titled 'Sin título', depicting an expressive, split face with contrasting warm and cool color fields, mounted on a charcoal grey accent wall in a sophisticated dining room. A segment of a dark polished dining table with minimalist designer chairs is subtly visible in the foreground. Soft, warm ceiling spotlights illuminate the artwork, creating a focused ambiance. Three-quarter right view, close-up.",
+      "negative_prompt": "clutter, distracting tableware, bright lights, reflections, busy background, traditional decor, unframed, small room, crowded, mismatched furniture",
+      "pinterest_marketing": {
+        "board_suggestion": "Elegant Dining Room Art Ideas",
+        "pin_title": "Maurizio Valch 'Sin título' - Art for Sophisticated Dining Rooms",
+        "pin_description": "Transform your dining experience with Maurizio Valch's 'Sin título'. This monumental, expressive portrait adds dramatic elegance and a compelling focal point to any sophisticated dining room.",
+        "alt_text": "Maurizio Valch 'Sin título' painting 180x120cm, expressive face art, sophisticated dining room, charcoal wall, large contemporary art, elegant interior",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "Dining Room Art",
+          "Sophisticated Interiors",
+          "Dramatic Wall Art",
+          "Contemporary Dining",
+          "Elegant Home Decor"
+        ],
+        "hashtags": [
+          "#MaurizioValch #DiningRoomDecor #ElegantArt #ContemporaryDining #StatementPiece #InteriorDesign"
+        ]
+      }
+    }
+  ]
+}
+```
