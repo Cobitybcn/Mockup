@@ -246,376 +246,158 @@ function clean_public_copy(string $copy, array $artistProfile): string
     return trim((string)$copy);
 }
 
-function visual_analysis_from(array $artwork, array $profile, array $artistProfile, string $sizeText): array
-{
-    $source = is_array($profile['artwork_analysis'] ?? null) ? $profile['artwork_analysis'] : $profile;
-    $dominantColors = concise_terms(words_from($source['dominant_colors'] ?? $source['palette'] ?? []), ['balanced tones']);
-    $secondaryColors = concise_terms(words_from($source['secondary_colors'] ?? $source['palette_family'] ?? []), ['subtle secondary tones']);
-    $style = concise_terms(words_from($source['visual_language'] ?? $source['style_tags'] ?? $artistProfile['visual_language'] ?? []), ['contemporary artwork']);
-    $composition = labelize_term((string)($source['composition_type'] ?? sentence_from(words_from($source['structure_tags'] ?? []), 'balanced composition')));
-    $contrast = labelize_term((string)($source['contrast_level'] ?? $source['contrast'] ?? 'balanced contrast'));
-    $surface = labelize_term((string)($source['surface'] ?? $source['texture_visibility'] ?? sentence_from(words_from($artistProfile['materials'] ?? ''), 'visible surface')));
-    $rhythm = labelize_term((string)($source['rhythm'] ?? sentence_from(words_from($source['structure_tags'] ?? []), 'measured rhythm')));
-    $symbols = concise_terms(words_from($source['visible_symbols'] ?? $source['visible_elements'] ?? $artistProfile['recurring_themes'] ?? []), ['forms', 'marks', 'fields']);
-    $emotions = concise_terms(words_from($source['emotional_energy'] ?? $source['mood_tags'] ?? $artistProfile['palette_notes'] ?? []), ['quiet', 'human', 'contemplative']);
-    $audience = english_or_default((string)($source['audience_profile']['primary'] ?? $artistProfile['target_audience'] ?? ''), 'collectors and thoughtful buyers');
-
-    return [
-        'dominant_colors' => $dominantColors,
-        'secondary_colors' => $secondaryColors,
-        'style' => $style,
-        'composition' => $composition,
-        'contrast' => $contrast,
-        'surface' => $surface,
-        'rhythm' => $rhythm,
-        'symbols' => $symbols,
-        'emotions' => $emotions,
-        'atmosphere' => sentence_from($emotions, 'quiet emotional atmosphere'),
-        'audience' => $audience,
-        'medium' => trim((string)($artwork['medium'] ?? '')) ?: 'original artwork',
-        'series' => trim((string)($artwork['series'] ?? '')),
-        'size' => $sizeText,
-        'context' => sentence_from(words_from($artistProfile['preferred_contexts'] ?? ''), 'a calm interior, gallery wall, or collector space'),
-        'tone' => public_copy_tone($artistProfile),
-    ];
-}
-
-function build_artwork_package_v2(array $artwork, array $profile, array $artistProfile, array $mockups, string $sizeText, array $contexts = []): array
+function build_artwork_package_v2(array $artwork, array $analysis, array $artistProfile): array
 {
     $artist = trim((string)($artistProfile['artist_name'] ?? ''));
-    $medium = trim((string)($artwork['medium'] ?? ''));
-    $series = trim((string)($artwork['series'] ?? ''));
-    $year = trim((string)($artwork['artwork_year'] ?? ''));
-    $visual = visual_analysis_from($artwork, $profile, $artistProfile, $sizeText);
-    $style = $visual['style'];
-    $mood = $visual['emotions'];
-    $palette = $visual['dominant_colors'];
-    $themes = $visual['symbols'];
-    $structure = concise_terms([$visual['composition'], $visual['rhythm'], $visual['surface']], ['composition', 'surface', 'spatial presence']);
-    $materials = concise_terms(words_from($artistProfile['materials'] ?? ''), ['mixed media', 'surface work']);
-    $artistLanguage = concise_terms(words_from($artistProfile['visual_language'] ?? ''), ['contemporary visual language']);
-    $commercial = concise_terms(words_from(($profile['commercial_fit'] ?? []) ?: $visual['audience']), ['collectors', 'buyers', 'interiors']);
+    $rootSuggestedTitles = is_array($analysis['suggested_titles'] ?? null) ? $analysis['suggested_titles'] : [];
+    $rootContextualProposals = is_array($analysis['contextual_proposals'] ?? null) ? $analysis['contextual_proposals'] : [];
+    $isNewSchema = array_key_exists('suggested_titles', $analysis) || array_key_exists('contextual_proposals', $analysis);
+    $profile = $analysis['artwork_analysis'] ?? $analysis['artwork_profile'] ?? [];
 
-    // Parse dynamic AI metadata if present
-    $aiMeta = $profile['publishing_metadata'] ?? [];
     $titles = [];
     $titleSubtitles = [];
     $titleDescriptions = [];
-    $titleLabels = [];
 
-    $rawSuggestedTitles = $aiMeta['suggested_titles'] ?? [];
-    if (is_array($rawSuggestedTitles) && isset($rawSuggestedTitles[0])) {
-        // New array of objects form
+    $legacySuggestedTitles = is_array($profile['publishing_metadata']['suggested_titles'] ?? null)
+        ? $profile['publishing_metadata']['suggested_titles']
+        : [];
+    if (isset($rootSuggestedTitles['title'])) {
+        $rootSuggestedTitles = [$rootSuggestedTitles];
+    }
+    if (isset($legacySuggestedTitles['title'])) {
+        $legacySuggestedTitles = [$legacySuggestedTitles];
+    }
+    $rawSuggestedTitles = $rootSuggestedTitles;
+
+    if (!$rawSuggestedTitles && $legacySuggestedTitles) {
+        $rawSuggestedTitles = $legacySuggestedTitles;
+    }
+
+    $countRoot = count($rootSuggestedTitles);
+    $countLegacy = count($legacySuggestedTitles);
+
+    if (is_array($rawSuggestedTitles)) {
         foreach ($rawSuggestedTitles as $idx => $tObj) {
             if (is_array($tObj)) {
                 $title = trim((string)($tObj['title'] ?? ''));
                 $sub = trim((string)($tObj['subtitle'] ?? ''));
                 $desc = trim((string)($tObj['description'] ?? ''));
+                $usedFallback = false;
+                $descriptionSource = $desc !== '' ? ($isNewSchema ? 'suggested_titles.description' : 'legacy.description') : 'none';
+
+                if (!$isNewSchema) {
+                    foreach ([
+                        'curatorial_description',
+                        'commercial_description',
+                        'short_description',
+                        'description',
+                    ] as $legacyDescriptionKey) {
+                        $candidate = trim((string)($tObj[$legacyDescriptionKey] ?? ''));
+                        if ($candidate !== '') {
+                            $desc = $candidate;
+                            $usedFallback = $legacyDescriptionKey !== 'description';
+                            $descriptionSource = 'legacy.' . $legacyDescriptionKey;
+                            break;
+                        }
+                    }
+                }
+
                 if ($title !== '') {
                     $titles[] = $title;
                     $titleSubtitles[$title] = $sub;
                     $titleDescriptions[$title] = $desc;
-                    $label = match($idx) {
-                        0 => 'Poetic',
-                        1 => 'Descriptive',
-                        2 => 'Marketplace-friendly',
-                        default => 'Option ' . ($idx + 1)
-                    };
-                    $titleLabels[$title] = $label;
+
+                    error_log(sprintf(
+                        "Artwork package title %d: description_source=%s, fallback_description_used=%s",
+                        $idx,
+                        $descriptionSource,
+                        $usedFallback ? 'yes' : 'no'
+                    ));
+                }
+            } elseif (is_string($tObj)) {
+                $title = trim((string)$tObj);
+                if ($title !== '') {
+                    $titles[] = $title;
+                    $titleSubtitles[$title] = '';
+                    $titleDescriptions[$title] = '';
                 }
             }
         }
-    } elseif (is_array($rawSuggestedTitles)) {
-        // Old key-value object form
-        foreach ($rawSuggestedTitles as $label => $titleVal) {
-            $title = trim((string)$titleVal);
-            if ($title !== '') {
-                $titles[] = $title;
-                $titleSubtitles[$title] = '';
-                $oldDescKey = match($label) {
-                    'poetic' => 'poetic_focus',
-                    'descriptive' => 'formal_focus',
-                    'marketplace_friendly' => 'commercial_focus',
-                    default => ''
-                };
-                $titleDescriptions[$title] = $aiMeta['descriptions'][$oldDescKey] ?? $aiMeta['descriptions'][$label] ?? '';
-                $titleLabels[$title] = ucfirst(str_replace('_', ' ', $label));
-            }
-        }
     }
 
-    if (empty($titles) || count($titles) < 3) {
-        $baseTitleTerms = unique_limited(array_merge($palette, $mood, $style, $structure, $themes), 8, ['quiet', 'field', 'surface']);
-        $titleSeedA = $baseTitleTerms[0] ?? 'quiet';
-        $titleSeedB = $baseTitleTerms[1] ?? 'field';
-        $seriesPrefix = $series !== '' ? $series . ': ' : '';
-        $titles = unique_limited([
-            $seriesPrefix . title_case_soft($titleSeedA . ' and ' . $titleSeedB),
-            title_case_soft(sentence_from([$visual['composition'], $titleSeedA, $medium], 'Abstract Composition')),
-            title_case_soft(($medium !== '' ? $medium : 'Original Artwork') . ' in ' . $titleSeedA),
-        ], 3, ['Quiet Field', 'Abstract Composition in Balanced Tones', 'Original Artwork in Sober Color']);
-
-        $titleLabels = [
-            $titles[0] => 'Poetic',
-            $titles[1] => 'Descriptive',
-            $titles[2] => 'Marketplace-friendly',
-        ];
+    if (empty($titles)) {
+        $titles = ['Untitled'];
+        $titleSubtitles = ['Untitled' => ''];
+        $titleDescriptions = ['Untitled' => ''];
     }
+
+    error_log(sprintf(
+        "Analysis Schema: %s, Root titles: %d, Legacy titles: %d",
+        $isNewSchema ? "new_schema" : "legacy_schema",
+        $countRoot,
+        $countLegacy
+    ));
 
     $storedTitle = trim((string)($artwork['final_title'] ?? ''));
     $storedSubtitle = trim((string)($artwork['subtitle'] ?? ''));
     $titleForCopy = ($storedTitle !== '' && !looks_spanish($storedTitle)) ? $storedTitle : $titles[0];
     
-    // Subtitle fallback or stored
     $suggestedSubtitle = $titleSubtitles[$titleForCopy] ?? '';
-    if ($suggestedSubtitle === '') {
-        $suggestedSubtitle = title_case_soft(($medium !== '' ? $medium : 'original artwork') . ' with ' . sentence_from([$visual['composition'], $visual['atmosphere']], 'visual presence'));
-    }
     $subtitle = ($storedSubtitle !== '' && !looks_spanish($storedSubtitle)) ? $storedSubtitle : $suggestedSubtitle;
     $titleLine = $titleForCopy . ($subtitle !== '' ? ': ' . $subtitle : '');
-    $specLine = trim(implode(', ', array_filter([$medium, $sizeText !== 'No dimensions specified' ? $sizeText : '', $year])));
     $fileSlug = slugify(($artist !== '' ? $artist . '-' : '') . $titleForCopy);
 
-    $description = !empty($titleDescriptions[$titleForCopy]) 
-        ? clean_public_copy($titleDescriptions[$titleForCopy], $artistProfile)
-        : null;
-
-    if (empty($description)) {
-        $styleSummary = clean_public_copy(english_or_default((string)($profile['style_summary'] ?? ''), ''), $artistProfile);
-        $curatorialRead = clean_public_copy(english_or_default((string)($profile['one_line_curatorial_read'] ?? ''), ''), $artistProfile);
-        $descriptionParts = [
-            'The work draws the eye first through ' . sentence_from($palette, 'its color field') . ', where ' . $visual['contrast'] . ' and ' . $visual['surface'] . ' give the image its physical presence.',
-            'Its ' . $visual['composition'] . ' composition creates a ' . $visual['rhythm'] . ' rhythm, allowing ' . sentence_from($themes, 'visible forms and marks') . ' to carry the viewer across the surface without forcing a single reading.',
-            'The atmosphere is ' . $visual['atmosphere'] . ', direct enough to meet a room clearly and open enough to reward a slower look.',
-        ];
-        if ($styleSummary !== '') {
-            $descriptionParts[] = first_sentence($styleSummary);
-        } elseif ($curatorialRead !== '') {
-            $descriptionParts[] = first_sentence($curatorialRead);
-        }
-        if ($artist !== '') {
-            $descriptionParts[] = 'Seen within ' . $artist . "'s practice, it connects to " . sentence_from(array_merge($artistLanguage, $materials), 'a material and contemporary language') . ' while remaining led by what is visible in the artwork itself.';
-        }
-        $description = clean_public_copy(implode(' ', $descriptionParts), $artistProfile);
+    $description = '';
+    if (!empty($titleDescriptions[$titleForCopy])) {
+        $description = clean_public_copy($titleDescriptions[$titleForCopy], $artistProfile);
+    } elseif (!empty($titles[0]) && !empty($titleDescriptions[$titles[0]])) {
+        $description = clean_public_copy($titleDescriptions[$titles[0]], $artistProfile);
     }
-
-    $shortDescription = !empty($description) 
-        ? clean_public_copy(first_sentence($description) . ' A ' . strtolower($medium !== '' ? $medium : 'work') . ' with ' . sentence_from($mood, 'a quiet atmosphere') . '.', $artistProfile)
-        : '';
-
-    $technicalDetailsForTitle = function (string $titleOption) use ($artist, $specLine): string {
-        return 'Technical details: ' . trim(($artist !== '' ? $artist . ', ' : '') . $titleOption . ($specLine !== '' ? ', ' . $specLine : '')) . '.';
-    };
 
     $premiumDescriptions = [];
-    $publicationDescriptions = [];
     foreach ($titles as $index => $titleOption) {
         $copy = $titleDescriptions[$titleOption] ?? '';
-        if ($copy === '') {
-            if ($index === 0) {
-                $copy = $description;
-            } elseif ($index === 1) {
-                $copy = 'Under the title "' . $titleOption . '", the work is described through what can be seen: ' . sentence_from($palette, 'balanced color') . ', ' . $visual['composition'] . ' structure, and ' . $visual['surface'] . '. It suits viewers who want a clear visual entry point before moving into the quieter emotional layers of the piece.';
-            } else {
-                $copy = '"' . $titleOption . '" gives buyers a direct way to understand the piece: an original ' . strtolower($medium !== '' ? $medium : 'artwork') . ' with ' . sentence_from($palette, 'a balanced palette') . ', ' . sentence_from($mood, 'a quiet mood') . ', and a strong visual presence for ' . $visual['audience'] . '.';
-            }
+        if ($copy === '' && !$isNewSchema) {
+            $copy = $description;
         }
-        $cleanedCopy = trim(clean_public_copy($copy, $artistProfile));
-        $premiumDescriptions[$titleOption] = $cleanedCopy;
-        $publicationDescriptions[$titleOption] = $cleanedCopy . "\n\n" . $technicalDetailsForTitle($titleOption);
-    }
-
-    $mainKeywords = [];
-    if (!empty($aiMeta['keywords']) && is_array($aiMeta['keywords'])) {
-        $mainKeywords = unique_limited($aiMeta['keywords'], 15);
-    } elseif (!empty($aiMeta['seo_keywords']) && is_array($aiMeta['seo_keywords'])) {
-        $mainKeywords = unique_limited($aiMeta['seo_keywords'], 20);
-    } else {
-        $mainKeywords = unique_limited(array_merge([
-            $artist ? $artist . ' artwork' : '',
-            $titles[0],
-            'contemporary art',
-            'original artwork',
-            'art for collectors',
-            $medium,
-            $series,
-        ], $style, $palette, $themes, $mood, $materials, $commercial), 15, [
-            'abstract art', 'contemporary artwork', 'artist-made artwork', 'art for interiors', 'symbolic art'
-        ]);
-    }
-
-    $longTailKeywords = [];
-    if (!empty($aiMeta['long_tail_keywords']) && is_array($aiMeta['long_tail_keywords'])) {
-        $longTailKeywords = unique_limited($aiMeta['long_tail_keywords'], 15);
-    } else {
-        $longTailKeywords = unique_limited([
-            ($artist ? $artist . ' original artwork' : 'original contemporary artwork') . ' for collectors',
-            sentence_from($style, 'abstract contemporary') . ' artwork for interiors',
-            sentence_from($palette, 'sober palette') . ' artwork for collectors',
-            'artwork ready to publish on Catawiki',
-            'artwork ready to publish on Saatchi Art',
-            'contemporary art for homes and collections',
-            'original artwork with clear description and SEO',
-            'Pinterest-ready artwork with title description and keywords',
-            sentence_from($mood, 'quiet contemplative') . ' artwork for private collections',
-            'artist-made artwork for sophisticated spaces',
-            'online listing for contemporary artwork',
-            'mockups for selling art online',
-            'art description for international marketplace listing',
-            'artwork for collectors of contemporary abstract art',
-            'complete artwork sheet for online art sales',
-        ], 15);
-    }
-
-    if (!empty($aiMeta['seo_tags'])) {
-        $tags = unique_limited($aiMeta['seo_tags'], 16);
-    } else {
-        $tags = unique_limited(array_merge($style, $mood, $palette, $structure, $themes, $commercial), 16, ['contemporary art', 'interiors']);
-    }
-
-    if (!empty($aiDescriptions['commercial_focus'])) {
-        $marketplaceDescription = clean_public_copy($aiDescriptions['commercial_focus'], $artistProfile) . "\n\n" . 'Technical details: ' . ($artist !== '' ? $artist . ', ' : '') . $titleForCopy . ($specLine !== '' ? ', ' . $specLine : '') . '.';
-    } else {
-        $marketplaceDescription = clean_public_copy(
-            ($artist !== ''
-                ? $titleForCopy . ' by ' . $artist
-                : $titleForCopy
-            ) . ' is an original artwork with ' . sentence_from($palette, 'a balanced palette') . ' and ' . $visual['composition'] . ' composition. The visible surface, rhythm, and emotional tone make it suitable for collectors, private interiors, and online art platforms looking for a distinctive contemporary piece. Main visual features: ' . sentence_from(array_merge($palette, $structure, $themes), 'color, structure, and surface') . '.',
-            $artistProfile
-        ) . "\n\n" . 'Technical details: ' . ($artist !== '' ? $artist . ', ' : '') . $titleForCopy . ($specLine !== '' ? ', ' . $specLine : '') . '.';
-    }
-
-    $boardSuggestion = in_array('architectural', $style, true) || in_array('structural', $style, true)
-        ? 'Architectural Minimalism'
-        : (in_array('minimal', $style, true) ? 'Minimalist Abstract Painting' : 'Contemporary Abstract Art');
-    $pinterestKeywords = unique_limited(array_merge([
-        'contemporary abstract art',
-        'original painting for sale',
-        'artwork for collectors',
-        'abstract painting for interiors',
-        'large wall art',
-        'statement painting',
-    ], $longTailKeywords, $mainKeywords), 14);
-    $hashtags = array_map(
-        fn($tag) => '#' . preg_replace('/[^a-z0-9]/', '', strtolower($tag)),
-        unique_limited(array_merge(['contemporary art', 'abstract painting', 'original artwork', 'art collectors', 'interior design art', 'statement art'], $style), 8)
-    );
-
-    $pinSources = $mockups ?: [[
-        'context_id' => 'root artwork',
-        'mockup_file' => $artwork['root_file'] ?? '',
-    ]];
-    $pinterestPins = [];
-    foreach ($pinSources as $index => $mockup) {
-        $contextId = (string)($mockup['context_id'] ?? '');
-        $matchingContext = null;
-        
-        foreach ($contexts as $ctx) {
-            if ((string)($ctx['id'] ?? '') === $contextId || (string)($ctx['name'] ?? '') === $contextId) {
-                $matchingContext = $ctx;
-                break;
-            }
-        }
-        
-        $aiPinterest = $matchingContext['pinterest_marketing'] ?? [];
-        $contextTitle = Display::contextTitle($mockup['context_id'] ?? ('Pin ' . ($index + 1)));
-        
-        $keyword = title_case_soft(($style[0] ?? 'Abstract') . ' ' . ($medium !== '' ? $medium : 'Painting'));
-        if (stripos($keyword, 'painting') === false && stripos($keyword, 'artwork') === false) {
-            $keyword .= ' Painting';
-        }
-        
-        // Calculate fallback title/description
-        $fallbackPinTitle = $keyword . ' - ' . title_case_soft(($mood[0] ?? 'Quiet') . ' ' . ($themes[0] ?? 'Composition')) . ' (' . $titleForCopy . ')';
-        $fallbackPinDescription = '"' . $titleForCopy . '"' . ($artist !== '' ? ' by ' . $artist : '') . '. ' . first_sentence($description) . ' Searchable details: ' . sentence_from(array_merge($palette, $style, $mood), 'contemporary artwork') . ', ' . strtolower($medium !== '' ? $medium : 'original art') . ', artwork for collectors and interiors.';
-        
-        $board = !empty($aiPinterest['board_suggestion']) ? $aiPinterest['board_suggestion'] : $boardSuggestion;
-        
-        $pTitle = !empty($aiPinterest['pin_title']) ? $aiPinterest['pin_title'] : $fallbackPinTitle;
-        if (strlen($pTitle) > 100) {
-            $pTitle = substr($pTitle, 0, 97) . '...';
-        }
-        
-        $pDesc = !empty($aiPinterest['pin_description']) ? $aiPinterest['pin_description'] : $fallbackPinDescription;
-        if (strlen($pDesc) > 500) {
-            $pDesc = substr($pDesc, 0, 497) . '...';
-        }
-        
-        $contextText = strtolower($contextTitle);
-        $pAlt = !empty($aiPinterest['alt_text']) 
-            ? $aiPinterest['alt_text'] 
-            : ('Artwork titled ' . $titleForCopy . ' shown in a ' . $contextText . ' setting, with visible wall placement, scale, colors, and surrounding interior.');
-
-        $pinterestPins[] = [
-            'label' => $contextTitle,
-            'board' => $board,
-            'title' => $pTitle,
-            'description' => clean_public_copy($pDesc, $artistProfile),
-            'alt' => $pAlt,
-            'destination' => '',
-            'keywords' => $pinterestKeywords,
-            'hashtags' => $hashtags,
-            'mockup_file' => $mockup['mockup_file'] ?? '',
-        ];
-    }
-
-    $rootAlt = $aiMeta['root_image_metadata']['alt_text'] ?? '';
-    $rootCaption = $aiMeta['root_image_metadata']['caption'] ?? '';
-    if (trim($rootAlt) === '') {
-        $rootAlt = 'Clean root image of ' . $titleForCopy . ', an original artwork with ' . sentence_from($palette, 'balanced') . ' colors and ' . $visual['composition'] . ' composition.';
-    }
-    if (trim($rootCaption) === '') {
-        $rootCaption = $titleLine . ' - ' . sentence_from($style, 'contemporary artwork') . ' with ' . sentence_from($mood, 'quiet presence') . '.';
+        $premiumDescriptions[$titleOption] = trim(clean_public_copy($copy, $artistProfile));
     }
 
     return [
-        'root_alt' => $rootAlt,
-        'root_caption' => $rootCaption,
-        'visual_analysis' => $visual,
+        'root_alt' => 'Clean root image of ' . $titleForCopy,
+        'root_caption' => $titleLine,
         'titles' => $titles,
-        'title_labels' => $titleLabels,
         'title_subtitles' => $titleSubtitles,
         'premium_descriptions' => $premiumDescriptions,
         'suggested_subtitle' => $suggestedSubtitle,
         'description' => $description,
-        'short_description' => $shortDescription,
-        'publication_descriptions' => $publicationDescriptions,
-        'technical_details' => $technicalDetailsForTitle($titleForCopy),
-        'curatorial_reading' => $curatorialRead !== '' ? $curatorialRead : $descriptionParts[1],
+        'curatorial_reading' => first_sentence($description),
         'seo_slug' => $fileSlug,
-        'main_keywords' => $mainKeywords,
-        'long_tail_keywords' => $longTailKeywords,
-        'tags' => $tags,
-        'captions' => [
-            $titleLine . ' - ' . sentence_from($style, 'contemporary artwork') . ' with ' . sentence_from($mood, 'quiet presence') . '.',
-            '"' . $titleForCopy . '" holds the room through color, surface, and a quiet emotional charge.',
-            ($artist !== '' ? $artist . ', ' : '') . $titleForCopy . ($specLine !== '' ? ' (' . $specLine . ')' : '') . '.',
-        ],
-        'alt_texts' => [
-            'Clean root image of ' . $titleForCopy . ', an original artwork with ' . sentence_from($palette, 'balanced') . ' colors and ' . $visual['composition'] . ' composition.',
-            $titleForCopy . ' with visible ' . sentence_from($themes, 'forms and marks') . ', ' . $visual['surface'] . ', and ' . sentence_from($mood, 'quiet atmosphere') . '.',
-            'Original artwork titled ' . $titleForCopy . ' shown clearly for online listing and accessible image description.',
-        ],
         'file_names' => [
             $fileSlug . '-root-artwork.jpg',
-            $fileSlug . '-mockup-01.jpg',
-            $fileSlug . '-marketplace-listing.jpg',
-        ],
-        'social' => [
-            'Instagram' => $titleLine . "\n\n" . sentence_from($palette, 'Color') . ', ' . $visual['surface'] . ', and ' . sentence_from($mood, 'a quiet emotional pull') . ".\n\n#" . implode(' #', array_map(fn($tag) => str_replace(' ', '', $tag), unique_limited($tags, 8))),
-            'Facebook' => $titleLine . "\n\n" . $shortDescription,
-            'X' => $titleLine . ' - original contemporary artwork prepared for collectors, interiors, and art platforms.',
-            'TikTok' => 'Show the clean root image, close details of color and surface, then the final mockup for "' . $titleForCopy . '".',
-        ],
-        'pinterest_pins' => $pinterestPins,
-        'marketplace' => [
-            'titles' => $titles,
-            'description' => $marketplaceDescription,
-            'Catawiki' => 'Suggested emphasis for Catawiki: authenticity, condition, dimensions, medium, year, series, provenance notes, and secure shipping.',
-            'Saatchi Art' => 'Suggested positioning for Saatchi Art: ' . $visual['audience'] . '.',
-            'Similar Platforms' => 'Use the title, description, keywords, tags, alt text, and mockup gallery as a coherent artwork listing.',
         ],
     ];
+}
+
+function normalize_artwork_contexts(array $contexts): array
+{
+    $normalized = [];
+    foreach ($contexts as $index => $context) {
+        if (!is_array($context)) {
+            continue;
+        }
+
+        $normalized[] = [
+            'id' => (string)($context['id'] ?? $context['context_id'] ?? ('ctx_' . ($index + 1))),
+            'name' => (string)($context['name'] ?? $context['context_name'] ?? $context['title'] ?? ('Context ' . ($index + 1))),
+            'why' => (string)($context['why'] ?? $context['curatorial_reason'] ?? $context['commercial_reason'] ?? ''),
+            'camera_group' => (string)($context['camera_group'] ?? $context['camera_view'] ?? ''),
+            'time_of_day' => (string)($context['time_of_day'] ?? ''),
+            'prompt' => (string)($context['prompt'] ?? $context['mockup_prompt'] ?? ''),
+        ];
+    }
+
+    return $normalized;
 }
 
 if ($id <= 0) {
@@ -686,16 +468,28 @@ $dbAnalysis = $analysisStmt->fetch();
 
 if (!$analysis && is_array($dbAnalysis)) {
     $analysisData = json_decode((string)$dbAnalysis['analysis_json'], true);
-    $analysis = is_array($analysisData) ? ['artwork_profile' => $analysisData] : [];
+    if (is_array($analysisData)) {
+        $analysis = array_key_exists('suggested_titles', $analysisData) || array_key_exists('contextual_proposals', $analysisData)
+            ? $analysisData
+            : ['artwork_profile' => $analysisData];
+    }
 }
 
 $profile = is_array($analysis['artwork_profile'] ?? null) ? $analysis['artwork_profile'] : [];
 if (!$profile && is_array($analysis['artwork_analysis'] ?? null)) {
     $profile = $analysis['artwork_analysis'];
 }
-$contexts = is_array($analysis['recommended_contexts'] ?? null) ? $analysis['recommended_contexts'] : [];
+$rootContextualProposals = is_array($analysis['contextual_proposals'] ?? null) ? $analysis['contextual_proposals'] : [];
+$legacyRecommendedContexts = is_array($analysis['recommended_contexts'] ?? null) ? $analysis['recommended_contexts'] : [];
+$contexts = normalize_artwork_contexts($rootContextualProposals ?: $legacyRecommendedContexts);
 
-if (!$contexts) {
+error_log(sprintf(
+    'Artwork package contexts: contextual_proposals_found=%d, source=%s',
+    count($rootContextualProposals),
+    $rootContextualProposals ? 'contextual_proposals' : ($legacyRecommendedContexts ? 'recommended_contexts' : 'none')
+));
+
+if (!$contexts && !$rootContextualProposals) {
     $contextStmt = $pdo->prepare('
         SELECT *
         FROM mockup_contexts
@@ -713,18 +507,19 @@ if (!$contexts) {
             'camera_group' => $contextJson['camera_group'] ?? '',
             'time_of_day' => $contextJson['time_of_day'] ?? '',
             'prompt' => $contextRow['prompt'],
-            'pinterest_marketing' => $contextJson['pinterest_marketing'] ?? [],
-            'mockup_metadata' => $contextJson['mockup_metadata'] ?? [],
         ];
     }
 }
 
-$firstPrompt = (string)($contexts[0]['prompt'] ?? '');
-$analysisNeedsRefresh = $firstPrompt !== '' && (
-    str_contains($firstPrompt, 'shoe lengths') ||
-    str_contains($firstPrompt, 'adult male shoe') ||
-    !str_contains($firstPrompt, 'PROMPT_RULESET_VERSION: admin_editable_v1')
-);
+$hasValidNewSchema = is_array($analysis['suggested_titles'] ?? null)
+    && is_array($analysis['contextual_proposals'] ?? null)
+    && count(array_filter($analysis['suggested_titles'], static function ($titleOption): bool {
+        return is_array($titleOption)
+            && trim((string)($titleOption['title'] ?? '')) !== ''
+            && trim((string)($titleOption['subtitle'] ?? '')) !== ''
+            && trim((string)($titleOption['description'] ?? '')) !== '';
+    })) === count((array)$analysis['suggested_titles']);
+$analysisNeedsRefresh = !$hasValidNewSchema && !empty($contexts);
 
 $mockupStmt = $pdo->prepare('
     SELECT *
@@ -755,18 +550,16 @@ if ($orientation === '' && (float)$width > 0 && (float)$height > 0) {
     $orientation = (float)$width > (float)$height ? 'horizontal' : ((float)$height > (float)$width ? 'vertical' : 'square');
 }
 $orientation = $orientation ?: 'Not specified';
-$package = build_artwork_package_v2($artwork, $profile, $artistProfile, $mockups, $sizeText, $contexts);
+$package = build_artwork_package_v2($artwork, $analysis, $artistProfile);
 $storedTitle = trim((string)($artwork['final_title'] ?? ''));
 $storedSubtitle = trim((string)($artwork['subtitle'] ?? ''));
 $selectedTitle = ($storedTitle !== '' && !looks_spanish($storedTitle)) ? $storedTitle : $package['titles'][0];
 $selectedSubtitle = ($storedSubtitle !== '' && !looks_spanish($storedSubtitle)) ? $storedSubtitle : $package['suggested_subtitle'];
-$selectedPublicationDescription = $package['publication_descriptions'][$selectedTitle] ?? trim($package['description'] . "\n\n" . ($package['technical_details'] ?? ''));
+$selectedPublicationDescription = $package['premium_descriptions'][$selectedTitle] ?? trim($package['description']);
 $publicationCopy = trim($selectedTitle . ($selectedSubtitle !== '' ? "\n" . $selectedSubtitle : '') . "\n\n" . $selectedPublicationDescription);
 
 $copyIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
 $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>';
-$hyphenatedLongTails = array_map(fn($kw) => slugify((string)$kw), $package['long_tail_keywords']);
-$publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $package['main_keywords']) . "\nLong-tail Keywords: " . implode(', ', $package['long_tail_keywords']);
 ?>
 <!doctype html>
 <html lang="en">
@@ -1268,7 +1061,7 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
         </header>
 
         <div class="alert-strip">
-            Permanent artwork sheet: root image, visual reading, public descriptions, SEO, social content and marketplace text.
+            Permanent artwork sheet: root image, title options, premium descriptions, contextual proposals and generated mockups.
         </div>
 
         <div class="workspace">
@@ -1280,6 +1073,7 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                 <div class="topbar-actions">
                     <?php if ($rootFile): ?>
                         <a class="button-link" href="report.php?image=<?= rawurlencode($rootFile) ?>">Curatorial Direction</a>
+                        <a class="button-link secondary" href="social_video.php?id=<?= (int)$id ?>">Social Video (beta)</a>
                         <a class="button-link secondary" href="analyze_wait.php?image=<?= rawurlencode($rootFile) ?>">Recalculate Analysis</a>
                         <a class="button-link secondary" href="<?= h(media_url($rootFile, true)) ?>">Download Root</a>
                     <?php endif; ?>
@@ -1292,14 +1086,14 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
 
             <?php if ($analysisNeedsRefresh): ?>
                 <div class="notice error">
-                    This analysis was generated with an older prompt ruleset. Recalculate the analysis before generating new mockups.
+                    This analysis does not match the current minimal schema. Recalculate the analysis before generating new mockups.
                 </div>
             <?php endif; ?>
 
             <section class="artwork-sheet">
                 <aside class="root-panel">
                     <div style="background: var(--surface); border: 1px solid var(--line); padding: 16px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 12px;">
-                        <label style="margin-top: 0; font-size: 11px; text-transform: uppercase; font-weight: 600; color: var(--ink); letter-spacing: 0.05em; display: block; margin-bottom: 6px;">SEO Slug / Filename Customizer</label>
+                        <label style="margin-top: 0; font-size: 11px; text-transform: uppercase; font-weight: 600; color: var(--ink); letter-spacing: 0.05em; display: block; margin-bottom: 6px;">Slug / Filename Customizer</label>
                         <input type="text" id="seo_slug_input" class="form-control" value="<?= h($package['seo_slug']) ?>" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 13px; font-family: monospace; border: 1px solid var(--line); border-radius: var(--radius);">
                         <small style="margin: 4px 0 0 0; color: var(--muted); font-size: 11px; line-height: 1.3; display: block;">Changes here will update all image download names dynamically.</small>
                     </div>
@@ -1307,7 +1101,7 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                     <div class="root-frame">
                         <?php if ($rootFile && is_file($rootPath)): ?>
                             <a href="<?= h(media_url($rootFile)) ?>" target="_blank" title="Click to open full size">
-                                <img src="<?= h(media_url($rootFile)) ?>" alt="<?= h($package['alt_texts'][0]) ?>">
+                                <img src="<?= h(media_url($rootFile)) ?>" alt="<?= h($package['root_alt']) ?>">
                             </a>
                         <?php else: ?>
                             <div class="empty-state">This artwork does not have a completed root image yet.</div>
@@ -1328,15 +1122,15 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                                 <div>
                                     <label style="font-size: 9px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; font-weight: 700; letter-spacing: 0.05em;">Caption</label>
                                     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
-                                        <span style="line-height: 1.4;"><?= h($package['captions'][0]) ?></span>
-                                        <button class="copy-button secondary" type="button" data-copy="<?= h($package['captions'][0]) ?>" aria-label="Copy Caption" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                        <span style="line-height: 1.4;"><?= h($package['root_caption']) ?></span>
+                                        <button class="copy-button secondary" type="button" data-copy="<?= h($package['root_caption']) ?>" aria-label="Copy Caption" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
                                     </div>
                                 </div>
                                 <div>
                                     <label style="font-size: 9px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; font-weight: 700; letter-spacing: 0.05em;">Alt Text</label>
                                     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
-                                        <span style="line-height: 1.4;"><?= h($package['alt_texts'][0]) ?></span>
-                                        <button class="copy-button secondary" type="button" data-copy="<?= h($package['alt_texts'][0]) ?>" aria-label="Copy Alt Text" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                        <span style="line-height: 1.4;"><?= h($package['root_alt']) ?></span>
+                                        <button class="copy-button secondary" type="button" data-copy="<?= h($package['root_alt']) ?>" aria-label="Copy Alt Text" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
                                     </div>
                                 </div>
                                 <div>
@@ -1353,7 +1147,7 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                          <div style="margin-top: 10px; line-height: 1.6; font-size: 13px; color: var(--ink);">
                              <p class="copy-block" style="margin: 0; font-style: italic;"><?= h($package['curatorial_reading']) ?></p>
                              <div style="margin-top: 8px; text-align: right;">
-                                 <button class="copy-button secondary" type="button" data-copy="<?= h($package['curatorial_reading']) ?>" aria-label="Copiar Lectura Curatorial" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                            <button class="copy-button secondary" type="button" data-copy="<?= h($package['curatorial_reading']) ?>" aria-label="Copy Curatorial Reading" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
                              </div>
                          </div>
                      </details>
@@ -1387,7 +1181,7 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                                 <option>More commercial</option>
                                 <option>More minimal</option>
                                 <option>More emotional</option>
-                                <option>More SEO-focused</option>
+                                <option>More concise</option>
                             </select>
                             <button type="submit" style="margin-top: 12px; width: 100%;">Save Artwork Sheet</button>
                         </form>
@@ -1398,10 +1192,10 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                     <section class="panel">
                         <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
                             <div>
-                                <h2>Sección 0: Mockups por defecto y Obra Root</h2>
-                                <p>Imágenes y metadatos SEO (nombres de archivo, alts y captions)</p>
+                                <h2>Section 0: Default Mockups and Root Artwork</h2>
+                                <p>Root image and mockup metadata for filenames and simple captions</p>
                             </div>
-                            <button class="copy-button secondary" type="button" id="copy_section_0" aria-label="Copiar Sección 0" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                            <button class="copy-button secondary" type="button" id="copy_section_0" aria-label="Copy Section 0" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr; gap: 24px; margin-top: 16px;">
@@ -1411,23 +1205,23 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                                     <div class="root-frame" style="padding: 6px; width: 100%; border: 1px solid var(--line); border-radius: 4px; background: var(--surface-soft);">
                                         <?php if ($rootFile && is_file($rootPath)): ?>
                                             <a href="<?= h(media_url($rootFile)) ?>" target="_blank" title="Click to open full size">
-                                                <img src="<?= h(media_url($rootFile)) ?>" alt="Obra Root" style="width: 100%; height: auto; display: block; border-radius: 2px;">
+                                                <img src="<?= h(media_url($rootFile)) ?>" alt="<?= h($package['root_alt']) ?>" style="width: 100%; height: auto; display: block; border-radius: 2px;">
                                             </a>
                                         <?php else: ?>
-                                            <div class="empty-state" style="font-size: 11px; padding: 20px 0;">Sin imagen</div>
+                                            <div class="empty-state" style="font-size: 11px; padding: 20px 0;">No image</div>
                                         <?php endif; ?>
                                     </div>
                                 </div>
 
                                 <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
                                     <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; border-bottom: 1px dashed var(--line); padding-bottom: 4px;">
-                                        <h3 style="font-size: 16px; margin: 0;">Obra Root</h3>
-                                        <span style="font-size: 10px; text-transform: uppercase; color: var(--muted); font-weight: 700; letter-spacing: 0.05em;">Imagen Principal</span>
+                                        <h3 style="font-size: 16px; margin: 0;">Root Artwork</h3>
+                                        <span style="font-size: 10px; text-transform: uppercase; color: var(--muted); font-weight: 700; letter-spacing: 0.05em;">Main Image</span>
                                     </div>
 
                                     <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
                                         <div class="pin-field" style="padding: 8px 10px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius);">
-                                            <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Nombre de Archivo SEO</label>
+                                            <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Filename</label>
                                             <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                                                 <span class="seo-root-filename" style="font-family: monospace; font-size: 11px; font-weight: 500;"><?= h($package['file_names'][0]) ?></span>
                                                 <button class="copy-button secondary" type="button" data-copy="<?= h($package['file_names'][0]) ?>" id="copy_root_filename" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
@@ -1435,7 +1229,7 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                                         </div>
 
                                         <div class="pin-field" style="padding: 8px 10px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius);">
-                                            <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Texto Alt</label>
+                                            <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Alt Text</label>
                                             <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
                                                 <span class="seo-root-alt" style="line-height: 1.4;"><?= h($package['root_alt']) ?></span>
                                                 <button class="copy-button secondary" type="button" data-copy="<?= h($package['root_alt']) ?>" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
@@ -1468,15 +1262,8 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                                         }
                                     }
 
-                                    // Alt & Caption fallback/custom
-                                    $mAlt = $ctx['mockup_metadata']['alt_text'] ?? '';
-                                    if (trim($mAlt) === '') {
-                                        $mAlt = 'Mockup of the artwork "' . $selectedTitle . '" presented in a ' . strtolower($ctx['name']) . ' environment.';
-                                    }
-                                    $mCaption = $ctx['mockup_metadata']['caption'] ?? '';
-                                    if (trim($mCaption) === '') {
-                                        $mCaption = '“' . $selectedTitle . '” mockup in ' . $ctx['name'] . '.';
-                                    }
+                                    $mAlt = 'Mockup of the artwork "' . $selectedTitle . '" presented in a ' . strtolower($ctx['name']) . ' environment.';
+                                    $mCaption = '"' . $selectedTitle . '" mockup in ' . $ctx['name'] . '.';
 
                                     $expectedFilename = $package['seo_slug'] . '-mockup-' . $ctxSlug . '.jpg';
                                 ?>
@@ -1504,10 +1291,10 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                                             <!-- Actions for generated state -->
                                             <div class="generated-actions" style="<?= $existingMockup ? '' : 'display: none;' ?>">
                                                 <a href="<?= $existingMockup ? 'media.php?file=' . rawurlencode(basename((string)$existingMockup['mockup_file'])) . '&download=1' : '#' ?>" class="download-mockup-link button secondary" data-base-file="<?= $existingMockup ? h(basename((string)$existingMockup['mockup_file'])) : '' ?>" data-context="<?= h($ctxSlug) ?>" style="font-size: 11px; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; width: 100%; box-sizing: border-box; margin-bottom: 6px;">
-                                                    <?= $downloadIconSvg ?> Descargar
+                                                    <?= $downloadIconSvg ?> Download
                                                 </a>
                                                 <button type="button" class="btn-delete-mockup button secondary danger" data-mockup-id="<?= $existingMockup ? h($existingMockup['id']) : '' ?>" style="font-size: 11px; margin: 0; padding: 6px 10px; width: 100%;">
-                                                    Eliminar
+                                                    Delete
                                                 </button>
                                             </div>
                                             
@@ -1535,7 +1322,7 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
 
                                         <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
                                             <div class="pin-field" style="padding: 8px 10px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius);">
-                                                <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Nombre de Archivo SEO</label>
+                                                <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Filename</label>
                                                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                                                     <span class="seo-mockup-filename" data-context-slug="<?= h($ctxSlug) ?>" style="font-family: monospace; font-size: 11px; font-weight: 500;"><?= h($expectedFilename) ?></span>
                                                     <button class="copy-button secondary copy-mockup-filename-btn" type="button" data-copy="<?= h($expectedFilename) ?>" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
@@ -1543,7 +1330,7 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                                             </div>
 
                                             <div class="pin-field" style="padding: 8px 10px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius);">
-                                                <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Texto Alt</label>
+                                                <label style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; display: block;">Alt Text</label>
                                                 <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
                                                     <span class="mockup-alt-text" style="line-height: 1.4;"><?= h($mAlt) ?></span>
                                                     <button class="copy-button secondary" type="button" data-copy="<?= h($mAlt) ?>" style="padding: 4px; display: inline-flex; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
@@ -1568,23 +1355,18 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                     <section class="panel">
                         <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
                             <div>
-                                <h2>Sección 1: Títulos y Subtítulos Sugeridos</h2>
-                                <p>Propuestas curatoriales y comerciales</p>
+                                <h2>Section 1: Suggested Titles and Subtitles</h2>
+                                <p>Curatorial and commercial proposals</p>
                             </div>
-                            <button class="copy-button secondary" type="button" id="copy_section_1" aria-label="Copiar Sección 1" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                            <button class="copy-button secondary" type="button" id="copy_section_1" aria-label="Copy Section 1" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
                         </div>
 
                         <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 16px;" class="title-grid-unified">
                             <?php foreach ($package['titles'] as $idx => $t): ?>
                                 <?php
                                     $sub = $package['title_subtitles'][$t] ?? '';
-                                    $label = match($idx) {
-                                        0 => 'Enfoque Poético',
-                                        1 => 'Enfoque Descriptivo',
-                                        2 => 'Enfoque Comercial',
-                                        default => 'Opción ' . ($idx + 1)
-                                    };
-                                    $titleCopy = "Título: " . $t . ($sub !== '' ? "\nSubtítulo: " . $sub : '');
+                                    $label = 'Option ' . ($idx + 1);
+                                    $titleCopy = "Title: " . $t . ($sub !== '' ? "\nSubtitle: " . $sub : '');
                                 ?>
                                 <article class="compact-title-row <?= $t === $selectedTitle ? 'selected' : '' ?>" style="display: flex; flex-direction: column; gap: 10px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px;">
                                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
@@ -1599,7 +1381,7 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                                     <?php endif; ?>
                                     
                                     <div style="margin-top: auto; display: flex; gap: 8px; align-items: center; padding-top: 10px; border-top: 1px dashed var(--line);">
-                                        <button class="copy-button secondary" type="button" data-copy="<?= h($titleCopy) ?>" aria-label="Copiar" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                        <button class="copy-button secondary" type="button" data-copy="<?= h($titleCopy) ?>" aria-label="Copy" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
                                         <form method="post" style="margin: 0; flex: 1;">
                                             <input type="hidden" name="action" value="save_sheet">
                                             <input type="hidden" name="final_title" value="<?= h($t) ?>">
@@ -1619,10 +1401,10 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                     <section class="panel">
                         <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
                             <div>
-                                <h2>Sección 2: Descripciones Premium</h2>
-                                <p>Descripciones artísticas y curatoriales asociadas a cada título</p>
+                                <h2>Section 2: Premium Descriptions</h2>
+                                <p>Artistic and curatorial descriptions associated with each title</p>
                             </div>
-                            <button class="copy-button secondary" type="button" id="copy_section_2" aria-label="Copiar Sección 2" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                            <button class="copy-button secondary" type="button" id="copy_section_2" aria-label="Copy Section 2" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
                         </div>
 
                         <div style="display: flex; flex-direction: column; gap: 20px; margin-top: 16px;">
@@ -1632,81 +1414,16 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                                     $idx = 0;
                                 }
                                 $desc = $package['premium_descriptions'][$selectedTitle] ?? '';
-                                $label = match($idx) {
-                                    0 => 'Descripción Poética',
-                                    1 => 'Descripción Descriptiva',
-                                    2 => 'Descripción Comercial',
-                                    default => 'Descripción Opción ' . ($idx + 1)
-                                };
+                                $label = 'Description Option ' . ($idx + 1);
                                 $descCopy = "[" . $label . " para: " . $selectedTitle . "]\n" . $desc;
                             ?>
                             <article class="premium-desc-block" style="background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 8px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <strong style="font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em;"><?= h($label) ?> — para "<?= h($selectedTitle) ?>"</strong>
-                                    <button class="copy-button secondary" type="button" data-copy="<?= h($descCopy) ?>" aria-label="Copiar" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
+                                    <button class="copy-button secondary" type="button" data-copy="<?= h($descCopy) ?>" aria-label="Copy" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
                                 </div>
                                 <p class="copy-block" style="font-size: 14px; line-height: 1.6; margin: 0; color: var(--ink);"><?= h($desc) ?></p>
                             </article>
-                        </div>
-                    </section>
-
-                    <!-- SECCIÓN 3: 15 KEYWORDS -->
-                    <section class="panel">
-                        <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
-                            <div>
-                                <h2>Sección 3: 15 Keywords</h2>
-                                <p>Palabras clave principales de búsqueda separadas por comas</p>
-                            </div>
-                            <button class="copy-button secondary" type="button" id="copy_section_3" aria-label="Copiar Sección 3" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
-                        </div>
-
-                        <div style="background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-top: 16px;">
-                            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
-                                <?php foreach ($package['main_keywords'] as $kw): ?>
-                                    <span class="keyword-chip" style="background: var(--surface); border: 1px solid var(--line); padding: 4px 10px; border-radius: 999px; font-size: 12px;"><?= h($kw) ?></span>
-                                <?php endforeach; ?>
-                            </div>
-                            <textarea id="section_3_raw_copy" style="width: 100%; min-height: 60px; font-size: 13px; font-family: monospace; padding: 10px; box-sizing: border-box; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);" readonly><?= h(implode(', ', $package['main_keywords'])) ?></textarea>
-                        </div>
-                    </section>
-
-                    <!-- SECCIÓN 4: 15 LONG-TAIL KEYWORDS -->
-                    <section class="panel">
-                        <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
-                            <div>
-                                <h2>Sección 4: 15 Long-tail Keywords</h2>
-                                <p>Keywords de cola larga relevantes para SEO y posicionamiento</p>
-                            </div>
-                            <button class="copy-button secondary" type="button" id="copy_section_4" aria-label="Copiar Sección 4" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
-                        </div>
-
-                        <div style="background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-top: 16px;">
-                            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
-                                <?php foreach ($package['long_tail_keywords'] as $kw): ?>
-                                    <span class="keyword-chip" style="background: var(--surface); border: 1px solid var(--line); padding: 4px 10px; border-radius: 999px; font-size: 12px;"><?= h($kw) ?></span>
-                                <?php endforeach; ?>
-                            </div>
-                            <textarea id="section_4_raw_copy" style="width: 100%; min-height: 60px; font-size: 13px; font-family: monospace; padding: 10px; box-sizing: border-box; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);" readonly><?= h(implode(', ', $package['long_tail_keywords'])) ?></textarea>
-                        </div>
-                    </section>
-
-                    <!-- SECCIÓN 5: 15 LONG-TAIL (CON GUIONES MEDIOS) -->
-                    <section class="panel">
-                        <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
-                            <div>
-                                <h2>Sección 5: 15 Long-tail (con guiones medios)</h2>
-                                <p>Keywords de cola larga unidas con guón medio</p>
-                            </div>
-                            <button class="copy-button secondary" type="button" id="copy_section_5" aria-label="Copiar Sección 5" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
-                        </div>
-
-                        <div style="background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-top: 16px;">
-                            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
-                                <?php foreach ($hyphenatedLongTails as $kw): ?>
-                                    <span class="keyword-chip" style="background: var(--surface); border: 1px solid var(--line); padding: 4px 10px; border-radius: 999px; font-size: 12px; font-family: monospace;"><?= h($kw) ?></span>
-                                <?php endforeach; ?>
-                            </div>
-                            <textarea id="section_5_raw_copy" style="width: 100%; min-height: 60px; font-size: 13px; font-family: monospace; padding: 10px; box-sizing: border-box; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);" readonly><?= h(implode(', ', $hyphenatedLongTails)) ?></textarea>
                         </div>
                     </section>
 
@@ -1725,7 +1442,7 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                         }
                     ?>
                         <details class="details-panel" style="margin-top: 16px;">
-                            <summary style="font-weight: 600; cursor: pointer; color: var(--ink);">Ver Análisis de IA Crudo (JSON)</summary>
+                            <summary style="font-weight: 600; cursor: pointer; color: var(--ink);">View Raw AI Analysis (JSON)</summary>
                             <div style="margin-top: 12px;">
                                 <pre style="background: var(--surface-soft); border: 1px solid var(--line); padding: 12px; border-radius: var(--radius); overflow-x: auto; font-family: monospace; font-size: 11px; margin: 0; max-height: 400px; color: var(--ink);"><code class="json"><?= h($rawAnalysisJson) ?></code></pre>
                             </div>
@@ -1827,15 +1544,15 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
 
     // Unified report sections copy functions
     function getSection0Text() {
-        let text = `[Obra Root]\n`;
-        text += `Archivo SEO: ${document.querySelector('.seo-root-filename')?.textContent || ''}\n`;
+        let text = `[Root Artwork]\n`;
+        text += `File: ${document.querySelector('.seo-root-filename')?.textContent || ''}\n`;
         text += `Alt: ${document.querySelector('.seo-root-alt')?.textContent || ''}\n`;
         text += `Caption: ${document.querySelector('.seo-root-caption')?.textContent || ''}\n\n`;
 
         document.querySelectorAll('.mockup-card-container').forEach((card, idx) => {
             const name = card.getAttribute('data-context-name') || `Mockup ${idx + 1}`;
             text += `[Mockup ${idx + 1}: ${name}]\n`;
-            text += `Archivo SEO: ${card.querySelector('.seo-mockup-filename')?.textContent || ''}\n`;
+            text += `File: ${card.querySelector('.seo-mockup-filename')?.textContent || ''}\n`;
             text += `Alt: ${card.querySelector('.mockup-alt-text')?.textContent || ''}\n`;
             text += `Caption: ${card.querySelector('.mockup-caption-text')?.textContent || ''}\n\n`;
         });
@@ -1846,13 +1563,13 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
         let text = '';
         document.querySelectorAll('.title-grid-unified article').forEach((card, idx) => {
             const labels = card.querySelectorAll('.selected-label');
-            const label = labels[0]?.textContent || `Opción ${idx + 1}`;
+            const label = labels[0]?.textContent || `Option ${idx + 1}`;
             const title = card.querySelector('h3')?.textContent || '';
             const sub = card.querySelector('.title-option-subtitle')?.textContent || '';
             text += `${label}:\n`;
-            text += `Título: ${title}\n`;
+            text += `Title: ${title}\n`;
             if (sub) {
-                text += `Subtítulo: ${sub}\n`;
+                text += `Subtitle: ${sub}\n`;
             }
             text += `\n`;
         });
@@ -1890,15 +1607,6 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
     document.getElementById('copy_section_2')?.addEventListener('click', function() {
         copySection(this, getSection2Text);
     });
-    document.getElementById('copy_section_3')?.addEventListener('click', function() {
-        copySection(this, () => document.getElementById('section_3_raw_copy')?.value || '');
-    });
-    document.getElementById('copy_section_4')?.addEventListener('click', function() {
-        copySection(this, () => document.getElementById('section_4_raw_copy')?.value || '');
-    });
-    document.getElementById('copy_section_5')?.addEventListener('click', function() {
-        copySection(this, () => document.getElementById('section_5_raw_copy')?.value || '');
-    });
 
     // AJAX mockup generation listener
     document.addEventListener('submit', async (event) => {
@@ -1920,7 +1628,7 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
             </div>
         `;
         button.disabled = true;
-        button.innerHTML = 'Generando...';
+        button.innerHTML = 'Generating...';
 
         try {
             const response = await fetch(form.action, {
@@ -1942,7 +1650,7 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
                     .replace(/<[^>]+>/g, ' ')
                     .replace(/\s+/g, ' ')
                     .trim();
-                throw new Error(readable || 'El servidor devolvió una respuesta inválida.');
+                throw new Error(readable || 'The server returned an invalid response.');
             }
 
             if (!response.ok || !data.ok) {
@@ -1994,7 +1702,7 @@ $publicationPackageCopy = $publicationCopy . "\n\nKeywords: " . implode(', ', $p
         const deleteBtn = event.target.closest('.btn-delete-mockup');
         if (!deleteBtn) return;
 
-        if (!confirm('¿Seguro que desea eliminar este mockup?')) {
+        if (!confirm('Are you sure you want to delete this mockup?')) {
             return;
         }
 

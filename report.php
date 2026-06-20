@@ -10,7 +10,7 @@ function h($v): string
     return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 }
 
-function form2_normalize_size_override(?string $value): int
+function report_normalize_size_override(?string $value): int
 {
     $size = (int)trim((string)$value);
 
@@ -52,7 +52,7 @@ function public_path(string $file): string
     return rawurlencode($base);
 }
 
-function form2_string_list($value): array
+function report_string_list($value): array
 {
     if (!is_array($value)) {
         $value = $value !== null && trim((string)$value) !== '' ? [$value] : [];
@@ -73,16 +73,15 @@ function form2_string_list($value): array
     return array_values(array_unique($items));
 }
 
-function form2_has_text($value): bool
+function report_has_text($value): bool
 {
     return trim((string)$value) !== '';
 }
 
-function form2_normalize_publishing_metadata(array $source): array
+function report_normalize_publishing_metadata(array $source): array
 {
-    $metadata = is_array($source['publishing_metadata'] ?? null) ? $source['publishing_metadata'] : [];
     $titleOptions = [];
-    $rawTitles = $metadata['suggested_titles'] ?? [];
+    $rawTitles = $source['suggested_titles'] ?? $source['publishing_metadata']['suggested_titles'] ?? [];
 
     if (is_array($rawTitles)) {
         $isList = array_keys($rawTitles) === range(0, count($rawTitles) - 1);
@@ -98,12 +97,18 @@ function form2_normalize_publishing_metadata(array $source): array
                     continue;
                 }
 
+                $desc = trim((string)($option['description'] ?? ''));
+                if ($desc === '') {
+                    $curatorialDesc = trim((string)($option['curatorial_description'] ?? ''));
+                    $commercialDesc = trim((string)($option['commercial_description'] ?? ''));
+                    $shortDesc = trim((string)($option['short_description'] ?? ''));
+                    $desc = trim((string)($curatorialDesc ?: $commercialDesc ?: $shortDesc));
+                }
+
                 $titleOptions[] = [
                     'title' => $title,
                     'subtitle' => trim((string)($option['subtitle'] ?? '')),
-                    'short_description' => trim((string)($option['short_description'] ?? '')),
-                    'curatorial_description' => trim((string)($option['curatorial_description'] ?? '')),
-                    'commercial_description' => trim((string)($option['commercial_description'] ?? '')),
+                    'description' => $desc,
                 ];
             }
         } else {
@@ -116,45 +121,86 @@ function form2_normalize_publishing_metadata(array $source): array
                 $titleOptions[] = [
                     'title' => $title,
                     'subtitle' => ucwords(str_replace('_', ' ', (string)$label)),
-                    'short_description' => '',
-                    'curatorial_description' => '',
-                    'commercial_description' => '',
+                    'description' => '',
                 ];
             }
         }
     }
 
-    $descriptions = is_array($metadata['descriptions'] ?? null) ? $metadata['descriptions'] : [];
-    $catawiki = is_array($metadata['catawiki_listing'] ?? null) ? $metadata['catawiki_listing'] : [];
-
     return [
         'title_options' => $titleOptions,
-        'descriptions' => [
-            'poetic_focus' => trim((string)($descriptions['poetic_focus'] ?? '')),
-            'formal_focus' => trim((string)($descriptions['formal_focus'] ?? '')),
-            'commercial_focus' => trim((string)($descriptions['commercial_focus'] ?? '')),
-        ],
-        'marketplace' => [
-            'title' => trim((string)($metadata['marketplace_title'] ?? '')),
-            'short_description' => trim((string)($metadata['marketplace_short_description'] ?? '')),
-            'long_description' => trim((string)($metadata['marketplace_long_description'] ?? '')),
-        ],
-        'catawiki' => [
-            'recommended_title' => trim((string)($catawiki['recommended_title'] ?? '')),
-            'alternative_titles' => form2_string_list($catawiki['alternative_titles'] ?? []),
-            'subtitle' => trim((string)($catawiki['subtitle'] ?? '')),
-            'short_description' => trim((string)($catawiki['short_description'] ?? '')),
-            'long_description' => trim((string)($catawiki['long_description'] ?? '')),
-            'technical_details' => trim((string)($catawiki['technical_details'] ?? '')),
-            'condition_statement' => trim((string)($catawiki['condition_statement'] ?? '')),
-            'shipping_statement' => trim((string)($catawiki['shipping_statement'] ?? '')),
-            'seo_keywords' => form2_string_list($catawiki['seo_keywords'] ?? []),
-            'tags' => form2_string_list($catawiki['tags'] ?? []),
-        ],
-        'seo_keywords' => form2_string_list($metadata['seo_keywords'] ?? []),
-        'seo_tags' => form2_string_list($metadata['seo_tags'] ?? []),
-        'pinterest_boards' => form2_string_list($metadata['pinterest_boards'] ?? []),
     ];
+}
+
+function report_is_new_schema(array $analysis): bool
+{
+    return array_key_exists('suggested_titles', $analysis) && array_key_exists('contextual_proposals', $analysis);
+}
+
+function report_valid_new_schema(array $analysis): bool
+{
+    if (!is_array($analysis['suggested_titles'] ?? null) || !is_array($analysis['contextual_proposals'] ?? null)) {
+        return false;
+    }
+
+    foreach ($analysis['suggested_titles'] as $titleOption) {
+        if (!is_array($titleOption)
+            || trim((string)($titleOption['title'] ?? '')) === ''
+            || trim((string)($titleOption['subtitle'] ?? '')) === ''
+            || trim((string)($titleOption['description'] ?? '')) === '') {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function report_normalize_contextual_proposals(array $proposals, array $dbContexts = []): array
+{
+    $promptByName = [];
+    $idByName = [];
+    foreach ($dbContexts as $dbCtx) {
+        $name = trim((string)($dbCtx['context_name'] ?? ''));
+        if ($name === '') {
+            continue;
+        }
+        $promptByName[$name] = (string)($dbCtx['prompt'] ?? '');
+        $idByName[$name] = (string)($dbCtx['id'] ?? '');
+    }
+
+    $contexts = [];
+    foreach ($proposals as $index => $proposal) {
+        if (!is_array($proposal)) {
+            continue;
+        }
+
+        $name = trim((string)($proposal['context_name'] ?? $proposal['name'] ?? ('Proposal ' . ($index + 1))));
+        $contexts[] = [
+            'id' => $idByName[$name] ?? (string)($proposal['id'] ?? ('ctx_' . ($index + 1))),
+            'name' => $name,
+            'purpose' => (string)($proposal['context_role'] ?? $proposal['purpose'] ?? ''),
+            'scene' => (string)($proposal['space_type'] ?? ''),
+            'atmosphere' => (string)($proposal['atmosphere'] ?? ''),
+            'materials' => is_array($proposal['materials'] ?? null) ? $proposal['materials'] : [],
+            'lighting' => (string)($proposal['lighting'] ?? ''),
+            'camera' => (string)($proposal['camera_view'] ?? ''),
+            'camera_angle' => (string)($proposal['camera_view'] ?? ''),
+            'camera_group' => '',
+            'camera_view' => (string)($proposal['camera_view'] ?? ''),
+            'camera_distance' => (string)($proposal['camera_distance'] ?? ''),
+            'camera_angle_notes' => (string)($proposal['camera_angle_notes'] ?? ''),
+            'time_of_day' => '',
+            'placement' => 'hanging',
+            'with_human' => strtolower(trim((string)($proposal['human_presence'] ?? 'none'))) !== 'none',
+            'human_profile' => null,
+            'why' => (string)($proposal['curatorial_reason'] ?? ''),
+            'commercial_reason' => (string)($proposal['commercial_reason'] ?? ''),
+            'prompt' => (string)($proposal['prompt'] ?? $promptByName[$name] ?? $proposal['mockup_prompt'] ?? ''),
+            'score' => 20,
+        ];
+    }
+
+    return $contexts;
 }
 
 function assert_root_owner(string $imagePath, array $user): void
@@ -205,7 +251,7 @@ if (!$image) {
     $stmt->execute(['user_id' => $currentUser['id']]);
     $latestArtwork = $stmt->fetch();
     if ($latestArtwork && !empty($latestArtwork['root_file'])) {
-        header('Location: form2.php?image=' . urlencode(basename($latestArtwork['root_file'])));
+        header('Location: report.php?image=' . urlencode(basename($latestArtwork['root_file'])));
         exit;
     } else {
         // No root artwork selected yet, redirect to upload page (artwork_new.php)
@@ -248,7 +294,7 @@ $hasArtistProfileForValidation = ArtistProfile::hasContent($currentArtistProfile
 $hasCurrentArtistProfileInAnalysis = !$hasArtistProfileForValidation ||
     ($currentArtistProfileUpdatedAt !== '' && $currentArtistProfileUpdatedAt === $analysisArtistProfileUpdatedAt);
 
-$contextsForValidation = $analysis['recommended_contexts'] ?? [];
+$contextsForValidation = $analysis['contextual_proposals'] ?? $analysis['recommended_contexts'] ?? [];
 $expectedContextCount = PromptSettings::mockupContextCount();
 $firstPromptForValidation = $contextsForValidation[0]['prompt'] ?? '';
 $metaPathForValidation = RESULTS_DIR . DIRECTORY_SEPARATOR . pathinfo(basename($imagePath), PATHINFO_FILENAME) . '.meta.json';
@@ -311,74 +357,46 @@ if ($artworkId) {
 
 $useClassicMode = isset($_GET['classic']) && $_GET['classic'] === '1';
 $analysisForPublishing = [];
+$dbAnalysisData = [];
+$hasNewDbAnalysis = false;
 
-if (!empty($dbContexts) && $dbAnalysis && !$useClassicMode) {
+if ($dbAnalysis && !empty($dbAnalysis['analysis_json'])) {
+    $decodedDbAnalysis = json_decode((string)$dbAnalysis['analysis_json'], true);
+    $dbAnalysisData = is_array($decodedDbAnalysis) ? $decodedDbAnalysis : [];
+    $hasNewDbAnalysis = $dbAnalysisData !== [] && report_is_new_schema($dbAnalysisData);
+}
+
+if ($dbAnalysis && !$useClassicMode && $hasNewDbAnalysis) {
     // ---- MODO DINÁMICO IMPULSADO POR LA OBRA (BETA) ----
-    $dbAnalysisData = json_decode($dbAnalysis['analysis_json'], true);
-    $analysisForPublishing = is_array($dbAnalysisData) ? $dbAnalysisData : [];
-    
-    // Mapear el análisis de la base de datos al formato esperado por la UI
+    $analysisForPublishing = $dbAnalysisData;
+    $analysis = $dbAnalysisData;
+
     $profile = [
-        'one_line_curatorial_read' => $dbAnalysisData['one_line_curatorial_read'] ?? '',
-        'style_summary' => $dbAnalysisData['style_summary'] ?? '',
-        'style_tags' => $dbAnalysisData['visual_language'] ?? [],
-        'palette' => array_merge((array)($dbAnalysisData['dominant_colors'] ?? []), (array)($dbAnalysisData['secondary_colors'] ?? [])),
-        'palette_family' => [$dbAnalysisData['color_temperature'] ?? 'balanced'],
-        'mood_tags' => $dbAnalysisData['emotional_energy'] ?? [],
-        'luminosity' => $dbAnalysisData['contrast_level'] ?? 'medium',
-        'saturation' => 'balanced',
-        'emotional_palette' => [
-            'temperature' => $dbAnalysisData['color_temperature'] ?? 'balanced'
-        ],
-        'dreamlike_presence' => [
-            'level' => 'medium'
-        ],
-        'audience_profile' => [
-            'primary' => $dbAnalysisData['audience_profile']['primary'] ?? ($dbAnalysisData['suggested_audience'][0] ?? '')
-        ],
-        'seasonal_strategy' => [
-            'primary_season' => $dbAnalysisData['seasonal_strategy']['primary_season'] ?? 'neutral'
-        ],
-        'commercial_fit' => $dbAnalysisData['suggested_audience'] ?? [],
+        'one_line_curatorial_read' => trim((string)($dbAnalysisData['suggested_titles'][0]['description'] ?? '')),
+        'style_summary' => '',
+        'style_tags' => [],
+        'palette' => [],
+        'palette_family' => [],
+        'mood_tags' => [],
+        'luminosity' => '',
+        'saturation' => '',
+        'emotional_palette' => ['temperature' => ''],
+        'dreamlike_presence' => ['level' => ''],
+        'audience_profile' => ['primary' => ''],
+        'seasonal_strategy' => ['primary_season' => ''],
+        'commercial_fit' => [],
         'avoid' => [],
-        'materiality_strategy' => [
-            'show' => []
-        ],
-        'format_and_scale' => $dbAnalysisData['format_and_scale'] ?? [],
-        'artist_profile_relation' => $dbAnalysisData['artist_profile_relation'] ?? [],
-        'publishing_metadata' => $dbAnalysisData['publishing_metadata'] ?? [],
+        'materiality_strategy' => ['show' => []],
     ];
 
-    // Mapear contextos dinámicos
-    $contexts = [];
-    foreach ($dbContexts as $i => $dbCtx) {
-        $ctxJson = json_decode($dbCtx['context_json'], true);
-        $contexts[] = [
-            'id' => (string)$dbCtx['id'],
-            'name' => $dbCtx['context_name'],
-            'purpose' => $ctxJson['context_role'] ?? '',
-            'scene' => $ctxJson['space_type'] ?? '',
-            'atmosphere' => $ctxJson['atmosphere'] ?? '',
-            'materials' => $ctxJson['materials'] ?? [],
-            'lighting' => $ctxJson['lighting'] ?? '',
-            'camera' => $ctxJson['camera_view'] ?? ($ctxJson['camera_angle'] ?? ''),
-            'camera_angle' => $ctxJson['camera_angle'] ?? '',
-            'camera_group' => $ctxJson['camera_group'] ?? '',
-            'camera_view' => $ctxJson['camera_view'] ?? '',
-            'camera_distance' => $ctxJson['camera_distance'] ?? '',
-            'camera_angle_notes' => $ctxJson['camera_angle_notes'] ?? '',
-            'time_of_day' => $ctxJson['time_of_day'] ?? '',
-            'placement' => $ctxJson['placement'] ?? 'hanging',
-            'with_human' => (isset($ctxJson['human_presence']) && strtolower(trim($ctxJson['human_presence'])) !== 'none'),
-            'human_profile' => $ctxJson['human_profile'] ?? null,
-            'why' => $ctxJson['curatorial_reason'] ?? '',
-            'commercial_reason' => $ctxJson['commercial_reason'] ?? '',
-            'pinterest_marketing' => $ctxJson['pinterest_marketing'] ?? [],
-            'prompt' => $dbCtx['prompt'],
-            'score' => 20, // default placeholder score
-        ];
-    }
-    
+    $contexts = report_normalize_contextual_proposals($dbAnalysisData['contextual_proposals'] ?? [], $dbContexts);
+    Logger::log(sprintf(
+        'report.php schema=new_schema contexts_source=contextual_proposals suggested_titles=%d contextual_proposals=%d old_mockup_contexts_ignored=%s',
+        count((array)($dbAnalysisData['suggested_titles'] ?? [])),
+        count((array)($dbAnalysisData['contextual_proposals'] ?? [])),
+        !empty($dbContexts) ? 'yes' : 'no'
+    ), 'analysis_debug');
+
     $isAdmin = Auth::isAdmin($currentUser);
     $mode = 'gemini';
     $mockNotice = '';
@@ -402,16 +420,19 @@ if (!empty($dbContexts) && $dbAnalysis && !$useClassicMode) {
     $depthCm = $artworkRow['depth'] ?? null;
 } else {
     // ---- MODO CLÁSICO DE RESPALDO (FALLBACK) ----
+    $hasValidNewFileAnalysis = is_array($analysis) && report_valid_new_schema($analysis);
     if (
         !$analysis ||
-        empty($contextsForValidation) ||
-        count($contextsForValidation) !== $expectedContextCount ||
-        str_contains((string)$firstPromptForValidation, 'Prototype prompt generated locally') ||
-        !$hasDynamicScaleText ||
-        !$hasScaleAnchors ||
-        !$hasExpectedMockupQuotas ||
-        !$hasCurrentArtistProfileInAnalysis ||
-        ($hasRootMeta && !$analysisWidthCm)
+        (!$hasValidNewFileAnalysis && (
+            empty($contextsForValidation) ||
+            count($contextsForValidation) !== $expectedContextCount ||
+            str_contains((string)$firstPromptForValidation, 'Prototype prompt generated locally') ||
+            !$hasDynamicScaleText ||
+            !$hasScaleAnchors ||
+            !$hasExpectedMockupQuotas ||
+            !$hasCurrentArtistProfileInAnalysis ||
+            ($hasRootMeta && !$analysisWidthCm)
+        ))
     ) {
         if (isset($_GET['json']) && $_GET['json'] !== '') {
             http_response_code(500);
@@ -423,9 +444,34 @@ if (!empty($dbContexts) && $dbAnalysis && !$useClassicMode) {
         exit;
     }
 
-    $profile = $analysis['artwork_profile'] ?? [];
-    $analysisForPublishing = $analysis['artwork_analysis'] ?? $profile;
-    $contexts = $analysis['recommended_contexts'] ?? [];
+    $profile = $analysis['artwork_profile'] ?? [
+        'one_line_curatorial_read' => trim((string)($analysis['suggested_titles'][0]['description'] ?? '')),
+        'style_summary' => '',
+        'style_tags' => [],
+        'palette' => [],
+        'palette_family' => [],
+        'mood_tags' => [],
+        'luminosity' => '',
+        'saturation' => '',
+        'emotional_palette' => ['temperature' => ''],
+        'dreamlike_presence' => ['level' => ''],
+        'audience_profile' => ['primary' => ''],
+        'seasonal_strategy' => ['primary_season' => ''],
+        'commercial_fit' => [],
+        'avoid' => [],
+        'materiality_strategy' => ['show' => []],
+    ];
+    $analysisForPublishing = report_is_new_schema($analysis) ? $analysis : ($analysis['artwork_analysis'] ?? $profile);
+    $contexts = report_is_new_schema($analysis)
+        ? report_normalize_contextual_proposals($analysis['contextual_proposals'] ?? [], $dbContexts)
+        : ($analysis['contextual_proposals'] ?? $analysis['recommended_contexts'] ?? []);
+    Logger::log(sprintf(
+        'report.php schema=%s contexts_source=%s suggested_titles=%d contextual_proposals=%d',
+        report_is_new_schema($analysis) ? 'new_schema' : 'legacy_schema',
+        report_is_new_schema($analysis) ? 'contextual_proposals' : 'legacy_analysis',
+        count((array)($analysis['suggested_titles'] ?? [])),
+        count((array)($analysis['contextual_proposals'] ?? []))
+    ), 'analysis_debug');
     $isAdmin = Auth::isAdmin($currentUser);
     $mode = $analysis['mode'] ?? ServiceFactory::appMode();
     $mockNotice = $analysis['mock_notice'] ?? '';
@@ -452,25 +498,16 @@ if ($widthCm && $heightCm) {
         $sizeText .= ' × ' . $depthCm . ' cm';
     }
 }
-$publishing = form2_normalize_publishing_metadata($analysisForPublishing);
+$publishing = report_normalize_publishing_metadata($analysis ?? $analysisForPublishing);
 $hasPublishingTitles = !empty($publishing['title_options']);
-$hasPublishingDescriptions = count(array_filter($publishing['descriptions'], 'form2_has_text')) > 0;
-$hasMarketplace = count(array_filter($publishing['marketplace'], 'form2_has_text')) > 0;
-$hasCatawiki = count(array_filter([
-    $publishing['catawiki']['recommended_title'],
-    $publishing['catawiki']['subtitle'],
-    $publishing['catawiki']['short_description'],
-    $publishing['catawiki']['long_description'],
-    $publishing['catawiki']['technical_details'],
-], 'form2_has_text')) > 0;
-$hasSeo = !empty($publishing['seo_keywords']) || !empty($publishing['seo_tags']) || !empty($publishing['pinterest_boards']);
-$hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarketplace || $hasCatawiki || $hasSeo;
+$hasPublishing = $hasPublishingTitles;
+$isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($analysisForPublishing);
 ?>
 <!doctype html>
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Formulario 2 - Dirección curatorial</title>
+    <title>Report - Curatorial Direction</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1753,6 +1790,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                     </div>
                 <?php endif; ?>
 
+                <?php if (!$isNewSchemaRender): ?>
                 <details class="sidebar-details-toggle">
                     <summary class="sidebar-details-summary">
                         <span>Show Detailed Analysis</span>
@@ -1815,7 +1853,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                         </div>
 
                         <div class="detail-block">
-                            <strong>Suggested Audience & Market Strategy</strong>
+                            <strong>Suggested Audience & Presentation Context</strong>
                             <div class="meta-mini-grid">
                                 <div><span>Target Audience</span> <strong><?= h($audience ?: '-') ?></strong></div>
                                 <div><span>Season</span> <strong><?= h($season ?: '-') ?></strong></div>
@@ -1853,6 +1891,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                         <?php endif; ?>
                     </div>
                 </details>
+                <?php endif; ?>
             </div>
 
             <?php
@@ -1897,14 +1936,14 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                                 <?php
                                     $altTitle = $option['title'] ?? '';
                                     $altSub = $option['subtitle'] ?? '';
-                                    $altDesc = $option['short_description'] ?? '';
+                                    $altDesc = $option['description'] ?? '';
                                 ?>
                                 <article class="publishing-card" style="background: var(--gal-surface); border: 1px solid var(--gal-border); border-radius: var(--gal-radius); padding: 18px; display: flex; flex-direction: column; gap: 14px;">
-                                    <div class="publishing-label" style="font-size: 11px; text-transform: uppercase; color: var(--gal-muted); font-weight: 600; letter-spacing: 0.05em;">Alternativa <?= h((string)($optionIndex + 1)) ?></div>
+                                    <div class="publishing-label" style="font-size: 11px; text-transform: uppercase; color: var(--gal-muted); font-weight: 600; letter-spacing: 0.05em;">Option <?= h((string)($optionIndex + 1)) ?></div>
                                     
                                     <div class="field-item">
                                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                            <strong style="font-size: 10px; text-transform: uppercase; color: var(--gal-muted); font-weight: 700; letter-spacing: 0.05em;">Título</strong>
+                                            <strong style="font-size: 10px; text-transform: uppercase; color: var(--gal-muted); font-weight: 700; letter-spacing: 0.05em;">Title</strong>
                                             <button class="copy-button secondary" type="button" data-copy="<?= h($altTitle) ?>" aria-label="Copy Title" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--gal-muted); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
                                         </div>
                                         <div style="font-size: 16px; font-weight: 600; color: var(--gal-ink); line-height: 1.4;"><?= h($altTitle) ?></div>
@@ -1913,7 +1952,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                                     <?php if ($altSub !== ''): ?>
                                         <div class="field-item">
                                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                                <strong style="font-size: 10px; text-transform: uppercase; color: var(--gal-muted); font-weight: 700; letter-spacing: 0.05em;">Subtítulo</strong>
+                                                <strong style="font-size: 10px; text-transform: uppercase; color: var(--gal-muted); font-weight: 700; letter-spacing: 0.05em;">Subtitle</strong>
                                                 <button class="copy-button secondary" type="button" data-copy="<?= h($altSub) ?>" aria-label="Copy Subtitle" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--gal-muted); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
                                             </div>
                                             <div style="font-size: 13px; color: var(--gal-accent); font-family: var(--font-serif); line-height: 1.4;"><?= h($altSub) ?></div>
@@ -1923,7 +1962,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                                     <?php if ($altDesc !== ''): ?>
                                         <div class="field-item" style="margin-top: auto; padding-top: 10px; border-top: 1px dashed var(--gal-border);">
                                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                                <strong style="font-size: 10px; text-transform: uppercase; color: var(--gal-muted); font-weight: 700; letter-spacing: 0.05em;">Descripción</strong>
+                                                <strong style="font-size: 10px; text-transform: uppercase; color: var(--gal-muted); font-weight: 700; letter-spacing: 0.05em;">Premium Description</strong>
                                                 <button class="copy-button secondary" type="button" data-copy="<?= h($altDesc) ?>" aria-label="Copy Description" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--gal-muted); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
                                             </div>
                                             <p class="publishing-text" style="font-size: 13px; line-height: 1.5; color: var(--gal-ink); margin: 0;"><?= h($altDesc) ?></p>
@@ -1966,7 +2005,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                 </aside>
             <?php endif; ?>
 
-            <?php $form2BackUrl = 'form2.php?image=' . rawurlencode(basename($imagePath)) . ($json ? '&json=' . rawurlencode(basename($json)) : ''); ?>
+            <?php $reportBackUrl = 'report.php?image=' . rawurlencode(basename($imagePath)) . ($json ? '&json=' . rawurlencode(basename($json)) : ''); ?>
 
             <?php
             // Pre-calculate generated vs pending state for each context
@@ -2048,7 +2087,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                                 <?php
                                     $mFile = basename((string)$existingMockup['mockup_file']);
                                     $mUrl = public_path($mFile);
-                                    $mViewerUrl = 'viewer.php?id=' . rawurlencode((string)$existingMockup['id']) . '&back=' . rawurlencode($form2BackUrl . '#context-' . $ctxId);
+                                    $mViewerUrl = 'viewer.php?id=' . rawurlencode((string)$existingMockup['id']) . '&back=' . rawurlencode($reportBackUrl . '#context-' . $ctxId);
                                     $mDownloadUrl = $mUrl . '&download=1';
                                 ?>
                                 <a class="inline-thumb" href="<?= h($mViewerUrl) ?>" aria-label="Open generated mockup">
@@ -2061,14 +2100,14 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                                     <?php if ($isAdmin): ?>
                                         <a href="media.php?file=<?= rawurlencode(basename((string)$existingMockup['prompt_file'])) ?>" target="_blank" rel="noopener">Prompt</a>
                                     <?php endif; ?>
-                                    <button type="button" class="btn-delete-mockup" data-mockup-id="<?= h((string)$existingMockup['id']) ?>" title="Eliminar Mockup" style="background: transparent; border: none; color: var(--gal-danger); cursor: pointer; padding: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">
+                                    <button type="button" class="btn-delete-mockup" data-mockup-id="<?= h((string)$existingMockup['id']) ?>" title="Delete Mockup" style="background: transparent; border: none; color: var(--gal-danger); cursor: pointer; padding: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">
                                         <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
                                             <polyline points="3 6 5 6 21 6"></polyline>
                                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                             <line x1="10" y1="11" x2="10" y2="17"></line>
                                             <line x1="14" y1="11" x2="14" y2="17"></line>
                                         </svg>
-                                        Eliminar
+                                        Delete
                                     </button>
                                 </div>
                             <?php else: ?>
@@ -2093,7 +2132,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
 
                         <?php if (!empty($ctx['why'])): ?>
                             <p class="why-rationale" style="font-size: 12px; line-height: 1.45; color: var(--gal-ink); margin: 12px 0 0 0; font-style: italic;">
-                                <strong>Razón curatorial:</strong> <?= h($ctx['why']) ?>
+                                <strong>Curatorial rationale:</strong> <?= h($ctx['why']) ?>
                             </p>
                         <?php endif; ?>
 
@@ -2146,12 +2185,12 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                                 $defaultHuman = (string)$selectorState['human_override'];
                             }
 
-                            $defaultSizeOverride = form2_normalize_size_override((string)($selectorState['size_override'] ?? '0'));
+                            $defaultSizeOverride = report_normalize_size_override((string)($selectorState['size_override'] ?? '0'));
                             ?>
 
                             <div class="customizer-options">
                                 <div class="opt-group">
-                                    <label>Ángulo de cámara</label>
+                                    <label>Camera Angle</label>
                                     <div class="selector-icons camera-selector">
                                         <button type="button" class="icon-btn <?= $defaultCamera === 'front' ? 'active' : '' ?>" data-value="front" title="Frontal">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2176,9 +2215,9 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                                     <input type="hidden" name="camera_override" value="<?= $defaultCamera ?>">
                                 </div>
                                 <div class="opt-group">
-                                    <label>Clima / Iluminación</label>
+                                    <label>Atmosphere / Lighting</label>
                                     <div class="selector-icons time-selector">
-                                        <button type="button" class="icon-btn <?= $defaultTime === 'sunny_day' ? 'active' : '' ?>" data-value="sunny_day" title="Día soleado">
+                                        <button type="button" class="icon-btn <?= $defaultTime === 'sunny_day' ? 'active' : '' ?>" data-value="sunny_day" title="Sunny day">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <circle cx="12" cy="12" r="5"></circle>
                                                 <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -2190,28 +2229,28 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                                                 <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
                                                 <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                                             </svg>
-                                            <span>Día soleado</span>
+                                            <span>Sunny day</span>
                                         </button>
-                                        <button type="button" class="icon-btn <?= $defaultTime === 'cloudy_day' ? 'active' : '' ?>" data-value="cloudy_day" title="Día nublado">
+                                        <button type="button" class="icon-btn <?= $defaultTime === 'cloudy_day' ? 'active' : '' ?>" data-value="cloudy_day" title="Cloudy day">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
                                             </svg>
-                                            <span>Día nublado</span>
+                                            <span>Cloudy day</span>
                                         </button>
-                                        <button type="button" class="icon-btn <?= $defaultTime === 'afternoon' ? 'active' : '' ?>" data-value="afternoon" title="Tarde">
+                                        <button type="button" class="icon-btn <?= $defaultTime === 'afternoon' ? 'active' : '' ?>" data-value="afternoon" title="Afternoon">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <path d="M17 18a5 5 0 0 0-10 0"></path>
                                                 <line x1="12" y1="2" x2="12" y2="9"></line>
                                                 <line x1="2" y1="18" x2="22" y2="18"></line>
                                                 <line x1="2" y1="21" x2="22" y2="21"></line>
                                             </svg>
-                                            <span>Tarde</span>
+                                            <span>Afternoon</span>
                                         </button>
-                                        <button type="button" class="icon-btn <?= $defaultTime === 'night' ? 'active' : '' ?>" data-value="night" title="Noche">
+                                        <button type="button" class="icon-btn <?= $defaultTime === 'night' ? 'active' : '' ?>" data-value="night" title="Night">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                                             </svg>
-                                            <span>Noche</span>
+                                            <span>Night</span>
                                         </button>
                                     </div>
                                     <input type="hidden" name="time_override" value="<?= $defaultTime ?>">
@@ -2248,7 +2287,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                                 </div>
 
                                 <div class="opt-group full-width" style="margin-top: 8px;">
-                                    <label>DISTANCIA DE CÁMARA</label>
+                                    <label>CAMERA DISTANCE</label>
                                     <div class="selector-icons distance-selector">
                                         <button type="button" class="icon-btn <?= ($selectorState['distance_override'] ?? 'medium') === 'close' ? 'active' : '' ?>" data-value="close" title="Acercar (Zoom In)">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2275,7 +2314,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                                     <label style="display:block; margin-bottom:6px;">ARTWORK SIZE</label>
                                     <div style="display: flex; align-items: center; gap: 12px;">
                                         <button type="button" class="size-adjust-btn size-minus" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; cursor: pointer; border: 1px solid var(--gal-border); background: var(--gal-surface-soft); border-radius: var(--gal-radius); color: var(--gal-ink);">-</button>
-                                        <span class="scale-badge neutral" style="font-family: monospace; font-size: 13px; font-weight: 600; min-width: 140px; text-align: center; display: inline-block;">Sin corrección (0%)</span>
+                                        <span class="scale-badge neutral" style="font-family: monospace; font-size: 13px; font-weight: 600; min-width: 140px; text-align: center; display: inline-block;">No correction (0%)</span>
                                         <button type="button" class="size-adjust-btn size-plus" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; cursor: pointer; border: 1px solid var(--gal-border); background: var(--gal-surface-soft); border-radius: var(--gal-radius); color: var(--gal-ink);">+</button>
                                     </div>
                                     <input type="hidden" name="size_override" value="<?= h((string)$defaultSizeOverride) ?>" class="premium-size-override">
@@ -2289,7 +2328,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
 
                         <?php if ($isAdmin): ?>
                             <details style="margin-top: 10px;">
-                                <summary style="font-size: 11px; font-weight: 600; cursor: pointer; color: var(--gal-muted);">Ver Prompt Técnico</summary>
+                                <summary style="font-size: 11px; font-weight: 600; cursor: pointer; color: var(--gal-muted);">View Technical Prompt</summary>
                                 <textarea style="width: 100%; min-height: 100px; font-size: 10px; font-family: monospace; background: var(--gal-bg); color: var(--gal-ink); margin-top: 6px;" readonly><?= h($prompt) ?></textarea>
                             </details>
                         <?php endif; ?>
@@ -2298,12 +2337,36 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
 
                 <!-- Row 2: Pending proposals -->
                 <?php if (!empty($pendingContexts)): ?>
+                    <?php foreach (array_chunk($pendingContexts, 3) as $batchIndex => $pendingBatch): ?>
+                    <?php
+                        $batchContextIds = array_values(array_map(
+                            fn(array $entry): string => (string)($entry['ctx']['id'] ?? ('ctx_' . ((int)$entry['i'] + 1))),
+                            $pendingBatch
+                        ));
+                        $batchHasActiveJob = false;
+                        foreach ($pendingBatch as $batchEntry) {
+                            $batchCtxId = (string)($batchEntry['ctx']['id'] ?? ('ctx_' . ((int)$batchEntry['i'] + 1)));
+                            foreach ($dbQueueJobs as $job) {
+                                if ((string)$job['context_id'] === $batchCtxId && in_array((string)$job['status'], ['queued', 'processing'], true)) {
+                                    $batchHasActiveJob = true;
+                                    break 2;
+                                }
+                            }
+                        }
+                    ?>
                     <div class="contexts-row-header" style="grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; margin-top: 20px; margin-bottom: 4px;">
-                        <span style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; color: var(--gal-muted);">Propuestas Pendientes</span>
+                        <button type="button"
+                                class="batch-generate-button"
+                                data-context-ids="<?= h(implode(',', $batchContextIds)) ?>"
+                                <?= $batchHasActiveJob ? 'disabled' : '' ?>
+                                style="width: auto; padding: 8px 12px; font-size: 10px; letter-spacing: .08em; border: 1px solid var(--gal-accent); background: var(--gal-accent); color: #fff; border-radius: var(--gal-radius); text-transform: uppercase; font-weight: 700; cursor: pointer;">
+                            <?= $batchHasActiveJob ? 'Generating...' : 'Generate Batch' ?>
+                        </button>
+                        <span style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; color: var(--gal-muted);">Pending Proposals · Batch <?= h($batchIndex + 2) ?></span>
                         <div style="flex: 1; height: 1px; background: var(--gal-border);"></div>
-                        <span style="font-size: 9px; color: var(--gal-muted); font-style: italic;">Contexto listo — generación manual o automática</span>
+                        <span style="font-size: 9px; color: var(--gal-muted); font-style: italic;">Ready for parallel generation</span>
                     </div>
-                    <?php foreach ($pendingContexts as $entry): ?>
+                    <?php foreach ($pendingBatch as $entry): ?>
                     <?php $i = $entry['i']; $ctx = $entry['ctx']; ?>
                     <?php
                         $prompt = $ctx['prompt'] ?? '';
@@ -2372,7 +2435,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                         if (in_array(($selectorState['human_override'] ?? ''), ['none', 'female_155', 'male_180'], true)) {
                             $defaultHuman = (string)$selectorState['human_override'];
                         }
-                        $defaultSizeOverride = form2_normalize_size_override((string)($selectorState['size_override'] ?? '0'));
+                        $defaultSizeOverride = report_normalize_size_override((string)($selectorState['size_override'] ?? '0'));
                     ?>
 
                     <div class="card <?= $existingMockup ? 'generated' : '' ?> <?= $isAutoPending ? 'auto-pending' : '' ?>" id="context-<?= h($ctxId) ?>" data-context-id="<?= h($ctxId) ?>" style="opacity: 0.85;">
@@ -2401,7 +2464,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
 
                         <?php if (!empty($ctx['why'])): ?>
                             <p class="why-rationale" style="font-size: 12px; line-height: 1.45; color: var(--gal-ink); margin: 12px 0 0 0; font-style: italic;">
-                                <strong>Razón curatorial:</strong> <?= h($ctx['why']) ?>
+                                <strong>Curatorial rationale:</strong> <?= h($ctx['why']) ?>
                             </p>
                         <?php endif; ?>
 
@@ -2414,7 +2477,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
 
                             <div class="customizer-options">
                                 <div class="opt-group">
-                                    <label>Ángulo de cámara</label>
+                                    <label>Camera Angle</label>
                                     <div class="selector-icons camera-selector">
                                         <button type="button" class="icon-btn <?= $defaultCamera === 'front' ? 'active' : '' ?>" data-value="front" title="Frontal">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="6" width="16" height="12" rx="1.5"></rect><line x1="12" y1="6" x2="12" y2="18" stroke-dasharray="2 2"></line></svg>
@@ -2432,23 +2495,23 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                                     <input type="hidden" name="camera_override" value="<?= $defaultCamera ?>">
                                 </div>
                                 <div class="opt-group">
-                                    <label>Clima / Iluminación</label>
+                                    <label>Atmosphere / Lighting</label>
                                     <div class="selector-icons time-selector">
-                                        <button type="button" class="icon-btn <?= $defaultTime === 'sunny_day' ? 'active' : '' ?>" data-value="sunny_day" title="Día soleado">
+                                        <button type="button" class="icon-btn <?= $defaultTime === 'sunny_day' ? 'active' : '' ?>" data-value="sunny_day" title="Sunny day">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                                            <span>Día soleado</span>
+                                            <span>Sunny day</span>
                                         </button>
-                                        <button type="button" class="icon-btn <?= $defaultTime === 'cloudy_day' ? 'active' : '' ?>" data-value="cloudy_day" title="Día nublado">
+                                        <button type="button" class="icon-btn <?= $defaultTime === 'cloudy_day' ? 'active' : '' ?>" data-value="cloudy_day" title="Cloudy day">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
-                                            <span>Día nublado</span>
+                                            <span>Cloudy day</span>
                                         </button>
-                                        <button type="button" class="icon-btn <?= $defaultTime === 'afternoon' ? 'active' : '' ?>" data-value="afternoon" title="Tarde">
+                                        <button type="button" class="icon-btn <?= $defaultTime === 'afternoon' ? 'active' : '' ?>" data-value="afternoon" title="Afternoon">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 18a5 5 0 0 0-10 0"></path><line x1="12" y1="2" x2="12" y2="9"></line><line x1="2" y1="18" x2="22" y2="18"></line><line x1="2" y1="21" x2="22" y2="21"></line></svg>
-                                            <span>Tarde</span>
+                                            <span>Afternoon</span>
                                         </button>
-                                        <button type="button" class="icon-btn <?= $defaultTime === 'night' ? 'active' : '' ?>" data-value="night" title="Noche">
+                                        <button type="button" class="icon-btn <?= $defaultTime === 'night' ? 'active' : '' ?>" data-value="night" title="Night">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                                            <span>Noche</span>
+                                            <span>Night</span>
                                         </button>
                                     </div>
                                     <input type="hidden" name="time_override" value="<?= $defaultTime ?>">
@@ -2472,7 +2535,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                                     <input type="hidden" name="human_override" value="<?= $defaultHuman ?>">
                                 </div>
                                 <div class="opt-group full-width" style="margin-top: 8px;">
-                                    <label>DISTANCIA DE CÁMARA</label>
+                                    <label>CAMERA DISTANCE</label>
                                     <div class="selector-icons distance-selector">
                                         <button type="button" class="icon-btn <?= ($selectorState['distance_override'] ?? 'medium') === 'close' ? 'active' : '' ?>" data-value="close" title="Acercar (Zoom In)">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
@@ -2489,7 +2552,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
                                     <label style="display:block; margin-bottom:6px;">ARTWORK SIZE</label>
                                     <div style="display: flex; align-items: center; gap: 12px;">
                                         <button type="button" class="size-adjust-btn size-minus" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; cursor: pointer; border: 1px solid var(--gal-border); background: var(--gal-surface-soft); border-radius: var(--gal-radius); color: var(--gal-ink);">-</button>
-                                        <span class="scale-badge neutral" style="font-family: monospace; font-size: 13px; font-weight: 600; min-width: 140px; text-align: center; display: inline-block;">Sin corrección (0%)</span>
+                                        <span class="scale-badge neutral" style="font-family: monospace; font-size: 13px; font-weight: 600; min-width: 140px; text-align: center; display: inline-block;">No correction (0%)</span>
                                         <button type="button" class="size-adjust-btn size-plus" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; cursor: pointer; border: 1px solid var(--gal-border); background: var(--gal-surface-soft); border-radius: var(--gal-radius); color: var(--gal-ink);">+</button>
                                     </div>
                                     <input type="hidden" name="size_override" value="<?= h((string)$defaultSizeOverride) ?>" class="premium-size-override">
@@ -2503,11 +2566,12 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
 
                         <?php if ($isAdmin): ?>
                             <details style="margin-top: 10px;">
-                                <summary style="font-size: 11px; font-weight: 600; cursor: pointer; color: var(--gal-muted);">Ver Prompt Técnico</summary>
+                                <summary style="font-size: 11px; font-weight: 600; cursor: pointer; color: var(--gal-muted);">View Technical Prompt</summary>
                                 <textarea style="width: 100%; min-height: 100px; font-size: 10px; font-family: monospace; background: var(--gal-bg); color: var(--gal-ink); margin-top: 6px;" readonly><?= h($prompt) ?></textarea>
                             </details>
                         <?php endif; ?>
                     </div>
+                    <?php endforeach; ?>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
@@ -2528,7 +2592,9 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
 <script>
     const isAdmin = <?= $isAdmin ? 'true' : 'false' ?>;
     const batchStatusUrl = 'mockup_batch_status.php?image=<?= rawurlencode(basename($imagePath)) ?>';
-    const form2BackUrl = <?= json_encode($form2BackUrl, JSON_UNESCAPED_SLASHES) ?>;
+    const batchGenerateUrl = 'generate_mockup_batch.php';
+    const batchImage = <?= json_encode(basename($imagePath), JSON_UNESCAPED_SLASHES) ?>;
+    const reportBackUrl = <?= json_encode($reportBackUrl, JSON_UNESCAPED_SLASHES) ?>;
 
     document.querySelectorAll('.admin-copy-mockup-prompt').forEach((button) => {
         button.addEventListener('click', async () => {
@@ -2561,21 +2627,21 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
             : '';
 
         const contextAnchor = data.context_id ? `#context-${encodeURIComponent(String(data.context_id))}` : '';
-        const backUrl = form2BackUrl + contextAnchor;
+        const backUrl = reportBackUrl + contextAnchor;
         const viewerUrl = data.viewer_url
             ? `${data.viewer_url}${String(data.viewer_url).includes('?') ? '&' : '?'}back=${encodeURIComponent(backUrl)}`
             : data.image_url;
 
         const mockupId = data.mockup_id || data.id;
         const deleteButton = mockupId
-            ? `<button type="button" class="btn-delete-mockup" data-mockup-id="${escapeAttribute(mockupId)}" title="Eliminar Mockup" style="background: transparent; border: none; color: var(--gal-danger); cursor: pointer; padding: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">
+            ? `<button type="button" class="btn-delete-mockup" data-mockup-id="${escapeAttribute(mockupId)}" title="Delete Mockup" style="background: transparent; border: none; color: var(--gal-danger); cursor: pointer; padding: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
                     <polyline points="3 6 5 6 21 6"></polyline>
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                     <line x1="10" y1="11" x2="10" y2="17"></line>
                     <line x1="14" y1="11" x2="14" y2="17"></line>
                 </svg>
-                Eliminar
+                Delete
                </button>`
             : '';
 
@@ -2714,13 +2780,13 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
         const updateBadge = (val) => {
             const numVal = parseInt(val, 10) || 0;
             if (numVal === 0) {
-                badge.textContent = 'Sin corrección (0%)';
+                badge.textContent = 'No correction (0%)';
                 badge.className = 'scale-badge neutral';
             } else if (numVal > 0) {
-                badge.textContent = `Más grande (+${numVal}%)`;
+                badge.textContent = `Larger (+${numVal}%)`;
                 badge.className = 'scale-badge positive';
             } else {
-                badge.textContent = `Más pequeña (${numVal}%)`;
+                badge.textContent = `Smaller (${numVal}%)`;
                 badge.className = 'scale-badge negative';
             }
             hiddenInput.value = numVal;
@@ -2767,6 +2833,89 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
 
     let batchPollingActive = Boolean(document.querySelector('[data-auto-status]'));
     let batchPollingTimer = null;
+
+    document.querySelectorAll('.batch-generate-button').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const contextIds = String(button.dataset.contextIds || '')
+                .split(',')
+                .map((value) => value.trim())
+                .filter(Boolean);
+
+            if (contextIds.length === 0) {
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = 'Generating...';
+
+            contextIds.forEach((contextId) => {
+                const card = document.querySelector(`.card[data-context-id="${CSS.escape(String(contextId))}"]`);
+                if (!card) {
+                    return;
+                }
+
+                const resultBox = card.querySelector('.inline-result');
+                const submitButton = card.querySelector('.inline-mockup-form button[type="submit"]');
+                card.classList.add('auto-pending');
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = 'Generating...';
+                }
+                if (resultBox) {
+                    resultBox.innerHTML = `
+                        <div class="inline-loader" data-auto-status="processing">
+                            <div class="spinner" aria-hidden="true"></div>
+                            <div class="inline-status">Generating mockup...</div>
+                        </div>
+                    `;
+                }
+            });
+
+            const formData = new FormData();
+            formData.append('image', batchImage);
+            contextIds.forEach((contextId) => formData.append('context_ids[]', contextId));
+
+            try {
+                const response = await fetch(batchGenerateUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const data = await response.json();
+                if (!response.ok || !data.ok) {
+                    throw new Error(data.error || 'Could not start this batch.');
+                }
+
+                batchPollingActive = true;
+                if (batchPollingTimer) {
+                    window.clearTimeout(batchPollingTimer);
+                }
+                batchPollingTimer = window.setTimeout(pollBatchStatus, 1000);
+            } catch (error) {
+                button.disabled = false;
+                button.textContent = 'Generate Batch';
+                contextIds.forEach((contextId) => {
+                    const card = document.querySelector(`.card[data-context-id="${CSS.escape(String(contextId))}"]`);
+                    if (!card) {
+                        return;
+                    }
+                    const resultBox = card.querySelector('.inline-result');
+                    const submitButton = card.querySelector('.inline-mockup-form button[type="submit"]');
+                    card.classList.remove('auto-pending');
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = 'Generate Mockup';
+                    }
+                    if (resultBox) {
+                        resultBox.innerHTML = `<div class="inline-status" style="color: var(--gal-danger); font-size: 11px; padding: 10px; text-align: center;">Error: ${escapeHtml(error.message)}</div>`;
+                    }
+                });
+            }
+        });
+    });
 
     async function pollBatchStatus() {
         if (!batchPollingActive) {
@@ -2860,7 +3009,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
         const deleteBtn = event.target.closest('.btn-delete-mockup');
         if (!deleteBtn) return;
 
-        if (!confirm('¿Seguro que desea eliminar este mockup?')) {
+        if (!confirm('Are you sure you want to delete this mockup?')) {
             return;
         }
 
@@ -2882,7 +3031,7 @@ $hasPublishing = $hasPublishingTitles || $hasPublishingDescriptions || $hasMarke
             if (data.ok) {
                 if (card) {
                     if (card.classList.contains('card')) {
-                        // Reset card UI in form2.php
+                        // Reset card UI in report.php
                         card.classList.remove('generated');
                         const resultBox = card.querySelector('.inline-result');
                         if (resultBox) {

@@ -76,6 +76,113 @@ class MockupBatchQueue
         return $created;
     }
 
+    public static function enqueueAndClaimContexts(int $artworkId, int $userId, string $rootFile, array $contextIds): array
+    {
+        $contextIds = array_values(array_unique(array_filter(array_map(
+            fn($id): string => trim((string)$id),
+            $contextIds
+        ))));
+
+        if ($contextIds === []) {
+            return [];
+        }
+
+        return Database::withBusyRetry(function () use ($artworkId, $userId, $rootFile, $contextIds): array {
+            $pdo = Database::connection();
+            Database::beginWriteTransaction($pdo);
+
+            try {
+                $claimedJobIds = [];
+                $rootFile = basename($rootFile);
+
+                foreach ($contextIds as $contextId) {
+                    $contextStmt = $pdo->prepare('
+                        SELECT id, prompt
+                        FROM mockup_contexts
+                        WHERE artwork_id = :artwork_id AND id = :id
+                        LIMIT 1
+                    ');
+                    $contextStmt->execute([
+                        'artwork_id' => $artworkId,
+                        'id' => $contextId,
+                    ]);
+                    $context = $contextStmt->fetch();
+
+                    if (!$context) {
+                        continue;
+                    }
+
+                    $existingMockup = $pdo->prepare('
+                        SELECT id FROM mockups
+                        WHERE user_id = :user_id AND artwork_file = :artwork_file AND context_id = :context_id
+                        LIMIT 1
+                    ');
+                    $existingMockup->execute([
+                        'user_id' => $userId,
+                        'artwork_file' => $rootFile,
+                        'context_id' => $contextId,
+                    ]);
+                    if ($existingMockup->fetch()) {
+                        continue;
+                    }
+
+                    $existingJob = $pdo->prepare('
+                        SELECT id, status
+                        FROM mockup_generation_jobs
+                        WHERE artwork_id = :artwork_id AND context_id = :context_id
+                        LIMIT 1
+                    ');
+                    $existingJob->execute([
+                        'artwork_id' => $artworkId,
+                        'context_id' => $contextId,
+                    ]);
+                    $job = $existingJob->fetch();
+                    $now = date('c');
+
+                    if ($job) {
+                        if ((string)$job['status'] === 'error') {
+                            $update = $pdo->prepare('
+                                UPDATE mockup_generation_jobs
+                                SET status = "processing", attempts = attempts + 1, error = NULL, updated_at = :updated_at
+                                WHERE id = :id
+                            ');
+                            $update->execute([
+                                'updated_at' => $now,
+                                'id' => (int)$job['id'],
+                            ]);
+                            $claimedJobIds[] = (int)$job['id'];
+                        }
+
+                        continue;
+                    }
+
+                    $insert = $pdo->prepare('
+                        INSERT INTO mockup_generation_jobs
+                            (user_id, artwork_id, artwork_file, context_id, prompt, status, attempts, created_at, updated_at)
+                        VALUES
+                            (:user_id, :artwork_id, :artwork_file, :context_id, :prompt, "processing", 1, :created_at, :updated_at)
+                    ');
+                    $insert->execute([
+                        'user_id' => $userId,
+                        'artwork_id' => $artworkId,
+                        'artwork_file' => $rootFile,
+                        'context_id' => $contextId,
+                        'prompt' => (string)$context['prompt'],
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+                    $claimedJobIds[] = (int)$pdo->lastInsertId();
+                }
+
+                $pdo->exec('COMMIT');
+                return $claimedJobIds;
+            } catch (Throwable $e) {
+                $pdo->exec('ROLLBACK');
+                throw $e;
+            }
+        }, 18);
+    }
+
     /**
      * Pre-claim all queued jobs for an artwork in a single transaction.
      * Returns an array of claimed job IDs. Each ID is then passed to a

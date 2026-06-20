@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $profile = ArtistProfile::findForUser((int)$user['id']);
+$isAdmin = Auth::isAdmin($user);
 
 function h($v): string
 {
@@ -26,6 +27,37 @@ function h($v): string
 function field_value(array $profile, string $field): string
 {
     return h($profile[$field] ?? '');
+}
+
+function artist_profile_admin_vars(string $field): array
+{
+    $directPlaceholders = [
+        'statement' => '{artist_statement}',
+        'visual_language' => '{visual_language}',
+        'recurring_themes' => '{recurring_symbols}',
+        'palette_notes' => '{preferred_atmospheres}',
+    ];
+
+    return [
+        'prompt_variable' => $directPlaceholders[$field] ?? '',
+        'included_in' => '{artist_profile_prompt}',
+    ];
+}
+
+function admin_vars_hint(bool $isAdmin, string $field): void
+{
+    if (!$isAdmin) {
+        return;
+    }
+
+    $vars = artist_profile_admin_vars($field);
+
+    echo '<small class="admin-vars">';
+    if ($vars['prompt_variable'] !== '') {
+        echo 'Prompt variable: ' . h($vars['prompt_variable']) . '<br>';
+    }
+    echo 'Included in: ' . h($vars['included_in']);
+    echo '</small>';
 }
 ?>
 <!doctype html>
@@ -97,6 +129,13 @@ function field_value(array $profile, string $field): string
             color: var(--muted);
             line-height: 1.3;
         }
+        .form-group small.admin-vars {
+            color: var(--accent);
+            font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+            font-size: 10px;
+            line-height: 1.45;
+            word-break: break-word;
+        }
         .submit-container {
             margin-top: 30px;
             display: flex;
@@ -128,7 +167,7 @@ function field_value(array $profile, string $field): string
             <div class="workspace-header">
                 <div>
                     <h1>Artist Profile</h1>
-                    <p>Configure the creative and commercial identity that shapes your catalog's metadata.</p>
+                    <p>Configure the artist context that shapes analysis, descriptions, and mockup guidance.</p>
                 </div>
                 <div class="topbar-actions">
                     <a class="button-link secondary" href="dashboard.php">Dashboard</a>
@@ -152,31 +191,37 @@ function field_value(array $profile, string $field): string
                         <div class="form-group">
                             <label>Artistic Name</label>
                             <input type="text" name="artist_name" value="<?= field_value($profile, 'artist_name') ?>" placeholder="e.g. Elena Rostova">
+                            <?php admin_vars_hint($isAdmin, 'artist_name'); ?>
                         </div>
 
                         <div class="form-group">
                             <label>Short Artist Bio</label>
                             <textarea name="short_bio" rows="3" placeholder="Brief biography focusing on career, studies and background..."><?= field_value($profile, 'short_bio') ?></textarea>
+                            <?php admin_vars_hint($isAdmin, 'short_bio'); ?>
                         </div>
 
                         <div class="form-group">
                             <label>Artistic Statement</label>
                             <textarea name="statement" rows="4" placeholder="Conceptual statement, intention, search or constant themes in your work..."><?= field_value($profile, 'statement') ?></textarea>
+                            <?php admin_vars_hint($isAdmin, 'statement'); ?>
                         </div>
 
                         <div class="form-group">
                             <label>Visual Language</label>
                             <textarea name="visual_language" rows="3" placeholder="e.g. Abstract expressionism, geometric structure, textures, organic lines..."><?= field_value($profile, 'visual_language') ?></textarea>
+                            <?php admin_vars_hint($isAdmin, 'visual_language'); ?>
                         </div>
 
                         <div class="form-group">
                             <label>Recurring Symbols / Motifs</label>
                             <textarea name="recurring_themes" rows="3" placeholder="e.g. Grids, thresholds, minerals, shadow play, anatomical forms..."><?= field_value($profile, 'recurring_themes') ?></textarea>
+                            <?php admin_vars_hint($isAdmin, 'recurring_themes'); ?>
                         </div>
 
                         <div class="form-group">
                             <label>Materials & Process</label>
                             <textarea name="materials" rows="3" placeholder="e.g. Layered acrylic, spatula incisions, wood panels, pigments..."><?= field_value($profile, 'materials') ?></textarea>
+                            <?php admin_vars_hint($isAdmin, 'materials'); ?>
                         </div>
                     </div>
 
@@ -188,63 +233,54 @@ function field_value(array $profile, string $field): string
                             <label>Preferred Atmospheres</label>
                             <textarea name="palette_notes" rows="4" placeholder="e.g. Nocturnal, mineral, warm, tense, serene, intimate, luminous, restrained..."><?= field_value($profile, 'palette_notes') ?></textarea>
                             <small>Shorthand description of lighting and color temp preferences.</small>
+                            <?php admin_vars_hint($isAdmin, 'palette_notes'); ?>
                         </div>
 
                         <div class="form-group">
                             <label>Preferred Mockup Styles</label>
                             <textarea name="preferred_contexts" rows="4" placeholder="e.g. Modernist galleries, architectural concrete rooms, townhouses, clean brick walls..."><?= field_value($profile, 'preferred_contexts') ?></textarea>
                             <small>Styles or spaces that best showcase your style.</small>
+                            <?php admin_vars_hint($isAdmin, 'preferred_contexts'); ?>
                         </div>
 
                         <div class="form-group">
                             <label>Excluded Mockup Contexts</label>
                             <textarea name="forbidden_contexts" rows="4" placeholder="e.g. Commercial kitchens, kids bedrooms, generic office spaces..."><?= field_value($profile, 'forbidden_contexts') ?></textarea>
                             <small>Environments the AI must avoid when creating mockups.</small>
+                            <?php admin_vars_hint($isAdmin, 'forbidden_contexts'); ?>
                         </div>
 
                         <div class="form-group">
                             <label>Forbidden Language / Exclusions</label>
                             <textarea name="commercial_positioning" rows="5" placeholder="List words or tones to avoid in curatorial texts (e.g. do not use marketing jargon, avoid academic over-complexity)..."><?= field_value($profile, 'commercial_positioning') ?></textarea>
                             <small>Words or phrases to exclude from AI copy generation.</small>
+                            <?php admin_vars_hint($isAdmin, 'commercial_positioning'); ?>
                         </div>
                     </div>
 
-                    <!-- Column 3: Commercial & Distribution -->
+                    <!-- Column 3: Audience & Voice -->
                     <div class="profile-card">
-                        <h3>Distribution & Marketing</h3>
+                        <h3>Audience & Voice</h3>
 
                         <div class="form-group">
                             <label>Tone of Voice</label>
                             <textarea name="tone_of_voice" rows="3" placeholder="e.g. Poetic, minimalist, elegant, conversational, technical, collectors-focused..."><?= field_value($profile, 'tone_of_voice') ?></textarea>
-                            <small>Guides the writing style of descriptions and captions.</small>
+                            <small>Guides the writing style of artwork descriptions.</small>
+                            <?php admin_vars_hint($isAdmin, 'tone_of_voice'); ?>
                         </div>
 
                         <div class="form-group">
-                            <label>Target Market</label>
-                            <textarea name="target_audience" rows="3" placeholder="e.g. Boutique hotels, corporate collectors, high-net-worth individuals, design agencies..."><?= field_value($profile, 'target_audience') ?></textarea>
-                            <small>Defines commercial copy hooks.</small>
+                            <label>Target Audience / Presentation Context</label>
+                            <textarea name="target_audience" rows="3" placeholder="e.g. Collectors, curators, architects, quiet interiors, institutional spaces..."><?= field_value($profile, 'target_audience') ?></textarea>
+                            <small>Defines who the work should speak to and where it should feel at home.</small>
+                            <?php admin_vars_hint($isAdmin, 'target_audience'); ?>
                         </div>
 
                         <div class="form-group">
                             <label>Conceptual Keywords</label>
                             <textarea name="conceptual_keywords" rows="3" placeholder="e.g. Silence, entropy, limit, construction, gravity..."><?= field_value($profile, 'conceptual_keywords') ?></textarea>
                             <small>Core philosophical terms guiding the metadata.</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Marketplace Strategy</label>
-                            <textarea name="marketplace_strategy" rows="4" placeholder="e.g. Emphasize physical detail and authenticity for Saatchi listings; suggest framing options and premium materials..."><?= field_value($profile, 'marketplace_strategy') ?></textarea>
-                            <small>Specific instructions for marketplaces copy.</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Social Media Strategy</label>
-                            <textarea name="social_strategy" rows="3" placeholder="e.g. Short, hook-oriented captions with storytelling elements..."><?= field_value($profile, 'social_strategy') ?></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Pinterest Strategy</label>
-                            <textarea name="pinterest_strategy" rows="3" placeholder="e.g. Board categories like 'Interior Design Inspiration', 'Modern Abstract Art'..."><?= field_value($profile, 'pinterest_strategy') ?></textarea>
+                            <?php admin_vars_hint($isAdmin, 'conceptual_keywords'); ?>
                         </div>
                     </div>
                 </div>

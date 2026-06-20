@@ -123,6 +123,7 @@ class GeminiArtworkAnalyzer implements ArtworkAnalyzerInterface
             $template
         );
 
+        $this->logCompiledPromptDebug($prompt, 'gemini_artwork_analysis');
 
         $parts = [
             $this->client->textPart($prompt),
@@ -189,6 +190,23 @@ class GeminiArtworkAnalyzer implements ArtworkAnalyzerInterface
         }
 
         return $profile;
+    }
+
+    private function logCompiledPromptDebug(string $prompt, string $context): void
+    {
+        $remaining = $this->remainingPromptPlaceholders($prompt);
+        Logger::log($context . ' compiled prompt after variable replacement:' . "\n" . $prompt, 'prompt_debug');
+        Logger::log(sprintf(
+            '%s unreplaced_placeholders=%s',
+            $context,
+            $remaining ? implode(', ', $remaining) : 'none'
+        ), $remaining ? 'warning' : 'prompt_debug');
+    }
+
+    private function remainingPromptPlaceholders(string $prompt): array
+    {
+        preg_match_all('/\{(?:artist_profile_prompt|artist_statement|visual_language|recurring_symbols|preferred_atmospheres)\}/', $prompt, $matches);
+        return array_values(array_unique($matches[0] ?? []));
     }
 
     private function fallbackProfile(array $metadata): array

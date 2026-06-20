@@ -93,9 +93,6 @@ class ArtistProfile
             'commercial_positioning' => 'Forbidden language',
             'conceptual_keywords' => 'Conceptual keywords',
             'tone_of_voice' => 'Tone of voice',
-            'marketplace_strategy' => 'Marketplace strategy',
-            'social_strategy' => 'Social media strategy',
-            'pinterest_strategy' => 'Pinterest strategy',
         ];
 
         foreach ($fields as $key => $label) {

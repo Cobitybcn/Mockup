@@ -8,13 +8,13 @@ header('Content-Type: application/json; charset=utf-8');
 $currentUser = Auth::user();
 if (!$currentUser) {
     http_response_code(401);
-    echo json_encode(['ok' => false, 'error' => 'No autorizado. Por favor inicie sesión.']);
+    echo json_encode(['ok' => false, 'error' => 'Unauthorized. Please sign in.']);
     exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['ok' => false, 'error' => 'Método no permitido.']);
+    echo json_encode(['ok' => false, 'error' => 'Method not allowed.']);
     exit;
 }
 

@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $image = trim((string)($_POST['image'] ?? ''));
 
 if ($image === '') {
-    fail_json('Falta el parámetro image.');
+    fail_json('Missing image parameter.');
 }
 
 $safeImage   = basename($image);
@@ -51,7 +51,7 @@ $imageBase   = pathinfo($safeImage, PATHINFO_FILENAME);
 $metaPath    = RESULTS_DIR . DIRECTORY_SEPARATOR . $imageBase . '.meta.json';
 
 if (!is_file($imagePath)) {
-    fail_json('No se encontró la imagen raíz: ' . $safeImage, 404);
+    fail_json('Root image not found: ' . $safeImage, 404);
 }
 
 // Verificar ownership
@@ -64,7 +64,7 @@ if (is_file($metaPath)) {
 
 // Verificar que el modo real esté activo
 if (!ProviderSettings::isRealMode() || !ProviderSettings::allowRealApi()) {
-    fail_json('El re-análisis requiere que el modo real de API esté activo (APP_MODE=gemini, ALLOW_REAL_API=true).');
+    fail_json('Re-analysis requires real API mode to be enabled (APP_MODE=gemini, ALLOW_REAL_API=true).');
 }
 
 // Cargar metadatos de la obra
@@ -83,7 +83,7 @@ $stmtArtwork->execute([
 $artwork = $stmtArtwork->fetch();
 
 if (!$artwork) {
-    fail_json('No se encontró la obra en la base de datos.', 404);
+    fail_json('Artwork was not found in the database.', 404);
 }
 
 $artworkId = (int)$artwork['id'];
@@ -145,6 +145,13 @@ try {
                 ->execute($oldAnalysisIds);
         }
 
+        $deletedByArtwork = $pdo->prepare("DELETE FROM mockup_contexts WHERE artwork_id = :artwork_id");
+        $deletedByArtwork->execute(['artwork_id' => $artworkId]);
+        Logger::log(
+            'Re-analysis cleared old mockup_contexts for artwork_id=' . $artworkId . ', rows=' . $deletedByArtwork->rowCount(),
+            'analysis_debug'
+        );
+
         $pdo->prepare("DELETE FROM artwork_analysis WHERE artwork_id = :artwork_id")
             ->execute(['artwork_id' => $artworkId]);
 
@@ -166,5 +173,5 @@ try {
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (Throwable $e) {
     Logger::log("Error en re-análisis de $safeImage: " . $e->getMessage(), 'error');
-    fail_json('Error durante el re-análisis: ' . $e->getMessage(), 500);
+    fail_json('Error during re-analysis: ' . $e->getMessage(), 500);
 }

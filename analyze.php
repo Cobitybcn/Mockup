@@ -166,6 +166,13 @@ try {
                         ->execute($oldAnalysisIds);
                 }
 
+                $deletedByArtwork = $db->prepare("DELETE FROM mockup_contexts WHERE artwork_id = :artwork_id");
+                $deletedByArtwork->execute(['artwork_id' => $artworkId]);
+                Logger::log(
+                    'Analysis cleared old mockup_contexts for artwork_id=' . $artworkId . ', rows=' . $deletedByArtwork->rowCount(),
+                    'analysis_debug'
+                );
+
                 $db->prepare("DELETE FROM artwork_analysis WHERE artwork_id = :artwork_id")
                     ->execute(['artwork_id' => $artworkId]);
 

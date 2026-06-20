@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 // Simple dotenv loader
+$APP_ENV_VALUES = [];
 $envPath = __DIR__ . DIRECTORY_SEPARATOR . '.env';
 if (is_file($envPath)) {
     $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -18,7 +19,7 @@ if (is_file($envPath)) {
                 if (preg_match('/^"(.*)"$/', $value, $matches) || preg_match('/^\'(.*)\'$/', $value, $matches)) {
                     $value = $matches[1];
                 }
-                putenv("$name=$value");
+                $APP_ENV_VALUES[$name] = $value;
                 $_ENV[$name] = $value;
                 $_SERVER[$name] = $value;
             }
@@ -28,6 +29,20 @@ if (is_file($envPath)) {
 
 function app_env(string $key, string $default = ''): string
 {
+    global $APP_ENV_VALUES;
+
+    if (array_key_exists($key, $APP_ENV_VALUES)) {
+        return trim((string)$APP_ENV_VALUES[$key]);
+    }
+
+    if (array_key_exists($key, $_ENV)) {
+        return trim((string)$_ENV[$key]);
+    }
+
+    if (array_key_exists($key, $_SERVER)) {
+        return trim((string)$_SERVER[$key]);
+    }
+
     $value = getenv($key);
     return $value === false ? $default : trim((string)$value);
 }

@@ -1086,7 +1086,7 @@ function h($v): string {
                         <details class="admin-prompt-job" <?= $promptJobId === $job ? 'open' : '' ?>>
                             <summary><?= h($promptJobId) ?> - <?= h((string)($promptJob['status'] ?? 'unknown')) ?></summary>
                             <div class="admin-prompt-meta">
-                                <span>Archivo: <?= h((string)($promptJob['main_file'] ?? '')) ?></span>
+                                <span>File: <?= h((string)($promptJob['main_file'] ?? '')) ?></span>
                                 <span>Medidas: <?= h($dims) ?></span>
                                 <span>Fuente: <?= h((string)($promptJob['prompt_source'] ?? '')) ?></span>
                             </div>

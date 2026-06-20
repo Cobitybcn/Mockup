@@ -23,6 +23,8 @@ $adminPromptKeys = [
     'artwork_analysis_prompt',
     'root_artwork_count',
     'mockup_context_count',
+    'social_video_selector_prompt',
+    'social_video_director_prompt',
 ];
 $labels = array_intersect_key(PromptSettings::labels(), array_flip($adminPromptKeys));
 $defaultDirectives = PromptSettings::defaultDirectives();

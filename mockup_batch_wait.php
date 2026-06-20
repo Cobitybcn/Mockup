@@ -93,7 +93,7 @@ try {
 }
 
 if ($mockupCount <= 0) {
-    $mockupCount = MockupBatchQueue::INITIAL_BATCH_LIMIT;
+    $mockupCount = ProviderSettings::mockupWorkerCount();
 }
 
 $albumSlides = array_values($albumSlides);
@@ -947,18 +947,18 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
 <div class="wait-wrap">
     <main class="wait-panel">
         <div class="wait-header-row">
-            <h1 class="wait-title" id="waitTitle">Generando lote de Mockups</h1>
+            <h1 class="wait-title" id="waitTitle">Generating Mockup Batch</h1>
             <div class="wait-bar" aria-hidden="true">
                 <div class="wait-fill" id="waitFill"></div>
             </div>
-            <div class="wait-meta" id="waitMeta">Iniciando generación automática...</div>
+            <div class="wait-meta" id="waitMeta">Starting automatic generation...</div>
             <div class="wait-actions">
-                <a href="<?= h($reportUrl) ?>">Abrir report ahora</a>
+                <a href="<?= h($reportUrl) ?>">Open report now</a>
             </div>
         </div>
     </main>
 
-    <h2 class="proposals-heading">Propuestas de Contexto Curatorial</h2>
+    <h2 class="proposals-heading">Curatorial Context Proposals</h2>
     <div class="proposals-grid" id="proposalsGrid">
         <!-- Renders dynamically with poll() -->
     </div>
@@ -1018,7 +1018,7 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
 
         const textQueue = [];
         
-        const spaceText = `${prop.space_type}. Materiales: ${prop.materials.join(', ')}. Iluminación: ${prop.lighting}.`;
+        const spaceText = `${prop.space_type}. Materials: ${prop.materials.join(', ')}. Lighting: ${prop.lighting}.`;
         const descEl = card.querySelector('.prop-desc-content');
         if (descEl) {
             textQueue.push({ el: descEl, text: spaceText });
@@ -1042,14 +1042,14 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
 
         proposals.forEach((prop, idx) => {
             let card = document.getElementById(`prop-card-${prop.id}`);
-            const isInitialBatch = idx < 3;
+            const job = (jobs || []).find(j => String(j.context_id) === String(prop.id));
+            const isInitialBatch = Boolean(job);
             
             // Find job status if initial batch
             let status = 'optional';
             let label = 'Opcional';
             if (isInitialBatch) {
-                const job = (jobs || []).find(j => String(j.context_id) === String(prop.id));
-                status = job ? String(job.status) : 'queued';
+                status = String(job.status);
                 label = matchStatusLabel(status);
             }
 
@@ -1059,18 +1059,18 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
                 card.className = 'proposal-card';
                 card.innerHTML = `
                     <div class="proposal-meta-row">
-                        <span class="proposal-kicker">Propuesta ${idx + 1}</span>
+                        <span class="proposal-kicker">Proposal ${idx + 1}</span>
                         <span class="proposal-badge ${status}" id="badge-${prop.id}">${label}</span>
                     </div>
                     <h3>${escapeHtml(prop.context_name)}</h3>
                     
                     <p class="proposal-desc">
-                        <strong>Espacio y Atmósfera</strong>
+                        <strong>Space and Atmosphere</strong>
                         <span class="prop-desc-content" style="opacity: 0;">Cargando...</span>
                     </p>
                     
                     <div class="proposal-reason-box">
-                        <strong>Justificación Curatorial</strong>
+                        <strong>Curatorial Rationale</strong>
                         <span class="prop-why-content" style="opacity: 0;">Cargando...</span>
                     </div>
                 `;
@@ -1098,7 +1098,7 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
     function matchStatus(status) {
         switch (status) {
             case 'queued': return 'En cola';
-            case 'processing': return 'Generando';
+            case 'processing': return 'Generating';
             case 'done': return 'Listo';
             case 'error': return 'Error';
             default: return 'En espera';
@@ -1196,17 +1196,27 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
             const total = Number(data.total || 0);
             const done = Number(data.done || 0);
             const error = Number(data.error || 0);
-            const pending = Number(data.queued || 0) + Number(data.processing || 0);
+            const queued = Number(data.queued || 0);
+            const processing = Number(data.processing || 0);
+            const pending = queued + processing;
             const complete = done + error;
             const pct = total > 0 ? Math.round((complete / total) * 100) : 0;
+            const statusParts = [
+                `${done} listo${done === 1 ? '' : 's'}`,
+                `${processing} generando`,
+                `${queued} en cola`,
+            ];
+            if (error > 0) {
+                statusParts.push(`${error} con error${error === 1 ? '' : 'es'}`);
+            }
 
             fill.style.width = `${pct}%`;
             if (waitTitle && total > 0) {
-                waitTitle.textContent = `Generando lote de Mockups (${complete} de ${total} listos)`;
+                waitTitle.textContent = `Generating Mockup Batch (${complete} of ${total} processed)`;
             }
             meta.textContent = total > 0
-                ? `${complete} de ${total} mockups listos${error > 0 ? `, ${error} con errores` : ''}.`
-                : 'Iniciando generación automática...';
+                ? `${statusParts.join(' · ')}. Total: ${total}.`
+                : 'Starting automatic generation...';
 
             if (data.proposals) {
                 renderProposals(data.proposals, data.jobs);

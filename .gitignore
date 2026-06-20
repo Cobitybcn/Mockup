@@ -19,3 +19,11 @@ app/Services/__pycache__/
 # Temp files
 wmi_outer_err.txt
 test.txt
+
+# Generated AI analysis files
+analysis/*.analysis-prompt.txt
+analysis/*.analysis-raw.txt
+analysis/*.analysis.json
+
+# Generated mockup prompts
+mockup-prompts/*.txt

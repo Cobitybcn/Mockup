@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 class ProviderSettings
 {
+    private const MAX_MOCKUP_WORKERS = 6;
+
     private static array $settings = [];
     private static bool $loaded = false;
 
@@ -28,6 +30,12 @@ class ProviderSettings
             'openai_image_quality' => $input['openai_image_quality'] ?? '',
             'openai_image_size' => $input['openai_image_size'] ?? '',
             'mockup_worker_count' => $input['mockup_worker_count'] ?? '',
+            'social_video_veo_enabled' => isset($input['social_video_veo_enabled']) ? '1' : '0',
+            'social_video_veo_model' => $input['social_video_veo_model'] ?? '',
+            'social_video_veo_region' => $input['social_video_veo_region'] ?? '',
+            'social_video_veo_resolution' => $input['social_video_veo_resolution'] ?? '',
+            'social_video_veo_storage_uri' => $input['social_video_veo_storage_uri'] ?? '',
+            'ffmpeg_binary_path' => $input['ffmpeg_binary_path'] ?? '',
         ]);
 
         foreach (['openai_api_key', 'gemini_api_key'] as $key) {
@@ -67,6 +75,12 @@ class ProviderSettings
             'openai_image_quality' => self::openAIImageQuality(),
             'openai_image_size' => self::openAIImageSize(),
             'mockup_worker_count' => (string)self::mockupWorkerCount(),
+            'social_video_veo_enabled' => self::socialVideoVeoEnabled() ? '1' : '0',
+            'social_video_veo_model' => self::socialVideoVeoModel(),
+            'social_video_veo_region' => self::socialVideoVeoRegion(),
+            'social_video_veo_resolution' => self::socialVideoVeoResolution(),
+            'social_video_veo_storage_uri' => self::socialVideoVeoStorageUri(),
+            'ffmpeg_binary_path' => self::ffmpegBinaryPath(),
         ];
     }
 
@@ -144,6 +158,36 @@ class ProviderSettings
         );
     }
 
+    public static function socialVideoVeoEnabled(): bool
+    {
+        return self::truthy(self::value('social_video_veo_enabled', '0'));
+    }
+
+    public static function socialVideoVeoModel(): string
+    {
+        return self::value('social_video_veo_model', 'veo-3.1-lite-generate-001');
+    }
+
+    public static function socialVideoVeoRegion(): string
+    {
+        return self::value('social_video_veo_region', 'us-central1');
+    }
+
+    public static function socialVideoVeoResolution(): string
+    {
+        return self::value('social_video_veo_resolution', '1080p');
+    }
+
+    public static function socialVideoVeoStorageUri(): string
+    {
+        return self::value('social_video_veo_storage_uri', 'gs://artwork-curator-veo-output');
+    }
+
+    public static function ffmpegBinaryPath(): string
+    {
+        return self::value('ffmpeg_binary_path', '');
+    }
+
     private static function value(string $key, string $fallback): string
     {
         self::load();
@@ -211,6 +255,10 @@ class ProviderSettings
             $clean['mockup_worker_count'] = (string)self::normalizeWorkerCount($clean['mockup_worker_count']);
         }
 
+        if (isset($clean['social_video_veo_enabled'])) {
+            $clean['social_video_veo_enabled'] = self::truthy($clean['social_video_veo_enabled']) ? '1' : '0';
+        }
+
         return $clean;
     }
 
@@ -228,6 +276,12 @@ class ProviderSettings
             'openai_image_quality',
             'openai_image_size',
             'mockup_worker_count',
+            'social_video_veo_enabled',
+            'social_video_veo_model',
+            'social_video_veo_region',
+            'social_video_veo_resolution',
+            'social_video_veo_storage_uri',
+            'ffmpeg_binary_path',
         ];
     }
 
@@ -273,6 +327,6 @@ class ProviderSettings
     private static function normalizeWorkerCount(string $value): int
     {
         $workers = (int)trim($value);
-        return max(1, min(8, $workers));
+        return max(1, min(self::MAX_MOCKUP_WORKERS, $workers));
     }
 }

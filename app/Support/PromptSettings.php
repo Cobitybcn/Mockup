@@ -176,6 +176,8 @@ TEXT;
             'mockup_final_request' => '',
             'mockup_context_count' => '6',
             'root_artwork_count' => '3',
+            'social_video_selector_prompt' => '',
+            'social_video_director_prompt' => '',
         ];
     }
 
@@ -183,11 +185,11 @@ TEXT;
     {
         return [
             'root_artwork_rules' => [
-                'title' => 'Imagen raiz',
+                'title' => 'Root Image',
                 'help' => 'Reglas adicionales para Formulario 1. Usar para ajustar fidelidad, luz, bastidor y preservacion.',
             ],
             'artwork_analysis_prompt' => [
-                'title' => 'Análisis de Obra (Sugerencias y Fichas)',
+                'title' => 'Artwork Analysis (Suggestions and Sheets)',
                 'help' => 'Instrucciones para que la IA analice la obra y sugiera contextos. Mantener los marcadores {placeholder} y la estructura de salida JSON intacta.',
             ],
             'artwork_analysis_layer_a' => [
@@ -208,7 +210,7 @@ TEXT;
             ],
             'mockup_scale_rules' => [
                 'title' => 'Escala y proporciones',
-                'help' => 'Reglas adicionales para controlar tamaño real de obra, figura humana, muebles y arquitectura.',
+                'help' => 'Additional rules to control real artwork size, human figures, furniture, and architecture.',
             ],
             'mockup_negative_rules' => [
                 'title' => 'Prohibiciones visuales',
@@ -219,8 +221,8 @@ TEXT;
                 'help' => 'Reglas finales para integracion, sombras, contexto, sofisticacion y estilo comercial.',
             ],
             'mockup_camera_rules' => [
-                'title' => 'Cámara y ángulos de toma',
-                'help' => 'Reglas sobre qué ángulos de cámara utilizar y cuáles evitar para la generación de mockups.',
+                'title' => 'Camera and Shot Angles',
+                'help' => 'Rules covering which camera angles to use and avoid for mockup generation.',
             ],
             'mockup_rendering_rules' => [
                 'title' => 'Render tecnico del mockup',
@@ -239,6 +241,14 @@ TEXT;
                 'title' => 'Cantidad de obras raiz',
                 'help' => 'Numero de versiones de obra raiz generadas en Formulario 1 antes de elegir la definitiva. Recomendado: 3.',
                 'type' => 'number',
+            ],
+            'social_video_selector_prompt' => [
+                'title' => 'Social Video Selector Prompt',
+                'help' => 'Controls Stage 1 selection, sequencing, selected title, and visible justification. It must not write camera direction or segment scripts.',
+            ],
+            'social_video_director_prompt' => [
+                'title' => 'Social Video Director Prompt',
+                'help' => 'Controls Stage 2 multi-segment video concepts, continuity, conservative-to-cinematic direction, and priority weighting.',
             ],
         ];
     }

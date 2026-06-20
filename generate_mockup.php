@@ -478,7 +478,7 @@ if (wants_json_response()) {
 $creditDeducted = false;
 if (ProviderSettings::allowRealApi()) {
     if (!Database::deductCredit((int)$currentUser['id'], 'mockup_generation:' . $contextId)) {
-        fail_page('No tienes créditos suficientes para generar un mockup. Contacta al administrador.');
+        fail_page('You do not have enough credits to generate a mockup. Please contact the administrator.');
     }
     $creditDeducted = true;
 }

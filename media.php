@@ -4,7 +4,12 @@ declare(strict_types=1);
 require_once __DIR__ . '/app/bootstrap.php';
 
 $user = Auth::requireUser();
-$file = basename((string)($_GET['file'] ?? ''));
+$file = str_replace('\\', '/', trim((string)($_GET['file'] ?? '')));
+$file = ltrim($file, '/');
+$isSocialVideo = preg_match('#^social-video/[A-Za-z0-9._-]+\.mp4$#', $file) === 1;
+if (!$isSocialVideo) {
+    $file = basename($file);
+}
 $download = isset($_GET['download']) && $_GET['download'] === '1';
 
 if ($file === '') {
@@ -15,20 +20,24 @@ if ($file === '') {
 $path = '';
 if (str_ends_with($file, '.analysis.json')) {
     $path = ANALYSIS_DIR . DIRECTORY_SEPARATOR . $file;
-} elseif (str_starts_with($file, 'mockup_prompt_') && str_ends_with($file, '.txt')) {
+} elseif (str_ends_with($file, '.txt') && is_file(PROMPTS_DIR . DIRECTORY_SEPARATOR . $file)) {
     $path = PROMPTS_DIR . DIRECTORY_SEPARATOR . $file;
 } else {
-    $path = RESULTS_DIR . DIRECTORY_SEPARATOR . $file;
+    $path = RESULTS_DIR . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $file);
 }
 
 if (!is_file($path)) {
     http_response_code(404);
-    exit('Archivo no encontrado.');
+    exit('File not found.');
 }
 
 if (!user_can_access_result_file((int)$user['id'], $file)) {
     http_response_code(403);
     exit('No tienes acceso a este archivo.');
+}
+
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
 }
 
 $mime = @mime_content_type($path) ?: 'application/octet-stream';
@@ -79,6 +88,39 @@ function user_can_access_result_file(int $userId, string $file): bool
 {
     $pdo = Database::connection();
 
+    if (preg_match('#^social-video/[A-Za-z0-9._-]+\.mp4$#', $file) === 1) {
+        $stmt = $pdo->prepare('SELECT 1 FROM social_video_workflows WHERE user_id = :user_id AND video_url = :video_url LIMIT 1');
+        $stmt->execute(['user_id' => $userId, 'video_url' => $file]);
+        return (bool)$stmt->fetchColumn();
+    }
+
+    $file = basename($file);
+
+    if (user_can_access_exact_result_file($pdo, $userId, $file)) {
+        return true;
+    }
+
+    $canonicalFile = canonical_generated_file($file);
+    if ($canonicalFile !== $file && user_can_access_exact_result_file($pdo, $userId, $canonicalFile)) {
+        return true;
+    }
+
+    if (str_ends_with($file, '.analysis.json')) {
+        $rootFile = preg_replace('/\.analysis\.json$/', '.png', $file);
+        $stmt = $pdo->prepare('SELECT 1 FROM artworks WHERE user_id = :user_id AND root_file = :file LIMIT 1');
+        $stmt->execute([
+            'user_id' => $userId,
+            'file' => $rootFile,
+        ]);
+
+        return (bool)$stmt->fetchColumn();
+    }
+
+    return false;
+}
+
+function user_can_access_exact_result_file(PDO $pdo, int $userId, string $file): bool
+{
     if (preg_match('/_(job_\d+_\d+)_v\d+\./', $file, $matches)) {
         $jobId = $matches[1];
         $stmt = $pdo->prepare('SELECT 1 FROM artworks WHERE user_id = :user_id AND job_id = :job_id LIMIT 1');
@@ -101,13 +143,15 @@ function user_can_access_result_file(int $userId, string $file): bool
         return true;
     }
 
-    $stmt = $pdo->prepare('
+    $fileColumn = str_ends_with($file, '.txt') ? 'prompt_file' : 'mockup_file';
+
+    $stmt = $pdo->prepare("
         SELECT 1
         FROM mockups
         WHERE user_id = :user_id
-        AND (mockup_file = :file OR prompt_file = :file)
+        AND {$fileColumn} = :file
         LIMIT 1
-    ');
+    ");
     $stmt->execute([
         'user_id' => $userId,
         'file' => $file,
@@ -117,16 +161,22 @@ function user_can_access_result_file(int $userId, string $file): bool
         return true;
     }
 
-    if (str_ends_with($file, '.analysis.json')) {
-        $rootFile = preg_replace('/\.analysis\.json$/', '.png', $file);
-        $stmt = $pdo->prepare('SELECT 1 FROM artworks WHERE user_id = :user_id AND root_file = :file LIMIT 1');
-        $stmt->execute([
-            'user_id' => $userId,
-            'file' => $rootFile,
-        ]);
+    $stmt = $pdo->prepare("
+        SELECT 1
+        FROM mockup_generation_jobs
+        WHERE user_id = :user_id
+        AND {$fileColumn} = :file
+        LIMIT 1
+    ");
+    $stmt->execute([
+        'user_id' => $userId,
+        'file' => $file,
+    ]);
 
-        return (bool)$stmt->fetchColumn();
-    }
+    return (bool)$stmt->fetchColumn();
+}
 
-    return false;
+function canonical_generated_file(string $file): string
+{
+    return (string)preg_replace('/\.original(?=\.[^.]+$)/', '', $file, 1);
 }

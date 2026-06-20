@@ -84,7 +84,7 @@ try {
     $artistProfile = ArtistProfile::findForUser((int)$status['user_id']);
     
     $metadata = [
-        'title' => $status['title'] ?? 'Sin título',
+        'title' => $status['title'] ?? 'Untitled',
         'artist_notes' => $status['artist_notes'] ?? '',
         'region' => trim((string)($artistProfile['preferred_regions'] ?? '')),
         'artist_profile' => $artistProfile,
@@ -127,7 +127,7 @@ try {
                 'artwork_function' => 'statement piece',
                 'suggested_audience' => ['collectors', 'architects'],
                 'commercial_positioning' => 'premium',
-                'one_line_curatorial_read' => 'Estudio de geometría y calma mineral (Mock).',
+                'one_line_curatorial_read' => 'A study in geometry and mineral calm (Mock).',
                 'style_summary' => 'Geometric abstract artwork (Mock).',
                 'seasonal_strategy' => [
                     'primary_season' => 'neutral'
@@ -159,7 +159,7 @@ try {
                     'lighting' => 'warm sunset light',
                     'camera_angle' => 'frontal view',
                     'human_presence' => 'optional standing male figure 1.80m',
-                    'curatorial_reason' => 'La madera y el cuero aportan sofisticación y escala real.',
+                    'curatorial_reason' => 'Wood and leather bring sophistication and a sense of real scale.',
                     'commercial_reason' => 'Ideal para entornos corporativos o estudios privados.'
                 ]
             ]
@@ -217,7 +217,7 @@ try {
         'id' => $artworkId
     ]);
 
-    $initialMockupLimit = 3;
+    $initialMockupLimit = ProviderSettings::mockupWorkerCount();
     $queuedMockups = MockupBatchQueue::enqueueInitialBatch(
         $artworkId,
         (int)$status['user_id'],

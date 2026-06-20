@@ -1107,7 +1107,7 @@ function h($v): string {
         <aside class="admin-overlay-prompts" aria-label="Admin mockup prompts while analyzing">
             <h3 data-typewriter data-typewriter-speed="24" data-typewriter-delay="220">Admin - Mockup Prompts</h3>
             <p data-typewriter data-typewriter-speed="12" data-typewriter-delay="820">Los textos apareceran aca apenas el analisis termine de crear las propuestas.</p>
-            <div class="admin-overlay-empty" id="adminOverlayPromptEmpty" data-typewriter data-typewriter-speed="14" data-typewriter-delay="1560">Aun no hay prompts de mockups. Generando analisis y contextos...</div>
+            <div class="admin-overlay-empty" id="adminOverlayPromptEmpty" data-typewriter data-typewriter-speed="14" data-typewriter-delay="1560">No mockup prompts yet. Generating analysis and contexts...</div>
             <div id="adminOverlayPromptList"></div>
         </aside>
     <?php endif; ?>

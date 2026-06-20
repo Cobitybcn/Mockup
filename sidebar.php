@@ -7,12 +7,59 @@ $sidebarIsAdmin = $sidebarUser ? Auth::isAdmin($sidebarUser) : false;
 
 $currentPage = basename($_SERVER['PHP_SELF']);
 $queryString = $_SERVER['QUERY_STRING'] ?? '';
+$currentImageParam = basename((string)($_GET['image'] ?? $_POST['image'] ?? ''));
+$currentArtworkIdParam = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
+$sidebarContextArtworkId = 0;
+$sidebarContextRootFile = '';
+
+if ($sidebarUser) {
+    try {
+        $db = Database::connection();
+        if ($currentImageParam !== '') {
+            $stmt = $db->prepare("
+                SELECT id, root_file
+                FROM artworks
+                WHERE user_id = :user_id
+                AND root_file = :root_file
+                LIMIT 1
+            ");
+            $stmt->execute([
+                'user_id' => (int)$sidebarUser['id'],
+                'root_file' => $currentImageParam,
+            ]);
+            $contextArtwork = $stmt->fetch();
+        } elseif ($currentArtworkIdParam > 0) {
+            $stmt = $db->prepare("
+                SELECT id, root_file
+                FROM artworks
+                WHERE user_id = :user_id
+                AND id = :id
+                LIMIT 1
+            ");
+            $stmt->execute([
+                'user_id' => (int)$sidebarUser['id'],
+                'id' => $currentArtworkIdParam,
+            ]);
+            $contextArtwork = $stmt->fetch();
+        } else {
+            $contextArtwork = null;
+        }
+
+        if ($contextArtwork) {
+            $sidebarContextArtworkId = (int)($contextArtwork['id'] ?? 0);
+            $sidebarContextRootFile = basename((string)($contextArtwork['root_file'] ?? ''));
+        }
+    } catch (Throwable $e) {
+        // Fallback silently if DB is not ready
+    }
+}
 
 // Step active states
 $step1Active = ($currentPage === 'artwork_new.php');
 $step2Active = ($currentPage === 'root_select.php' || $currentPage === 'waiting.php');
 $step3Active = ($currentPage === 'report.php');
 $step4Active = ($currentPage === 'artwork.php' || $currentPage === 'publish.php');
+$step5Active = ($currentPage === 'social_video.php');
 
 // Menu active states
 $dashboardActive = ($currentPage === 'dashboard.php');
@@ -56,12 +103,12 @@ if ($step2Disabled && $sidebarUser) {
 $step3Url = '#';
 $step3Disabled = true;
 
-if ($currentPage === 'report.php') {
-    $imageParam = $_GET['image'] ?? $_POST['image'] ?? '';
-    if ($imageParam !== '') {
-        $step3Url = 'report.php?image=' . urlencode(basename($imageParam));
-        $step3Disabled = false;
-    }
+if ($sidebarContextRootFile !== '') {
+    $step3Url = 'report.php?image=' . urlencode($sidebarContextRootFile);
+    $step3Disabled = false;
+} elseif ($currentPage === 'report.php' && $currentImageParam !== '') {
+    $step3Url = 'report.php?image=' . urlencode($currentImageParam);
+    $step3Disabled = false;
 }
 
 if ($step3Disabled && $sidebarUser) {
@@ -83,12 +130,12 @@ if ($step3Disabled && $sidebarUser) {
 $step4Url = '#';
 $step4Disabled = true;
 
-if ($currentPage === 'artwork.php') {
-    $artworkId = (int)($_GET['id'] ?? 0);
-    if ($artworkId > 0) {
-        $step4Url = 'artwork.php?id=' . urlencode((string)$artworkId);
-        $step4Disabled = false;
-    }
+if ($sidebarContextArtworkId > 0) {
+    $step4Url = 'artwork.php?id=' . urlencode((string)$sidebarContextArtworkId);
+    $step4Disabled = false;
+} elseif (($currentPage === 'artwork.php' || $currentPage === 'publish.php') && $currentArtworkIdParam > 0) {
+    $step4Url = 'artwork.php?id=' . urlencode((string)$currentArtworkIdParam);
+    $step4Disabled = false;
 }
 
 if ($step4Disabled && $sidebarUser) {
@@ -114,6 +161,16 @@ if ($step4Disabled && $sidebarUser) {
         // Fallback silently if DB is not ready
     }
 }
+
+$step5Url = '#';
+$step5Disabled = true;
+if ($sidebarContextArtworkId > 0) {
+    $step5Url = 'social_video.php?id=' . urlencode((string)$sidebarContextArtworkId);
+    $step5Disabled = false;
+} elseif ($currentPage === 'social_video.php' && $currentArtworkIdParam > 0) {
+    $step5Url = 'social_video.php?id=' . urlencode((string)$currentArtworkIdParam);
+    $step5Disabled = false;
+}
 ?>
 <aside class="sidebar">
     <div class="sidebar-head">
@@ -134,7 +191,7 @@ if ($step4Disabled && $sidebarUser) {
             </div>
             <div class="step-details">
                 <span class="step-label">Upload Artwork</span>
-                <span class="step-subtitle">Subir la obra original.</span>
+                <span class="step-subtitle">Upload the original artwork.</span>
             </div>
         </a>
 
@@ -146,7 +203,7 @@ if ($step4Disabled && $sidebarUser) {
                 </div>
                 <div class="step-details">
                     <span class="step-label">Select Root Artwork</span>
-                    <span class="step-subtitle">Elegir obra raíz generada.</span>
+                    <span class="step-subtitle">Choose the generated root artwork.</span>
                 </div>
             </div>
         <?php else: ?>
@@ -157,7 +214,7 @@ if ($step4Disabled && $sidebarUser) {
                 </div>
                 <div class="step-details">
                     <span class="step-label">Select Root Artwork</span>
-                    <span class="step-subtitle">Elegir obra raíz generada.</span>
+                    <span class="step-subtitle">Choose the generated root artwork.</span>
                 </div>
             </a>
         <?php endif; ?>
@@ -169,8 +226,8 @@ if ($step4Disabled && $sidebarUser) {
                     <span class="step-number">3</span>
                 </div>
                 <div class="step-details">
-                    <span class="step-label">Create Mockups</span>
-                    <span class="step-subtitle">Crear múltiples mockups.</span>
+                    <span class="step-label">Curated Mockups</span>
+                    <span class="step-subtitle">Create multiple mockups.</span>
                 </div>
             </div>
         <?php else: ?>
@@ -180,8 +237,8 @@ if ($step4Disabled && $sidebarUser) {
                     <?php if ($step3Active): ?><span class="step-indicator"></span><?php endif; ?>
                 </div>
                 <div class="step-details">
-                    <span class="step-label">Create Mockups</span>
-                    <span class="step-subtitle">Crear múltiples mockups.</span>
+                    <span class="step-label">Curated Mockups</span>
+                    <span class="step-subtitle">Create multiple mockups.</span>
                 </div>
             </a>
         <?php endif; ?>
@@ -193,8 +250,8 @@ if ($step4Disabled && $sidebarUser) {
                     <span class="step-number">4</span>
                 </div>
                 <div class="step-details">
-                    <span class="step-label">Publish</span>
-                    <span class="step-subtitle">Ficha artwork.</span>
+                    <span class="step-label">Artwork Details</span>
+                    <span class="step-subtitle">Artwork metadata and publishing assets.</span>
                 </div>
             </div>
         <?php else: ?>
@@ -204,8 +261,29 @@ if ($step4Disabled && $sidebarUser) {
                     <?php if ($step4Active): ?><span class="step-indicator"></span><?php endif; ?>
                 </div>
                 <div class="step-details">
-                    <span class="step-label">Publish</span>
-                    <span class="step-subtitle">Ficha artwork.</span>
+                    <span class="step-label">Artwork Details</span>
+                    <span class="step-subtitle">Artwork metadata and publishing assets.</span>
+                </div>
+            </a>
+        <?php endif; ?>
+
+        <?php if ($step5Disabled && !$step5Active): ?>
+            <div class="step-item disabled" title="Choose an artwork before creating a social video concept.">
+                <div class="step-num-container"><span class="step-number">5</span></div>
+                <div class="step-details">
+                    <span class="step-label">Social Video (beta)</span>
+                    <span class="step-subtitle">Plan a video from this artwork.</span>
+                </div>
+            </div>
+        <?php else: ?>
+            <a href="<?= htmlspecialchars($step5Url, ENT_QUOTES, 'UTF-8') ?>" class="step-item <?= $step5Active ? 'active' : '' ?>">
+                <div class="step-num-container">
+                    <span class="step-number">5</span>
+                    <?php if ($step5Active): ?><span class="step-indicator"></span><?php endif; ?>
+                </div>
+                <div class="step-details">
+                    <span class="step-label">Social Video (beta)</span>
+                    <span class="step-subtitle">Plan a video from this artwork.</span>
                 </div>
             </a>
         <?php endif; ?>

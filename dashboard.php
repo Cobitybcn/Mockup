@@ -294,7 +294,7 @@ function dashboard_page_url(int $page, string $query): string
                         }
                         if ($hasClearable):
                         ?>
-                            <form method="post" onsubmit="return confirm('¿Seguro que deseas limpiar todos los uploads atascados o con error? (Se mantendrán los iniciados hace menos de 5 minutos)');" style="margin: 0;">
+                            <form method="post" onsubmit="return confirm('Are you sure you want to clean all stuck or failed uploads? Uploads started less than 5 minutes ago will be kept.');" style="margin: 0;">
                                 <input type="hidden" name="action" value="clear_stuck">
                                 <button type="submit" class="button-link secondary" style="font-size: 11px; padding: 6px 12px; border: 1px solid #e53e3e; color: #e53e3e; background: transparent; cursor: pointer; border-radius: 4px; transition: all 0.2s;">Limpiar atascados</button>
                             </form>

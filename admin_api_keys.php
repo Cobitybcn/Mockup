@@ -209,15 +209,34 @@ $geminiImagePlans = [
                             name="mockup_worker_count"
                             type="number"
                             min="1"
-                            max="8"
+                            max="6"
                             step="1"
                             value="<?= h($settings['mockup_worker_count'] ?? '4') ?>"
                         >
                         <p class="checkbox-line" style="margin-top: 14px;">
-                            Recommended testing path: 4, then 5 or 6 if Vertex remains stable. Use 8 only if there are no quota or timeout errors.
+                            Recommended testing path: 4, then 5 or 6 if Vertex remains stable. Higher concurrency tends to trigger Vertex quota errors.
                         </p>
                     </section>
                 </div>
+
+                <section class="form-section">
+                    <h2>Social Video (beta)</h2>
+                    <p>This is an isolated queue. It never consumes mockup workers.</p>
+                    <label class="checkbox-line">
+                        <input type="checkbox" name="social_video_veo_enabled" value="1" <?= !empty($settings['social_video_veo_enabled']) ? 'checked' : '' ?>>
+                        Enable Vertex/Veo video jobs
+                    </label>
+                    <label for="social_video_veo_model">Veo model</label>
+                    <input id="social_video_veo_model" name="social_video_veo_model" type="text" value="<?= h($settings['social_video_veo_model'] ?? '') ?>" placeholder="Set after confirming the available Vertex Veo model">
+                    <label for="social_video_veo_region">Veo region</label>
+                    <input id="social_video_veo_region" name="social_video_veo_region" type="text" value="<?= h($settings['social_video_veo_region'] ?? '') ?>" placeholder="us-central1">
+                    <label for="social_video_veo_resolution">Veo resolution</label>
+                    <input id="social_video_veo_resolution" name="social_video_veo_resolution" type="text" value="<?= h($settings['social_video_veo_resolution'] ?? '') ?>" placeholder="1080p">
+                    <label for="social_video_veo_storage_uri">Veo output storage URI</label>
+                    <input id="social_video_veo_storage_uri" name="social_video_veo_storage_uri" type="text" value="<?= h($settings['social_video_veo_storage_uri'] ?? '') ?>" placeholder="gs://artwork-curator-veo-output">
+                    <label for="ffmpeg_binary_path">FFmpeg binary path</label>
+                    <input id="ffmpeg_binary_path" name="ffmpeg_binary_path" type="text" value="<?= h($settings['ffmpeg_binary_path'] ?? '') ?>" placeholder="Leave empty to use ffmpeg from PATH">
+                </section>
 
                 <button type="submit">Save API Settings</button>
             </form>

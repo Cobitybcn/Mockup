@@ -2,13 +2,13 @@ Analyze this artwork visually first and propose dynamic contextual mockup recomm
 "The artwork determines the space, not the space determines the artwork."
 Return only a valid JSON object. Do not include markdown formatting, comments, explanations, or any text outside the JSON object.
 ARTIST PROFILE CONTEXT:
-
+Artist name: Maurizio Valch
 ARTWORK DETAILS:
-Title: Test Artwork
-Physical dimensions: 100 cm wide x 100 cm high x 5 cm deep
+Title: Sin título
+Physical dimensions: 180 cm wide x 120 cm high x 5 cm deep
 Artist notes: 
-User preferred style: abstract
-Target market: collectors
+User preferred style: 
+Target market: 
 Image orientation: horizontal
 RELEVANT ARTIST DATA:
 Analyze the artwork in relation to the artist profile.
@@ -57,7 +57,7 @@ TEXTURE AND MATERIAL PRESENCE:
 Analyze surface, brushstroke, gesture, layers, roughness, softness, visible physical presence, and sense of depth or flatness.
 FORMAT AND SCALE:
 Use the dimensions entered by the user:
-100 cm wide x 100 cm high x 5 cm deep.
+180 cm wide x 120 cm high x 5 cm deep.
 Interpret the impact of the physical dimensions, orientation, proportion, wall presence, monumentality or intimacy, and how the artwork can modify the perception of a space.
 VISUAL ATMOSPHERE:
 Describe emotional tone, psychological climate, calm, tension, mystery, silence, energy, refinement, and dramatic quality.
@@ -144,7 +144,7 @@ Describe the visible composition objectively and attractively.
 Paragraph 2:
 Describe the atmosphere, visual tension, materiality or spatial reading of the work.
 Technical line:
-Technical details: Maurizio Valch, {selected_title}, 100 x 100 x 5 cm.
+Technical details: Maurizio Valch, {selected_title}, 180 x 120 x 5 cm.
 Condition and shipping:
 The piece is in excellent condition, with no damage or restorations.
 The artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.
@@ -368,7 +368,7 @@ commercial / collectible focus
 ADMIN CUSTOM ANALYSIS LAYERS:
 
 CAPA A - ANALISIS DE LA OBRA:
-GRAPHIC / VISUAL ANALYSIS. 1. DOMINANT VISUAL LANGUAGE: Identify whether the artwork relates to categories such as: abstract, surrealist, Mediterranean, minimalist, architectural, organic, geometric, expressive, symbolic, metaphysical, or other relevant categories. Do not force categories if they do not apply. 2. COMPOSITION: Analyze: structure, balance, rhythm, visual tension, density, silence, main focal point, movement, depth, negative space, verticality, horizontality, internal organization. 3. COLOR: Describe: dominant palette, secondary colors, level of contrast, temperature, chromatic harmony, possible emotional or psychological associations of the main colors. 4. TEXTURE AND MATERIAL PRESENCE: Analyze: surface, brushstroke, gesture, layers, roughness, softness, visible physical presence, sense of depth or flatness. 5. FORMAT AND SCALE: Dimensions entered by the user: 100 cm wide, 100 cm high, 5 cm deep. Interpret: impact of the physical dimensions, orientation, proportion, wall presence, monumentality or intimacy, how the artwork can modify the perception of a space. 6. VISUAL ATMOSPHERE: Describe: emotional tone, psychological climate, calm, tension, mystery, silence, energy, refinement, dramatic quality. 7. TARGET AUDIENCE: Identify: suggested audience, buyer profile, type of collector, relevance for interior design, gallery potential, marketplace positioning.
+GRAPHIC / VISUAL ANALYSIS. 1. DOMINANT VISUAL LANGUAGE: Identify whether the artwork relates to categories such as: abstract, surrealist, Mediterranean, minimalist, architectural, organic, geometric, expressive, symbolic, metaphysical, or other relevant categories. Do not force categories if they do not apply. 2. COMPOSITION: Analyze: structure, balance, rhythm, visual tension, density, silence, main focal point, movement, depth, negative space, verticality, horizontality, internal organization. 3. COLOR: Describe: dominant palette, secondary colors, level of contrast, temperature, chromatic harmony, possible emotional or psychological associations of the main colors. 4. TEXTURE AND MATERIAL PRESENCE: Analyze: surface, brushstroke, gesture, layers, roughness, softness, visible physical presence, sense of depth or flatness. 5. FORMAT AND SCALE: Dimensions entered by the user: 180 cm wide, 120 cm high, 5 cm deep. Interpret: impact of the physical dimensions, orientation, proportion, wall presence, monumentality or intimacy, how the artwork can modify the perception of a space. 6. VISUAL ATMOSPHERE: Describe: emotional tone, psychological climate, calm, tension, mystery, silence, energy, refinement, dramatic quality. 7. TARGET AUDIENCE: Identify: suggested audience, buyer profile, type of collector, relevance for interior design, gallery potential, marketplace positioning.
 
 CAPA B - DATOS RELEVANTES DEL ARTISTA:
 ELEVANT ARTIST DATA
@@ -426,8 +426,8 @@ Return exactly this JSON schema:
 "material_presence": "",
 "sense_of_depth_or_flatness": "",
 "format_and_scale": {
-"width_cm": "100",
-"height_cm": "100",
+"width_cm": "180",
+"height_cm": "120",
 "depth_cm": "5",
 "orientation": "horizontal",
 "scale_impact": "",

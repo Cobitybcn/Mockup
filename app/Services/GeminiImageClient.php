@@ -23,11 +23,6 @@ class GeminiImageClient
             $cmd .= ' --image ' . escapeshellarg($imagePath);
         }
 
-        // Punto #4: pasar VERTEX_PROJECT_ID como variable de entorno al subproceso
-        if (defined('VERTEX_PROJECT_ID') && VERTEX_PROJECT_ID !== '') {
-            putenv('VERTEX_PROJECT_ID=' . VERTEX_PROJECT_ID);
-        }
-
         return $this->runCommand($cmd, $prompt, 180); // aumentado de 90s a 180s para permitir reintentos
     }
 
@@ -59,11 +54,6 @@ class GeminiImageClient
             $cmd .= ' --model ' . escapeshellarg($model);
         }
 
-        // Punto #4: pasar VERTEX_PROJECT_ID como variable de entorno al subproceso
-        if (defined('VERTEX_PROJECT_ID') && VERTEX_PROJECT_ID !== '') {
-            putenv('VERTEX_PROJECT_ID=' . VERTEX_PROJECT_ID);
-        }
-
         $this->runCommand($cmd, $prompt, 200); // aumentado de 150s a 200s para permitir reintentos
 
         if (!is_file($tempOutput)) {
@@ -82,9 +72,6 @@ class GeminiImageClient
 
     private function runCommand(string $cmd, string $promptText, int $timeout = 90): string
     {
-        putenv('PYTHONIOENCODING=utf-8');
-        putenv('PYTHONUTF8=1');
-
         $tempDir = $this->getTempDir();
         $tempPromptFile = tempnam($tempDir, 'gemini_prompt_');
         if ($tempPromptFile === false) {
@@ -107,7 +94,7 @@ class GeminiImageClient
             2 => ["file", $tempErrFile, "w"]  // stderr
         ];
 
-        $process = proc_open($cmd, $descriptorspec, $pipes);
+        $process = proc_open($cmd, $descriptorspec, $pipes, null, $this->pythonProcessEnv());
         if (!is_resource($process)) {
             @unlink($tempPromptFile);
             @unlink($tempOutFile);
@@ -226,14 +213,8 @@ class GeminiImageClient
 
     public function runCommandsParallel(array $cmds, array $prompts, int $timeout = 150): array
     {
-        putenv('PYTHONIOENCODING=utf-8');
-        putenv('PYTHONUTF8=1');
-
-        if (defined('VERTEX_PROJECT_ID') && VERTEX_PROJECT_ID !== '') {
-            putenv('VERTEX_PROJECT_ID=' . VERTEX_PROJECT_ID);
-        }
-
         $tempDir = $this->getTempDir();
+        $processEnv = $this->pythonProcessEnv();
         $processes = [];
         $tempFiles = [];
 
@@ -260,7 +241,7 @@ class GeminiImageClient
                 2 => ["file", $tempErrFile, "w"]  // stderr
             ];
 
-            $process = proc_open($fullCmd, $descriptorspec, $pipes);
+            $process = proc_open($fullCmd, $descriptorspec, $pipes, null, $processEnv);
             if (!is_resource($process)) {
                 // Clean up what we created so far and throw
                 foreach ($tempFiles as $f) { @unlink($f); }
@@ -326,6 +307,20 @@ class GeminiImageClient
         }
 
         return $results;
+    }
+
+    private function pythonProcessEnv(): array
+    {
+        $env = getenv();
+        $env = is_array($env) ? array_map('strval', $env) : [];
+        $env['PYTHONIOENCODING'] = 'utf-8';
+        $env['PYTHONUTF8'] = '1';
+
+        if (defined('VERTEX_PROJECT_ID') && VERTEX_PROJECT_ID !== '') {
+            $env['VERTEX_PROJECT_ID'] = (string)VERTEX_PROJECT_ID;
+        }
+
+        return $env;
     }
 
     private function getTempDir(): string

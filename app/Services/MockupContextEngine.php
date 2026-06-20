@@ -37,6 +37,7 @@ class MockupContextEngine
                 $rawText = $this->client->generateText($parts, $model);
                 $this->saveDebugText($imagePath, $rawText, 'raw');
                 $json = $this->extractJson($rawText);
+                $this->logRawJsonDebug($json);
                 $profile = json_decode($json, true);
 
                 if (!is_array($profile) || empty($profile['contextual_proposals'])) {
@@ -67,10 +68,11 @@ class MockupContextEngine
     {
         $imagePath = $analysisData['image_path'] ?? '';
         $imageMeta = $this->imageMeta($imagePath, $artworkMetadata);
-        
+
+        $suggestedTitles = $this->normalizeSuggestedTitles($analysisData['suggested_titles'] ?? []);
         $artworkAnalysis = $analysisData['artwork_analysis'] ?? [];
         $proposals = $analysisData['contextual_proposals'] ?? [];
-        
+
         $limit = PromptSettings::mockupContextCount();
         $proposals = array_slice($proposals, 0, $limit);
 
@@ -125,14 +127,15 @@ class MockupContextEngine
             $finalProposals[] = $prop;
         }
 
-        // Guardar el análisis y las propuestas dinámicas en la base de datos
-        $this->saveToDatabase($artworkId, $artworkAnalysis, $finalProposals);
-
-        return [
-            'artwork_analysis' => $artworkAnalysis,
+        $minimalAnalysis = [
+            'suggested_titles' => $suggestedTitles,
             'recommended_number_of_contexts' => count($finalProposals),
-            'contextual_proposals' => $finalProposals,
+            'contextual_proposals' => array_map([$this, 'minimalContextualProposal'], $finalProposals),
         ];
+
+        $this->saveToDatabase($artworkId, $minimalAnalysis, $finalProposals);
+
+        return $minimalAnalysis;
     }
 
     private function buildAnalysisPrompt(array $metadata, array $imageMeta): string
@@ -149,6 +152,7 @@ class MockupContextEngine
 
         $contextCount = PromptSettings::mockupContextCount();
         $template = PromptSettings::artworkAnalysisPrompt();
+        $this->logPromptSourceDebug($template);
         
         // Dynamically replace context count in prompt template
         $template = preg_replace(
@@ -158,7 +162,7 @@ class MockupContextEngine
         );
         $template = str_replace('{context_count}', (string)$contextCount, $template);
 
-        return str_replace(
+        $prompt = str_replace(
             [
                 '{artist_profile_prompt}',
                 '{artist_statement}',
@@ -195,6 +199,10 @@ class MockupContextEngine
             ],
             $template
         );
+
+        $this->logCompiledPromptDebug($prompt, 'mockup_context_analysis');
+
+        return $prompt;
     }
 
     private function saveDebugPrompt(string $imagePath, string $prompt): void
@@ -355,12 +363,195 @@ class MockupContextEngine
     private function normalizeAnalysisResponse(array $profile, array $imageMeta): array
     {
         $count = PromptSettings::mockupContextCount();
+        $rootTitles = $this->normalizeSuggestedTitles($profile['suggested_titles'] ?? []);
+        $legacyTitles = is_array($profile['artwork_analysis']['publishing_metadata']['suggested_titles'] ?? null)
+            ? $profile['artwork_analysis']['publishing_metadata']['suggested_titles']
+            : [];
+        $schema = !empty($rootTitles) || array_key_exists('contextual_proposals', $profile) ? 'new_schema' : 'legacy_schema';
+
+        $profile['suggested_titles'] = $rootTitles;
         $profile['recommended_number_of_contexts'] = $count;
 
         $proposals = is_array($profile['contextual_proposals'] ?? null) ? $profile['contextual_proposals'] : [];
         $profile['contextual_proposals'] = array_slice($proposals, 0, $count);
 
+        Logger::log(sprintf(
+            'Analysis schema detected=%s root_suggested_titles=%d legacy_suggested_titles=%d contextual_proposals=%d',
+            $schema,
+            count($rootTitles),
+            count($legacyTitles),
+            count($profile['contextual_proposals'])
+        ), 'analysis_debug');
+
+        foreach ($profile['suggested_titles'] as $index => $titleOption) {
+            Logger::log(sprintf(
+                'Title option %d title="%s" subtitle_length=%d description_length=%d description_source=%s fallback_description_used=no',
+                $index + 1,
+                (string)($titleOption['title'] ?? ''),
+                strlen((string)($titleOption['subtitle'] ?? '')),
+                strlen((string)($titleOption['description'] ?? '')),
+                'suggested_titles.description'
+            ), 'analysis_debug');
+        }
+
         return $profile;
+    }
+
+    private function normalizeSuggestedTitles($titles): array
+    {
+        if (!is_array($titles)) {
+            return [];
+        }
+
+        if (isset($titles['title'])) {
+            $titles = [$titles];
+        }
+
+        $normalized = [];
+        foreach ($titles as $titleOption) {
+            if (!is_array($titleOption)) {
+                continue;
+            }
+
+            $normalized[] = [
+                'title' => trim((string)($titleOption['title'] ?? '')),
+                'subtitle' => trim((string)($titleOption['subtitle'] ?? '')),
+                'description' => trim((string)($titleOption['description'] ?? '')),
+            ];
+        }
+
+        return $normalized;
+    }
+
+    private function minimalContextualProposal(array $proposal): array
+    {
+        $allowedKeys = [
+            'context_name',
+            'context_role',
+            'space_type',
+            'atmosphere',
+            'materials',
+            'lighting',
+            'camera_view',
+            'camera_distance',
+            'camera_angle_notes',
+            'human_presence',
+            'curatorial_reason',
+            'commercial_reason',
+            'mockup_prompt',
+            'negative_prompt',
+        ];
+
+        $minimal = [];
+        foreach ($allowedKeys as $key) {
+            if (array_key_exists($key, $proposal)) {
+                $minimal[$key] = $proposal[$key];
+            }
+        }
+
+        return $minimal;
+    }
+
+    private function logCompiledPromptDebug(string $prompt, string $context): void
+    {
+        $remaining = $this->remainingPromptPlaceholders($prompt);
+        $oldTerms = $this->oldPromptTermsFound($prompt);
+        $containsMinimalSchema = str_contains($prompt, 'suggested_titles')
+            && str_contains($prompt, 'recommended_number_of_contexts')
+            && str_contains($prompt, 'contextual_proposals');
+        Logger::log($context . ' compiled prompt after variable replacement:' . "\n" . $prompt, 'prompt_debug');
+        Logger::log(sprintf(
+            '%s first_500="%s" contains_minimal_schema=%s unreplaced_placeholders=%s old_terms=%s',
+            $context,
+            substr($prompt, 0, 500),
+            $containsMinimalSchema ? 'yes' : 'no',
+            $remaining ? implode(', ', $remaining) : 'none',
+            $oldTerms ? implode(', ', $oldTerms) : 'none'
+        ), $remaining ? 'warning' : 'prompt_debug');
+    }
+
+    private function logPromptSourceDebug(string $template): void
+    {
+        $source = 'built_in_default';
+        $updatedAt = '';
+
+        try {
+            $stmt = Database::connection()->prepare("SELECT updated_at, value FROM app_settings WHERE `key` = :key LIMIT 1");
+            $stmt->execute(['key' => 'artwork_analysis_prompt']);
+            $row = $stmt->fetch();
+            if (is_array($row) && trim((string)($row['value'] ?? '')) !== '') {
+                $source = 'app_settings.artwork_analysis_prompt';
+                $updatedAt = (string)($row['updated_at'] ?? '');
+            }
+        } catch (Throwable $e) {
+            Logger::log('Could not read prompt source metadata: ' . $e->getMessage(), 'warning');
+        }
+
+        Logger::log(sprintf(
+            'Prompt source=%s prompt_name=artwork_analysis_prompt prompt_id=%s updated_at=%s template_first_500="%s"',
+            $source,
+            $source,
+            $updatedAt !== '' ? $updatedAt : 'n/a',
+            substr($template, 0, 500)
+        ), 'prompt_debug');
+    }
+
+    private function logRawJsonDebug(string $json): void
+    {
+        $decoded = json_decode($json, true);
+        if (!is_array($decoded)) {
+            Logger::log('Raw Gemini JSON could not be decoded for root-key debug.', 'warning');
+            return;
+        }
+
+        $keys = array_keys($decoded);
+        $expected = ['suggested_titles', 'recommended_number_of_contexts', 'contextual_proposals'];
+        $onlyExpected = empty(array_diff($keys, $expected));
+        $oldKeys = array_values(array_intersect($keys, [
+            'artwork_analysis',
+            'publishing_metadata',
+            'technical_metadata',
+            'catawiki_listing',
+            'pinterest_marketing',
+            'seo_keywords',
+            'seo_tags',
+            'marketplace_title',
+            'short_description',
+            'curatorial_description',
+            'commercial_description',
+        ]));
+
+        Logger::log(sprintf(
+            'Raw Gemini JSON root_keys=%s only_minimal_root_keys=%s old_root_keys=%s suggested_titles=%d contextual_proposals=%d',
+            implode(', ', $keys),
+            $onlyExpected ? 'yes' : 'no',
+            $oldKeys ? implode(', ', $oldKeys) : 'none',
+            count((array)($decoded['suggested_titles'] ?? [])),
+            count((array)($decoded['contextual_proposals'] ?? []))
+        ), $onlyExpected ? 'analysis_debug' : 'warning');
+    }
+
+    private function oldPromptTermsFound(string $text): array
+    {
+        $terms = [
+            'publishing_metadata',
+            'artwork_analysis',
+            'Catawiki',
+            'Pinterest',
+            'SEO',
+            'marketplace',
+            'short_description',
+            'curatorial_description',
+            'commercial_description',
+        ];
+
+        return array_values(array_filter($terms, static fn(string $term): bool => stripos($text, $term) !== false));
+    }
+
+    private function remainingPromptPlaceholders(string $prompt): array
+    {
+        preg_match_all('/\{(?:artist_profile_prompt|artist_statement|visual_language|recurring_symbols|preferred_atmospheres)\}/', $prompt, $matches);
+        return array_values(array_unique($matches[0] ?? []));
     }
 
     private function imageMeta(string $path, array $metadata): array
@@ -432,8 +623,6 @@ class MockupContextEngine
                 'commercial_reason' => $prop['commercial_reason'] ?? '',
                 'mockup_prompt' => $mapped['mockup_prompt'] ?? ($prop['mockup_prompt'] ?? ''),
                 'negative_prompt' => $mapped['negative_prompt'] ?? ($prop['negative_prompt'] ?? ''),
-                'mockup_metadata' => $prop['mockup_metadata'] ?? [],
-                'pinterest_marketing' => $prop['mockup_metadata'] ?? $prop['pinterest_marketing'] ?? [],
             ];
 
             $stmtContext->execute([
