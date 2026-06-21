@@ -21,10 +21,9 @@ $settings = PromptSettings::all();
 $adminPromptKeys = [
     'root_artwork_rules',
     'artwork_analysis_prompt',
+    'social_video_veo_finishing_prompt',
     'root_artwork_count',
     'mockup_context_count',
-    'social_video_selector_prompt',
-    'social_video_director_prompt',
 ];
 $labels = array_intersect_key(PromptSettings::labels(), array_flip($adminPromptKeys));
 $defaultDirectives = PromptSettings::defaultDirectives();

@@ -243,12 +243,13 @@ def handle_generate_image(args):
                 w, h = pil_img.size
             
             # Create a composite canvas (neutral gray wall) representing the room
-            canvas_size = 1024
-            canvas = Image.new("RGB", (canvas_size, canvas_size), color=(240, 240, 240))
+            canvas_width = 1024
+            canvas_height = 1536
+            canvas = Image.new("RGB", (canvas_width, canvas_height), color=(240, 240, 240))
             
             # Calculate target size for the artwork on the wall based on real size
             import re
-            match = re.search(r"(\d+(?:\.\d+)?)\s*cm\s+wide\s*x\s*(\d+(?:\.\d+)?)\s*cm\s+high", args.prompt)
+            match = re.search(r"(\d+(?:\.\d+)?)\s*cm\s+wide\s*[x×]\s*(\d+(?:\.\d+)?)\s*cm\s+high", args.prompt)
             
             fill_ratio = prompt_float_control(args.prompt, "mockup_fill_default", 0.35)
             if match:
@@ -308,7 +309,7 @@ def handle_generate_image(args):
                 fill_min, fill_max = fill_max, fill_min
             fill_ratio = max(fill_min, min(fill_max, fill_ratio))
             
-            max_art_dim = int(canvas_size * fill_ratio)
+            max_art_dim = int(canvas_width * fill_ratio)
             
             ratio = min(max_art_dim / w, max_art_dim / h)
             new_w = int(w * ratio)
@@ -321,8 +322,8 @@ def handle_generate_image(args):
             art_resized = pil_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
             
             # Position: center horizontally, slightly above center vertically (classic gallery hang)
-            x = (canvas_size - new_w) // 2
-            y = int((canvas_size - new_h) * 0.35)
+            x = (canvas_width - new_w) // 2
+            y = int((canvas_height - new_h) * 0.35)
             
             # Use alpha mask for pasting if image has alpha
             canvas.paste(art_resized, (x, y), art_resized if art_resized.mode == "RGBA" else None)
@@ -335,7 +336,7 @@ def handle_generate_image(args):
             # 255 = White (the area to be edited/replaced by the model)
             # 0 = Black (the area to keep/preserve)
             import io
-            mask_img = Image.new("L", (canvas_size, canvas_size), color=255)
+            mask_img = Image.new("L", (canvas_width, canvas_height), color=255)
             art_mask_part = Image.new("L", art_resized.size, color=0)
             if art_resized.mode == "RGBA":
                 alpha = art_resized.split()[3]
@@ -352,6 +353,7 @@ def handle_generate_image(args):
                 "\n\nHARMONIZATION AND INTEGRATION DIRECTIVES:\n"
                 "- Keep the artwork surface itself unchanged. Do not repaint, reinterpret, alter, crop, mirror, rotate, recolor, simplify, extend, or replace the artwork.\n"
                 "- The newly generated background room/gallery must harmonize beautifully with the artwork's color palette, tone, style, and mood.\n"
+                "- The artwork must hang at a natural gallery eye-level height on the wall, leaving more floor space visible below it than ceiling space above (do not center it vertically in the room).\n"
                 "- Render realistic lighting on the wall and the artwork boundaries, matching the natural light sources in the room.\n"
                 "- Add subtle, soft contact shadows and realistic depth at the edges where the artwork meets the wall.\n"
                 "- The artwork must look perfectly integrated, like a real physical painting hung in a premium space, not pasted or floating."

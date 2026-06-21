@@ -165,7 +165,7 @@ class ProviderSettings
 
     public static function socialVideoVeoModel(): string
     {
-        return self::value('social_video_veo_model', 'veo-3.1-lite-generate-001');
+        return self::value('social_video_veo_model', 'veo-3.1-generate-preview');
     }
 
     public static function socialVideoVeoRegion(): string

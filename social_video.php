@@ -1,11 +1,13 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/app/bootstrap.php';
+require __DIR__ . '/social_video_simple.php';
+exit;
 
 ob_start();
 register_shutdown_function(function (): void {
     $html = ob_get_clean();
-    global $artworkId, $conceptJson, $workflow;
+    global $artworkId, $conceptJson, $workflow, $archetypes, $suggestedArchetypes, $selectedArchetype, $toneValue, $setup;
     if (!is_string($html) || !isset($artworkId)) { return; }
     $enabled = ProviderSettings::socialVideoVeoEnabled();
     $disabled = (!$enabled || trim((string)($conceptJson ?? '')) === '') ? ' disabled' : '';
@@ -14,7 +16,23 @@ register_shutdown_function(function (): void {
     if ($videoUrl !== '') {
         $button .= '<div class="field-block"><label>Generated video</label><video controls preload="metadata" style="width:100%;max-height:500px" src="media.php?file=' . rawurlencode($videoUrl) . '"></video></div>';
     }
-    echo str_replace('<aside class="social-panel">', '<aside class="social-panel">' . $button, $html);
+    $options = '';
+    foreach ((array)$archetypes as $archetype) {
+        $id = (string)($archetype['id'] ?? '');
+        if ($id === '') { continue; }
+        $options .= '<option value="' . h($id) . '" data-second="' . (!empty($archetype['requires_second_artwork']) ? '1' : '0') . '" data-new-image="' . (!empty($archetype['requires_new_image_generation']) ? '1' : '0') . '"' . ($id === $selectedArchetype ? ' selected' : '') . '>' . h((string)($archetype['name'] ?? $id)) . '</option>';
+    }
+    $suggestions = '';
+    foreach ((array)$suggestedArchetypes as $suggestion) {
+        if (!is_array($suggestion)) { continue; }
+        $suggestions .= '<li><strong>' . h((string)($suggestion['name'] ?? $suggestion['id'] ?? '')) . '</strong>: ' . h((string)($suggestion['reason'] ?? '')) . '</li>';
+    }
+    $archetypeControl = '<div class="field-block" id="archetype-control"><label for="narrative_archetype">Arquetipo narrativo</label><small>Elige una sugerencia o explora la lista completa. La selección define la estructura del relato.</small>' . ($suggestions !== '' ? '<ul class="archetype-suggestions">' . $suggestions . '</ul>' : '') . '<select id="narrative_archetype" name="narrative_archetype">' . $options . '</select><div class="field-block"><label for="tone_value">Tono del video: Documental ←→ Artístico</label><input id="tone_value" name="tone_value" type="range" min="0" max="100" value="' . (int)$toneValue . '" oninput="document.getElementById(\'tone-value-output\').textContent=this.value"><output id="tone-value-output">' . (int)$toneValue . '</output></div><div class="field-block new-image-generation-brief"><label>Nueva imagen necesaria</label><small>Para este arquetipo, describe la escena que debe crear el pipeline de generación de imágenes.</small><textarea name="new_image_generation_brief">' . h((string)($setup['new_image_generation_brief'] ?? '')) . '</textarea></div></div><script>document.addEventListener("DOMContentLoaded",function(){const select=document.getElementById("narrative_archetype"), refs=document.querySelector("textarea[name=new_image_references]"), note=refs?.parentElement.querySelector("small"), brief=document.querySelector(".new-image-generation-brief"); function sync(){const o=select.options[select.selectedIndex], second=o.dataset.second==="1", newImage=o.dataset.newImage==="1"; if(refs)refs.required=second; if(note)note.textContent=second?"Required: add the second artwork reference for Diálogo Simbólico.":"Optional. One URL or asset reference per line."; if(brief)brief.style.display=newImage?"block":"none";} select.addEventListener("change",sync);sync();});</script>';
+    $archetypeControl .= '<div class="field-block" id="second-artwork-upload"><label for="second_artwork">Subir imagen de referencia</label><small>También puedes subir una imagen desde tu computadora: JPG, PNG o WebP, máximo 20 MB. Es obligatoria para Diálogo Simbólico si no indicas una URL arriba.</small><input id="second_artwork" name="second_artwork" type="file" accept="image/jpeg,image/png,image/webp"></div><script>document.addEventListener("DOMContentLoaded",function(){["selected_title","selected_description","narrative_tone","narrative_concept"].forEach(function(name){var field=document.querySelector("[name="+name+"]");if(field){field.setAttribute("autocomplete","off");}});var select=document.getElementById("narrative_archetype"), refs=document.querySelector("textarea[name=new_image_references]"), upload=document.getElementById("second-artwork-upload");if(refs&&upload){refs.parentElement.after(upload);}function allowUpload(){if(refs){refs.required=false;}}select.addEventListener("change",allowUpload);allowUpload();});</script>';
+    $setupForm = '<form method="post"><input type="hidden" name="id" value="' . (int)$artworkId . '"><div class="field-block"><label>Artwork as primary source</label>';
+    $html = str_replace($setupForm, str_replace('<form method="post">', '<form method="post" enctype="multipart/form-data">', $setupForm), $html);
+    $html = str_replace('<aside class="social-panel">', '<aside class="social-panel">' . $button, $html);
+    echo str_replace('<div class="field-block"><label>Artwork as primary source</label>', $archetypeControl . '<div class="field-block"><label>Artwork as primary source</label>', $html);
 });
 
 $user = Auth::requireUser();
@@ -35,15 +53,46 @@ function workflow_save(PDO $pdo, int $userId, int $artworkId, array $values): vo
     $base += ['user_id' => $userId, 'artwork_id' => $artworkId, 'created_at' => $now];
     $pdo->prepare('INSERT INTO social_video_workflows (user_id,artwork_id,setup_suggestion_json,setup_edited_json,final_concept_json,status,video_status,video_url,error,created_at,updated_at) VALUES (:user_id,:artwork_id,:setup_suggestion_json,:setup_edited_json,:final_concept_json,:status,:video_status,:video_url,:error,:created_at,:updated_at)')->execute($base);
 }
+function social_video_upload_reference(array $file, int $userId, int $artworkId): ?string {
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) { return null; }
+    if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) { throw new RuntimeException('No se pudo subir la segunda obra. Inténtalo de nuevo.'); }
+    if (!is_uploaded_file((string)($file['tmp_name'] ?? ''))) { throw new RuntimeException('El archivo subido no es válido.'); }
+    if ((int)($file['size'] ?? 0) > 20 * 1024 * 1024) { throw new RuntimeException('La segunda obra no puede superar 20 MB.'); }
+    $imageInfo = @getimagesize((string)$file['tmp_name']);
+    $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+    $mime = (string)($imageInfo['mime'] ?? '');
+    if (!isset($extensions[$mime])) { throw new RuntimeException('La segunda obra debe ser una imagen JPG, PNG o WebP.'); }
+    $directory = RESULTS_DIR . DIRECTORY_SEPARATOR . 'social-video-references';
+    if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) { throw new RuntimeException('No se pudo preparar el almacenamiento de referencias.'); }
+    $fileName = 'reference_u' . $userId . '_a' . $artworkId . '_' . time() . '_' . bin2hex(random_bytes(5)) . '.' . $extensions[$mime];
+    if (!move_uploaded_file((string)$file['tmp_name'], $directory . DIRECTORY_SEPARATOR . $fileName)) { throw new RuntimeException('No se pudo guardar la segunda obra.'); }
+    return 'social-video-references/' . $fileName;
+}
+
 function setup_from_request(array $post, array $fallback): array {
+    global $user, $artworkId;
     $references = decode_social_json((string)($post['scene_references_json'] ?? '[]'));
     $newReferences = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', (string)($post['new_image_references'] ?? '')) ?: [])));
+    $uploadedReference = social_video_upload_reference((array)($_FILES['second_artwork'] ?? []), (int)$user['id'], (int)$artworkId);
+    if ($uploadedReference !== null) { $newReferences[] = $uploadedReference; }
+    $archetypeId = trim((string)($post['narrative_archetype'] ?? $fallback['narrative_archetype'] ?? 'contexto_vivido'));
+    $archetype = SocialVideoArchetypes::find($archetypeId);
+    if (!$archetype) { throw new InvalidArgumentException('El arquetipo narrativo seleccionado ya no está disponible.'); }
+    if (!empty($archetype['requires_second_artwork']) && $newReferences === []) {
+        throw new InvalidArgumentException('Diálogo Simbólico requiere una segunda obra en New Image References.');
+    }
     return [
         'primary_artwork' => ['id' => (string)($fallback['primary_artwork']['id'] ?? ''), 'file' => trim((string)($post['primary_artwork'] ?? $fallback['primary_artwork']['file'] ?? '')), 'role' => 'Primary visual source', 'usage_notes' => trim((string)($post['primary_usage_notes'] ?? $fallback['primary_artwork']['usage_notes'] ?? ''))],
         'scene_references' => is_array($references) ? array_values($references) : [],
         'narrative_thread' => ['tone' => trim((string)($post['narrative_tone'] ?? '')), 'selected_title_index' => (int)($post['selected_title_index'] ?? 0), 'selected_title' => trim((string)($post['selected_title'] ?? '')), 'selected_description' => trim((string)($post['selected_description'] ?? '')), 'concept' => trim((string)($post['narrative_concept'] ?? ''))],
         'selection_justification' => trim((string)($post['selection_justification'] ?? '')),
         'new_image_references' => $newReferences,
+        'available_archetypes' => SocialVideoArchetypes::all(),
+        'suggested_archetypes' => is_array($fallback['suggested_archetypes'] ?? null) ? $fallback['suggested_archetypes'] : [],
+        'narrative_archetype' => $archetypeId,
+        'suggested_tone_value' => max(0, min(100, (int)($fallback['suggested_tone_value'] ?? 50))),
+        'tone_value' => max(0, min(100, (int)($post['tone_value'] ?? $fallback['tone_value'] ?? $fallback['suggested_tone_value'] ?? 50))),
+        'new_image_generation_brief' => trim((string)($post['new_image_generation_brief'] ?? $fallback['new_image_generation_brief'] ?? '')),
     ];
 }
 
@@ -66,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } catch (Throwable $e) { $error = $e->getMessage(); }
     $workflowStmt->execute(['artwork_id' => $artworkId]); $workflow = $workflowStmt->fetch() ?: [];
 }
-$setup = decode_social_json((string)($workflow['setup_edited_json'] ?? $workflow['setup_suggestion_json'] ?? '')); $primary = is_array($setup['primary_artwork'] ?? null) ? $setup['primary_artwork'] : []; $narrative = is_array($setup['narrative_thread'] ?? null) ? $setup['narrative_thread'] : []; $references = is_array($setup['scene_references'] ?? null) ? $setup['scene_references'] : []; $newReferences = is_array($setup['new_image_references'] ?? null) ? $setup['new_image_references'] : [];
+$setup = decode_social_json((string)($workflow['setup_edited_json'] ?? $workflow['setup_suggestion_json'] ?? '')); $primary = is_array($setup['primary_artwork'] ?? null) ? $setup['primary_artwork'] : []; $narrative = is_array($setup['narrative_thread'] ?? null) ? $setup['narrative_thread'] : []; $references = is_array($setup['scene_references'] ?? null) ? $setup['scene_references'] : []; $newReferences = is_array($setup['new_image_references'] ?? null) ? $setup['new_image_references'] : []; $archetypes = is_array($setup['available_archetypes'] ?? null) ? $setup['available_archetypes'] : SocialVideoArchetypes::all(); $suggestedArchetypes = is_array($setup['suggested_archetypes'] ?? null) ? $setup['suggested_archetypes'] : []; $selectedArchetype = (string)($setup['narrative_archetype'] ?? 'contexto_vivido'); $toneValue = max(0, min(100, (int)($setup['tone_value'] ?? $setup['suggested_tone_value'] ?? 50)));
 $conceptJson = (string)($workflow['final_concept_json'] ?? ''); $status = (string)($workflow['status'] ?? 'not_started');
 ?>
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Social Video - The Artwork Curator</title><link rel="stylesheet" href="style.css"><style>.social-layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(320px,.7fr);gap:24px}.social-panel{padding:22px;border:1px solid var(--line);background:var(--surface);border-radius:var(--radius)}.social-panel h2{margin-top:0}.field-block{margin-top:16px}.field-block textarea{min-height:92px}.field-block input,.field-block textarea{width:100%;box-sizing:border-box}.status-pill{border:1px solid var(--accent);color:var(--accent);padding:5px 9px;text-transform:uppercase;font-size:12px}.json-output{max-height:540px;overflow:auto;white-space:pre-wrap;background:var(--surface-soft);padding:14px;font:12px/1.45 Consolas,monospace}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}@media(max-width:900px){.social-layout{grid-template-columns:1fr}}</style></head><body><div class="app-shell"><?php include __DIR__ . '/sidebar.php'; ?><main class="main-area"><header class="app-header"><a class="user-chip" href="account.php"><?= h($user['email']) ?></a></header><div class="alert-strip">Independent Social Video planning. It never uses mockup workers or their queue.</div><div class="workspace"><div class="workspace-header"><div><h1>Social Video (beta)</h1><p>AI suggests a sequence; you decide the final setup.</p></div><span class="status-pill"><?= h(str_replace('_', ' ', $status)) ?></span></div><?php if ($notice): ?><div class="notice"><?= h($notice) ?></div><?php endif; ?><?php if ($error): ?><div class="notice error"><?= h($error) ?></div><?php endif; ?><div class="social-layout"><section class="social-panel"><h2>1. Setup Proposal</h2><p>Selector suggestions are editable and never lock your choices.</p><form method="post"><input type="hidden" name="id" value="<?= $artworkId ?>"><button name="action" value="propose">Generate or Regenerate Setup Proposal</button></form><form method="post"><input type="hidden" name="id" value="<?= $artworkId ?>"><div class="field-block"><label>Artwork as primary source</label><input name="primary_artwork" value="<?= h($primary['file'] ?? $artwork['root_file']) ?>"><textarea name="primary_usage_notes"><?= h($primary['usage_notes'] ?? '') ?></textarea></div><div class="field-block"><label>Scene references from selected mockups</label><small>Reorder, remove, or replace entries in this editable JSON list.</small><textarea name="scene_references_json"><?= h(encode_social_json($references)) ?></textarea></div><div class="field-block"><label>Narrative / text thread</label><input name="selected_title_index" type="number" min="0" value="<?= (int)($narrative['selected_title_index'] ?? 0) ?>"><input name="selected_title" value="<?= h($narrative['selected_title'] ?? '') ?>"><textarea name="selected_description"><?= h($narrative['selected_description'] ?? '') ?></textarea><input name="narrative_tone" value="<?= h($narrative['tone'] ?? '') ?>"><textarea name="narrative_concept"><?= h($narrative['concept'] ?? '') ?></textarea></div><div class="field-block"><label>Selection justification</label><textarea name="selection_justification"><?= h($setup['selection_justification'] ?? '') ?></textarea></div><div class="field-block"><label>New image references</label><small>Optional. One URL or asset reference per line.</small><textarea name="new_image_references"><?= h(implode("\n", $newReferences)) ?></textarea></div><div class="actions"><button class="secondary" name="action" value="save_setup">Save Edited Setup</button><button name="action" value="concept">Generate Final Video Concept JSON</button></div></form></section><aside class="social-panel"><h2>2. Video Concept / Generation</h2><p><strong>Veo:</strong> <?= ProviderSettings::socialVideoVeoEnabled() ? 'Enabled' : 'Disabled' ?></p><p>When disabled, the multi-segment concept remains fully available without interrupting this workflow.</p><?php if ($conceptJson !== ''): ?><h3>Final Video Concept JSON</h3><pre class="json-output"><?= h($conceptJson) ?></pre><?php endif; ?></aside></div></div></main></div></body></html>

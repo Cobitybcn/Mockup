@@ -174,10 +174,9 @@ TEXT;
             'mockup_camera_rules' => '',
             'mockup_rendering_rules' => '',
             'mockup_final_request' => '',
+            'social_video_veo_finishing_prompt' => 'Enhance the video sequence with a coherent cinematic color grading, smooth subtle camera pans, high-fidelity textures, and professional gallery lighting. Retain the exact visual content of each mockup frame, keeping the artwork completely clear, in focus, and undeformed. Avoid adding extra elements, text, or major changes.',
             'mockup_context_count' => '6',
             'root_artwork_count' => '3',
-            'social_video_selector_prompt' => '',
-            'social_video_director_prompt' => '',
         ];
     }
 
@@ -242,13 +241,9 @@ TEXT;
                 'help' => 'Numero de versiones de obra raiz generadas en Formulario 1 antes de elegir la definitiva. Recomendado: 3.',
                 'type' => 'number',
             ],
-            'social_video_selector_prompt' => [
-                'title' => 'Social Video Selector Prompt',
-                'help' => 'Controls Stage 1 selection, sequencing, selected title, and visible justification. It must not write camera direction or segment scripts.',
-            ],
-            'social_video_director_prompt' => [
-                'title' => 'Social Video Director Prompt',
-                'help' => 'Controls Stage 2 multi-segment video concepts, continuity, conservative-to-cinematic direction, and priority weighting.',
+            'social_video_veo_finishing_prompt' => [
+                'title' => 'Social Video - Veo Finishing Prompt',
+                'help' => 'Prompt utilizado para el pase de acabado creativo (finishing pass) con Veo sobre el video base. Debe guiar mejoras estilísticas, luz y transiciones sin alterar la obra.',
             ],
         ];
     }
