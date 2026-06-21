@@ -1,0 +1,13 @@
+{
+    "artwork": "uploads/artwork_1780397544.jpg",
+    "camera": "frontal",
+    "scene": "atelier",
+    "run_id": "run1",
+    "model": "imagen-3.0-capability-001",
+    "width_cm": 100.0,
+    "height_cm": 120.0,
+    "prompt": "A warm, cozy artist atelier, cluttered with brushes, canvases leaning against walls, soft ambient light, warm wooden textures, bohemian atmosphere, a brick wall. A discreet standing adult scale figure looking at the art piece.\n\n- Artwork Dimensions: 100.0 cm wide x 120.0 cm high\n- mockup\n- Camera View: frontal eye-level view\n\nHARMONIZATION AND INTEGRATION DIRECTIVES:\n- Keep the artwork surface itself unchanged. Do not repaint, reinterpret, alter, crop, mirror, rotate, recolor, simplify, extend, or replace the artwork.\n- The newly generated background room/gallery must harmonize beautifully with the artwork's color palette, tone, style, and mood.\n- The artwork must hang at a natural gallery eye-level height on the wall, leaving more floor space visible below it than ceiling space above (do not center it vertically in the room).\n- Render realistic lighting on the wall and the artwork boundaries, matching the natural light sources in the room.\n- Add subtle, soft contact shadows and realistic depth at the edges where the artwork meets the wall.\n- The artwork must look perfectly integrated, like a real physical painting hung in a premium space, not pasted or floating.",
+    "status": "success",
+    "duration_seconds": 24.86,
+    "error": null
+}

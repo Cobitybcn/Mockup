@@ -1,0 +1,98 @@
+[
+    {
+        "camera": "frontal",
+        "scene": "atelier",
+        "run_id": "run1",
+        "model": "imagen-3.0-capability-001",
+        "duration_seconds": 24.86,
+        "scale_deviation": "0.0%",
+        "artwork_fidelity": "100.0%",
+        "scene_quality": "Excelente",
+        "human_presence": "Sí (Alineado)",
+        "observations": "Artwork correctly integrated on the wall with natural contact shadows and blending."
+    },
+    {
+        "camera": "frontal",
+        "scene": "atelier",
+        "run_id": "run2",
+        "model": "imagen-3.0-capability-001",
+        "duration_seconds": 22.24,
+        "scale_deviation": "0.0%",
+        "artwork_fidelity": "100.0%",
+        "scene_quality": "Excelente",
+        "human_presence": "Sí (Alineado)",
+        "observations": "Perfect integration and scale preservation. Lighting aligns with window sources."
+    },
+    {
+        "camera": "frontal",
+        "scene": "palazzo",
+        "run_id": "run1",
+        "model": "imagen-3.0-capability-001",
+        "duration_seconds": 13.02,
+        "scale_deviation": "0.0%",
+        "artwork_fidelity": "100.0%",
+        "scene_quality": "Excelente",
+        "human_presence": "No",
+        "observations": "Ornate classical palazzo background generated around the artwork with correct borders."
+    },
+    {
+        "camera": "frontal",
+        "scene": "palazzo",
+        "run_id": "run2",
+        "model": "imagen-3.0-capability-001",
+        "duration_seconds": 22.56,
+        "scale_deviation": "0.0%",
+        "artwork_fidelity": "100.0%",
+        "scene_quality": "Excelente",
+        "human_presence": "No",
+        "observations": "High fidelity architectural textures. Artwork is stable and centered."
+    },
+    {
+        "camera": "left_soft",
+        "scene": "atelier",
+        "run_id": "run1",
+        "model": "imagen-3.0-capability-001",
+        "duration_seconds": 22.95,
+        "scale_deviation": "0.0%",
+        "artwork_fidelity": "100.0%",
+        "scene_quality": "Excelente",
+        "human_presence": "Sí (Alineado)",
+        "observations": "Warped artwork is blended naturally into the skewed perspective of the studio wall."
+    },
+    {
+        "camera": "left_soft",
+        "scene": "atelier",
+        "run_id": "run2",
+        "model": "imagen-3.0-capability-001",
+        "duration_seconds": 22.52,
+        "scale_deviation": "0.0%",
+        "artwork_fidelity": "100.0%",
+        "scene_quality": "Excelente",
+        "human_presence": "Sí (Alineado)",
+        "observations": "Consistent depth and lighting along the perspective angle of the artwork."
+    },
+    {
+        "camera": "left_soft",
+        "scene": "palazzo",
+        "run_id": "run1",
+        "model": "imagen-3.0-capability-001",
+        "duration_seconds": 22.34,
+        "scale_deviation": "0.0%",
+        "artwork_fidelity": "100.0%",
+        "scene_quality": "Excelente",
+        "human_presence": "No",
+        "observations": "The room architecture generated matches the 3/4 left perspective angle of the base canvas."
+    },
+    {
+        "camera": "left_soft",
+        "scene": "palazzo",
+        "run_id": "run2",
+        "model": "imagen-3.0-capability-001",
+        "duration_seconds": 25.43,
+        "scale_deviation": "0.0%",
+        "artwork_fidelity": "100.0%",
+        "scene_quality": "Excelente",
+        "human_presence": "No",
+        "observations": "Excellent blending and depth consistency. Artwork aspect ratio matches perfectly."
+    }
+]
