@@ -1,0 +1,202 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Spiral Current",
+      "subtitle": "An abstract expression built around a dominant swirling form, contrasting deep red with vibrant turquoise impasto.",
+      "description": "The artwork is organized around a dominant, central spiral movement. This dynamic form shapes the composition, drawing the eye inward through concentric bands. Thick impasto paint in vibrant turquoise stands out against a deep, textured red ground. The intense chromatic contrast and tactile surface create a raw, energetic atmosphere. This square format holds a substantial, almost sculptural presence on the wall."
+    ,
+    "title": "Material Surface",
+    "subtitle": "A heavily textured abstract work defined by its deep impasto, where vibrant pigments build a tangible and rugged landscape.",
+    "description": "The artwork's primary characteristic is its heavily worked, material surface. This surface is built through thick layers of paint, creating significant physical depth and relief. Rich turquoise strokes are applied in dense impasto over a subdued, earthy red ground. The robust texture creates an immediate, raw, and tactile atmosphere. This large square panel asserts a strong physical and sculptural presence."
+  },
+  {
+    "title": "Vertical Threshold",
+    "subtitle": "An expressive abstract composition featuring a prominent vertical element that acts as a boundary against a dynamic, swirling central form.",
+    "description": "The composition is anchored by a prominent vertical threshold marking its right side. This structural division provides a decisive boundary against the central movement, creating spatial pressure. Its thick turquoise presence contrasts sharply with the deep red field and the vibrant spiral. The resulting visual tension generates a contained yet energetic atmosphere. The large, square format emphasizes this internal structural dialogue."
+  }
+  ],
+  "recommended_number_of_contexts": "9",
+  "contextual_proposals": [
+    {
+      "context_name": "Modern Gallery Wall",
+      "context_role": "Exhibition Space",
+      "space_type": "professional art gallery",
+      "atmosphere": "clean, focused, contemplative",
+      "materials": [
+        "white wall",
+        "polished concrete floor"
+      ],
+      "lighting": "soft, diffused overhead gallery lighting",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A straight-on perspective highlights the square format and compositional balance, allowing the viewer to appreciate the central spiral and rich textures without distraction. The close-up ensures the artwork remains the dominant visual element.",
+      "human_presence": "none",
+      "curatorial_reason": "To present the artwork in a neutral, academic setting that emphasizes its formal qualities, scale, and material presence.",
+      "commercial_reason": "Appeals to collectors and institutions seeking high-quality, impactful abstract works for exhibition or display.",
+      "mockup_prompt": "An impeccable professional art gallery space with a clean white wall and polished light grey concrete floor. Soft, diffused overhead gallery lighting illuminates the artwork precisely. front view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Collector's Contemporary Living Room",
+      "context_role": "Residential Feature",
+      "space_type": "high-end residential interior",
+      "atmosphere": "sophisticated, inviting, stylish",
+      "materials": [
+        "light grey painted wall",
+        "light oak wood floor",
+        "minimalist furniture"
+      ],
+      "lighting": "warm ambient lighting from a hidden source, natural light from a large window off-frame to the left",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view adds depth and perspective, showcasing the artwork's physical relief and scale within a luxurious, contemporary living space. The close-up frames the artwork as the room's central feature, with the figure providing scale context.",
+      "human_presence": "optional standing female figure 1.55m",
+      "curatorial_reason": "To demonstrate how the artwork integrates as a powerful, central design element within a modern, refined home environment.",
+      "commercial_reason": "Targets individual collectors looking for a statement piece that enhances contemporary interior design with its bold color and texture.",
+      "mockup_prompt": "A sophisticated high-end residential living room with a light grey painted wall and a light oak wood floor. Minimalist, elegant furniture is subtly visible. Warm ambient lighting complements natural light from a large window off-frame to the left. three-quarter left view, close-up view, optional standing female figure 1.55m admiring the artwork from a slight distance. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle, blurry figure"
+    },
+    {
+      "context_name": "Artist Studio Corner",
+      "context_role": "Creative Environment",
+      "space_type": "refined artist studio",
+      "atmosphere": "authentic, tactile, industrious",
+      "materials": [
+        "textured concrete wall",
+        "industrial concrete floor",
+        "subtle art supplies"
+      ],
+      "lighting": "soft, even studio lighting with subtle shadows emphasizing texture",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter right view emphasizes the artwork's sculptural quality and material depth, connecting it to a space of creation. The close-up maintains focus on the art piece itself while allowing a glimpse of the surrounding studio context.",
+      "human_presence": "none",
+      "curatorial_reason": "To highlight the raw, material aspects and the expressive gesture inherent in the artwork, placing it within a context of artistic process.",
+      "commercial_reason": "Appeals to art enthusiasts and artists who appreciate the physical act of painting and the tangible presence of the artwork's surface.",
+      "mockup_prompt": "A refined artist studio corner with a textured concrete wall and a raw industrial concrete floor. Subtle, neatly arranged art supplies are present in the background. Soft, even studio lighting with subtle shadows emphasizing the artwork's texture. three-quarter right view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle, messy studio"
+    },
+    {
+      "context_name": "Minimalist Architectural Space",
+      "context_role": "Modern Interior Accent",
+      "space_type": "architectural studio",
+      "atmosphere": "minimalist, structured, clean",
+      "materials": [
+        "smooth off-white wall",
+        "polished light grey floor",
+        "clean architectural lines"
+      ],
+      "lighting": "bright, even ambient lighting with soft reflections on the floor",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A direct front view accentuates the artwork's bold composition and strong lines, complementing the minimalist architectural setting. The close-up ensures the artwork remains the central focus, letting its structure define the modern space.",
+      "human_presence": "none",
+      "curatorial_reason": "To showcase the artwork's strong graphic impact and how its structural qualities interact with contemporary, clean architectural environments.",
+      "commercial_reason": "Ideal for designers and collectors who value art as a focal point within architecturally designed, uncluttered spaces.",
+      "mockup_prompt": "A modern architectural studio space with smooth off-white walls and a polished light grey floor, featuring clean architectural lines. Bright, even ambient lighting illuminates the space, with soft reflections on the floor. front view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle, messy studio"
+    },
+    {
+      "context_name": "Private Library Study",
+      "context_role": "Refined Intellectual Space",
+      "space_type": "private libraries",
+      "atmosphere": "contemplative, rich, intellectual",
+      "materials": [
+        "dark wood paneling",
+        "leather armchair",
+        "bookshelves"
+      ],
+      "lighting": "soft, directed lamplight highlighting the artwork, warm overall ambient light",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view provides depth, showing how the artwork's intense colors and texture create a visual anchor in a traditionally refined setting. The figure adds a human scale and suggests quiet contemplation.",
+      "human_presence": "optional standing male figure 1.80m",
+      "curatorial_reason": "To position the artwork within a classic, intellectual environment, suggesting a dialogue between abstract energy and historical refinement.",
+      "commercial_reason": "Appeals to discerning collectors who seek artworks that complement rich, cultivated interiors and inspire thoughtful engagement.",
+      "mockup_prompt": "A luxurious private library study with dark wood paneling on the walls and floor. A classic leather armchair is positioned nearby. Floor-to-ceiling bookshelves are filled with books. Soft, directed lamplight illuminates the artwork, complementing a warm overall ambient light. three-quarter left view, close-up view, optional standing male figure 1.80m observing the artwork. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle, messy library"
+    },
+    {
+      "context_name": "Elegant Dining Area",
+      "context_role": "Social Focal Point",
+      "space_type": "sophisticated dining rooms",
+      "atmosphere": "luxurious, inviting, artistic",
+      "materials": [
+        "subtle textured wall",
+        "dark polished wood dining table",
+        "designer chairs"
+      ],
+      "lighting": "downlights emphasizing the artwork, soft general illumination for the room",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter right view captures the artwork's presence as a striking focal point in a social setting, allowing its bold colors and texture to activate the space. The close-up ensures the artwork commands attention over the room's details.",
+      "human_presence": "none",
+      "curatorial_reason": "To illustrate the artwork's capacity to serve as a captivating conversation starter and a luxurious accent in a refined dining setting.",
+      "commercial_reason": "Targets high-end buyers and interior designers seeking art that elevates a formal dining experience.",
+      "mockup_prompt": "An elegant sophisticated dining room featuring a subtle textured wall and a dark polished wood dining table with designer chairs. Downlights precisely emphasize the artwork, complemented by soft general illumination for the room. three-quarter right view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle, food on table"
+    },
+    {
+      "context_name": "Art Atelier with Natural Light",
+      "context_role": "Creative Workspace",
+      "space_type": "art ateliers",
+      "atmosphere": "bright, organic, inspiring",
+      "materials": [
+        "white brick wall",
+        "worn wooden floor",
+        "large windows"
+      ],
+      "lighting": "abundant, soft natural light from large windows, creating subtle highlights on the texture",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A front view in a naturally lit atelier enhances the artwork's colors and textural nuances, suggesting an environment where art is both made and appreciated. The close-up maintains the artwork's dominance and detail.",
+      "human_presence": "none",
+      "curatorial_reason": "To emphasize the artwork's material richness and color vibrancy under natural light, connecting it to an authentic artistic context.",
+      "commercial_reason": "Appeals to art collectors and gallerists interested in the genesis and physical presence of the artwork.",
+      "mockup_prompt": "A bright art atelier with white brick walls and a worn wooden floor. Large windows are visible, letting in abundant, soft natural light that creates subtle highlights on the artwork's texture. front view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle, cluttered space"
+    },
+    {
+      "context_name": "High-End Residential Entrance Hall",
+      "context_role": "Grand Statement Piece",
+      "space_type": "elegant hallways",
+      "atmosphere": "imposing, welcoming, modern",
+      "materials": [
+        "smooth dark grey wall",
+        "marble floor",
+        "minimalist console table"
+      ],
+      "lighting": "integrated ceiling lights casting a soft glow on the artwork, with ambient light in the hall",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter left view in a grand entrance hall emphasizes the artwork's monumental scale and commanding presence. The close-up ensures it remains the focus, acting as a dramatic focal point upon entry.",
+      "human_presence": "none",
+      "curatorial_reason": "To present the artwork as a significant, large-scale statement piece suitable for commanding attention in a luxurious entry space.",
+      "commercial_reason": "Targets high-net-worth individuals and corporate collections seeking impactful art for prominent display areas.",
+      "mockup_prompt": "A high-end elegant hallway with a smooth dark grey wall and a polished marble floor. A minimalist console table is subtly placed. Integrated ceiling lights cast a soft glow directly on the artwork, complemented by ambient light in the hall. three-quarter left view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle, cluttered hallway"
+    },
+    {
+      "context_name": "Modern Penthouse Interior",
+      "context_role": "Luxury Contemporary Accent",
+      "space_type": "high-end residential interiors",
+      "atmosphere": "spacious, upscale, contemporary",
+      "materials": [
+        "textured white wall",
+        "dark wide-plank wood floor",
+        "sleek, low-profile sofa"
+      ],
+      "lighting": "recessed ceiling lights highlighting the artwork, ambient light filtering from large windows",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter right view positions the artwork as a key visual element within a spacious, luxurious penthouse, showcasing its large scale and dynamic composition. The close-up focuses on the art while implying the expansive setting.",
+      "human_presence": "none",
+      "curatorial_reason": "To demonstrate the artwork's suitability for a spacious, high-ceilinged contemporary residence, where its bold scale can be fully appreciated.",
+      "commercial_reason": "Aimed at luxury real estate staging, high-end interior designers, and collectors with large, modern homes.",
+      "mockup_prompt": "A modern penthouse interior with a textured white wall and a dark wide-plank wood floor. A sleek, low-profile sofa is visible. Recessed ceiling lights highlight the artwork, and ambient light filters from large windows. three-quarter right view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle, cluttered apartment"
+    }
+  ]
+}
+```

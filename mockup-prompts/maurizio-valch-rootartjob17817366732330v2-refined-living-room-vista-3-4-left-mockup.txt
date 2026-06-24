@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 160 cm wide × 160 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Refined Living Room Vista
+- Purpose: Illustrates sophisticated residential integration
+- Scene Description: A Luxury Living Room with Warm, inviting, elegant atmosphere. Materials: Textured off-white walls, Oak wood flooring, Subtle linen or velvet furniture, Bronze accents
+- Lighting: Soft natural light from a large window to the left, ambient evening light
+- Time of Day: night
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The three-quarter left view provides a sense of the artwork within a larger, inviting residential space, showcasing its integration with sophisticated decor. The close-up distance keeps the artwork visually dominant while allowing glimpses of complementary textures and furniture. Natural light from the left enhances the painting's rich surface, and its square proportions assert a strong presence on the wall.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A sophisticated living room with textured off-white walls and warm oak wood flooring. The artwork 'Deep Core' by Maurizio Valch is mounted on the main wall. Soft natural light filters in from a large window to the left, casting a gentle glow. A hint of elegant, low-profile linen or velvet furniture and a bronze accent piece are visible in the foreground. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. camera_view: three-quarter left view, camera_distance: close-up view.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+Cluttered space, bright primary colors, generic furniture, harsh lighting, digital screens, distractions.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Modernist Villa Entrance
+- Purpose: Architectural integration, material dialogue
+- Scene Description: A Minimalist entrance hall with Architectural, serene, minimalist atmosphere. Materials: Smooth light grey architectural concrete wall, large format stone flooring
+- Lighting: Soft natural light from a hidden skylight, subtle wall wash effect
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A three-quarter left view accentuates the artwork's material depth and its structured forms in dialogue with the concrete wall. The 'close-up view' ensures the painting's presence dominates, complementing the minimalist architecture.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A minimalist, double-height entrance hall within a modernist villa. The wall behind the artwork is smooth, light grey architectural concrete. Large format stone flooring extends from the base. Soft natural light filters in from a hidden skylight, creating a subtle wall wash. The artwork is the visual center. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

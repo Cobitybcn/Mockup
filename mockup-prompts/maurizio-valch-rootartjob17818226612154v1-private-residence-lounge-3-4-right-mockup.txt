@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Camera: three-quarter view from the right, slight side angle, eye-level, natural perspective
+- Scene Name: Private Residence Lounge
+- Purpose: Residential
+- Scene Description: A private lounge in a cultivated residence with Exclusive, comfortable, discerning. atmosphere. Materials: Dark textured wallpaper, deep emerald velvet sofa, low wooden coffee table
+- Lighting: luminous natural daylight, bright, sunny day, clear blue sky reflections, clean direct sunlight
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult black woman, 1.55 meters tall.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: medium-close view, enough space for context and scale while keeping artwork dominant
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A private lounge in a cultivated residence with dark textured wallpaper and a deep emerald velvet sofa. A low wooden coffee table holds subtle art books. Controlled dramatic side light illuminates the artwork, complemented by soft overhead light. three-quarter right view, close-up view. An elegant standing male figure 1.80m, relaxed but attentive, observes the artwork. The artwork remains the visual center. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

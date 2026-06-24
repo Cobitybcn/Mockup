@@ -1,0 +1,186 @@
+{
+    "suggested_titles": [
+        {
+            "title": "Red Forms",
+            "subtitle": "An abstract composition features three distinct red structures resting on subtle bases within a heavily textured, muted green field, emphasizing spatial tension.",
+            "description": "Three rectangular red forms act as primary focal points across an expansive, textured green surface. The largest form anchors the right, while two smaller elements are positioned on the left and lower center. White and light blue undertones are visible beneath the red, suggesting a layered construction. This arrangement creates a quiet, ordered visual territory. The horizontal format emphasizes the breadth of the contained space."
+        },
+        {
+            "title": "Territory Green",
+            "subtitle": "A contemplative abstract painting presenting a layered green field interrupted by vibrant red forms and delicate linear incisions across its surface.",
+            "description": "The artwork centers on a dominant field of muted green-blue, heavily worked with visible palette knife textures and scraping. Vibrant red structures are set against this rich surface, revealing underlying layers of white and light blue. Thin, precise white lines traverse the composition, creating subtle divisions and connections within the material. This textural landscape evokes a sense of silence and depth. The substantial surface presence grounds the visual experience."
+        },
+        {
+            "title": "Incised Horizon",
+            "subtitle": "This structural abstract work features subtle horizontal divisions and layered forms, creating a sense of distance and presence within a vast field.",
+            "description": "A subtle horizontal line divides the upper and lower sections of the painting, setting a wide, open horizon. Three distinct red forms, appearing as monolithic structures, are suspended within this textured green territory. Fine white lines incise the surface, marking subtle pathways and accentuating the spatial relationships between elements. The composition balances visual tension with a restrained, contemplative atmosphere. Its horizontal orientation emphasizes an expansive, silent presence."
+        }
+    ],
+    "recommended_number_of_contexts": 9,
+    "contextual_proposals": [
+        {
+            "context_name": "Collector's Evening Salon",
+            "context_role": "Private viewing in an elegant home",
+            "space_type": "High-end penthouse living room",
+            "atmosphere": "Warm, intimate, sophisticated, contemplative",
+            "materials": [
+                "Dark wood panels",
+                "Soft plaster walls",
+                "Wool rug",
+                "Brushed bronze accents"
+            ],
+            "lighting": "Warm evening gallery lighting, subtle reflections on a polished floor",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "The front view emphasizes the painting's structural presence against the warm wall, making it the central focus. The close-up allows the viewer to appreciate the texture and color relationships within an inviting, aspirational domestic setting.",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The intimate and warm setting with refined materials directly echoes the artwork's sober yet contemplative atmosphere and material depth, presenting it as a treasured object in a private collection.",
+            "commercial_reason": "This context cultivates a sense of private ownership and sophisticated taste, enabling a collector to envision the artwork as a significant and emotionally resonant piece within their curated living space."
+        },
+        {
+            "context_name": "Architectural Villa Interior",
+            "context_role": "Integrating art with contemporary architecture",
+            "space_type": "Architect-designed villa interior",
+            "atmosphere": "Spacious, serene, refined, natural light",
+            "materials": [
+                "Light travertine walls",
+                "Polished concrete floor",
+                "Large glass windows",
+                "Minimalist wooden furniture"
+            ],
+            "lighting": "Soft architectural wall wash combined with natural light from large windows",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter left view adds depth and shows the artwork's material presence in relation to the architectural elements. The horizontal orientation is complemented by the expansive wall, suggesting its integration into a modern, airy environment.",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The artwork's structural and spatial language finds a strong resonance within a minimalist architectural context, where its forms, lines, and textures can be clearly appreciated against a clean, yet rich material backdrop.",
+            "commercial_reason": "This proposal highlights the artwork's suitability for architect-designed spaces, appealing to collectors who value a harmonious blend of contemporary art and modern design, showing it can enhance a high-value property."
+        },
+        {
+            "context_name": "Private Viewing Room",
+            "context_role": "Focused appreciation of material and detail",
+            "space_type": "Private art viewing room",
+            "atmosphere": "Focused, quiet, detailed, textural emphasis",
+            "materials": [
+                "Textured plaster wall",
+                "Subtle oak floor",
+                "Minimalist seating"
+            ],
+            "lighting": "Controlled dramatic side light to highlight texture and depth, soft overhead spot",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "The three-quarter right view, combined with specific lighting, is chosen to emphasize the visible texture and material presence of the painting, allowing for a closer inspection of its surface details. The close-up draws attention to the tactile quality.",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "This setting prioritizes the material and surface qualities of the artwork, allowing the intricate textures, layering, and incisions to be the primary focus, aligning with the artist's emphasis on visible matter.",
+            "commercial_reason": "This context elevates the viewing experience, making the artwork feel precious and worthy of close study, reinforcing its value as a serious object for a discerning collector who appreciates craftsmanship and material depth."
+        },
+        {
+            "context_name": "Contemporary Gallery Hallway",
+            "context_role": "A neutral yet sophisticated public display",
+            "space_type": "Professional art gallery",
+            "atmosphere": "Clean, spacious, professionally presented, focused",
+            "materials": [
+                "Warm off-white walls",
+                "Polished concrete floor"
+            ],
+            "lighting": "Museum-grade spotlights with warmth, even ambient light",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A front view provides a direct, unobstructed presentation of the artwork, emphasizing its scale and visual order within a gallery context. The close-up ensures the artwork remains the primary visual element.",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "Placing the artwork in a professional gallery setting underscores its status as serious contemporary art, where its abstract language and structural elements can be contemplated without distraction.",
+            "commercial_reason": "This presentation validates the artwork's market position, showcasing it in a recognized professional environment, which can build confidence for potential buyers seeking established artistic quality."
+        },
+        {
+            "context_name": "Mediterranean Sunset Residence",
+            "context_role": "Art in a serene, light-filled environment",
+            "space_type": "Mediterranean villa interior",
+            "atmosphere": "Calm, expansive, warm, infused with natural light",
+            "materials": [
+                "Rough plaster walls",
+                "Terracotta floor",
+                "Large archways"
+            ],
+            "lighting": "Late afternoon Mediterranean light, soft, warm and diffused across the walls",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "The three-quarter left view integrates the artwork with the architectural forms and warm light of the Mediterranean interior, allowing its muted greens and reds to harmonize with the natural palette of the space. The close-up maintains focus on the art.",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The artwork's contemplative mood and muted color palette resonate with the tranquil atmosphere of a Mediterranean villa, where its 'territory' motif can evoke vast, sun-drenched landscapes.",
+            "commercial_reason": "This setting appeals to buyers seeking art that enhances a sense of serenity and natural beauty in spacious, refined homes, suggesting the artwork can elevate a sophisticated lifestyle."
+        },
+        {
+            "context_name": "Refined Study",
+            "context_role": "Art for intellectual and private contemplation",
+            "space_type": "Quiet library with collector atmosphere",
+            "atmosphere": "Cultivated, introspective, quiet, focused",
+            "materials": [
+                "Dark walnut panels",
+                "Leather armchair",
+                "Bookshelves"
+            ],
+            "lighting": "Soft, indirect lamplight combined with subtle overhead lighting",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A direct front view positions the artwork as a focal point within a cultivated interior, ideal for quiet study and contemplation. The close-up ensures its visual impact is immediate and commanding despite the rich surrounding details.",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The artwork's structural order and contemplative silence align perfectly with the intellectual and refined atmosphere of a study or library, inviting deeper engagement and reflection.",
+            "commercial_reason": "This context appeals to collectors who appreciate art as a source of quiet inspiration and intellectual engagement within their private, cultivated spaces, enhancing the sense of a distinguished personal collection."
+        },
+        {
+            "context_name": "Boutique Hotel Art Lobby",
+            "context_role": "Elevating a public space with significant art",
+            "space_type": "Elegant hotel art lobby",
+            "atmosphere": "Understated luxury, inviting, artistic, calm",
+            "materials": [
+                "Polished limestone walls",
+                "Brushed brass accents",
+                "Textured fabrics"
+            ],
+            "lighting": "Warm hospitality-style illumination, soft upward wall wash",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter right view allows the artwork to be seen within the context of a luxurious public space, showcasing its ability to define and elevate an environment. The close-up maintains its prominence within the frame.",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The artwork's refined aesthetic and structural clarity lend themselves well to a high-end hospitality environment, where it can serve as a sophisticated visual anchor for guests.",
+            "commercial_reason": "This setting demonstrates the artwork's versatility for both private and public high-end spaces, broadening its appeal to architects, interior designers, and collectors seeking art for luxury commercial projects."
+        },
+        {
+            "context_name": "Townhouse Gallery Wall",
+            "context_role": "Displaying art in a sophisticated urban home",
+            "space_type": "Spacious salon in a townhouse",
+            "atmosphere": "Classic elegance, art-centric, refined, serene",
+            "materials": [
+                "Soft grey plaster walls",
+                "Herringbone wood floor",
+                "Subtle decorative molding"
+            ],
+            "lighting": "Soft, diffused lighting from large windows, with subtle evening highlights",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "The front view ensures the artwork dominates the composition, framed by the elegant details of the salon. The close-up allows its texture and color to be fully appreciated in a classic, yet art-focused domestic setting.",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The artwork's structural and contemplative nature provides a modern counterpoint to the classic architectural details of a townhouse, demonstrating its capacity to blend tradition with contemporary art.",
+            "commercial_reason": "This context targets collectors living in elegant urban residences, showing how the artwork can anchor a sophisticated salon, adding a layer of contemporary art appreciation to a classic home."
+        },
+        {
+            "context_name": "Minimalist Warm Interior",
+            "context_role": "Art as a focal point in a serene, modern dwelling",
+            "space_type": "Minimalist interior with warm design",
+            "atmosphere": "Calm, airy, contemporary, quietly luxurious",
+            "materials": [
+                "Light natural wood panels",
+                "Warm grey microcement floor",
+                "Minimalist white furniture"
+            ],
+            "lighting": "Soft indirect lighting, accentuating wall textures and artwork",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "The three-quarter left view captures the interaction between the artwork's material presence and the clean lines of the minimalist interior, highlighting its objecthood and integration into the space. The close-up brings attention to the art's texture.",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The artwork's emphasis on visual order, surface, and spatial tension aligns perfectly with a minimalist aesthetic, where each element is carefully considered for its presence and impact.",
+            "commercial_reason": "This context appeals to buyers with modern, minimalist sensibilities, demonstrating how the artwork can serve as a powerful yet restrained focal point in a thoughtfully designed contemporary home."
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1781806675_7776_v1.png"
+}

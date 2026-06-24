@@ -16,6 +16,9 @@ from google.genai.errors import ClientError
 from google.auth.exceptions import TransportError
 from PIL import Image
 
+MOCKUP_USE_PRECOMPOSITION = os.environ.get("MOCKUP_USE_PRECOMPOSITION", "false").lower() == "true"
+MOCKUP_USE_BACKGROUND_EDIT = os.environ.get("MOCKUP_USE_BACKGROUND_EDIT", "false").lower() == "true"
+
 def get_client():
     import httpx
     # Punto #4: project ID desde variable de entorno, fallback al valor original
@@ -207,7 +210,7 @@ def handle_generate_image(args):
         pil_img = Image.open(base_image_path).convert("RGBA")
         w, h = pil_img.size
         
-        if is_mockup:
+        if is_mockup and MOCKUP_USE_PRECOMPOSITION:
             # Check camera perspective direction
             prompt_lower = args.prompt.lower()
             warp_dir = None
@@ -243,14 +246,16 @@ def handle_generate_image(args):
                 w, h = pil_img.size
             
             # Create a composite canvas (neutral gray wall) representing the room
-            canvas_width = 1024
-            canvas_height = 1536
-            canvas = Image.new("RGB", (canvas_width, canvas_height), color=(240, 240, 240))
+            canvas_size = 1024
+            canvas = Image.new("RGB", (canvas_size, canvas_size), color=(240, 240, 240))
             
             # Calculate target size for the artwork on the wall based on real size
             import re
-            match = re.search(r"(\d+(?:\.\d+)?)\s*cm\s+wide\s*[x×]\s*(\d+(?:\.\d+)?)\s*cm\s+high", args.prompt)
+            match = re.search(r"(\d+(?:\.\d+)?)\s*cm\s+wide\s*x\s*(\d+(?:\.\d+)?)\s*cm\s+high", args.prompt)
             
+            width_cm = None
+            height_cm = None
+            long_side_cm = None
             fill_ratio = prompt_float_control(args.prompt, "mockup_fill_default", 0.35)
             if match:
                 try:
@@ -309,7 +314,7 @@ def handle_generate_image(args):
                 fill_min, fill_max = fill_max, fill_min
             fill_ratio = max(fill_min, min(fill_max, fill_ratio))
             
-            max_art_dim = int(canvas_width * fill_ratio)
+            max_art_dim = int(canvas_size * fill_ratio)
             
             ratio = min(max_art_dim / w, max_art_dim / h)
             new_w = int(w * ratio)
@@ -319,11 +324,49 @@ def handle_generate_image(args):
             new_w = (new_w // 8) * 8
             new_h = (new_h // 8) * 8
             
+            # Logging the scale parameters
+            try:
+                log_lines = []
+                log_lines.append(f"--- VERTEX BRIDGE SCALE AUDIT ---")
+                if width_cm and height_cm:
+                    log_lines.append(f"Real Artwork Dimensions: {width_cm} cm wide x {height_cm} cm high")
+                    log_lines.append(f"Long Side: {long_side_cm} cm")
+                else:
+                    log_lines.append("Real Artwork Dimensions: Not provided/parsed in prompt")
+                
+                log_lines.append(f"Human Presence Detected: {has_human}")
+                if has_human:
+                    multiplier = prompt_float_control(args.prompt, "mockup_human_scale_multiplier", 0.50)
+                    log_lines.append(f"Human Scale Multiplier Applied: {multiplier}")
+                
+                log_lines.append(f"Final fill_ratio for Canvas: {fill_ratio:.4f}")
+                log_lines.append(f"Final Artwork size in 1024x1024 canvas: {new_w} px x {new_h} px")
+                log_lines.append(f"Position (x, y) on canvas: {((canvas_size - new_w) // 2)}, {int((canvas_size - new_h) * 0.35)}")
+                log_lines.append("---------------------------------")
+                
+                # Write to sys.stderr
+                for line in log_lines:
+                    print(f"[SCALE-AUDIT] {line}", file=sys.stderr)
+                
+                # Write to logs/vertex_bridge.log
+                log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'logs')
+                if not os.path.exists(log_dir):
+                    os.makedirs(log_dir, exist_ok=True)
+                
+                import datetime
+                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                with open(os.path.join(log_dir, 'vertex_bridge.log'), 'a', encoding='utf-8') as f:
+                    f.write(f"[{timestamp}] JOB: {os.path.basename(args.output) if args.output else 'unknown'}\n")
+                    for line in log_lines:
+                        f.write(f"  {line}\n")
+            except Exception as le:
+                print(f"[WARN] Failed to write scale audit log: {le}", file=sys.stderr)
+            
             art_resized = pil_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
             
             # Position: center horizontally, slightly above center vertically (classic gallery hang)
-            x = (canvas_width - new_w) // 2
-            y = int((canvas_height - new_h) * 0.35)
+            x = (canvas_size - new_w) // 2
+            y = int((canvas_size - new_h) * 0.35)
             
             # Use alpha mask for pasting if image has alpha
             canvas.paste(art_resized, (x, y), art_resized if art_resized.mode == "RGBA" else None)
@@ -336,7 +379,7 @@ def handle_generate_image(args):
             # 255 = White (the area to be edited/replaced by the model)
             # 0 = Black (the area to keep/preserve)
             import io
-            mask_img = Image.new("L", (canvas_width, canvas_height), color=255)
+            mask_img = Image.new("L", (canvas_size, canvas_size), color=255)
             art_mask_part = Image.new("L", art_resized.size, color=0)
             if art_resized.mode == "RGBA":
                 alpha = art_resized.split()[3]
@@ -353,7 +396,6 @@ def handle_generate_image(args):
                 "\n\nHARMONIZATION AND INTEGRATION DIRECTIVES:\n"
                 "- Keep the artwork surface itself unchanged. Do not repaint, reinterpret, alter, crop, mirror, rotate, recolor, simplify, extend, or replace the artwork.\n"
                 "- The newly generated background room/gallery must harmonize beautifully with the artwork's color palette, tone, style, and mood.\n"
-                "- The artwork must hang at a natural gallery eye-level height on the wall, leaving more floor space visible below it than ceiling space above (do not center it vertically in the room).\n"
                 "- Render realistic lighting on the wall and the artwork boundaries, matching the natural light sources in the room.\n"
                 "- Add subtle, soft contact shadows and realistic depth at the edges where the artwork meets the wall.\n"
                 "- The artwork must look perfectly integrated, like a real physical painting hung in a premium space, not pasted or floating."
@@ -395,7 +437,7 @@ def handle_generate_image(args):
                 img_rgb = img_rgb.convert("RGB")
             
             # Prepend physical scaling/placement instructions for mockups
-            if is_mockup:
+            if is_mockup and MOCKUP_USE_PRECOMPOSITION:
                 gemini_prompt = (
                     "The input image is a reference showing the artwork already correctly sized and positioned on a neutral wall.\n"
                     "You must preserve this artwork exactly as it is (its aspect ratio, perspective angle, center position, and relative size must not be changed).\n"
@@ -468,7 +510,7 @@ def handle_generate_image(args):
             
         return
         
-    elif args.image:
+    elif args.image and not (is_mockup and not MOCKUP_USE_PRECOMPOSITION and not MOCKUP_USE_BACKGROUND_EDIT):
         # Image-to-image or background replacement using edit_image (Imagen models)
         import io
         img_byte_arr = io.BytesIO()
@@ -497,13 +539,24 @@ def handle_generate_image(args):
                 )
             )
             edit_mode = "EDIT_MODE_INPAINT_INSERTION"
-        else:
+        elif is_mockup and MOCKUP_USE_BACKGROUND_EDIT:
             mask_ref = types.MaskReferenceImage(
                 reference_id=2,
                 config=types.MaskReferenceConfig(
                     mask_mode="MASK_MODE_BACKGROUND"
                 )
             )
+            edit_mode = None
+        elif not is_mockup:
+            mask_ref = types.MaskReferenceImage(
+                reference_id=2,
+                config=types.MaskReferenceConfig(
+                    mask_mode="MASK_MODE_BACKGROUND"
+                )
+            )
+            edit_mode = None
+        else:
+            mask_ref = None
             edit_mode = None
             
         # Use capability model by default for editing

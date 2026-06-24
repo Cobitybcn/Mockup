@@ -26,28 +26,29 @@ class GeminiArtworkProcessor implements ArtworkProcessorInterface
             mkdir($resultsDir, 0775, true);
         }
 
-        $prompt = $this->buildPrompt($status, $source);
-        $parts = [$this->client->textPart($prompt), $this->client->imagePart($source)];
+        $rootCount = PromptSettings::rootArtworkCount();
 
-        foreach (($status['extra_files'] ?? []) as $extraFile) {
-            $extraPath = rtrim($jobDir, '/\\') . DIRECTORY_SEPARATOR . basename((string)$extraFile);
-            if (is_file($extraPath)) {
-                $parts[] = $this->client->imagePart($extraPath);
-            }
+        $promptsMap = [];
+        for ($i = 1; $i <= $rootCount; $i++) {
+            $promptsMap[$i] = $this->buildPromptForVersion($i, $status, $source);
         }
 
-        file_put_contents($jobDir . '/prompt.txt', $prompt);
+        // Write all prompts to prompt.txt for reference/UI
+        $promptSummary = '';
+        foreach ($promptsMap as $i => $vPrompt) {
+            $promptSummary .= "=== VERSION {$i} ===\n{$vPrompt}\n\n";
+        }
+        file_put_contents($jobDir . '/prompt.txt', trim($promptSummary));
+
         $model = ProviderSettings::geminiImageModel();
 
         file_put_contents($jobDir . '/target_size.txt', 'gemini-native model=' . $model);
 
         $files = [];
         $paths = [];
-        $rootCount = PromptSettings::rootArtworkCount();
 
         $python = $this->client->getPythonExecutable();
         $bridgeScript = __DIR__ . '/vertex_bridge.py';
-        $model = ProviderSettings::geminiImageModel();
 
         // Build base command for generating image
         $baseCmd = '"' . $python . '" ' . escapeshellarg($bridgeScript) . ' generate-image';
@@ -74,9 +75,12 @@ class GeminiArtworkProcessor implements ArtworkProcessorInterface
             $cmd = $baseCmd . ' --output ' . escapeshellarg($outputPath);
             
             $cmds[] = $cmd;
-            $prompts[] = $prompt;
+            $prompts[] = $promptsMap[$i];
             $files[] = $outputName;
             $paths[] = $outputPath;
+
+            // Log prompt details for auditability
+            $this->logRootPromptInfo($i, $promptsMap[$i]);
         }
 
         // Run all commands in parallel
@@ -103,9 +107,69 @@ class GeminiArtworkProcessor implements ArtworkProcessorInterface
         ];
     }
 
-    private function buildPrompt(array $status, string $source): string
+    private function buildPromptForVersion(int $version, array $status, string $source): string
     {
-        return trim(PromptSettings::rootArtworkRules());
+        if ($version === 1) {
+            return trim(PromptSettings::rootArtworkRulesFrontal());
+        }
+
+        if ($version === 2) {
+            return trim(PromptSettings::rootArtworkRulesLeft());
+        }
+
+        if ($version === 3) {
+            return trim(PromptSettings::rootArtworkRulesRight());
+        }
+
+        // Fallback for version > 3
+        if ($version % 3 === 1) {
+            return trim(PromptSettings::rootArtworkRulesFrontal());
+        } elseif ($version % 3 === 2) {
+            return trim(PromptSettings::rootArtworkRulesLeft());
+        } else {
+            return trim(PromptSettings::rootArtworkRulesRight());
+        }
+    }
+
+    private function logRootPromptInfo(int $version, string $finalPrompt): void
+    {
+        $model = ProviderSettings::geminiImageModel();
+        $timestamp = date('Y-m-d H:i:s');
+
+        $viewNames = [
+            1 => 'frontal root view',
+            2 => 'three-quarter left root view',
+            3 => 'three-quarter right root view',
+        ];
+        $rootView = $viewNames[$version] ?? ('view variant ' . $version);
+
+        $keys = [
+            1 => 'root_artwork_rules_frontal',
+            2 => 'root_artwork_rules_left',
+            3 => 'root_artwork_rules_right',
+        ];
+        $specificKey = $keys[$version] ?? 'root_artwork_rules_frontal';
+
+        $allSettings = PromptSettings::all();
+        $dbValue = trim($allSettings[$specificKey] ?? '');
+        $source = $dbValue !== '' ? 'Admin' : 'Built-in default';
+
+        $logMessage = "----------------------------------------\n";
+        $logMessage .= "Timestamp: {$timestamp}\n";
+        $logMessage .= "Root Image Number: {$version}\n";
+        $logMessage .= "Root View: {$rootView}\n";
+        $logMessage .= "Admin Key: {$specificKey}\n";
+        $logMessage .= "Source: {$source}\n";
+        $logMessage .= "Model: {$model}\n";
+        $logMessage .= "Final Prompt Sent to Vertex:\n";
+        $logMessage .= "{$finalPrompt}\n";
+        $logMessage .= "----------------------------------------\n\n";
+
+        $logDir = __DIR__ . '/../../logs';
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0775, true);
+        }
+        @file_put_contents($logDir . '/root_prompts.log', $logMessage, FILE_APPEND);
     }
 
     private function expectedRatio(array $status, string $source): ?float

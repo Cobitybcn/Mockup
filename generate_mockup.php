@@ -177,7 +177,7 @@ function override_prompt_directives(string $prompt, ?string $camera, ?string $ti
 {
     if ($camera) {
         $cameraVal = match ($camera) {
-            'front' => 'straight-on front view, eye-level, orthographic-like perspective, artwork dominant in frame',
+            'front' => 'straight-on front view, eye-level, orthographic-like perspective',
             '3_4_left' => 'three-quarter view from the left, slight side angle, eye-level, natural perspective',
             '3_4_right' => 'three-quarter view from the right, slight side angle, eye-level, natural perspective',
             default => null
@@ -274,8 +274,33 @@ function override_prompt_directives(string $prompt, ?string $camera, ?string $ti
             'human_profile' => ($human !== 'none' ? $human : null),
         ];
 
-        $builder = new MockPromptBuilder();
-        $newHumanRule = $builder->humanRule($ctx);
+        $depthText = $depthCm ? " × {$depthCm} cm deep" : " × 4 cm deep";
+        $humanHeightStr = ($human === 'male_180' || $human === 'male_180m') ? "1.80m" : "1.55m";
+        $humanHeightCm = ($human === 'male_180' || $human === 'male_180m') ? 180 : 155;
+        $genderNoun = ($human === 'male_180' || $human === 'male_180m') ? "male" : "female";
+        $genderSubject = ($human === 'male_180' || $human === 'male_180m') ? "man" : "woman";
+        $genderPronoun = ($human === 'male_180' || $human === 'male_180m') ? "him" : "her";
+        $genderPossessive = ($human === 'male_180' || $human === 'male_180m') ? "his" : "her";
+
+        $scaleDirective = "";
+        if ($heightCm && $widthCm) {
+            $pct = (int)round(($heightCm / $humanHeightCm) * 100);
+            $scaleDirective = " The artwork is {$widthCm} cm wide × {$heightCm} cm high{$depthText}. The human figure is {$humanHeightStr} tall. The artwork height is {$heightCm} cm, so it must appear as approximately {$pct}% of the {$genderNoun} figure's full standing height.";
+            if ($heightCm < $humanHeightCm) {
+                $scaleDirective .= " The artwork must appear clearly shorter than the {$genderSubject}, not equal to {$genderPossessive} full height and not taller than {$genderPronoun}.";
+            } else if ($heightCm > $humanHeightCm) {
+                $scaleDirective .= " The artwork must appear taller than the {$genderSubject}'s full standing height.";
+            }
+        }
+
+        $newHumanRule = 'Include exactly one standing human figure for scale reference. The full-body figure must remain completely visible from head to shoes, standing on the exact same floor plane as the artwork, positioned at a comparable depth relative to the camera (not blocking or overlapping the artwork), and placed close enough to the artwork to serve as a reliable visual scale reference to verify and audit the physical scale of the artwork.' . $scaleDirective;
+        if ($human === 'none') {
+            $newHumanRule = 'Do not include any human figure.';
+        } elseif ($human === 'female_155' || $human === 'female_155m') {
+            $newHumanRule = 'Include exactly one elegant standing female figure (1.55m tall) for scale reference. The full-body figure must remain completely visible from head to shoes, standing on the exact same floor plane as the artwork, positioned at a comparable depth relative to the camera (not blocking or overlapping the artwork), and placed close enough to the artwork to serve as a reliable visual scale reference to verify and audit the physical scale of the artwork.' . $scaleDirective;
+        } elseif ($human === 'male_180' || $human === 'male_180m') {
+            $newHumanRule = 'Include exactly one elegant standing male figure (1.80m tall) for scale reference. The full-body figure must remain completely visible from head to shoes, standing on the exact same floor plane as the artwork, positioned at a comparable depth relative to the camera (not blocking or overlapping the artwork), and placed close enough to the artwork to serve as a reliable visual scale reference to verify and audit the physical scale of the artwork.' . $scaleDirective;
+        }
 
         // Reemplazar la directiva de figura humana de manera segura (formato nuevo o antiguo)
         if (preg_match('/-\s*Human Figure:[^\r\n]*/i', $prompt)) {
@@ -293,35 +318,12 @@ function override_prompt_directives(string $prompt, ?string $camera, ?string $ti
                 $prompt
             );
         }
-
-        // Construir la nueva línea de SCALE RULES
-        $orientation = 'unknown';
-        if ($widthCm && $heightCm) {
-            $orientation = ((float)$widthCm > (float)$heightCm) ? 'horizontal' : (((float)$heightCm > (float)$widthCm) ? 'vertical' : 'square');
-        }
-
-        $imageMeta = [
-            'orientation' => $orientation,
-            'physical_size' => [
-                'width_cm' => $widthCm,
-                'height_cm' => $heightCm,
-                'depth_cm' => $depthCm,
-            ]
-        ];
-
-        $newScaleText = $builder->scaleText($imageMeta, $ctx);
-        if (preg_match('/-\s*Scale:[^\r\n]*/i', $prompt)) {
-            $prompt = preg_replace('/-\s*Scale:[^\r\n]*/i', '- Scale: ' . $newScaleText, $prompt);
-        } else {
-            $prompt = preg_replace('/-\s*(The physical artwork measures|No physical size was provided)[^\r\n]*/i', '- PLACEHOLDER_SCALE_TEXT', $prompt);
-            $prompt = str_replace('PLACEHOLDER_SCALE_TEXT', $newScaleText, $prompt);
-        }
     }
 
     if ($distance) {
         $distanceVal = match ($distance) {
-            'close' => '- Structured Camera Distance: close-up view, artwork dominant, room only suggested',
-            'medium' => '- Structured Camera Distance: medium-close view, enough space for context and scale while keeping artwork dominant',
+            'close' => '- Structured Camera Distance: close-up view, room only suggested',
+            'medium' => '- Structured Camera Distance: medium-close view, enough space for context and scale',
             default => null
         };
 
@@ -347,6 +349,22 @@ function override_prompt_directives(string $prompt, ?string $camera, ?string $ti
             . "- Keep the artwork proportions, placement realism, wall contact, canvas depth and physical believability.\n"
             . "- Apply this only to the artwork display size, not to the room, furniture, human figure, or camera angle.";
     }
+
+    // Convert fraction ratios like 120/155 or 80/180 into explicit percentages with height context
+    $prompt = preg_replace_callback(
+        '#\b(\d+)\s*/\s*(155|180)(?:\s+of\s+the\s+1\.(?:55|80)m\s+(?:female\s+|male\s+)?figure\'s\s+(?:full\s+)?(?:standing\s+)?height)?\b#i',
+        function ($matches) use ($heightCm) {
+            $denom = (int)$matches[2];
+            $num = ($heightCm !== null) ? (int)$heightCm : (int)$matches[1];
+            $pct = (int)round(($num / $denom) * 100);
+            if ($denom === 155) {
+                return "{$pct}% of the 1.55m female figure's full standing height";
+            } else {
+                return "{$pct}% of the 1.80m male figure's full standing height";
+            }
+        },
+        $prompt
+    );
 
     return $prompt;
 }
@@ -592,6 +610,21 @@ try {
 
         return (int)$pdo->lastInsertId();
     }, 24);
+
+    if ($mockupId > 0 && $artwork) {
+        try {
+            Logger::logMockupGeneration(
+                $mockupId,
+                (int)$artwork['id'],
+                $contextId,
+                $prompt,
+                $cameraOverride !== '' ? $cameraOverride : ($contextRow['camera_view'] ?? ''),
+                $humanOverride !== '' ? $humanOverride : ($contextRow['human_presence'] ?? '')
+            );
+        } catch (Throwable $logEx) {
+            Logger::log("Failed to log mockup audit: " . $logEx->getMessage(), 'error');
+        }
+    }
 } catch (Throwable $e) {
     if (wants_json_response() && isset($result['file']) && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . basename((string)$result['file']))) {
         Logger::log('Mockup generated but database save failed: ' . $e->getMessage(), 'error');

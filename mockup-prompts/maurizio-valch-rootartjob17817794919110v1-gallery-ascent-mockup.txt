@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 160 cm wide × 160 cm high.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Gallery Ascent
+- Purpose: Exhibition Space
+- Scene Description: A Contemporary art gallery with Minimalist, pristine, focused atmosphere. Materials: White walls, Polished concrete floor, Neutral plinth
+- Lighting: Soft, diffused natural light from above, subtle spotlights
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: front view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A straight-on view emphasizes the artwork's monumental square format and central composition, highlighting its structural presence on a clean gallery wall. The close-up ensures textural details are visible while still suggesting the minimalist environment.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A Maurizio Valch 'Tectonic Current' painting (160x160cm) mounted on a stark white gallery wall, polished concrete floor. Minimalist white plinth nearby. Soft, diffused overhead natural light with subtle art spotlights. Front view, close-up.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+clutter, ornate, generic, cheap, busy, unlit, blurry
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

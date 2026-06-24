@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: square canvas, 160 cm wide × 160 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Contemplative Study Corner
+- Purpose: Creating an intimate, reflective atmosphere for personal engagement with the artwork.
+- Scene Description: A Refined home study or library nook with Quiet, intellectual, introspective, warm, cozy yet spacious atmosphere. Materials: dark wood paneling, leather armchair, soft rug, muted wall lamp
+- Lighting: Warm, focused task lighting from a minimalist wall lamp, complemented by a soft glow from a nearby window.
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A three-quarter right view allows for an intimate perspective, showcasing the artwork's detail and its connection to a personal, contemplative space. The close-up distance maintains focus on the artwork, with the study elements softly blurred to suggest context without distraction. This view subtly introduces the depth of the room.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A refined home study corner with dark wood paneling, a classic leather armchair, and a soft rug. Maurizio Valch's large square abstract painting featuring a fuchsia spiral on dark segmented background hangs above the armchair. Warm, focused task lighting from a minimalist wall lamp, soft ambient glow. Three-quarter right view, close-up view, emphasizing personal engagement and the artwork's contemplative quality.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+bright colors, messy desk, modern office, corporate setting, sterile, overly minimalist, blurry artwork, distorted perspective
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

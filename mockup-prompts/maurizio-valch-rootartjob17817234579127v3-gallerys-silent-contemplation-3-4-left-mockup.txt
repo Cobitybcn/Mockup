@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 160 cm wide × 120 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Gallery's Silent Contemplation
+- Purpose: Showcasing artistic merit and visual impact in a gallery setting
+- Scene Description: A professional art gallery with minimalist, serene, focused, museum-like atmosphere. Materials: white gallery walls, polished concrete floor, metal track lighting
+- Lighting: focused, crisp gallery lighting highlighting texture and color, with ambient overhead light
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A three-quarter left view adds a sense of spatial depth to the gallery context, allowing for a glimpse of the room while keeping the artwork dominant. The close-up view ensures all details of the brushwork and the intense gaze are clear. The absence of a human figure maintains the pristine, focused gallery atmosphere, emphasizing the artwork itself.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A pristine, minimalist professional art gallery with stark white walls and polished light grey concrete floors. Maurizio Valch's 'Sin título' is mounted centrally on a wall, illuminated by precise, focused track lighting from above, emphasizing its texture and colors. The view shows a slight angle, giving depth to the gallery space. The artwork is the undisputed focal point. close-up view, three-quarter left view.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+distracting elements, other artworks, people, busy environment, color on walls, ornate frames, low light, warm tones, distort, crop
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

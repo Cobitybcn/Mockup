@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Architectural Vista Gallery
+- Purpose: Modern residential art display
+- Scene Description: A High-end penthouse living room with large windows with Serene, spacious, bright, refined, with soft natural light atmosphere. Materials: Polished concrete floor, warm grey plaster walls, large glass windows, minimalist wooden furniture
+- Lighting: Soft, diffused daylight from large windows, with subtle indoor spot lighting on the artwork.
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: front view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The front view emphasizes the artwork's balanced horizontal composition and clean lines. The soft, diffused daylight allows the viewer to appreciate the subtle color gradients and the work's inherent structure within a contemporary, open setting.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A serene, spacious, bright, and refined high-end penthouse living room with large glass windows. The floor is polished concrete, walls are warm grey plaster. Minimalist wooden furniture is subtly placed. Soft, diffused daylight enters from large windows, complemented by subtle indoor spot lighting on the artwork. The camera is positioned at a front view, close-up. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

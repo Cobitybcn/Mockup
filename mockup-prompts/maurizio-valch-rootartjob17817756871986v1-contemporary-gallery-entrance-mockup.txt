@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 160 cm wide × 160 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Contemporary Gallery Entrance
+- Purpose: Exhibition Space
+- Scene Description: A professional art galleries with minimalist, focused, sophisticated atmosphere. Materials: white walls, polished concrete floor, neutral tones
+- Lighting: gallery spotlights, even ambient light
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: front view
+- Structured Camera Distance: close-up view
+- Camera Rationale: Frontal view accentuates the square format and centered composition, presenting the artwork directly. Close-up allows focus on texture without distraction, while showing just enough of the gallery wall to suggest scale.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+Minimalist contemporary art gallery entrance, white walls, polished concrete floor, focused gallery lighting on a 160x160cm artwork, wide shot from front, no people, neutral tones.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+clutter, excessive decoration, busy background, poor lighting, unfocused, generic, cheap materials
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

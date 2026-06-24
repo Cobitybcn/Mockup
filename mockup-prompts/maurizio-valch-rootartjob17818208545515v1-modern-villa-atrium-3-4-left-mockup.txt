@@ -1,0 +1,33 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Modern Villa Atrium
+- Purpose: collector salon
+- Scene Description: A architect-designed villa interior with sophisticated, expansive, serene atmosphere. Materials: pale microcement walls, large format stone flooring, dark wood accents, large windows
+- Lighting: blue-hour window light with subtle interior uplighting
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult middle eastern man, 1.80 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+
+
+AI PROPOSED MOCKUP DIRECTION:
+An architect-designed villa interior atrium during blue hour, featuring pale microcement walls and large format stone flooring. Subtle dark wood accents provide contrast, and large windows let in soft, cool blue-hour light. Interior uplighting adds warmth. camera_view: three-quarter left view. camera_distance: close-up view. An elegant standing male figure 1.80m, in a dark tailored suit, stands observing the artwork from a respectful distance, embodying a quiet contemplative stance. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

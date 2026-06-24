@@ -1,0 +1,40 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 220 cm wide × 180 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Camera: three-quarter view from the left, slight side angle, eye-level, natural perspective
+- Scene Name: Mid-Century Modern Harmony
+- Purpose: Integrating contemporary art into classic, well-designed residential spaces
+- Scene Description: A Mid-century modern living room with Stylish, balanced, retro-chic, inviting atmosphere. Materials: Warm off-white wall, Teak wood sideboard (classic MCM design), Geometric patterned rug (subtle), Velvet upholstered armchair (vintage style)
+- Lighting: dramatic evening light, spot art lamps, nocturnal gallery ambiance (evening/night), subtle warm spot lighting
+- Time of Day: evening
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: medium-close view, enough space for context and scale while keeping artwork dominant
+- Camera Rationale: The three-quarter left view complements the angularity and clean lines often found in Mid-Century Modern design, allowing the artwork to integrate seamlessly. The close-up ensures the artwork remains the dominant feature, while glimpses of iconic MCM furniture establish a stylish, harmonious environment, showcasing its broad appeal to design-conscious collectors.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+Maurizio Valch 'Sin título' (220x180cm) hanging on a warm off-white wall in a mid-century modern living room, classic teak wood sideboard directly below, geometric patterned rug (subtle design), velvet upholstered armchair (vintage style) partially visible, soft diffused evening, vintage floor lamp providing warm accent light, three-quarter left view, close-up view, stylish, balanced, retro-chic, harmonious design.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+Cluttered, messy, futuristic, rustic, industrial, bad lighting, generic, pixelated, people.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:
+
+ARTWORK SIZE CORRECTION FOR THIS REGENERATION:
+- Make the artwork appear 30% larger than the current/default prompt scale.
+- Keep the artwork proportions, placement realism, wall contact, canvas depth and physical believability.
+- Apply this only to the artwork display size, not to the room, furniture, human figure, or camera angle.

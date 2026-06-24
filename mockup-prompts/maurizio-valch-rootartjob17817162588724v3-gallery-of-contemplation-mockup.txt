@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 180 cm wide × 120 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Gallery of Contemplation
+- Purpose: Primary gallery display, highlighting artistic impact.
+- Scene Description: A professional art gallery with serene, contemplative, modern, minimalist atmosphere. Materials: smooth white walls, light concrete floor, subtle track lighting, polished metal accents
+- Lighting: soft, diffused overhead gallery lighting, accentuating texture and color, creating subtle shadows
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult white man, 1.80 meters tall.
+
+- Structured Camera View: front view
+- Structured Camera Distance: close-up view
+- Camera Rationale: Front view emphasizes the direct gaze and symmetrical qualities of the artwork's face, maximizing its visual impact and commercial clarity in a gallery setting. The close-up distance ensures the monumental scale and detailed brushwork are clearly visible, making the artwork dominant.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A large-scale Maurizio Valch painting "Chromatic Duality" on a pristine white gallery wall, 180cm wide x 120cm high. The artwork depicts a monumental, split human face with contrasting warm (red, ochre) and cool (blue, teal) colors, strong brushstrokes, and a direct gaze. Soft, diffused gallery lighting illuminates the piece. An optional standing male figure (1.80m) in a tailored suit is observing the artwork from a slight distance to the right, providing scale. Clean, minimalist concrete floor. Front view, close-up view.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+Distracting elements, busy background, poor lighting, cluttered space, blurry, grainy, out of focus, distorted artwork.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

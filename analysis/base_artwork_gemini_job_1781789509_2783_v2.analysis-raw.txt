@@ -1,0 +1,202 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Central Field",
+      "subtitle": "Abstract painting establishing spatial tension through an expansive, warm-toned core contained by dark, structural divisions.",
+      "description": "An expansive, luminous form occupies the upper-central area of the canvas. The composition is organized around this warm, light-filled territory, which appears surrounded by darker, structural elements. Layers of earthy reds, oranges, and yellows emerge with visible brushwork, contrasting with deep blues and purples. This interplay of color and form creates a contemplative and spatially complex atmosphere. The artwork holds a significant presence through its balanced divisions and material depth."
+    ,
+    "title": "Blue Incision",
+      "subtitle": "Structural abstract work highlighting a deep blue vertical field marked by lighter, incised gestures against warmer, divided territories.",
+      "description": "A dominant vertical field of deep blue occupies the right side of the composition. This blue territory is distinctly marked by lighter, incised lines and textured areas, anchoring the overall structure. The painting develops through curvilinear divisions that separate the dense blue from a central area of layered warm tones and purples. Visible material presence and color contrast create a sober, restrained atmosphere. The work achieves a quiet tension through its deliberate formal balance and surface construction."
+    },
+    {
+      "title": "Tectonic Lines",
+      "subtitle": "Abstract composition built from distinct color territories, defined by bold curvilinear lines and strong divisions creating spatial order.",
+      "description": "The artwork is structured by prominent, dark curvilinear lines that divide the canvas into distinct color territories. The composition organizes around these divisions, separating areas of deep blue, rich purple, and a luminous warm center. Pigment density and visible surface construction are evident in the layering of acrylics and nuanced transitions between fields. This formal organization lends a silent, ordered, and slightly melancholic atmosphere. The piece maintains visual integrity through its coherent internal structure and material presence."
+    }
+  ],
+  "recommended_number_of_contexts": "9",
+  "contextual_proposals": [
+    {
+      "context_name": "Minimalist Gallery Corner",
+      "context_role": "Showcasing structural purity and visual order.",
+      "space_type": "Contemporary art gallery",
+      "atmosphere": "Silent, stark, contemplative",
+      "materials": [
+        "white gallery walls",
+        "polished concrete floor",
+        "subtle shadow gaps"
+      ],
+      "lighting": "Soft overhead track lighting, ambient light from a skylight",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A straight-on view emphasizes the artwork's square format and internal structural divisions, allowing its quiet presence to dominate the minimal gallery space.",
+      "human_presence": "none",
+      "curatorial_reason": "To present the artwork in a pristine, focused environment that highlights its formal elements and material integrity without distraction.",
+      "commercial_reason": "Appeals to collectors and institutions seeking art for contemporary exhibition spaces or highly curated private collections.",
+      "mockup_prompt": "A pristine, contemporary art gallery corner. The walls are white and the floor is polished concrete. Soft overhead track lighting illuminates the artwork, complemented by ambient light from a skylight. front view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Architectural Residence Lounge",
+      "context_role": "Integrating artwork into a refined, high-ceiling residential design.",
+      "space_type": "High-end residential living area",
+      "atmosphere": "Refined, open, quiet",
+      "materials": [
+        "light grey concrete wall",
+        "warm wide-plank wood flooring",
+        "subtle plaster textures"
+      ],
+      "lighting": "Soft ambient light from large, tall windows, indirect cove lighting",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view offers a sense of the artwork's depth and material presence within a spacious residential setting, providing scale reference with the human figure.",
+      "human_presence": "optional standing male figure 1.80m",
+      "curatorial_reason": "Demonstrates the artwork's ability to anchor a sophisticated, architect-designed interior, connecting its structural qualities to the surrounding space.",
+      "commercial_reason": "Targets interior designers and collectors looking for statement pieces that enhance contemporary, minimalist, and architecturally driven homes.",
+      "mockup_prompt": "A refined, high-ceiling residential living area. A light grey concrete wall provides a subtle backdrop, complemented by warm wide-plank wood flooring. Soft ambient light streams from large, tall windows, with additional indirect cove lighting. three-quarter left view, close-up view, optional standing male figure 1.80m. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Boutique Hotel Feature Wall",
+      "context_role": "Creating a focal point in a high-design hospitality setting.",
+      "space_type": "Upscale boutique hotel lobby",
+      "atmosphere": "Chic, inviting, tranquil",
+      "materials": [
+        "dark textured wall (e.g., charcoal linen)",
+        "discreet seating (blurred in foreground)"
+      ],
+      "lighting": "Warm, focused downlights, soft lamplight from a side table",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter right view captures the artwork's presence on a feature wall, allowing hints of the hotel's luxurious ambiance without detracting from the art.",
+      "human_presence": "none",
+      "curatorial_reason": "Showcases the artwork's capacity to define the aesthetic of a high-end commercial space through its rich colors and structural design.",
+      "commercial_reason": "Ideal for interior designers specifying for luxury hotels, corporate collections, or high-traffic, sophisticated public spaces.",
+      "mockup_prompt": "An upscale boutique hotel lobby. The artwork is mounted on a dark textured wall, possibly charcoal linen or Venetian plaster. Warm, focused downlights illuminate the piece, complemented by soft lamplight from a side table. three-quarter right view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Private Collector's Study",
+      "context_role": "Placing the artwork in a context of considered contemplation.",
+      "space_type": "Private collector's study",
+      "atmosphere": "Thoughtful, academic, intimate",
+      "materials": [
+        "dark wood paneling",
+        "classic leather armchair (blurred)",
+        "subtle bookshelf section"
+      ],
+      "lighting": "Focused art lighting from above, warm lamplight from a desk lamp",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The front view brings the viewer directly into conversation with the artwork, emphasizing its detail and surface, appropriate for a private, contemplative setting.",
+      "human_presence": "none",
+      "curatorial_reason": "Highlights the artwork's suitability for a personal collection where visual depth and restrained emotion are valued for quiet reflection.",
+      "commercial_reason": "Targets discerning private collectors who appreciate art as an intellectual and aesthetic anchor within their personal environments.",
+      "mockup_prompt": "A private collector's study with dark wood paneling on the walls. A classic leather armchair is softly blurred in the foreground, and a subtle bookshelf lines the side. Focused art lighting illuminates the artwork from above, augmented by warm lamplight from a desk lamp. front view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Mediterranean Salon",
+      "context_role": "Connecting the artwork's palette and divisions to organic architecture.",
+      "space_type": "Spacious salon in a modern Mediterranean villa",
+      "atmosphere": "Serene, airy, organic",
+      "materials": [
+        "off-white textured plaster walls",
+        "terracotta tile floor (subtle)",
+        "large arched doorway (blurred)"
+      ],
+      "lighting": "Abundant natural light from a large window, creating soft shadows",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "This view, with natural light and hints of Mediterranean architecture, connects the artwork's organic yet structured forms and warm undertones to a sun-drenched environment.",
+      "human_presence": "none",
+      "curatorial_reason": "To demonstrate how the artwork's earthy tones and abstract landscapes can resonate with specific regional aesthetics and natural light conditions.",
+      "commercial_reason": "Appeals to collectors and designers focused on Mediterranean, Wabi-Sabi, or organic modern interior styles.",
+      "mockup_prompt": "A spacious salon in a modern Mediterranean villa. The walls are off-white textured plaster, and the floor is subtle terracotta tile. Abundant natural light streams from a large window, casting soft shadows, with a blurred arched doorway in the background. three-quarter left view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Minimalist Dining Space",
+      "context_role": "Showcasing the artwork as a refined, central element in a functional space.",
+      "space_type": "Contemporary dining room",
+      "atmosphere": "Clean, sophisticated, inviting to conversation",
+      "materials": [
+        "smooth, light grey wall",
+        "simple minimalist dining table (blurred edge)",
+        "light wood floor"
+      ],
+      "lighting": "Soft diffused overhead light, ambient light from a large window",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter right view captures the artwork's quiet authority in a dining setting, showing its integration with modern furniture while remaining the visual focus.",
+      "human_presence": "none",
+      "curatorial_reason": "To illustrate the artwork's capacity to elevate everyday spaces with its thoughtful composition and silent presence, promoting contemplation during social gatherings.",
+      "commercial_reason": "Targets interior designers and homeowners seeking sophisticated, non-distracting art for modern dining areas or open-plan living spaces.",
+      "mockup_prompt": "A contemporary dining room featuring a smooth, light grey wall as a backdrop. A simple minimalist dining table is partially blurred in the foreground, and the floor is light wood. Soft diffused overhead light illuminates the space, complemented by ambient light from a large window. three-quarter right view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Gallery with Accent Wall",
+      "context_role": "Emphasizing the artwork's material presence and depth against contrast.",
+      "space_type": "Contemporary art gallery",
+      "atmosphere": "Focused, curated, clean",
+      "materials": [
+        "deep charcoal grey accent wall",
+        "white adjacent walls",
+        "light concrete floor"
+      ],
+      "lighting": "Precise gallery spot lighting highlighting texture and surface variation",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The direct front view maximizes the visual impact of the artwork against the dramatic accent wall, with the optional figure providing a clear sense of scale.",
+      "human_presence": "optional standing female figure 1.55m",
+      "curatorial_reason": "To highlight the artwork's rich colors and material textures by juxtaposing them against a darker, contrasting background, enhancing its visual weight.",
+      "commercial_reason": "Ideal for galleries and curators looking to make a strong visual statement and emphasize the artwork's unique surface qualities.",
+      "mockup_prompt": "A contemporary art gallery interior. The artwork is centered on a deep charcoal grey accent wall, flanked by white adjacent walls. The floor is light concrete. Precise gallery spot lighting highlights the artwork's texture and surface variation. front view, close-up view, optional standing female figure 1.55m. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Architectural Studio Lounge",
+      "context_role": "Positioning the artwork as inspiration for creative professionals.",
+      "space_type": "Lounge area within an architectural design studio",
+      "atmosphere": "Creative, professional, spacious",
+      "materials": [
+        "exposed concrete wall",
+        "industrial-style window frames (blurred)",
+        "minimalist modular seating (blurred)"
+      ],
+      "lighting": "Bright, even natural light, with some overhead task lighting",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter left view provides an architectural context, framing the artwork as a source of visual thought for professionals, emphasizing its structural and spatial qualities.",
+      "human_presence": "none",
+      "curatorial_reason": "Connects the artwork's emphasis on structure, territory, and spatial relationships to the practices of architecture and design, suggesting visual dialogue.",
+      "commercial_reason": "Appeals to architectural firms, design agencies, and commercial clients seeking sophisticated and intellectually stimulating art for their professional environments.",
+      "mockup_prompt": "A lounge area within an architectural design studio. An exposed concrete wall forms the backdrop. Industrial-style window frames are blurred in the background, along with minimalist modular seating. Bright, even natural light fills the space, complemented by some overhead task lighting. three-quarter left view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "High-End Townhouse Hallway",
+      "context_role": "Elevating a transitional space with quiet presence and refined aesthetic.",
+      "space_type": "Wide hallway in a high-end townhouse",
+      "atmosphere": "Elegant, transitional, curated",
+      "materials": [
+        "pale beige painted walls",
+        "dark chevron wood floor",
+        "subtle console table (blurred)"
+      ],
+      "lighting": "Soft wall sconces, natural light from a distant window",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "This view, capturing the artwork in an elegant hallway, highlights its ability to create a focal point in a transitional space, with hints of luxury finishes.",
+      "human_presence": "none",
+      "curatorial_reason": "Illustrates how the artwork's restrained aesthetic and material depth can enhance circulation areas, providing moments of visual repose and sophistication.",
+      "commercial_reason": "Suitable for private collectors and interior designers seeking art that integrates seamlessly into luxurious residential settings, elevating everyday transitions.",
+      "mockup_prompt": "A wide hallway in a high-end townhouse. The walls are painted pale beige, and the floor features dark chevron wood. A subtle console table is blurred in the foreground. Soft wall sconces provide ambient light, supplemented by natural light from a distant window. three-quarter right view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    }
+  ]
+}
+```

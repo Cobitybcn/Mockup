@@ -1,0 +1,204 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Red Structures",
+      "subtitle": "An abstract painting built through a rich red color field, interrupted by horizontal incisions and small, solid forms.",
+      "description": "A dense red field occupies the canvas, built through layers of pigment and visible brushwork. Across this rich field, several small, bright red rectangular forms are strategically placed, appearing as defined structures. Thin, undulating white lines traverse the composition horizontally, seeming to connect or articulate these forms. The surface is visibly worked, creating a tactile presence and depth within the color field. This structural arrangement fosters a silent and contemplative atmosphere, emphasizing visual order. The artwork, with its verticality, holds a significant and commanding presence."
+    },
+    {
+      "title": "Incised Territory",
+      "subtitle": "A structural abstract work, defined by its materially worked red surface and precise horizontal incisions across the pictorial field.",
+      "description": "The canvas is dominated by a deep, textured red, revealing visible brushstrokes and subtle material build-up. Several fine, wavy white lines are incised or thinly painted across this rich surface, subtly delineating visual areas. Small, rectangular red elements appear to emerge from or float within the varied red field. The composition is built through the interplay of surface and line, creating a distinct sense of visual order. This ordered structure gives the artwork a restrained, silent presence and atmospheric depth."
+    },
+    {
+      "title": "Red Thresholds",
+      "subtitle": "Contemporary painting where horizontal lines subtly divide a deep red field, creating a sense of spatial tension and defined visual territories.",
+      "description": "A vibrant red expanse forms the primary territory of this vertical composition, showing rich textural variations. Thin, slightly irregular white lines stretch horizontally across the canvas, functioning as subtle divisions or perceived thresholds. Positioned along these lines are smaller, brighter red rectangular forms, suggesting elements suspended within the space. The layered red surface provides a tactile quality, enhancing the material presence of the work. This structured arrangement creates a contemplative and spatially aware atmosphere, holding visual order. The artwork’s vertical format emphasizes its quiet, commanding presence."
+    }
+  ],
+  "recommended_number_of_contexts": "9",
+  "contextual_proposals": [
+    {
+      "context_name": "Collector's Evening Residence",
+      "context_role": "private viewing",
+      "space_type": "private collector residence at evening",
+      "atmosphere": "warm, intimate, contemplative",
+      "materials": [
+        "dark wood paneling",
+        "subtle textured wallpaper",
+        "bronze accents",
+        "polished concrete floor"
+      ],
+      "lighting": "warm evening gallery lighting",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view showcases the artwork's depth and texture against the warm, sophisticated backdrop, with the lighting creating an intimate atmosphere that highlights its rich red tones. The angle allows for a subtle view of the figure while keeping the artwork dominant.",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "Emphasizes the artwork as a cherished object within a sophisticated private collection, aligning with the artist's focus on material presence and contemplative atmosphere.",
+      "commercial_reason": "Places the artwork in an aspirational, emotionally rich setting, showing its scale and suitability for a high-end private residence and fostering a sense of exclusive ownership.",
+      "mockup_prompt": "A warm, intimate private collector residence at evening. The artwork hangs on a dark wood paneling wall with subtle textured wallpaper, featuring bronze accents and a polished concrete floor. Warm evening gallery lighting illuminates the artwork. three-quarter left view, close-up view. An elegant standing male figure 1.80m, in a dark tailored suit, stands with hands relaxed, observing the artwork from a respectful distance. The artwork in the attached image is the final artwork to be presented, not an inspiration image, and should not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the artwork in the attached image. Preserve the artwork exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, brushstroke, marks, symbols, and visual content. The artwork must remain completely visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, the human figure, the lighting, the wall, the architecture, the furniture, and the atmosphere can be generated or modified."
+    },
+    {
+      "context_name": "Architectural Villa Interior",
+      "context_role": "modern luxury integration",
+      "space_type": "architect-designed villa interior",
+      "atmosphere": "refined, serene, modern luxury",
+      "materials": [
+        "polished limestone walls",
+        "warm oak flooring",
+        "large glass windows",
+        "minimalist leather seating"
+      ],
+      "lighting": "blue-hour window light, subtle integrated wall wash",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter right view enhances the artwork's structural qualities within a sleek architectural context. The blue-hour light creates a serene backdrop, emphasizing the contrast of the red while allowing the figure to subtly frame the piece, suggesting harmonious integration.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "Connects the artwork with high-quality contemporary architecture, highlighting its structural and atmospheric qualities within a modern, discerning aesthetic.",
+      "commercial_reason": "Shows the artwork's ability to integrate into and elevate a modern, architectural environment, appealing to design-conscious collectors and showcasing its versatility.",
+      "mockup_prompt": "An architect-designed villa interior, modern and serene. The artwork is set against polished limestone walls, complemented by warm oak flooring and large glass windows. Subtle integrated wall wash light blends with blue-hour window light. three-quarter right view, close-up view. An elegant standing female figure 1.55m, in a long elegant dress, in side profile, contemplates the artwork against the evening light. The artwork in the attached image is the final artwork to be presented, not an inspiration image, and should not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the artwork in the attached image. Preserve the artwork exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, brushstroke, marks, symbols, and visual content. The artwork must remain completely visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, the human figure, the lighting, the wall, the architecture, the furniture, and the atmosphere can be generated or modified."
+    },
+    {
+      "context_name": "Cultivated Art Salon",
+      "context_role": "central art display",
+      "space_type": "art-filled salon with restrained elegance",
+      "atmosphere": "cultivated, quiet, elegant, personal",
+      "materials": [
+        "aged plaster walls",
+        "classic European moldings",
+        "refined textile furniture",
+        "subtle oriental rug",
+        "dark wood side table"
+      ],
+      "lighting": "soft, warm ambient light, focused spotlight",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The front view clearly presents the artwork's full composition and texture, allowing its structural elements to dominate. The focused spotlight emphasizes its role as a central piece in a curated salon, with the male figure providing scale and a contemplative presence.",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "Highlights the artwork's scale and presence within a curated, collected environment, showing it as a central piece worthy of serious consideration, in line with the artist's emphasis on visual order and silence.",
+      "commercial_reason": "Demonstrates the artwork's value as a significant acquisition for a serious collector, implying a rich art collecting lifestyle and positioning it as a centerpiece in a refined interior.",
+      "mockup_prompt": "A cultivated art-filled salon with restrained elegance. The artwork is presented on aged plaster walls with classic European moldings. Refined textile furniture, a subtle oriental rug, and a dark wood side table furnish the space. Soft, warm ambient light fills the room, with a focused spotlight on the artwork. front view, close-up view. An elegant standing male figure 1.80m, in a tailored suit, stands with hands behind his back, adopting a quiet contemplative stance. The artwork in the attached image is the final artwork to be presented, not an inspiration image, and should not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the artwork in the attached image. Preserve the artwork exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, brushstroke, marks, symbols, and visual content. The artwork must remain completely visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, the human figure, the lighting, the wall, the architecture, the furniture, and the atmosphere can be generated or modified."
+    },
+    {
+      "context_name": "Luxury Hotel Lobby",
+      "context_role": "sophisticated public art display",
+      "space_type": "elegant hotel art lobby",
+      "atmosphere": "sophisticated, inviting, subtly grand",
+      "materials": [
+        "textured stone wall",
+        "bronze metallic accents",
+        "subdued lighting",
+        "large format tile flooring"
+      ],
+      "lighting": "warm interior light, soft shadows",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view allows the artwork to interact with the architectural lines and materials of the luxury lobby, showing its robust presence. The warm light and soft shadows create an inviting atmosphere, suitable for public viewing, with the figure indicating scale without distraction.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "Positions the artwork in a refined public-private space where its structural and atmospheric qualities can be appreciated by a discerning audience.",
+      "commercial_reason": "Expands the artwork's appeal beyond private residences, showing its suitability for luxury hospitality projects and public art collections, adding prestige and visibility.",
+      "mockup_prompt": "An elegant hotel art lobby, sophisticated and inviting. The artwork hangs on a textured stone wall, complemented by bronze metallic accents and large format tile flooring. Warm interior light casts soft shadows. three-quarter left view, close-up view. An elegant standing female figure 1.55m, in a refined minimalist dress, views the artwork from a slight distance. The artwork in the attached image is the final artwork to be presented, not an inspiration image, and should not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the artwork in the attached image. Preserve the artwork exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, brushstroke, marks, symbols, and visual content. The artwork must remain completely visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, the human figure, the lighting, the wall, the architecture, the furniture, and the atmosphere can be generated or modified."
+    },
+    {
+      "context_name": "Mediterranean Sunset Interior",
+      "context_role": "tranquil residential setting",
+      "space_type": "Mediterranean villa interior",
+      "atmosphere": "serene, natural light, timeless",
+      "materials": [
+        "warm plaster walls",
+        "terracotta flooring",
+        "subtle linen curtains",
+        "organic wooden furniture"
+      ],
+      "lighting": "late afternoon Mediterranean light, soft and directional",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The front view ensures the artwork's full visual impact is conveyed under the warm, directional Mediterranean light, which complements its red palette. The natural setting, combined with the figure, enhances its tranquil and timeless appeal.",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "Connects the artwork's warm red and structural elements with the natural, sun-drenched aesthetic of Mediterranean architecture, reinforcing its contemplative aspect.",
+      "commercial_reason": "Appeals to collectors with properties in warm climates, showcasing the artwork's versatility and ability to enhance a tranquil, refined lifestyle.",
+      "mockup_prompt": "A serene Mediterranean villa interior at late afternoon. The artwork is placed on warm plaster walls, alongside terracotta flooring and subtle linen curtains. Late afternoon Mediterranean light, soft and directional, illuminates the scene. front view, close-up view. An elegant standing male figure 1.80m, in light refined clothing, observes the artwork, creating a relaxed yet cultivated presence. The artwork in the attached image is the final artwork to be presented, not an inspiration image, and should not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the artwork in the attached image. Preserve the artwork exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, brushstroke, marks, symbols, and visual content. The artwork must remain completely visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, the human figure, the lighting, the wall, the architecture, the furniture, and the atmosphere can be generated or modified."
+    },
+    {
+      "context_name": "Refined Private Study",
+      "context_role": "intellectual contemplation",
+      "space_type": "quiet library with collector atmosphere",
+      "atmosphere": "intellectual, focused, intimate",
+      "materials": [
+        "dark wood bookshelves",
+        "leather armchair",
+        "muted wall color",
+        "rich carpet"
+      ],
+      "lighting": "warm lamplight illuminating the artwork",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter right view offers a subtle engagement with the artwork in an intimate setting, allowing its quiet depth to be appreciated. The warm lamplight and the figure's contemplative stance reinforce its suitability for intellectual and private enjoyment.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "Reinforces the contemplative and serious nature of the artwork, suitable for a space of reflection and study, aligning with the artist's restrained and sober atmosphere.",
+      "commercial_reason": "Positions the artwork as a piece for intellectual engagement and private enjoyment, desirable for collectors who value depth and contemplation in their personal spaces.",
+      "mockup_prompt": "A quiet library with a collector atmosphere. The artwork is hung on a muted wall color, surrounded by dark wood bookshelves and a classic leather armchair. Warm lamplight illuminates the artwork and surrounding area. three-quarter right view, close-up view. An elegant standing female figure 1.55m, in a tailored outfit, with one hand in her pocket, contemplates the artwork thoughtfully. The artwork in the attached image is the final artwork to be presented, not an inspiration image, and should not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the artwork in the attached image. Preserve the artwork exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, brushstroke, marks, symbols, and visual content. The artwork must remain completely visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, the human figure, the lighting, the wall, the architecture, the furniture, and the atmosphere can be generated or modified."
+    },
+    {
+      "context_name": "Minimalist Warm Residence",
+      "context_role": "contemporary design focal point",
+      "space_type": "minimal but warm luxury interior",
+      "atmosphere": "contemporary, sleek, yet inviting",
+      "materials": [
+        "microcement walls in soft warm grey",
+        "minimalist dark wood furniture",
+        "soft textured rug",
+        "indirect lighting elements"
+      ],
+      "lighting": "soft indirect lighting, gentle glow",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The front view highlights the artwork's strong color field and structural elements as a central focal point in a minimalist setting. The soft indirect lighting and the figure's calm presence ensure the scene remains inviting and warm, not sterile.",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "Shows how the artwork's strong color field and structural elements can be a focal point in a contemporary minimalist setting without feeling cold, adhering to the artist's structural emphasis.",
+      "commercial_reason": "Appeals to collectors who prefer a modern, refined aesthetic, demonstrating the artwork's ability to provide warmth and depth within a sleek, contemporary environment.",
+      "mockup_prompt": "A minimal but warm luxury interior. The artwork is featured on microcement walls in a soft warm grey, complemented by minimalist dark wood furniture and a soft textured rug. Soft indirect lighting creates a gentle glow around the artwork. front view, close-up view. An elegant standing male figure 1.80m, in a dark tailored suit, observes the artwork calmly. The artwork in the attached image is the final artwork to be presented, not an inspiration image, and should not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the artwork in the attached image. Preserve the artwork exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, brushstroke, marks, symbols, and visual content. The artwork must remain completely visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, the human figure, the lighting, the wall, the architecture, the furniture, and the atmosphere can be generated or modified."
+    },
+    {
+      "context_name": "Refined European Apartment",
+      "context_role": "historic elegance",
+      "space_type": "refined Parisian apartment",
+      "atmosphere": "elegant, historic, cultivated",
+      "materials": [
+        "classic wall panels (boiseries)",
+        "parquet flooring",
+        "subtle patterned wallpaper",
+        "large windows"
+      ],
+      "lighting": "soft ambient light, focused art lighting",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view subtly integrates the artwork into the historic elegance of the Parisian apartment, allowing the classic moldings and textures to frame it. The focused art lighting ensures its contemporary presence is clear, with the figure providing a touch of cultivated life.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "Highlights the artwork's timeless quality and its ability to enrich a historically significant and elegant living space, bridging contemporary and classic aesthetics.",
+      "commercial_reason": "Positions the artwork for collectors of European taste, showing its integration into a sophisticated interior with heritage and understated luxury, enhancing its perceived value.",
+      "mockup_prompt": "A refined Parisian apartment, elegant and historic. The artwork is set against classic wall panels (boiseries) and subtle patterned wallpaper. Parquet flooring and large windows are visible. Soft ambient light from the windows, with art lighting focused on the piece. three-quarter left view, close-up view. An elegant standing female figure 1.55m, in a sophisticated black dress, observes the artwork with poise. The artwork in the attached image is the final artwork to be presented, not an inspiration image, and should not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the artwork in the attached image. Preserve the artwork exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, brushstroke, marks, symbols, and visual content. The artwork must remain completely visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, the human figure, the lighting, the wall, the architecture, the furniture, and the atmosphere can be generated or modified."
+    },
+    {
+      "context_name": "Warm Curated Gallery Room",
+      "context_role": "professional art display with residential feel",
+      "space_type": "warm gallery room with residential character",
+      "atmosphere": "focused, curated, approachable gallery feel",
+      "materials": [
+        "warm off-white walls",
+        "light wood flooring",
+        "discreet architectural lighting fixtures"
+      ],
+      "lighting": "museum-grade spotlights with warmth",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter right view offers a clean, professional perspective that highlights the artwork's material presence and composition. The warm gallery lighting and the figure's presence ensure it feels curated and inviting, suitable for a private preview.",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "Provides a classic, clean viewing context but imbues it with warmth, making it feel less institutional and more accessible for a private collection preview, emphasizing its visual order.",
+      "commercial_reason": "Offers a clear, professional presentation, allowing the artwork's intrinsic qualities to shine while hinting at its readiness for a serious collection, appealing to discerning buyers.",
+      "mockup_prompt": "A warm gallery room with a residential character. The artwork is displayed on warm off-white walls, with light wood flooring. Museum-grade spotlights with warmth illuminate the artwork. three-quarter right view, close-up view. An elegant standing male figure 1.80m, in a tailored suit, stands with a quiet viewing posture. The artwork in the attached image is the final artwork to be presented, not an inspiration image, and should not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the artwork in the attached image. Preserve the artwork exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, brushstroke, marks, symbols, and visual content. The artwork must remain completely visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, the human figure, the lighting, the wall, the architecture, the furniture, and the atmosphere can be generated or modified."
+    }
+  ]
+}
+```

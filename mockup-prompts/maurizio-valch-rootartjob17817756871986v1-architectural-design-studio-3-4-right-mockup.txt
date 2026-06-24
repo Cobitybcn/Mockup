@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 160 cm wide × 160 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Architectural Design Studio
+- Purpose: Professional Workspace
+- Scene Description: A design studios with modern, analytical, inspiring atmosphere. Materials: exposed concrete wall, industrial steel accents, large windows
+- Lighting: bright natural daylight, diffuse
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+- Camera Rationale: Three-quarter right view adds perspective to the thick impasto and painted edges, highlighting the object-like quality. Close-up keeps the artwork as the central focus while hinting at the intellectual atmosphere of the studio.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+Architect's design studio, 160x160cm artwork on an exposed concrete wall, large windows, industrial minimalist aesthetic, bright natural daylight, close-up view from three-quarter right, no people.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+messy, dated, sterile, corporate office, bad light, uninspired
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

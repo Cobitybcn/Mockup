@@ -1,0 +1,28 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Private Viewing Room
+- Purpose: Focused appreciation of material and detail
+- Scene Description: A Private art viewing room with Focused, quiet, detailed, textural emphasis atmosphere. Materials: Textured plaster wall, Subtle oak floor, Minimalist seating
+- Lighting: Controlled dramatic side light to highlight texture and depth, soft overhead spot
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult hispanic man, 1.80 meters tall.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The three-quarter right view, combined with specific lighting, is chosen to emphasize the visible texture and material presence of the painting, allowing for a closer inspection of its surface details. The close-up draws attention to the tactile quality.
+
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

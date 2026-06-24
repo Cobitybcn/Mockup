@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 180 cm wide × 120 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Reflective Living Chroma
+- Purpose: Enhancing a sophisticated residential interior with artistic presence.
+- Scene Description: A high-end residential living room with elegant, calm, sophisticated, personal, modern comfort atmosphere. Materials: light oak wood flooring, soft linen sofa, muted grey wall, natural light filtering through sheer curtains
+- Lighting: natural daylight from a large window to the left, casting a soft, even light, augmented by subtle recessed ceiling lights
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: Three-quarter left view offers spatial depth, integrating the artwork into a residential context while maintaining its dominance. The close-up distance ensures the artwork's details and scale are clearly visible, showcasing its ability to transform a luxurious living space.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A large Maurizio Valch painting "Chromatic Duality" displayed centrally on a muted grey wall in a sophisticated, minimalist living room. The 180cm wide x 120cm high artwork depicts a monumental, expressive split face with rich crimson, ochre, cerulean, and teal tones. A sleek, light oak console table is beneath the artwork. Soft natural daylight from a large window to the left illuminates the room, creating a warm, inviting glow. Three-quarter left view, close-up view.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+Cluttered room, excessive furniture, harsh shadows, unnatural colors, dated decor, small artwork, distorted perspective.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 120 cm wide × 120 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Loft Living, Modern Scale
+- Purpose: Statement piece in a spacious contemporary residence.
+- Scene Description: A Expansive, minimalist loft apartment living area with high ceilings and large windows. with Open, airy, modern, sophisticated, yet inviting. atmosphere. Materials: Concrete walls, Light wooden floors, Clean-lined sofa, Large windows
+- Lighting: Bright, indirect daylight illuminating the space evenly, artwork slightly accentuated by ambient light.
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult hispanic woman, 1.55 meters tall.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+- Camera Rationale: Three-quarter right view shows the artwork within a spacious modern setting, allowing for a human figure to provide scale and emphasizing the artwork's visual weight and presence in a contemporary home.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+An expansive, minimalist loft apartment living area with concrete walls, light wooden floors, and high ceilings. Large windows provide bright, indirect daylight. An optional standing female figure (1.55m) is observing the artwork from a respectful distance. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Camera: three-quarter right view, close-up view.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+Clutter, excessive furniture, harsh shadows, traditional decor, small room, generic interior.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

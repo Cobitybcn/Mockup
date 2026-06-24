@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Collector's Evening Lounge
+- Purpose: Private collection display
+- Scene Description: A private collector residence at evening with warm, contemplative, luxurious atmosphere. Materials: dark wood panels, deep-pile rug, soft velvet sofa, bronze accent lighting, warm plaster walls
+- Lighting: warm evening gallery lighting, focused spotlights on the artwork
+- Time of Day: night
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult middle eastern woman, 1.55 meters tall.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+- Camera Rationale: This three-quarter right view captures the subtle texture of the artwork's surface and its relationship to the warm, refined residential setting, enhancing its presence. The angle also allows for a glimpse of the luxurious materials surrounding the piece, and the elegant figure slightly to the left, without competing with the artwork.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A private collector residence at evening, showing a sophisticated lounge with dark wood panels and deep-pile rug. Soft velvet sofa visible on the left. Warm plaster walls. The lighting is warm evening gallery lighting, with focused spotlights on the artwork. Three-quarter right view, close-up view. An elegant standing female figure 1.55m, dressed in a black evening dress, stands slightly to the left, observing the artwork with a contemplative stance, hands relaxed. The artwork in the attached image is the final artwork that must be presented, not an inspiration image, and should not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the artwork in the attached image. Preserve the artwork exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, brushstroke, marks, symbols, and visual content. The artwork must remain completely visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, the human figure, the lighting, the wall, the architecture, the furniture, and the atmosphere can be generated or modified.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle, empty room, no human figure, artwork alone without human scale, overly ornate, cluttered
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

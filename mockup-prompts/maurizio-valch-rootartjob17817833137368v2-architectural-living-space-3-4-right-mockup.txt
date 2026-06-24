@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 160 cm wide × 160 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Architectural Living Space
+- Purpose: Highlighting the artwork's structural qualities within a contemporary, minimalist design.
+- Scene Description: A Architecturally designed living room with Open, serene, contemporary, minimalist atmosphere. Materials: Concrete walls, Large format stone flooring, Minimalist furniture
+- Lighting: Natural light from large windows, soft diffused light
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A three-quarter right view provides a subtle angle that emphasizes the artwork's physical depth and presence against a structured, minimalist background. The close-up perspective maintains visual dominance while showcasing its integration into a thoughtfully designed modern space.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+An abstract acrylic painting by Maurizio Valch, 160x160cm, with vibrant teal and red impasto spiral on a dark reddish-brown textured background, centrally mounted on a smooth concrete wall in an architecturally designed living room. The room features large format stone flooring and very minimalist furniture. The atmosphere is open, serene, and contemporary, illuminated by natural light from large windows and soft diffused lighting. three-quarter right view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interiors, ordinary bedrooms, visual noise, logos, visible text, letters, numbers, labels, posters, captions, dimension lines, ruler marks, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the colors of the artwork, changing the composition of the artwork, wide room views, distant views, aerial views, extreme angles, panoramic compositions
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

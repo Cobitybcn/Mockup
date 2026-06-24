@@ -1,0 +1,150 @@
+{
+    "suggested_titles": [
+        {
+            "title": "Red Monolith Ascent",
+            "subtitle": "An abstract composition presents a bold red monolithic structure reaching towards a luminous disc in a deep blue field.",
+            "description": "A dominant red monolithic structure anchors the left side of the horizontal canvas, standing resolute against the deep blue above. The composition is organized into distinct horizontal territories, with a light beige middle ground and a variegated foreground featuring ladder-like forms. Visible brushwork and textural contrasts define the fields, with subtle scraped marks adding depth to the red form. A silent, contemplative atmosphere pervades the scene, suggestive of distance and quiet observation. The wide format holds the distinct elements in a balanced, unhurried spatial tension."
+        },
+        {
+            "title": "Incised Blue Horizon",
+            "subtitle": "This contemporary artwork features a textured surface where deep blue meets a stratified ground, marked by subtle incisions and distinct color territories.",
+            "description": "The upper register is commanded by a vast field of deep, opaque blue, beneath which a luminous white disc hovers with quiet intensity. The surface exhibits clear texture, with varied pigment density and visible brushstrokes creating a tactile quality across the color fields. Subtle, lighter blue marks incise the red structure, adding a counterpoint to its otherwise solid form. This visual language evokes a restrained and sober atmosphere, inviting quiet contemplation of its spatial relationships. The work's material presence creates a profound sense of silent, ordered territory."
+        },
+        {
+            "title": "Layered Fields Threshold",
+            "subtitle": "A structural abstract painting organizes space through layered horizontal fields, punctuated by ladder-like forms that suggest movement and ascent across distinct zones.",
+            "description": "Horizontal bands of color establish clear divisions across the canvas, with a prominent red block emerging from the left. The composition builds depth through these stratified territories, from the deep blue sky to the lighter mid-ground and patterned foreground blocks. Pigment is applied with visible texture, creating distinct material surfaces that delineate each field and form. The resulting atmosphere is one of profound stillness and measured distance, with implied narratives of passage and presence. The carefully structured elements create a quiet authority within the expansive horizontal format."
+        }
+    ],
+    "recommended_number_of_contexts": 6,
+    "contextual_proposals": [
+        {
+            "context_name": "Twilight Contemplation in an Andalusian Villa",
+            "context_role": "Private Residence",
+            "space_type": "Andalusian or coastal Mediterranean villa",
+            "atmosphere": "Serene, contemplative, warm evening glow, architectural richness",
+            "materials": [
+                "whitewashed walls",
+                "terracotta floor",
+                "dark wood shutters",
+                "subtle plaster textures"
+            ],
+            "lighting": "Soft, warm evening light from large windows, blending with subtle interior accent lighting.",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A 50mm lens, camera positioned at a clear, unmistakable lateral angle to the left of the artwork's perpendicular axis. Camera height is at the artwork's vertical center, with no vertical tilt. The 80 cm artwork height reads as about 44.4% of the 1.80m figure's full standing height.",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The artwork's deep blue field and silent red monolith resonate with the contemplative calm of the villa at twilight, framed by the subtle perspective of the archway, enhancing its quiet presence.",
+            "commercial_reason": "This view captures the artwork as a focal point in a serene, architecturally distinguished private home, suggesting a sophisticated lifestyle and thoughtful ownership for the discerning collector.",
+            "mockup_prompt": "An elegant standing male figure 1.80m, in a tailored suit, stands in side profile, hands relaxed, observing the artwork. The scene is set in an Andalusian villa interior with whitewashed walls, a terracotta tiled floor, and a large archway on the far wall leading to another sun-drenched room. The warm evening light from the large windows blends with subtle interior accent lighting, casting soft shadows. Shot with a 50mm lens, camera positioned at a clear, unmistakable lateral angle to the left of the artwork's perpendicular axis, camera height is at the artwork's vertical center, with no vertical tilt. The archway's lines recede subtly, establishing the room's depth. Close-up view, enough surrounding wall, floor, architecture, and the full human figure visible to preserve its real physical size. The 80 cm artwork height reads as about 44.4% of the 1.80m figure's full standing height. The artwork remains the curatorial focus, while its physical scale remains accurate to the real dimensions and to the nearby human figure. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y curatorialmente dominante, sin aumentar su escala física real. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, excessively distant room view, artwork tiny or lost in the room, wide angle photography, extreme perspective distortion, ultra-wide lens, soaring double-height ceilings, oversized architectural spaces, artwork appearing tiny in the background, artwork physically oversized, artwork larger than its real dimensions, artwork equal to human full height when dimensions do not justify it, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, unintentional artwork tilt, artwork floating, artwork used as wallpaper, artwork as mural, artwork printed on glass, artwork projected on wall, artwork converted into a digital screen"
+        },
+        {
+            "context_name": "Museum Gallery Reflection",
+            "context_role": "Gallery",
+            "space_type": "contemporary art museum gallery",
+            "atmosphere": "Refined, quiet, focused, institutional elegance",
+            "materials": [
+                "warm grey concrete walls",
+                "polished light stone floor",
+                "subtle plaster"
+            ],
+            "lighting": "Museum-grade spotlights with a warm glow, creating subtle shadow around the piece and controlled illumination.",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "Camera perpendicular to the artwork's plane, centered. Camera height is at the artwork's vertical center, with no tilt. The 80 cm artwork height reads as about 51.6% of the 1.55m figure's full standing height.",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The frontal presentation allows for direct engagement with the artwork's layered fields and symbolic ladders, while the museum setting emphasizes its contemporary relevance and quiet authority.",
+            "commercial_reason": "This classic museum-style view positions the artwork as an important acquisition for a serious collection, highlighting its intrinsic visual power without distraction, suitable for a discerning institutional or private buyer.",
+            "mockup_prompt": "An elegant standing female figure 1.55m, dressed in a black dress, assumes a three-quarter observer pose, hands clasped lightly, standing slightly in front of the artwork. The setting is a contemporary art museum gallery with tall, warm grey concrete walls and a polished light stone floor. Museum-grade spotlights cast a warm glow, creating subtle shadows around the piece and providing controlled illumination. Shot with the camera perpendicular to the artwork's plane, centered. Camera height is at the artwork's vertical center, with no tilt. Close-up view, enough surrounding wall, floor, architecture, and the full human figure visible to preserve its real physical size. The 80 cm artwork height reads as about 51.6% of the 1.55m figure's full standing height. The artwork remains the curatorial focus, while its physical scale remains accurate to the real dimensions and to the nearby human figure. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y curatorialmente dominante, sin aumentar su escala física real. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, excessively distant room view, artwork tiny or lost in the room, wide angle photography, extreme perspective distortion, ultra-wide lens, soaring double-height ceilings, oversized architectural spaces, artwork appearing tiny in the background, artwork physically oversized, artwork larger than its real dimensions, artwork equal to human full height when dimensions do not justify it, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, unintentional artwork tilt, artwork floating, artwork used as wallpaper, artwork as mural, artwork printed on glass, artwork projected on wall, artwork converted into a digital screen"
+        },
+        {
+            "context_name": "High-Rise Blue Hour Solitude",
+            "context_role": "Private Residence",
+            "space_type": "double-height luxury condominium with floor-to-ceiling glass",
+            "atmosphere": "Reflective, sophisticated, urban, peaceful blue-hour tranquility",
+            "materials": [
+                "architectural concrete",
+                "warm wood accents",
+                "large glass windows",
+                "polished concrete floor"
+            ],
+            "lighting": "Blue-hour window light blending with warm interior architectural lighting, creating a soft, inviting glow.",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A 50mm lens, camera positioned at a clear, unmistakable lateral angle to the right of the artwork's perpendicular axis. Camera height is at the artwork's vertical center, with no vertical tilt. The 80 cm artwork height reads as about 44.4% of the 1.80m figure's full standing height.",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The artwork's wide horizon and layered forms find a compelling counterpoint in the expansive blue-hour cityscape glimpsed through the windows, creating a sense of reflective solitude and quiet power.",
+            "commercial_reason": "Showcasing the artwork in a high-rise luxury setting emphasizes its suitability for contemporary, aspirational living spaces, integrating art seamlessly into a sophisticated modern lifestyle and commanding attention.",
+            "mockup_prompt": "An elegant standing male figure 1.80m, in a dark tailored suit, assumes a contemplative stance with hands in pockets, looking towards the artwork from a slight distance. The scene is a double-height luxury condominium with floor-to-ceiling glass windows revealing a shimmering blue-hour cityscape. Architectural concrete walls and warm wood accents frame the space, and the polished concrete floor reflects the subtle lighting. The window mullions recede into the distance, defining the room's expansive perspective. Blue-hour window light blends with warm interior architectural lighting, creating a soft, inviting glow. Shot with a 50mm lens, camera positioned at a clear, unmistakable lateral angle to the right of the artwork's perpendicular axis. Camera height is at the artwork's vertical center, with no vertical tilt. Close-up view, enough surrounding wall, floor, architecture, and the full human figure visible to preserve its real physical size. The 80 cm artwork height reads as about 44.4% of the 1.80m figure's full standing height. The artwork remains the curatorial focus, while its physical scale remains accurate to the real dimensions and to the nearby human figure. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y curatorialmente dominante, sin aumentar su escala física real. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, excessively distant room view, artwork tiny or lost in the room, wide angle photography, extreme perspective distortion, ultra-wide lens, soaring double-height ceilings, oversized architectural spaces, artwork appearing tiny in the background, artwork physically oversized, artwork larger than its real dimensions, artwork equal to human full height when dimensions do not justify it, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, unintentional artwork tilt, artwork floating, artwork used as wallpaper, artwork as mural, artwork printed on glass, artwork projected on wall, artwork converted into a digital screen"
+        },
+        {
+            "context_name": "Sky-Lobby Moment of Pause",
+            "context_role": "Lobby",
+            "space_type": "skyscraper lobby or sky-lobby",
+            "atmosphere": "Grand, quiet, inviting, subtly luxurious",
+            "materials": [
+                "stone-clad walls",
+                "high polished floors",
+                "subtle brass accents",
+                "large windows with urban views"
+            ],
+            "lighting": "Soft, indirect evening lighting with focused downlights on architectural elements and warm accent lighting.",
+            "camera_view": "seven-eighths left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A 35mm lens, camera positioned at a moderate lateral angle to the left, noticeably turned but keeping the artwork dominant. Camera height is at the artwork's vertical center, with no vertical tilt. The 80 cm artwork height reads as about 51.6% of the 1.55m figure's full standing height.",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The artwork's distinct color fields and symbolic ladders draw the eye into its silent narrative, creating an intimate moment of pause and contemplation within the grand, expansive scale of the sky-lobby.",
+            "commercial_reason": "This view demonstrates the artwork's capacity to command attention and create a focal point even in a spacious, high-ceilinged public-facing environment, suggesting its significant presence and value for corporate or prominent private collections.",
+            "mockup_prompt": "An elegant standing female figure 1.55m, dressed in refined minimalist clothing, stands in side profile, hands relaxed, admiring the artwork. The setting is a skyscraper sky-lobby, with imposing stone-clad walls that recede towards a distant, softly lit reception desk, indicating the room's depth. High polished floors reflect the soft, indirect evening lighting, which is complemented by focused downlights on architectural elements and warm accent lighting. Shot with a 35mm lens, camera positioned at a moderate lateral angle to the left, noticeably turned but keeping the artwork dominant. Camera height is at the artwork's vertical center, with no vertical tilt. Close-up view, enough surrounding wall, floor, architecture, and the full human figure visible to preserve its real physical size. The 80 cm artwork height reads as about 51.6% of the 1.55m figure's full standing height. The artwork remains the curatorial focus, while its physical scale remains accurate to the real dimensions and to the nearby human figure. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y curatorialmente dominante, sin aumentar su escala física real. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, excessively distant room view, artwork tiny or lost in the room, wide angle photography, extreme perspective distortion, ultra-wide lens, soaring double-height ceilings, oversized architectural spaces, artwork appearing tiny in the background, artwork physically oversized, artwork larger than its real dimensions, artwork equal to human full height when dimensions do not justify it, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, unintentional artwork tilt, artwork floating, artwork used as wallpaper, artwork as mural, artwork printed on glass, artwork projected on wall, artwork converted into a digital screen"
+        },
+        {
+            "context_name": "Library Study Elevation",
+            "context_role": "Private Study",
+            "space_type": "historic European library or reading room",
+            "atmosphere": "Intellectual, contemplative, warm, timeless prestige",
+            "materials": [
+                "dark wood shelving",
+                "leather chairs",
+                "brass reading lamps",
+                "richly patterned rug",
+                "coffered ceiling"
+            ],
+            "lighting": "Warm lamplight from brass reading lamps, creating an inviting glow and focused illumination on the artwork.",
+            "camera_view": "contrapicado view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A 35mm lens, camera positioned at chest height (approximately at lower-third of the artwork), with a subtle upward tilt of about 5-10 degrees, combined with a slight three-quarter lateral turn. The 80 cm artwork height reads as about 44.4% of the 1.80m figure's full standing height.",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The contrapicado view enhances the sense of the red monolith's architectural weight and the expansive blue field above, anchoring the composition within the rich, contemplative atmosphere of the historic library, making it feel integral.",
+            "commercial_reason": "Presenting the artwork with a slight upward perspective reinforces its commanding presence and significant scale within a distinguished private collection, making it feel integral to an environment of intellectual and cultural depth.",
+            "mockup_prompt": "An elegant standing male figure 1.80m, in a tailored suit, stands with hands behind his back, partially turned away from the camera, looking up towards the artwork. The scene is a historic European library, featuring dark wood shelving reaching to the ceiling, filled with books, and leather chairs. The rich patterned rug grounds the space, and a coffered ceiling is visible overhead. The lines of the bookshelves and ceiling panels recede into the room, creating a strong sense of perspective. Warm lamplight from brass reading lamps illuminates the artwork and bookshelves, creating an inviting glow. Shot with a 35mm lens, camera positioned at chest height (approximately at lower-third of the artwork), with a subtle upward tilt of about 5-10 degrees, combined with a slight three-quarter lateral turn. Close-up view, enough surrounding wall, floor, architecture, and the full human figure visible to preserve its real physical size. The 80 cm artwork height reads as about 44.4% of the 1.80m figure's full standing height. The artwork remains the curatorial focus, while its physical scale remains accurate to the real dimensions and to the nearby human figure. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y curatorialmente dominante, sin aumentar su escala física real. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, excessively distant room view, artwork tiny or lost in the room, wide angle photography, extreme perspective distortion, ultra-wide lens, soaring double-height ceilings, oversized architectural spaces, artwork appearing tiny in the background, artwork physically oversized, artwork larger than its real dimensions, artwork equal to human full height when dimensions do not justify it, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, unintentional artwork tilt, artwork floating, artwork used as wallpaper, artwork as mural, artwork printed on glass, artwork projected on wall, artwork converted into a digital screen"
+        },
+        {
+            "context_name": "Renaissance Atelier Contrast",
+            "context_role": "Artist Studio",
+            "space_type": "Renaissance/Old Master atelier",
+            "atmosphere": "Creative, historical, authentic, focused, contrasting energy",
+            "materials": [
+                "aged wood floors",
+                "plaster walls",
+                "easels",
+                "canvases leaning",
+                "ground pigments"
+            ],
+            "lighting": "Natural raking light from a tall north-facing window, illuminating the canvas and studio.",
+            "camera_view": "seven-eighths right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A 35mm lens, camera positioned at a moderate lateral angle to the right, noticeably turned, revealing more of the surrounding studio. Camera height is at the artwork's vertical center, with no vertical tilt. The artwork is leaning against a wall. The 80 cm artwork height reads as about 51.6% of the 1.55m figure's full standing height.",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The artwork's clean lines, structural fields, and contemporary abstract language offer a stark yet compelling contrast against the rich, historical textures and visible creative process of a Renaissance atelier, highlighting its modern clarity and timelessness.",
+            "commercial_reason": "This unique studio setting, emphasizing the creative process, adds authenticity and intellectual depth to the artwork's provenance, suggesting its value within artistic dialogue and lineage to collectors seeking historical connection.",
+            "mockup_prompt": "A female figure 1.55m, dressed in a linen apron with sleeves rolled and hands paint-marked, is paused mid-thought, looking intently at the artwork. The scene is a Renaissance/Old Master atelier with high windows providing natural raking light. Easels stand with other canvases, ground pigments are visible, and more canvases lean against aged wood and plaster walls, which recede towards a far archway, creating perspective. Natural raking light from a tall north-facing window illuminates the canvas and studio. Shot with a 35mm lens, camera positioned at a moderate lateral angle to the right, noticeably turned, revealing more of the surrounding studio. Camera height is at the artwork's vertical center, with no vertical tilt. Close-up view, enough surrounding wall, floor, architecture, and the full human figure visible to preserve its real physical size. The 80 cm artwork height reads as about 51.6% of the 1.55m figure's full standing height. The artwork remains the curatorial focus, while its physical scale remains accurate to the real dimensions and to the nearby human figure. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, presentada naturalmente en el caballete o apoyada contra la pared según la escena propuesta, y curatorialmente dominante, sin aumentar su escala física real. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, excessively distant room view, artwork tiny or lost in the room, wide angle photography, extreme perspective distortion, ultra-wide lens, soaring double-height ceilings, oversized architectural spaces, artwork appearing tiny in the background, artwork physically oversized, artwork larger than its real dimensions, artwork equal to human full height when dimensions do not justify it, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, unintentional artwork tilt, artwork floating, artwork used as wallpaper, artwork as mural, artwork printed on glass, artwork projected on wall, artwork converted into a digital screen"
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1782307373_8340_v1.png"
+}

@@ -1,0 +1,591 @@
+{
+    "artwork_analysis": {
+        "visual_language": [
+            "Abstract",
+            "Structural",
+            "Symbolic",
+            "Metaphysical",
+            "Organic",
+            "Textural"
+        ],
+        "emotional_energy": [
+            "Contemplative",
+            "Deep",
+            "Mysterious",
+            "Intense",
+            "Meditative",
+            "Introspective"
+        ],
+        "dominant_colors": [
+            "Deep Teal",
+            "Ochre",
+            "Dark Brown",
+            "Bronze"
+        ],
+        "secondary_colors": [
+            "Black",
+            "Pale Blue",
+            "Warm Grey",
+            "Coppery Orange"
+        ],
+        "visible_elements": [
+            "Concentric spirals",
+            "Dark central void",
+            "Heavily textured surface",
+            "Layered color fields",
+            "Subtle ridges",
+            "Visible paint drips",
+            "Brushwork"
+        ],
+        "visible_symbols": [
+            "Vortex",
+            "Eye",
+            "Threshold",
+            "Spiral"
+        ],
+        "color_temperature": "Cool with warm accents",
+        "contrast_level": "Moderate to high",
+        "composition_type": "Centralized, radial",
+        "balance": "Dynamic, centripetal",
+        "visual_tension": "High, created by spiraling motion and tonal shifts",
+        "density": "High, due to impasto and layered forms",
+        "silence": "Profound, particularly in the central core",
+        "main_focal_point": "The dark, central void",
+        "movement": "Strong, swirling, inward and outward motion",
+        "depth": "Very deep, achieved through spiraling perspective and layering",
+        "negative_space": "Minimal, the form fills the entire canvas",
+        "verticality_or_horizontality": "Dynamic equilibrium within the square format",
+        "internal_organization": "Concentric, spiraling bands radiating from a central point",
+        "rhythm": "Pulsating, organic, spiraling",
+        "surface": "Richly textured, impasto, irregular",
+        "brushstroke": "Visible, expressive, often thick and scraped",
+        "gesture": "Energetic yet controlled, building up the form",
+        "layers": "Clearly visible layers of paint, suggesting buildup and erosion",
+        "material_presence": "Strong, tactile, almost sculptural quality",
+        "sense_of_depth_or_flatness": "Strong sense of deep, receding space",
+        "format_and_scale": {
+            "width_cm": "160",
+            "height_cm": "160",
+            "depth_cm": "5",
+            "orientation": "vertical",
+            "scale_impact": "Significant, commanding",
+            "wall_presence": "Imposing yet inviting, anchors the space",
+            "monumentality_or_intimacy": "Monumental, but invites intimate contemplation",
+            "spatial_effect": "Draws the viewer inward, creating a focal point"
+        },
+        "spatial_presence": "Commanding and immersive",
+        "visual_atmosphere": "Profoundly contemplative, mysterious, deep, and subtly intense",
+        "artwork_function": "Meditative focal point, statement piece, architectural enhancer",
+        "suggested_audience": [
+            "Contemporary art collectors",
+            "Architects",
+            "Interior designers",
+            "Art consultants",
+            "High-end residential buyers"
+        ],
+        "audience_profile": {
+            "primary": "Discerning collectors of abstract and symbolic art",
+            "secondary": "Design professionals seeking impactful, contemplative pieces",
+            "buyer_profile": "Individuals with an appreciation for depth, texture, and structural abstraction",
+            "collector_type": "Collectors focused on modern and contemporary works that evoke presence and silence",
+            "interior_design_relevance": "High, suitable for luxury residences, corporate collections, and boutique hotels",
+            "gallery_potential": "Excellent, for galleries specializing in abstract, structural, or metaphysical art"
+        },
+        "commercial_positioning": "High-value abstract statement piece for sophisticated interiors and serious collections",
+        "one_line_curatorial_read": "A commanding abstract work drawing the viewer into a deep, spiraling vortex of color and texture, evoking geological time and introspective contemplation.",
+        "style_summary": "Abstract expressionist with structural, symbolic, and metaphysical undertones, characterized by a powerful central vortex and rich material presence.",
+        "artist_profile_relation": {
+            "relevant_statement_connection": "The work explores the relationship between landscape, consciousness, and inner structure, aligning with the artist's focus on fields of color, incisions, and suspended forms as signs of presence and perception.",
+            "relevant_visual_language_connection": "Directly embodies the artist's use of abstract, contemporary, structural, symbolic, and metaphysical language through fields of color, tectonic lines, and spatial relationships.",
+            "relevant_symbol_connection": "Connects to recurring motifs such as territory, silence, incisions, suspended forms, nocturnal atmospheres, geological time, thresholds, and the relationship between individual and earth.",
+            "relevant_atmosphere_connection": "Reflects the preferred atmosphere of silent, deep, sober, contemplative, and slightly melancholic, with restrained tension and quiet intensity."
+        },
+        "seasonal_strategy": {
+            "primary_season": "neutral"
+        },
+        "publishing_metadata": {
+            "suggested_titles": [
+                {
+                    "title": "Deep Core",
+                    "subtitle": "A contemporary abstract painting reveals a profound central void, drawing the eye into layers of rich teal and warm earthy tones.",
+                    "short_description": "This compelling abstract painting centers on a dark, introspective core, enveloped by a dynamic swirl of textured color, evoking a powerful sense of depth and mystery.",
+                    "curatorial_description": "The painting \"Deep Core\" commands attention with its hypnotic central void, a threshold into profound introspection. Concentric forms of deep teal and ochre unfurl from this dark center, each band revealing a history of layered brushwork and subtle incisions. The dynamic spiral, rich in tactile surface, creates a palpable sense of movement and geological time, inviting a quiet, sustained contemplation of inner structure and universal depth.",
+                    "commercial_description": "With its significant square format, this commanding artwork anchors a space, offering a sophisticated focal point for discerning collectors and interior designers. The rich textures and deep, contemplative atmosphere create a profound visual presence, transforming any luxury residence or gallery into a space of quiet intensity and introspection."
+                },
+                {
+                    "title": "Tectonic Spiral",
+                    "subtitle": "A structural abstract composition unfolds with a mesmerizing spiral, featuring intense blue-green hues and stratified, earthy textures.",
+                    "short_description": "This large-scale abstract work presents a powerful, uncoiling spiral of blue-green and bronze, its deeply textured surface suggesting the flow of time and matter.",
+                    "curatorial_description": "\"Tectonic Spiral\" manifests as a powerful study in dynamic form and layered materiality. The dominant spiral structure, rendered in shifting tones of teal, bronze, and deep brown, evokes both cosmic and geological forces. Visible incisions and palette knife work create a surface alive with movement and historical depth, where each concentric band represents a distinct yet fluid territory. The balanced tension between motion and silence invites a meditative engagement with the artwork's structural integrity.",
+                    "commercial_description": "An impressive piece for collectors seeking impactful abstract art, this work brings a dynamic yet contemplative presence to any refined environment. Its monumental scale and rich textural quality make it a striking focal point, perfect for integrating into contemporary architectural designs or enhancing a private collection with a profound sense of natural force and artistic execution."
+                },
+                {
+                    "title": "Ocean Stratum",
+                    "subtitle": "An expansive abstract artwork with a textured, spiraling composition, revealing deep ocean blues, greens, and mineral-like ochre tones.",
+                    "short_description": "Layers of textured paint in deep blues, greens, and ochre merge into a powerful, swirling composition, suggesting geological strata and oceanic depths.",
+                    "curatorial_description": "\"Ocean Stratum\" presents a compelling visual dialogue between fluid motion and solid form, characterized by its deep, saturated palette and heavily worked surface. Shades of profound blue-green intermingle with mineral ochre and bronze, creating a spiraling topography that feels both ancient and alive. The meticulous layering and subtle scraping evoke a sense of geological formation and oceanic mystery, inviting the viewer to explore its tactile depths and rich chromatic variations.",
+                    "commercial_description": "This artwork, with its commanding presence and intricate material detail, is ideal for sophisticated collectors and designers seeking a statement piece that evokes natural grandeur and contemplative depth. Its rich, tactile surface and immersive color palette ensure it will serve as a powerful anchor in any high-end residential, gallery, or corporate setting."
+                }
+            ],
+            "catawiki_listing": {
+                "recommended_title": "Deep Core",
+                "alternative_titles": [
+                    "Tectonic Spiral",
+                    "Ocean Stratum"
+                ],
+                "subtitle": "A contemporary abstract painting reveals a profound central void, drawing the eye into layers of rich teal and warm earthy tones.",
+                "short_description": "This compelling abstract painting centers on a dark, introspective core, enveloped by a dynamic swirl of textured color, evoking a powerful sense of depth and mystery.",
+                "long_description": "Maurizio Valch's \"Deep Core\" is a powerful abstract painting inviting viewers into a profound visual journey. The composition is dominated by a mesmerizing central void, from which concentric spirals of rich teal, deep blue-green, and warm ochre emerge and recede. The surface is heavily textured, showcasing visible impasto, palette knife work, and subtle incisions, lending the artwork a tactile, almost geological quality. This dynamic interplay of color and texture creates a palpable sense of depth and movement, suggesting both cosmic formations and the silent progression of time. The artwork's square format and substantial scale allow it to command a significant wall presence, fostering an atmosphere of contemplative intensity and structural elegance.\n\nThe piece is in excellent condition, with no damage or restorations.\nThe artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+                "technical_details": "Acrylic on canvas. 160 cm wide x 160 cm high x 5 cm deep. Vertical orientation.",
+                "condition_statement": "The piece is in excellent condition, with no damage or restorations.",
+                "shipping_statement": "The artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+                "seo_keywords": [
+                    "Maurizio Valch",
+                    "Abstract painting",
+                    "Contemporary art",
+                    "Spiral art",
+                    "Textured artwork",
+                    "Teal and gold abstract",
+                    "Large square painting",
+                    "Deep core art",
+                    "Structural abstraction",
+                    "Meditative art"
+                ],
+                "tags": [
+                    "Abstract",
+                    "Contemporary",
+                    "Structural",
+                    "Symbolic",
+                    "Vortex",
+                    "Textured",
+                    "Teal",
+                    "Ochre",
+                    "Deep",
+                    "Meditative",
+                    "Square format",
+                    "Maurizio Valch"
+                ]
+            },
+            "descriptions": {
+                "poetic_focus": "Maurizio Valch's 'Deep Core' pulls the gaze into an infinite, spiraling embrace, where oceanic depths meet ancient earth. A central darkness acts as a quiet threshold, surrounded by textured undulations of teal and ochre that breathe with a profound, almost geological silence.",
+                "formal_focus": "Characterized by a commanding radial composition, this work features a dominant, textured spiral culminating in a dark central point. Layers of impastoed teal and bronze paint create a structural rhythm, defining a dynamic and deeply dimensional surface within the square format.",
+                "commercial_focus": "An imposing 160x160 cm abstract painting, this piece by Maurizio Valch offers a commanding presence and rich visual depth. Its intricate textural quality and contemplative palette make it an exceptional focal point for high-end residential interiors, curated collections, or contemporary gallery spaces."
+            },
+            "seo_keywords": [
+                "Maurizio Valch art",
+                "Abstract spiral painting",
+                "Textured abstract art",
+                "Contemporary wall art",
+                "Large scale abstract",
+                "Teal and bronze painting",
+                "Modern living room art",
+                "Collector art piece",
+                "Meditative artwork",
+                "Structural art",
+                "Gallery quality art",
+                "Symbolic abstract",
+                "Luxury home decor",
+                "Interior design art"
+            ],
+            "seo_tags": [
+                "Abstract",
+                "Contemporary",
+                "Spiral",
+                "Vortex",
+                "Textured",
+                "Teal",
+                "Ochre",
+                "Deep",
+                "Meditative",
+                "Structural",
+                "Maurizio Valch",
+                "Large",
+                "Square",
+                "Symbolic"
+            ],
+            "marketplace_title": "Deep Core - Maurizio Valch Abstract Painting, 160x160cm",
+            "marketplace_short_description": "A powerful abstract by Maurizio Valch, featuring a dark central void and textured spirals in deep teal and ochre, creating profound depth and presence.",
+            "marketplace_long_description": "This monumental 160x160 cm abstract painting by Maurizio Valch, titled \"Deep Core,\" is a captivating exploration of inner structure and universal depth. Its mesmerizing composition features a strong central void, around which richly textured spirals of deep teal, blue-green, and warm earthy tones unfurl. The artist's distinctive palette knife work and layering create a tactile surface that invites close examination, evoking both ancient geological formations and a sense of profound introspection. This piece is ideal for collectors and designers seeking an artwork that provides a contemplative focal point and imbues a space with quiet intensity and sophisticated presence.",
+            "pinterest_boards": [
+                "Abstract Art for Modern Interiors",
+                "Contemporary Painting Collection",
+                "Textured Wall Art Inspiration",
+                "Deep & Meditative Art",
+                "Luxury Home Decor Statement Pieces",
+                "Maurizio Valch Artwork"
+            ]
+        }
+    },
+    "recommended_number_of_contexts": 9,
+    "contextual_proposals": [
+        {
+            "context_name": "Minimalist Gallery Focus",
+            "context_role": "Primary presentation for detailed viewing",
+            "space_type": "Art Gallery",
+            "atmosphere": "Serene, pure, contemplative",
+            "materials": [
+                "White plaster walls",
+                "Polished concrete floor",
+                "Minimalist architectural elements"
+            ],
+            "lighting": "Soft, diffused overhead gallery lighting, highlighting texture",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "The front view maximizes direct visual engagement with the artwork's central vortex and textured surface, essential for a gallery context. The close-up distance ensures full readability of compositional details and material presence, while clearly showing the artwork's square proportions and its dominant role on the clean white wall, with light falling evenly across its surface.",
+            "human_presence": "none",
+            "curatorial_reason": "Showcases the artwork's inherent power and detail without distraction, emphasizing its structural and textual qualities for serious study.",
+            "commercial_reason": "Presents the artwork in a professional, gallery-grade setting, appealing to curators and collectors focused on the pure artistic merit and execution.",
+            "mockup_prompt": "A modern art gallery with pristine white plaster walls and polished concrete flooring. The artwork 'Deep Core' by Maurizio Valch is centrally mounted on a clean white wall. Soft, diffused overhead gallery lighting illuminates the artwork, emphasizing its texture and depth. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. camera_view: front view, camera_distance: close-up view.",
+            "negative_prompt": "Clutter, other artworks, harsh shadows, reflections, ornate decor, furniture, people in background.",
+            "pinterest_marketing": {
+                "board_suggestion": "Gallery Wall Inspiration: Abstract Art",
+                "pin_title": "Deep Core by Maurizio Valch in Minimalist Gallery",
+                "pin_description": "A profound abstract painting, 'Deep Core' by Maurizio Valch, commands attention in a minimalist gallery setting. Ideal for contemporary art collectors.",
+                "alt_text": "Maurizio Valch 'Deep Core' abstract painting in a modern art gallery, front view, close-up.",
+                "seo_keywords": [
+                    "Gallery art",
+                    "Abstract painting",
+                    "Maurizio Valch",
+                    "Minimalist art",
+                    "Contemporary art display"
+                ],
+                "hashtags": [
+                    "#AbstractArt",
+                    "#GalleryWall",
+                    "#MaurizioValch",
+                    "#ContemporaryPainting",
+                    "#ArtCollector"
+                ]
+            }
+        },
+        {
+            "context_name": "Refined Living Room Vista",
+            "context_role": "Illustrates sophisticated residential integration",
+            "space_type": "Luxury Living Room",
+            "atmosphere": "Warm, inviting, elegant",
+            "materials": [
+                "Textured off-white walls",
+                "Oak wood flooring",
+                "Subtle linen or velvet furniture",
+                "Bronze accents"
+            ],
+            "lighting": "Soft natural light from a large window to the left, ambient evening light",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "The three-quarter left view provides a sense of the artwork within a larger, inviting residential space, showcasing its integration with sophisticated decor. The close-up distance keeps the artwork visually dominant while allowing glimpses of complementary textures and furniture. Natural light from the left enhances the painting's rich surface, and its square proportions assert a strong presence on the wall.",
+            "human_presence": "none",
+            "curatorial_reason": "Highlights the artwork's ability to act as a central, contemplative element within a high-end personal space, enriching the domestic environment.",
+            "commercial_reason": "Appeals to interior designers and luxury homeowners seeking impactful, well-integrated art that elevates the aesthetic and emotional quality of a living area.",
+            "mockup_prompt": "A sophisticated living room with textured off-white walls and warm oak wood flooring. The artwork 'Deep Core' by Maurizio Valch is mounted on the main wall. Soft natural light filters in from a large window to the left, casting a gentle glow. A hint of elegant, low-profile linen or velvet furniture and a bronze accent piece are visible in the foreground. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. camera_view: three-quarter left view, camera_distance: close-up view.",
+            "negative_prompt": "Cluttered space, bright primary colors, generic furniture, harsh lighting, digital screens, distractions.",
+            "pinterest_marketing": {
+                "board_suggestion": "Luxury Living Room Art Ideas",
+                "pin_title": "Maurizio Valch Abstract in Elegant Living Room",
+                "pin_description": "Elevate your space with Maurizio Valch's 'Deep Core' abstract painting, perfectly complementing a refined living room with warm, natural light.",
+                "alt_text": "Maurizio Valch 'Deep Core' abstract painting in an elegant living room, three-quarter left view.",
+                "seo_keywords": [
+                    "Luxury decor",
+                    "Abstract art",
+                    "Living room art",
+                    "High-end interiors",
+                    "Designer art",
+                    "Maurizio Valch"
+                ],
+                "hashtags": [
+                    "#LuxuryInteriors",
+                    "#AbstractPainting",
+                    "#HomeDecor",
+                    "#ArtForSale",
+                    "#ContemporaryDesign"
+                ]
+            }
+        },
+        {
+            "context_name": "Grand Hallway Threshold",
+            "context_role": "Demonstrates monumental presence in a transitional space",
+            "space_type": "Entryway/Hallway of a Townhouse",
+            "atmosphere": "Stately, welcoming, architectural",
+            "materials": [
+                "Smooth light grey walls",
+                "Polished dark wood console table",
+                "Subtle metallic details"
+            ],
+            "lighting": "Indirect, recessed ceiling lights emphasizing wall texture, creating depth",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "The three-quarter right view captures the artwork's imposing presence within a grand hallway, showcasing its scale and square proportions against a high wall. The close-up distance ensures the artwork remains the clear focal point, while indirect lighting enhances its sculptural quality and the depth of its central vortex.",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "Illustrates how the artwork acts as a commanding focal point in an architectural setting, guiding movement and setting a sophisticated tone.",
+            "commercial_reason": "Targets architects and high-end residential developers looking for statement pieces that define an entrance or significant transitional area.",
+            "mockup_prompt": "A grand and spacious townhouse hallway with smooth light grey walls and high ceilings. The artwork 'Deep Core' by Maurizio Valch is prominently displayed on the wall. Indirect, recessed ceiling lights create soft illumination, highlighting the artwork's textures and forms. A polished dark wood console table is subtly visible to the right. An optional standing male figure 1.80m is positioned admiring the artwork. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. camera_view: three-quarter right view, camera_distance: close-up view.",
+            "negative_prompt": "Clutter, bright colors, dated furniture, harsh shadows, distorted perspective, busy patterns.",
+            "pinterest_marketing": {
+                "board_suggestion": "Entryway & Hallway Art Statements",
+                "pin_title": "Deep Core by Valch: Architectural Hallway Art",
+                "pin_description": "Transform a grand hallway with Maurizio Valch's 'Deep Core'. Its monumental presence and deep textures create an impactful statement.",
+                "alt_text": "Maurizio Valch 'Deep Core' abstract painting in a modern townhouse hallway, three-quarter right view with male figure.",
+                "seo_keywords": [
+                    "Hallway art",
+                    "Statement piece",
+                    "Architectural art",
+                    "Large format art",
+                    "Maurizio Valch",
+                    "Luxury townhouse"
+                ],
+                "hashtags": [
+                    "#ArchitecturalDesign",
+                    "#HallwayDecor",
+                    "#ArtInContext",
+                    "#ContemporaryArt",
+                    "#StatementArt"
+                ]
+            }
+        },
+        {
+            "context_name": "Architect's Design Studio",
+            "context_role": "Shows integration within a creative, professional environment",
+            "space_type": "Architecture Studio",
+            "atmosphere": "Focused, innovative, inspiring",
+            "materials": [
+                "Raw concrete walls",
+                "Metal shelving",
+                "Minimalist wooden desk"
+            ],
+            "lighting": "Bright, even overhead studio lighting, with a hint of natural light from the front",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A front view provides a direct and clear presentation suitable for a professional studio, allowing for an unobstructed appreciation of the artwork's structural complexity. The close-up distance keeps the focus on the painting itself, while the even lighting highlights the fine textures and the clarity of the square format. This setup emphasizes the artwork as a source of creative inspiration.",
+            "human_presence": "none",
+            "curatorial_reason": "Positions the artwork as an object of intellectual engagement and inspiration within a creative professional setting.",
+            "commercial_reason": "Appeals to architects and interior designers, showcasing the artwork's ability to complement and elevate modern design sensibilities.",
+            "mockup_prompt": "A modern architect's design studio with raw concrete walls and industrial metal shelving in the background. The artwork 'Deep Core' by Maurizio Valch is centrally mounted on a prominent concrete wall. Bright, even overhead studio lighting illuminates the space, with a soft hint of natural light entering from the front. A minimalist wooden desk is partially visible to the left. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. camera_view: front view, camera_distance: close-up view.",
+            "negative_prompt": "Clutter, unfinished projects, dated equipment, strong reflections, distracting elements, vibrant colors.",
+            "pinterest_marketing": {
+                "board_suggestion": "Art for Creative Workspaces",
+                "pin_title": "Inspiring Studio Art: Valch's Deep Core",
+                "pin_description": "Maurizio Valch's 'Deep Core' provides a powerful, contemplative focal point in an architect's studio, inspiring structural thought.",
+                "alt_text": "Maurizio Valch 'Deep Core' abstract painting in an architecture studio, front view.",
+                "seo_keywords": [
+                    "Studio art",
+                    "Architectural inspiration",
+                    "Maurizio Valch",
+                    "Abstract painting",
+                    "Contemporary office art"
+                ],
+                "hashtags": [
+                    "#StudioDecor",
+                    "#ArchitectureArt",
+                    "#CreativeSpace",
+                    "#AbstractArt",
+                    "#InspiringArt"
+                ]
+            }
+        },
+        {
+            "context_name": "Collector's Private Retreat",
+            "context_role": "Highlights intimacy and personal contemplation",
+            "space_type": "Private Study/Library",
+            "atmosphere": "Intimate, reflective, sophisticated",
+            "materials": [
+                "Dark wood paneled walls",
+                "Leather armchair",
+                "Subtle brass desk lamp"
+            ],
+            "lighting": "Soft, warm, indirect lighting from a desk lamp and ambient room light",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "The three-quarter left view allows the artwork to be seen within a cozy, private study, emphasizing its suitability for personal contemplation. The close-up distance keeps the focus on the artwork's intricate details and its deep central vortex, while the warm lighting enhances its earthy and bronze tones. Its square proportions contribute to a sense of balanced intimacy.",
+            "human_presence": "none",
+            "curatorial_reason": "Emphasizes the artwork's capacity for sustained, personal engagement and its value as a contemplative object in a private collection.",
+            "commercial_reason": "Appeals to private collectors seeking art that creates a deep, intellectual, and aesthetically rich atmosphere in their personal spaces.",
+            "mockup_prompt": "A private collector's study or library with elegant dark wood paneled walls. The artwork 'Deep Core' by Maurizio Valch is mounted on a central wall. Soft, warm indirect light emanates from a subtle brass desk lamp nearby, creating an intimate glow. A classic leather armchair is partially visible to the right. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. camera_view: three-quarter left view, camera_distance: close-up view.",
+            "negative_prompt": "Bright lights, clutter, modern distractions, generic office furniture, sterile environment.",
+            "pinterest_marketing": {
+                "board_suggestion": "Art for Sophisticated Studies",
+                "pin_title": "Maurizio Valch: Contemplative Art for Private Study",
+                "pin_description": "Find deep introspection with Maurizio Valch's 'Deep Core' in a luxurious private study, perfect for quiet contemplation.",
+                "alt_text": "Maurizio Valch 'Deep Core' abstract painting in a dark wood paneled study, three-quarter left view.",
+                "seo_keywords": [
+                    "Collector's study",
+                    "Private art collection",
+                    "Maurizio Valch",
+                    "Contemplative art",
+                    "Luxury study decor",
+                    "Abstract depth"
+                ],
+                "hashtags": [
+                    "#PrivateCollection",
+                    "#StudyDecor",
+                    "#AbstractArt",
+                    "#MaurizioValch",
+                    "#ArtForCollectors"
+                ]
+            }
+        },
+        {
+            "context_name": "Boutique Hotel Lobby Accent",
+            "context_role": "Showcases public yet refined commercial appeal",
+            "space_type": "Boutique Hotel Lobby",
+            "atmosphere": "Chic, welcoming, sophisticated",
+            "materials": [
+                "Warm grey stucco walls",
+                "Mid-century modern lounge seating",
+                "Subtle metallic accents"
+            ],
+            "lighting": "Designer pendant lighting providing warm, focused illumination on the artwork",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter right view allows for a dynamic presentation within a chic hotel lobby, demonstrating the artwork's ability to enhance public spaces. The close-up distance ensures the artwork's detail and square format are central, while focused lighting highlights its rich textures and the profound central vortex, adding visual interest without overwhelming the space.",
+            "human_presence": "none",
+            "curatorial_reason": "Positions the artwork as a key aesthetic element in a high-design hospitality environment, inviting engagement from a broad, discerning public.",
+            "commercial_reason": "Appeals to hotel designers and developers seeking unique, impactful art that contributes to a luxury brand's identity and guest experience.",
+            "mockup_prompt": "A chic boutique hotel lobby with warm grey stucco walls and elegant mid-century modern lounge seating. The artwork 'Deep Core' by Maurizio Valch is mounted prominently on a wall. Designer pendant lighting provides warm, focused illumination on the artwork. A glimpse of lounge seating is visible to the left. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. camera_view: three-quarter right view, camera_distance: close-up view.",
+            "negative_prompt": "Busy lobby, people, excessive furniture, harsh overhead lighting, generic decor, digital displays.",
+            "pinterest_marketing": {
+                "board_suggestion": "Boutique Hotel Art & Design",
+                "pin_title": "Deep Core: Art for Hotel Lobbies by Valch",
+                "pin_description": "Maurizio Valch's 'Deep Core' adds a layer of sophisticated depth to a boutique hotel lobby, perfect for curated public spaces.",
+                "alt_text": "Maurizio Valch 'Deep Core' abstract painting in a boutique hotel lobby, three-quarter right view.",
+                "seo_keywords": [
+                    "Hotel art",
+                    "Boutique hotel design",
+                    "Maurizio Valch",
+                    "Commercial art",
+                    "Luxury hospitality art",
+                    "Abstract focal point"
+                ],
+                "hashtags": [
+                    "#HotelDesign",
+                    "#PublicArt",
+                    "#AbstractPainting",
+                    "#LuxuryHotels",
+                    "#CommercialArt"
+                ]
+            }
+        },
+        {
+            "context_name": "Mediterranean Coastal Residence",
+            "context_role": "Connects to natural elements and serene lifestyle",
+            "space_type": "Mediterranean Villa Interior",
+            "atmosphere": "Bright, airy, tranquil, grounded",
+            "materials": [
+                "Rough white stucco walls",
+                "Terracotta tile floor",
+                "Natural wood beam ceiling"
+            ],
+            "lighting": "Abundant natural sunlight from a large window to the right, creating soft highlights",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A front view in this bright, Mediterranean setting emphasizes the artwork's square format and its deep blue-green tones, connecting to coastal elements. The close-up distance ensures the visual dominance of the artwork, while natural sunlight highlights its intricate textures and the subtle play of light within the central vortex, making it feel integral to the serene atmosphere.",
+            "human_presence": "none",
+            "curatorial_reason": "Explores the artwork's resonance with natural elements and light, positioning it within an environment that balances raw beauty with refined living.",
+            "commercial_reason": "Attracts buyers with Mediterranean aesthetic preferences, demonstrating the artwork's versatility and its ability to enhance tranquil, sunlit spaces.",
+            "mockup_prompt": "A bright and airy Mediterranean villa interior with rough white stucco walls and warm terracotta tile flooring. The artwork 'Deep Core' by Maurizio Valch is centrally mounted on a wall. Abundant natural sunlight streams in from a large window to the right, creating soft highlights on the artwork's textured surface. A hint of a natural wood beam ceiling is visible. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. camera_view: front view, camera_distance: close-up view.",
+            "negative_prompt": "Clutter, dark tones, modern industrial elements, artificial lighting, busy patterns, distractions.",
+            "pinterest_marketing": {
+                "board_suggestion": "Mediterranean Inspired Art",
+                "pin_title": "Deep Core by Valch in Mediterranean Villa",
+                "pin_description": "Maurizio Valch's 'Deep Core' beautifully complements a Mediterranean villa, linking deep blues and earthy textures with natural light.",
+                "alt_text": "Maurizio Valch 'Deep Core' abstract painting in a bright Mediterranean villa, front view.",
+                "seo_keywords": [
+                    "Mediterranean decor",
+                    "Coastal art",
+                    "Maurizio Valch",
+                    "Abstract painting",
+                    "White stucco interiors",
+                    "Natural light art"
+                ],
+                "hashtags": [
+                    "#MediterraneanDesign",
+                    "#CoastalLiving",
+                    "#AbstractArt",
+                    "#HomeDecor",
+                    "#MaurizioValch"
+                ]
+            }
+        },
+        {
+            "context_name": "Sophisticated Dining Ambiance",
+            "context_role": "Creates a focal point for intimate gatherings",
+            "space_type": "Minimalist Dining Room",
+            "atmosphere": "Refined, intimate, focused",
+            "materials": [
+                "Smooth cream-colored walls",
+                "Dark marble dining table",
+                "Upholstered minimalist dining chairs"
+            ],
+            "lighting": "Soft, downward-directed dining pendant light, creating a focused glow on the artwork",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "The three-quarter left view integrates the artwork into a sophisticated dining setting, emphasizing its role as a conversation piece during intimate gatherings. The close-up distance ensures the artwork's intricate details and its powerful central vortex are clearly visible. Soft, focused lighting enhances its contemplative atmosphere, and its square proportions provide a balanced anchor above the dining area.",
+            "human_presence": "none",
+            "curatorial_reason": "Highlights the artwork's ability to inspire conversation and contemplation within a social, yet refined, domestic setting.",
+            "commercial_reason": "Appeals to discerning homeowners and interior designers looking for art that adds depth and sophistication to dining spaces.",
+            "mockup_prompt": "A sophisticated minimalist dining room with smooth cream-colored walls. The artwork 'Deep Core' by Maurizio Valch is mounted on the main wall above a sleek dark marble dining table. A soft, downward-directed pendant light casts a focused glow on the artwork. Upholstered minimalist dining chairs are partially visible. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. camera_view: three-quarter left view, camera_distance: close-up view.",
+            "negative_prompt": "Clutter on table, distracting food, bright overhead lights, generic furniture, busy patterns, large windows with strong glare.",
+            "pinterest_marketing": {
+                "board_suggestion": "Dining Room Art & Design Ideas",
+                "pin_title": "Deep Core by Valch: Art for Minimalist Dining",
+                "pin_description": "Enhance your dining experience with Maurizio Valch's 'Deep Core', a contemplative abstract artwork perfect for minimalist and sophisticated interiors.",
+                "alt_text": "Maurizio Valch 'Deep Core' abstract painting in a minimalist dining room, three-quarter left view.",
+                "seo_keywords": [
+                    "Dining room art",
+                    "Minimalist interior",
+                    "Maurizio Valch",
+                    "Abstract painting",
+                    "Luxury dining decor",
+                    "Contemporary art"
+                ],
+                "hashtags": [
+                    "#DiningRoomDecor",
+                    "#MinimalistDesign",
+                    "#AbstractArt",
+                    "#HomeStyling",
+                    "#ArtForSale"
+                ]
+            }
+        },
+        {
+            "context_name": "Curated Residential Gallery Walk",
+            "context_role": "Showcases scale and visual impact in a private collection route",
+            "space_type": "Long Residential Hallway",
+            "atmosphere": "Refined, contemplative, expansive",
+            "materials": [
+                "Light grey textured walls",
+                "Natural wood herringbone floor",
+                "Recessed linear lighting"
+            ],
+            "lighting": "Even, directional recessed lighting highlighting the artwork, creating subtle shadows",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter right view along a long hallway with an optional human figure effectively conveys the artwork's scale and dominant presence within a private collection. The close-up distance ensures the artwork's square proportions and intricate central vortex remain the focus, while the lighting emphasizes its textured surface. The human presence provides a strong sense of scale and interaction.",
+            "human_presence": "optional standing female figure 1.55m",
+            "curatorial_reason": "Demonstrates the artwork's strong visual anchor point within a curated path, inviting interaction and contemplation as one moves through a space.",
+            "commercial_reason": "Targets collectors and interior designers seeking a powerful statement piece for a significant wall in a private residence, offering both aesthetic appeal and a sense of scale through human presence.",
+            "mockup_prompt": "A long, elegant residential hallway with light grey textured walls and natural wood herringbone flooring. The artwork 'Deep Core' by Maurizio Valch is prominently mounted on the wall. Even, directional recessed lighting illuminates the artwork, highlighting its texture and creating subtle shadows. An optional standing female figure 1.55m is subtly positioned in the mid-ground, admiring the artwork. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. camera_view: three-quarter right view, camera_distance: close-up view.",
+            "negative_prompt": "Clutter, other artworks competing, harsh or uneven lighting, distracting architectural features, children or groups of people.",
+            "pinterest_marketing": {
+                "board_suggestion": "Residential Art Collection Ideas",
+                "pin_title": "Deep Core by Valch: Hallway Art with Human Scale",
+                "pin_description": "Experience the commanding scale of Maurizio Valch's 'Deep Core' in a luxurious residential hallway, perfect for curated private collections.",
+                "alt_text": "Maurizio Valch 'Deep Core' abstract painting in a residential hallway with a female figure for scale, three-quarter right view.",
+                "seo_keywords": [
+                    "Residential gallery",
+                    "Large scale abstract",
+                    "Maurizio Valch",
+                    "Hallway art",
+                    "Collector's home",
+                    "Human scale art"
+                ],
+                "hashtags": [
+                    "#HomeGallery",
+                    "#ResidentialArt",
+                    "#AbstractPainting",
+                    "#ArtCollector",
+                    "#MaurizioValch"
+                ]
+            }
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1781736673_2330_v2.png"
+}

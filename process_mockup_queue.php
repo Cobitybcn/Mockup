@@ -89,6 +89,26 @@ if ($preAssignedJobId > 0) {
                 return (int)$pdo->lastInsertId();
             }, 24);
 
+            if ($mockupId > 0) {
+                try {
+                    $pdo = Database::connection();
+                    $stmtContext = $pdo->prepare("SELECT * FROM mockup_contexts WHERE id = :id LIMIT 1");
+                    $stmtContext->execute(['id' => (string)$job['context_id']]);
+                    $contextRow = $stmtContext->fetch();
+                    
+                    Logger::logMockupGeneration(
+                        $mockupId,
+                        (int)$job['artwork_id'],
+                        (string)$job['context_id'],
+                        (string)$job['prompt'],
+                        $contextRow ? ($contextRow['camera_view'] ?? '') : '',
+                        $contextRow ? ($contextRow['human_presence'] ?? '') : ''
+                    );
+                } catch (Throwable $logEx) {
+                    Logger::log("Failed to log queue mockup audit: " . $logEx->getMessage(), 'error');
+                }
+            }
+
             MockupBatchQueue::markDone(
                 (int)$job['id'],
                 $mockupId,
@@ -185,6 +205,26 @@ for ($i = 0; $i < $maxJobs; $i++) {
 
             return (int)$pdo->lastInsertId();
         }, 24);
+
+        if ($mockupId > 0) {
+            try {
+                $pdo = Database::connection();
+                $stmtContext = $pdo->prepare("SELECT * FROM mockup_contexts WHERE id = :id LIMIT 1");
+                $stmtContext->execute(['id' => (string)$job['context_id']]);
+                $contextRow = $stmtContext->fetch();
+                
+                Logger::logMockupGeneration(
+                    $mockupId,
+                    (int)$job['artwork_id'],
+                    (string)$job['context_id'],
+                    (string)$job['prompt'],
+                    $contextRow ? ($contextRow['camera_view'] ?? '') : '',
+                    $contextRow ? ($contextRow['human_presence'] ?? '') : ''
+                );
+            } catch (Throwable $logEx) {
+                Logger::log("Failed to log queue mockup audit: " . $logEx->getMessage(), 'error');
+            }
+        }
 
         MockupBatchQueue::markDone(
             (int)$job['id'],

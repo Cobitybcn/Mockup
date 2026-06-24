@@ -66,7 +66,46 @@ class PromptSettings
 
     public static function rootArtworkRules(): string
     {
-        return trim(self::all()['root_artwork_rules'] ?? '');
+        $value = trim(self::all()['root_artwork_rules'] ?? '');
+
+        if ($value === '') {
+            $value = trim(self::builtInDefaultDirectives()['root_artwork_rules'] ?? '');
+        }
+
+        return $value;
+    }
+
+    public static function rootArtworkRulesFrontal(): string
+    {
+        $value = trim(self::all()['root_artwork_rules_frontal'] ?? '');
+
+        if ($value === '') {
+            $value = trim(self::builtInDefaultDirectives()['root_artwork_rules_frontal'] ?? '');
+        }
+
+        return $value;
+    }
+
+    public static function rootArtworkRulesLeft(): string
+    {
+        $value = trim(self::all()['root_artwork_rules_left'] ?? '');
+
+        if ($value === '') {
+            $value = trim(self::builtInDefaultDirectives()['root_artwork_rules_left'] ?? '');
+        }
+
+        return $value;
+    }
+
+    public static function rootArtworkRulesRight(): string
+    {
+        $value = trim(self::all()['root_artwork_rules_right'] ?? '');
+
+        if ($value === '') {
+            $value = trim(self::builtInDefaultDirectives()['root_artwork_rules_right'] ?? '');
+        }
+
+        return $value;
     }
 
     public static function artworkAnalysisPrompt(): string
@@ -75,78 +114,76 @@ class PromptSettings
         $prompt = trim($settings['artwork_analysis_prompt'] ?? '');
 
         if ($prompt === '') {
-            $prompt = self::artworkAnalysisContract();
+            $prompt = trim(self::builtInDefaultDirectives()['artwork_analysis_prompt'] ?? '');
         }
 
-        $layers = [
-            'CAPA A - ANALISIS DE LA OBRA' => trim($settings['artwork_analysis_layer_a'] ?? ''),
-            'CAPA B - DATOS RELEVANTES DEL ARTISTA' => trim($settings['artwork_analysis_layer_b'] ?? ''),
-            'CAPA C - INFORMES PARA PROMPTS Y PUBLICACIONES' => trim($settings['artwork_analysis_layer_c'] ?? ''),
-            'CAPA D - PROMPTS PARA MOCKUPS' => trim($settings['artwork_analysis_layer_d'] ?? ''),
-        ];
-
-        $customLayers = [];
-        foreach ($layers as $title => $text) {
-            if ($text !== '') {
-                $customLayers[] = $title . ":\n" . $text;
-            }
-        }
-
-        $instructionBlocks = [];
-
-        if ($customLayers !== []) {
-            $instructionBlocks[] = "ADMIN CUSTOM ANALYSIS LAYERS:\n\n" . implode("\n\n", $customLayers);
-        }
-
-        $instructionBlocks[] = <<<'TEXT'
-ADMIN EFFECTIVE SETTINGS:
-- Generate exactly {context_count} contextual proposals.
-- If any custom layer mentions another number of contexts or mockups, ignore that number and obey {context_count}.
-- Keep the final response as one valid JSON object matching the schema below.
-TEXT;
-
-        $injectedInstructions = implode("\n\n", $instructionBlocks);
-        $schemaMarker = 'Return exactly this JSON schema:';
-
-        if (str_contains($prompt, $schemaMarker)) {
-            return trim(str_replace(
-                $schemaMarker,
-                $injectedInstructions . "\n\n" . $schemaMarker,
-                $prompt
-            ));
-        }
-
-        return trim($prompt . "\n\n" . $injectedInstructions);
+        return $prompt;
     }
 
     public static function mockupScaleRules(): string
     {
-        return trim(self::all()['mockup_scale_rules'] ?? '');
+        $value = trim(self::all()['mockup_scale_rules'] ?? '');
+
+        if ($value === '') {
+            $value = trim(self::builtInDefaultDirectives()['mockup_scale_rules'] ?? '');
+        }
+
+        return $value;
     }
 
     public static function mockupNegativeRules(): string
     {
-        return trim(self::all()['mockup_negative_rules'] ?? '');
+        $value = trim(self::all()['mockup_negative_rules'] ?? '');
+
+        if ($value === '') {
+            $value = trim(self::builtInDefaultDirectives()['mockup_negative_rules'] ?? '');
+        }
+
+        return $value;
     }
 
     public static function mockupQualityRules(): string
     {
-        return trim(self::all()['mockup_quality_rules'] ?? '');
+        $value = trim(self::all()['mockup_quality_rules'] ?? '');
+
+        if ($value === '') {
+            $value = trim(self::builtInDefaultDirectives()['mockup_quality_rules'] ?? '');
+        }
+
+        return $value;
     }
 
     public static function mockupCameraRules(): string
     {
-        return trim(self::all()['mockup_camera_rules'] ?? '');
+        $value = trim(self::all()['mockup_camera_rules'] ?? '');
+
+        if ($value === '') {
+            $value = trim(self::builtInDefaultDirectives()['mockup_camera_rules'] ?? '');
+        }
+
+        return $value;
     }
 
     public static function mockupRenderingRules(): string
     {
-        return trim(self::all()['mockup_rendering_rules'] ?? '');
+        $value = trim(self::all()['mockup_rendering_rules'] ?? '');
+
+        if ($value === '') {
+            $value = trim(self::builtInDefaultDirectives()['mockup_rendering_rules'] ?? '');
+        }
+
+        return $value;
     }
 
     public static function mockupFinalRequest(): string
     {
-        return trim(self::all()['mockup_final_request'] ?? '');
+        $value = trim(self::all()['mockup_final_request'] ?? '');
+
+        if ($value === '') {
+            $value = trim(self::builtInDefaultDirectives()['mockup_final_request'] ?? '');
+        }
+
+        return $value;
     }
 
     public static function mockupContextCount(): int
@@ -174,19 +211,17 @@ TEXT;
             'mockup_camera_rules' => '',
             'mockup_rendering_rules' => '',
             'mockup_final_request' => '',
-            'social_video_veo_finishing_prompt' => 'Enhance the video sequence with a coherent cinematic color grading, smooth subtle camera pans, high-fidelity textures, and professional gallery lighting. Retain the exact visual content of each mockup frame, keeping the artwork completely clear, in focus, and undeformed. Avoid adding extra elements, text, or major changes.',
             'mockup_context_count' => '6',
             'root_artwork_count' => '3',
+            'root_artwork_rules_frontal' => '',
+            'root_artwork_rules_left' => '',
+            'root_artwork_rules_right' => '',
         ];
     }
 
     public static function labels(): array
     {
         return [
-            'root_artwork_rules' => [
-                'title' => 'Root Image',
-                'help' => 'Reglas adicionales para Formulario 1. Usar para ajustar fidelidad, luz, bastidor y preservacion.',
-            ],
             'artwork_analysis_prompt' => [
                 'title' => 'Artwork Analysis (Suggestions and Sheets)',
                 'help' => 'Instrucciones para que la IA analice la obra y sugiera contextos. Mantener los marcadores {placeholder} y la estructura de salida JSON intacta.',
@@ -241,9 +276,17 @@ TEXT;
                 'help' => 'Numero de versiones de obra raiz generadas en Formulario 1 antes de elegir la definitiva. Recomendado: 3.',
                 'type' => 'number',
             ],
-            'social_video_veo_finishing_prompt' => [
-                'title' => 'Social Video - Veo Finishing Prompt',
-                'help' => 'Prompt utilizado para el pase de acabado creativo (finishing pass) con Veo sobre el video base. Debe guiar mejoras estilísticas, luz y transiciones sin alterar la obra.',
+            'root_artwork_rules_frontal' => [
+                'title' => 'Obra Raíz — Vista Frontal',
+                'help' => 'Prompt completo y exclusivo para la vista frontal (v1). Este texto se envía a Vertex AI tal cual, sin combinarse con ningún otro campo.',
+            ],
+            'root_artwork_rules_left' => [
+                'title' => 'Obra Raíz — 3/4 Izquierda',
+                'help' => 'Prompt completo y exclusivo para la vista 3/4 izquierda (v2). Este texto se envía a Vertex AI tal cual, sin combinarse con ningún otro campo.',
+            ],
+            'root_artwork_rules_right' => [
+                'title' => 'Obra Raíz — 3/4 Derecha',
+                'help' => 'Prompt completo y exclusivo para la vista 3/4 derecha (v3). Este texto se envía a Vertex AI tal cual, sin combinarse con ningún otro campo.',
             ],
         ];
     }
@@ -279,10 +322,21 @@ TEXT;
     {
         return [
             'root_artwork_rules' => <<<'TEXT'
-Generate a clean, high-resolution front-facing close-up of ONLY the painting itself, filling the entire frame.
-Remove all background elements, including walls, floors, frames, borders, easels, stands, and shadows.
-The output image must contain only the canvas and the painting, flat, centered, and occupying 100% of the image space from edge to edge.
-DO NOT paint over, distort, redraw, smooth out brushstrokes, or omit signatures. Maintain 100% color, texture, and line fidelity of the painting surface. Keep signatures and artist marks exactly as they appear in the original upload.
+The artwork must be understood as only the final visible surface of the finished piece — that is, the real painted area that constitutes the artwork itself.
+
+Do not use the edge of the photograph, the edge of any temporary support, or the edge of the visible background as the boundary of the artwork.
+
+Completely remove anything that is not part of the final artwork, including but not limited to: temporary supports, MDF panels, cardboard, boards, walls, tables, support surfaces, backgrounds, shadows, accidental framing elements, external studio stains, nearby objects, or any structure used only to hold or photograph the piece.
+
+Preserve only the real surface of the artwork, respecting its true physical boundaries, original proportions, orientation, and composition.
+
+If the artwork is temporarily placed on a larger support, do not keep that support. Do not interpret it as a frame or as part of the artwork.
+
+Expected result: a luxurious, realistic, premium product photograph, with the artwork resting on the floor and slightly leaning against a wall, in a minimal and elegant environment.
+
+Lighting: composite studio lighting, soft and balanced, with lateral fill light, subtle directional highlights, clean tonal separation, sharp edges, and realistic texture.
+
+Do not redraw, reinterpret, stylize, beautify, artistically correct, change colors, alter the composition, or add or remove any pictorial elements from the artwork.
 TEXT,
             'artwork_analysis_prompt' => <<<'TEXT'
 Analyze this artwork visually first and propose dynamic contextual mockup recommendations following the principle "The artwork determines the space, not the space the artwork".
@@ -408,68 +462,51 @@ TEXT,
             'artwork_analysis_layer_b' => '',
             'artwork_analysis_layer_c' => '',
             'artwork_analysis_layer_d' => '',
-            'mockup_scale_rules' => <<<'TEXT'
-Respect the physical dimensions of the artwork relative to furniture, doors, windows, ceilings, pedestals, and human figures.
-Do not enlarge the artwork for dramatic effect.
-Use baseboards, doors, consoles, chairs, and human height as realistic, proportional scale references in the same plane.
-Do not convert a medium-sized artwork into a mural, monumental panel, or installation if its dimensions do not warrant it.
-TEXT,
-            'mockup_negative_rules' => <<<'TEXT'
-No kitchens.
-No common bedrooms.
-No cheap decor.
-No generic stock interiors.
-No additional artworks, paintings, framed prints, posters, murals, canvases, or competing wall art anywhere in the scene.
-No logos.
-No visible text.
-No letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.
-No shoes or footwear as scale reference.
-No distorted perspective.
-Do not redraw, repaint, reinterpret, crop, mirror, rotate, recolor, simplify, extend, or alter the artwork surface.
-Do not change the artwork's internal composition, visible symbols, brushstrokes, marks, texture, colors, proportions, orientation, or edge shape.
-TEXT,
-            'mockup_quality_rules' => <<<'TEXT'
-Create an integrated mockup, not a photo pasted on a generic background.
-Add realistic contact shadows, wall contact, depth, the canvas physical edge, and subtle ambient light.
-The environment must feel sophisticated, European or American collector style, gallery, museum, art fair, or high-end interior.
-The emotional impact should come from the scene, lighting, and context, not from false scaling.
-The artwork must feel placed, collected, and desired.
-The provided artwork image must remain visually identical inside the mockup. Preserve its exact composition, colors, symbols, lines, surface texture, brushwork, proportions, orientation, and edges.
-Create a close, artwork-dominant mockup, not a distant interior view. The artwork must be the clear main subject and should occupy roughly 50-70% of the final image area when visually plausible.
-TEXT,
-            'mockup_camera_rules' => <<<'TEXT'
-CAMERA SELECTION RULES FOR MOCKUP GENERATION
-
-Only use camera angles that present the artwork as the dominant, high-end centerpiece of the room. The room exists to accompany, scale, and add value to the artwork, never to overshadow it. Avoid wide-angle or distant rooms.
-
-ALLOWED CAMERAS:
-1. Front Gallery View: straight-on front view, eye-level, artwork dominant, filling at least 50-70% of the visual space. Excellent for Saatchi Art, Pinterest, and listings.
-2. Three-Quarter Left View: subtle three-quarter angle from the left, revealing slight canvas depth/thickness on the wall.
-3. Three-Quarter Right View: subtle three-quarter angle from the right, showing texture, depth, and realistic lighting.
-
-CAMERAS TO AVOID (DO NOT USE):
-- Do not use wide-angle, distant room shots, or full-room views. The room must feel close, cropped, and intimate around the artwork.
-- Do not add other paintings, artworks, framed prints, posters, murals, canvases, or visual competitors on surrounding walls.
-- Do not use low-angle hero shots, fisheye, birds-eye, or extreme diagonal perspective views.
-TEXT,
-            'mockup_rendering_rules' => <<<'TEXT'
-TECHNICAL RENDERER CONTROLS
-These values control the pre-composed reference image sent to the image model. Edit only after visual testing.
-
-mockup_fill_default=0.50
-mockup_fill_long_side_le_45=0.32
-mockup_fill_long_side_le_80=0.42
-mockup_fill_long_side_le_120=0.52
-mockup_fill_long_side_le_160=0.58
-mockup_fill_long_side_le_220=0.64
-mockup_fill_long_side_gt_220=0.70
-mockup_human_scale_multiplier=0.78
-mockup_fill_min=0.05
-mockup_fill_max=0.95
-TEXT,
+            'mockup_scale_rules' => '',
+            'mockup_negative_rules' => '',
+            'mockup_quality_rules' => '',
+            'mockup_camera_rules' => '',
+            'mockup_rendering_rules' => '',
             'mockup_final_request' => '',
             'mockup_context_count' => '6',
             'root_artwork_count' => '3',
+            'root_artwork_rules_frontal' => 'Create a single clean, high-resolution product photograph of ONLY the painting itself, isolated against a plain neutral studio background (light gray or white, no texture, no shadows from walls or floors other than the artwork\'s own contact shadow).
+
+CAMERA: Position the camera perpendicular to the painting\'s surface, centered on the artwork, at the painting\'s mid-height. The lens axis must be exactly perpendicular to the painted surface — no perspective distortion, no convergence of the frame edges.
+
+PHYSICAL POSE: The painting is leaning against a wall, resting on the floor, tilted back slightly (5-8 degrees) as physical objects naturally rest — NOT hanging, NOT floating, NOT perfectly vertical like a flat scan. The base of the painting touches the studio floor.
+
+FRAMING: The artwork should occupy the majority of the frame, fully visible with all four edges inside the image, with even margin of neutral background around it. Do not crop any edge of the painting.
+
+PROHIBITED: No mockup decor, no interior walls, no furniture, no gallery setting, no lifestyle context, no people, no reflections of a room. Only the painting and the empty studio surface it rests on.
+
+There is only ONE physical object in this scene: the painting.',
+            'root_artwork_rules_left' => 'Create a single clean, high-resolution product photograph of ONLY the painting itself, isolated against a plain neutral studio background (light gray or white, no texture, no shadows from walls or floors other than the artwork\'s own contact shadow).
+
+CAMERA: Position the camera at a 3/4 angle to the LEFT of the painting\'s frontal axis (camera rotated approximately 25-35 degrees from perpendicular, viewing the artwork\'s right edge rotating away from camera). This is a genuine three-quarter rotation — the painting must appear visibly turned in space, not flat-on.
+
+PHYSICAL POSE: The painting is leaning against a wall, resting on the floor, tilted back slightly (5-8 degrees) as physical objects naturally rest — same physical pose as the frontal view, NOT hanging, NOT floating.
+
+CANVAS EDGE: This is a gallery-wrap canvas. The painted surface and colors wrap around onto the visible side edge of the canvas — there is no raw, unpainted canvas or visible wooden stretcher bars. The side edge shows continuous painted color/texture, not staples or bare wood.
+
+FRAMING: The artwork should occupy the majority of the frame, fully visible with all edges inside the image, with even margin of neutral background around it. Do not crop any edge of the painting.
+
+PROHIBITED: No mockup decor, no interior walls, no furniture, no gallery setting, no lifestyle context, no people, no reflections of a room. Only the painting and the empty studio surface it rests on.
+
+There is only ONE physical object in this scene: the painting.',
+            'root_artwork_rules_right' => 'Create a single clean, high-resolution product photograph of ONLY the painting itself, isolated against a plain neutral studio background (light gray or white, no texture, no shadows from walls or floors other than the artwork\'s own contact shadow).
+
+CAMERA: Position the camera at a 3/4 angle to the RIGHT of the painting\'s frontal axis (camera rotated approximately 25-35 degrees from perpendicular, viewing the artwork\'s left edge rotating away from camera). This is a genuine three-quarter rotation — the painting must appear visibly turned in space, not flat-on.
+
+PHYSICAL POSE: The painting is leaning against a wall, resting on the floor, tilted back slightly (5-8 degrees) as physical objects naturally rest — same physical pose as the frontal view, NOT hanging, NOT floating.
+
+CANVAS EDGE: This is a gallery-wrap canvas. The painted surface and colors wrap around onto the visible side edge of the canvas — there is no raw, unpainted canvas or visible wooden stretcher bars. The side edge shows continuous painted color/texture, not staples or bare wood.
+
+FRAMING: The artwork should occupy the majority of the frame, fully visible with all edges inside the image, with even margin of neutral background around it. Do not crop any edge of the painting.
+
+PROHIBITED: No mockup decor, no interior walls, no furniture, no gallery setting, no lifestyle context, no people, no reflections of a room. Only the painting and the empty studio surface it rests on.
+
+There is only ONE physical object in this scene: the painting.',
         ];
     }
 

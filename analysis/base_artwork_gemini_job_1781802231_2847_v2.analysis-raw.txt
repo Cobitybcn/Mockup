@@ -1,0 +1,208 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Vertical Divide",
+      "subtitle": "Abstract painting creating a structured perspective through a bold central partition and layered planes.",
+      "description": "The artwork is primarily structured by a strong vertical division, anchoring the composition with a profound sense of order. This architectural element separates a contained, organic landscape on the left from an expansive, open vista on the right. Warm earth tones and cool blues define distinct atmospheric zones across the surface. The arrangement creates a sense of balanced tension and quiet observation. Its horizontal format emphasizes a broad, contemplative field of view, suggesting depth and presence."
+    },
+    {
+      "title": "Orange Earth",
+      "subtitle": "Abstract landscape rendered with sweeping ochre fields and distant horizons under a pale sky.",
+      "description": "Expansive orange fields dominate the lower portions, grounding the composition with a warm, material presence. The canvas is organized into distinct horizontal bands that suggest distant plains and a vast horizon. Visible brushstrokes contribute to a textured surface, evoking an ancient or sun-drenched terrain. A serene and luminous atmosphere pervades the scene, marked by clarity and depth. This substantial horizontal piece creates a deep, quiet spatial resonance on the wall."
+    },
+    {
+      "title": "Scattered Forms",
+      "subtitle": "Geometric elements punctuate a divided abstract landscape, marking scale within a broad panorama.",
+      "description": "Small, distinct red rectangular forms are strategically placed throughout the composition, creating subtle visual anchors. The painting is divided by a prominent vertical bar, framing diverse spatial experiences across its surface. Vibrant oranges, greens, and blues define distinct regions with varying textures and light. These sparse geometric shapes introduce a subtle human scale and contemplative tension within the abstract view. The horizontal expanse feels like a grand, silent cartography, inviting prolonged observation."
+    }
+  ],
+  "recommended_number_of_contexts": "9",
+  "contextual_proposals": [
+    {
+      "context_name": "Evening Reading Room",
+      "context_role": "Private Collector's Study",
+      "space_type": "Refined study with tailored furnishings",
+      "atmosphere": "Warm, intimate, contemplative, luxurious",
+      "materials": [
+        "Dark wood paneling",
+        "leather armchair",
+        "soft wool rug",
+        "brass lighting fixtures"
+      ],
+      "lighting": "Soft, warm lamplight from a standing lamp, indirect wall wash, gentle ambient glow.",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view, combined with warm evening lighting, enhances the artwork's depth and texture. The angle allows appreciation of the artwork within the rich, intimate study setting, while the elegant figure provides a sense of scale and discerning viewership without obstructing the piece.",
+      "human_presence": "elegant standing male figure 1.80m, observing the artwork from a slight distance, hands behind his back, tailored dark suit.",
+      "curatorial_reason": "The artwork's structured yet warm abstract landscape harmonizes with the intellectual and refined atmosphere of a private study, where its compositional elements can be quietly contemplated.",
+      "commercial_reason": "Presents the artwork as a centerpiece in a sophisticated, private collection setting, demonstrating its ability to anchor a refined space and appealing to a discerning collector who values intimacy and cultivation.",
+      "mockup_prompt": "A warm, intimate, contemplative luxury study. Dark wood paneling covers the walls, with a classic leather armchair and a soft wool rug. Brass lighting fixtures provide soft, warm lamplight and indirect wall wash. An elegant standing male figure, 1.80m tall, in a tailored dark suit, stands observing the artwork from a slight distance, hands behind his back. The camera is positioned at a three-quarter left view, close-up. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Architectural Vista Gallery",
+      "context_role": "Modern residential art display",
+      "space_type": "High-end penthouse living room with large windows",
+      "atmosphere": "Serene, spacious, bright, refined, with soft natural light",
+      "materials": [
+        "Polished concrete floor",
+        "warm grey plaster walls",
+        "large glass windows",
+        "minimalist wooden furniture"
+      ],
+      "lighting": "Soft, diffused daylight from large windows, with subtle indoor spot lighting on the artwork.",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The front view emphasizes the artwork's balanced horizontal composition and clean lines. The soft, diffused daylight allows the viewer to appreciate the subtle color gradients and the work's inherent structure within a contemporary, open setting.",
+      "human_presence": "none",
+      "curatorial_reason": "The artwork's clean lines and structured abstract landscape complement a modern architectural interior, emphasizing its geometric yet expansive qualities which resonate with the exterior views.",
+      "commercial_reason": "Shows the artwork's capacity to integrate seamlessly into a contemporary, light-filled luxury residence, appealing to buyers seeking art that enhances modern architectural design with its expansive presence.",
+      "mockup_prompt": "A serene, spacious, bright, and refined high-end penthouse living room with large glass windows. The floor is polished concrete, walls are warm grey plaster. Minimalist wooden furniture is subtly placed. Soft, diffused daylight enters from large windows, complemented by subtle indoor spot lighting on the artwork. The camera is positioned at a front view, close-up. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Boutique Hotel Lobby",
+      "context_role": "Elegant hospitality art display",
+      "space_type": "Luxury apartment lobby with a curated art selection",
+      "atmosphere": "Welcoming, elegant, subtly vibrant, sophisticated",
+      "materials": [
+        "Travertine walls",
+        "brushed bronze accents",
+        "dark wood reception desk",
+        "soft ambient lighting"
+      ],
+      "lighting": "Warm, even overhead lighting with spotlights on the artwork, supplemented by discreet recessed lighting.",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter right view highlights the artwork's textured surface and the interplay of its warm colors against the elegant backdrop of the lobby. The standing female figure provides scale and an aspirational context for the artwork in a sophisticated public setting.",
+      "human_presence": "elegant standing female figure 1.55m, in a black dress, looking towards the artwork from a slight distance.",
+      "curatorial_reason": "The artwork's inviting color palette and balanced composition make it suitable for a refined public space, offering a focal point that is both engaging and calming, where its strong vertical elements echo architectural framing.",
+      "commercial_reason": "Illustrates the artwork's potential for high-end commercial or hospitality settings, broadening its appeal to designers and institutional buyers seeking sophisticated yet accessible art.",
+      "mockup_prompt": "An elegant, subtly vibrant, sophisticated luxury apartment lobby. Walls are travertine, with brushed bronze accents. A dark wood reception desk is visible in the background. Soft ambient lighting creates a welcoming mood. Warm, even overhead lighting with spotlights illuminates the artwork, supplemented by discreet recessed lighting. An elegant standing female figure, 1.55m tall, in a black dress, looks towards the artwork from a slight distance. The camera is positioned at a three-quarter right view, close-up. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Collector's Afternoon Salon",
+      "context_role": "Private art viewing experience",
+      "space_type": "Art-filled salon with restrained elegance",
+      "atmosphere": "Cultivated, intimate, serene, warm",
+      "materials": [
+        "Soft linen walls",
+        "antique wooden console table",
+        "subtle patterned rug"
+      ],
+      "lighting": "Gentle, warm afternoon sunlight filtering through curtains, creating soft shadows and highlights.",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "This three-quarter left view, bathed in warm afternoon light, accentuates the artwork's rich color fields and textured surfaces, inviting a contemplative mood. It places the artwork within a cultivated yet intimate setting, ideal for a private collection.",
+      "human_presence": "none",
+      "curatorial_reason": "The painting's landscape abstraction and rich color fields are enhanced by the warm, diffused light, evoking a sense of calm and depth, perfect for a contemplative viewing experience in a private salon.",
+      "commercial_reason": "Appeals to collectors who appreciate art in a curated, lived-in environment, showcasing its ability to bring warmth and sophistication to a personal space with a sense of quiet luxury.",
+      "mockup_prompt": "A cultivated, intimate, serene, and warm art-filled salon with restrained elegance. Soft linen walls, an antique wooden console table, and a subtle patterned rug. Gentle, warm afternoon sunlight filters through curtains, creating soft shadows and highlights on the artwork. The camera is positioned at a three-quarter left view, close-up. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Contemporary Gallery Wall",
+      "context_role": "Clean display for artistic examination",
+      "space_type": "Professional art gallery, well-lit",
+      "atmosphere": "Crisp, focused, objective",
+      "materials": [
+        "Smooth, light grey gallery wall",
+        "concrete floor"
+      ],
+      "lighting": "Neutral, bright gallery track lighting, emphasizing the artwork's true colors and textures.",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A front view in a gallery setting provides an unadulterated presentation of the artwork, allowing for clear assessment of its composition, scale, and color fidelity. This objective angle emphasizes its artistic integrity.",
+      "human_presence": "none",
+      "curatorial_reason": "A minimalist gallery setting allows the viewer to focus entirely on the artwork's compositional structure, color relationships, and painterly qualities without external distraction, highlighting its intrinsic artistic merit.",
+      "commercial_reason": "Reinforces the artwork's status as a serious piece of art, suitable for institutional or high-end private collections where pristine, objective presentation is paramount for evaluation.",
+      "mockup_prompt": "A crisp, focused, objective professional art gallery. Walls are smooth, light grey, and the floor is concrete. Neutral, bright gallery track lighting illuminates the artwork, emphasizing its true colors and textures. The camera is positioned at a front view, close-up. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Sophisticated Dining Space",
+      "context_role": "Focal point in a refined interior",
+      "space_type": "Sophisticated dining room with art prominence",
+      "atmosphere": "Elegant, inviting, convivial, quietly luxurious",
+      "materials": [
+        "Dark lacquered wood dining table",
+        "upholstered chairs",
+        "warm grey walls",
+        "subtle wall sconces"
+      ],
+      "lighting": "Warm, downward-focused lighting over the dining table, with ambient wall wash illuminating the artwork.",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter right view subtly integrates the artwork into the elegant dining setting, showing how it can enhance the ambiance. The lighting emphasizes the artwork as a central feature without overwhelming the room.",
+      "human_presence": "none",
+      "curatorial_reason": "The artwork's balanced composition and rich, yet not overwhelming, color palette create a harmonious backdrop for social interaction, complementing the refined setting and acting as a sophisticated conversational piece.",
+      "commercial_reason": "Positions the artwork as an ideal piece for a high-end dining area, appealing to buyers looking to enrich entertaining spaces with significant and tasteful art.",
+      "mockup_prompt": "An elegant, inviting, convivial, and quietly luxurious sophisticated dining room with art prominence. A dark lacquered wood dining table is set, surrounded by upholstered chairs. Walls are warm grey with subtle wall sconces. Warm, downward-focused lighting illuminates the dining table, with an ambient wall wash specifically highlighting the artwork. The camera is positioned at a three-quarter right view, close-up. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Private Study Retreat",
+      "context_role": "Intellectual and aesthetic focal point",
+      "space_type": "Quiet library with collector atmosphere",
+      "atmosphere": "Calm, intellectual, personal, rich",
+      "materials": [
+        "Built-in dark wood bookshelves",
+        "comfortable reading chair",
+        "aged leather"
+      ],
+      "lighting": "Warm, focused task lighting and soft, indirect ambient light, highlighting textural elements.",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view allows the artwork to be seen as an integral part of this rich, contemplative space. The warm, focused lighting enhances its material qualities and inviting composition, perfect for a private study.",
+      "human_presence": "none",
+      "curatorial_reason": "The structured yet organic forms of the painting invite contemplation, making it a natural fit for a scholarly or reflective space. Its earthy tones complement the surrounding dark wood and provide visual anchor.",
+      "commercial_reason": "Suggests the artwork as a valuable addition to a private study or library, appealing to collectors who appreciate intellectual engagement and a sense of history within their personal sanctuary.",
+      "mockup_prompt": "A calm, intellectual, personal, and rich quiet library with a collector atmosphere. Built-in dark wood bookshelves line the walls, with a comfortable reading chair and aged leather accents. Warm, focused task lighting and soft, indirect ambient light illuminate the space, highlighting textural elements. The camera is positioned at a three-quarter left view, close-up. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Serene Bedroom Sanctuary",
+      "context_role": "Calming presence in a private quarter",
+      "space_type": "Master bedroom in a luxury residence",
+      "atmosphere": "Peaceful, serene, intimate, sophisticated",
+      "materials": [
+        "Linen upholstered headboard",
+        "soft neutral walls",
+        "light wood side tables",
+        "natural fiber rug"
+      ],
+      "lighting": "Soft, diffused morning light or gentle bedside lamp glow, creating a tranquil mood.",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The front view ensures the artwork's balanced and calming composition is fully appreciated in this intimate setting. Soft, diffused lighting enhances its tranquil atmosphere, making it ideal for a personal space.",
+      "human_presence": "none",
+      "curatorial_reason": "The artwork's balanced composition and gentle color transitions contribute to a calming aesthetic, suitable for a personal and tranquil space like a bedroom, offering a sophisticated visual anchor.",
+      "commercial_reason": "Broadens the artwork's perceived versatility, showing its suitability for a high-end bedroom, appealing to buyers desiring sophistication and calm in their most private and intimate spaces.",
+      "mockup_prompt": "A peaceful, serene, intimate, and sophisticated master bedroom in a luxury residence. A linen upholstered headboard and soft neutral walls. Light wood side tables and a natural fiber rug. Soft, diffused morning light or a gentle bedside lamp glow creates a tranquil mood. The camera is positioned at a front view, close-up. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Grand Architectural Corridor",
+      "context_role": "Statement piece in a transitional space",
+      "space_type": "Large residence with double-height wall or grand hallway",
+      "atmosphere": "Expansive, impressive, structured, luminous",
+      "materials": [
+        "Polished stone flooring",
+        "tall, textured plaster walls",
+        "minimalist console"
+      ],
+      "lighting": "Architectural wall-wash lighting from above, emphasizing height and surface, with natural light from a distance.",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter right view places the artwork as a commanding presence in a grand architectural space. The elegant figure walking away provides scale and suggests the artwork as a discovery within a curated journey, without distracting from it.",
+      "human_presence": "elegant standing male figure 1.80m, walking slowly away from the viewer, hands in pockets, refined minimalist clothing.",
+      "curatorial_reason": "The artwork's strong horizontal and vertical structures command attention in a large transitional space, guiding the eye and enhancing the architectural flow and sense of scale.",
+      "commercial_reason": "Highlights the artwork's monumental presence and its ability to define and elevate significant architectural passages within a luxury home or gallery, appealing to buyers with grander spaces.",
+      "mockup_prompt": "An expansive, impressive, structured, and luminous grand architectural corridor in a large residence with a double-height wall. Polished stone flooring, tall, textured plaster walls, and a minimalist console. Architectural wall-wash lighting from above emphasizes height and surface, complemented by natural light from a distance. An elegant standing male figure, 1.80m tall, in refined minimalist clothing, walks slowly away from the viewer, hands in pockets. The camera is positioned at a three-quarter right view, close-up. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    }
+  ]
+}
+```

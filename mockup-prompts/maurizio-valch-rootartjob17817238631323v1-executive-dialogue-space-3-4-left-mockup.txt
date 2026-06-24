@@ -1,0 +1,35 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 160 cm wide × 120 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Camera: three-quarter view from the left, slight side angle, eye-level, natural perspective
+- Scene Name: Executive Dialogue Space
+- Purpose: Enhancing a professional environment with artistic depth
+- Scene Description: A sophisticated dining room with formal, contemplative, prestigious atmosphere. Materials: dark polished wood table, minimalist upholstered chairs, textured grey walls
+- Lighting: luminous natural daylight, bright, sunny day, clear blue sky reflections, clean direct sunlight
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: medium-close view, enough space for context and scale while keeping artwork dominant
+- Camera Rationale: A three-quarter left view naturally integrates the artwork into a professional dining or meeting space, showing its potential to stimulate conversation. The close-up view keeps the focus on the artwork's intensity and scale, highlighting its suitability for prestigious commercial or executive settings.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A sophisticated dining room or executive meeting space with a long dark polished wood table and minimalist upholstered chairs. The textured grey wall hosts Maurizio Valch's 'Dual Gaze', lit by subtle downlighting and ambient light from large windows. Captured from a three-quarter left view, close-up, prestigious, formal, contemplative.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+casual, bright office, kitchen, generic dining set, residential, cluttered, cheap, informal
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

@@ -1,0 +1,31 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Architectural Villa Interior
+- Purpose: modern luxury integration
+- Scene Description: A architect-designed villa interior with refined, serene, modern luxury atmosphere. Materials: polished limestone walls, warm oak flooring, large glass windows, minimalist leather seating
+- Lighting: blue-hour window light, subtle integrated wall wash
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult white woman, 1.55 meters tall.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The three-quarter right view enhances the artwork's structural qualities within a sleek architectural context. The blue-hour light creates a serene backdrop, emphasizing the contrast of the red while allowing the figure to subtly frame the piece, suggesting harmonious integration.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+An architect-designed villa interior, modern and serene. The artwork is set against polished limestone walls, complemented by warm oak flooring and large glass windows. Subtle integrated wall wash light blends with blue-hour window light. three-quarter right view, close-up view. An elegant standing female figure 1.55m, in a long elegant dress, in side profile, contemplates the artwork against the evening light. The artwork in the attached image is the final artwork to be presented, not an inspiration image, and should not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the artwork in the attached image. Preserve the artwork exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, brushstroke, marks, symbols, and visual content. The artwork must remain completely visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, the human figure, the lighting, the wall, the architecture, the furniture, and the atmosphere can be generated or modified.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

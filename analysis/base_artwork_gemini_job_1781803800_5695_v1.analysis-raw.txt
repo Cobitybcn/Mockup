@@ -1,0 +1,233 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Red Monolith Field",
+      "subtitle": "An abstract structural painting featuring a prominent red form anchored within an expansive, textured green territory.",
+      "description": "A significant red monolithic form anchors the right side of the canvas, drawing the eye. The composition is structured by a broad, muted green field punctuated by these solid elements. Visible layers of pigment define a textured surface, crossed by delicate white incised lines. This creates a silent, contemplative atmosphere, suggesting vastness and contained presence. The substantial format holds a quiet, architectural presence on the wall."
+    },
+    {
+      "title": "Incised Green Territory",
+      "subtitle": "A contemporary abstract work presenting a materially worked green surface, subtly divided by horizontal white incisions.",
+      "description": "The artwork is defined by an expansive, rich green field that occupies most of the canvas. The composition organizes a quiet visual order across this textured plane, with three distinct red forms appearing within it. Scraped layers and visible brushwork give the surface a tactile material presence, revealing depth. This careful construction creates a sense of restrained silence and spatial tension. The wide format emphasizes the territorial expanse."
+    },
+    {
+      "title": "Tectonic Horizons",
+      "subtitle": "A structural abstract painting where subtle white incised lines define spatial relationships across a muted, materially rich ground.",
+      "description": "Fine white incised lines delineate multiple horizons and divisions across the canvas surface. The composition is built through these horizontal stresses, anchoring three red rectangular forms within the vast green field. Pigment density and scraping reveal a deep, worked texture across the entire canvas. This creates a quiet, almost melancholic atmosphere, rich with spatial depth and restrained presence. The artwork holds a calm, commanding visual order."
+    }
+  ],
+  "recommended_number_of_contexts": "9",
+  "contextual_proposals": [
+    {
+      "context_name": "Twilight Contemplation",
+      "context_role": "Private viewing in an evening residence",
+      "space_type": "Private collector's residence living room",
+      "atmosphere": "Warm, intimate, contemplative",
+      "materials": [
+        "Dark walnut wall paneling",
+        "Brushed bronze accents",
+        "Textured linen sofa",
+        "Soft wool rug"
+      ],
+      "lighting": "Warm evening lamplight, subtle recessed ceiling lights, soft glow from outside window",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view offers depth to the walnut paneling and reveals the interplay of evening light and shadow around the artwork, enhancing its material presence. The close-up ensures the artwork remains the dominant focal point, while the figure provides scale and emotional context. The camera angle frames the artwork and observer naturally within the rich interior.",
+      "human_presence": "elegant standing male figure 1.80m, contemplating the artwork with hands clasped behind his back, seen in profile",
+      "curatorial_reason": "Emphasizes the artwork's contemplative nature and material presence within a sophisticated, intimate setting, allowing its structural silence to unfold.",
+      "commercial_reason": "Creates a strong sense of private ownership and aspirational lifestyle, showing the artwork as a cherished object in a luxurious, personally curated home after dusk.",
+      "mockup_prompt": "A private collector's residence living room at twilight, featuring dark walnut wall paneling and brushed bronze accents. Warm evening lamplight and subtle recessed ceiling lights illuminate the space. An elegant standing male figure 1.80m, wearing a tailored suit, contemplates the artwork with hands clasped behind his back, seen in profile at a respectful distance. The artwork remains the visual center. The attached root artwork is a protected visual asset, not a style reference, and must not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, human figure, lighting, wall, architecture, furniture, and atmosphere may be generated or modified.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, repainting the artwork, redesigning the artwork, changing artwork colors, changing artwork texture, adding symbols inside the artwork, removing symbols from the artwork, extending artwork edges, blending artwork into wall, rotating the artwork, distorting the artwork, wide room view, distant view, extreme angle, no human figure, artwork alone without human scale, harsh lighting, sterile environment."
+    },
+    {
+      "context_name": "Architectural Presence",
+      "context_role": "Showcasing scale and structural dialogue in a modern setting",
+      "space_type": "High-ceilinged contemporary living space",
+      "atmosphere": "Spacious, refined, minimalist but warm",
+      "materials": [
+        "Light grey polished concrete walls",
+        "Natural oak flooring",
+        "Large glass windows",
+        "Subtle linen sheer curtains"
+      ],
+      "lighting": "Soft, diffused daylight from large windows, supplemented by warm art spotlights",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A direct front view emphasizes the artwork's inherent structural balance and scale against a clean, architectural backdrop. The close-up ensures the artwork's details and material presence are clearly visible, while the figure provides a crucial sense of scale and human interaction. This angle highlights the artwork's compositional strength.",
+      "human_presence": "elegant standing female figure 1.55m, dressed in refined minimalist clothing, standing slightly to the side of the artwork, observing it",
+      "curatorial_reason": "Highlights the artwork's structural quality and how it commands a spacious, architecturally significant environment, engaging with the surrounding planes.",
+      "commercial_reason": "Emphasizes the artwork's scale and importance within a serious, sophisticated collection, demonstrating its presence in a modern, high-end home with ample space.",
+      "mockup_prompt": "A high-ceilinged contemporary living space with light grey polished concrete walls and natural oak flooring. Soft, diffused daylight enters from large windows, complemented by warm art spotlights. An elegant standing female figure 1.55m, dressed in refined minimalist clothing, stands slightly to the side of the artwork, observing it with calm attention. The artwork remains the visual center. The attached root artwork is a protected visual asset, not a style reference, and must not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, human figure, lighting, wall, architecture, furniture, and atmosphere may be generated or modified.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, repainting the artwork, redesigning the artwork, changing artwork colors, changing artwork texture, adding symbols inside the artwork, removing symbols from the artwork, extending artwork edges, blending artwork into wall, rotating the artwork, distorting the artwork, wide room view, distant view, extreme angle, no human figure, artwork alone without human scale, cold lighting, sterile environment."
+    },
+    {
+      "context_name": "Quiet Study Presence",
+      "context_role": "Contemplative setting for intellectual engagement",
+      "space_type": "Refined home study or library",
+      "atmosphere": "Calm, intellectual, contemplative",
+      "materials": [
+        "Rich dark wood bookshelves",
+        "Leather armchair",
+        "Muted plaster walls",
+        "Brass lighting fixtures"
+      ],
+      "lighting": "Subdued, warm ambient light, focused spotlight on the artwork, gentle spill from a desk lamp",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter right view adds depth to the study's rich materials and allows the subtle interplay of light on the artwork's surface to be appreciated. The close-up brings focus to the artwork's texture and detail within this intimate setting, with the figure providing a human, reflective presence without distraction.",
+      "human_presence": "elegant standing male figure 1.80m, in a tailored jacket, hands in pockets, looking toward the artwork reflectively",
+      "curatorial_reason": "Connects the artwork's restrained silence and structural depth with an atmosphere of quiet thought and intellectual engagement, enhancing its contemplative nature.",
+      "commercial_reason": "Positions the artwork as a significant piece for a cultivated collector's private space, enhancing its value as an object of contemplation and a centerpiece in a refined study.",
+      "mockup_prompt": "A refined home study with rich dark wood bookshelves and a classic leather armchair. Muted plaster walls are softly lit by warm ambient light and a focused spotlight on the artwork. An elegant standing male figure 1.80m, in a tailored jacket, hands in pockets, looks toward the artwork reflectively from a respectful distance. The artwork remains the visual center. The attached root artwork is a protected visual asset, not a style reference, and must not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, human figure, lighting, wall, architecture, furniture, and atmosphere may be generated or modified.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, repainting the artwork, redesigning the artwork, changing artwork colors, changing artwork texture, adding symbols inside the artwork, removing symbols from the artwork, extending artwork edges, blending artwork into wall, rotating the artwork, distorting the artwork, wide room view, distant view, extreme angle, no human figure, artwork alone without human scale, bright daylight."
+    },
+    {
+      "context_name": "Warm Gallery Corridor",
+      "context_role": "Curatorial presentation in a contemporary gallery",
+      "space_type": "Professional art gallery corridor",
+      "atmosphere": "Refined, focused, inviting",
+      "materials": [
+        "Warm off-white gallery walls",
+        "Polished concrete floor",
+        "Subtle architectural moldings"
+      ],
+      "lighting": "Museum-grade spotlights with warm temperature, gentle wall wash",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view offers a dynamic perspective within the corridor, showcasing the artwork's depth and texture under precise gallery lighting. The close-up ensures the artwork's integrity and details are paramount, while the figure provides scale, reinforcing a serious exhibition context.",
+      "human_presence": "elegant standing female figure 1.55m, wearing an evening dress, hands clasped, viewing the artwork from a slight angle",
+      "curatorial_reason": "Presents the artwork in a professional, albeit warm, gallery setting, highlighting its status as a serious work of contemporary art.",
+      "commercial_reason": "Lends institutional credibility and a sense of curated value, suggesting the artwork is suitable for significant public or private collections.",
+      "mockup_prompt": "A professional art gallery corridor with warm off-white walls and a polished concrete floor. Museum-grade spotlights with warm temperature gently illuminate the artwork, complemented by a soft wall wash. An elegant standing female figure 1.55m, wearing an evening dress, hands clasped, views the artwork from a slight angle. The artwork remains the visual center. The attached root artwork is a protected visual asset, not a style reference, and must not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, human figure, lighting, wall, architecture, furniture, and atmosphere may be generated or modified.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, repainting the artwork, redesigning the artwork, changing artwork colors, changing artwork texture, adding symbols inside the artwork, removing symbols from the artwork, extending artwork edges, blending artwork into wall, rotating the artwork, distorting the artwork, wide room view, distant view, extreme angle, no human figure, artwork alone without human scale, cold sterile gallery."
+    },
+    {
+      "context_name": "Mediterranean Light",
+      "context_role": "Showcasing the artwork in a tranquil, sun-drenched setting",
+      "space_type": "Mediterranean villa interior with natural light",
+      "atmosphere": "Tranquil, serene, warm, expansive",
+      "materials": [
+        "Rough white plaster walls",
+        "Terracotta floor tiles",
+        "Large arched window",
+        "Linen curtains"
+      ],
+      "lighting": "Soft, diffused Mediterranean daylight, casting subtle shadows, warm indirect light",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter right view captures the subtle textures of the plaster wall and the quality of the diffused Mediterranean light on the artwork's surface. The close-up emphasizes the artwork's colors and material presence, while the figure adds a sense of human scale and appreciation within this inviting context.",
+      "human_presence": "elegant standing male figure 1.80m, in light tailored clothing, hands in front, looking towards the artwork with a gentle gaze",
+      "curatorial_reason": "Highlights the artwork's subtle color palette and textured surface against a natural, warm architectural backdrop, allowing its spatial tension to breathe.",
+      "commercial_reason": "Appeals to collectors seeking art for refined, architecturally integrated residences, connecting the artwork with a desirable, tranquil Mediterranean lifestyle.",
+      "mockup_prompt": "A Mediterranean villa interior with rough white plaster walls and terracotta floor tiles. Soft, diffused Mediterranean daylight enters through a large arched window, casting subtle shadows and illuminating the artwork with warm indirect light. An elegant standing male figure 1.80m, in light tailored clothing, hands in front, looks towards the artwork with a gentle gaze. The artwork remains the visual center. The attached root artwork is a protected visual asset, not a style reference, and must not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, human figure, lighting, wall, architecture, furniture, and atmosphere may be generated or modified.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, repainting the artwork, redesigning the artwork, changing artwork colors, changing artwork texture, adding symbols inside the artwork, removing symbols from the artwork, extending artwork edges, blending artwork into wall, rotating the artwork, distorting the artwork, wide room view, distant view, extreme angle, no human figure, artwork alone without human scale, harsh sunlight, cold tones."
+    },
+    {
+      "context_name": "Penthouse Vista",
+      "context_role": "Contemporary luxury and expansive urban views",
+      "space_type": "High-end penthouse living room",
+      "atmosphere": "Sleek, sophisticated, expansive, modern luxury",
+      "materials": [
+        "Smooth grey microcement walls",
+        "Dark engineered wood flooring",
+        "Floor-to-ceiling windows with urban skyline",
+        "Minimalist leather seating"
+      ],
+      "lighting": "Soft ambient light from concealed fixtures, subtle glow from the city outside, accent spotlight on artwork",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A direct front view ensures the artwork's clarity and dominance within the sleek penthouse setting, allowing its structural composition to stand out. The close-up highlights the texture and color, while the figure reinforces the aspirational scale and the artwork's seamless integration into a modern luxury interior.",
+      "human_presence": "elegant standing female figure 1.55m, dressed in a black elegant dress, observing the artwork with hands clasped in front",
+      "curatorial_reason": "Positions the artwork as a focal point within a contemporary, high-design interior, emphasizing its clean lines and restrained aesthetic against a modern backdrop.",
+      "commercial_reason": "Appeals to a discerning market for luxury contemporary art, demonstrating how the artwork elevates a sophisticated urban living space with subtle elegance.",
+      "mockup_prompt": "A high-end penthouse living room with smooth grey microcement walls and dark engineered wood flooring. Soft ambient light from concealed fixtures, a subtle glow from the urban skyline outside floor-to-ceiling windows, and an accent spotlight illuminates the artwork. An elegant standing female figure 1.55m, dressed in a black elegant dress, observes the artwork with hands clasped in front. The artwork remains the visual center. The attached root artwork is a protected visual asset, not a style reference, and must not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, human figure, lighting, wall, architecture, furniture, and atmosphere may be generated or modified.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, repainting the artwork, redesigning the artwork, changing artwork colors, changing artwork texture, adding symbols inside the artwork, removing symbols from the artwork, extending artwork edges, blending artwork into wall, rotating the artwork, distorting the artwork, wide room view, distant view, extreme angle, no human figure, artwork alone without human scale, overly bright, cluttered."
+    },
+    {
+      "context_name": "Hotel Art Lounge",
+      "context_role": "Curated art display in a luxury hospitality setting",
+      "space_type": "Elegant hotel art lobby or lounge",
+      "atmosphere": "Refined, inviting, luxurious, quietly sophisticated",
+      "materials": [
+        "Textured charcoal plaster walls",
+        "Polished dark marble floor",
+        "Bronze accent tables",
+        "Velvet armchairs"
+      ],
+      "lighting": "Warm, indirect lighting from designer lamps, soft downlights on the artwork, ambient glow",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view enhances the visual interest of the lounge space, allowing the artwork to interact with the elegant textures and lighting. The close-up ensures the artwork's presence is commanding, while the figure provides scale, demonstrating its impact within a high-end public yet intimate setting.",
+      "human_presence": "elegant standing male figure 1.80m, in a dark tailored suit, hands casually in pockets, glancing at the artwork",
+      "curatorial_reason": "Showcases the artwork's ability to create a sophisticated focal point in a high-end public space, drawing attention with its unique material presence and structural quietude.",
+      "commercial_reason": "Highlights the artwork's suitability for luxury hospitality and corporate collections, where art elevates the guest experience and reflects refined taste.",
+      "mockup_prompt": "An elegant hotel art lobby or lounge with textured charcoal plaster walls and a polished dark marble floor. Warm, indirect lighting from designer lamps and soft downlights illuminate the artwork, creating an inviting ambient glow. An elegant standing male figure 1.80m, in a dark tailored suit, hands casually in pockets, glances at the artwork. The artwork remains the visual center. The attached root artwork is a protected visual asset, not a style reference, and must not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, human figure, lighting, wall, architecture, furniture, and atmosphere may be generated or modified.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, repainting the artwork, redesigning the artwork, changing artwork colors, changing artwork texture, adding symbols inside the artwork, removing symbols from the artwork, extending artwork edges, blending artwork into wall, rotating the artwork, distorting the artwork, wide room view, distant view, extreme angle, no human figure, artwork alone without human scale, cold, garish, busy."
+    },
+    {
+      "context_name": "Collector's Dining Experience",
+      "context_role": "Art as a centerpiece in a sophisticated dining room",
+      "space_type": "Sophisticated dining room in a private residence",
+      "atmosphere": "Intimate, elegant, refined, conversational",
+      "materials": [
+        "Textured beige wallpaper with subtle pattern",
+        "Mahogany dining table",
+        "Upholstered dining chairs",
+        "Polished wood floor"
+      ],
+      "lighting": "Soft overhead chandelier light, warm wall sconces, focused light on the artwork creating a gentle halo",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter right view subtly incorporates the dining room's elegant elements, placing the artwork as a natural focal point. The close-up allows appreciation of the artwork's visual and tactile qualities, with the figure creating a narrative of shared artistic appreciation during a refined social occasion.",
+      "human_presence": "elegant standing female figure 1.55m, gesturing subtly towards the artwork while engaging in conversation",
+      "curatorial_reason": "Integrates the artwork into a functional yet elegant living space, demonstrating its capacity to enrich daily life and serve as a sophisticated point of interest.",
+      "commercial_reason": "Shows the artwork in a highly desirable, intimate residential context, illustrating its aesthetic and conversational value for a collector's personal enjoyment and entertaining.",
+      "mockup_prompt": "A sophisticated dining room in a private residence with textured beige wallpaper and a mahogany dining table. Soft overhead chandelier light, warm wall sconces, and focused light on the artwork create a gentle halo. An elegant standing female figure 1.55m, dressed in an elegant dress, gestures subtly towards the artwork while engaging in conversation from a polite distance. The artwork remains the visual center. The attached root artwork is a protected visual asset, not a style reference, and must not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, human figure, lighting, wall, architecture, furniture, and atmosphere may be generated or modified.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, repainting the artwork, redesigning the artwork, changing artwork colors, changing artwork texture, adding symbols inside the artwork, removing symbols from the artwork, extending artwork edges, blending artwork into wall, rotating the artwork, distorting the artwork, wide room view, distant view, extreme angle, no human figure, artwork alone without human scale, overly formal, sterile."
+    },
+    {
+      "context_name": "Architect's Gallery Wall",
+      "context_role": "Display in a refined professional environment",
+      "space_type": "Architectural studio or design firm reception",
+      "atmosphere": "Professional, minimalist, inspiring, considered",
+      "materials": [
+        "Smooth, light grey plaster walls",
+        "Concrete floor",
+        "Steel framed windows",
+        "Architectural models in background"
+      ],
+      "lighting": "Clean, even daylight, supplemented by discreet track lighting focused on the artwork",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A direct front view ensures the artwork's structural clarity and precise composition are highlighted within the architectural studio. The close-up allows appreciation of the artwork's detail and texture, with the figure providing a human, professional scale, reinforcing its relevance in a design-focused environment.",
+      "human_presence": "elegant standing male figure 1.80m, in smart casual attire, observing the artwork with a critical, appreciative eye",
+      "curatorial_reason": "Positions the artwork within an environment that values structure, precision, and visual order, aligning with its own artistic language.",
+      "commercial_reason": "Targets architects and interior designers, showcasing the artwork's suitability for modern, minimalist yet warm professional spaces and its ability to inspire.",
+      "mockup_prompt": "An architectural studio or design firm reception with smooth, light grey plaster walls and a concrete floor. Clean, even daylight, supplemented by discreet track lighting focused on the artwork, illuminates the space. An elegant standing male figure 1.80m, in smart casual attire, observes the artwork with a critical, appreciative eye. The artwork remains the visual center. The attached root artwork is a protected visual asset, not a style reference, and must not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, human figure, lighting, wall, architecture, furniture, and atmosphere may be generated or modified.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, repainting the artwork, redesigning the artwork, changing artwork colors, changing artwork texture, adding symbols inside the artwork, removing symbols from the artwork, extending artwork edges, blending artwork into wall, rotating the artwork, distorting the artwork, wide room view, distant view, extreme angle, no human figure, artwork alone without human scale, cold, sterile, overly industrial."
+    },
+    {
+      "context_name": "Transitional Grandeur",
+      "context_role": "Artwork enhancing a luxurious, historically-inflected interior",
+      "space_type": "European townhouse grand corridor",
+      "atmosphere": "Elegant, luxurious, timeless, transitional",
+      "materials": [
+        "Soft grey panelled walls with subtle moldings",
+        "Dark herringbone parquet flooring",
+        "Console table with ornate base",
+        "Large mirror with antique frame"
+      ],
+      "lighting": "Warm overhead chandelier light, soft light from a distant window, accent lighting on the artwork",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view captures the elegant length of the corridor and the interplay of classic and modern elements, with the artwork as a central focus. The close-up allows the artwork's texture and color to stand out, while the figure provides scale, highlighting its appeal in a sophisticated, historically rich context.",
+      "human_presence": "elegant standing female figure 1.55m, in a long elegant dress, admiring the artwork with one hand gently raised",
+      "curatorial_reason": "Demonstrates the artwork's versatility and timeless appeal, integrating seamlessly into a space that bridges classic elegance with contemporary art sensibilities.",
+      "commercial_reason": "Appeals to collectors with traditional or transitional interiors, showing how the artwork can elevate and modernize a luxurious, established setting with refined subtlety.",
+      "mockup_prompt": "A European townhouse grand corridor with soft grey panelled walls featuring subtle moldings and dark herringbone parquet flooring. Warm overhead chandelier light, soft light from a distant window, and accent lighting on the artwork illuminate the space. An elegant standing female figure 1.55m, in a long elegant dress, admires the artwork with one hand gently raised. The artwork remains the visual center. The attached root artwork is a protected visual asset, not a style reference, and must not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, human figure, lighting, wall, architecture, furniture, and atmosphere may be generated or modified.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, repainting the artwork, redesigning the artwork, changing artwork colors, changing artwork texture, adding symbols inside the artwork, removing symbols from the artwork, extending artwork edges, blending artwork into wall, rotating the artwork, distorting the artwork, wide room view, distant view, extreme angle, no human figure, artwork alone without human scale, overly ornate, cluttered, cold."
+    }
+  ]
+}
+```

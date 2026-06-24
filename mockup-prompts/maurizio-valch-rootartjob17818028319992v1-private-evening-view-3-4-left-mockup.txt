@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 140 cm wide × 140 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Private Evening View
+- Purpose: Collector's Residence
+- Scene Description: A private collector living room with intimate, warm, sophisticated atmosphere. Materials: dark walnut paneling, soft upholstered armchair, brushed bronze accents, warm plaster walls
+- Lighting: warm, indirect wall wash, soft glow from a nearby table lamp
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult middle eastern woman, 1.55 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The three-quarter left view effectively captures the artwork's texture and depth within the warm, inviting ambiance of a private living room, while allowing the elegant female figure to provide scale and a sense of intimate contemplation. The warm lighting highlights the painting's vibrant colors and surface quality. The artwork remains visually dominant, drawing the eye despite the rich surroundings.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+An elegant private collector living room in the evening. The walls are warm plaster with dark walnut paneling. An upholstered armchair and brushed bronze accents are subtly visible. Warm, indirect wall wash lighting illuminates the artwork, supplemented by a soft glow from a nearby table lamp. Three-quarter left view, close-up view. An elegant standing female figure 1.55m, in a black evening dress, observes the artwork from a respectful distance to the left. The artwork remains the visual center. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle, empty room, no human figure, artwork alone without human scale
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Mediterranean Villa Living Space
+- Purpose: private collector residence at evening
+- Scene Description: A architect-designed villa interior with Warm, aspirational, private viewing atmosphere. Materials: travertine, aged plaster, dark wood, linen curtains
+- Lighting: Late afternoon Mediterranean light, creating soft shadows
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult hispanic woman, 1.55 meters tall.
+
+- Structured Camera View: front view
+- Structured Camera Distance: close-up view
+- Camera Rationale: Directly facing the artwork, capturing its full presence.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+An architect-designed villa interior, warm plaster walls, travertine flooring, dark wood accents, and sheer linen curtains in the background. Late afternoon Mediterranean light streams in, creating soft shadows across the room. front view, close-up view. An elegant standing female figure 1.55m, dressed in refined minimalist clothing, stands admiring the artwork. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

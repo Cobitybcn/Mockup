@@ -1,0 +1,595 @@
+{
+    "artwork_analysis": {
+        "visual_language": [
+            "Abstract",
+            "Structural",
+            "Symbolic",
+            "Metaphysical",
+            "Textural",
+            "Organic"
+        ],
+        "emotional_energy": [
+            "Silent",
+            "Deep",
+            "Contemplative",
+            "Mysterious",
+            "Restrained tension",
+            "Introspective"
+        ],
+        "dominant_colors": [
+            "Deep teal",
+            "Turquoise",
+            "Muted gold",
+            "Bronze",
+            "Dark brown",
+            "Black"
+        ],
+        "secondary_colors": [
+            "Ochre",
+            "Pale blue-green",
+            "Off-white highlights"
+        ],
+        "visible_elements": [
+            "Central spiral",
+            "Concentric bands",
+            "Textured layers",
+            "Dark core",
+            "Palette knife marks",
+            "Scraped areas",
+            "Impasto surfaces",
+            "Swirling forms"
+        ],
+        "visible_symbols": [
+            "Vortex",
+            "Threshold",
+            "Inner structure",
+            "Territory"
+        ],
+        "color_temperature": "Cool with warm accents",
+        "contrast_level": "Moderate to high",
+        "composition_type": "Radial",
+        "balance": "Centered and dynamic",
+        "visual_tension": "Restrained, between movement and stillness",
+        "density": "High, particularly in the central spiral",
+        "silence": "Profound",
+        "main_focal_point": "The dark central core of the spiral",
+        "movement": "Strong rotational, inward descent",
+        "depth": "Pronounced, both optical and material",
+        "negative_space": "Subtle, integrated into the outer fields of the spiral",
+        "verticality_or_horizontality": "Balanced by square format, but suggests vertical descent",
+        "internal_organization": "Concentric bands organized around a central axis",
+        "rhythm": "Repetitive, swirling, and flowing",
+        "surface": "Highly textured, sculpted",
+        "brushstroke": "Implied through palette knife work and layering",
+        "gesture": "Dynamic and deliberate, building the spiral form",
+        "layers": "Multiple, visible, contributing to depth",
+        "material_presence": "Strong, tactile, sculptural",
+        "sense_of_depth_or_flatness": "Predominantly deep and dimensional",
+        "format_and_scale": {
+            "width_cm": "120",
+            "height_cm": "120",
+            "depth_cm": "5",
+            "orientation": "vertical",
+            "scale_impact": "Significant, creating a commanding presence",
+            "wall_presence": "Substantial, acts as a visual anchor",
+            "monumentality_or_intimacy": "Monumental in its focal power, yet intimate in its invitation to introspection",
+            "spatial_effect": "Draws the viewer into a deep, meditative space"
+        },
+        "spatial_presence": "Commanding and immersive",
+        "visual_atmosphere": "Deep, contemplative, mysterious, and silent, with a sense of restrained intensity",
+        "artwork_function": "To evoke introspection and provide a focal point of structured depth",
+        "suggested_audience": [
+            "Contemporary art collectors",
+            "Interior designers",
+            "Architects",
+            "Curators",
+            "High-level art buyers"
+        ],
+        "audience_profile": {
+            "primary": "Collectors interested in abstract, symbolic, and contemplative works",
+            "secondary": "Professionals seeking sophisticated focal points for residential and commercial interiors",
+            "buyer_profile": "Discerning individuals who appreciate art with structural integrity, emotional depth, and a strong material presence",
+            "collector_type": "Seekers of impactful, museum-quality abstract art with a philosophical undertone",
+            "interior_design_relevance": "Highly relevant for minimalist, contemporary, and luxurious interiors that prioritize understated elegance and intellectual engagement",
+            "gallery_potential": "High, suitable for leading contemporary art galleries in major art markets"
+        },
+        "commercial_positioning": "Premium contemporary abstract art, positioned for high-end collectors and architectural integration projects.",
+        "one_line_curatorial_read": "A profound central spiral, rendered in deep teal and textured bronze, creates a contemplative vortex that explores inner structures and geological time.",
+        "style_summary": "An abstract, structural, and symbolic work characterized by a dynamic, textured central spiral in deep teal and bronze, evoking a silent, introspective atmosphere.",
+        "artist_profile_relation": {
+            "relevant_statement_connection": "The artwork directly explores 'the relationship between landscape, consciousness and inner structure' through its swirling, layered form and introspective depth, aligning with Valch's interest in 'symbolic territory and contemplative silence.'",
+            "relevant_visual_language_connection": "The visual language is clearly 'abstract, contemporary, structural, symbolic and metaphysical,' built through 'fields of color,' 'incisions' (implied by texture), 'suspended forms' (the spiral), and rich 'spatial relationships.'",
+            "relevant_symbol_connection": "The central spiral functions as a 'territory,' a 'threshold,' and a 'suspended form,' conveying 'silence,' 'presence,' and a sense of 'geological time' through its layered, earth-like textures.",
+            "relevant_atmosphere_connection": "The artwork fully embodies the 'silent, deep, sober, contemplative and slightly melancholic' emotional atmosphere, moving between 'nocturnal calm' and 'quiet intensity.'"
+        },
+        "seasonal_strategy": {
+            "primary_season": "neutral"
+        },
+        "publishing_metadata": {
+            "suggested_titles": [
+                {
+                    "title": "Deep Recess",
+                    "subtitle": "An abstract painting structured around a profound, swirling core, inviting introspection through its rich teal and muted bronze tones.",
+                    "short_description": "This abstract work centers on a deep, dark recess, enveloped by concentric spirals of textured teal and bronze, evoking a sense of ancient depth and quiet intensity.",
+                    "curatorial_description": "\"Deep Recess\" draws the viewer into a compelling central void, articulated by sweeping, textured layers of teal and muted bronze. The spiral form creates a dynamic sense of descent, hinting at geological time and inner structures. Valch's precise palette knife work builds material depth, giving the surface a palpable presence. The overall composition balances movement with a profound silence, establishing a contemplative space that resonates with the artist's exploration of perception and internal landscapes.",
+                    "commercial_description": "With its powerful central motif and rich, tactile surface, \"Deep Recess\" provides a commanding visual anchor for contemporary interiors. Its square format and substantial depth ensure significant wall presence, while the deep, contemplative palette offers a sophisticated counterpoint to architectural lines. This artwork enhances spaces seeking both structural elegance and a profound, quiet intensity."
+                },
+                {
+                    "title": "Spiral Descent",
+                    "subtitle": "A contemporary abstract canvas revealing a powerful, textured spiral form, moving from vibrant teal into a somber, dark center.",
+                    "short_description": "A dynamic spiral form dominates this contemporary abstract, built with thick, layered textures of deep teal and hints of bronze, drawing the gaze inward.",
+                    "curatorial_description": "\"Spiral Descent\" unfolds as a vibrant, textural journey, centered on a powerful spiral form. Layers of rich teal and subtle bronze pigments are meticulously applied and incised, creating a surface that feels both ancient and fluid. The rhythmic concentric bands guide the eye towards a dark, profound core, suggesting a natural phenomenon or a deep internal state. This piece exemplifies Valch's method of building territories through color fields and structured forms, evoking a sense of geological time and contemplative silence.",
+                    "commercial_description": "The dynamic \"Spiral Descent\" offers a compelling focal point, its substantial scale and textural richness making it an impressive addition to a collector's private space or a refined architectural setting. The interplay of deep colors and palpable surface invites close engagement, subtly transforming an environment with its structured elegance and evocative depth."
+                },
+                {
+                    "title": "Teal Threshold",
+                    "subtitle": "An abstract composition defined by swirling, textured fields of deep teal and bronze, opening a threshold into contemplative silence.",
+                    "short_description": "Swirling fields of deep teal and bronze create a textured, central spiral, forming a visual threshold into a realm of quiet contemplation.",
+                    "curatorial_description": "\"Teal Threshold\" presents a visually arresting surface, where a rich palette of deep teal, accented with muted bronze, coalesces into a profound central form. The artwork is built through a meticulous process of layering and scraping, giving rise to palpable textures and intricate tonal variations. This structural spiral suggests a passage or entrance, embodying a contemplative silence that aligns with Valch's exploration of presence and distance. The work holds a quiet intensity, inviting prolonged engagement with its mysterious depth.",
+                    "commercial_description": "This distinguished abstract work, \"Teal Threshold,\" with its striking palette and powerful central motif, is designed to elevate sophisticated interiors. Its commanding presence and nuanced texture engage the viewer, creating an atmosphere of quiet refinement. Ideal for spaces where architectural clarity meets artistic depth, it functions as a strong visual anchor and a catalyst for introspection."
+                }
+            ],
+            "catawiki_listing": {
+                "recommended_title": "Deep Recess",
+                "alternative_titles": [
+                    "Spiral Descent",
+                    "Teal Threshold"
+                ],
+                "subtitle": "An abstract painting structured around a profound, swirling core, inviting introspection through its rich teal and muted bronze tones.",
+                "short_description": "This abstract work centers on a deep, dark recess, enveloped by concentric spirals of textured teal and bronze, evoking a sense of ancient depth and quiet intensity.",
+                "long_description": "\"Deep Recess\" draws the viewer into a compelling central void, articulated by sweeping, textured layers of teal and muted bronze. The spiral form creates a dynamic sense of descent, hinting at geological time and inner structures. Valch's precise palette knife work builds material depth, giving the surface a palpable presence. The overall composition balances movement with a profound silence, establishing a contemplative space that resonates with the artist's exploration of perception and internal landscapes. The square format (120x120 cm) and substantial depth (5 cm) ensure a commanding presence on any wall, making it a focal point in a carefully curated environment.",
+                "technical_details": "Acrylic on canvas. 120 cm wide x 120 cm high x 5 cm deep. Vertical orientation.",
+                "condition_statement": "The piece is in excellent condition, with no damage or restorations.",
+                "shipping_statement": "The artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+                "seo_keywords": [
+                    "Maurizio Valch",
+                    "abstract painting",
+                    "contemporary art",
+                    "structural art",
+                    "symbolic art",
+                    "metaphysical art",
+                    "teal art",
+                    "spiral art",
+                    "textured painting",
+                    "contemplative art",
+                    "deep art",
+                    "modern abstract",
+                    "gallery art",
+                    "collector art"
+                ],
+                "tags": [
+                    "Abstract",
+                    "Contemporary",
+                    "Structural",
+                    "Symbolic",
+                    "Metaphysical",
+                    "Valch",
+                    "Spiral",
+                    "Teal",
+                    "Textured",
+                    "Deep",
+                    "Contemplative",
+                    "Square",
+                    "Acrylic",
+                    "Canvas"
+                ]
+            },
+            "descriptions": {
+                "poetic_focus": "Maurizio Valch's 'Deep Recess' captures a silent, swirling descent into inner landscapes, rich with textured teal and bronze, reflecting consciousness and geological time.",
+                "formal_focus": "Maurizio Valch's 'Deep Recess' presents a structural abstract composition: a square canvas dominated by a central, textured spiral in teal and bronze, defining spatial depth and material presence.",
+                "commercial_focus": "Elevate your space with Maurizio Valch's 'Deep Recess,' a compelling abstract work featuring a dynamic spiral and rich textures, ideal for discerning collectors and sophisticated interiors."
+            },
+            "seo_keywords": [
+                "Maurizio Valch",
+                "abstract art",
+                "contemporary painting",
+                "spiral art",
+                "textured canvas",
+                "teal and bronze",
+                "structural abstraction",
+                "contemplative art",
+                "gallery artwork",
+                "modern interiors",
+                "art collector",
+                "metaphysical art"
+            ],
+            "seo_tags": [
+                "Abstract",
+                "Contemporary",
+                "Spiral",
+                "Teal",
+                "Bronze",
+                "Texture",
+                "Depth",
+                "Valch",
+                "Structural",
+                "Symbolic",
+                "Metaphysical",
+                "Contemplative"
+            ],
+            "marketplace_title": "Maurizio Valch: Deep Recess - Textured Abstract Spiral, 120x120cm",
+            "marketplace_short_description": "Maurizio Valch's 'Deep Recess' is a powerful abstract painting featuring a central, textured spiral in deep teal and bronze, evoking profound depth and contemplation. Perfect for collectors and high-end interiors.",
+            "marketplace_long_description": "Maurizio Valch's 'Deep Recess' invites viewers into a captivating visual dialogue through its intricate central spiral. Rendered in rich, layered acrylics with pronounced palette knife textures, the artwork showcases a harmonious blend of deep teal, vibrant turquoise, and subtle bronze accents, all converging into a mysterious dark core. This contemporary abstract piece, measuring 120x120 cm, creates a compelling sense of depth and movement, while maintaining a profound silence. It reflects the artist's exploration of inner structures and the relationship between landscape and consciousness, making it a distinguished addition to any sophisticated collection or architectural space. The tactile surface and profound emotional atmosphere offer a unique visual experience.",
+            "pinterest_boards": [
+                "Abstract Art for Modern Homes",
+                "Maurizio Valch: Structural Abstractions",
+                "Contemporary Teal & Bronze Art",
+                "Gallery-Worthy Abstract Paintings",
+                "Meditative & Contemplative Art",
+                "Luxury Interior Art Ideas"
+            ]
+        }
+    },
+    "recommended_number_of_contexts": 9,
+    "contextual_proposals": [
+        {
+            "context_name": "Gallery of Deep Form",
+            "context_role": "Showcasing the artwork's formal power in a pristine setting.",
+            "space_type": "Professional art gallery",
+            "atmosphere": "Pristine, silent, refined",
+            "materials": [
+                "Smooth matte white walls",
+                "Polished light grey concrete floor"
+            ],
+            "lighting": "Soft, directional gallery spotlights emphasizing texture and depth",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A front view emphasizes the artwork's square format and central composition, ensuring maximum clarity for formal presentation. The close-up distance keeps the artwork visually dominant, allowing its textures and colors to be the focal point against the pristine wall. The lighting highlights surface details without glare.",
+            "human_presence": "none",
+            "curatorial_reason": "This context provides an ideal neutral ground for appreciating the artwork's structural integrity, material complexity, and contemplative depth without environmental distractions.",
+            "commercial_reason": "Placing the artwork in a pristine gallery setting validates its fine art status and demonstrates its ability to command attention in a high-caliber exhibition environment, appealing to serious collectors.",
+            "mockup_prompt": "A pristine contemporary art gallery alcove. The artwork 'Deep Recess' by Maurizio Valch is centered on a smooth, matte white wall. The floor is polished light grey concrete. Soft, focused gallery lighting from above highlights the artwork's texture and central spiral. The overall atmosphere is silent and refined. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. close-up view.",
+            "negative_prompt": "Clutter, distracting elements, harsh shadows, overly ornate architecture, generic wall art, blurry elements, low resolution, bad lighting, busy background.",
+            "pinterest_marketing": {
+                "board_suggestion": "Gallery Interiors: Abstract Art Focus",
+                "pin_title": "Maurizio Valch: Deep Recess in Minimalist Gallery",
+                "pin_description": "Experience the profound depth of Maurizio Valch's 'Deep Recess' in a pristine gallery setting. A compelling textured spiral in teal and bronze, perfect for serious collectors.",
+                "alt_text": "Maurizio Valch abstract painting 'Deep Recess' on a white gallery wall, illuminated by spotlights. Textured teal and bronze spiral.",
+                "seo_keywords": [
+                    "gallery art",
+                    "abstract painting",
+                    "Maurizio Valch",
+                    "contemporary art",
+                    "minimalist gallery",
+                    "textured art"
+                ],
+                "hashtags": [
+                    "#MaurizioValch",
+                    "#AbstractArt",
+                    "#GalleryWall",
+                    "#ContemporaryPainting",
+                    "#TexturedArt"
+                ]
+            }
+        },
+        {
+            "context_name": "Contemplative Study Corner",
+            "context_role": "Integrating the artwork into a sophisticated private collection space.",
+            "space_type": "Private study / library",
+            "atmosphere": "Intimate, contemplative, luxurious",
+            "materials": [
+                "Dark walnut wood paneling",
+                "Deep bronze accents",
+                "Leather armchair"
+            ],
+            "lighting": "Warm, indirect lighting from a concealed source, enhancing texture",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter left view adds spatial depth to the scene, positioning the viewer within an intimate setting. The close-up distance ensures the artwork remains the central focus, while the surrounding elements suggest scale and a luxurious, contemplative atmosphere. The human figure provides a sense of scale and engagement.",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "This context highlights the artwork's introspective qualities and its suitability for personal, reflective spaces where art fosters quiet thought and sophisticated ambiance.",
+            "commercial_reason": "Showcases the artwork's value as a private collection piece, demonstrating its seamless integration into high-end residential interiors and appealing to collectors who appreciate both aesthetic and intellectual depth.",
+            "mockup_prompt": "A luxurious private study corner with rich, dark walnut wood paneling on the walls. The artwork 'Deep Recess' by Maurizio Valch is displayed on the main wall, with a comfortable deep-bronze leather armchair positioned to the left, slightly out of focus. Warm, indirect lighting illuminates the artwork and the surrounding space, emphasizing the deep textures of the painting. The atmosphere is intimate and contemplative. An optional standing male figure 1.80m is positioned looking at the artwork from the left side of the frame. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. close-up view.",
+            "negative_prompt": "Clutter, bright direct light, modern furniture, unluxurious textures, generic room, low resolution, bad lighting, busy background.",
+            "pinterest_marketing": {
+                "board_suggestion": "Luxury Home Office & Study Decor",
+                "pin_title": "Deep Recess by Maurizio Valch in Elegant Study",
+                "pin_description": "Transform your study with Maurizio Valch's 'Deep Recess.' A textured teal spiral artwork creating a contemplative focal point in a luxurious, wood-paneled room. Optional male figure for scale.",
+                "alt_text": "Maurizio Valch 'Deep Recess' abstract painting on a dark wood-paneled wall in a luxurious study, with a leather armchair. A man stands observing the artwork.",
+                "seo_keywords": [
+                    "Maurizio Valch",
+                    "abstract art",
+                    "luxury study",
+                    "collector art",
+                    "walnut paneling",
+                    "contemplative decor"
+                ],
+                "hashtags": [
+                    "#MaurizioValchArt",
+                    "#LuxuryInteriors",
+                    "#ArtCollector",
+                    "#HomeStudy",
+                    "#AbstractPainting"
+                ]
+            }
+        },
+        {
+            "context_name": "Architectural Threshold",
+            "context_role": "Showing the artwork as a central design element in a high-end residential setting.",
+            "space_type": "Modern townhouse living area",
+            "atmosphere": "Serene, architecturally refined, spacious",
+            "materials": [
+                "Textured beige plaster wall",
+                "Light oak flooring",
+                "Minimalist steel and glass elements"
+            ],
+            "lighting": "Natural daylight from a large window off-camera, creating soft, even illumination",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "The three-quarter right view provides an expansive feel, integrating the artwork into the broader architectural language of the room. A close-up ensures the artwork remains prominent, highlighting its harmonious relationship with the refined, natural materials and soft daylight.",
+            "human_presence": "none",
+            "curatorial_reason": "Emphasizes the artwork's ability to act as a structured, yet organic, focal point within contemporary architectural spaces, demonstrating its dialogue with clean lines and natural textures.",
+            "commercial_reason": "Positions the artwork for high-level interior design projects, showcasing its capacity to elevate modern residential environments with its depth and sophisticated palette, appealing to architects and luxury homeowners.",
+            "mockup_prompt": "A minimalist living area in a modern townhouse. The artwork 'Deep Recess' by Maurizio Valch hangs on a textured beige plaster wall. A light oak floor extends into the foreground. Subtle minimalist steel and glass accents are visible further in the room. Natural, soft daylight from a large window to the left illuminates the space gently. The atmosphere is serene and architecturally refined. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. close-up view.",
+            "negative_prompt": "Cluttered furniture, harsh artificial light, traditional decor, poor composition, low resolution, bad lighting, busy background.",
+            "pinterest_marketing": {
+                "board_suggestion": "Modern Living Room Art & Design",
+                "pin_title": "Maurizio Valch: Deep Recess in Modern Townhouse",
+                "pin_description": "A stunning visual anchor: Maurizio Valch's 'Deep Recess' enhances a minimalist living area with its textured teal spiral and serene atmosphere. Ideal for contemporary design.",
+                "alt_text": "Maurizio Valch abstract painting 'Deep Recess' on a textured beige plaster wall in a modern, serene living room with light oak floors.",
+                "seo_keywords": [
+                    "modern living room",
+                    "abstract art",
+                    "Maurizio Valch",
+                    "interior design",
+                    "minimalist decor",
+                    "architectural art"
+                ],
+                "hashtags": [
+                    "#ModernTownhouse",
+                    "#AbstractDecor",
+                    "#InteriorDesign",
+                    "#MaurizioValch",
+                    "#ContemporaryArt"
+                ]
+            }
+        },
+        {
+            "context_name": "Serene Lobby Focal",
+            "context_role": "Positioning the artwork as a distinguished piece in a refined commercial space.",
+            "space_type": "Boutique hotel lobby",
+            "atmosphere": "Tranquil, elegant, understated luxury",
+            "materials": [
+                "Honed grey marble wall",
+                "Dark polished wood counter",
+                "Subtle metallic details"
+            ],
+            "lighting": "Integrated LED lighting subtly highlighting the artwork and creating soft ambient light",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A front view reinforces the artwork's role as a central focal point, crucial for a public space like a lobby. The close-up ensures the artwork's details are clearly visible and dominant, while the integrated lighting emphasizes its sophisticated presence.",
+            "human_presence": "none",
+            "curatorial_reason": "Highlights the artwork's capacity to define a sophisticated public environment, offering a moment of quiet contemplation amidst a welcoming, high-end commercial setting.",
+            "commercial_reason": "Demonstrates the artwork's suitability for luxury hospitality projects, showcasing its ability to elevate the aesthetic of a boutique hotel lobby and impress discerning guests.",
+            "mockup_prompt": "A sophisticated boutique hotel lobby with a honed grey marble wall. The artwork 'Deep Recess' by Maurizio Valch is centrally mounted. A low, dark polished wood counter with subtle metallic detailing is just visible below. Integrated LED lighting softly illuminates the artwork, bringing out its textural qualities. The mood is tranquil and elegant. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. close-up view.",
+            "negative_prompt": "Cluttered reception, harsh overhead lights, cheap materials, generic wall decor, low resolution, bad lighting, busy background.",
+            "pinterest_marketing": {
+                "board_suggestion": "Boutique Hotel Lobby Art",
+                "pin_title": "Maurizio Valch: Deep Recess in Hotel Lobby",
+                "pin_description": "Elevate your commercial space with Maurizio Valch's 'Deep Recess.' A tranquil abstract spiral in teal and bronze, perfect for a sophisticated boutique hotel lobby.",
+                "alt_text": "Maurizio Valch 'Deep Recess' abstract painting on a grey marble wall in a modern hotel lobby, softly lit.",
+                "seo_keywords": [
+                    "hotel art",
+                    "lobby design",
+                    "Maurizio Valch",
+                    "commercial art",
+                    "abstract sculpture",
+                    "marble wall art"
+                ],
+                "hashtags": [
+                    "#BoutiqueHotel",
+                    "#CommercialArt",
+                    "#LobbyDesign",
+                    "#MaurizioValch",
+                    "#AbstractDecor"
+                ]
+            }
+        },
+        {
+            "context_name": "Studio of Inner Forms",
+            "context_role": "Connecting the artwork to its creative origins, emphasizing process.",
+            "space_type": "Artist's studio",
+            "atmosphere": "Authentic, creative, focused",
+            "materials": [
+                "Rough concrete wall",
+                "Sturdy wooden easel (blurred)",
+                "Natural linen fabric"
+            ],
+            "lighting": "Soft, even studio light from a large overhead skylight, revealing material detail",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter left view offers a glimpse into the artist's world, placing the artwork within its context of creation. The close-up ensures the painting's texture and detail are paramount, supported by the natural studio lighting that highlights its material qualities.",
+            "human_presence": "none",
+            "curatorial_reason": "Provides insight into the artist's material process and philosophical approach, showcasing the artwork in an environment that speaks to its raw creation and intellectual depth.",
+            "commercial_reason": "Appeals to collectors interested in the provenance and process of art, adding an authentic, behind-the-scenes narrative that enhances the artwork's story and value.",
+            "mockup_prompt": "An inspiring corner of an artist's studio. The artwork 'Deep Recess' by Maurizio Valch hangs against a rough, light grey concrete wall. A sturdy wooden easel and some natural linen fabric are casually arranged nearby, slightly out of focus. Soft, consistent studio light from a large overhead skylight highlights the raw textures and layered quality of the painting. The atmosphere is authentic and focused on creation. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. close-up view.",
+            "negative_prompt": "Overly messy studio, distracting tools, harsh shadows, unnatural light, low resolution, bad lighting, busy background.",
+            "pinterest_marketing": {
+                "board_suggestion": "Artist Studio Inspiration & Art",
+                "pin_title": "Maurizio Valch: Deep Recess in Artist's Studio",
+                "pin_description": "Witness Maurizio Valch's 'Deep Recess' in its creative environment. A textured teal spiral artwork reflecting the artist's process against a raw concrete studio wall.",
+                "alt_text": "Maurizio Valch 'Deep Recess' abstract painting on a concrete wall in an artist's studio, with an easel nearby. Soft skylight.",
+                "seo_keywords": [
+                    "artist studio",
+                    "Maurizio Valch",
+                    "art process",
+                    "abstract art",
+                    "textured painting",
+                    "creative space"
+                ],
+                "hashtags": [
+                    "#ArtistStudio",
+                    "#ArtProcess",
+                    "#MaurizioValch",
+                    "#AbstractArtist",
+                    "#CreativeSpace"
+                ]
+            }
+        },
+        {
+            "context_name": "Mediterranean Depths",
+            "context_role": "Showing how the artwork's organic qualities harmonize with natural materials.",
+            "space_type": "Mediterranean villa interior",
+            "atmosphere": "Calm, organic, sun-drenched",
+            "materials": [
+                "Textured off-white stucco wall",
+                "Terracotta floor tiles",
+                "Woven natural fiber rug (blurred)"
+            ],
+            "lighting": "Warm, sun-drenched light from a window to the right, creating soft highlights",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter right view allows the warm natural light to interact dynamically with the artwork's texture, creating soft highlights that enhance its organic feel. The close-up view ensures the artwork's details remain central, while the surrounding elements establish a harmonious Mediterranean aesthetic.",
+            "human_presence": "none",
+            "curatorial_reason": "Demonstrates the artwork's versatility, showing its subtle power to complement and enhance interiors characterized by natural materials and a relaxed, yet sophisticated, European aesthetic.",
+            "commercial_reason": "Appeals to international buyers with Mediterranean properties or those seeking to infuse their homes with an earthy, refined elegance, highlighting the artwork's adaptability to various luxury design styles.",
+            "mockup_prompt": "An elegant interior of a Mediterranean villa. The artwork 'Deep Recess' by Maurizio Valch is featured on a textured off-white stucco wall. Terracotta floor tiles extend into the foreground, with a glimpse of a woven natural fiber rug. Warm, diffused sunlight streams in from a nearby archway or window to the right, enhancing the natural textures of both the artwork and the room. The ambiance is calm and organic. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. close-up view.",
+            "negative_prompt": "Cluttered objects, harsh artificial light, cold colors, overly modern furniture, low resolution, bad lighting, busy background.",
+            "pinterest_marketing": {
+                "board_suggestion": "Mediterranean Interior Design Art",
+                "pin_title": "Maurizio Valch: Deep Recess in Mediterranean Villa",
+                "pin_description": "Maurizio Valch's 'Deep Recess' harmonizes with natural textures in a Mediterranean villa. A textured teal spiral abstract creating organic elegance.",
+                "alt_text": "Maurizio Valch abstract painting 'Deep Recess' on a textured white stucco wall in a Mediterranean villa, with terracotta floors. Warm sunlight.",
+                "seo_keywords": [
+                    "Mediterranean decor",
+                    "abstract art",
+                    "Maurizio Valch",
+                    "stucco wall art",
+                    "organic art",
+                    "villa interior"
+                ],
+                "hashtags": [
+                    "#MediterraneanStyle",
+                    "#VillaDecor",
+                    "#AbstractArt",
+                    "#MaurizioValch",
+                    "#OrganicInterior"
+                ]
+            }
+        },
+        {
+            "context_name": "Dining Room of Quiet Focus",
+            "context_role": "As a sophisticated backdrop for social gatherings, sparking quiet conversation.",
+            "space_type": "Contemporary dining room",
+            "atmosphere": "Refined, quietly dramatic, intimate",
+            "materials": [
+                "Deep charcoal accent wall",
+                "Polished dark wood dining table (blurred foreground)",
+                "Minimalist chairs"
+            ],
+            "lighting": "Subtle ceiling downlights focused on the artwork, creating a dramatic focal point",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A front view centers the artwork as a dramatic focal point for the dining space. The close-up ensures the artwork's depth and texture are clearly visible, while focused lighting enhances its quiet intensity against the deep charcoal wall, making it a conversation piece.",
+            "human_presence": "none",
+            "curatorial_reason": "Highlights the artwork's ability to create a focal point of sophisticated interest in a social setting, encouraging quiet contemplation and elevating the overall ambiance of the room.",
+            "commercial_reason": "Appeals to discerning buyers and interior designers looking to create a statement piece in a dining area, offering a blend of artistic depth and elegant drama suitable for high-end entertaining spaces.",
+            "mockup_prompt": "A contemporary dining room with a deep charcoal accent wall. The artwork 'Deep Recess' by Maurizio Valch is centrally mounted. A hint of a polished dark wood dining table and minimalist chairs can be seen in the blurred foreground. Subtle ceiling downlights cast a focused glow on the artwork, enhancing its mysterious depth against the dark wall. The setting is refined and quietly dramatic. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. close-up view.",
+            "negative_prompt": "Overly bright lights, mismatched furniture, cluttered table, generic decor, low resolution, bad lighting, busy background.",
+            "pinterest_marketing": {
+                "board_suggestion": "Contemporary Dining Room Art",
+                "pin_title": "Maurizio Valch: Deep Recess in Dining Room",
+                "pin_description": "Create a dramatic focal point with Maurizio Valch's 'Deep Recess' in a contemporary dining room. A textured teal spiral abstract for sophisticated gatherings.",
+                "alt_text": "Maurizio Valch abstract painting 'Deep Recess' on a deep charcoal wall in a contemporary dining room, illuminated by downlights.",
+                "seo_keywords": [
+                    "dining room art",
+                    "Maurizio Valch",
+                    "abstract decor",
+                    "charcoal wall",
+                    "contemporary dining",
+                    "focal point art"
+                ],
+                "hashtags": [
+                    "#DiningRoomArt",
+                    "#ContemporaryDining",
+                    "#AbstractStatement",
+                    "#MaurizioValch",
+                    "#InteriorDesign"
+                ]
+            }
+        },
+        {
+            "context_name": "Entryway of Silent Presence",
+            "context_role": "Creating a welcoming yet profound impression in an entrance area.",
+            "space_type": "Minimalist foyer",
+            "atmosphere": "Expansive, subtly impactful, serene",
+            "materials": [
+                "Smooth, pale grey wall",
+                "Large format light stone tiles",
+                "Discreet architectural lighting"
+            ],
+            "lighting": "Even, ambient light, subtly diffused to prevent harsh reflections",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter left view provides perspective, allowing the artwork to make a grand statement upon entry. The close-up ensures its profound details are immediately apparent, while ambient lighting creates a welcoming yet serious mood for the entrance.",
+            "human_presence": "none",
+            "curatorial_reason": "Emphasizes the artwork's commanding spatial presence and its ability to set a sophisticated and contemplative tone from the moment one enters a space.",
+            "commercial_reason": "Highlights the artwork as a premium choice for foyers and entrance halls in luxury residences or corporate headquarters, signifying discerning taste and a commitment to quality art.",
+            "mockup_prompt": "A spacious, minimalist foyer with smooth, pale grey walls. The artwork 'Deep Recess' by Maurizio Valch is positioned prominently. Large format light stone tiles cover the floor. Discreet architectural lighting provides an even, gentle illumination that respects the artwork's quiet intensity. The atmosphere is expansive and subtly impactful. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. close-up view.",
+            "negative_prompt": "Cluttered entryway, harsh shadows, distracting decor, overly vibrant colors, low resolution, bad lighting, busy background.",
+            "pinterest_marketing": {
+                "board_suggestion": "Minimalist Entryway & Foyer Art",
+                "pin_title": "Maurizio Valch: Deep Recess in Minimalist Foyer",
+                "pin_description": "Make a sophisticated first impression with Maurizio Valch's 'Deep Recess.' A textured teal spiral abstract in a minimalist foyer, conveying silent presence.",
+                "alt_text": "Maurizio Valch abstract painting 'Deep Recess' on a pale grey wall in a minimalist foyer with stone floor tiles. Even ambient light.",
+                "seo_keywords": [
+                    "foyer art",
+                    "minimalist entryway",
+                    "Maurizio Valch",
+                    "abstract statement",
+                    "architectural art",
+                    "stone floor"
+                ],
+                "hashtags": [
+                    "#FoyerDesign",
+                    "#MinimalistArt",
+                    "#EntrywayDecor",
+                    "#MaurizioValch",
+                    "#AbstractPainting"
+                ]
+            }
+        },
+        {
+            "context_name": "Executive Reflective Space",
+            "context_role": "Enhancing a high-level professional environment with contemplative art.",
+            "space_type": "Corporate executive office",
+            "atmosphere": "Refined, focused, professionally sophisticated",
+            "materials": [
+                "Understated rich blue accent wall",
+                "Polished metal desk (blurred)",
+                "Modern ergonomic chair"
+            ],
+            "lighting": "Balanced natural light from a window combined with soft recessed lighting",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter right view subtly frames the artwork within a professional setting, providing context without distraction. The close-up keeps the artwork visually commanding, and the balanced lighting respects its contemplative nature while integrating it into a workspace. The human figure offers scale and a sense of a working environment.",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "Showcases the artwork's suitability for corporate collections and executive offices, where it can provide a sophisticated visual anchor that inspires thought and complements a refined professional aesthetic.",
+            "commercial_reason": "Targets corporate art buyers and interior designers specializing in high-end office spaces, highlighting the artwork's ability to convey gravitas and intellectual depth in a professional environment.",
+            "mockup_prompt": "A refined executive office featuring an understated rich blue accent wall. The artwork 'Deep Recess' by Maurizio Valch is prominently displayed. A polished metal desk and a modern ergonomic chair are subtly visible in the foreground, blurred. Balanced natural light from a large window combines with soft recessed lighting to create an environment of calm focus. An optional standing male figure 1.80m is positioned from the right side of the frame, looking towards the artwork. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. close-up view.",
+            "negative_prompt": "Cluttered office, generic motivational art, harsh fluorescent lighting, outdated furniture, low resolution, bad lighting, busy background.",
+            "pinterest_marketing": {
+                "board_suggestion": "Executive Office Art & Decor",
+                "pin_title": "Maurizio Valch: Deep Recess in Executive Office",
+                "pin_description": "Enhance executive spaces with Maurizio Valch's 'Deep Recess.' A textured teal spiral abstract fostering contemplation in a refined corporate setting. Optional male figure for scale.",
+                "alt_text": "Maurizio Valch abstract painting 'Deep Recess' on a rich blue accent wall in an executive office, with a man standing nearby. Natural light.",
+                "seo_keywords": [
+                    "executive office art",
+                    "corporate art",
+                    "Maurizio Valch",
+                    "abstract painting",
+                    "blue accent wall",
+                    "professional decor"
+                ],
+                "hashtags": [
+                    "#ExecutiveOffice",
+                    "#CorporateArt",
+                    "#AbstractDecor",
+                    "#MaurizioValch",
+                    "#OfficeDesign"
+                ]
+            }
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1781739283_1743_v1.png"
+}

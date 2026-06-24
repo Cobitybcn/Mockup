@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 160 cm wide × 120 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Collector's Den Threshold
+- Purpose: Integration into a sophisticated personal collection
+- Scene Description: A collectors' room with intimate, discerning, richly textured atmosphere. Materials: dark wood paneling, velvet armchair, subtle brass accents, warm rug
+- Lighting: soft, warm ambient light from a lamp, subtle natural light
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult middle eastern man, 1.80 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A three-quarter left view adds depth and perspective, integrating the artwork into the rich context of a collector's private space. The close-up view ensures the artwork's details are prominent while hints of the luxurious surroundings frame its presence, enhancing its commercial appeal to private buyers.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A warm and richly textured collector's room, dimly lit by a stylish floor lamp casting a glow, with dark wood paneling and a luxurious velvet armchair partially visible. Maurizio Valch's 'Dual Gaze' is prominently displayed on the wall, captured from a three-quarter left view. An optional standing male figure (1.80m, sophisticated attire) stands admiring the art. Close-up view, discerning, elegant.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+bright, stark, minimalist, empty, generic, cheap furniture, harsh lighting, office, messy
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

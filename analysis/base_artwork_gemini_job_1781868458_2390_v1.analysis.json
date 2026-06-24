@@ -1,0 +1,148 @@
+{
+    "suggested_titles": [
+        {
+            "title": "Red Block Ascent",
+            "subtitle": "An abstract landscape painting presents a weighty red structure anchored on the left, juxtaposed against an expansive blue field under a single luminous disc.",
+            "description": "A substantial red block anchors the left side of the canvas, standing solid against a deep blue field. Below this, layered horizontal bands of pale orange and muted greens define a vast, subtly textured ground plane. Vivid turquoise marks disrupt the red block, suggesting a weathered surface, while a luminous white circle floats serenely in the blue expanse. A sense of quiet anticipation settles over the scene, where human-made structures meet an elemental, simplified world. The broad horizontal format holds the bold forms and delicate ladders in a measured, balanced tension."
+        },
+        {
+            "title": "Marked Red Plane",
+            "subtitle": "A structural composition reveals a painterly surface where vivid red is interrupted by cool turquoise scrapes, defining distinct planes of color and texture.",
+            "description": "A commanding red rectangular plane occupies the left foreground, its presence stark against the deep blue above. Below the red, an extended horizon of layered pale peach and green defines a wide, open ground, traversed by two ladder-like forms. The red surface bears visible turquoise scrapes and underlayers, contrasting with the smooth, uniform blue sky and the softly worked ground below. The distinct color fields and structured elements combine to create a powerful sense of stark isolation and tranquil expanse. The tactile red plane, with its exposed marks, rests firmly within the expansive composition, giving the work a grounded weight."
+        },
+        {
+            "title": "Threshold and Ladders",
+            "subtitle": "An elemental abstraction uses bold horizontal divisions and slender ladder forms to suggest passage across a vast, quiet, and structured terrain.",
+            "description": "A wide, serene blue field dominates the upper portion of the canvas, met by a complex, layered ground below. A bold red block and smaller structural elements, including two ascending ladders, punctuate the horizontal division between sky and earth. The deep blue field appears smooth, while the red block shows cool turquoise accents and the ground is built up with varied, muted pigments. The arrangement evokes a sense of quiet discovery and potential, set within a vast, simplified landscape under a single distant light. Within its generous width, the artwork establishes a compelling dialogue between weighty forms and subtle suggestions of passage."
+        }
+    ],
+    "recommended_number_of_contexts": 6,
+    "contextual_proposals": [
+        {
+            "context_name": "Andalusian Villa Evening",
+            "context_role": "private collection showcase",
+            "space_type": "Andalusian or coastal Mediterranean villa",
+            "atmosphere": "warm, contemplative evening",
+            "materials": [
+                "whitewashed lime-plaster walls",
+                "dark wood shutters",
+                "terracotta tile floor",
+                "wrought iron details"
+            ],
+            "lighting": "soft, warm interior lamplight with subtle shadows",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The artwork's stark red block and the rich blue field find a compelling contrast against the warm, earthy tones of the Andalusian villa's whitewashed walls and dark wood, allowing the ladders' implied journey to resonate with the quiet evening atmosphere.",
+            "commercial_reason": "This setting positions the artwork as a cherished acquisition within a private, culturally rich Mediterranean residence, highlighting its capacity to anchor a refined, contemplative space for a discerning collector.",
+            "mockup_prompt": "A collector pauses alone in a beautifully restored Andalusian villa after dinner, hands clasped behind his back, contemplating the artwork in the soft glow of evening. The space features textured whitewashed lime-plaster walls, dark wood ceiling beams, and a terracotta tile floor. Soft, warm interior lamplight casts subtle shadows, enhancing the artwork's depth. Three-quarter left view, close-up view. An elegant standing male figure 1.80m stands respectfully before the artwork, slightly to its left. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating"
+        },
+        {
+            "context_name": "Museum Gallery Blue Hour",
+            "context_role": "institutional and public display",
+            "space_type": "contemporary art museum gallery",
+            "atmosphere": "crisp, contemplative, subtly lit",
+            "materials": [
+                "smooth, light grey polished concrete walls",
+                "dark grey polished concrete floor",
+                "minimalist plinths"
+            ],
+            "lighting": "controlled directional spotlights highlighting the artwork against the blue hour exterior light",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The artwork's strong color contrasts of red and blue, combined with its graphic ladder elements, are amplified by the precise lighting of a museum setting, emphasizing its structural and compositional integrity as a significant work.",
+            "commercial_reason": "This context lends institutional credibility and highlights the artwork's formal presence, suggesting it belongs in a serious collection with public or semi-public viewing potential, appealing to collectors who value artistic gravitas.",
+            "mockup_prompt": "A visitor pauses in a contemporary art museum gallery at blue hour, having stepped away from a conversation just out of frame, admiring the artwork in quiet reverence. The gallery features smooth, light grey polished concrete walls and dark grey polished concrete floors, with a subtle blue hue filtering in from large windows. Controlled directional spotlights illuminate the artwork, creating crisp visibility. Front view, close-up view. An elegant standing female figure 1.55m stands to the right of the artwork, observing it in a serene side profile. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating"
+        },
+        {
+            "context_name": "High-Rise Condo Evening",
+            "context_role": "luxury residential statement",
+            "space_type": "double-height luxury condominium with floor-to-ceiling glass",
+            "atmosphere": "aspirational, sophisticated, urban twilight",
+            "materials": [
+                "polished concrete walls",
+                "dark timber flooring",
+                "floor-to-ceiling glass windows",
+                "subtle brushed bronze accents"
+            ],
+            "lighting": "soft interior light blending with blue hour city lights beyond the glass",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The artwork's expansive blue sky and structured red form find an echo in the urban landscape beyond the floor-to-ceiling windows, while the ladders subtly connect to the verticality of a high-rise setting, creating a dialogue between internal abstraction and external reality.",
+            "commercial_reason": "This setting positions the artwork as a powerful focal point in a contemporary, high-altitude luxury residence, appealing to collectors seeking a visually impactful piece that complements a modern, sophisticated urban lifestyle.",
+            "mockup_prompt": "A collector stands in a double-height luxury condominium at blue hour, looking up from a catalogue toward the wall where the artwork hangs, framed by the city's lights beyond the immense glass. The space features smooth polished concrete walls, dark timber flooring, and floor-to-ceiling glass windows revealing a city skyline. Soft interior light blends with the cool, ambient glow of the urban twilight. Three-quarter right view, close-up view. An elegant standing male figure 1.80m stands slightly to the left of the artwork, gazing at it. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating"
+        },
+        {
+            "context_name": "Tuscan Villa Daylight",
+            "context_role": "integrated within heritage architecture",
+            "space_type": "Tuscan or Umbrian villa interior",
+            "atmosphere": "rustic elegance, sun-drenched calm",
+            "materials": [
+                "exposed stone walls",
+                "terracotta floor tiles",
+                "heavy timber ceiling beams",
+                "linen curtains"
+            ],
+            "lighting": "soft, natural daylight filtering from a large window",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The artwork's earthy ground tones and the raw, textural quality of the red block complement the rustic authenticity of the Tuscan villa's exposed stone and timber, suggesting a harmonious blend of abstract art with traditional, sun-drenched architecture.",
+            "commercial_reason": "This context demonstrates the artwork's ability to enrich historic, character-filled homes, offering collectors a vision of how the piece can become a central, yet integrated, element in a warm and inviting heritage interior.",
+            "mockup_prompt": "A figure arrives at a Tuscan villa as the morning light turns golden, pausing in the doorway of a spacious room, drawn to the artwork. The interior features textured exposed stone walls, classic terracotta floor tiles, and heavy timber ceiling beams. Soft, natural daylight filters gently from a large, open window, illuminating the space with a warm, inviting glow. Front view, close-up view. An elegant standing female figure 1.55m stands respectfully in front of the artwork, her attention focused on it. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating"
+        },
+        {
+            "context_name": "Historic Library Contemplation",
+            "context_role": "intellectual and private study",
+            "space_type": "historic European library or reading room",
+            "atmosphere": "scholarly, intimate, profound",
+            "materials": [
+                "dark polished wood shelving",
+                "leather armchairs",
+                "brass reading lamps",
+                "rich tapestry rug"
+            ],
+            "lighting": "warm, focused lamplight from brass reading lamps",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The artwork's abstracted forms and the implied narrative of the ladders provide a contemplative pause within the rich, intellectual density of a historic library, inviting a reflective interpretation that complements the setting's scholarly depth.",
+            "commercial_reason": "This context underscores the artwork's capacity to inspire thought and quiet contemplation, presenting it as an essential addition to a collector's private study or library-a piece for profound personal engagement.",
+            "mockup_prompt": "A collector stands in a historic European library in the evening, having looked up from a book on a leather armchair, now absorbed by the artwork. The room is characterized by dark polished wood shelving reaching to the ceiling, filled with books, and the soft sheen of leather furniture. Warm, focused lamplight from brass reading lamps illuminates the space with an intimate glow. Three-quarter left view, close-up view. An elegant standing male figure 1.80m, dressed in refined minimalist clothing, stands quietly to the right of the artwork, gazing at it. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating"
+        },
+        {
+            "context_name": "Catalan Modernist Salon",
+            "context_role": "artistic and refined home integration",
+            "space_type": "Catalan modernist apartment",
+            "atmosphere": "elegant, artistically inspired, warm daylight",
+            "materials": [
+                "sinuous dark wood paneling",
+                "warm plaster walls",
+                "geometric tile flooring",
+                "subtle stained-glass accents"
+            ],
+            "lighting": "soft, filtered daylight from a large window",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The artwork's bold color blocks and architectural lines align with the organic yet structured aesthetic of Catalan modernism, allowing its abstract landscape to resonate with the fluid forms and craftsmanship of the room.",
+            "commercial_reason": "This context highlights the artwork's appeal to collectors who appreciate a synthesis of fine art and exceptional design within a historically rich, character-filled living space, suggesting a cultivated sense of taste.",
+            "mockup_prompt": "A visitor lingers a moment longer than the rest of the room in an elegant Catalan modernist apartment salon, alone with the artwork. The room features distinctive sinuous dark wood paneling, warm plaster walls, and geometric patterned tile flooring. Soft, filtered daylight enters through a large window, with subtle stained-glass accents casting colored light. Three-quarter right view, close-up view. An elegant standing female figure 1.55m, in refined minimalist clothing, stands to the left of the artwork, observing it with quiet attention. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating"
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1781868458_2390_v1.png"
+}

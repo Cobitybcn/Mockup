@@ -1,0 +1,33 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Hôtel Particulier Elegance
+- Purpose: Refined Salon Centerpiece
+- Scene Description: A French hôtel particulier salon with Elegant, classic, refined, intimate, prestigious atmosphere. Materials: boiserie paneling, parquet de Versailles flooring, silk drapes, antique gilded mirror
+- Lighting: Soft, warm ambient light from chandeliers, complemented by discreet picture lights on the artwork
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult hispanic woman, 1.55 meters tall.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A host steps back from a dinner party, alone for a moment, to look at the piece across the room, appreciating its quiet elegance in the refined space. The scene is a French hôtel particulier salon, adorned with intricate boiserie paneling, a gleaming parquet de Versailles flooring, tall windows draped in silk, and an antique gilded mirror reflecting the soft light. Soft, warm ambient light filters from elegant chandeliers, with discreet picture lights highlighting the artwork. three-quarter right view. close-up view. An elegant standing female figure 1.55m, dressed in an evening dress, stands to the right of the artwork, observing it with a quiet, appreciative expression. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

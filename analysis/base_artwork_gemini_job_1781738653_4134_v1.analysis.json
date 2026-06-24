@@ -1,0 +1,587 @@
+{
+    "artwork_analysis": {
+        "visual_language": [
+            "abstract",
+            "structural",
+            "symbolic",
+            "metaphysical",
+            "dynamic",
+            "textural"
+        ],
+        "emotional_energy": [
+            "contemplative",
+            "deep",
+            "silent",
+            "intense",
+            "mysterious",
+            "immersive"
+        ],
+        "dominant_colors": [
+            "teal",
+            "dark blue",
+            "ochre",
+            "bronze",
+            "deep brown"
+        ],
+        "secondary_colors": [
+            "white",
+            "copper",
+            "muted green",
+            "black"
+        ],
+        "visible_elements": [
+            "spiral form",
+            "central dark core",
+            "concentric rings",
+            "textured surfaces",
+            "scraped areas",
+            "impasto",
+            "subtle drips"
+        ],
+        "visible_symbols": [
+            "spiral",
+            "vortex",
+            "threshold",
+            "depth",
+            "geological strata"
+        ],
+        "color_temperature": "cool with warm accents",
+        "contrast_level": "high",
+        "composition_type": "radial",
+        "balance": "symmetrical and dynamic",
+        "visual_tension": "high",
+        "density": "high",
+        "silence": "strong",
+        "main_focal_point": "the dark, central void of the spiral",
+        "movement": "strong inward, swirling",
+        "depth": "very high",
+        "negative_space": "minimal within the canvas",
+        "verticality_or_horizontality": "neutral (square format), emphasis on depth",
+        "internal_organization": "concentric spirals leading to a core",
+        "rhythm": "cyclical and hypnotic",
+        "surface": "rough, layered, textural",
+        "brushstroke": "evident and sculptural",
+        "gesture": "expressive and energetic",
+        "layers": "clearly visible, built up with varying thickness",
+        "material_presence": "very strong",
+        "sense_of_depth_or_flatness": "strong sense of depth, three-dimensional illusion",
+        "format_and_scale": {
+            "width_cm": "120",
+            "height_cm": "120",
+            "depth_cm": "5",
+            "orientation": "vertical",
+            "scale_impact": "substantial and immersive",
+            "wall_presence": "monumental and commanding",
+            "monumentality_or_intimacy": "monumentality with an intimate contemplative focus",
+            "spatial_effect": "transforms the surrounding space by creating an intense focal point"
+        },
+        "spatial_presence": "immersive and commanding",
+        "visual_atmosphere": "deep, mysterious, contemplative, austere, intensely quiet",
+        "artwork_function": "focal point for contemplation, statement piece, immersive visual experience",
+        "suggested_audience": [
+            "contemporary art collectors",
+            "galleries",
+            "architects",
+            "interior designers",
+            "curators"
+        ],
+        "audience_profile": {
+            "primary": "contemporary art collectors, curators",
+            "secondary": "high-end interior designers, architects",
+            "buyer_profile": "discerning individuals seeking significant abstract works that evoke depth and contemplation",
+            "collector_type": "those drawn to structural abstraction, symbolic depth, and strong material presence",
+            "interior_design_relevance": "transforms sophisticated, minimalist, or architecturally driven spaces",
+            "gallery_potential": "high, due to strong visual identity, structural quality, and thematic depth"
+        },
+        "commercial_positioning": "high-value abstract painting, suitable for major collections, architectural projects, and refined residential or public spaces",
+        "one_line_curatorial_read": "ADMIN_PROMPT_ACTIVE_7421 - This square abstract painting pulls the viewer into a deep, textured spiral of teal and ochre, centered on a profound dark void, evoking geological time and an immersive journey inward.",
+        "style_summary": "Abstract expressionism meets structural symbolism, with a focus on material depth and contemplative atmosphere.",
+        "artist_profile_relation": {
+            "relevant_statement_connection": "The artwork directly embodies the exploration of 'landscape, consciousness, and inner structure,' moving 'between abstraction, symbolic territory, and contemplative silence' using 'fields of color' and a 'suspended form' (the spiral).",
+            "relevant_visual_language_connection": "The piece is clearly abstract, contemporary, structural, symbolic, and metaphysical. It prominently features fields of color, a strong central form (like a suspended sign), and spatial relationships that create depth and order.",
+            "relevant_symbol_connection": "The central spiral acts as a 'threshold' or 'monolith,' evoking 'geological time' and a 'nocturnal atmosphere' through its dark core and cool palette, creating a sense of 'presence' and 'distance.'",
+            "relevant_atmosphere_connection": "The artwork perfectly aligns with the preferred atmospheres of 'silent, deep, sober, contemplative and slightly melancholic,' characterized by 'nocturnal calm, restrained tension, austerity, distance and quiet intensity.'"
+        },
+        "seasonal_strategy": {
+            "primary_season": "neutral"
+        },
+        "publishing_metadata": {
+            "suggested_titles": [
+                {
+                    "title": "Inner Vortex",
+                    "subtitle": "A compelling abstract painting centered on a dark, swirling threshold, presenting a profound journey of color and material depth.",
+                    "short_description": "This painting draws the eye into a textured spiral of deep teals and rich ochres, converging on a silent, dark core that suggests an immersive internal landscape.",
+                    "curatorial_description": "Inner Vortex captivates with its dynamic, centralized composition, where layers of deep teal and earthy ochre pigments swirl inwards towards a profound dark core. The painting's surface is rich with palpable texture, showcasing the artist's masterful use of palette knife work and veils of color that build a sense of geological time and internal structure. This powerful visual anchor creates an immersive threshold, inviting quiet contemplation and a deep engagement with its spatial mystery.",
+                    "commercial_description": "With its commanding 120x120 cm format, Inner Vortex creates a monumental presence, transforming any sophisticated interior into a space of quiet contemplation. The artwork's rich textures and deep chromatic harmony offer both visual intrigue and profound atmospheric depth, making it an exceptional acquisition for private collections and design projects seeking a statement of refined intensity."
+                },
+                {
+                    "title": "Tectonic Swirl",
+                    "subtitle": "An abstract composition defined by swirling, textured planes of deep teal and warm ochre, creating a dynamic visual territory.",
+                    "short_description": "Tectonic Swirl presents a vibrant interplay of deep teal and earthen ochre, sculpted into a swirling form that evokes both geological strata and a powerful, silent movement.",
+                    "curatorial_description": "Tectonic Swirl is characterized by its powerful material presence, where dense layers of paint in varying shades of teal, bronze, and ochre are meticulously built up and incised. The composition unfolds as a sweeping, concentric form, revealing complex textures that suggest eroded landscapes or ancient, silent movements beneath the earth's surface. This piece resonates with a structural elegance, highlighting the artist's signature approach to creating territories of color and form that speak to perception and underlying order.",
+                    "commercial_description": "The substantial 120x120 cm scale of Tectonic Swirl ensures its dominance in any curated space, offering a visual and tactile experience of remarkable depth. Its sophisticated palette and textural richness make it a compelling choice for collectors and designers who value abstract works with both strong aesthetic impact and a profound, contemplative resonance within architectural settings."
+                },
+                {
+                    "title": "Deep Recess",
+                    "subtitle": "A square abstract artwork featuring a deep, textured spiral that explores the relationship between light, shadow, and profound inner silence.",
+                    "short_description": "Deep Recess offers an immersive journey into a textured spiral, where cool tones meet warm earthen hues, drawing the eye towards a central mystery and serene stillness.",
+                    "curatorial_description": "Deep Recess draws the viewer into its concentric forms, where an interplay of cool teals, muted greens, and warm coppery tones creates a compelling visual dialogue. The artwork's highly textured surface, achieved through a blend of palette knife and scraping techniques, builds a sense of tangible depth and geological layering. This piece evokes a profound, almost nocturnal silence, inviting an introspective gaze into its dark, central recess, aligning with themes of presence and quiet intensity.",
+                    "commercial_description": "Designed to anchor and define a space, Deep Recess commands attention with its square 120x120 cm dimensions and captivating visual depth. This artwork is particularly suited for discerning collectors, architects, and interior designers seeking a piece that combines strong contemporary abstraction with a contemplative atmosphere, creating a focal point that enriches refined residential or gallery environments."
+                }
+            ],
+            "catawiki_listing": {
+                "recommended_title": "Inner Vortex",
+                "alternative_titles": [
+                    "Tectonic Swirl",
+                    "Deep Recess"
+                ],
+                "subtitle": "A compelling abstract painting centered on a dark, swirling threshold, presenting a profound journey of color and material depth.",
+                "short_description": "This painting draws the eye into a textured spiral of deep teals and rich ochres, converging on a silent, dark core that suggests an immersive internal landscape.",
+                "long_description": "Inner Vortex captivates with its dynamic, centralized composition, where layers of deep teal and earthy ochre pigments swirl inwards towards a profound dark core. The painting's surface is rich with palpable texture, showcasing the artist's masterful use of palette knife work and veils of color that build a sense of geological time and internal structure. This powerful visual anchor creates an immersive threshold, inviting quiet contemplation and a deep engagement with its spatial mystery. The square 120x120 cm format ensures a monumental wall presence, transforming its environment.",
+                "technical_details": "Medium: Acrylic on canvas. Dimensions: 120 cm wide x 120 cm high x 5 cm deep. Orientation: Vertical.",
+                "condition_statement": "The piece is in excellent condition, with no damage or restorations.",
+                "shipping_statement": "The artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+                "seo_keywords": [
+                    "abstract painting",
+                    "contemporary art",
+                    "structural abstraction",
+                    "symbolic art",
+                    "metaphysical art",
+                    "Maurizio Valch",
+                    "teal art",
+                    "ochre art",
+                    "spiral composition",
+                    "textured canvas",
+                    "deep art",
+                    "contemplative artwork",
+                    "modern wall art"
+                ],
+                "tags": [
+                    "abstract",
+                    "contemporary",
+                    "structural",
+                    "symbolic",
+                    "metaphysical",
+                    "spiral",
+                    "vortex",
+                    "teal",
+                    "ochre",
+                    "textured",
+                    "deep",
+                    "contemplative",
+                    "modern",
+                    "square"
+                ]
+            },
+            "descriptions": {
+                "poetic_focus": "Inner Vortex draws the eye into a deep, textural spiral of teal and ochre, culminating in a profound dark core that echoes geological time and silent introspection.",
+                "formal_focus": "This square abstract work features a centralized spiral composition, meticulously built with layers of acrylic, palette knife work, and rich textures in cool blues and warm earthen tones.",
+                "commercial_focus": "A commanding 120x120 cm abstract painting, this piece offers a significant statement for high-end interiors, merging structural depth with a contemplative, sophisticated aesthetic."
+            },
+            "seo_keywords": [
+                "abstract art",
+                "contemporary painting",
+                "Maurizio Valch",
+                "spiral art",
+                "vortex painting",
+                "textured abstract",
+                "teal ochre art",
+                "modern wall art",
+                "structural art",
+                "symbolic abstraction",
+                "contemplative art",
+                "luxury wall decor"
+            ],
+            "seo_tags": [
+                "abstract",
+                "contemporary",
+                "structural",
+                "symbolic",
+                "metaphysical",
+                "spiral",
+                "vortex",
+                "teal",
+                "ochre",
+                "textured",
+                "deep",
+                "contemplative",
+                "Maurizio Valch"
+            ],
+            "marketplace_title": "Inner Vortex: Deep Textured Abstract Spiral Painting, 120x120cm",
+            "marketplace_short_description": "Maurizio Valch's 'Inner Vortex' is a captivating 120x120cm abstract painting featuring a textured spiral of deep teals and rich ochres converging on a silent, profound dark core, inviting deep contemplation.",
+            "marketplace_long_description": "This square abstract painting, 'Inner Vortex', exemplifies Maurizio Valch's exploration of landscape and inner structure. The artwork's dynamic, centralized spiral composition is meticulously crafted with layers of acrylic, revealing a rich, tactile surface of deep teal and earthy ochre pigments. The vortex-like form leads the eye into a profound dark core, evoking a sense of geological time, a silent threshold, and an immersive internal journey. Its substantial 120x120 cm dimensions ensure a powerful presence, making it an ideal focal point for sophisticated residential or gallery environments. The piece combines strong contemporary abstraction with a contemplative atmosphere, perfect for discerning collectors and interior designers.",
+            "pinterest_boards": [
+                "Contemporary Abstract Art",
+                "Textured Wall Art Ideas",
+                "Maurizio Valch Art",
+                "Deep Contemplative Paintings",
+                "Luxury Interior Design Art",
+                "Abstract Spiral Art"
+            ]
+        }
+    },
+    "recommended_number_of_contexts": 9,
+    "contextual_proposals": [
+        {
+            "context_name": "Gallery of Deep Structures",
+            "context_role": "formal presentation",
+            "space_type": "minimalist contemporary art gallery",
+            "atmosphere": "pristine, refined, silent",
+            "materials": [
+                "white walls",
+                "polished concrete floor",
+                "natural wood bench"
+            ],
+            "lighting": "overhead track lighting, soft directional light",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A front view emphasizes the artwork's symmetrical composition and textural detail, ensuring maximum fidelity for a formal gallery presentation. The close-up distance keeps the artwork visually dominant against the clean backdrop.",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "Emphasizes the artwork's structural qualities and commanding scale within a neutral, focused environment, allowing for pure aesthetic appreciation.",
+            "commercial_reason": "Ideal for gallery representation, art fairs, and serious collectors, showcasing the artwork as a significant piece in an unadorned, high-end display setting.",
+            "mockup_prompt": "Minimalist contemporary art gallery with pristine white walls and a polished concrete floor. A natural wood bench is subtly placed to the side. The lighting is soft overhead track lighting, highlighting the artwork. The artwork 'Inner Vortex' is centrally mounted on a clean white wall. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Camera view: front view, camera distance: close-up view.",
+            "negative_prompt": "clutter, overly ornate, distracting elements, poor lighting, low quality, cheap decor, busy background",
+            "pinterest_marketing": {
+                "board_suggestion": "Gallery Interiors & Exhibitions",
+                "pin_title": "Maurizio Valch: Inner Vortex in Contemporary Gallery",
+                "pin_description": "Experience the profound structural depth of Maurizio Valch's 'Inner Vortex' in a pristine contemporary gallery setting. This 120x120cm piece commands attention with its textural spiral and dark core.",
+                "alt_text": "Maurizio Valch 'Inner Vortex' abstract painting in a minimalist art gallery, front view, 120x120cm.",
+                "seo_keywords": [
+                    "gallery art",
+                    "contemporary gallery",
+                    "abstract expressionism",
+                    "art exhibition",
+                    "structural art"
+                ],
+                "hashtags": [
+                    "#MaurizioValch",
+                    "#AbstractArt",
+                    "#GalleryWall",
+                    "#ContemporaryPainting",
+                    "#ArtCollector"
+                ]
+            }
+        },
+        {
+            "context_name": "Contemplative Residence Corner",
+            "context_role": "luxury residential integration",
+            "space_type": "high-ceiling modern living room",
+            "atmosphere": "sophisticated, calm, inviting",
+            "materials": [
+                "plastered white walls",
+                "light oak flooring",
+                "natural linen sofa",
+                "subtle dark metal accents"
+            ],
+            "lighting": "soft ambient light from large windows, supplemented by a discreet floor lamp",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter left view adds spatial depth and suggests the artwork's integration into a luxurious living space. The close-up distance ensures the artwork remains the central focus, while hinting at the quality of the surrounding interior.",
+            "human_presence": "none",
+            "curatorial_reason": "Illustrates how the artwork functions as a contemplative focal point within an elegant, high-end home, creating an atmosphere of refined tranquility.",
+            "commercial_reason": "Appeals to luxury residential buyers and interior designers, showcasing the artwork's ability to enhance and define sophisticated living environments.",
+            "mockup_prompt": "High-ceiling modern living room with plastered white walls and light oak flooring. A natural linen sofa is partially visible in the foreground to the right. Soft ambient light streams from large windows, complemented by a discreet floor lamp casting a warm glow. The artwork 'Inner Vortex' is mounted on a clean white wall. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Camera view: three-quarter left view, camera distance: close-up view.",
+            "negative_prompt": "cluttered furniture, bright primary colors, cheap finishes, commercial office, bad lighting, generic decor",
+            "pinterest_marketing": {
+                "board_suggestion": "Luxury Living Room Decor",
+                "pin_title": "Abstract Art Statement in Modern Living Room",
+                "pin_description": "Elevate a modern living room with Maurizio Valch's 'Inner Vortex'. Its deep colors and textural spiral create a sophisticated, contemplative focal point.",
+                "alt_text": "Maurizio Valch 'Inner Vortex' abstract painting in a modern living room with light oak floors and a linen sofa, three-quarter left view.",
+                "seo_keywords": [
+                    "luxury home decor",
+                    "modern living room art",
+                    "abstract statement piece",
+                    "interior design art",
+                    "high-end residential"
+                ],
+                "hashtags": [
+                    "#LuxuryInteriors",
+                    "#AbstractDecor",
+                    "#LivingRoomArt",
+                    "#ModernHome",
+                    "#DesignInspiration"
+                ]
+            }
+        },
+        {
+            "context_name": "Evening Dining Tableau",
+            "context_role": "atmospheric dining",
+            "space_type": "minimalist dining area in a luxury apartment",
+            "atmosphere": "intimate, sophisticated, subdued",
+            "materials": [
+                "dark wood dining table",
+                "simple upholstered chairs",
+                "textured off-white walls"
+            ],
+            "lighting": "warm, focused pendant lighting over the table, indirect wall lighting",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter right view introduces an element of intimate setting, highlighting how the artwork complements a curated dining experience. The close-up distance ensures the painting's atmospheric qualities are immediately perceived.",
+            "human_presence": "none",
+            "curatorial_reason": "Highlights the artwork's atmospheric qualities, demonstrating its capacity to enrich intimate social settings with depth and visual intrigue.",
+            "commercial_reason": "Positions the artwork as a centerpiece for refined social environments, appealing to collectors and designers who curate spaces for both aesthetic and experiential value.",
+            "mockup_prompt": "Minimalist dining area in a luxury apartment with textured off-white walls. A dark wood dining table with simple upholstered chairs is subtly visible in the foreground to the left. Warm, focused pendant lighting hangs over the table, with indirect wall lighting illuminating the space. The artwork 'Inner Vortex' is prominently displayed on the wall. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Camera view: three-quarter right view, camera distance: close-up view.",
+            "negative_prompt": "clutter, bright fluorescent lights, cheap dining set, corporate office, distracting wall decor",
+            "pinterest_marketing": {
+                "board_suggestion": "Sophisticated Dining Room Art",
+                "pin_title": "Maurizio Valch: Abstract Art for Elegant Dining",
+                "pin_description": "Create an intimate and sophisticated dining experience with Maurizio Valch's 'Inner Vortex'. Its deep tones and textural spiral enhance the ambiance of any luxury dining area.",
+                "alt_text": "Maurizio Valch 'Inner Vortex' abstract painting in an elegant dining room with dark wood table, three-quarter right view.",
+                "seo_keywords": [
+                    "dining room art",
+                    "luxury apartment decor",
+                    "abstract dining art",
+                    "modern dining",
+                    "sophisticated interiors"
+                ],
+                "hashtags": [
+                    "#DiningRoomDesign",
+                    "#AbstractPainting",
+                    "#LuxuryDecor",
+                    "#MaurizioValch",
+                    "#InteriorStyling"
+                ]
+            }
+        },
+        {
+            "context_name": "Architect's Visionary Space",
+            "context_role": "structural and creative inspiration",
+            "space_type": "contemporary architectural studio/office with high ceilings",
+            "atmosphere": "creative, focused, professional",
+            "materials": [
+                "exposed concrete walls",
+                "large format glass windows",
+                "minimalist desk"
+            ],
+            "lighting": "bright natural light from large windows, adjustable task lighting",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A front view highlights the artwork's structural precision and depth, making it a natural fit for an architectural studio. The close-up view ensures its visual complexity is appreciated as a source of inspiration.",
+            "human_presence": "none",
+            "curatorial_reason": "Connects the artwork's structural, spatial depth, and compositional rigor with architectural thinking, positioning it as an object of contemplation for design professionals.",
+            "commercial_reason": "Targets architects and design professionals seeking art that resonates with their professional aesthetic and conceptual concerns, suitable for studio or high-end office environments.",
+            "mockup_prompt": "Contemporary architectural studio with high ceilings, exposed concrete walls, and large format glass windows revealing urban views. A minimalist desk with architectural models is partially visible in the foreground. Bright natural light floods the space. The artwork 'Inner Vortex' is prominently displayed on a concrete wall. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Camera view: front view, camera distance: close-up view.",
+            "negative_prompt": "clutter, old-fashioned office, bright colors, residential setting, bad lighting, generic decor",
+            "pinterest_marketing": {
+                "board_suggestion": "Art for Architectural Spaces",
+                "pin_title": "Abstract Art in Architectural Studio",
+                "pin_description": "Maurizio Valch's 'Inner Vortex' provides structural inspiration in a contemporary architectural studio. Its deep spiral and textured surface resonate with design principles.",
+                "alt_text": "Maurizio Valch 'Inner Vortex' abstract painting in a modern architectural studio with concrete walls, front view.",
+                "seo_keywords": [
+                    "architectural art",
+                    "design studio art",
+                    "contemporary office art",
+                    "structural abstract",
+                    "minimalist office decor"
+                ],
+                "hashtags": [
+                    "#ArchitectureArt",
+                    "#DesignStudio",
+                    "#AbstractDesign",
+                    "#MaurizioValch",
+                    "#ModernOffice"
+                ]
+            }
+        },
+        {
+            "context_name": "Grand Entrance Threshold",
+            "context_role": "defining a transitional space",
+            "space_type": "double-height entrance hall of a modern townhouse",
+            "atmosphere": "impressive, welcoming, expansive",
+            "materials": [
+                "pale grey marble flooring",
+                "textured light grey walls",
+                "a simple console table"
+            ],
+            "lighting": "overhead recessed lighting, natural light from a skylight",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter left view effectively captures the grand scale of the entrance hall while framing the artwork as a central anchor. The presence of a human figure provides critical scale context against the artwork.",
+            "human_presence": "optional standing female figure 1.55m",
+            "curatorial_reason": "Demonstrates the artwork's monumental presence and its ability to define a significant transitional space, making a powerful first impression.",
+            "commercial_reason": "Attracts buyers for high-end residential properties who seek impactful art to elevate their home's entry points, highlighting its strong wall presence and scale.",
+            "mockup_prompt": "Double-height entrance hall of a modern townhouse with pale grey marble flooring and textured light grey walls. A simple console table is partially visible to the right. Overhead recessed lighting combined with natural light from a skylight illuminates the space. The artwork 'Inner Vortex' is prominently mounted on the wall. An optional standing female figure (1.55m) is present in the scene for scale. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Camera view: three-quarter left view, camera distance: close-up view.",
+            "negative_prompt": "small room, cluttered entrance, poor lighting, outdated decor, cheap materials, uninviting atmosphere",
+            "pinterest_marketing": {
+                "board_suggestion": "Luxury Entrance Hall Decor",
+                "pin_title": "Maurizio Valch Abstract Art in Grand Entryway",
+                "pin_description": "Make a grand statement with Maurizio Valch's 'Inner Vortex' in a double-height entrance hall. Its scale and depth create an unforgettable welcome.",
+                "alt_text": "Maurizio Valch 'Inner Vortex' abstract painting in a luxurious entrance hall with a standing female figure, three-quarter left view.",
+                "seo_keywords": [
+                    "grand entryway art",
+                    "luxury townhouse decor",
+                    "abstract focal point",
+                    "modern entrance hall",
+                    "statement art"
+                ],
+                "hashtags": [
+                    "#EntranceHallArt",
+                    "#LuxuryDesign",
+                    "#AbstractMasterpiece",
+                    "#MaurizioValch",
+                    "#HomeDecor"
+                ]
+            }
+        },
+        {
+            "context_name": "Boutique Hotel Sanctuary",
+            "context_role": "hospitality focal point",
+            "space_type": "chic, understated lobby of a boutique hotel",
+            "atmosphere": "exclusive, serene, design-forward",
+            "materials": [
+                "dark polished wood panels",
+                "dark upholstered seating",
+                "soft diffused lighting"
+            ],
+            "lighting": "soft recessed lighting, accent lighting on the artwork, subtle natural light",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter right view adds depth and context within the sophisticated hotel lobby, while maintaining the artwork's prominence. The close-up view emphasizes its quality for a discerning clientele.",
+            "human_presence": "none",
+            "curatorial_reason": "Illustrates the artwork's capacity to create a focal point of calm and sophistication in a public yet intimate setting, enhancing the guest experience.",
+            "commercial_reason": "Appeals to hotel developers and interior designers for hospitality projects, showcasing art that contributes to a high-end, curated brand identity.",
+            "mockup_prompt": "Chic, understated lobby of a boutique hotel featuring dark polished wood panels and dark upholstered seating. Soft recessed lighting illuminates the space, with accent lighting specifically on the artwork. Subtle natural light filters through. The artwork 'Inner Vortex' is elegantly displayed on a wood-paneled wall. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Camera view: three-quarter right view, camera distance: close-up view.",
+            "negative_prompt": "generic hotel lobby, bright colors, cluttered space, cheap materials, harsh lighting, corporate feel",
+            "pinterest_marketing": {
+                "board_suggestion": "Hotel Art Collections",
+                "pin_title": "Abstract Art for Boutique Hotel Lobbies",
+                "pin_description": "Enhance the ambiance of a boutique hotel lobby with Maurizio Valch's 'Inner Vortex'. Its deep tones and textural beauty create a serene and exclusive focal point.",
+                "alt_text": "Maurizio Valch 'Inner Vortex' abstract painting in a chic boutique hotel lobby with dark wood panels, three-quarter right view.",
+                "seo_keywords": [
+                    "hotel art",
+                    "boutique hotel design",
+                    "hospitality art",
+                    "luxury hotel decor",
+                    "commercial art"
+                ],
+                "hashtags": [
+                    "#HotelDesign",
+                    "#BoutiqueHotel",
+                    "#AbstractArt",
+                    "#LuxuryHospitality",
+                    "#InteriorDesign"
+                ]
+            }
+        },
+        {
+            "context_name": "Collector's Inner Sanctum",
+            "context_role": "private contemplation space",
+            "space_type": "private study or library in a collector's home",
+            "atmosphere": "intimate, intellectual, contemplative",
+            "materials": [
+                "dark wood paneling",
+                "leather armchair",
+                "muted rug"
+            ],
+            "lighting": "warm lamplight, subtle natural light from a window, artwork spot",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A front view provides an unhindered, direct engagement with the artwork, suitable for an intimate study where deep focus is desired. The close-up view accentuates the artwork's intricate texture and depth for personal contemplation.",
+            "human_presence": "none",
+            "curatorial_reason": "Highlights the artwork as a profound focus for private contemplation and intellectual engagement, aligning with the personal interests of a serious collector.",
+            "commercial_reason": "Directly targets serious private collectors seeking works for personal immersion and study, emphasizing the artwork's capacity for sustained visual and intellectual dialogue.",
+            "mockup_prompt": "Private study or library in a collector's home with dark wood paneling and a muted rug. A classic leather armchair is partially visible in the foreground. Warm lamplight from a desk lamp and subtle natural light from a window create a cozy atmosphere. A dedicated art spot illuminates the artwork 'Inner Vortex' mounted on a wood-paneled wall. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Camera view: front view, camera distance: close-up view.",
+            "negative_prompt": "modern minimalist decor, bright colors, cluttered shelves, generic study, harsh lighting, office cubicle",
+            "pinterest_marketing": {
+                "board_suggestion": "Art for Private Collections & Studies",
+                "pin_title": "Maurizio Valch: Abstract Art for a Collector's Study",
+                "pin_description": "Create an intimate and intellectual atmosphere with Maurizio Valch's 'Inner Vortex' in a private study. Its depth and complexity offer endless contemplation.",
+                "alt_text": "Maurizio Valch 'Inner Vortex' abstract painting in a sophisticated private study with dark wood paneling, front view.",
+                "seo_keywords": [
+                    "collector's art",
+                    "private study decor",
+                    "intellectual art",
+                    "contemplative abstract",
+                    "luxury home office"
+                ],
+                "hashtags": [
+                    "#ArtCollector",
+                    "#HomeLibrary",
+                    "#AbstractArt",
+                    "#MaurizioValch",
+                    "#PrivateCollection"
+                ]
+            }
+        },
+        {
+            "context_name": "Mediterranean Light Study",
+            "context_role": "harmonizing with natural environments",
+            "space_type": "sunlit interior of a modern Mediterranean villa",
+            "atmosphere": "bright, natural, organic, tranquil",
+            "materials": [
+                "textured white plaster walls",
+                "terracotta floor tiles",
+                "simple wooden furniture"
+            ],
+            "lighting": "abundant natural daylight flooding the room",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter left view allows for a wider shot of the sunlit interior, showing how the artwork's natural tones and textures resonate with organic Mediterranean materials. The close-up view keeps the artwork central, highlighting its textural details.",
+            "human_presence": "none",
+            "curatorial_reason": "Connects the artwork's earthy tones and textural depth with natural, organic environments, evoking a sense of ancient landscapes and geological formations under warm light.",
+            "commercial_reason": "Suitable for luxury villas and design projects with a natural or Mediterranean aesthetic, demonstrating the artwork's versatility and ability to complement various sophisticated styles.",
+            "mockup_prompt": "Sunlit interior of a modern Mediterranean villa with textured white plaster walls and terracotta floor tiles. Simple wooden furniture is subtly arranged. Abundant natural daylight floods the room, creating soft shadows. The artwork 'Inner Vortex' is mounted on a textured white plaster wall. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Camera view: three-quarter left view, camera distance: close-up view.",
+            "negative_prompt": "dark room, artificial light, overly rustic decor, cluttered space, industrial setting, cold atmosphere",
+            "pinterest_marketing": {
+                "board_suggestion": "Mediterranean Style Art & Decor",
+                "pin_title": "Abstract Art in Mediterranean Villa",
+                "pin_description": "Maurizio Valch's 'Inner Vortex' harmonizes with the natural light and earthy textures of a modern Mediterranean villa, evoking a sense of ancient landscapes.",
+                "alt_text": "Maurizio Valch 'Inner Vortex' abstract painting in a sunlit Mediterranean villa with white plaster walls and terracotta floor, three-quarter left view.",
+                "seo_keywords": [
+                    "mediterranean decor",
+                    "villa art",
+                    "natural abstract art",
+                    "organic interior",
+                    "sunlit art"
+                ],
+                "hashtags": [
+                    "#MediterraneanStyle",
+                    "#VillaDecor",
+                    "#AbstractArt",
+                    "#MaurizioValch",
+                    "#NaturalInteriors"
+                ]
+            }
+        },
+        {
+            "context_name": "Art Fair Presentation",
+            "context_role": "direct commercial visibility",
+            "space_type": "a high-end art fair booth",
+            "atmosphere": "dynamic, focused, professional",
+            "materials": [
+                "neutral grey walls",
+                "light exhibition flooring"
+            ],
+            "lighting": "bright, direct art fair lighting",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter right view allows for a dynamic perspective of the artwork within a professional art fair setting, subtly implying surrounding activity without detracting from the piece. The close-up view ensures commercial readability and impact.",
+            "human_presence": "none",
+            "curatorial_reason": "Demonstrates the artwork's strong visual impact and ability to capture attention in a competitive, commercial art context, highlighting its immediate appeal.",
+            "commercial_reason": "Highlights its suitability for direct sale to a broad collector base at art events and its presence as a key piece in a curated exhibition space.",
+            "mockup_prompt": "A high-end art fair booth with neutral grey walls and light exhibition flooring. Bright, direct art fair lighting illuminates the space. The artwork 'Inner Vortex' is prominently displayed on a grey wall. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Camera view: three-quarter right view, camera distance: close-up view.",
+            "negative_prompt": "cluttered booth, generic posters, low quality display, distracting elements, poor lighting, casual setting",
+            "pinterest_marketing": {
+                "board_suggestion": "Art Fair Highlights",
+                "pin_title": "Maurizio Valch: Art Fair Feature - Inner Vortex",
+                "pin_description": "See Maurizio Valch's 'Inner Vortex' as a prominent feature at a high-end art fair. Its commanding presence and deep texture make it a standout piece.",
+                "alt_text": "Maurizio Valch 'Inner Vortex' abstract painting in a modern art fair booth with grey walls, three-quarter right view.",
+                "seo_keywords": [
+                    "art fair",
+                    "art exhibition",
+                    "commercial art",
+                    "art investment",
+                    "gallery display"
+                ],
+                "hashtags": [
+                    "#ArtFair",
+                    "#ArtExhibition",
+                    "#AbstractArt",
+                    "#MaurizioValch",
+                    "#ArtMarket"
+                ]
+            }
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1781738653_4134_v1.png"
+}

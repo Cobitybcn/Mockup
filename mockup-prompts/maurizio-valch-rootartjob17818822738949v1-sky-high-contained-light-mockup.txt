@@ -1,0 +1,33 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Sky-High Contained Light
+- Purpose: Contemporary penthouse living area
+- Scene Description: A double-height luxury condominium with floor-to-ceiling glass with Modern, expansive, urban, focused atmosphere. Materials: polished concrete floor, large glass panels, minimalist furniture, subtle brushed metal accents, warm plaster wall
+- Lighting: Blue-hour window light from city skyline, warm interior architectural lighting
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult asian man, 1.80 meters tall.
+
+- Structured Camera View: front view
+- Structured Camera Distance: close-up view
+
+
+AI PROPOSED MOCKUP DIRECTION:
+An elegant standing male figure 1.80m pauses, looking up from the city lights outside a double-height luxury condominium with floor-to-ceiling glass, turning his attention to the artwork. The space features a polished concrete floor and a warm plaster wall that anchors the artwork against the vast urban skyline beyond the glass. Blue-hour window light combines with warm interior architectural lighting. The camera is set to a front view. The figure stands beside the artwork at a respectful viewing distance, hands behind his back. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la wall y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

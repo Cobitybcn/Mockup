@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: square canvas, 160 cm wide × 160 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Design Studio Inspiration
+- Purpose: Serving as a source of creative inspiration and a visual benchmark within an artistic professional environment.
+- Scene Description: A Architectural or interior design studio with Creative, sophisticated, focused, industrial chic atmosphere. Materials: exposed concrete wall, large industrial-style window, minimalist work desk, architectural models
+- Lighting: Bright, even daylight from a large window, with overhead studio lighting providing clarity.
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A three-quarter left view naturally integrates the artwork into the professional, creative environment of a design studio. The close-up maintains the artwork's dominance, while showing enough of the studio elements to convey its context as a source of inspiration and high aesthetic standard.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A sophisticated architectural or interior design studio with an exposed concrete wall and a large industrial-style window. Maurizio Valch's large square abstract painting featuring a fuchsia spiral on dark segmented background is mounted prominently. A minimalist work desk with architectural models is in the foreground. Bright, even daylight, overhead studio lighting. Three-quarter left view, close-up view, emphasizing the artwork as an object of inspiration in a creative professional space.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cluttered, messy, traditional, cozy, residential, bright colors, unfocused, blurry artwork, distorted perspective
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

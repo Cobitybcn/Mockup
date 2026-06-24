@@ -1,0 +1,82 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 4 cm deep.
+
+SCALE RULES:
+This is a medium vertical artwork, not a monumental piece. It should read at real collector-home scale, comparable to a console table width when horizontal, clearly smaller than a large sofa, below door height, and never as a wall-filling exhibition panel. Scale calibration anchors: against a common 205 cm interior door, the artwork height should be about 59% of the door height; against an 80 cm console table, the artwork height is about 1.5 times the table height; compared with an 8 cm floor baseboard, the artwork height is about 15 baseboard heights. The room or gallery in this scene must have a realistic ceiling height of approximately 3.0 meters (10 feet) to anchor the scale of the room, preventing the space from looking like a giant cavernous hall. The 1.80 m man must stand immediately next to the artwork (within 1 meter of the artwork's side edge) on the exact same depth and floor plane as the artwork. He must not stand in the background or foreground. Visually, the artwork height must be about 67% of the man's standing height, and the artwork width must be about 44% of the man's standing height. Use only architecture, furniture and full standing human height as scale references. Do not introduce shoes or footwear as visual scale references.
+Respect the physical dimensions of the artwork relative to furniture, doors, windows, ceilings, pedestals, and human figures.
+Do not enlarge the artwork for dramatic effect.
+Use baseboards, doors, consoles, chairs, and human height as realistic, proportional scale references in the same plane.
+Do not convert a medium-sized artwork into a mural, monumental panel, or installation if its dimensions do not warrant it.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Palazzo Contemplation
+- Purpose: Private Residence Collection
+- Scene Description: A Italian palazzo piano nobile with Silent, refined, contemplative atmosphere. Materials: terrazzo floor, warm plaster walls, dark wood boiserie, antique velvet armchair, brass lamp
+- Lighting: Warm evening gallery lighting, soft directional spotlight on artwork
+- Time of Day: night
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult middle eastern man, 1.80 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: three-quarter left view: left edge near and showing canvas depth, right edge receding toward a vanishing point on the right, 50mm lens, camera at artwork vertical center, no tilt. The 120 cm artwork height must read as approximately 120/180 of the 1.80m figure's full standing height.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+An elegant standing male figure, 1.80m tall, in a dark tailored suit, pauses contemplatively after dinner, his gaze fixed on the artwork. The scene is set in an Italian palazzo piano nobile, with a polished terrazzo floor, warm aged plaster walls, and subtle dark wood boiserie panels defining the space. Soft evening gallery lighting illuminates the artwork, with a focused spotlight highlighting its surface, while a brass lamp casts a warm glow from a nearby antique velvet armchair. The camera is set to a three-quarter left view, with a 50mm-equivalent lens, positioned at the artwork's vertical center and no vertical tilt. The LEFT edge of the artwork is closest to the camera, appearing slightly larger and showing visible canvas depth. The RIGHT edge recedes away from the camera, and the top and bottom edges converge subtly toward a vanishing point on the RIGHT side of the frame. The boiserie panel lines and terrazzo floor patterns support this right-side vanishing point. This is a collector-context close-up view, encompassing enough surrounding wall, floor, architecture, and the full human figure to preserve the artwork's real physical size. The figure stands on the same floor plane as the artwork and at a comparable depth, not blocking the artwork, serving as a clear scale reference. The artwork height is 120 cm, so it must read as approximately 120/180 of the 1.80m male figure's full height. The artwork remains curatorially important through framing, lighting, architecture, and human attention, not through physical enlargement. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la wall y curatorialmente dominante, sin aumentar su escala física real. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.
+
+CAMERA SELECTION RULES:
+CAMERA SELECTION RULES FOR MOCKUP GENERATION
+
+Only use camera angles that present the artwork as the centerpiece of the room. The room exists to accompany, scale, and add value to the artwork, never to overshadow it.
+
+ALLOWED CAMERAS:
+1. Front Gallery View: straight-on front view, eye-level, with realistic scale presentation. Excellent for Saatchi Art, Pinterest, and listings.
+2. Three-Quarter Left View: subtle three-quarter angle from the left, revealing slight canvas depth/thickness on the wall.
+3. Three-Quarter Right View: subtle three-quarter angle from the right, showing texture, depth, and realistic lighting.
+
+CAMERAS TO AVOID (DO NOT USE):
+- Do not use extreme diagonal perspective views.
+- Do not add other paintings, artworks, framed prints, posters, murals, canvases, or visual competitors on surrounding walls.
+
+QUALITY RULES:
+Create an integrated mockup, not a photo pasted on a generic background.
+Add realistic contact shadows, wall contact, depth, the canvas physical edge, and subtle ambient light.
+The environment must feel sophisticated, European or American collector style, gallery, museum, art fair, or high-end interior.
+The emotional impact should come from the scene, lighting, and context, not from false scaling.
+The artwork must feel placed, collected, and desired.
+The provided artwork image must remain visually identical inside the mockup. Preserve its exact composition, colors, symbols, lines, surface texture, brushwork, proportions, orientation, and edges.
+The artwork must preserve its real physical scale relative to the human figure and surrounding architecture. The precomposed artwork size is the scale reference and must not be enlarged to fill the frame. If accurate scale requires it, show more surrounding wall, floor, ceiling, furniture, or architecture instead of increasing the artwork's physical size. The artwork may remain visually important through lighting, placement, framing, contrast, and human attention, but never through artificial enlargement.
+
+NEGATIVE RULES:
+No kitchens.
+No common bedrooms.
+No cheap decor.
+No generic stock interiors.
+No additional artworks, paintings, framed prints, posters, murals, canvases, or competing wall art anywhere in the scene.
+No logos.
+No visible text.
+No letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.
+No shoes or footwear as scale reference.
+No distorted perspective.
+Do not redraw, repaint, reinterpret, crop, mirror, rotate, recolor, simplify, extend, or alter the artwork surface.
+Do not change the artwork's internal composition, visible symbols, brushstrokes, marks, texture, colors, proportions, orientation, or edge shape.
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, artwork content warped, artwork content stretched, artwork content simplified, artwork content extended, artwork physically oversized, artwork larger than its real dimensions, artwork equal to human full height when dimensions do not justify it, artwork taller than human figure when dimensions do not justify it, artwork tiny or lost in the room, excessively distant room view, empty room without human figure, artwork alone without human scale, human figure too far from artwork to verify scale, human figure at incompatible camera depth, cropped human figure preventing scale comparison, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork floating, artwork used as wallpaper, artwork as mural, artwork printed on glass, artwork projected on wall, artwork converted into a digital screen, fisheye distortion, ultra-wide 16mm lens, warped perspective, exaggerated theatrical distortion, symmetrical front-on artwork edges when a three-quarter, seven-eighths, low-angle seven-eighths, or doorway angle was specified
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:
+TECHNICAL RENDERER CONTROLS
+These values control the pre-composed reference image sent to the image model. Edit only after visual testing.
+
+mockup_fill_default=0.50
+mockup_fill_long_side_le_45=0.32
+mockup_fill_long_side_le_80=0.42
+mockup_fill_long_side_le_120=0.52
+mockup_fill_long_side_le_160=0.58
+mockup_fill_long_side_le_220=0.64
+mockup_fill_long_side_gt_220=0.70
+mockup_human_scale_multiplier=0.78
+mockup_fill_min=0.05
+mockup_fill_max=0.95

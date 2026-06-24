@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 220 cm wide × 180 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Minimalist Gallery Passage
+- Purpose: Showcasing monumental art in a pristine, art-focused public or private gallery space
+- Scene Description: A Elegant hallway or gallery corridor with Serene, expansive, focused on art atmosphere. Materials: Seamless white walls, Light grey polished concrete floor, Hidden baseboards
+- Lighting: Even, bright overhead gallery lighting, no harsh shadows
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+- Camera Rationale: This three-quarter right view subtly opens the space, suggesting a longer hallway while keeping the artwork central and dominant. The close-up, combined with the pure white gallery setting, focuses entirely on the artwork's form, color, and texture, maximizing its curatorial clarity and visual impact. This presents the artwork as museum-worthy and effortlessly integrated.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+Maurizio Valch 'Sin título' (220x180cm) installed on a seamless white wall in a minimalist gallery corridor, light grey polished concrete floor, hidden baseboards, bright and even overhead gallery lighting, three-quarter right view, close-up view, serene, expansive, clean, art-focused, contemporary architecture.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+Clutter, distractions, dark, residential, busy patterns, old architecture, cheap walls, people.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Refined Gallery Alcove
+- Purpose: Curated exhibition, professional presentation
+- Scene Description: A professional art gallery with focused, clean, quiet atmosphere. Materials: warm off-white gallery walls, polished concrete floor, minimalist bench
+- Lighting: museum-grade spotlights with warmth, creating soft highlights on the texture
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult black woman, 1.55 meters tall.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+- Camera Rationale: This three-quarter right view provides a subtle depth to the gallery alcove, highlighting the professional presentation and the artwork's sculptural quality. The focused lighting accentuates the texture of the red forms, while the female figure establishes a sense of scale and discerning viewership, without obstructing the artwork.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A professional art gallery with warm off-white gallery walls and a polished concrete floor. A minimalist bench is visible further back. The lighting consists of museum-grade spotlights with warmth, creating soft highlights on the artwork's texture. Three-quarter right view, close-up view. An elegant standing female figure 1.55m, wearing refined minimalist clothing, stands in a contemplative stance slightly to the left and back, giving space for the artwork. The artwork in the attached image is the final artwork that must be presented, not an inspiration image, and should not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the artwork in the attached image. Preserve the artwork exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, brushstroke, marks, symbols, and visual content. The artwork must remain completely visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, the human figure, the lighting, the wall, the architecture, the furniture, and the atmosphere can be generated or modified.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle, empty room, no human figure, artwork alone without human scale, cold, sterile
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

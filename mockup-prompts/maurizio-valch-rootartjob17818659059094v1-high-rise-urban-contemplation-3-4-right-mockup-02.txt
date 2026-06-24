@@ -1,0 +1,39 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Camera: three-quarter view from the right, slight side angle, eye-level, natural perspective
+- Scene Name: High-Rise Urban Contemplation
+- Purpose: Contemporary Architectural Statement
+- Scene Description: A double-height luxury condominium with floor-to-ceiling glass with Sophisticated, urban, expansive, contemplative at dusk, commanding views atmosphere. Materials: polished concrete floor, minimalist white walls, brushed metal accents, floor-to-ceiling glass window
+- Lighting: luminous natural daylight, bright, sunny day, clear blue sky reflections, clean direct sunlight
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult hispanic woman, 1.55 meters tall.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: medium-close view, enough space for context and scale while keeping artwork dominant
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A person, having just stepped out of an sunny day meeting, takes a moment to breathe and observe the city lights through the glass, finding solace in the artwork's quiet structure. The scene is set in a double-height luxury condominium, characterized by a polished concrete floor, minimalist white walls, brushed metal accents, and a vast floor-to-ceiling glass window showcasing a blue-hour city skyline. Soft ambient internal lighting contrasts with the exterior glow, with a subtle spotlight illuminating the artwork. three-quarter right view. close-up view. An elegant standing male figure 1.80m is positioned slightly to the right of the artwork, in a contemplative stance facing the window, with his back partially to the camera, acknowledging the artwork's presence. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:
+
+ARTWORK SIZE CORRECTION FOR THIS REGENERATION:
+- Make the artwork appear 20% larger than the current/default prompt scale.
+- Keep the artwork proportions, placement realism, wall contact, canvas depth and physical believability.
+- Apply this only to the artwork display size, not to the room, furniture, human figure, or camera angle.

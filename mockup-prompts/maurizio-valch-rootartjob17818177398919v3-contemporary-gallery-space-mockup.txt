@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Contemporary Gallery Space
+- Purpose: Exhibition Setting
+- Scene Description: A Art gallery with Minimalist, focused, bright, professional atmosphere. Materials: smooth white walls, polished concrete floor, high ceilings
+- Lighting: Even, bright gallery lighting with subtle spotlights on the artwork
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult white man, 1.80 meters tall.
+
+- Structured Camera View: front view
+- Structured Camera Distance: close-up view
+- Camera Rationale: Artwork perfectly centered on a clean white wall, minimalist bench in the foreground.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+Spacious contemporary art gallery with smooth white walls, polished concrete floor, and high ceilings. Bright, even gallery lighting with subtle spotlights illuminating the artwork. Front view, close-up view. An elegant standing male figure 1.80m, clad in a dark tailored suit, stands in front of the artwork at a respectful viewing distance, hands behind his back. The artwork in the image attached is the final artwork to be showcased, not an inspiration image, and must not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the artwork in the attached image. Preserve the artwork exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, brushstrokes, marks, symbols, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, human figure, lighting, wall, architecture, furniture, and atmosphere are to be generated or modified.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle, empty room, no human figure, artwork alone without human scale, deformed hands, unrealistic anatomy
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

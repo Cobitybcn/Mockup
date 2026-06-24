@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 220 cm wide × 180 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Mid-Century Modern Harmony
+- Purpose: Integrating contemporary art into classic, well-designed residential spaces
+- Scene Description: A Mid-century modern living room with Stylish, balanced, retro-chic, inviting atmosphere. Materials: Warm off-white wall, Teak wood sideboard (classic MCM design), Geometric patterned rug (subtle), Velvet upholstered armchair (vintage style)
+- Lighting: Soft, diffused daylight, with a vintage floor lamp providing warm accent light
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The three-quarter left view complements the angularity and clean lines often found in Mid-Century Modern design, allowing the artwork to integrate seamlessly. The close-up ensures the artwork remains the dominant feature, while glimpses of iconic MCM furniture establish a stylish, harmonious environment, showcasing its broad appeal to design-conscious collectors.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+Maurizio Valch 'Sin título' (220x180cm) hanging on a warm off-white wall in a mid-century modern living room, classic teak wood sideboard directly below, geometric patterned rug (subtle design), velvet upholstered armchair (vintage style) partially visible, soft diffused daylight, vintage floor lamp providing warm accent light, three-quarter left view, close-up view, stylish, balanced, retro-chic, harmonious design.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+Cluttered, messy, futuristic, rustic, industrial, bad lighting, generic, pixelated, people.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 160 cm wide × 160 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Modern Townhouse Study
+- Purpose: Integrating the artwork as a focal point in a sophisticated residential or executive environment.
+- Scene Description: A Luxurious townhouse study with Sober, intelligent, contemplative atmosphere. Materials: Dark wood paneled walls, Leather armchair, Subtle metallic accents
+- Lighting: Warm, ambient light with soft accents on the artwork
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult hispanic man, 1.80 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A three-quarter left view provides depth and context to the artwork within the study, showcasing its presence on a substantial wall. The close-up distance ensures the viewer focuses on the artwork while appreciating its harmonious integration into a high-end interior.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+An abstract acrylic painting by Maurizio Valch, 160x160cm, with vibrant teal and red impasto spiral on a dark reddish-brown textured background, mounted on a dark wood-paneled wall in a luxurious townhouse study. A leather armchair is subtly visible. The atmosphere is sober and intelligent, with warm ambient light and soft accents on the artwork. A standing male figure (1.80m) is present, observing the painting. three-quarter left view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interiors, ordinary bedrooms, visual noise, logos, visible text, letters, numbers, labels, posters, captions, dimension lines, ruler marks, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the colors of the artwork, changing the composition of the artwork, wide room views, distant views, aerial views, extreme angles, panoramic compositions
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

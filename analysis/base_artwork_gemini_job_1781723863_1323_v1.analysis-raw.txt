@@ -1,0 +1,492 @@
+```json
+{
+  "artwork_analysis": {
+    "visual_language": [
+      "expressive",
+      "figurative",
+      "symbolic",
+      "modern portraiture",
+      "cubist influence"
+    ],
+    "emotional_energy": [
+      "intense",
+      "profound",
+      "introspective",
+      "contemplative"
+    ],
+    "dominant_colors": [
+      "deep blue",
+      "beige",
+      "flesh tones",
+      "dark brown",
+      "black"
+    ],
+    "secondary_colors": [
+      "teal",
+      "ochre",
+      "subtle grey"
+    ],
+    "visible_elements": [
+      "eyes",
+      "nose",
+      "lips",
+      "face"
+    ],
+    "visible_symbols": [
+      "divided face",
+      "piercing gaze"
+    ],
+    "color_temperature": "balanced cool and warm",
+    "contrast_level": "high",
+    "composition_type": "bifurcated portrait",
+    "balance": "symmetrical with subtle asymmetry",
+    "visual_tension": "high",
+    "density": "high in the central figure",
+    "silence": "contemplative",
+    "main_focal_point": "the eyes",
+    "movement": "static yet internally dynamic",
+    "depth": "moderate",
+    "negative_space": "minimal, dark background acts as space",
+    "verticality_or_horizontality": "strong horizontality due to format, vertical division of face",
+    "internal_organization": "a central vertical line divides a close-up facial rendering",
+    "rhythm": "created by the repetition and contrast of facial halves",
+    "surface": "impasto, visible brushstrokes",
+    "brushstroke": "bold, expressive, painterly",
+    "gesture": "direct, confident",
+    "layers": "apparent layering of paint",
+    "material_presence": "strong, tactile",
+    "sense_of_depth_or_flatness": "more depth than flatness",
+    "format_and_scale": {
+      "width_cm": "160",
+      "height_cm": "120",
+      "depth_cm": "5",
+      "orientation": "horizontal",
+      "scale_impact": "commanding, immersive, impactful",
+      "wall_presence": "significant, dominant",
+      "monumentality_or_intimacy": "monumental yet intimate",
+      "spatial_effect": "transforms and centers the space"
+    },
+    "spatial_presence": "dominant, immersive",
+    "visual_atmosphere": "intense, enigmatic, contemplative, soulful",
+    "artwork_function": "statement piece, focal point",
+    "suggested_audience": [
+      "art collectors",
+      "interior designers",
+      "contemporary art enthusiasts"
+    ],
+    "audience_profile": {
+      "primary": "discerning collectors of contemporary art",
+      "secondary": "interior designers for high-end projects",
+      "buyer_profile": "cultured, appreciative of psychological depth and expressive technique",
+      "collector_type": "contemporary art, figurative, expressive art",
+      "interior_design_relevance": "ideal for spaces requiring a strong visual anchor and intellectual depth",
+      "gallery_potential": "high, for galleries specializing in modern and contemporary figurative works"
+    },
+    "commercial_positioning": "high-value, impactful statement piece",
+    "one_line_curatorial_read": "A powerful, bifurcated portrait by Maurizio Valch exploring the duality of perception through expressive brushwork and a piercing gaze.",
+    "style_summary": "Expressive figurative portraiture with modern and symbolic undertones.",
+    "artist_profile_relation": {
+      "relevant_statement_connection": "N/A - no artist statement provided.",
+      "relevant_visual_language_connection": "The artwork itself defines Maurizio Valch's visual language in this instance as expressive figurative, with a focus on dramatic portraiture and a strong use of line and color to convey emotion.",
+      "relevant_symbol_connection": "N/A - no recurring symbols/motifs provided.",
+      "relevant_atmosphere_connection": "The work's intense and contemplative atmosphere suggests Maurizio Valch's preferred atmospheres may gravitate towards profound human experience and psychological depth."
+    },
+    "seasonal_strategy": {
+      "primary_season": "neutral"
+    },
+    "publishing_metadata": {
+      "suggested_titles": [
+        {
+          "title": "Dual Gaze",
+          "subtitle": "A Split Vision of the Inner Self",
+          "short_description": "An intense, horizontally oriented portrait by Maurizio Valch, featuring a bifurcated face with piercing blue eyes, rendered in expressive brushstrokes and a rich palette of blues, beiges, and dark tones.",
+          "curatorial_description": "Maurizio Valch's 'Dual Gaze' presents a compelling study of identity through a split, intimate portrait. The composition, divided by a central vertical line, reveals two subtly distinct halves of a face, each contributing to a collective, intense stare. The powerful blue eyes act as focal points, drawing the viewer into a profound contemplation of perception and inner complexity.",
+          "commercial_description": "A striking horizontal artwork, 'Dual Gaze' by Maurizio Valch offers a sophisticated focal point for any discerning space. Its generous dimensions and dramatic visual presence make it an ideal statement piece, perfect for collectors seeking expressive contemporary portraiture with emotional depth. The rich textures and intense palette ensure a captivating presence."
+        },
+        {
+          "title": "Unveiling Horizons",
+          "subtitle": "The Contemplative Divide",
+          "short_description": "Maurizio Valch's large-scale expressive portrait, 'Unveiling Horizons', features a face divided yet unified by a profound, direct gaze, painted with bold gestures and a stark color contrast.",
+          "curatorial_description": "In 'Unveiling Horizons', Maurizio Valch crafts an image of profound introspection. The artwork's horizontal expanse mirrors the breadth of human experience, while the central division of the face suggests a dialogue between visible and hidden aspects of the self. The deliberate brushwork and the deep, soulful eyes invite an extended moment of contemplation on identity and emotional landscapes.",
+          "commercial_description": "This commanding artwork, 'Unveiling Horizons' by Maurizio Valch, is a testament to the power of expressive figuration. Its considerable scale and intense gaze create an immersive experience, making it a pivotal acquisition for collectors aiming to enhance their environment with art that sparks thought and conversation. The nuanced color scheme and palpable texture lend it a timeless elegance."
+        },
+        {
+          "title": "Silent Split",
+          "subtitle": "Dialogue of the Soul",
+          "short_description": "A large, horizontally formatted painting by Maurizio Valch depicting a fragmented yet unified face with intense blue eyes, characterized by strong lines and a muted, earthy color palette.",
+          "curatorial_description": "'Silent Split' by Maurizio Valch explores the multifaceted nature of human emotion through a fragmented yet cohesive portrait. The artwork’s composition, with its pronounced central division and direct gaze, creates a powerful tension, suggesting an internal dialogue or a duality of presence. The textured surface and considered color choices deepen the work's emotional resonance and visual impact.",
+          "commercial_description": "Maurizio Valch’s 'Silent Split' is an exceptional piece of contemporary art, designed to command attention in a refined setting. Its powerful scale and expressive qualities make it perfect for a collector's salon or a prominent wall in a sophisticated interior. The deep blue eyes provide a captivating contrast to the earthy skin tones, ensuring its allure and lasting impression."
+        }
+      ],
+      "catawiki_listing": {
+        "recommended_title": "Dual Gaze",
+        "alternative_titles": [
+          "Unveiling Horizons",
+          "Silent Split"
+        ],
+        "subtitle": "Original artwork with expressive figurative portraiture, split face, and intense blue eyes",
+        "short_description": "An intense, large-scale horizontal portrait by Maurizio Valch, depicting a bifurcated face with piercing blue eyes and expressive brushstrokes.",
+        "long_description": "This captivating horizontal composition by Maurizio Valch presents a powerful, close-up portrait of a bifurcated face. The artwork is dominated by a pair of intense blue eyes, which serve as the primary focal points, drawing the viewer into a profound gaze. A prominent vertical line bisects the face, suggesting duality or introspection, while the surrounding flesh tones, rendered in a palette of beiges and subtle browns, contrast with the dark background.\n\nVisible, confident brushstrokes create a textured surface, lending a raw and immediate quality to the piece. The interplay of cool blues and warm skin tones, alongside deep shadows, builds a sense of moderate depth and strong visual tension. The overall atmosphere is one of contemplative intensity, inviting a deep engagement with the subject's emotional landscape. The substantial dimensions (160 cm wide x 120 cm high x 5 cm deep) ensure a monumental presence, making it a significant statement artwork for any space.\n\nThe piece is in excellent condition, with no damage or restorations.\nThe artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+        "technical_details": "Maurizio Valch, Dual Gaze, 160 x 120 x 5 cm.",
+        "condition_statement": "The piece is in excellent condition, with no damage or restorations.",
+        "shipping_statement": "The artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "figurative painting",
+          "expressive portrait",
+          "contemporary art",
+          "blue eyes art",
+          "split face art",
+          "large abstract portrait",
+          "modern art",
+          "intense gaze painting"
+        ],
+        "tags": [
+          "figurative",
+          "portrait",
+          "expressive",
+          "contemporary",
+          "blue",
+          "human face",
+          "gaze",
+          "duality",
+          "large scale",
+          "modern"
+        ]
+      },
+      "descriptions": {
+        "poetic_focus": "Maurizio Valch's 'Dual Gaze' peers from the canvas with a soulful intensity, its divided visage a mirror to the complexities within. The deep blue pools of the eyes hold silent narratives, drawing the viewer into a profound, almost mystical dialogue with the self. Each brushstroke, a whisper of emotion, builds a landscape of inner experience, a contemplative journey across a split horizon.",
+        "formal_focus": "This horizontal artwork, 'Dual Gaze' by Maurizio Valch, is structurally anchored by a pronounced central vertical division that bisects a close-up facial rendering. The composition is highly balanced, yet imbued with a subtle asymmetry that adds visual dynamism. Dominant cool blue hues of the eyes provide a striking contrast to the warm, earthy skin tones, while expressive impasto brushwork builds textural depth and emphasizes the inherent materiality of the paint.",
+        "commercial_focus": "An exceptional statement piece, Maurizio Valch's 'Dual Gaze' offers significant visual impact and intellectual depth, making it an ideal acquisition for sophisticated collectors. Its monumental 160x120 cm dimensions ensure a commanding presence, perfect for anchoring a modern living space, a refined corporate lobby, or a gallery wall. The captivating gaze and masterfully applied texture elevate any interior, promising enduring aesthetic value."
+      },
+      "seo_keywords": [
+        "Maurizio Valch art",
+        "expressive portraiture",
+        "contemporary figurative painting",
+        "large format art",
+        "blue eyes painting",
+        "divided face artwork",
+        "modern art original",
+        "collector grade art",
+        "statement art piece"
+      ],
+      "seo_tags": [
+        "Maurizio Valch",
+        "portrait",
+        "figurative",
+        "expressive",
+        "contemporary",
+        "blue eyes",
+        "large painting",
+        "modern",
+        "art",
+        "collector"
+      ],
+      "marketplace_title": "Maurizio Valch - Dual Gaze - Expressive Divided Portrait, Large Format",
+      "marketplace_short_description": "An intense, large-scale horizontal portrait by Maurizio Valch, featuring a bifurcated face with piercing blue eyes and expressive brushstrokes.",
+      "marketplace_long_description": "This captivating horizontal composition by Maurizio Valch presents a powerful, close-up portrait of a bifurcated face. The artwork is dominated by a pair of intense blue eyes, which serve as the primary focal points, drawing the viewer into a profound gaze. A prominent vertical line bisects the face, suggesting duality or introspection, while the surrounding flesh tones, rendered in a palette of beiges and subtle browns, contrast with the dark background.\n\nVisible, confident brushstrokes create a textured surface, lending a raw and immediate quality to the piece. The interplay of cool blues and warm skin tones, alongside deep shadows, builds a sense of moderate depth and strong visual tension. The overall atmosphere is one of contemplative intensity, inviting a deep engagement with the subject's emotional landscape. The substantial dimensions (160 cm wide x 120 cm high x 5 cm deep) ensure a monumental presence, making it a significant statement artwork for any space. This piece is suitable for discerning collectors seeking a profound and visually impactful work of contemporary figurative art.",
+      "pinterest_boards": [
+        {
+          "board_name": "Maurizio Valch Art - Expressive Portraits",
+          "pin_title": "Maurizio Valch - Dual Gaze | Intense Expressive Portrait",
+          "pin_description": "Discover Maurizio Valch's 'Dual Gaze,' a powerful 160x120 cm expressive portrait with piercing blue eyes and a fascinating bifurcated composition. Ideal for contemporary art collectors and modern interiors. #MaurizioValch #ExpressiveArt #ContemporaryPortrait #BlueEyesArt #LargeArt #ModernInterior #ArtCollector #FigurativeArt",
+          "alt_text": "Large horizontal painting by Maurizio Valch showing a divided face with intense blue eyes and strong brushstrokes, titled Dual Gaze.",
+          "seo_keywords": [
+            "Maurizio Valch",
+            "expressive art",
+            "contemporary portrait",
+            "large scale painting",
+            "blue eyes art",
+            "modern decor",
+            "art for collectors"
+          ],
+          "hashtags": [
+            "#MaurizioValch",
+            "#ExpressiveArt",
+            "#ContemporaryPortrait",
+            "#BlueEyesArt",
+            "#LargeArt",
+            "#ModernInterior",
+            "#ArtCollector",
+            "#FigurativeArt",
+            "#StatementPiece"
+          ]
+        }
+      ]
+    }
+  },
+  "recommended_number_of_contexts": "6",
+  "contextual_proposals": [
+    {
+      "context_name": "Gallery Echoes",
+      "context_role": "Primary display for curatorial impact",
+      "space_type": "professional art gallery",
+      "atmosphere": "clean, contemplative, refined",
+      "materials": [
+        "polished concrete floor",
+        "white gallery walls",
+        "natural wood details"
+      ],
+      "lighting": "focused gallery track lighting, soft ambient daylight",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A direct front view emphasizes the artwork's symmetrical central division and the piercing direct gaze, ensuring maximum visual fidelity and formal presentation. The close-up view keeps the artwork dominant, showcasing its texture and scale in a classic gallery setting.",
+      "human_presence": "none",
+      "curatorial_reason": "Highlights the artwork's formal qualities, compositional strength, and the direct confrontational aspect of the gaze, typical for a primary gallery display.",
+      "commercial_reason": "Presents the artwork in a professional, high-value context, appealing to serious collectors and institutions by showcasing its museum-like presentation potential.",
+      "mockup_prompt": "A pristine professional art gallery interior, white walls, polished concrete floor, focused gallery track lighting illuminating a large Maurizio Valch artwork 'Dual Gaze' on the wall. The camera is directly in front of the artwork, showing just enough of the surrounding gallery space to suggest context, close-up view, sophisticated, clean lines.",
+      "negative_prompt": "cluttered, residential, cheap materials, blurry, busy background, unrefined, generic, empty white room",
+      "pinterest_marketing": {
+        "board_suggestion": "Contemporary Gallery Art",
+        "pin_title": "Maurizio Valch - Dual Gaze in a Gallery Setting",
+        "pin_description": "Experience the impactful presence of Maurizio Valch's 'Dual Gaze' within a professional gallery environment. This large-scale expressive portrait, with its intense gaze, is perfectly suited for a curated art collection. #ArtGallery #MaurizioValch #FigurativePainting #GalleryArt #ContemporaryCollection #StatementArt",
+        "alt_text": "Maurizio Valch's Dual Gaze, a large expressive portrait, displayed on a white wall in a modern art gallery with polished concrete floors.",
+        "seo_keywords": [
+          "art gallery",
+          "Maurizio Valch",
+          "contemporary art",
+          "expressive portrait",
+          "museum quality",
+          "fine art",
+          "gallery exhibition"
+        ],
+        "hashtags": [
+          "#ArtGallery",
+          "#MaurizioValch",
+          "#FigurativePainting",
+          "#GalleryArt",
+          "#ContemporaryCollection",
+          "#StatementArt",
+          "#ModernArt"
+        ]
+      }
+    },
+    {
+      "context_name": "Collector's Den Threshold",
+      "context_role": "Integration into a sophisticated personal collection",
+      "space_type": "collectors’ room",
+      "atmosphere": "intimate, discerning, richly textured",
+      "materials": [
+        "dark wood paneling",
+        "velvet armchair",
+        "subtle brass accents",
+        "warm rug"
+      ],
+      "lighting": "soft, warm ambient light from a lamp, subtle natural light",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter left view adds depth and perspective, integrating the artwork into the rich context of a collector's private space. The close-up view ensures the artwork's details are prominent while hints of the luxurious surroundings frame its presence, enhancing its commercial appeal to private buyers.",
+      "human_presence": "optional standing male figure 1.80m",
+      "curatorial_reason": "Demonstrates the artwork's ability to command presence and contribute to the cultivated atmosphere of a personal collection, inviting prolonged engagement.",
+      "commercial_reason": "Positions the artwork as a valuable acquisition for private collectors, highlighting its suitability for sophisticated residential interiors and its ability to co-exist with other curated items.",
+      "mockup_prompt": "A warm and richly textured collector's room, dimly lit by a stylish floor lamp casting a glow, with dark wood paneling and a luxurious velvet armchair partially visible. Maurizio Valch's 'Dual Gaze' is prominently displayed on the wall, captured from a three-quarter left view. An optional standing male figure (1.80m, sophisticated attire) stands admiring the art. Close-up view, discerning, elegant.",
+      "negative_prompt": "bright, stark, minimalist, empty, generic, cheap furniture, harsh lighting, office, messy",
+      "pinterest_marketing": {
+        "board_suggestion": "Luxury Home Art Collection",
+        "pin_title": "Maurizio Valch - Dual Gaze | Art for Discerning Collectors",
+        "pin_description": "Elevate your private collection with Maurizio Valch's 'Dual Gaze.' This powerful portrait enriches a sophisticated collector's room, blending seamlessly with luxurious textures and warm lighting. A true statement for the discerning eye. #ArtCollection #LuxuryHome #MaurizioValch #CollectorLife #FineArt #InteriorDesignGoals #ExclusiveArt",
+        "alt_text": "A sophisticated male figure standing in a warmly lit collector's room, admiring Maurizio Valch's large expressive portrait 'Dual Gaze' on a dark wood-paneled wall, seen from a three-quarter left angle.",
+        "seo_keywords": [
+          "collector's art",
+          "luxury interior",
+          "Maurizio Valch",
+          "high end art",
+          "private collection",
+          "home gallery",
+          "statement painting"
+        ],
+        "hashtags": [
+          "#ArtCollection",
+          "#LuxuryHome",
+          "#MaurizioValch",
+          "#CollectorLife",
+          "#FineArt",
+          "#InteriorDesignGoals",
+          "#ExclusiveArt",
+          "#ResidentialArt"
+        ]
+      }
+    },
+    {
+      "context_name": "Architectural Serenity",
+      "context_role": "Integrating art into minimalist, modern architecture",
+      "space_type": "design studio",
+      "atmosphere": "minimalist, bright, expansive",
+      "materials": [
+        "light concrete walls",
+        "large glass windows",
+        "blonde wood flooring"
+      ],
+      "lighting": "abundant natural daylight, soft diffused light",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter right view allows for the inclusion of architectural elements like a large window, demonstrating the artwork's harmony with modern, expansive spaces. The close-up view keeps the artwork central, highlighting its ability to be a focal point even in a bright, architecturally significant environment.",
+      "human_presence": "none",
+      "curatorial_reason": "Showcases the artwork's versatility and strong aesthetic impact within contemporary, architecturally driven environments, emphasizing its modernist appeal.",
+      "commercial_reason": "Appeals to architects, interior designers, and clients seeking art that complements and enhances cutting-edge minimalist or industrial-chic design schemes.",
+      "mockup_prompt": "A contemporary design studio with minimalist aesthetics, featuring light concrete walls, large floor-to-ceiling glass windows allowing ample natural light, and blonde wood flooring. Maurizio Valch's 'Dual Gaze' is mounted on a concrete wall, viewed from a three-quarter right angle, close-up view. The space feels serene and sophisticated.",
+      "negative_prompt": "ornate, cluttered, dark, traditional, busy patterns, old building, uninspired",
+      "pinterest_marketing": {
+        "board_suggestion": "Modern Art & Architectural Interiors",
+        "pin_title": "Maurizio Valch's Dual Gaze in a Minimalist Design Studio",
+        "pin_description": "See how Maurizio Valch's 'Dual Gaze' transforms a minimalist design studio. Its expressive power creates a dynamic focal point against clean architectural lines. Perfect for contemporary design projects. #ModernDesign #ArchitecturalArt #MaurizioValch #MinimalistInterior #DesignStudio #ContemporaryArt #ArtForDesigners",
+        "alt_text": "Maurizio Valch's large expressive portrait 'Dual Gaze' displayed on a light concrete wall in a bright, minimalist design studio with large windows, from a three-quarter right angle.",
+        "seo_keywords": [
+          "modern art",
+          "architectural interior",
+          "design studio art",
+          "minimalist decor",
+          "Maurizio Valch",
+          "contemporary design",
+          "art for architects"
+        ],
+        "hashtags": [
+          "#ModernDesign",
+          "#ArchitecturalArt",
+          "#MaurizioValch",
+          "#MinimalistInterior",
+          "#DesignStudio",
+          "#ContemporaryArt",
+          "#ArtForDesigners",
+          "#CleanAesthetics"
+        ]
+      }
+    },
+    {
+      "context_name": "Urban Loft Contemplation",
+      "context_role": "Adding depth and character to a residential space",
+      "space_type": "high-end residential interior",
+      "atmosphere": "urban, eclectic, sophisticated, slightly moody",
+      "materials": [
+        "exposed brick wall",
+        "dark metal accents",
+        "leather sofa",
+        "warm wood furniture"
+      ],
+      "lighting": "soft, overhead recessed lighting, ambient city light",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A front view provides a direct and strong visual anchor for the artwork against the textured backdrop of an urban loft. The close-up view emphasizes the artwork's scale and detail, demonstrating its ability to be the central artistic element in a character-rich residential setting.",
+      "human_presence": "optional standing female figure 1.55m",
+      "curatorial_reason": "Illustrates the artwork's capacity to create a focal point and introduce a contemplative mood within a modern, characterful home environment.",
+      "commercial_reason": "Targets individual buyers looking for impactful, conversation-starting art for their primary residence, emphasizing its aesthetic compatibility with diverse, sophisticated residential styles.",
+      "mockup_prompt": "A chic urban loft interior with an exposed brick wall, dark metal architectural details, and a glimpse of a stylish leather sofa. Maurizio Valch's 'Dual Gaze' hangs centrally on the brick wall, illuminated by soft recessed lighting. An optional standing female figure (1.55m, casually elegant) stands to the side, observing the artwork. Front view, close-up, eclectic, urban sophistication.",
+      "negative_prompt": "suburban, traditional, overly bright, cluttered, cheap decor, office, sterile, generic room",
+      "pinterest_marketing": {
+        "board_suggestion": "Loft Living & Statement Art",
+        "pin_title": "Urban Elegance: Maurizio Valch's Dual Gaze in a Loft",
+        "pin_description": "Transform your urban loft with the powerful 'Dual Gaze' by Maurizio Valch. This expressive portrait on an exposed brick wall creates an atmosphere of sophisticated contemplation. Ideal for modern, eclectic interiors. #UrbanLoft #StatementArt #MaurizioValch #IndustrialChic #HomeDecor #ContemporaryArt #LoftStyle",
+        "alt_text": "A standing female figure admiring Maurizio Valch's large expressive portrait 'Dual Gaze' mounted on an exposed brick wall in a chic urban loft, shown from a front view.",
+        "seo_keywords": [
+          "urban loft art",
+          "industrial chic decor",
+          "Maurizio Valch",
+          "residential art",
+          "statement painting",
+          "contemporary home",
+          "expressive art"
+        ],
+        "hashtags": [
+          "#UrbanLoft",
+          "#StatementArt",
+          "#MaurizioValch",
+          "#IndustrialChic",
+          "#HomeDecor",
+          "#ContemporaryArt",
+          "#LoftStyle",
+          "#EclecticInterior"
+        ]
+      }
+    },
+    {
+      "context_name": "Executive Dialogue Space",
+      "context_role": "Enhancing a professional environment with artistic depth",
+      "space_type": "sophisticated dining room",
+      "atmosphere": "formal, contemplative, prestigious",
+      "materials": [
+        "dark polished wood table",
+        "minimalist upholstered chairs",
+        "textured grey walls"
+      ],
+      "lighting": "subtle downlighting, large windows with diffused daylight",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter left view naturally integrates the artwork into a professional dining or meeting space, showing its potential to stimulate conversation. The close-up view keeps the focus on the artwork's intensity and scale, highlighting its suitability for prestigious commercial or executive settings.",
+      "human_presence": "none",
+      "curatorial_reason": "Positions the artwork as a conversation starter and a symbol of thoughtful design within a professional context, adding intellectual and aesthetic value.",
+      "commercial_reason": "Appeals to corporate art collectors and interior designers furnishing high-profile executive or hospitality spaces where art contributes to a distinguished atmosphere.",
+      "mockup_prompt": "A sophisticated dining room or executive meeting space with a long dark polished wood table and minimalist upholstered chairs. The textured grey wall hosts Maurizio Valch's 'Dual Gaze', lit by subtle downlighting and ambient light from large windows. Captured from a three-quarter left view, close-up, prestigious, formal, contemplative.",
+      "negative_prompt": "casual, bright office, kitchen, generic dining set, residential, cluttered, cheap, informal",
+      "pinterest_marketing": {
+        "board_suggestion": "Corporate Art & Executive Interiors",
+        "pin_title": "Maurizio Valch - Dual Gaze in a Prestigious Dining Room",
+        "pin_description": "Elevate executive spaces with Maurizio Valch's 'Dual Gaze.' This powerful expressive portrait provides a focal point of contemplation and dialogue in a sophisticated dining or meeting room. #CorporateArt #ExecutiveInterior #MaurizioValch #FineArtForBusiness #LuxuryDesign #ArtForOffices",
+        "alt_text": "Maurizio Valch's large expressive portrait 'Dual Gaze' displayed on a textured grey wall in a sophisticated dining room with a dark polished wood table, seen from a three-quarter left angle.",
+        "seo_keywords": [
+          "corporate art",
+          "executive interior design",
+          "Maurizio Valch",
+          "sophisticated dining room",
+          "art for business",
+          "luxury office decor",
+          "statement art"
+        ],
+        "hashtags": [
+          "#CorporateArt",
+          "#ExecutiveInterior",
+          "#MaurizioValch",
+          "#FineArtForBusiness",
+          "#LuxuryDesign",
+          "#ArtForOffices",
+          "#SophisticatedSpaces"
+        ]
+      }
+    },
+    {
+      "context_name": "Artist Studio Contemplation",
+      "context_role": "Authentic context showcasing artistic process and scale",
+      "space_type": "refined artist studio",
+      "atmosphere": "creative, focused, inspiring",
+      "materials": [
+        "light wooden floor",
+        "large windows",
+        "subtle art tools/materials in background"
+      ],
+      "lighting": "bright, even natural light, high ceilings",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter right view allows for a glimpse into the creative environment of an artist's studio, adding an authentic, aspirational context. The close-up view keeps the artwork's scale and detail prominent, suggesting its genesis and artistic integrity.",
+      "human_presence": "none",
+      "curatorial_reason": "Connects the artwork to its origin, emphasizing the artist's dedication and the creative journey, enriching the narrative for buyers interested in provenance and process.",
+      "commercial_reason": "Appeals to collectors who appreciate the artistic journey and the environment of creation, adding a layer of authenticity and perceived value to the artwork.",
+      "mockup_prompt": "A bright and airy refined artist studio with high ceilings, large windows providing abundant natural light, and light wooden floors. Maurizio Valch's 'Dual Gaze' is displayed prominently on a clean white wall, with subtle hints of art tools or a workstation blurred in the background. Captured from a three-quarter right view, close-up, creative, inspiring atmosphere.",
+      "negative_prompt": "messy, generic office, dark, industrial, residential, cluttered, unrefined, unfinished",
+      "pinterest_marketing": {
+        "board_suggestion": "Artistic Spaces & Studio Inspiration",
+        "pin_title": "Maurizio Valch's Dual Gaze in the Artist's Studio",
+        "pin_description": "Discover Maurizio Valch's 'Dual Gaze' in the inspiring context of an artist's studio. This large, expressive portrait reflects the creative spirit and mastery behind the work. Perfect for art lovers and creative professionals. #ArtistStudio #ArtisticProcess #MaurizioValch #CreativeSpace #FineArt #StudioVibes #ArtInspiration",
+        "alt_text": "Maurizio Valch's large expressive portrait 'Dual Gaze' displayed on a white wall in a bright artist's studio with wooden floors and natural light, seen from a three-quarter right angle.",
+        "seo_keywords": [
+          "artist studio",
+          "Maurizio Valch",
+          "art inspiration",
+          "creative space",
+          "painting studio",
+          "fine art creation",
+          "expressive art"
+        ],
+        "hashtags": [
+          "#ArtistStudio",
+          "#ArtisticProcess",
+          "#MaurizioValch",
+          "#CreativeSpace",
+          "#FineArt",
+          "#StudioVibes",
+          "#ArtInspiration",
+          "#BehindTheScenes"
+        ]
+      }
+    }
+  ]
+}
+```

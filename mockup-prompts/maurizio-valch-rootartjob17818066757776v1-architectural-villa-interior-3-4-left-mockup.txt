@@ -1,0 +1,28 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Architectural Villa Interior
+- Purpose: Integrating art with contemporary architecture
+- Scene Description: A Architect-designed villa interior with Spacious, serene, refined, natural light atmosphere. Materials: Light travertine walls, Polished concrete floor, Large glass windows, Minimalist wooden furniture
+- Lighting: Soft architectural wall wash combined with natural light from large windows
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult middle eastern woman, 1.55 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A three-quarter left view adds depth and shows the artwork's material presence in relation to the architectural elements. The horizontal orientation is complemented by the expansive wall, suggesting its integration into a modern, airy environment.
+
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

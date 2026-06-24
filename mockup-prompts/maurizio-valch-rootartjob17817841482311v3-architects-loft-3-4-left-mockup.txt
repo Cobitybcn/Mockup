@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Architect's Loft
+- Purpose: Integrating the artwork into an urban, industrially-inspired residential setting.
+- Scene Description: A High-end residential interior with Modern, sophisticated, structured atmosphere. Materials: Exposed concrete wall, Dark wood floor, Steel furniture accents
+- Lighting: Natural light from a large window to the left, casting soft shadows
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A three-quarter left view subtly reveals the canvas depth (5 cm) and the texture of the surrounding concrete, aligning with the artwork's structured yet expressive nature. The close-up shot focuses on the artwork's material presence and its bold color blocks.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A sophisticated architect's loft with an exposed concrete wall and dark wood floor. Natural light streams in from a large window on the left, creating soft shadows. The artwork hangs prominently on the concrete wall. three-quarter left view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

@@ -1,0 +1,33 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Museum Gallery Display
+- Purpose: Institutional or Formal Exhibition
+- Scene Description: A contemporary art museum gallery with Formal, appreciative, serene atmosphere. Materials: Subtly textured pale gray wall, polished concrete floor, minimalist plinths (out of frame)
+- Lighting: Museum-grade spotlights with warmth, creating soft shadows
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult hispanic man, 1.80 meters tall.
+
+- Structured Camera View: front view
+- Structured Camera Distance: close-up view
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A visitor is caught mid-thought in a contemporary art museum gallery, having slowed without meaning to, drawn by the artwork's presence amidst a larger collection, alone with the piece for a moment. The gallery is engineered for art, with a subtly textured pale gray wall and a polished concrete floor. Museum-grade spotlights with warmth highlight the artwork's texture and color, creating soft shadows. The artwork is presented from a front view, close-up. An elegant standing male figure 1.80m, in gallery-opening attire, stands in side profile, attentive toward the artwork. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

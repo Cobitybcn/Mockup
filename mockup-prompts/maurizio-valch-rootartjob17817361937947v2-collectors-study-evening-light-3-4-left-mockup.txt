@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 120 cm wide × 120 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Collector's Study, Evening Light
+- Purpose: Private collection, personal reflection.
+- Scene Description: A Elegant, wood-paneled home study or library. with Sophisticated, intellectual, warm, contemplative. atmosphere. Materials: Dark wood paneling, Leather armchair, Brass lamp, Diffused natural light
+- Lighting: Soft, indirect natural light from the left, complemented by a warm, ambient lamp.
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: Three-quarter left view provides depth, showing the artwork integrated into a rich, cultivated private space, while maintaining its central importance and allowing the texture to catch the ambient light from the left.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+An elegant home study featuring dark wood paneling, a vintage leather armchair, and a classic brass lamp. Diffused natural light enters from a large window on the left. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Camera: three-quarter left view, close-up view.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+Modern furniture, bright colors, clutter, office supplies, harsh lighting, cold atmosphere.
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

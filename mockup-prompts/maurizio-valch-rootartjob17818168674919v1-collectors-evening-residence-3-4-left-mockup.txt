@@ -1,0 +1,31 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Collector's Evening Residence
+- Purpose: private viewing
+- Scene Description: A private collector residence at evening with warm, intimate, contemplative atmosphere. Materials: dark wood paneling, subtle textured wallpaper, bronze accents, polished concrete floor
+- Lighting: warm evening gallery lighting
+- Time of Day: night
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult white man, 1.80 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The three-quarter left view showcases the artwork's depth and texture against the warm, sophisticated backdrop, with the lighting creating an intimate atmosphere that highlights its rich red tones. The angle allows for a subtle view of the figure while keeping the artwork dominant.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A warm, intimate private collector residence at evening. The artwork hangs on a dark wood paneling wall with subtle textured wallpaper, featuring bronze accents and a polished concrete floor. Warm evening gallery lighting illuminates the artwork. three-quarter left view, close-up view. An elegant standing male figure 1.80m, in a dark tailored suit, stands with hands relaxed, observing the artwork from a respectful distance. The artwork in the attached image is the final artwork to be presented, not an inspiration image, and should not be repainted, redesigned, enhanced, simplified, extended, cropped, or reinterpreted. Never modify the artwork in the attached image. Preserve the artwork exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, brushstroke, marks, symbols, and visual content. The artwork must remain completely visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Only the surrounding environment, the human figure, the lighting, the wall, the architecture, the furniture, and the atmosphere can be generated or modified.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

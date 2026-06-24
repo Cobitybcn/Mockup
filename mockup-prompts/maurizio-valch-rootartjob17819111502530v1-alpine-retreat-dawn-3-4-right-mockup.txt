@@ -1,0 +1,30 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 160 cm wide × 140 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Alpine Retreat Dawn
+- Purpose: Minimalist Sanctuary Centerpiece
+- Scene Description: A Nordic or Alpine architect-designed retreat with Serene, minimalist, natural, expansive atmosphere. Materials: Pale ash wood paneling, polished grey stone floor, large picture windows, light wood paneling wall
+- Lighting: Soft, diffused morning light from large windows, supplemented by subtle integrated ambient light
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult middle eastern woman, 1.55 meters tall.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A female figure, in refined minimalist clothing, stands by the artwork in a quiet moment of reflection, looking out at the serene landscape from an Alpine architect-designed retreat. The interior features pale ash wood paneling on the walls, a polished grey stone floor, and large picture windows framing a mountain view. The wall behind the artwork is a smooth, light wood paneling. Soft, diffused morning light streams in from the large windows, supplemented by subtle integrated ambient lighting. three-quarter right view. close-up view. An elegant standing female figure 1.55m stands to the right of the artwork, with a calm attention toward the piece and the view beyond. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la wall y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

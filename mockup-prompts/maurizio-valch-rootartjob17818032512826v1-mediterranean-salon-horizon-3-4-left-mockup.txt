@@ -1,0 +1,31 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Mediterranean Salon Horizon
+- Purpose: Architectural integration, aesthetic centerpiece
+- Scene Description: A Spacious Mediterranean villa salon with Serene, expansive, sun-drenched atmosphere. Materials: Warm, aged plaster walls, Light stone flooring, Linen curtains, Minimalist wooden furniture
+- Lighting: Soft, bright late afternoon Mediterranean light, creating gentle shadows.
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult middle eastern woman, 1.55 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The three-quarter left view adds depth and shows the artwork's physical presence in a spacious room. The soft Mediterranean light emphasizes the muted greens and the horizon-like divisions, connecting the artwork to the architectural environment's natural light.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A spacious salon in a Mediterranean villa, featuring warm, aged plaster walls and light stone flooring. The artwork is centered on a prominent wall. Soft, bright late afternoon Mediterranean light filters into the room, casting gentle shadows. An elegant standing female figure, 1.55m, in a long elegant dress, stands at a respectful distance to the left, observing the artwork. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

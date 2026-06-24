@@ -1,0 +1,596 @@
+{
+    "artwork_analysis": {
+        "visual_language": [
+            "Expressive Figurative",
+            "Cubist-influenced",
+            "Abstract Portraiture",
+            "Dynamic",
+            "Geometric (subtle)"
+        ],
+        "emotional_energy": [
+            "Intense",
+            "Contemplative",
+            "Enigmatic",
+            "Profound",
+            "Dramatic",
+            "Dualistic"
+        ],
+        "dominant_colors": [
+            "Deep Black",
+            "Ochre/Tan",
+            "Stark White",
+            "Teal Blue",
+            "Deep Indigo Blue"
+        ],
+        "secondary_colors": [
+            "Muted Purple",
+            "Rose Pink (around eye)",
+            "Light Blue (iris detail)"
+        ],
+        "visible_elements": [
+            "Two large eyes",
+            "Nose",
+            "Mouth/Lips (implied)",
+            "Stylized facial features",
+            "Fragmented planes"
+        ],
+        "visible_symbols": [
+            "Eyes (windows to soul, observation)",
+            "Divided face (duality, inner conflict/harmony, reflection)"
+        ],
+        "color_temperature": "Balanced, with interplay of cool blues/whites and warm ochres/browns",
+        "contrast_level": "High contrast, both chromatic and tonal",
+        "composition_type": "Symmetrical division, centralized portraiture, fragmented forms",
+        "balance": "Symmetrically balanced around a central vertical axis, yet dynamically unbalanced in color and implied mood",
+        "visual_tension": "High, created by the stark central division, contrasting color fields, and direct, piercing gaze",
+        "density": "High density in painterly application and visual information, yet controlled by strong outlines",
+        "silence": "A profound, introspective silence, almost a stare-down",
+        "main_focal_point": "The two large, watchful eyes, specifically the pupils",
+        "movement": "Implied movement in brushstrokes and the dynamic interplay between the two facial halves",
+        "depth": "Created by impasto, layering of paint, and volumetric rendering of facial features; not purely flat",
+        "negative_space": "Minimal, primarily the black background framing the face, contributing to the intensity",
+        "verticality_or_horizontality": "Horizontal orientation, emphasizing the breadth of the dualistic face",
+        "internal_organization": "Highly organized around a central vertical axis, with each half mirroring/contrasting the other",
+        "rhythm": "Strong, rhythmic brushstrokes and the alternating dark/light, warm/cool segments",
+        "surface": "Rough, textured, palpable",
+        "brushstroke": "Bold, thick, expressive, visible impasto",
+        "gesture": "Strong, deliberate, painterly gestures creating volumetric forms",
+        "layers": "Evident layering of thick paint, building form and texture",
+        "material_presence": "Very strong, almost sculptural due to impasto and depth of paint",
+        "sense_of_depth_or_flatness": "Combines volumetric depth in facial features with a certain flatness of abstract planes",
+        "format_and_scale": {
+            "width_cm": "220",
+            "height_cm": "180",
+            "depth_cm": "5",
+            "orientation": "horizontal",
+            "scale_impact": "Monumental and immersive, dominates the visual field",
+            "wall_presence": "Commanding and transformative, acts as a powerful focal point",
+            "monumentality_or_intimacy": "Predominantly monumental, yet invites intimate contemplation of the gaze",
+            "spatial_effect": "Can re-orient a room, making it feel more gallery-like or creating a powerful 'presence' within the space"
+        },
+        "spatial_presence": "Imposing and impactful, capable of anchoring a large space",
+        "visual_atmosphere": "Intense, mysterious, deeply contemplative, dramatic, silent, refined",
+        "artwork_function": "Statement piece, focal point, conversation starter",
+        "suggested_audience": [
+            "Contemporary art collectors",
+            "Aficionados of expressive figuration",
+            "Interior designers for modern/minimalist luxury spaces",
+            "Galleries showcasing bold modern art"
+        ],
+        "audience_profile": {
+            "primary": "Discerning collectors of contemporary art with an appreciation for bold, expressive portraiture",
+            "secondary": "Individuals and institutions seeking impactful statement pieces for sophisticated interiors",
+            "buyer_profile": "Culturally aware, design-conscious, valuing unique artistic expression and quality craftsmanship",
+            "collector_type": "Modernist, expressionist, figurative art collector",
+            "interior_design_relevance": "Exceptional for anchoring large, open-plan modern or minimalist spaces, providing a strong artistic statement",
+            "gallery_potential": "High, due to its scale, impact, and distinctive style, suitable for solo or group exhibitions focusing on contemporary figuration"
+        },
+        "commercial_positioning": "High-value contemporary art, collectible statement piece for significant private collections or public/corporate spaces",
+        "one_line_curatorial_read": "A monumental, expressive portrait exploring duality and the profound intensity of the human gaze through fragmented forms and contrasting chromatic fields.",
+        "style_summary": "Bold, expressive, cubist-influenced figurative abstraction with a strong psychological charge.",
+        "artist_profile_relation": {
+            "relevant_statement_connection": "Not provided in profile, derived from visible artwork.",
+            "relevant_visual_language_connection": "The artwork itself exemplifies Maurizio Valch's visual language: a blend of expressive figuration and cubist fragmentation, using bold lines, intense colors, and thick impasto to create a psychologically charged portrait.",
+            "relevant_symbol_connection": "Not provided in profile, derived from visible artwork.",
+            "relevant_atmosphere_connection": "The intense, contemplative, and dramatic atmosphere visible in the artwork would define a 'preferred atmosphere' for Valch's work, characterized by depth and mystery."
+        },
+        "seasonal_strategy": {
+            "primary_season": "neutral"
+        },
+        "publishing_metadata": {
+            "suggested_titles": [
+                {
+                    "title": "Dual Gaze: Chromatic Reflection",
+                    "subtitle": "A study in fragmented perception and intense observation",
+                    "short_description": "This powerful artwork presents a monumental, split face, its contrasting halves and piercing eyes inviting deep contemplation on identity and perception.",
+                    "curatorial_description": "Maurizio Valch's \"Dual Gaze: Chromatic Reflection\" masterfully employs a cubist-influenced expressive style to explore the complexities of self. The artwork's central division, bold lines, and intense chromatic palette create a profound dialogue between disparate yet conjoined elements, culminating in a gaze of unsettling clarity and depth.",
+                    "commercial_description": "A commanding statement piece, this large-scale artwork offers an arresting focal point for any sophisticated interior. Its distinctive style, rich texture, and powerful presence ensure it stands as a significant acquisition for collectors of contemporary figurative art."
+                },
+                {
+                    "title": "Silent Observer",
+                    "subtitle": "Impasto of Presence and Abstraction",
+                    "short_description": "Thick, gestural paintwork brings forth a face of quiet intensity, its monumental scale demanding a direct encounter with its silent, watchful eyes.",
+                    "curatorial_description": "Through robust impasto and a stark compositional division, \"Silent Observer\" manifests a profound sense of presence. Valch's technique builds a surface teeming with life, where each brushstroke contributes to the volumetric rendering of a fragmented visage, creating an atmosphere of deep introspection and an enduring, silent vigilance.",
+                    "commercial_description": "With its impressive dimensions and tactile surface, \"Silent Observer\" is a compelling work that lends gravitas and artistic sophistication to any space. Its unique blend of abstract and figurative elements, rendered with powerful brushwork, makes it an exceptional choice for collectors seeking art with both aesthetic impact and intellectual depth."
+                },
+                {
+                    "title": "Intersecting Planes",
+                    "subtitle": "Portrait of Inner Duality",
+                    "short_description": "Fragmented forms and a vibrant contrast of color define this striking portrait, suggesting a complex interplay of inner states.",
+                    "curatorial_description": "\"Intersecting Planes\" deconstructs the traditional portrait, presenting a face built from dynamic, angular segments and bold color fields. Valch's approach highlights a fundamental duality, where distinct halves converge at a sharp, defining line, inviting viewers to ponder the fragmented nature of identity and the synthesis of contrasting elements.",
+                    "commercial_description": "An artwork of significant visual weight and intellectual resonance, \"Intersecting Planes\" offers a distinctive aesthetic for modern environments. Its large format and intricate interplay of form and color ensure it serves as a captivating centerpiece, appealing to collectors who value innovation in contemporary figurative art."
+                }
+            ],
+            "catawiki_listing": {
+                "recommended_title": "Dual Gaze: Chromatic Reflection",
+                "alternative_titles": [
+                    "Silent Observer",
+                    "Intersecting Planes"
+                ],
+                "subtitle": "Original artwork with expressive abstraction, dualistic portraiture, and intense gaze",
+                "short_description": "This large-scale artwork by Maurizio Valch presents a monumental, divided face with piercing eyes, rendered in a bold, expressive, and cubist-influenced style. The contrasting halves and rich impasto create a powerful and contemplative presence.",
+                "long_description": "This monumental horizontal composition by Maurizio Valch features a compelling, fragmented portrait dominated by two large, expressive eyes. The face is sharply divided down the center, presenting contrasting color fields-warm ochre and deep black on one side, stark white and various blues on the other. Bold, thick brushstrokes and visible impasto create a rich, palpable surface texture, contributing to the volumetric presence of the facial features. The direct, intense gaze anchors the composition, inviting deep introspection and a dialogue about duality and perception. The interplay of cool and warm tones, alongside high chromatic and tonal contrast, generates a profound visual tension and a dramatic atmosphere.\n\nThrough this powerful work, Valch explores the complexities of identity with a style that merges expressive figuration with cubist deconstruction. The artwork's impressive scale ensures it commands attention, making it a significant focal point that transforms its environment into a space for contemplation. The strong material presence and tactile quality of the paint add an additional layer of engagement, revealing the artist's deliberate and gestural approach.\n\nThe piece is in excellent condition, with no damage or restorations.\nThe artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+                "technical_details": "Maurizio Valch, Dual Gaze: Chromatic Reflection, 220 x 180 x 5 cm.",
+                "condition_statement": "The piece is in excellent condition, with no damage or restorations.",
+                "shipping_statement": "The artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+                "seo_keywords": [
+                    "Maurizio Valch",
+                    "Contemporary Art",
+                    "Expressive Portrait",
+                    "Cubist Influence",
+                    "Abstract Figurative",
+                    "Large Scale Art",
+                    "Original Painting",
+                    "Modern Art",
+                    "Duality Art",
+                    "Intense Gaze",
+                    "Impasto",
+                    "Textured Art"
+                ],
+                "tags": [
+                    "Contemporary",
+                    "Figurative",
+                    "Abstract",
+                    "Portrait",
+                    "Expressionism",
+                    "Cubism",
+                    "Large",
+                    "Bold",
+                    "Textured",
+                    "Duality",
+                    "Maurizio Valch"
+                ]
+            },
+            "descriptions": {
+                "poetic_focus": "Within Valch's monumental canvas, a silent dialogue unfolds across a visage halved by chromatic tension. One side, warm earth and shadow; the other, cool light and deep azure, converge at the precipice of a profound, unblinking gaze. Each brushstroke is a pulse, building a textured landscape of inner reflection, where fragmented forms speak to the essential duality of existence, inviting a whispered conversation with the observer's soul.",
+                "formal_focus": "This artwork by Maurizio Valch is characterized by its monumental horizontal format, presenting a highly stylized, centrally divided portrait. The composition utilizes a stark vertical axis to bisect the facial structure, rendering each half with distinct color palettes-one in deep ochre and black, the other in cool whites and various blues. The application of thick impasto creates significant surface texture, enhancing the volumetric quality of the fragmented planes. The dominant eyes, a central focal point, exert a direct and intense visual tension, establishing a complex interplay between abstraction and figuration.",
+                "commercial_focus": "An exceptional statement piece, this large-scale work by Maurizio Valch offers a commanding presence for any discerning collection or sophisticated interior. Its powerful fusion of expressive figuration and cubist aesthetics, rendered with impressive impasto and a high-contrast palette, ensures immediate visual impact. This artwork is ideally suited for clients seeking a significant, conversation-starting piece that provides both artistic depth and a compelling aesthetic anchor to a modern living or professional space."
+            },
+            "seo_keywords": [
+                "Maurizio Valch",
+                "Contemporary Art",
+                "Expressive Portrait",
+                "Cubist Influence",
+                "Abstract Figurative",
+                "Large Scale Art",
+                "Original Painting",
+                "Modern Art",
+                "Duality Art",
+                "Intense Gaze",
+                "Impasto",
+                "Textured Art",
+                "Home Decor",
+                "Interior Design",
+                "Collector's Item"
+            ],
+            "seo_tags": [
+                "contemporaryart",
+                "figurativeart",
+                "abstractportrait",
+                "mauriziovalch",
+                "largescaleart",
+                "statementpiece",
+                "cubist",
+                "expressionism",
+                "artcollector",
+                "interiordesign"
+            ],
+            "marketplace_title": "Maurizio Valch: Dual Gaze - Monumental Abstract Expressionist Portrait",
+            "marketplace_short_description": "A powerful and large-scale (220x180cm) abstract-expressionist portrait by Maurizio Valch, featuring a dramatically divided face with an intense gaze, rich impasto, and contrasting color fields. A compelling statement piece for sophisticated interiors.",
+            "marketplace_long_description": "Immerse yourself in the profound visual dialogue of Maurizio Valch's 'Sin título', a monumental artwork (220x180cm) that redefines contemporary portraiture. This captivating piece features a face starkly divided by a central axis, with one half rendered in warm ochre and deep black, and the other in cool whites and vibrant blues. Valch's distinctive style, characterized by bold, thick impasto and expressive brushstrokes, creates a rich, tactile surface that invites close inspection. The artwork's powerful visual tension stems from its contrasting chromatic fields and the piercing, direct gaze of its stylized eyes.\n\n'Sin título' is more than a portrait; it is an exploration of duality, introspection, and the fragmented nature of identity. Its impressive scale ensures it commands any wall it graces, transforming a room into a gallery-like experience. This is an exceptional acquisition for discerning collectors of modern and contemporary figurative art, as well as interior designers seeking an impactful, conversation-starting centerpiece for high-end residential or commercial spaces.\n\nMaurizio Valch's unique blend of cubist influence and raw expressionism is evident in every layer, making this a work of significant artistic merit and enduring aesthetic appeal. Its robust material presence and dramatic atmosphere make it a truly unforgettable addition to any collection.",
+            "pinterest_boards": [
+                "Contemporary Art Masterpieces",
+                "Luxury Interior Design Ideas",
+                "Abstract Portraiture Gallery",
+                "Statement Art for Modern Homes",
+                "Maurizio Valch Art Portfolio"
+            ]
+        }
+    },
+    "recommended_number_of_contexts": 9,
+    "contextual_proposals": [
+        {
+            "context_name": "Urban Loft's Soulful Gaze",
+            "context_role": "Primary display for a statement piece in a modern, expansive setting",
+            "space_type": "High-end residential loft",
+            "atmosphere": "Contemporary, reflective, spacious",
+            "materials": [
+                "Polished concrete floor",
+                "Matte white walls",
+                "Minimalist dark wood furniture"
+            ],
+            "lighting": "Soft, diffused natural light from large windows, with subtle track lighting highlighting the artwork",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A direct front view maximizes the visual impact and symmetrical balance of the monumental artwork, showcasing its commanding presence on a clean white wall. The close-up shot emphasizes the textured brushwork and intense gaze, while just enough of the polished concrete floor and minimalist wall is visible to establish a contemporary, urban loft setting. This enhances commercial readability by presenting the artwork clearly and powerfully.",
+            "human_presence": "none",
+            "curatorial_reason": "To highlight the artwork's capacity to anchor a large, contemporary residential space, acting as a powerful focal point that defines the room's aesthetic and mood.",
+            "commercial_reason": "Showcases the artwork's appeal to urban dwellers and collectors with modern, expansive living spaces, emphasizing its statement-making quality and seamless integration into a refined, minimalist environment.",
+            "mockup_prompt": "Maurizio Valch 'Sin título' (220x180cm) mounted on a pristine white wall in a high-end urban loft, polished concrete floor, minimalist dark wood credenza barely visible, soft natural light from large windows, subtle overhead track lighting, front view, close-up view, modern, spacious, reflective, clean lines, contemporary interior design.",
+            "negative_prompt": "Clutter, messy, low quality, cheap furniture, outdated decor, poor lighting, distorted, pixelated, busy background, people, distractions.",
+            "pinterest_marketing": {
+                "board_suggestion": "Modern Art in Urban Lofts",
+                "pin_title": "Maurizio Valch: Monumental Gaze for Contemporary Living",
+                "pin_description": "Transform your urban loft with Maurizio Valch's 'Sin título', a large-scale, expressive portrait that commands attention. Its intense gaze and dynamic forms perfectly complement modern, minimalist interiors.",
+                "alt_text": "Large expressive abstract portrait by Maurizio Valch in a modern urban loft setting, front view",
+                "seo_keywords": [
+                    "urban loft art",
+                    "contemporary portraiture",
+                    "large abstract painting",
+                    "minimalist interior art",
+                    "maurizio valch",
+                    "statement art"
+                ],
+                "hashtags": [
+                    "#UrbanArt",
+                    "#ContemporaryDesign",
+                    "#LoftLiving",
+                    "#StatementPiece",
+                    "#MaurizioValch",
+                    "#AbstractPortrait"
+                ]
+            }
+        },
+        {
+            "context_name": "Architectural Stone Dialogue",
+            "context_role": "Exhibition in a sophisticated gallery setting, emphasizing texture and scale",
+            "space_type": "Professional art gallery with architectural elements",
+            "atmosphere": "Refined, contemplative, grounded",
+            "materials": [
+                "Textured natural stone wall (light grey/cream)",
+                "Smooth concrete floor",
+                "Minimalist plinth (dark metal)"
+            ],
+            "lighting": "Gallery spot lighting from above, emphasizing texture and depth of the artwork",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter left view introduces spatial depth, allowing the viewer to appreciate the artwork's physical presence and its interaction with the textured stone wall. The close-up ensures the artwork remains dominant, while the architectural stone provides a rich, grounded context, enhancing the curatorial impact. This angle also subtly reveals the artwork's depth (5cm) and robust materiality.",
+            "human_presence": "none",
+            "curatorial_reason": "To present the artwork in a gallery context that emphasizes its textural qualities and monumental scale against natural, architectural materials, suggesting a dialogue between art and structure.",
+            "commercial_reason": "Appeals to gallery owners and institutional buyers, showcasing the artwork's suitability for high-level exhibition spaces and its ability to engage with sophisticated architectural environments.",
+            "mockup_prompt": "Maurizio Valch 'Sin título' (220x180cm) prominently displayed on a textured natural stone wall in a professional art gallery, smooth concrete floor, minimalist dark metal plinth to the side, focused gallery spot lighting from above, three-quarter left view, close-up view, refined, contemplative, architectural, interplay of textures.",
+            "negative_prompt": "Cheap materials, distracting elements, poor focus, low resolution, crowded, residential, unframed, distorted.",
+            "pinterest_marketing": {
+                "board_suggestion": "Gallery & Museum Installations",
+                "pin_title": "Maurizio Valch: Monumental Art in Architectural Spaces",
+                "pin_description": "Witness the powerful presence of Maurizio Valch's 'Sin título' in a refined gallery setting. Its texture and scale make it a perfect fit for architectural stone walls, creating a profound visual dialogue.",
+                "alt_text": "Large expressive abstract portrait by Maurizio Valch in a gallery with stone walls, three-quarter left view",
+                "seo_keywords": [
+                    "art gallery installation",
+                    "architectural art",
+                    "maurizio valch",
+                    "contemporary art exhibition",
+                    "textured artwork",
+                    "large scale abstract"
+                ],
+                "hashtags": [
+                    "#GalleryArt",
+                    "#ArchitecturalDesign",
+                    "#ArtInstallation",
+                    "#MaurizioValch",
+                    "#ModernGallery"
+                ]
+            }
+        },
+        {
+            "context_name": "Sophisticated Evening Dining",
+            "context_role": "Focal point in an elegant residential dining environment, fostering conversation",
+            "space_type": "Elegant dining room in a high-end residence",
+            "atmosphere": "Warm, intimate, sophisticated, inviting conversation",
+            "materials": [
+                "Deep charcoal grey wall",
+                "Dark polished wood floor",
+                "Elegant dark wood dining table (partially visible)",
+                "Subtle metallic accents"
+            ],
+            "lighting": "Warm, ambient lighting, with focused downlighting on the artwork and soft candlelight on the table",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "The three-quarter right view offers a glimpse into a luxurious dining setting, positioning the artwork as a central, elegant focal point for social interaction. The warm lighting and rich materials complement the artwork's bold colors without overwhelming its intensity. A close-up frames the artwork and just enough of the sophisticated environment to convey warmth and intimacy, ideal for residential commercial presentation.",
+            "human_presence": "none",
+            "curatorial_reason": "To demonstrate the artwork's ability to create a sophisticated and engaging atmosphere in a private, intimate setting, elevating a functional space into an art-centric experience.",
+            "commercial_reason": "Targets private collectors and interior designers looking for a commanding yet harmonious piece for luxurious dining or entertaining areas, highlighting its role as a conversation starter and aesthetic anchor.",
+            "mockup_prompt": "Maurizio Valch 'Sin título' (220x180cm) hanging on a deep charcoal grey wall in an elegant dining room, dark polished wood floor, a section of a refined dark wood dining table with subtle metallic accents, warm ambient lighting, focused downlighting on the artwork, soft candlelight glow on the table, three-quarter right view, close-up view, sophisticated, intimate, luxurious, inviting conversation, high-end residential.",
+            "negative_prompt": "Bright, sterile, cheap decor, cluttered, generic, office, museum, bad perspective, unflattering shadows.",
+            "pinterest_marketing": {
+                "board_suggestion": "Luxury Dining Room Art",
+                "pin_title": "Elevate Your Dining Space: Maurizio Valch's Striking 'Sin título'",
+                "pin_description": "Introduce a layer of sophistication to your dining room with Maurizio Valch's impactful abstract portrait. Its rich textures and compelling gaze make every meal a cultural experience. Perfect for elegant, intimate settings.",
+                "alt_text": "Large abstract portrait by Maurizio Valch in a luxurious dining room with warm lighting, three-quarter right view",
+                "seo_keywords": [
+                    "luxury dining art",
+                    "sophisticated home decor",
+                    "statement art dining room",
+                    "maurizio valch painting",
+                    "elegant interior design",
+                    "contemporary portrait"
+                ],
+                "hashtags": [
+                    "#LuxuryInteriors",
+                    "#DiningRoomGoals",
+                    "#ArtForHome",
+                    "#MaurizioValch",
+                    "#ElegantDecor",
+                    "#StatementArt"
+                ]
+            }
+        },
+        {
+            "context_name": "Artist's Creative Sanctuary",
+            "context_role": "Authentic representation of artwork within a refined creative environment",
+            "space_type": "Refined artist studio",
+            "atmosphere": "Inspired, authentic, raw elegance",
+            "materials": [
+                "Rough concrete wall (clean, light grey)",
+                "Unfinished wooden floorboards",
+                "Minimalist metal studio easel (nearby, out of focus)"
+            ],
+            "lighting": "Bright, even natural light from a large north-facing window, with additional soft industrial-style task lighting",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A front view provides a direct, unmediated presentation of the artwork, as if seen in its creator's space. The close-up view highlights the raw textures of the paint, connecting it to the authentic, yet refined, studio environment. The light concrete wall and unfinished wood emphasize the artwork's material presence and origin, offering a glimpse into the creative process for commercial appeal.",
+            "human_presence": "none",
+            "curatorial_reason": "To contextualize the artwork within an authentic creative space, emphasizing its inherent artistic value and the craftsmanship involved in its creation.",
+            "commercial_reason": "Appeals to collectors who value the authenticity and artistic process behind a work, suggesting a direct connection to the artist's vision and environment.",
+            "mockup_prompt": "Maurizio Valch 'Sin título' (220x180cm) proudly displayed on a rough but clean light grey concrete wall in a refined artist's studio, unfinished wide wooden floorboards, a minimalist metal studio easel partially visible and out of focus in the foreground, bright even natural light from a large north-facing window, soft industrial-style task lighting, front view, close-up view, inspired, authentic, raw elegance, creative environment.",
+            "negative_prompt": "Messy studio, clutter, bad tools, poor quality paint, unrealistic, artificial lighting, sterile, generic room.",
+            "pinterest_marketing": {
+                "board_suggestion": "Artist Studios & Creative Spaces",
+                "pin_title": "Maurizio Valch: In the Heart of Creation",
+                "pin_description": "Experience 'Sin título' by Maurizio Valch in a refined artist's studio. This mockup emphasizes the artwork's powerful textures and authenticity, connecting viewers to the creative process.",
+                "alt_text": "Large expressive abstract portrait by Maurizio Valch in a clean artist's studio with concrete walls, front view",
+                "seo_keywords": [
+                    "artist studio art",
+                    "maurizio valch artist",
+                    "creative space decor",
+                    "textured abstract",
+                    "original art studio",
+                    "artistic process"
+                ],
+                "hashtags": [
+                    "#ArtistStudio",
+                    "#CreativeProcess",
+                    "#MaurizioValch",
+                    "#ArtAndDesign",
+                    "#StudioVibes",
+                    "#AuthenticArt"
+                ]
+            }
+        },
+        {
+            "context_name": "Collector's Library Contemplation",
+            "context_role": "Enriching a private, intellectual space with a significant art piece",
+            "space_type": "Private collector's library/study",
+            "atmosphere": "Intellectual, sophisticated, reflective, quiet",
+            "materials": [
+                "Rich dark wood paneling (walnut or mahogany)",
+                "Leather armchair (classic design)",
+                "Antique brass desk lamp",
+                "Bookshelves with curated collections"
+            ],
+            "lighting": "Soft, directional reading light, warm ambient light, emphasizing contemplation",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A three-quarter left view, combined with an optional human figure, provides a crucial sense of scale and highlights the artwork's command over a space. The close-up view allows the viewer to focus on the intricate details and textures, while the rich, warm library context underscores its value to a discerning collector. The light fall on the artwork and the figure is balanced for commercial clarity.",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "To position the artwork as a significant acquisition for an intellectually inclined collector, fostering an atmosphere of deep thought and appreciation within a personal, curated space.",
+            "commercial_reason": "Targets high-net-worth collectors who appreciate art that complements and enriches a sophisticated, cultured lifestyle, emphasizing the artwork's role as a centerpiece for private contemplation and intellectual engagement.",
+            "mockup_prompt": "Maurizio Valch 'Sin título' (220x180cm) hanging on rich dark wood paneling (walnut or mahogany) in a private collector's library, luxurious leather armchair partially visible, antique brass desk lamp on a nearby table, meticulously curated bookshelves, soft directional reading light, warm ambient light, three-quarter left view, close-up view, optional standing male figure 1.80m observing the artwork from a respectful distance, intellectual, sophisticated, reflective, quiet atmosphere.",
+            "negative_prompt": "Modern furniture, bright colors, cluttered, generic office, museum, bright overhead light, sterile, low resolution, distracting elements.",
+            "pinterest_marketing": {
+                "board_suggestion": "Art for Refined Studies & Libraries",
+                "pin_title": "Maurizio Valch's 'Sin título': The Essence of Intellectual Art",
+                "pin_description": "Perfect for a private library, Maurizio Valch's monumental abstract portrait invites intellectual contemplation. Its profound gaze and rich textures resonate with a refined, scholarly atmosphere, complemented by elegant wood and leather.",
+                "alt_text": "Large expressive abstract portrait by Maurizio Valch in a dark wood paneled library with a standing male figure, three-quarter left view",
+                "seo_keywords": [
+                    "collector's art",
+                    "private library decor",
+                    "intellectual art",
+                    "maurizio valch artwork",
+                    "sophisticated study",
+                    "large scale portraiture"
+                ],
+                "hashtags": [
+                    "#CollectorLife",
+                    "#LibraryGoals",
+                    "#ArtAndBooks",
+                    "#MaurizioValch",
+                    "#RefinedInteriors",
+                    "#IntellectualArt"
+                ]
+            }
+        },
+        {
+            "context_name": "Minimalist Gallery Passage",
+            "context_role": "Showcasing monumental art in a pristine, art-focused public or private gallery space",
+            "space_type": "Elegant hallway or gallery corridor",
+            "atmosphere": "Serene, expansive, focused on art",
+            "materials": [
+                "Seamless white walls",
+                "Light grey polished concrete floor",
+                "Hidden baseboards"
+            ],
+            "lighting": "Even, bright overhead gallery lighting, no harsh shadows",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "This three-quarter right view subtly opens the space, suggesting a longer hallway while keeping the artwork central and dominant. The close-up, combined with the pure white gallery setting, focuses entirely on the artwork's form, color, and texture, maximizing its curatorial clarity and visual impact. This presents the artwork as museum-worthy and effortlessly integrated.",
+            "human_presence": "none",
+            "curatorial_reason": "To emphasize the artwork's monumental presence and clean lines within a pristine gallery environment, allowing the viewer an unobstructed, focused engagement.",
+            "commercial_reason": "Showcases the artwork's versatility for high-end gallery representation and its ability to elevate a transitional space into a significant artistic experience, appealing to curators and institutional buyers.",
+            "mockup_prompt": "Maurizio Valch 'Sin título' (220x180cm) installed on a seamless white wall in a minimalist gallery corridor, light grey polished concrete floor, hidden baseboards, bright and even overhead gallery lighting, three-quarter right view, close-up view, serene, expansive, clean, art-focused, contemporary architecture.",
+            "negative_prompt": "Clutter, distractions, dark, residential, busy patterns, old architecture, cheap walls, people.",
+            "pinterest_marketing": {
+                "board_suggestion": "Contemporary Gallery Interiors",
+                "pin_title": "Maurizio Valch: A Powerful Presence in Minimalist Galleries",
+                "pin_description": "Experience 'Sin título' by Maurizio Valch in a serene, minimalist gallery passage. Its monumental scale and compelling visual language command attention, perfectly suited for modern exhibition spaces.",
+                "alt_text": "Large expressive abstract portrait by Maurizio Valch in a minimalist white gallery hallway, three-quarter right view",
+                "seo_keywords": [
+                    "minimalist gallery art",
+                    "contemporary art corridor",
+                    "maurizio valch exhibition",
+                    "modern gallery design",
+                    "large scale art display",
+                    "clean art space"
+                ],
+                "hashtags": [
+                    "#MinimalistGallery",
+                    "#ArtCorridor",
+                    "#MaurizioValch",
+                    "#GalleryDesign",
+                    "#ContemporaryArt",
+                    "#ArtDisplay"
+                ]
+            }
+        },
+        {
+            "context_name": "Grand Hotel Lobby's Embrace",
+            "context_role": "Statement piece for a luxury public space, enhancing brand image and visitor experience",
+            "space_type": "Luxury boutique hotel lobby",
+            "atmosphere": "Grand, welcoming, sophisticated, contemporary opulence",
+            "materials": [
+                "Rich textured wall covering (subtle geometric pattern in dark neutral tone)",
+                "Marble floor with subtle veining",
+                "Designer lounge seating (partially visible, elegant fabric)",
+                "Subtle metallic lighting fixtures"
+            ],
+            "lighting": "Warm, sophisticated ambient lighting, with accent lights highlighting the artwork, soft glow from designer fixtures",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "A direct front view ensures the artwork's immediate impact and legibility, crucial for a public space like a hotel lobby. The close-up focuses on the artwork as the central aesthetic anchor, with just enough of the luxurious surroundings to convey the upscale, welcoming atmosphere. This highlights its suitability for corporate or hospitality art collections.",
+            "human_presence": "none",
+            "curatorial_reason": "To illustrate the artwork's ability to act as a grand, welcoming focal point in a high-traffic, luxury public space, setting a tone of sophistication and artistic appreciation.",
+            "commercial_reason": "Targets corporate art buyers and interior designers for luxury hospitality projects, emphasizing the artwork's enduring visual appeal and its capacity to elevate brand perception.",
+            "mockup_prompt": "Maurizio Valch 'Sin título' (220x180cm) proudly featured on a rich textured wall covering (subtle geometric pattern in dark neutral tone) in a luxury boutique hotel lobby, highly polished marble floor with subtle veining, elegant designer lounge seating (partially visible), subtle metallic lighting fixtures, warm sophisticated ambient lighting, accent lights highlighting the artwork, front view, close-up view, grand, welcoming, contemporary opulence, inviting, high-end hospitality.",
+            "negative_prompt": "Cheap lobby, generic hotel, busy patterns, bright lights, sterile, commercial clutter, poor resolution.",
+            "pinterest_marketing": {
+                "board_suggestion": "Art for Luxury Hotels & Corporate Spaces",
+                "pin_title": "Maurizio Valch: The Centerpiece of Luxury Hotel Design",
+                "pin_description": "Elevate your hotel lobby with Maurizio Valch's monumental 'Sin título'. This expressive portrait provides a sophisticated welcome, commanding attention with its powerful gaze and rich textures in a grand, opulent setting.",
+                "alt_text": "Large expressive abstract portrait by Maurizio Valch in a luxury hotel lobby, front view",
+                "seo_keywords": [
+                    "hotel lobby art",
+                    "corporate art collection",
+                    "luxury hospitality art",
+                    "maurizio valch",
+                    "grand statement piece",
+                    "designer hotel"
+                ],
+                "hashtags": [
+                    "#HotelArt",
+                    "#LuxuryDesign",
+                    "#CorporateArt",
+                    "#MaurizioValch",
+                    "#BoutiqueHotel",
+                    "#StatementLobby"
+                ]
+            }
+        },
+        {
+            "context_name": "Mid-Century Modern Harmony",
+            "context_role": "Integrating contemporary art into classic, well-designed residential spaces",
+            "space_type": "Mid-century modern living room",
+            "atmosphere": "Stylish, balanced, retro-chic, inviting",
+            "materials": [
+                "Warm off-white wall",
+                "Teak wood sideboard (classic MCM design)",
+                "Geometric patterned rug (subtle)",
+                "Velvet upholstered armchair (vintage style)"
+            ],
+            "lighting": "Soft, diffused daylight, with a vintage floor lamp providing warm accent light",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "The three-quarter left view complements the angularity and clean lines often found in Mid-Century Modern design, allowing the artwork to integrate seamlessly. The close-up ensures the artwork remains the dominant feature, while glimpses of iconic MCM furniture establish a stylish, harmonious environment, showcasing its broad appeal to design-conscious collectors.",
+            "human_presence": "none",
+            "curatorial_reason": "To illustrate the artwork's timeless appeal and its capacity to blend seamlessly with iconic design aesthetics, proving its versatility beyond purely contemporary settings.",
+            "commercial_reason": "Attracts collectors and interior designers specializing in Mid-Century Modern aesthetics, demonstrating how a contemporary artwork can enhance and update a classic design scheme.",
+            "mockup_prompt": "Maurizio Valch 'Sin título' (220x180cm) hanging on a warm off-white wall in a mid-century modern living room, classic teak wood sideboard directly below, geometric patterned rug (subtle design), velvet upholstered armchair (vintage style) partially visible, soft diffused daylight, vintage floor lamp providing warm accent light, three-quarter left view, close-up view, stylish, balanced, retro-chic, harmonious design.",
+            "negative_prompt": "Cluttered, messy, futuristic, rustic, industrial, bad lighting, generic, pixelated, people.",
+            "pinterest_marketing": {
+                "board_suggestion": "Mid-Century Modern Art & Decor",
+                "pin_title": "Maurizio Valch: A Contemporary Anchor for MCM Interiors",
+                "pin_description": "Discover how Maurizio Valch's bold 'Sin título' elevates a Mid-Century Modern living room. Its dynamic forms and intense gaze provide a perfect contemporary counterpoint to classic design aesthetics, creating a truly harmonious space.",
+                "alt_text": "Large expressive abstract portrait by Maurizio Valch in a Mid-Century Modern living room, three-quarter left view",
+                "seo_keywords": [
+                    "mid century modern art",
+                    "mcm interior design",
+                    "maurizio valch painting",
+                    "contemporary art mcm",
+                    "retro chic decor",
+                    "modern living room art"
+                ],
+                "hashtags": [
+                    "#MidCenturyModern",
+                    "#MCMDesign",
+                    "#ContemporaryArt",
+                    "#MaurizioValch",
+                    "#RetroChic",
+                    "#LivingRoomArt"
+                ]
+            }
+        },
+        {
+            "context_name": "Historic European Grandeur",
+            "context_role": "Creating a compelling contrast and dialogue between old and new in a luxurious residential setting",
+            "space_type": "Renovated historic European interior (e.g., Parisian apartment, Italian villa)",
+            "atmosphere": "Elegant, grand, sophisticated contrast, timeless",
+            "materials": [
+                "Original ornate plaster wall (painted crisp white)",
+                "Herringbone parquet flooring",
+                "Gilt console table (minimalist design)",
+                "Large arched window (blurred background)"
+            ],
+            "lighting": "Abundant natural light streaming through a large arched window, with subtle wall sconces providing evening ambiance",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "This three-quarter right view positions the artwork as a bold modern intervention within a historically rich setting. The close-up focuses on the artwork's impact, while the ornate white wall and classic parquet flooring hint at its luxurious European context. The natural light emphasizes the painting's colors and textures, showcasing its adaptability to diverse architectural styles and its ability to create compelling visual contrasts.",
+            "human_presence": "optional standing female figure 1.55m",
+            "curatorial_reason": "To illustrate the artwork's versatility and its powerful ability to create a dynamic contrast when placed within traditional, architecturally significant European spaces, fostering a dialogue between past and present.",
+            "commercial_reason": "Appeals to international collectors and designers specializing in luxury residential renovations, highlighting the artwork's capacity to serve as a contemporary anchor in grand, historic interiors.",
+            "mockup_prompt": "Maurizio Valch 'Sin título' (220x180cm) on an original ornate plaster wall (painted crisp white) in a renovated historic European apartment (e.g., Parisian apartment, Italian villa), herringbone parquet flooring, minimalist gilt console table below the artwork, large arched window with blurred background, abundant natural light, subtle wall sconces for evening ambiance, three-quarter right view, close-up view, optional standing female figure 1.55m observing the artwork from a respectful distance, elegant, grand, sophisticated contrast, timeless design.",
+            "negative_prompt": "Modern building, generic room, cluttered, dark, cheap materials, poor lighting, unrefined, ugly, distorted.",
+            "pinterest_marketing": {
+                "board_suggestion": "Art for Historic European Homes",
+                "pin_title": "Maurizio Valch: Modern Art in Historic European Grandeur",
+                "pin_description": "Witness the striking contrast of Maurizio Valch's 'Sin título' in a renovated historic European interior. Its monumental, expressive gaze creates a captivating dialogue between past and present, perfect for adding a contemporary edge to grand spaces.",
+                "alt_text": "Large expressive abstract portrait by Maurizio Valch in a historic European apartment with a female figure, three-quarter right view",
+                "seo_keywords": [
+                    "historic interior art",
+                    "european apartment decor",
+                    "maurizio valch painting",
+                    "contemporary art historic",
+                    "renovated villa art",
+                    "grand modern art"
+                ],
+                "hashtags": [
+                    "#EuropeanInteriors",
+                    "#HistoricHomes",
+                    "#ArtContrast",
+                    "#MaurizioValch",
+                    "#LuxuryRenovation",
+                    "#GrandDecor"
+                ]
+            }
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1781724972_3363_v2.png"
+}

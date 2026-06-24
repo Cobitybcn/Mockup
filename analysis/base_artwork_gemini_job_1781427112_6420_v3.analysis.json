@@ -1,153 +1,227 @@
 {
-    "suggested_titles": [
-        {
-            "title": "Scattered Gold Forms",
-            "subtitle": "An abstract composition structures an expansive ochre field, where delicate golden forms and linear marks articulate a quiet, distant landscape.",
-            "description": "Small, luminous gold forms are scattered across the expansive ochre field that dominates the upper canvas, suggesting distant, perhaps architectural, elements. A clear, subtle horizontal division separates this vast plane from the brighter yellow ground below, anchored by a thin reddish-brown line. The ochre pigment is softly brushed, creating a gentle atmospheric texture, contrasted by the precise, possibly incised, golden lines that connect the small forms. A calm, almost ancient atmosphere of quiet observation settles across the entire composition, suggesting a simplified, sun-drenched landscape. The artwork's verticality lends dignity to this measured distance, holding both sky and earth in serene balance."
+    "artwork_analysis": {
+        "visual_language": [
+            "abstract",
+            "organic",
+            "symbolic",
+            "minimalist",
+            "earthy",
+            "contemplative"
+        ],
+        "emotional_energy": [
+            "warmth",
+            "serenity",
+            "richness",
+            "grounding",
+            "subtle luxury",
+            "timelessness"
+        ],
+        "dominant_colors": [
+            "Golden Ochre",
+            "Deep Yellow",
+            "Mustard"
+        ],
+        "secondary_colors": [
+            "Metallic Gold",
+            "Dark Sienna",
+            "Umber"
+        ],
+        "color_temperature": "Warm",
+        "contrast_level": "Medium",
+        "composition_type": "Layered Horizontal",
+        "spatial_presence": "Grounded and expansive",
+        "artwork_function": "Statement piece, contemplative, investment",
+        "suggested_audience": [
+            "High-net-worth individuals",
+            "Interior designers",
+            "Art collectors",
+            "Design enthusiasts"
+        ],
+        "commercial_positioning": "Premium contemporary abstract with timeless appeal",
+        "one_line_curatorial_read": "A minimalist ode to sun-drenched horizons, infused with golden light and serene contemplation.",
+        "style_summary": "Contemporary abstract, rich textured surface, warm palette, symbolic geometry",
+        "seasonal_strategy": {
+            "primary_season": "neutral"
         },
-        {
-            "title": "Ochre Field Horizon",
-            "subtitle": "This mixed media painting presents a textured surface, where earthy pigments meet refined metallic applications to evoke a serene visual territory.",
-            "description": "An expansive field of rich ochre occupies the majority of the canvas, giving way to a brighter, more immediate yellow band at the bottom. A delicate, slightly undulating reddish-brown line marks the precise boundary between these two territories, acting as a profound horizon. The ochre surface shows subtle, varied brushwork, while small, squared gold elements and fine, luminous lines are embedded within it, catching the light. This creates an atmosphere of quiet contemplation, evoking an aerial perspective over a vast, sun-drenched plain. The canvas holds this spatial tension between the distant and the near, rendered in warm, resonant earth tones."
-        },
-        {
-            "title": "Divided Ochre Plane",
-            "subtitle": "A minimalist artwork divides the canvas into two distinct planes, creating a sense of vast horizontal distance anchored by a vibrant yellow ground.",
-            "description": "A commanding ochre plane stretches across the upper two-thirds of the artwork, establishing a powerful sense of atmospheric expanse. This broad field is sharply divided by a nuanced horizon line, below which a vibrant, layered yellow ground anchors the composition. The ochre surface reveals soft, almost ethereal brushstrokes, while metallic gold forms and linear incisions introduce points of focused light and delicate structure. The visual effect is one of serene architectural abstraction, inviting a deep, sustained gaze into its quiet distances. The artwork's proportions emphasize the layered division, giving a measured weight to each distinct territory."
+        "audience_profile": {
+            "primary": "Sophisticated art collectors and interior design clientele seeking unique, high-quality abstract works with an inviting, earthy aesthetic."
         }
-    ],
+    },
     "recommended_number_of_contexts": 6,
     "contextual_proposals": [
         {
-            "context_name": "Hôtel Particulier Salon",
-            "context_role": "Residential Collector's View",
-            "space_type": "French hôtel particulier salon",
-            "atmosphere": "Refined luxury, intimate evening contemplation",
+            "context_name": "Golden Hour Sanctuary",
+            "context_role": "Primary residential presentation",
+            "space_type": "High-end living room",
+            "atmosphere": "Elegant, inviting, softly luxurious",
             "materials": [
-                "Boiserie paneling",
-                "parquet de Versailles flooring",
-                "gilded mirror fragments",
-                "deep velvet upholstery",
-                "brass lighting elements"
+                "Light natural wood",
+                "Cream linen textiles",
+                "Subtle plaster textures"
             ],
-            "lighting": "Warm evening gallery lighting, soft lamplight from a side table",
-            "camera_view": "three-quarter right view",
-            "camera_distance": "close-up view",
-            "camera_angle_notes": "",
-            "human_presence": "elegant standing male figure 1.80m",
-            "curatorial_reason": "The artwork's warm ochre and gold tones resonate with the soft evening light, allowing the subtle metallic elements to glimmer as quiet focal points within the refined boiserie, enhancing its subtle landscape reference.",
-            "commercial_reason": "Places the artwork within a setting of established taste and history, suggesting it's a cherished object viewed in moments of private contemplation, elevating its prestige.",
-            "mockup_prompt": "An elegant standing male figure 1.80m, in a dark tailored suit, stands with one hand in his pocket, pausing after dinner, alone in the quiet of a French hôtel particulier salon, admiring the artwork. The room features exquisite boiserie paneling in a muted historical color, highly polished parquet de Versailles flooring reflecting soft light, and subtle gilded mirror fragments. Warm evening gallery lighting illuminates the artwork, complemented by soft lamplight from a brass table lamp nearby. three-quarter right view. close-up view. The elegant standing male figure, with a quiet contemplative stance, is positioned slightly in front of the artwork at a respectful viewing distance, his back three-quarter to the camera. The artwork remains the visual center. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
-            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating"
+            "lighting": "Soft natural diffused daylight",
+            "camera_angle": "Three-quarter right view",
+            "human_presence": "none",
+            "curatorial_reason": "The soft, diffused natural light and warm, organic materials of this space echo the artwork's golden hues and earthy textures, fostering an intimate connection. The refined ambiance allows the painting to radiate its inherent warmth and contemplative energy, enhancing its perception as a serene focal point.",
+            "commercial_reason": "This setup immediately positions the artwork within a high-value residential setting, demonstrating its seamless integration into a sophisticated home. It appeals directly to private collectors and interior designers seeking a unique, harmonious piece for a primary living space, encouraging envisioning it as a luxurious anchor.",
+            "prompt": "ARTWORK TECHNICAL DATA:\n- Artwork size: vertical canvas, 75 cm wide × 110 cm high × 3 cm deep.\n\nMOCKUP ART DIRECTION:\n- Scene Name: Golden Hour Sanctuary\n- Purpose: Primary residential presentation\n- Scene Description: A High-end living room with Elegant, inviting, softly luxurious atmosphere. Materials: Light natural wood, Cream linen textiles, Subtle plaster textures\n- Lighting: Soft natural diffused daylight\n- Time of Day: day\n- Placement: Hang the artwork naturally on the wall at a believable height.\n- Human Figure: Do not include any human figure.\n\nCAMERA SELECTION RULES:\nUse only front view, three-quarter left view, or three-quarter right view. Always show the artwork in near close-up, large and dominant in the frame. Do not use wide or open room views. The environment should only suggest context and must never be more important than the artwork.\n\nNEGATIVE RULES:\nDo not modify the artwork composition.\r\nDo not redraw, repaint, reinterpret, restyle, extend, crop, simplify, enhance, or alter the artwork in any way.\r\nDo not add, remove, rearrange, or invent elements inside the artwork.\r\nPreserve the original composition, proportions, orientation, and internal structure of the artwork exactly as provided.No kitchens.\r\nNo common bedrooms.\r\nNo cheap decor.\r\nNo generic stock interiors.\r\nNo logos.\r\nNo visible text.\r\nNo letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.\r\nNo shoes or footwear as scale reference.\r\nNo distorted perspective.",
+            "mapped_context": {
+                "name": "Golden Hour Sanctuary",
+                "purpose": "Primary residential presentation",
+                "scene": "A High-end living room with Elegant, inviting, softly luxurious atmosphere. Materials: Light natural wood, Cream linen textiles, Subtle plaster textures",
+                "lighting": "Soft natural diffused daylight",
+                "camera": "three-quarter view from the right, slight side angle, eye-level, natural perspective",
+                "camera_group": "three_quarter_right",
+                "time_of_day": "day",
+                "placement": "hanging",
+                "with_human": false,
+                "human_profile": null
+            }
         },
         {
-            "context_name": "Museum Gallery Viewing",
-            "context_role": "Private Exhibition Moment",
-            "space_type": "contemporary art museum gallery",
-            "atmosphere": "Controlled, refined, intellectual viewing",
+            "context_name": "Curator's Evening Study",
+            "context_role": "Collector positioning, intellectual appeal",
+            "space_type": "Private collector's study/library",
+            "atmosphere": "Refined, intellectual, contemplative",
             "materials": [
-                "Smooth, warm-toned plaster walls",
-                "polished concrete floor",
-                "minimalist bench",
-                "subtle bronze accents"
+                "Dark walnut wood",
+                "Leather upholstery",
+                "Muted textile rug",
+                "Polished stone accents"
             ],
-            "lighting": "Museum-grade spotlights with warmth, soft architectural wall wash",
-            "camera_view": "front view",
-            "camera_distance": "close-up view",
-            "camera_angle_notes": "",
-            "human_presence": "elegant standing female figure 1.55m",
-            "curatorial_reason": "The artwork's minimalist composition and vast ochre field gain a quiet authority against the clean lines of a contemporary museum space, allowing its internal structure and subtle golden forms to assert themselves without distraction.",
-            "commercial_reason": "Positions the artwork as a significant piece, worthy of institutional presentation, appealing to collectors who value artistic merit and recognition from a critical perspective.",
-            "mockup_prompt": "An elegant standing female figure 1.55m, in an elegant long dress, stands quietly, having arrived early to a private viewing room in a contemporary art museum gallery. The space features smooth, warm-toned plaster walls and a polished concrete floor, with controlled museum-grade spotlights enhancing the artwork's subtle textures and soft architectural wall wash along the wall. front view. close-up view. The elegant standing female figure, with an upright, calm attention toward the artwork, is positioned discreetly to the side of the artwork, providing scale without distraction. The artwork remains the visual center. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
-            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating"
+            "lighting": "Warm directional spot lighting, ambient evening glow",
+            "camera_angle": "Frontal view",
+            "human_presence": "none",
+            "curatorial_reason": "Placing the artwork in a richly appointed study with warm, directional lighting draws attention to its intricate textures and metallic accents, revealing deeper layers of its minimalist composition. This environment suggests a space for thoughtful appreciation and intellectual engagement, aligning with the artwork's contemplative nature.",
+            "commercial_reason": "This context elevates the artwork's perceived value by associating it with a collector's private, esteemed possessions. It appeals to buyers who view art as an investment and a subject of intellectual discourse, suggesting the piece holds significant depth worthy of detailed study and long-term appreciation within a distinguished collection.",
+            "prompt": "ARTWORK TECHNICAL DATA:\n- Artwork size: vertical canvas, 75 cm wide × 110 cm high × 3 cm deep.\n\nMOCKUP ART DIRECTION:\n- Scene Name: Curator's Evening Study\n- Purpose: Collector positioning, intellectual appeal\n- Scene Description: A Private collector's study/library with Refined, intellectual, contemplative atmosphere. Materials: Dark walnut wood, Leather upholstery, Muted textile rug, Polished stone accents\n- Lighting: Warm directional spot lighting, ambient evening glow\n- Time of Day: night\n- Placement: Hang the artwork naturally on the wall at a believable height.\n- Human Figure: Do not include any human figure.\n\nCAMERA SELECTION RULES:\nUse only front view, three-quarter left view, or three-quarter right view. Always show the artwork in near close-up, large and dominant in the frame. Do not use wide or open room views. The environment should only suggest context and must never be more important than the artwork.\n\nNEGATIVE RULES:\nDo not modify the artwork composition.\r\nDo not redraw, repaint, reinterpret, restyle, extend, crop, simplify, enhance, or alter the artwork in any way.\r\nDo not add, remove, rearrange, or invent elements inside the artwork.\r\nPreserve the original composition, proportions, orientation, and internal structure of the artwork exactly as provided.No kitchens.\r\nNo common bedrooms.\r\nNo cheap decor.\r\nNo generic stock interiors.\r\nNo logos.\r\nNo visible text.\r\nNo letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.\r\nNo shoes or footwear as scale reference.\r\nNo distorted perspective.",
+            "mapped_context": {
+                "name": "Curator's Evening Study",
+                "purpose": "Collector positioning, intellectual appeal",
+                "scene": "A Private collector's study/library with Refined, intellectual, contemplative atmosphere. Materials: Dark walnut wood, Leather upholstery, Muted textile rug, Polished stone accents",
+                "lighting": "Warm directional spot lighting, ambient evening glow",
+                "camera": "front-facing medium shot, eye-level, balanced interior context, artwork dominant in frame",
+                "camera_group": "front_medium",
+                "time_of_day": "night",
+                "placement": "hanging",
+                "with_human": false,
+                "human_profile": null
+            }
         },
         {
-            "context_name": "Renaissance Atelier",
-            "context_role": "Artist's Studio",
-            "space_type": "Renaissance/Old Master atelier",
-            "atmosphere": "Working creative space, historical contrast",
+            "context_name": "Modernist Gallery Hall",
+            "context_role": "Gallery validation, scale reference",
+            "space_type": "Clean museum/gallery space",
+            "atmosphere": "Pristine, focused, expansive",
             "materials": [
-                "Aged wood floorboards",
-                "rough plaster walls",
-                "tall leaded glass windows",
-                "ground pigments on a workbench",
-                "stacked canvases"
+                "White plaster walls",
+                "Polished concrete floor"
             ],
-            "lighting": "Natural raking light from high windows, focused beam on the easel",
-            "camera_view": "three-quarter left view",
-            "camera_distance": "close-up view",
-            "camera_angle_notes": "Artwork is on an easel, slightly angled",
-            "human_presence": "elegant standing male figure 1.80m",
-            "curatorial_reason": "The artwork's stark abstraction and warm, simplified landscape find intriguing contrast against the rich, historical chaos of a Renaissance atelier, highlighting its modern conceptual clarity amidst traditional tools and processes.",
-            "commercial_reason": "Offers a unique glimpse into the creative process and the artwork's journey from conception, suggesting conceptual depth and an appreciation for artistic evolution across eras.",
-            "mockup_prompt": "An elegant standing male figure 1.80m, wearing a linen artist's apron over simple refined clothing with rolled sleeves and subtly paint-marked hands, pauses mid-thought beside the artwork on an easel in a Renaissance/Old Master atelier. The studio is filled with natural raking light from tall leaded glass windows, illuminating aged wood floorboards and rough plaster walls. Ground pigments sit on a heavy wooden workbench, and other canvases lean against the walls. three-quarter left view. close-up view. The artwork is presented on an easel, slightly angled toward the light, with the artist standing beside it in a thoughtful, observant posture. The artwork remains the visual center. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, presentada on an easel, and visually dominant. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
-            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating, artwork wall-mounted"
+            "lighting": "Bright, even overhead gallery lighting, focused spotlight on artwork",
+            "camera_angle": "Three-quarter left view",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "The stark, minimalist 'white cube' environment allows the artwork to command full attention, emphasizing its structure, scale, and color intensity without distraction. The clean backdrop enhances the subtle interplay of gold and ochre, highlighting its artistic merit and contemporary relevance.",
+            "commercial_reason": "This mockup provides essential gallery validation, reassuring collectors and institutions of the artwork's quality and exhibition potential. The human figure offers a vital scale reference, helping potential buyers visualize the substantial presence of the 75x110cm canvas in a real-world setting, crucial for both private and institutional sales.",
+            "prompt": "ARTWORK TECHNICAL DATA:\n- Artwork size: vertical canvas, 75 cm wide × 110 cm high × 3 cm deep.\n\nMOCKUP ART DIRECTION:\n- Scene Name: Modernist Gallery Hall\n- Purpose: Gallery validation, scale reference\n- Scene Description: A Clean museum/gallery space with Pristine, focused, expansive atmosphere. Materials: White plaster walls, Polished concrete floor\n- Lighting: Bright, even overhead gallery lighting, focused spotlight on artwork\n- Time of Day: day\n- Placement: Place the artwork leaning naturally against the wall.\n- Human Figure: Include one standing adult hispanic man, 1.80 meters tall.\n\nCAMERA SELECTION RULES:\nUse only front view, three-quarter left view, or three-quarter right view. Always show the artwork in near close-up, large and dominant in the frame. Do not use wide or open room views. The environment should only suggest context and must never be more important than the artwork.\n\nNEGATIVE RULES:\nDo not modify the artwork composition.\r\nDo not redraw, repaint, reinterpret, restyle, extend, crop, simplify, enhance, or alter the artwork in any way.\r\nDo not add, remove, rearrange, or invent elements inside the artwork.\r\nPreserve the original composition, proportions, orientation, and internal structure of the artwork exactly as provided.No kitchens.\r\nNo common bedrooms.\r\nNo cheap decor.\r\nNo generic stock interiors.\r\nNo logos.\r\nNo visible text.\r\nNo letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.\r\nNo shoes or footwear as scale reference.\r\nNo distorted perspective.",
+            "mapped_context": {
+                "name": "Modernist Gallery Hall",
+                "purpose": "Gallery validation, scale reference",
+                "scene": "A Clean museum/gallery space with Pristine, focused, expansive atmosphere. Materials: White plaster walls, Polished concrete floor",
+                "lighting": "Bright, even overhead gallery lighting, focused spotlight on artwork",
+                "camera": "three-quarter view from the left, slight side angle, eye-level, natural perspective",
+                "camera_group": "three_quarter_left",
+                "time_of_day": "day",
+                "placement": "leaning",
+                "with_human": true,
+                "human_profile": "male_180"
+            }
         },
         {
-            "context_name": "Italian Palazzo Staircase Landing",
-            "context_role": "Grand Residential Statement",
-            "space_type": "Italian palazzo piano nobile",
-            "atmosphere": "Timeless grandeur, historical elegance",
+            "context_name": "Ochre Dawn Dining",
+            "context_role": "Premium residential integration, lifestyle appeal",
+            "space_type": "Elegant dining area",
+            "atmosphere": "Sophisticated, warm, inviting for social gatherings",
             "materials": [
-                "Frescoed or coffered ceilings",
-                "terrazzo or marble floors",
-                "tall shuttered windows",
-                "richly textured plaster walls",
-                "ornate wooden balustrade"
+                "Smooth plaster walls",
+                "Refined concrete flooring",
+                "Minimalist wooden dining table"
             ],
-            "lighting": "Late afternoon sun filtering through tall windows, casting long shadows",
-            "camera_view": "three-quarter right view",
-            "camera_distance": "close-up view",
-            "camera_angle_notes": "",
-            "human_presence": "elegant standing female figure 1.55m",
-            "curatorial_reason": "The artwork's horizontal division and expansive golden field echo the grand proportions and subtle light play of an Italian palazzo's tall windows, its warm hues catching the last light filtering through them, asserting a quiet monumentality within a historic space.",
-            "commercial_reason": "Demonstrates the artwork's ability to command presence in a historically significant, large-scale residential setting, appealing to collectors who envision their art as part of a lasting legacy.",
-            "mockup_prompt": "An elegant standing female figure 1.55m, in an evening dress with elegant shoes, descends a grand staircase at dusk, pausing on a landing in an Italian palazzo piano nobile. The space boasts frescoed ceilings, cool marble floors, and tall shuttered windows through which the last light of late afternoon filters. The richly textured plaster walls absorb the changing light. three-quarter right view. close-up view. The elegant standing female figure, with a measured poised presence, is positioned in elegant side profile, observing the artwork on the wall as she pauses on the landing. The artwork remains the visual center. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
-            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating"
+            "lighting": "Soft, diffused morning natural light from large windows",
+            "camera_angle": "Frontal view",
+            "human_presence": "none",
+            "curatorial_reason": "The warm, golden palette of the artwork perfectly complements the atmosphere of a sunlit dining space, evoking feelings of calm and nourishment. Its presence elevates the room from functional to art-centric, fostering an environment where conversations can unfold against a backdrop of understated beauty and artistic depth.",
+            "commercial_reason": "Showcasing the artwork in a modern, elegant dining room demonstrates its versatility beyond a traditional living room, appealing to buyers looking to integrate art into various upscale residential zones. This context emphasizes a lifestyle of refined taste and intentional design, making it highly appealing for Pinterest traffic and direct sales to design-conscious homeowners.",
+            "prompt": "ARTWORK TECHNICAL DATA:\n- Artwork size: vertical canvas, 75 cm wide × 110 cm high × 3 cm deep.\n\nMOCKUP ART DIRECTION:\n- Scene Name: Ochre Dawn Dining\n- Purpose: Premium residential integration, lifestyle appeal\n- Scene Description: A Elegant dining area with Sophisticated, warm, inviting for social gatherings atmosphere. Materials: Smooth plaster walls, Refined concrete flooring, Minimalist wooden dining table\n- Lighting: Soft, diffused morning natural light from large windows\n- Time of Day: day\n- Placement: Hang the artwork naturally on the wall at a believable height.\n- Human Figure: Do not include any human figure.\n\nCAMERA SELECTION RULES:\nUse only front view, three-quarter left view, or three-quarter right view. Always show the artwork in near close-up, large and dominant in the frame. Do not use wide or open room views. The environment should only suggest context and must never be more important than the artwork.\n\nNEGATIVE RULES:\nDo not modify the artwork composition.\r\nDo not redraw, repaint, reinterpret, restyle, extend, crop, simplify, enhance, or alter the artwork in any way.\r\nDo not add, remove, rearrange, or invent elements inside the artwork.\r\nPreserve the original composition, proportions, orientation, and internal structure of the artwork exactly as provided.No kitchens.\r\nNo common bedrooms.\r\nNo cheap decor.\r\nNo generic stock interiors.\r\nNo logos.\r\nNo visible text.\r\nNo letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.\r\nNo shoes or footwear as scale reference.\r\nNo distorted perspective.",
+            "mapped_context": {
+                "name": "Ochre Dawn Dining",
+                "purpose": "Premium residential integration, lifestyle appeal",
+                "scene": "A Elegant dining area with Sophisticated, warm, inviting for social gatherings atmosphere. Materials: Smooth plaster walls, Refined concrete flooring, Minimalist wooden dining table",
+                "lighting": "Soft, diffused morning natural light from large windows",
+                "camera": "front-facing medium shot, eye-level, balanced interior context, artwork dominant in frame",
+                "camera_group": "front_medium",
+                "time_of_day": "day",
+                "placement": "hanging",
+                "with_human": false,
+                "human_profile": null
+            }
         },
         {
-            "context_name": "Luxury Condominium Vista",
-            "context_role": "Contemporary Architectural Integration",
-            "space_type": "double-height luxury condominium with floor-to-ceiling glass",
-            "atmosphere": "Modern elegance, expansive city views, sophisticated living",
+            "context_name": "Painter's Luminous Atelier",
+            "context_role": "Authenticity, artistic context, design studio appeal",
+            "space_type": "Refined artist studio",
+            "atmosphere": "Creative, authentic, inspiring, well-lit",
             "materials": [
-                "Polished concrete floors",
-                "minimalist warm plaster walls",
-                "floor-to-ceiling glass windows",
-                "brushed steel accents",
-                "tailored linen drapes"
+                "Raw concrete or textured plaster walls",
+                "Large industrial-style windows",
+                "Subtle hints of artistic tools/materials"
             ],
-            "lighting": "Blue-hour window light, warm integrated architectural lighting",
-            "camera_view": "front view",
-            "camera_distance": "close-up view",
-            "camera_angle_notes": "",
-            "human_presence": "elegant standing male figure 1.80m",
-            "curatorial_reason": "The artwork's minimalist abstraction and broad, atmospheric fields complement the expansive glass and urban vista of the high-rise, creating a serene counterpoint to the city's energy, its gold elements subtly reflecting the distant lights.",
-            "commercial_reason": "Shows the artwork's suitability for sophisticated contemporary architecture, integrating seamlessly into a modern, elevated lifestyle with panoramic views, appealing to buyers who value a cohesive, luxurious aesthetic.",
-            "mockup_prompt": "An elegant standing male figure 1.80m, in refined minimalist clothing, stands casually at a private study desk in a double-height luxury condominium with floor-to-ceiling glass, looking up from a catalogue toward the artwork on the wall. Beyond the glass, a city skyline glows at blue hour. The interior features polished concrete floors, minimalist warm plaster walls, and subtle brushed steel accents. Warm integrated architectural lighting enhances the artwork. front view. close-up view. The elegant standing male figure is positioned to the side, looking towards the artwork, creating a natural and reflective moment. The artwork remains the visual center. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la wall y visually dominant. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
-            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating"
+            "lighting": "Abundant, soft natural light, slightly diffused",
+            "camera_angle": "Three-quarter right view",
+            "human_presence": "none",
+            "curatorial_reason": "Presenting the artwork in a clean, sophisticated atelier connects it directly to the creative process, suggesting depth of thought and skilled craftsmanship. The luminous natural light reveals the painting's subtle brushwork and the rich interaction of its golden tones, reinforcing its authenticity and artistic integrity.",
+            "commercial_reason": "This context appeals to collectors and interior designers who value the narrative of creation and the artist's journey. It adds an authentic, behind-the-scenes allure, enhancing the artwork's story and making it particularly attractive for design studios seeking pieces with a strong artistic provenance and genuine character.",
+            "prompt": "ARTWORK TECHNICAL DATA:\n- Artwork size: vertical canvas, 75 cm wide × 110 cm high × 3 cm deep.\n\nMOCKUP ART DIRECTION:\n- Scene Name: Painter's Luminous Atelier\n- Purpose: Authenticity, artistic context, design studio appeal\n- Scene Description: A Refined artist studio with Creative, authentic, inspiring, well-lit atmosphere. Materials: Raw concrete or textured plaster walls, Large industrial-style windows, Subtle hints of artistic tools/materials\n- Lighting: Abundant, soft natural light, slightly diffused\n- Time of Day: day\n- Placement: Hang the artwork naturally on the wall at a believable height.\n- Human Figure: Do not include any human figure.\n\nCAMERA SELECTION RULES:\nUse only front view, three-quarter left view, or three-quarter right view. Always show the artwork in near close-up, large and dominant in the frame. Do not use wide or open room views. The environment should only suggest context and must never be more important than the artwork.\n\nNEGATIVE RULES:\nDo not modify the artwork composition.\r\nDo not redraw, repaint, reinterpret, restyle, extend, crop, simplify, enhance, or alter the artwork in any way.\r\nDo not add, remove, rearrange, or invent elements inside the artwork.\r\nPreserve the original composition, proportions, orientation, and internal structure of the artwork exactly as provided.No kitchens.\r\nNo common bedrooms.\r\nNo cheap decor.\r\nNo generic stock interiors.\r\nNo logos.\r\nNo visible text.\r\nNo letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.\r\nNo shoes or footwear as scale reference.\r\nNo distorted perspective.",
+            "mapped_context": {
+                "name": "Painter's Luminous Atelier",
+                "purpose": "Authenticity, artistic context, design studio appeal",
+                "scene": "A Refined artist studio with Creative, authentic, inspiring, well-lit atmosphere. Materials: Raw concrete or textured plaster walls, Large industrial-style windows, Subtle hints of artistic tools/materials",
+                "lighting": "Abundant, soft natural light, slightly diffused",
+                "camera": "three-quarter view from the right, slight side angle, eye-level, natural perspective",
+                "camera_group": "three_quarter_right",
+                "time_of_day": "day",
+                "placement": "hanging",
+                "with_human": false,
+                "human_profile": null
+            }
         },
         {
-            "context_name": "Tuscan Villa Interior",
-            "context_role": "Rustic Elegance Statement",
-            "space_type": "Tuscan or Umbrian villa interior",
-            "atmosphere": "Earthy warmth, timeless countryside charm, quiet retreat",
+            "context_name": "Desert Bloom Foyer",
+            "context_role": "Commercial alternative, high-traffic sophisticated space",
+            "space_type": "Boutique hotel lobby / Elegant hallway",
+            "atmosphere": "Welcoming, luxurious, understated grandeur",
             "materials": [
-                "Exposed rough stone walls",
-                "terracotta floor tiles",
-                "heavy timber ceiling beams",
-                "simple wooden furniture",
-                "thick linen curtains"
+                "Travertine or limestone wall cladding",
+                "Subtle metallic or wood trim accents",
+                "Soft, neutral floor runner"
             ],
-            "lighting": "Warm countryside light filtering from large windows, gentle sconce lighting",
-            "camera_view": "three-quarter left view",
-            "camera_distance": "close-up view",
-            "camera_angle_notes": "",
-            "human_presence": "elegant standing female figure 1.55m",
-            "curatorial_reason": "The artwork's earthy ochre and bright yellow, along with its subtle texture and simplified 'landscape' quality, harmonize perfectly with the exposed stone and warm light of a Tuscan villa, deepening the sense of ancient landscape and rustic elegance.",
-            "commercial_reason": "Highlights the artwork's ability to ground and enrich a natural, rustic-chic environment, offering a sense of warmth and belonging to a collector's retreat and lifestyle.",
-            "mockup_prompt": "An elegant standing female figure 1.55m, in tailored luxury-residential attire, stands, caught mid-thought in a tranquil hallway of a Tuscan villa interior, having slowed without meaning to. The space features rough exposed stone walls, warm terracotta floor tiles, and heavy timber ceiling beams. Gentle countryside light filters from a large window, complemented by subtle sconce lighting. three-quarter left view. close-up view. The elegant standing female figure is in a quiet, contemplative stance, positioned with her side profile towards the artwork, creating an intimate viewing moment. The artwork remains the visual center. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la wall y visually dominant. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
-            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating"
+            "lighting": "Indirect warm architectural lighting, some natural light from a distance",
+            "camera_angle": "Frontal view",
+            "human_presence": "optional standing female figure 1.55m",
+            "curatorial_reason": "The artwork's warm, earthy palette and minimalist elegance are perfectly suited for a sophisticated hospitality or high-end commercial environment. It offers a subtle yet impactful focal point, creating an inviting first impression that aligns with an upscale brand's aesthetic. The golden elements add a touch of refined luxury.",
+            "commercial_reason": "This mockup demonstrates the artwork's suitability for commercial applications beyond private homes, targeting hotels, corporate collections, and luxury developments. The presence of a human figure provides a subtle sense of scale and liveliness, showing how the piece enhances a public, high-traffic space while maintaining its artistic presence.",
+            "prompt": "ARTWORK TECHNICAL DATA:\n- Artwork size: vertical canvas, 75 cm wide × 110 cm high × 3 cm deep.\n\nMOCKUP ART DIRECTION:\n- Scene Name: Desert Bloom Foyer\n- Purpose: Commercial alternative, high-traffic sophisticated space\n- Scene Description: A Boutique hotel lobby / Elegant hallway with Welcoming, luxurious, understated grandeur atmosphere. Materials: Travertine or limestone wall cladding, Subtle metallic or wood trim accents, Soft, neutral floor runner\n- Lighting: Indirect warm architectural lighting, some natural light from a distance\n- Time of Day: afternoon\n- Placement: Hang the artwork naturally on the wall at a believable height.\n- Human Figure: Include one standing adult hispanic woman, 1.55 meters tall.\n\nCAMERA SELECTION RULES:\nUse only front view, three-quarter left view, or three-quarter right view. Always show the artwork in near close-up, large and dominant in the frame. Do not use wide or open room views. The environment should only suggest context and must never be more important than the artwork.\n\nNEGATIVE RULES:\nDo not modify the artwork composition.\r\nDo not redraw, repaint, reinterpret, restyle, extend, crop, simplify, enhance, or alter the artwork in any way.\r\nDo not add, remove, rearrange, or invent elements inside the artwork.\r\nPreserve the original composition, proportions, orientation, and internal structure of the artwork exactly as provided.No kitchens.\r\nNo common bedrooms.\r\nNo cheap decor.\r\nNo generic stock interiors.\r\nNo logos.\r\nNo visible text.\r\nNo letters, numbers, plates, labels, posters, dimensions, dimension lines, ruler marks, or annotations.\r\nNo shoes or footwear as scale reference.\r\nNo distorted perspective.",
+            "mapped_context": {
+                "name": "Desert Bloom Foyer",
+                "purpose": "Commercial alternative, high-traffic sophisticated space",
+                "scene": "A Boutique hotel lobby / Elegant hallway with Welcoming, luxurious, understated grandeur atmosphere. Materials: Travertine or limestone wall cladding, Subtle metallic or wood trim accents, Soft, neutral floor runner",
+                "lighting": "Indirect warm architectural lighting, some natural light from a distance",
+                "camera": "front-facing medium shot, eye-level, balanced interior context, artwork dominant in frame",
+                "camera_group": "front_medium",
+                "time_of_day": "afternoon",
+                "placement": "hanging",
+                "with_human": true,
+                "human_profile": "female_155"
+            }
         }
     ]
 }

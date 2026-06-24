@@ -1,0 +1,33 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Palazzo Evening Serenity
+- Purpose: Private Collection Display
+- Scene Description: A Italian palazzo piano nobile with Refined, serene, historic weight, private contemplation atmosphere. Materials: terrazzo floor, high coffered ceiling, aged plaster walls, dark wood accents
+- Lighting: Warm, soft architectural uplighting combined with the glow from an antique brass floor lamp
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult black man, 1.80 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A collector pauses alone in an Italian palazzo after a quiet evening, savoring the stillness of the room and the artwork. The scene unfolds within a piano nobile of an Italian palazzo, featuring a polished terrazzo floor, high coffered ceiling with subtle fresco remnants, and aged plaster walls. Soft architectural uplighting blends with the warm glow from an antique brass floor lamp. three-quarter left view. close-up view. An elegant standing male figure 1.80m stands to the left of the artwork, hands clasped behind his back, observing the piece. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

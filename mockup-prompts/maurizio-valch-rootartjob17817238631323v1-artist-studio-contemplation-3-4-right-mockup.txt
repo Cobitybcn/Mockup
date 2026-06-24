@@ -1,0 +1,35 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 160 cm wide × 120 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Camera: three-quarter view from the right, slight side angle, eye-level, natural perspective
+- Scene Name: Artist Studio Contemplation
+- Purpose: Authentic context showcasing artistic process and scale
+- Scene Description: A refined artist studio with creative, focused, inspiring atmosphere. Materials: light wooden floor, large windows, subtle art tools/materials in background
+- Lighting: luminous natural daylight, bright, sunny day, clear blue sky reflections, clean direct sunlight
+- Time of Day: day
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Do not include any human figure.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: medium-close view, enough space for context and scale while keeping artwork dominant
+- Camera Rationale: A three-quarter right view allows for a glimpse into the creative environment of an artist's studio, adding an authentic, aspirational context. The close-up view keeps the artwork's scale and detail prominent, suggesting its genesis and artistic integrity.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A bright and airy refined artist studio with high ceilings, large windows providing abundant natural light, and light wooden floors. Maurizio Valch's 'Dual Gaze' is displayed prominently on a clean white wall, with subtle hints of art tools or a workstation blurred in the background. Captured from a three-quarter right view, close-up, creative, inspiring atmosphere.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+messy, generic office, dark, industrial, residential, cluttered, unrefined, unfinished
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

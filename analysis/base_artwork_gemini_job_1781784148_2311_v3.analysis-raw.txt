@@ -1,0 +1,168 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Red Block Ascent",
+      "subtitle": "Geometric abstraction features a dominant crimson rectangular form juxtaposed against a deep blue field, grounded by layered earth tones.",
+      "description": "The artwork presents a robust red rectangular block positioned prominently on the left, anchoring the visual field with its bold presence. Its composition is structured by distinct horizontal bands that delineate a vast blue sky above and varied ground layers below, creating a sense of layered spatiality. The surface of the red form reveals nuanced blue-green textures, suggesting erosion or internal light, contrasting with the smoother expanse of the sky. This interplay of strong color and texture generates an atmosphere of stark contemplation, hinting at a dialogue between solid architecture and boundless space. The horizontal format of 120 cm wide enhances the panoramic feel, inviting a prolonged gaze into its abstracted landscape."
+    },
+    {
+      "title": "Cerulean Horizon",
+      "subtitle": "An expansive cerulean expanse holds a solitary white orb, contrasting with a vibrant red architectural form and symbolic ladders reaching across defined plains.",
+      "description": "A vast field of deep cerulean blue dominates the upper canvas, asserting its expansive presence and drawing the eye to a solitary white orb. The composition unfolds through distinct horizontal strata that ground the dynamic interplay of color, punctuated by the luminous circle providing a focal point in the upper right. The textured surface of the painting reveals deliberate brushwork and layered pigments, particularly in the varied ground tones and the expressive red structure. This vibrant yet calm palette evokes a sense of meditative solitude, where elemental forms converge under an eternal sky. The medium-large scale (120 cm wide) allows the viewer to immerse themselves in this abstracted, almost mythical, landscape."
+    },
+    {
+      "title": "Laddered Plains",
+      "subtitle": "Layered horizontal fields in rich hues support ascending ladder forms, leading the eye towards a vivid red structure under a vast blue sky.",
+      "description": "The artwork is defined by a series of distinct horizontal plains, rendered in soft orange, grey, and green, which traverse the lower half of the composition. These layers organize the visual narrative, with a prominent red ladder reaching skyward from the foreground, and another receding into the distance. The textural quality of the painted surface is palpable, showing subtle variations in pigment density and brushstrokes that build a tangible sense of place. This arrangement creates an atmosphere of implied journey or aspiration, where familiar objects like ladders take on a symbolic, almost architectural, dimension within an abstract setting. Its substantial horizontal presence (120 cm wide) allows for a sweeping visual exploration of these structured yet open territories."
+    }
+  ],
+  "recommended_number_of_contexts": "9",
+  "contextual_proposals": [
+    {
+      "context_name": "Minimalist Gallery Wall",
+      "context_role": "Showcasing the artwork as a focal point in a clean exhibition setting.",
+      "space_type": "Professional art gallery",
+      "atmosphere": "Refined, calm, contemplative",
+      "materials": ["Smooth off-white wall", "Polished concrete floor", "Minimalist plinth"],
+      "lighting": "Soft, diffused overhead gallery lighting",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A direct front view emphasizes the artwork's dominant red and blue color fields and its horizontal composition. The close-up ensures the textured surface and subtle color transitions are clearly visible, while the surrounding minimalist space supports its artistic presence.",
+      "human_presence": "none",
+      "curatorial_reason": "Highlights the artwork's bold geometric forms and chromatic balance within an uncluttered, focused environment.",
+      "commercial_reason": "Appeals to collectors seeking contemporary abstract art for modern, minimalist interiors, emphasizing its potential as a central statement piece.",
+      "mockup_prompt": "A pristine, minimalist art gallery space with a smooth off-white wall and polished concrete floor. The lighting is soft and diffused from above. The artwork is centered on the wall. front view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Architect's Loft",
+      "context_role": "Integrating the artwork into an urban, industrially-inspired residential setting.",
+      "space_type": "High-end residential interior",
+      "atmosphere": "Modern, sophisticated, structured",
+      "materials": ["Exposed concrete wall", "Dark wood floor", "Steel furniture accents"],
+      "lighting": "Natural light from a large window to the left, casting soft shadows",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter left view subtly reveals the canvas depth (5 cm) and the texture of the surrounding concrete, aligning with the artwork's structured yet expressive nature. The close-up shot focuses on the artwork's material presence and its bold color blocks.",
+      "human_presence": "none",
+      "curatorial_reason": "Emphasizes the artwork's architectural and spatial qualities, resonating with a modern, design-conscious aesthetic.",
+      "commercial_reason": "Targets urban professionals and designers looking for impactful art that complements industrial-chic or contemporary loft environments.",
+      "mockup_prompt": "A sophisticated architect's loft with an exposed concrete wall and dark wood floor. Natural light streams in from a large window on the left, creating soft shadows. The artwork hangs prominently on the concrete wall. three-quarter left view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Collector's Lounge",
+      "context_role": "Presenting the artwork within a private, curated collection space.",
+      "space_type": "Collectors’ rooms",
+      "atmosphere": "Warm, inviting, cultivated",
+      "materials": ["Painted wall in a warm, muted beige", "Oak parquet flooring", "Velvet armchair (out of focus)"],
+      "lighting": "Soft, warm accent lighting focused on the artwork, supplemented by ambient room light",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter right view offers a dynamic perspective, allowing a glimpse of the canvas's depth and the nuanced textures. The close-up ensures the vivid color contrasts remain central, while the soft lighting enhances the artwork's contemplative atmosphere.",
+      "human_presence": "none",
+      "curatorial_reason": "Showcases the artwork's rich color palette and atmospheric depth within a distinguished private setting.",
+      "commercial_reason": "Appeals to experienced collectors who appreciate bold, yet harmonious, abstract compositions and seek art that enhances a well-appointed home.",
+      "mockup_prompt": "A cultivated collector's lounge with a warm, muted beige painted wall and oak parquet flooring. A velvet armchair is subtly visible out of focus in the foreground. Soft, warm accent lighting highlights the artwork, complemented by ambient room light. The artwork is mounted on the wall. three-quarter right view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Contemporary Dining Room",
+      "context_role": "Illustrating the artwork as a vibrant centerpiece in a social residential space.",
+      "space_type": "Sophisticated dining room",
+      "atmosphere": "Vibrant, social, elegant",
+      "materials": ["Smooth off-white wall", "Herringbone wood flooring", "Modern minimalist dining table (partially visible)"],
+      "lighting": "Bright, even ambient lighting with a decorative pendant light slightly out of frame above the table.",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A direct front view emphasizes the artwork's striking composition and vibrant color blocks, making it an immediate focal point. The close-up shot maintains the artwork's visual dominance, allowing its expressive details to be appreciated.",
+      "human_presence": "none",
+      "curatorial_reason": "Highlights the artwork's capacity to energize a space with its strong colors and dynamic structure.",
+      "commercial_reason": "Suitable for homeowners seeking a statement piece for a modern dining area, adding artistic depth and conversation to gatherings.",
+      "mockup_prompt": "A contemporary and sophisticated dining room with a smooth off-white wall and elegant herringbone wood flooring. A modern minimalist dining table is partially visible in the foreground. Bright, even ambient lighting illuminates the space. The artwork is proudly displayed on the wall. front view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Private Library",
+      "context_role": "Placing the artwork in a contemplative and intellectual environment.",
+      "space_type": "Private libraries",
+      "atmosphere": "Serene, intellectual, introspective",
+      "materials": ["Dark wood paneled wall", "Leather armchair", "Bookshelves with muted spines"],
+      "lighting": "Soft, directional lighting from a reading lamp, creating gentle highlights on the artwork.",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view allows for a sense of the artwork's integration into the room's depth, while the close-up maintains focus on its intricate details and rich colors. The human figure provides an excellent scale reference in this intimate setting.",
+      "human_presence": "optional standing male figure 1.80m",
+      "curatorial_reason": "Connects the artwork's abstract narrative and symbolic elements (ladders, orb) with an atmosphere of thought and inquiry.",
+      "commercial_reason": "Appeals to intellectual buyers and those who desire art that provokes thought and contemplation in a private, refined space.",
+      "mockup_prompt": "A refined private library with dark wood paneled walls and extensive bookshelves. A classic leather armchair is visible. Soft, directional lighting from a reading lamp gently illuminates the artwork mounted on a paneled wall. An optional standing male figure 1.80m is observing the artwork. three-quarter left view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Modern Exhibition Hall",
+      "context_role": "Showcasing the artwork within a large, contemporary public exhibition space.",
+      "space_type": "Impeccable museum spaces",
+      "atmosphere": "Grand, open, inspiring",
+      "materials": ["Textured concrete wall", "Light gray floor", "High ceilings"],
+      "lighting": "Bright, even overhead lighting, with subtle spotlights highlighting the artwork.",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "This three-quarter right view adds a dynamic edge, capturing the artwork's scale in relation to the expansive museum wall and its visual depth. The close-up ensures the vibrant colors and detailed textures are clearly presented, even within a grand setting.",
+      "human_presence": "none",
+      "curatorial_reason": "Presents the artwork as a significant piece of contemporary abstraction, holding its own in a large institutional context.",
+      "commercial_reason": "Highlights the artwork's suitability for prominent display in public spaces, corporate collections, or large residential settings.",
+      "mockup_prompt": "A modern, impeccable museum exhibition hall with a textured concrete wall and light gray floor, featuring high ceilings. Bright, even overhead lighting, supplemented by subtle spotlights, illuminates the space. The artwork is mounted on the wall. three-quarter right view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Artist Studio Corner",
+      "context_role": "Displaying the artwork in an authentic, creative workspace environment.",
+      "space_type": "Refined artist studios",
+      "atmosphere": "Creative, authentic, focused",
+      "materials": ["White brick wall", "Light wooden easel (behind artwork, out of focus)", "Splattered concrete floor"],
+      "lighting": "Abundant natural light from a large north-facing window, with soft, even illumination.",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A direct front view centers the artwork's strong composition, allowing its visual language to speak clearly. The close-up ensures that the viewer connects intimately with the artwork's surface and color vitality, as if seen in the making.",
+      "human_presence": "none",
+      "curatorial_reason": "Emphasizes the raw creativity and visual force of the artwork, connecting it to its origins in the artist's hands.",
+      "commercial_reason": "Appeals to art enthusiasts who value the authenticity of the creative process and appreciate the artwork's vibrant, unadorned presence.",
+      "mockup_prompt": "A bright corner of a refined artist's studio with a white brick wall and a splattered concrete floor. Abundant natural light streams in from a large north-facing window, providing soft, even illumination. The artwork is presented on the wall, with a light wooden easel subtly out of focus in the background. front view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Elegant Hallway",
+      "context_role": "Positioning the artwork as a captivating visual journey in a transitional space.",
+      "space_type": "Elegant hallways",
+      "atmosphere": "Inviting, transitional, sophisticated",
+      "materials": ["Light gray painted wall", "Dark wood wainscoting", "Long runner rug"],
+      "lighting": "Recessed ceiling lights providing a focused glow on the artwork, supplemented by soft ambient light.",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "The three-quarter left view adds depth to the presentation, allowing the viewer to appreciate the artwork's presence within the architectural flow of the hallway. The close-up ensures the artwork's details are prominent, drawing the eye into its abstracted landscape.",
+      "human_presence": "none",
+      "curatorial_reason": "Highlights the artwork's ability to create a moment of visual interest and contemplation in a space designed for movement.",
+      "commercial_reason": "Ideal for residential buyers seeking to enrich transitional areas with distinctive art, offering an engaging visual experience.",
+      "mockup_prompt": "An elegant hallway with a light gray painted wall and dark wood wainscoting. A long runner rug extends across the floor. Recessed ceiling lights provide a focused glow on the artwork, complemented by soft ambient light. The artwork is mounted on the wall. three-quarter left view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    },
+    {
+      "context_name": "Executive Study",
+      "context_role": "Integrating the artwork into a refined and contemplative personal workspace.",
+      "space_type": "Private study",
+      "atmosphere": "Refined, contemplative, focused",
+      "materials": ["Rich walnut wood wall paneling", "Leather-bound books (out of focus)", "Deep pile rug"],
+      "lighting": "Soft, warm, indirect lighting from a desk lamp, casting a subtle glow.",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter right view offers a sophisticated angle, allowing the artwork's texture and side profile to be appreciated. The close-up maintains its central visual importance, harmonizing with the luxurious yet understated ambiance of the study.",
+      "human_presence": "none",
+      "curatorial_reason": "Positions the artwork as a source of inspiration and visual grounding in a space dedicated to thought and work.",
+      "commercial_reason": "Appeals to high-net-worth individuals and corporate clients seeking art that adds gravitas and intellectual appeal to executive or private offices.",
+      "mockup_prompt": "A refined executive study featuring rich walnut wood wall paneling. Leather-bound books are subtly visible on a shelf out of focus. A deep pile rug covers the floor. Soft, warm, indirect lighting emanates from a stylish desk lamp, casting a subtle glow. The artwork is tastefully displayed on the wall paneling. three-quarter right view, close-up view. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.",
+      "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle"
+    }
+  ]
+}
+```

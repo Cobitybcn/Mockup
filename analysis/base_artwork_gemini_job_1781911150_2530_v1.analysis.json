@@ -1,0 +1,147 @@
+{
+    "suggested_titles": [
+        {
+            "title": "Spiral Vortex",
+            "subtitle": "An abstract expressionist canvas dominated by a powerful, central, and swirling form, rendered in deep magenta and verdant green with rich material depth.",
+            "description": "A powerful magenta spiral dominates the canvas, unfurling from the upper right and expanding outward across the central field. Rectilinear divisions segment the dark background, providing a structured counterpoint to the spiral's fluid energy. The magenta pigment is thickly applied with visible impasto and fine cracks, contrasting with the flatter, deep emerald green and rich burgundy fields. This interplay of vivid color and deep texture creates a dramatic yet contemplative atmosphere of contained dynamism. The substantial scale and tactile surface imbue the swirling form with a compelling and silent material presence."
+        },
+        {
+            "title": "Magenta Passage",
+            "subtitle": "A structural contemporary painting featuring a vivid, textured magenta pathway carving through dark, segmented fields, creating an immersive spatial journey.",
+            "description": "A luminous magenta pathway curves through the center of the canvas, drawing the eye into its textured, coiling form. Dark, segmented fields of deep green and muted brown anchor the vibrant passage, creating distinct territories that both define and contain its movement. The surface reveals substantial layering and deliberate scraping, with the magenta appearing raised and cracked against the smoother, darker sections. The vivid color and structural divisions coalesce into an intense, quiet, and introspective spatial experience. Its imposing dimensions give the central passage a significant physical weight and an unyielding, monumental quality."
+        },
+        {
+            "title": "Divided Terraces",
+            "subtitle": "A richly textured abstract work exploring the tension between curvilinear movement and rectilinear divisions across a surface marked by deep, contrasting hues and subtle material incisions.",
+            "description": "Broad, vibrant terraces of magenta spiral across the canvas, segmented by dark, rectilinear incisions that cut through the background. These powerful curvilinear forms are juxtaposed against deep emerald and rich brown fields, creating a dynamic tension between fluid motion and structured restraint. Thick impasto builds the magenta areas, showcasing visible cracks and textural variations, while the darker tones offer a subtler, more absorbent surface. The high contrast and material density establish a profound and slightly melancholic atmosphere of contained energy and visual order. Within its generous format, the artwork holds this intricate relationship of forms with authority and a quiet, deliberate presence."
+        }
+    ],
+    "recommended_number_of_contexts": 6,
+    "contextual_proposals": [
+        {
+            "context_name": "Parisian Salon Evening",
+            "context_role": "Private Collection Display",
+            "space_type": "French hôtel particulier salon",
+            "atmosphere": "Refined, contemplative, warm, private",
+            "materials": [
+                "Boiserie paneling",
+                "parquet de Versailles",
+                "gilded mirror",
+                "velvet upholstery",
+                "warm plaster wall"
+            ],
+            "lighting": "Warm evening lamplight, soft architectural wall wash",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The artwork's deep magenta spiral and textured, fractured surface find an intriguing counterpoint in the classic elegance of this salon, its contained energy resonating with the room's formal yet intimate proportions.",
+            "commercial_reason": "This scene demonstrates the artwork's capacity to anchor a historically rich interior, showcasing its refined presence and suggesting its place within a significant, curated private collection.",
+            "mockup_prompt": "A male collector pauses, his hands relaxed behind his back, taking a moment of quiet reflection before the artwork after an evening gathering has ended. The scene unfolds in a French hôtel particulier salon, featuring elegant boiserie paneling on the walls, a classic parquet de Versailles floor, and subtle gilded mirror fragments catching the soft light. The wall holding the artwork is a warm plaster. Warm evening lamplight and soft architectural wall wash illuminate the room, casting gentle shadows that enhance the texture of the boiserie. three-quarter left view. close-up view. An elegant standing male figure 1.80m stands to the left of the artwork, observing it with a quiet contemplative stance. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la wall y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados."
+        },
+        {
+            "context_name": "Skyline High-Rise View",
+            "context_role": "Contemporary Executive Space",
+            "space_type": "double-height luxury condominium with floor-to-ceiling glass",
+            "atmosphere": "Open, sophisticated, dynamic, inspiring",
+            "materials": [
+                "Polished concrete",
+                "brushed steel",
+                "full-height glass",
+                "natural wood accents",
+                "architectural concrete wall"
+            ],
+            "lighting": "Soft city light from floor-to-ceiling windows, subtle recessed lighting",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The artwork's vibrant magenta against dark, segmented fields provides a compelling focal point, its structural and symbolic language holding visual weight against the expansive urban backdrop and minimalist architectural lines.",
+            "commercial_reason": "Placing the artwork in this contemporary high-rise setting highlights its modern appeal and shows its commanding presence in a space that speaks to ambition and an elevated lifestyle.",
+            "mockup_prompt": "A female figure stands, observing the artwork with a measured, poised presence, having just turned from the expansive city view outside. The scene is set in a double-height luxury condominium, characterized by floor-to-ceiling glass windows revealing a distant cityscape, polished concrete floors, and a sleek, modern aesthetic with natural wood accents. The wall behind the artwork is a warm, subtle architectural concrete. Soft city light filters through the large windows, complemented by subtle recessed lighting overhead. front view. close-up view. An elegant standing female figure 1.55m stands at a respectful viewing distance in front of the artwork. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la wall y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados."
+        },
+        {
+            "context_name": "Historic Library Study",
+            "context_role": "Intellectual Sanctuary Display",
+            "space_type": "historic European library or reading room",
+            "atmosphere": "Scholarly, contemplative, intimate, quiet",
+            "materials": [
+                "Dark walnut shelving",
+                "leather-bound books",
+                "brass accents",
+                "worn oriental rug",
+                "deep, warm plaster wall"
+            ],
+            "lighting": "Warm glow from reading lamps, soft ambient light filtering through high windows",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The artwork's rich, textured surface and deep, melancholic color palette, with its visible incisions and contained movement, resonate with the gravitas and introspection inherent in a classic library setting.",
+            "commercial_reason": "This context underscores the artwork's capacity for deep contemplation and intellectual engagement, positioning it as a significant piece for a discerning collector with a cultivated private study.",
+            "mockup_prompt": "A male figure, dressed in refined minimalist clothing, is caught mid-thought in a historic European library, having paused unexpectedly before the artwork amidst shelves filled with leather-bound books. The room features dark walnut shelving extending to the ceiling, rich leather chairs, and brass reading lamps. The wall behind the artwork is a deep, warm plaster. Warm glow from reading lamps highlights specific areas, with soft ambient light filtering through high, leaded windows. three-quarter right view. close-up view. An elegant standing male figure 1.80m stands slightly to the right and in front of the artwork, in a quiet contemplative stance. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la wall y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados."
+        },
+        {
+            "context_name": "Tuscan Villa Hearth",
+            "context_role": "Rustic Elegance Accent",
+            "space_type": "Tuscan or Umbrian villa interior",
+            "atmosphere": "Earthy, warm, authentic, serene",
+            "materials": [
+                "Exposed stone walls",
+                "terracotta tiled floor",
+                "heavy timber ceiling beams",
+                "wrought iron",
+                "textured, warm stone wall"
+            ],
+            "lighting": "Late afternoon Mediterranean golden light, warm from a nearby window",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The artwork's heavily textured surface and grounding hues of green and brown are beautifully complemented by the natural, rustic materials of the villa, while the vibrant magenta offers a striking, unexpected focal point.",
+            "commercial_reason": "This scene illustrates how the artwork can enrich a traditional, warm environment, suggesting it as a sophisticated addition to an art collection within a relaxed, luxurious Mediterranean lifestyle.",
+            "mockup_prompt": "A female figure, arriving at a Tuscan villa, pauses in the entrance hall as the late afternoon sun casts a golden glow, drawn to the artwork's presence. The interior features exposed rough-hewn stone walls, a traditional terracotta tiled floor, and heavy timber ceiling beams that add rustic charm. The wall supporting the artwork is a textured, warm stone. Late afternoon Mediterranean golden light pours in from a large window, creating a warm, inviting atmosphere. three-quarter left view. close-up view. An elegant standing female figure 1.55m stands to the left side of the artwork, in a slow viewing posture, hands relaxed. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la wall y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados."
+        },
+        {
+            "context_name": "Curated Gallery Focus",
+            "context_role": "Private Viewing Moment",
+            "space_type": "contemporary art museum gallery",
+            "atmosphere": "Focused, reverent, crisp, professional",
+            "materials": [
+                "Neutral warm grey walls",
+                "polished concrete floor",
+                "subtle acoustic paneling",
+                "smooth, museum-quality wall"
+            ],
+            "lighting": "Museum-grade spotlights with warmth, highlighting texture and depth",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The precise museum lighting reveals every crack and ridge of the artwork's magenta impasto and the subtle variations in its dark fields, emphasizing its physical presence and meticulous construction.",
+            "commercial_reason": "Presenting the artwork in a museum-quality setting validates its artistic merit and collectible status, inviting serious consideration from a knowledgeable audience during a private viewing.",
+            "mockup_prompt": "A male figure, dressed in gallery-opening attire, stands with a quiet, contemplative stance, taking a moment alone to absorb the artwork during a private viewing in a contemporary art museum gallery. The gallery features neutral warm grey walls and a polished concrete floor, designed to focus attention on the art. The wall presenting the artwork is a smooth, museum-quality surface. Museum-grade spotlights with warmth precisely illuminate the artwork, highlighting its texture and depth against the otherwise softly lit space. front view. close-up view. An elegant standing male figure 1.80m stands slightly in front of the artwork, maintaining a respectful viewing distance. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la wall y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados."
+        },
+        {
+            "context_name": "Alpine Retreat Dawn",
+            "context_role": "Minimalist Sanctuary Centerpiece",
+            "space_type": "Nordic or Alpine architect-designed retreat",
+            "atmosphere": "Serene, minimalist, natural, expansive",
+            "materials": [
+                "Pale ash wood paneling",
+                "polished grey stone floor",
+                "large picture windows",
+                "light wood paneling wall"
+            ],
+            "lighting": "Soft, diffused morning light from large windows, supplemented by subtle integrated ambient light",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The artwork's contained structural dynamism and intense magenta create a powerful visual anchor within the tranquil, expansive environment of the retreat, offering a vivid counterpoint to the subdued natural palette.",
+            "commercial_reason": "This context showcases the artwork's ability to act as a singular, impactful statement piece in a highly refined, design-conscious modern interior, appealing to collectors who value minimalist luxury.",
+            "mockup_prompt": "A female figure, in refined minimalist clothing, stands by the artwork in a quiet moment of reflection, looking out at the serene landscape from an Alpine architect-designed retreat. The interior features pale ash wood paneling on the walls, a polished grey stone floor, and large picture windows framing a mountain view. The wall behind the artwork is a smooth, light wood paneling. Soft, diffused morning light streams in from the large windows, supplemented by subtle integrated ambient lighting. three-quarter right view. close-up view. An elegant standing female figure 1.55m stands to the right of the artwork, with a calm attention toward the piece and the view beyond. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la wall y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados."
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1781911150_2530_v1.png"
+}

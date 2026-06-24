@@ -1,0 +1,639 @@
+```json
+{
+  "artwork_analysis": {
+    "visual_language": [
+      "abstract",
+      "structural",
+      "symbolic",
+      "metaphysical",
+      "textural",
+      "contemplative"
+    ],
+    "emotional_energy": [
+      "deep",
+      "silent",
+      "contemplative",
+      "mysterious",
+      "profound",
+      "intense"
+    ],
+    "dominant_colors": [
+      "teal",
+      "deep blue",
+      "ochre",
+      "deep brown",
+      "black"
+    ],
+    "secondary_colors": [
+      "pale peach",
+      "cream",
+      "muted green",
+      "white"
+    ],
+    "visible_elements": [
+      "central vortex",
+      "concentric spirals",
+      "textured surfaces",
+      "layered paint",
+      "incised lines",
+      "color fields"
+    ],
+    "visible_symbols": [
+      "vortex",
+      "eye",
+      "threshold",
+      "cosmic spiral",
+      "geological strata"
+    ],
+    "color_temperature": "cool with warm accents",
+    "contrast_level": "moderate to high",
+    "composition_type": "radial, dynamic, central focal point",
+    "balance": "dynamic, asymmetrical, internally coherent",
+    "visual_tension": "high, created by spiraling motion and deep central void",
+    "density": "moderate to high, dense texture and layered color",
+    "silence": "profound, despite implied movement",
+    "main_focal_point": "the deep, dark central vortex",
+    "movement": "implied spiraling, rotational, inward and outward",
+    "depth": "strong sense of receding depth into the center",
+    "negative_space": "minimal, the entire canvas is activated",
+    "verticality_or_horizontality": "square format, strong central pull",
+    "internal_organization": "concentric, layered, swirling",
+    "rhythm": "organic, flowing, rotational rhythm of spiral bands",
+    "surface": "textured, uneven, rich with impasto and scraping marks",
+    "brushstroke": "varied, visible palette knife work and expressive strokes",
+    "gesture": "energetic yet controlled, forming the spiral",
+    "layers": "evident, colors and textures build upon each other",
+    "material_presence": "strong, tactile, emphasizes physical nature of paint",
+    "sense_of_depth_or_flatness": "predominantly deep towards the center, with textured surface relief",
+    "format_and_scale": {
+      "width_cm": "120",
+      "height_cm": "120",
+      "depth_cm": "5",
+      "orientation": "vertical",
+      "scale_impact": "substantial, immersive, commands attention",
+      "wall_presence": "powerful, a significant focal point",
+      "monumentality_or_intimacy": "monumental due to size and depth, yet invites intimate contemplation",
+      "spatial_effect": "transforms perception of the wall, creating a portal-like effect"
+    },
+    "spatial_presence": "immersive, deep, draws the viewer into its core",
+    "visual_atmosphere": "mysterious, contemplative, deep, quiet intensity, ancient",
+    "artwork_function": "contemplative focal point, statement piece",
+    "suggested_audience": [
+      "contemporary art collectors",
+      "architects",
+      "interior designers",
+      "art consultants",
+      "private collectors"
+    ],
+    "audience_profile": {
+      "primary": "collectors seeking profound, abstract, and contemplative works",
+      "secondary": "interior designers and architects looking for statement pieces in high-end spaces",
+      "buyer_profile": "discerning individuals valuing depth, texture, and intellectual engagement in art",
+      "collector_type": "modern, abstract, symbolic art collectors",
+      "interior_design_relevance": "high, provides a sophisticated anchor for minimalist or contemporary luxury interiors",
+      "gallery_potential": "excellent, suited for contemporary art galleries focusing on abstract or structural work"
+    },
+    "commercial_positioning": "high-value contemporary abstract art, collector-grade",
+    "one_line_curatorial_read": "ADMIN_PROMPT_ACTIVE_7421 — This square abstract painting features a profound central vortex, meticulously crafted through layers of teal, ochre, and deep browns, inviting contemplation into its textured, spiraling depth.",
+    "style_summary": "abstract, structural, symbolic, textural, contemplative, metaphysical",
+    "artist_profile_relation": {
+      "relevant_statement_connection": "The artwork embodies Valch's exploration of \"inner structure\" and \"contemplative silence\" through fields of color and suspended forms, echoing a deep sense of presence and perception.",
+      "relevant_visual_language_connection": "It directly reflects his visual language of \"structural, symbolic\" forms, utilizing \"fields of color\" and \"incisions\" to create a powerful \"spatial relationship\" that evokes \"depth and inner order.\"",
+      "relevant_symbol_connection": "The central spiraling form acts as a \"threshold\" and suggests \"geological time\" and a \"nocturnal atmosphere,\" aligning with Valch's recurring motifs of profound natural phenomena and internal landscapes.",
+      "relevant_atmosphere_connection": "The piece perfectly captures Valch's preferred \"silent, deep, sober, contemplative and slightly melancholic\" atmosphere, radiating a \"quiet intensity\" and \"restrained tension.\""
+    },
+    "seasonal_strategy": {
+      "primary_season": "neutral"
+    },
+    "publishing_metadata": {
+      "suggested_titles": [
+        {
+          "title": "Deep Core Threshold",
+          "subtitle": "An abstract painting that draws the eye into a central, swirling composition of deep teal and earthy ochre, revealing a profound, textured void.",
+          "short_description": "A dynamic, square abstract piece centered around a deep, spiraling vortex. Its textured layers of teal and ochre invite a silent descent into an enigmatic core.",
+          "curatorial_description": "Deep Core Threshold presents a compelling central vortex, where concentric bands of deep teal and warm ochre swirl towards an enigmatic, dark core. The composition suggests both immense cosmic structures and microscopic inner worlds. Valch's skilled layering and visible incisions create a surface rich with geological texture, evoking a sense of ancient time and profound depth. The visual tension between the dynamic spiral and the silent center generates a contemplative experience.",
+          "commercial_description": "This square painting, Deep Core Threshold, offers a commanding presence. Its intricate spiraling form and rich, textured surface in teal and ochre make it a powerful focal point for sophisticated interiors. The artwork's deep contemplative quality ensures it will resonate with collectors seeking works of significant spatial and emotional depth. Its 120x120 cm format delivers substantial wall impact."
+        },
+        {
+          "title": "Tectonic Current",
+          "subtitle": "A contemporary abstract work defined by its tactile surface, where layers of teal and earth tones sculpt a powerful, spiraling geological current.",
+          "short_description": "This abstract work features a tactile, layered surface, evoking geological formations. Swirls of teal and brown create a sense of powerful, slow-moving elemental force.",
+          "curatorial_description": "Tectonic Current reveals a dynamic interplay of texture and form, where thick layers of teal, muted green, and earthen pigments are masterfully scraped and incised. The surface bears the marks of process, suggesting ancient geological forces or fluid currents that have shaped the visible world. Its central, swirling composition guides the eye through a landscape of subtle relief and raw material presence, embodying a deep, elemental rhythm.",
+          "commercial_description": "Tectonic Current offers a sophisticated material presence, ideal for discerning collectors and architects. Its compelling textures and rich palette of deep blues and browns create an organic yet structured focal point. The substantial 120x120 cm scale ensures a profound visual impact, enhancing contemporary spaces with its unique blend of raw materiality and quiet power."
+        },
+        {
+          "title": "Nocturne Aperture",
+          "subtitle": "An evocative abstract painting creating a silent, nocturnal atmosphere through deep blues and earth tones, centered on a mysterious, introspective opening.",
+          "short_description": "A contemplative abstract piece that evokes a silent, nocturnal atmosphere. Its deep blues and subtle ochres converge into a mysterious central aperture, inviting introspection.",
+          "curatorial_description": "Nocturne Aperture creates a profound sense of silence and depth, drawing the viewer into a darkly luminous space. The rich, nocturnal palette of deep teal and muted brown hues is broken by subtle incisions and textural variations, forming a mysterious central opening. This work resonates with Valch's exploration of contemplative atmospheres, offering a gateway to an inner landscape or a distant, ancient presence. It is a piece that rewards quiet observation.",
+          "commercial_description": "With its profound, silent atmosphere, Nocturne Aperture is a powerful addition to any serious art collection or high-design interior. The painting's deep blues and earth tones, combined with its unique central composition, provide a point of quiet intensity. Its generous 120x120 cm dimensions allow it to anchor a room, inviting sustained contemplation and enriching the spatial experience with its understated elegance."
+        }
+      ],
+      "catawiki_listing": {
+        "recommended_title": "Deep Core Threshold",
+        "alternative_titles": [
+          "Tectonic Current",
+          "Nocturne Aperture"
+        ],
+        "subtitle": "An abstract painting that draws the eye into a central, swirling composition of deep teal and earthy ochre, revealing a profound, textured void.",
+        "short_description": "This square abstract painting, \"Deep Core Threshold,\" features a profound central vortex, meticulously crafted through layers of teal, ochre, and deep browns, inviting contemplation into its textured, spiraling depth.",
+        "long_description": "Deep Core Threshold is a compelling square abstract painting by Maurizio Valch, centered around a powerful spiraling vortex. Concentric bands of rich teal and warm ochre swirl towards an enigmatic, dark core, creating a dynamic composition that suggests both cosmic structures and inner worlds. The artwork's surface is highly textured, exhibiting Valch's signature layering, visible palette knife work, and subtle incisions. This material presence evokes a sense of geological time and elemental force. The dominant cool blues are balanced by earthy browns, lending a nocturnal and contemplative atmosphere. Its 120x120 cm dimensions ensure a significant wall presence, drawing the viewer into its profound depth and quiet intensity. The piece is in excellent condition, with no damage or restorations. The artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+        "technical_details": "Medium: Acrylic on canvas. Dimensions: 120 cm wide x 120 cm high x 5 cm deep. Orientation: Vertical.",
+        "condition_statement": "The piece is in excellent condition, with no damage or restorations.",
+        "shipping_statement": "The artwork is shipped unframed and unstretched, carefully rolled inside a protective tube to ensure safe delivery.",
+        "seo_keywords": [
+          "Maurizio Valch",
+          "abstract painting",
+          "contemporary art",
+          "vortex art",
+          "teal ochre",
+          "textured canvas",
+          "spiritual art",
+          "deep art",
+          "contemplative abstract",
+          "modern wall art"
+        ],
+        "tags": [
+          "abstract",
+          "contemporary",
+          "spiral",
+          "vortex",
+          "teal",
+          "ochre",
+          "texture",
+          "meditation",
+          "structural",
+          "symbolic",
+          "large scale",
+          "square format",
+          "deep blue",
+          "geometric"
+        ]
+      },
+      "descriptions": {
+        "poetic_focus": "Maurizio Valch's 'Deep Core Threshold' invites a meditative journey into an enigmatic, spiraling depth. Layers of oceanic teal and ancient ochre converge, crafting a textured aperture that whispers of cosmic silence and geological time.",
+        "formal_focus": "The artwork presents a compelling radial composition, anchored by a deep central vortex. Its structural integrity is defined by concentric bands of rich color and incised textures, creating a dynamic yet balanced visual tension.",
+        "commercial_focus": "A substantial 120x120 cm abstract work, 'Deep Core Threshold' offers profound spatial impact for sophisticated interiors. Its rich textures and contemplative depth make it an ideal focal point for collectors seeking a statement piece of quiet intensity."
+      },
+      "seo_keywords": [
+        "Maurizio Valch",
+        "abstract art",
+        "contemporary painting",
+        "vortex composition",
+        "teal and ochre art",
+        "textured abstract",
+        "meditative painting",
+        "structural art",
+        "symbolic abstraction",
+        "large format painting",
+        "gallery quality art",
+        "interior design art",
+        "collectible abstract",
+        "modern art"
+      ],
+      "seo_tags": [
+        "abstract",
+        "contemporary",
+        "painting",
+        "spiral",
+        "vortex",
+        "teal",
+        "ochre",
+        "texture",
+        "depth",
+        "meditation",
+        "structural",
+        "symbolic",
+        "modern",
+        "collector"
+      ],
+      "marketplace_title": "Maurizio Valch: Deep Core Threshold - Large Abstract Textured Painting, 120x120cm",
+      "marketplace_short_description": "An immersive abstract painting by Maurizio Valch, featuring a deep, textured vortex in striking teal and ochre tones. A powerful statement piece for contemporary spaces.",
+      "marketplace_long_description": "Maurizio Valch's 'Deep Core Threshold' is a square abstract painting, 120 cm by 120 cm, that commands attention with its profound central vortex. The artwork is characterized by concentric, swirling bands of rich teal and warm ochre, leading the eye into an enigmatic, dark core. Valch's distinctive technique of layering and incision creates a highly textured surface, conveying a sense of geological depth and ancient formation. This piece is ideal for collectors who appreciate abstract works with significant visual and emotional depth, offering a contemplative focal point that enhances sophisticated interior environments. Its substantial scale ensures a powerful wall presence.",
+      "pinterest_boards": [
+        "Contemporary Abstract Art",
+        "Maurizio Valch Paintings",
+        "Modern Interior Design Art",
+        "Textured Abstract Walls",
+        "Deep Blue & Ochre Art",
+        "Contemplative Art Collection"
+      ]
+    }
+  },
+  "recommended_number_of_contexts": "9",
+  "contextual_proposals": [
+    {
+      "context_name": "Minimalist Gallery Sanctuary",
+      "context_role": "showcase",
+      "space_type": "art gallery",
+      "atmosphere": "serene, contemplative, modern",
+      "materials": [
+        "white concrete walls",
+        "polished concrete floor",
+        "natural light"
+      ],
+      "lighting": "soft, diffused natural light from above, subtle spotlights",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A direct front view ensures maximum visual fidelity of the artwork's square format and central vortex. The close-up perspective emphasizes the detailed texture and profound depth against a clean, minimalist wall, allowing the artwork to dominate without distraction, enhancing its commercial readability.",
+      "human_presence": "none",
+      "curatorial_reason": "Presents the artwork in its purest form, emphasizing its structural and symbolic qualities without external distractions, as if in a dedicated exhibition space.",
+      "commercial_reason": "Highlights the artwork's individual impact and quality for serious collectors and galleries, demonstrating its ability to hold a space with understated power.",
+      "mockup_prompt": "Minimalist art gallery, white concrete walls, polished concrete floor, soft diffused natural light, subtle overhead spotlights on the artwork. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Close-up view.",
+      "negative_prompt": "cluttered, busy, overly ornate, distracting elements, poor lighting, low resolution, bad composition, generic space",
+      "pinterest_marketing": {
+        "board_suggestion": "Gallery Style Abstract Art",
+        "pin_title": "Maurizio Valch: Deep Core Threshold in Minimalist Gallery",
+        "pin_description": "Experience the profound depth and textured detail of Maurizio Valch's 'Deep Core Threshold' in a serene, minimalist gallery setting. Ideal for collectors.",
+        "alt_text": "Maurizio Valch's square abstract painting 'Deep Core Threshold' featuring a teal and ochre spiral vortex, displayed on a white concrete wall in a minimalist art gallery.",
+        "seo_keywords": [
+          "abstract art gallery",
+          "minimalist painting display",
+          "collectible art",
+          "contemporary art",
+          "Maurizio Valch"
+        ],
+        "hashtags": [
+          "#AbstractArt",
+          "#GalleryWall",
+          "#MinimalistInterior",
+          "#ContemporaryPainting",
+          "#ArtCollector"
+        ]
+      }
+    },
+    {
+      "context_name": "Collector's Nocturnal Study",
+      "context_role": "contemplative focal point",
+      "space_type": "private study / den",
+      "atmosphere": "intimate, sophisticated, tranquil",
+      "materials": [
+        "dark wood paneling",
+        "leather furniture",
+        "brass accents",
+        "subtle ambient light"
+      ],
+      "lighting": "soft, warm indirect lighting, accent light on artwork",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter left view adds depth and context, integrating the artwork into a sophisticated private study. The close-up perspective highlights its contemplative atmosphere and rich textures within an intimate setting, allowing for a natural, yet dominant, presentation of the artwork.",
+      "human_presence": "optional standing male figure 1.80m",
+      "curatorial_reason": "Positions the artwork as a powerful piece for private contemplation, fitting the artist's preference for 'nocturnal calm' and 'quiet intensity' in an intimate, collector-oriented environment.",
+      "commercial_reason": "Showcases its integration into a luxurious residential setting, appealing to high-end collectors and interior designers seeking art that creates a deep, atmospheric focal point.",
+      "mockup_prompt": "Luxurious private study with dark wood paneling, a leather armchair in the foreground (optional male figure 1.80m standing nearby), soft, warm indirect lighting, and a focused accent light on the artwork. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Three-quarter left view. Close-up view.",
+      "negative_prompt": "bright, sterile, cheap furniture, distracting objects, office setting, cluttered, modern office, artificial light, cold colors",
+      "pinterest_marketing": {
+        "board_suggestion": "Luxury Home Art & Decor",
+        "pin_title": "Deep Core Threshold by Valch in Elegant Study",
+        "pin_description": "Maurizio Valch's 'Deep Core Threshold' provides a profound, contemplative focal point in a luxurious, dark-paneled private study. Perfect for discerning collectors.",
+        "alt_text": "Maurizio Valch's square abstract painting 'Deep Core Threshold' with a teal and ochre vortex, hanging in a sophisticated dark wood-paneled private study with an optional male figure for scale.",
+        "seo_keywords": [
+          "luxury home art",
+          "private collection",
+          "dark study decor",
+          "contemporary abstract",
+          "moody interiors",
+          "Maurizio Valch painting"
+        ],
+        "hashtags": [
+          "#LuxuryInteriors",
+          "#ArtForHome",
+          "#CollectorLife",
+          "#AbstractPainting",
+          "#StudyDecor"
+        ]
+      }
+    },
+    {
+      "context_name": "Architectural Studio Insight",
+      "context_role": "inspiration / statement piece",
+      "space_type": "architect's studio",
+      "atmosphere": "thought-provoking, minimalist, professional",
+      "materials": [
+        "raw concrete wall",
+        "metal furniture",
+        "natural light",
+        "subtle industrial elements"
+      ],
+      "lighting": "bright, even natural daylight from a large window",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter right view showcases the artwork within an architectural studio, emphasizing its structural and tactile qualities. The close-up framing keeps the artwork dominant while providing enough context to suggest a professional and intellectually stimulating environment, ideal for architects and designers.",
+      "human_presence": "none",
+      "curatorial_reason": "Highlights the artwork's structural integrity and conceptual depth, resonating with an audience interested in design principles, form, and spatial relationships.",
+      "commercial_reason": "Appeals directly to architects and designers by showing how the artwork can integrate into and inspire professional, design-focused spaces, offering aesthetic and intellectual value.",
+      "mockup_prompt": "Contemporary architect's studio with a raw concrete wall, minimalist metal furniture (e.g., a drafting table edge), and abundant natural daylight from a large window. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Three-quarter right view. Close-up view.",
+      "negative_prompt": "messy, traditional, ornate, distracting architectural elements, cluttered workspace, dark room, artificial light only",
+      "pinterest_marketing": {
+        "board_suggestion": "Art for Architects & Designers",
+        "pin_title": "Valch's Tectonic Current in an Architectural Studio",
+        "pin_description": "Maurizio Valch's 'Tectonic Current' perfectly complements a minimalist architectural studio, offering structural depth and inspiring design thinking.",
+        "alt_text": "Maurizio Valch's square abstract painting 'Tectonic Current' with a teal and ochre spiraling form, displayed on a raw concrete wall in a contemporary architectural studio.",
+        "seo_keywords": [
+          "art for architects",
+          "studio art",
+          "contemporary design",
+          "concrete walls",
+          "structural abstract",
+          "Maurizio Valch"
+        ],
+        "hashtags": [
+          "#ArchitecturalDesign",
+          "#StudioArt",
+          "#ModernAbstract",
+          "#DesignInspiration",
+          "#ArtConsultant"
+        ]
+      }
+    },
+    {
+      "context_name": "Mediterranean Villa Entryway",
+      "context_role": "welcoming statement",
+      "space_type": "luxury residence entryway / hallway",
+      "atmosphere": "calm, elegant, sun-drenched",
+      "materials": [
+        "white stucco walls",
+        "terracotta floor",
+        "minimalist wooden console"
+      ],
+      "lighting": "bright, warm natural light from a nearby arched opening",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A front view provides a clear, inviting presentation of the artwork as a focal point in a sophisticated entryway. The close-up ensures the artwork’s presence and details are paramount, while the warm Mediterranean context suggests a specific, desirable lifestyle.",
+      "human_presence": "optional standing female figure 1.55m",
+      "curatorial_reason": "Showcases the artwork's ability to create a silent, profound presence even in a transition space, aligning with the artist's contemplative and spatial themes within an elegant setting.",
+      "commercial_reason": "Appeals to international buyers, particularly in European and Mediterranean markets, demonstrating its versatility and elegance in high-end residential contexts.",
+      "mockup_prompt": "Elegant entryway of a Mediterranean villa with smooth white stucco walls, a warm terracotta tile floor, a minimalist wooden console table below the artwork (optional female figure 1.55m standing nearby), and bright, natural light streaming from a nearby arched opening. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Front view. Close-up view.",
+      "negative_prompt": "cluttered, dark, cold lighting, generic hallway, cheap materials, modern urban, industrial, overly rustic",
+      "pinterest_marketing": {
+        "board_suggestion": "Mediterranean Luxury Homes",
+        "pin_title": "Valch's Deep Core Threshold in Mediterranean Entryway",
+        "pin_description": "Elevate a Mediterranean villa entryway with Maurizio Valch's 'Deep Core Threshold,' bringing contemplative depth and sophisticated style to sun-drenched spaces.",
+        "alt_text": "Maurizio Valch's square abstract painting 'Deep Core Threshold' featuring a teal and ochre vortex, hanging on a white stucco wall in a luxurious Mediterranean villa entryway with an optional female figure for scale.",
+        "seo_keywords": [
+          "Mediterranean interior",
+          "luxury entryway art",
+          "white stucco walls",
+          "abstract art",
+          "Maurizio Valch",
+          "European homes"
+        ],
+        "hashtags": [
+          "#MediterraneanStyle",
+          "#LuxuryEntryway",
+          "#AbstractDecor",
+          "#VillaInteriors",
+          "#ArtForSale"
+        ]
+      }
+    },
+    {
+      "context_name": "Sophisticated Loft Living",
+      "context_role": "modern centerpiece",
+      "space_type": "contemporary urban loft living room",
+      "atmosphere": "chic, spacious, refined",
+      "materials": [
+        "exposed brick wall (painted white)",
+        "hardwood floor",
+        "minimalist furniture"
+      ],
+      "lighting": "soft overhead recessed lighting, floor lamp creating subtle glow",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter left view in a modern loft highlights the artwork's contemporary appeal and scale within a spacious living environment. The close-up ensures the artwork remains the dominant element, showcasing its textures and commanding presence against a clean, urban backdrop.",
+      "human_presence": "none",
+      "curatorial_reason": "Demonstrates the artwork's structural and spatial qualities within a modern, open-plan living space, appealing to a contemporary urban aesthetic.",
+      "commercial_reason": "Positions the artwork as a key piece for high-end urban residences, suitable for buyers looking for sophisticated, impactful art in a spacious environment.",
+      "mockup_prompt": "Spacious contemporary urban loft living room with an exposed brick wall painted white, light hardwood floors, and minimalist furniture (e.g., a low-profile sofa edge). Soft overhead recessed lighting and a floor lamp create a subtle glow around the artwork. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Three-quarter left view. Close-up view.",
+      "negative_prompt": "cluttered, traditional, small room, distracting decor, cheap furniture, vibrant colors, overly industrial",
+      "pinterest_marketing": {
+        "board_suggestion": "Loft Living & Contemporary Art",
+        "pin_title": "Maurizio Valch: Tectonic Current in Urban Loft",
+        "pin_description": "Elevate an urban loft with Maurizio Valch's 'Tectonic Current,' a striking abstract piece bringing depth and sophistication to spacious, modern living.",
+        "alt_text": "Maurizio Valch's square abstract painting 'Tectonic Current' with a teal and ochre vortex on a white brick wall in a chic urban loft living room.",
+        "seo_keywords": [
+          "urban loft art",
+          "contemporary living room",
+          "abstract wall art",
+          "white brick wall",
+          "modern interior",
+          "Maurizio Valch"
+        ],
+        "hashtags": [
+          "#UrbanLoft",
+          "#ContemporaryArt",
+          "#LivingRoomDecor",
+          "#ModernDesign",
+          "#ArtStatement"
+        ]
+      }
+    },
+    {
+      "context_name": "Executive Lounge Reflection",
+      "context_role": "calming presence",
+      "space_type": "upscale corporate lounge / executive office",
+      "atmosphere": "calm, professional, inspiring",
+      "materials": [
+        "muted grey wall",
+        "dark carpet",
+        "streamlined modern furniture"
+      ],
+      "lighting": "balanced ambient light with a subtle art light",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A front view provides clear, professional presentation, suitable for an executive setting. The close-up maintains the artwork's visual dominance, emphasizing its contemplative quality and making it an ideal focal point for an inspiring yet tranquil corporate environment.",
+      "human_presence": "none",
+      "curatorial_reason": "Highlights the artwork's ability to induce contemplation and quiet intensity, providing a sophisticated and calming presence in a demanding professional setting.",
+      "commercial_reason": "Targets corporate collectors, luxury office designers, and businesses seeking art that inspires reflection and contributes to a refined professional atmosphere.",
+      "mockup_prompt": "Upscale executive lounge or large office with a muted grey wall, a dark, plush carpet, and a hint of streamlined modern furniture. Balanced ambient lighting with a subtle, focused art light illuminating the artwork. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Front view. Close-up view.",
+      "negative_prompt": "cold office, generic cubicle, cluttered desk, bright fluorescent lights, unprofessional, cheap decor, distracting elements",
+      "pinterest_marketing": {
+        "board_suggestion": "Corporate Art Collections",
+        "pin_title": "Valch: Nocturne Aperture for Executive Spaces",
+        "pin_description": "Maurizio Valch's 'Nocturne Aperture' brings a calm, contemplative elegance to executive lounges and upscale offices, fostering an inspiring professional environment.",
+        "alt_text": "Maurizio Valch's square abstract painting 'Nocturne Aperture' with a deep blue and ochre vortex, displayed on a muted grey wall in an upscale executive lounge.",
+        "seo_keywords": [
+          "corporate art",
+          "executive office art",
+          "professional decor",
+          "calming abstract",
+          "modern office design",
+          "Maurizio Valch"
+        ],
+        "hashtags": [
+          "#CorporateArt",
+          "#ExecutiveOffice",
+          "#ModernWorkspace",
+          "#AbstractForBusiness",
+          "#ArtConsulting"
+        ]
+      }
+    },
+    {
+      "context_name": "Boutique Hotel Serenity",
+      "context_role": "design focal point",
+      "space_type": "boutique hotel lobby / communal area",
+      "atmosphere": "serene, refined, welcoming",
+      "materials": [
+        "polished light stone wall",
+        "subtle texture",
+        "warm wood floor",
+        "designer seating"
+      ],
+      "lighting": "soft, warm ambient light, strategic accent lighting",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter right view positions the artwork as a key design element in a sophisticated hotel lobby. The close-up ensures its visual dominance and allows the details of texture and color to be appreciated within an inviting, high-design context, relevant for commercial and hospitality buyers.",
+      "human_presence": "none",
+      "curatorial_reason": "Demonstrates the artwork's ability to define a sophisticated aesthetic and create a tranquil atmosphere in a public, yet high-design, space.",
+      "commercial_reason": "Appeals to hospitality designers and developers looking for art that provides a unique sense of place and elegance in boutique hotel environments.",
+      "mockup_prompt": "Lobby of a boutique hotel with polished light stone walls, subtle textural detailing, warm wood floors, and elegant designer seating partially visible. Soft, warm ambient lighting with strategic accent lighting on the artwork. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Three-quarter right view. Close-up view.",
+      "negative_prompt": "generic hotel, garish decor, cheap materials, cold lighting, busy, distracting elements, unrefined, common areas",
+      "pinterest_marketing": {
+        "board_suggestion": "Boutique Hotel Art & Design",
+        "pin_title": "Valch: Deep Core Threshold in Hotel Lobby",
+        "pin_description": "Maurizio Valch's 'Deep Core Threshold' creates a serene and refined focal point for a boutique hotel lobby, enhancing the guest experience with its contemplative depth.",
+        "alt_text": "Maurizio Valch's square abstract painting 'Deep Core Threshold' with a teal and ochre vortex, displayed on a polished light stone wall in a boutique hotel lobby.",
+        "seo_keywords": [
+          "hotel art",
+          "boutique design",
+          "hospitality art",
+          "luxury lobby",
+          "abstract painting",
+          "Maurizio Valch"
+        ],
+        "hashtags": [
+          "#BoutiqueHotel",
+          "#HotelArt",
+          "#LobbyDesign",
+          "#AbstractDecor",
+          "#DesignHotel"
+        ]
+      }
+    },
+    {
+      "context_name": "Townhouse Gallery Wall",
+      "context_role": "private collection feature",
+      "space_type": "upscale townhouse private gallery / landing",
+      "atmosphere": "curated, elegant, intimate",
+      "materials": [
+        "off-white painted walls",
+        "ornate plaster molding (subtle)",
+        "dark wood flooring"
+      ],
+      "lighting": "soft track lighting, natural light from a nearby window",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A front view highlights the artwork as a prominent feature in a private townhouse gallery space. The close-up ensures clarity and dominance, while the subtle historic architectural elements add a layer of sophistication without detracting from the artwork itself.",
+      "human_presence": "none",
+      "curatorial_reason": "Positions the artwork as a key piece within a cultivated private collection, showcasing its blend of contemporary abstraction with classic architectural elegance.",
+      "commercial_reason": "Appeals to collectors with traditional homes who seek to integrate modern, impactful art, demonstrating its versatility across different architectural styles.",
+      "mockup_prompt": "Private gallery wall in an upscale European townhouse, with off-white painted walls, subtle ornate plaster molding, and dark wood flooring. Soft track lighting illuminates the artwork, complemented by natural light from a nearby window. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Front view. Close-up view.",
+      "negative_prompt": "cluttered, overly ornate, distracting traditional elements, bright modern, cold room, generic, bad lighting",
+      "pinterest_marketing": {
+        "board_suggestion": "Art for Traditional & Modern Homes",
+        "pin_title": "Valch's Nocturne Aperture in Townhouse Gallery",
+        "pin_description": "Maurizio Valch's 'Nocturne Aperture' offers a profound contemporary presence within the elegant setting of a townhouse private gallery, blending modern abstraction with classic architecture.",
+        "alt_text": "Maurizio Valch's square abstract painting 'Nocturne Aperture' with a deep blue and ochre vortex, displayed on an off-white wall with subtle molding in a European townhouse gallery.",
+        "seo_keywords": [
+          "townhouse art",
+          "private gallery",
+          "historic home modern art",
+          "abstract for traditional",
+          "Maurizio Valch painting",
+          "curated collection"
+        ],
+        "hashtags": [
+          "#TownhouseInteriors",
+          "#ArtCollection",
+          "#ModernMeetsClassic",
+          "#AbstractArt",
+          "#HomeGallery"
+        ]
+      }
+    },
+    {
+      "context_name": "Minimalist Dining Room",
+      "context_role": "aesthetic centerpiece",
+      "space_type": "contemporary dining room",
+      "atmosphere": "clean, peaceful, inviting",
+      "materials": [
+        "smooth light grey walls",
+        "light oak flooring",
+        "minimalist dining table and chairs"
+      ],
+      "lighting": "bright, even natural light, complemented by soft pendant lighting",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter left view in a minimalist dining room context presents the artwork as an aesthetic centerpiece without dominating the functional space. The close-up ensures the artwork’s details and scale are clearly conveyed, suggesting its ability to enhance a serene environment without being merely decorative.",
+      "human_presence": "none",
+      "curatorial_reason": "Highlights the artwork's capacity to bring contemplative depth and structural beauty to a functional living space, maintaining a silent yet powerful presence.",
+      "commercial_reason": "Appeals to discerning homeowners and interior designers seeking a statement piece that elevates a dining area with sophisticated, non-intrusive art.",
+      "mockup_prompt": "Clean, contemporary dining room with smooth light grey walls, light oak flooring, and minimalist dining table and chairs. Bright, even natural light from a large window, complemented by soft pendant lighting above the table. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Three-quarter left view. Close-up view.",
+      "negative_prompt": "cluttered dining table, busy patterns, traditional furniture, dark room, artificial light only, generic dining room, cheap decor",
+      "pinterest_marketing": {
+        "board_suggestion": "Minimalist Dining Room Art",
+        "pin_title": "Maurizio Valch: Deep Core Threshold in Dining Room",
+        "pin_description": "Transform a minimalist dining room with Maurizio Valch's 'Deep Core Threshold,' adding profound depth and contemplative calm to modern gatherings.",
+        "alt_text": "Maurizio Valch's square abstract painting 'Deep Core Threshold' with a teal and ochre vortex, displayed on a smooth light grey wall in a contemporary minimalist dining room.",
+        "seo_keywords": [
+          "dining room art",
+          "minimalist interior",
+          "abstract painting",
+          "light grey walls",
+          "modern dining",
+          "Maurizio Valch"
+        ],
+        "hashtags": [
+          "#DiningRoomArt",
+          "#MinimalistHome",
+          "#AbstractDecor",
+          "#ModernInterior",
+          "#HomeStyling"
+        ]
+      }
+    },
+    {
+      "context_name": "Artist's Private Studio",
+      "context_role": "authentic inspiration",
+      "space_type": "artist's studio / creative workspace",
+      "atmosphere": "authentic, inspiring, focused",
+      "materials": [
+        "textured white plaster walls",
+        "wooden easel (subtle)",
+        "natural light"
+      ],
+      "lighting": "soft, even natural light from a large north-facing window",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter right view places the artwork within an artist's studio, lending authenticity and showcasing its textural details in an environment of creative work. The close-up maintains its visual priority while allowing a glimpse into a space that speaks to process and inspiration.",
+      "human_presence": "none",
+      "curatorial_reason": "Connects the artwork directly to the creative process and the artist's environment, emphasizing its material presence and profound inner structure, aligning with the artist's process-oriented approach.",
+      "commercial_reason": "Appeals to collectors and art enthusiasts who value the story behind the art and the artist's dedication, demonstrating the artwork's intrinsic value and authenticity.",
+      "mockup_prompt": "Authentic artist's studio with textured white plaster walls, a glimpse of a wooden easel or art tools in the foreground (subtly out of focus), and soft, even natural light from a large north-facing window. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant. Three-quarter right view. Close-up view.",
+      "negative_prompt": "cluttered, messy, industrial, generic studio, dark room, bright artificial lights, distractions, uninspired",
+      "pinterest_marketing": {
+        "board_suggestion": "Artist Studio & Abstract Inspiration",
+        "pin_title": "Valch's Tectonic Current in Artist Studio",
+        "pin_description": "Witness Maurizio Valch's 'Tectonic Current' within the inspiring environment of an artist's studio, highlighting its textural depth and creative origins.",
+        "alt_text": "Maurizio Valch's square abstract painting 'Tectonic Current' with a teal and ochre vortex, displayed on a textured white plaster wall in an artist's studio.",
+        "seo_keywords": [
+          "artist studio art",
+          "creative workspace",
+          "abstract art process",
+          "textured painting",
+          "Maurizio Valch",
+          "art inspiration"
+        ],
+        "hashtags": [
+          "#ArtistStudio",
+          "#ArtProcess",
+          "#AbstractArt",
+          "#CreativeSpace",
+          "#ArtInspiration"
+        ]
+      }
+    }
+  ]
+}
+```

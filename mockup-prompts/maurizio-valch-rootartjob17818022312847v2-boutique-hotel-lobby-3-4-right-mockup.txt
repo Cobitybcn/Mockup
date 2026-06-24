@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Boutique Hotel Lobby
+- Purpose: Elegant hospitality art display
+- Scene Description: A Luxury apartment lobby with a curated art selection with Welcoming, elegant, subtly vibrant, sophisticated atmosphere. Materials: Travertine walls, brushed bronze accents, dark wood reception desk, soft ambient lighting
+- Lighting: Warm, even overhead lighting with spotlights on the artwork, supplemented by discreet recessed lighting.
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult white woman, 1.55 meters tall.
+
+- Structured Camera View: three-quarter right view
+- Structured Camera Distance: close-up view
+- Camera Rationale: The three-quarter right view highlights the artwork's textured surface and the interplay of its warm colors against the elegant backdrop of the lobby. The standing female figure provides scale and an aspirational context for the artwork in a sophisticated public setting.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+An elegant, subtly vibrant, sophisticated luxury apartment lobby. Walls are travertine, with brushed bronze accents. A dark wood reception desk is visible in the background. Soft ambient lighting creates a welcoming mood. Warm, even overhead lighting with spotlights illuminates the artwork, supplemented by discreet recessed lighting. An elegant standing female figure, 1.55m tall, in a black dress, looks towards the artwork from a slight distance. The camera is positioned at a three-quarter right view, close-up. Never modify the attached artwork. Preserve it exactly as provided, including composition, proportions, orientation, internal structure, edges, colors, texture, and visual content. The artwork must remain fully visible, correctly proportioned, naturally mounted on the wall, and visually dominant.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropping the artwork, altering the artwork, rotating the artwork, distorting the artwork, changing the artwork colors, wide room view, distant view, extreme angle
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

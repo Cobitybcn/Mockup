@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: square canvas, 160 cm wide × 160 cm high × 5 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Mediterranean Sunset Interior
+- Purpose: Providing a deep, introspective counterpoint to light-filled, earthy Mediterranean aesthetics.
+- Scene Description: A Mediterranean-inspired living room with modern touches with Warm, earthy, serene, contemplative, inviting atmosphere. Materials: textured white-washed walls, terracotta floor tiles, linen sofas, hand-glazed ceramics
+- Lighting: Soft, golden hour light filtering through large archways or windows, creating a gentle warmth.
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult black woman, 1.55 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: A three-quarter left view introduces a natural, inviting perspective, allowing the artwork's depth to engage with the warm, earthy tones of the Mediterranean setting. The close-up ensures the artwork remains the central focus, while hinting at the spacious, light-filled environment.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+A spacious Mediterranean-inspired living room with textured white-washed walls and terracotta floor tiles. Maurizio Valch's large square abstract painting featuring a fuchsia spiral on dark segmented background hangs prominently. Soft, golden hour light filters through a large archway. Linen sofas and hand-glazed ceramics. Optional standing female figure 1.55m admiring the art. Three-quarter left view, close-up view, highlighting the artwork's profound contrast and presence in a warm, serene setting.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cold colors, industrial setting, cluttered, modern urban loft, artificial lighting, harsh shadows, small artwork, distorted perspective
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

@@ -1,0 +1,34 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 110 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Evening Study in a Parisian Salon
+- Purpose: Private collection, personal study, evening contemplation
+- Scene Description: A French hôtel particulier salon with Refined, contemplative, warm evening intimacy atmosphere. Materials: Boiserie paneling, parquet de Versailles flooring, gilded mirror fragments, velvet upholstery, dark wood
+- Lighting: Warm interior lamplight, soft architectural wall wash
+- Time of Day: afternoon
+- Placement: Hang the artwork naturally on the wall at a believable height.
+- Human Figure: Include one standing adult white man, 1.80 meters tall.
+
+- Structured Camera View: three-quarter left view
+- Structured Camera Distance: close-up view
+- Camera Rationale: Artwork on a boiserie panelled wall, figure observing from a slight angle.
+
+
+AI PROPOSED MOCKUP DIRECTION:
+An elegant standing male figure 1.80m, having just stepped away from a dark wood desk, pauses in front of the artwork, hands clasped behind his back, taking in the deep color and forms. The scene is set in a French hôtel particulier salon, featuring meticulously crafted boiserie paneling on the walls, classic parquet de Versailles flooring, and a subtle reflection from a gilded mirror fragment across the room. The wall behind the artwork is a soft, warm plaster. Warm interior lamplight combined with a soft architectural wall wash creates an atmosphere of intimate evening contemplation. three-quarter left view, close-up view. The elegant standing male figure 1.80m is observing the artwork from a respectful distance, slightly to the right of the artwork's center. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y visualmente dominante. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.
+
+CAMERA SELECTION RULES:
+
+
+QUALITY RULES:
+
+
+NEGATIVE RULES:
+
+
+
+CONTEXT-SPECIFIC NEGATIVE PROMPT:
+cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, wide room view, distant view, extreme angle, empty room without human figure, artwork alone without human scale, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork tilted, artwork off-wall, artwork floating
+
+TECHNICAL RENDERER CONTROLS FROM ADMIN:

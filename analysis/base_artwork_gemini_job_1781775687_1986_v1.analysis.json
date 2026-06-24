@@ -1,0 +1,203 @@
+{
+    "suggested_titles": [
+        {
+            "title": "Inner Gyre",
+            "subtitle": "A deep dive into vibrant strata",
+            "description": "This commanding work draws the eye into a powerful, textural gyre of rich teal and fiery red, emerging from a deep, nocturnal ground. Valch's signature layering and palette knife incisions build a landscape of intense physicality, evoking both the earth's primordial forces and the intricate spirals of consciousness. The monumental scale allows for an immersive contemplation of this dynamic core, where raw energy meets a profound sense of inner order. It holds a silent, yet palpable, presence that shifts between vibrant movement and deep stillness, inviting an exploration of hidden depths."
+        },
+        {
+            "title": "Tectonic Bloom",
+            "subtitle": "The emergence of primordial hues",
+            "description": "Layers of vibrant turquoise and intense red erupt across the canvas, forming a dynamic structure reminiscent of geological shifts and ancient strata. Maurizio Valch employs bold impasto and precise incisions to sculpt the surface, creating a tactile landscape where matter and color converge. The rich, dark undertones anchor this powerful bloom, suggesting a nocturnal and timeless atmosphere. This piece asserts a strong, contemplative presence, balancing the raw, expressive material with a quiet, structural elegance, echoing the deep, slow rhythms of the earth."
+        },
+        {
+            "title": "Silent Imprint",
+            "subtitle": "Depth in sculpted light and shadow",
+            "description": "Through an interplay of robust impasto and subtle incisions, this work creates a profound surface that captures and modulates light. The central, swirling form, rendered in vivid teal and fiery red, pulsates with a restrained energy against a deep, somber background. Valch's meticulous build-up of paint results in a tactile topography, where every ridge and valley contributes to a sense of enduring presence. This artwork embodies a powerful tension between dynamic movement and contemplative silence, inviting viewers to explore its physical depth and the quiet intensity of its internal structure."
+        }
+    ],
+    "recommended_number_of_contexts": 9,
+    "contextual_proposals": [
+        {
+            "context_name": "Contemporary Gallery Entrance",
+            "context_role": "Exhibition Space",
+            "space_type": "professional art galleries",
+            "atmosphere": "minimalist, focused, sophisticated",
+            "materials": [
+                "white walls",
+                "polished concrete floor",
+                "neutral tones"
+            ],
+            "lighting": "gallery spotlights, even ambient light",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "Frontal view accentuates the square format and centered composition, presenting the artwork directly. Close-up allows focus on texture without distraction, while showing just enough of the gallery wall to suggest scale.",
+            "human_presence": "none",
+            "curatorial_reason": "To emphasize the artwork's monumental presence and clean lines, allowing the viewer to absorb its full visual impact as a standalone statement piece in a professional setting.",
+            "commercial_reason": "Highlights its gallery-readiness and ability to anchor a space, appealing to curators and institutional buyers looking for impactful main wall installations.",
+            "mockup_prompt": "Minimalist contemporary art gallery entrance, white walls, polished concrete floor, focused gallery lighting on a 160x160cm artwork, wide shot from front, no people, neutral tones.",
+            "negative_prompt": "clutter, excessive decoration, busy background, poor lighting, unfocused, generic, cheap materials"
+        },
+        {
+            "context_name": "Luxury Residential Living Room",
+            "context_role": "Private Residence",
+            "space_type": "high-end residential interiors",
+            "atmosphere": "elegant, warm, inviting",
+            "materials": [
+                "light oak flooring",
+                "textured wall finish",
+                "minimalist furniture"
+            ],
+            "lighting": "soft ambient light, strategic accent light",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "Three-quarter left view reveals the sculptural depth of the impasto and the canvas edges, enriching the material perception. Close-up shows detail, while the human figure provides a sense of scale within a luxurious home.",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "To demonstrate how the artwork's intense texture and deep colors interact with ambient light in a sophisticated residential environment, offering a dynamic visual experience from different angles.",
+            "commercial_reason": "Appeals to high-end interior designers and private collectors seeking a bold, statement piece that enhances a minimalist aesthetic, with the figure providing scale for residential integration.",
+            "mockup_prompt": "Luxury living room, 160x160cm artwork on a light textured wall, light oak wooden floor, minimalist contemporary furniture, soft natural light, close-up view from three-quarter left, optional standing male figure 1.80m.",
+            "negative_prompt": "cluttered, generic furniture, cheap decor, poor lighting, unrefined, old-fashioned"
+        },
+        {
+            "context_name": "Architectural Design Studio",
+            "context_role": "Professional Workspace",
+            "space_type": "design studios",
+            "atmosphere": "modern, analytical, inspiring",
+            "materials": [
+                "exposed concrete wall",
+                "industrial steel accents",
+                "large windows"
+            ],
+            "lighting": "bright natural daylight, diffuse",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "Three-quarter right view adds perspective to the thick impasto and painted edges, highlighting the object-like quality. Close-up keeps the artwork as the central focus while hinting at the intellectual atmosphere of the studio.",
+            "human_presence": "none",
+            "curatorial_reason": "To present the artwork within a creative, professional environment, showcasing its structural and tectonic qualities in conversation with modern architectural elements.",
+            "commercial_reason": "Targets architects and design professionals, illustrating the artwork's capacity to integrate into and elevate contemporary, thoughtfully designed commercial or residential spaces.",
+            "mockup_prompt": "Architect's design studio, 160x160cm artwork on an exposed concrete wall, large windows, industrial minimalist aesthetic, bright natural daylight, close-up view from three-quarter right, no people.",
+            "negative_prompt": "messy, dated, sterile, corporate office, bad light, uninspired"
+        },
+        {
+            "context_name": "Boutique Hotel Lounge",
+            "context_role": "Hospitality Space",
+            "space_type": "hotels boutique",
+            "atmosphere": "chic, inviting, sophisticated",
+            "materials": [
+                "velvet upholstery",
+                "dark wood panels",
+                "subtle brass details"
+            ],
+            "lighting": "warm, recessed lighting, ambient",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "Frontal view allows the artwork's full composition and vibrant colors to be appreciated directly. Close-up ensures visual dominance, while the figure provides a relatable scale for a discerning clientele.",
+            "human_presence": "optional standing female figure 1.55m",
+            "curatorial_reason": "To illustrate the artwork's commanding presence and ability to create a focal point in a public, yet intimate, high-design hospitality setting, offering a moment of contemplative pause.",
+            "commercial_reason": "Appeals to luxury hospitality projects and corporate collections, demonstrating the artwork's impact and ability to define a sophisticated brand aesthetic, with the figure for scale.",
+            "mockup_prompt": "Lobby of a boutique hotel, 160x160cm artwork on a dark wood panel wall, velvet armchairs, warm ambient lighting, close-up view from front, optional standing female figure 1.55m.",
+            "negative_prompt": "motel, bland, cheap hotel, harsh lighting, cluttered, uninviting"
+        },
+        {
+            "context_name": "Private Collector's Study",
+            "context_role": "Personal Collection",
+            "space_type": "colecciones privadas",
+            "atmosphere": "intimate, intellectual, serene",
+            "materials": [
+                "dark wood bookshelves",
+                "leather armchair",
+                "soft rug"
+            ],
+            "lighting": "directed reading light, soft lamp glow",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "Three-quarter left view provides a nuanced perspective on the textured surface and physical depth. Close-up reinforces the artwork's importance as a cherished object for close examination.",
+            "human_presence": "none",
+            "curatorial_reason": "To suggest a more intimate and intellectual engagement with the artwork, where its layers and symbolism can be explored reflectively within a personal collection.",
+            "commercial_reason": "Targets experienced art collectors who appreciate the depth of texture and symbolic resonance, suitable for a refined personal space dedicated to contemplation and study.",
+            "mockup_prompt": "Private collector's study, 160x160cm artwork on a subtly textured wall, surrounded by dark wood bookshelves, a classic leather armchair, and soft ambient lighting from a desk lamp, close-up three-quarter left view, no people.",
+            "negative_prompt": "modern office, generic study, bright, cold, uncozy, messy"
+        },
+        {
+            "context_name": "Elegant Residential Hallway",
+            "context_role": "Transitional Space",
+            "space_type": "elegant hallways",
+            "atmosphere": "refined, spacious, transitional",
+            "materials": [
+                "smooth plaster walls",
+                "marble flooring",
+                "minimalist console table"
+            ],
+            "lighting": "natural light from above, subtle wall sconces",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "Three-quarter right view allows for appreciation of the artwork's sculptural quality as one might pass it, revealing its volumetric presence. Close-up maintains focus, hinting at the architectural integration.",
+            "human_presence": "none",
+            "curatorial_reason": "To show how the artwork can transform a transitional space, its dynamic spiral creating movement and energy within a structured architectural context.",
+            "commercial_reason": "Highlights its versatility for high-end residential interiors beyond typical living rooms, appealing to interior designers for grand entrances or impactful landings in luxury homes.",
+            "mockup_prompt": "Elegant residential hallway, 160x160cm artwork on a smooth plaster wall, polished marble flooring, minimalist console table, natural light from a skylight, subtle wall sconces, close-up view from three-quarter right, no people.",
+            "negative_prompt": "narrow corridor, cluttered, dark, uninviting, cheap hallway, office corridor"
+        },
+        {
+            "context_name": "Museum Contemporary Wing",
+            "context_role": "Exhibition Space",
+            "space_type": "impeccable museum spaces",
+            "atmosphere": "sacred, contemplative, pristine",
+            "materials": [
+                "white exhibition walls",
+                "light grey concrete floor",
+                "minimalist benches"
+            ],
+            "lighting": "focused art lighting, high ceilings",
+            "camera_view": "front view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "Frontal view showcases the artwork's formal power and allows the focused lighting to reveal its intricate texture evenly. Close-up ensures the artwork remains the sole, celebrated object of attention.",
+            "human_presence": "none",
+            "curatorial_reason": "To present the artwork with the gravitas of a museum piece, emphasizing its artistic merit, material innovation, and the interplay of light and shadow on its textured surface.",
+            "commercial_reason": "Positions the artwork as museum-quality, enhancing its prestige for high-level collectors, institutional acquisitions, and major gallery exhibitions.",
+            "mockup_prompt": "Impeccable museum contemporary wing, 160x160cm artwork on a pristine white wall, light grey concrete floor, high ceilings, focused gallery lighting on the artwork, close-up front view, no people.",
+            "negative_prompt": "old museum, crowded, poor lighting, sterile, uninviting, generic exhibition"
+        },
+        {
+            "context_name": "Mediterranean Designer Home",
+            "context_role": "Luxury Residence",
+            "space_type": "casas con diseño sobrio",
+            "atmosphere": "calm, earthy, sun-drenched",
+            "materials": [
+                "rough plaster walls",
+                "terracotta floor tiles",
+                "natural linen fabrics"
+            ],
+            "lighting": "abundant natural Mediterranean sunlight",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "Three-quarter left view helps capture the interaction of the artwork's thick surface with natural light. Close-up highlights its material presence, with the figure providing relatable scale within the airy space.",
+            "human_presence": "optional standing female figure 1.55m",
+            "curatorial_reason": "To contrast the artwork's intense colors and textures with the serene, natural materials and light of a Mediterranean setting, creating a dialogue between primal energy and calm sophistication.",
+            "commercial_reason": "Appeals to buyers with residences in preferred regions like Spain, Italy, Miami, seeking a powerful, earthy yet vibrant artwork that complements a sophisticated, organic modern aesthetic.",
+            "mockup_prompt": "Sober Mediterranean designer home, 160x160cm artwork on a rough white plaster wall, terracotta floor tiles, natural light from a large window, close-up view from three-quarter left, optional standing female figure 1.55m.",
+            "negative_prompt": "kitschy Mediterranean, outdated, dark, cluttered, cheap, noisy"
+        },
+        {
+            "context_name": "Artist's Private Atelier",
+            "context_role": "Creative Workspace",
+            "space_type": "refined artist studios",
+            "atmosphere": "authentic, inspiring, raw",
+            "materials": [
+                "unfinished concrete walls",
+                "splattered studio floor",
+                "artistic tools subtly present"
+            ],
+            "lighting": "north-facing studio light, industrial task lamp",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "Three-quarter right view brings out the three-dimensional quality of the impasto and the robust canvas edges, suggesting its origin. Close-up keeps the artwork dominant, while the figure adds a narrative element of artistic scale.",
+            "human_presence": "optional standing male figure 1.80m",
+            "curatorial_reason": "To immerse the artwork in an authentic creative environment, emphasizing its raw, process-driven nature and connection to the artist's hands-on methods.",
+            "commercial_reason": "Attracts collectors interested in the artist's process and authenticity, offering a behind-the-scenes feel that connects the artwork directly to its creation. The figure adds a human touch to the creative process.",
+            "mockup_prompt": "Maurizio Valch's private artist atelier, 160x160cm artwork on an unfinished concrete wall, paints and tools in background, north-facing studio light, close-up view from three-quarter right, optional standing male figure 1.80m.",
+            "negative_prompt": "clean studio, generic white room, unauthentic, messy, commercial studio, bad lighting"
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1781775687_1986_v1.png"
+}
