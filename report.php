@@ -1100,8 +1100,9 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
 
         .inline-result img {
             width: 100%;
-            aspect-ratio: 4 / 3;
-            object-fit: cover;
+            height: auto;
+            max-height: 500px;
+            object-fit: contain;
             display: block;
             background: var(--gal-surface-soft);
             border: 1px solid var(--gal-border);
@@ -1918,11 +1919,14 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
 
         <!-- Main Workspace Area -->
         <div class="contexts-area">
-            <div class="contexts-header">
-                <h1>Curatorial Direction</h1>
+            <div class="contexts-header" style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
+                <h1 style="margin: 0; line-height: 1.1;">Curatorial Direction</h1>
+                <?php if (!empty($analysis['prompt_version'])): ?>
+                    <span class="prompt-version-badge" style="font-size: 11px; font-weight: 600; padding: 3px 8px; background: var(--gal-surface); border: 1px solid var(--gal-border); border-radius: 4px; color: var(--gal-muted); display: inline-flex; align-items: center; letter-spacing: 0.02em;"><?= h($analysis['prompt_version']) ?></span>
+                <?php endif; ?>
                 
                 <?php if ($mockNotice): ?>
-                    <div class="mock-warning">
+                    <div class="mock-warning" style="width: 100%; margin-top: 10px;">
                         <?= h($mockNotice) ?>
                     </div>
                 <?php endif; ?>
@@ -2212,7 +2216,7 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                                             <span>3/4 derecho</span>
                                         </button>
                                     </div>
-                                    <input type="hidden" name="camera_override" value="<?= $defaultCamera ?>">
+                                    <input type="hidden" name="camera_override" value="">
                                 </div>
                                 <div class="opt-group">
                                     <label>Atmosphere / Lighting</label>
@@ -2253,7 +2257,7 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                                             <span>Night</span>
                                         </button>
                                     </div>
-                                    <input type="hidden" name="time_override" value="<?= $defaultTime ?>">
+                                    <input type="hidden" name="time_override" value="">
                                 </div>
                                 <div class="opt-group full-width">
                                     <label>Figura humana</label>
@@ -2283,7 +2287,7 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                                             <span>Masculina</span>
                                         </button>
                                     </div>
-                                    <input type="hidden" name="human_override" value="<?= $defaultHuman ?>">
+                                    <input type="hidden" name="human_override" value="">
                                 </div>
 
                                 <div class="opt-group full-width" style="margin-top: 8px;">
@@ -2307,7 +2311,7 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                                             <span>Alejar (Zoom Out)</span>
                                         </button>
                                     </div>
-                                    <input type="hidden" name="distance_override" value="<?= h($selectorState['distance_override'] ?? 'medium') ?>">
+                                    <input type="hidden" name="distance_override" value="">
                                 </div>
 
                                 <div class="opt-group full-width scale-customizer-container" style="margin-top: 8px;">
@@ -2492,7 +2496,7 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                                             <span>3/4 derecho</span>
                                         </button>
                                     </div>
-                                    <input type="hidden" name="camera_override" value="<?= $defaultCamera ?>">
+                                    <input type="hidden" name="camera_override" value="">
                                 </div>
                                 <div class="opt-group">
                                     <label>Atmosphere / Lighting</label>
@@ -2514,7 +2518,7 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                                             <span>Night</span>
                                         </button>
                                     </div>
-                                    <input type="hidden" name="time_override" value="<?= $defaultTime ?>">
+                                    <input type="hidden" name="time_override" value="">
                                 </div>
                                 <div class="opt-group full-width">
                                     <label>Figura humana</label>
@@ -2532,7 +2536,7 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                                             <span>Masculina</span>
                                         </button>
                                     </div>
-                                    <input type="hidden" name="human_override" value="<?= $defaultHuman ?>">
+                                    <input type="hidden" name="human_override" value="">
                                 </div>
                                 <div class="opt-group full-width" style="margin-top: 8px;">
                                     <label>CAMERA DISTANCE</label>
@@ -2546,7 +2550,7 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                                             <span>Alejar (Zoom Out)</span>
                                         </button>
                                     </div>
-                                    <input type="hidden" name="distance_override" value="<?= h($selectorState['distance_override'] ?? 'medium') ?>">
+                                    <input type="hidden" name="distance_override" value="">
                                 </div>
                                 <div class="opt-group full-width scale-customizer-container" style="margin-top: 8px;">
                                     <label style="display:block; margin-bottom:6px;">ARTWORK SIZE</label>

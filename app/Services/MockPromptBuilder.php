@@ -59,12 +59,6 @@ class MockPromptBuilder
             }
         }
         
-        $cameraStructuredBlock = $cameraView !== '' || $cameraDistance !== '' || $cameraNotes !== ''
-            ? "\n- Structured Camera View: " . ($cameraView !== '' ? $cameraView : 'not specified')
-                . "\n- Structured Camera Distance: " . ($cameraDistance !== '' ? $cameraDistance : 'not specified')
-                . ($cameraNotes !== '' ? "\n- Camera Rationale: {$cameraNotes}" : '')
-            : '';
-
         $creativePromptBlock = $mockupPrompt !== ''
             ? "\n\nAI PROPOSED MOCKUP DIRECTION:\n{$mockupPrompt}"
             : '';
@@ -84,7 +78,7 @@ MOCKUP ART DIRECTION:
 - Scene Description: {$sceneDescription}
 - Lighting: {$lighting}
 - Placement: {$placement}
-- Human Figure: {$humanRule}{$cameraStructuredBlock}{$creativePromptBlock}
+- Human Figure: {$humanRule}{$creativePromptBlock}
 PROMPT;
 
         // Convert fraction ratios like 120/155 or 80/180 into explicit percentages with height context

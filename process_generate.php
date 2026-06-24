@@ -120,15 +120,28 @@ try {
     $result = $processor->createRootImage($jobDir, $status);
 
     // Update status.json with candidates
-    $status = read_status_file($statusFile);
-    $status['status'] = 'done';
-    $status['message'] = 'Root image candidates created. Awaiting user selection.';
-    $status['candidates'] = $result['files'];
-    $status['result_file'] = null; // No selected root image yet
-    write_status_file($statusFile, $status);
+    $diskStatus = [];
+    for ($i = 0; $i < 5; $i++) {
+        $diskStatus = read_status_file($statusFile);
+        if (!empty($diskStatus) && isset($diskStatus['job_id'])) {
+            break;
+        }
+        usleep(100000); // 100ms
+    }
+
+    // Fallback to memory status if disk read failed or is corrupted
+    if (empty($diskStatus) || !isset($diskStatus['job_id'])) {
+        $diskStatus = $status;
+    }
+
+    $diskStatus['status'] = 'done';
+    $diskStatus['message'] = 'Root image candidates created. Awaiting user selection.';
+    $diskStatus['candidates'] = $result['files'];
+    $diskStatus['result_file'] = null; // No selected root image yet
+    write_status_file($statusFile, $diskStatus);
 
     // Update SQLite database status of artwork to awaiting_selection
-    update_artwork_record($status, 'awaiting_selection', null);
+    update_artwork_record($diskStatus, 'awaiting_selection', null);
 
     exit('DONE candidate generation for job ' . $jobId . "\n");
 } catch (Throwable $e) {

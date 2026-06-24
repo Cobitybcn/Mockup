@@ -989,8 +989,9 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
 
         .inline-result img {
             width: 100%;
-            aspect-ratio: 4 / 3;
-            object-fit: cover;
+            height: auto;
+            max-height: 500px;
+            object-fit: contain;
             display: block;
             background: var(--surface-soft);
             border: 1px solid var(--line);

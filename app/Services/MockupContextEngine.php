@@ -45,6 +45,7 @@ class MockupContextEngine
                 }
 
                 $normalized = $this->normalizeAnalysisResponse($profile, $imageMeta);
+                $normalized['prompt_version'] = PromptSettings::artworkAnalysisPromptVersion();
                 $expectedCount = PromptSettings::mockupContextCount();
                 $actualCount = count((array)($normalized['contextual_proposals'] ?? []));
                 if ($actualCount < $expectedCount) {
@@ -99,7 +100,7 @@ class MockupContextEngine
                 'camera_distance' => $cameraDistance,
                 'camera_angle_notes' => $cameraNotes,
                 'time_of_day' => $this->mapTimeOfDay($prop['lighting'] ?? 'day'),
-                'placement' => $this->mapPlacement($prop['space_type'] ?? 'wall'),
+                'placement' => $prop['placement'] ?? 'hanging',
                 'with_human' => (isset($prop['human_presence']) && strtolower(trim($prop['human_presence'])) !== 'none'),
                 'human_profile' => $this->mapHumanProfile($prop['human_presence'] ?? 'none'),
                 'mockup_prompt' => $mockupPrompt,
@@ -131,6 +132,7 @@ class MockupContextEngine
             'suggested_titles' => $suggestedTitles,
             'recommended_number_of_contexts' => count($finalProposals),
             'contextual_proposals' => array_map([$this, 'minimalContextualProposal'], $finalProposals),
+            'prompt_version' => $analysisData['prompt_version'] ?? 'v1.0 (Auto)',
         ];
 
         $this->saveToDatabase($artworkId, $minimalAnalysis, $finalProposals);
@@ -235,40 +237,12 @@ class MockupContextEngine
 
     private function mapCameraAngle(string $angle, string $distance = ''): string
     {
-        $angle = strtolower(trim($angle));
-        $distance = strtolower(trim($distance));
-        $distanceText = match (true) {
-            str_contains($distance, 'close-up') || str_contains($distance, 'close up') => 'close-up view, artwork dominant, room only suggested',
-            str_contains($distance, 'medium') => 'medium-close view, enough space for context and scale while keeping artwork dominant',
-            default => 'medium-close view, artwork dominant in frame',
-        };
-
-        if (str_contains($angle, 'three-quarter') || str_contains($angle, '3/4') || str_contains($angle, 'quarter')) {
-            if (str_contains($angle, 'left')) return 'three-quarter view from the left, slight side angle, eye-level, natural perspective, ' . $distanceText;
-            if (str_contains($angle, 'right')) return 'three-quarter view from the right, slight side angle, eye-level, natural perspective, ' . $distanceText;
-            return 'three-quarter view from the left, slight side angle, eye-level, natural perspective, ' . $distanceText;
-        }
-        if (str_contains($angle, 'close') || str_contains($angle, 'detail') || str_contains($angle, 'texture')) {
-            return 'close-up detail shot of canvas texture, painted surface, brushwork and artwork edge';
-        }
-        if (str_contains($angle, 'low') || str_contains($angle, 'hero')) {
-            return 'subtle low-angle hero shot, slightly below eye level, artwork powerful but not distorted';
-        }
-        if (str_contains($angle, 'human') || str_contains($angle, 'figure') || str_contains($angle, 'scale')) {
-            return 'medium interior shot with discreet human figure for scale, artwork remains the main subject';
-        }
-        return 'front-facing shot, eye-level, balanced interior context, artwork dominant in frame, ' . $distanceText;
+        return trim($angle);
     }
 
     private function mapCameraGroup(string $angle): string
     {
-        $angle = strtolower(trim($angle));
-        if (str_contains($angle, 'three-quarter') || str_contains($angle, '3/4') || str_contains($angle, 'quarter')) {
-            if (str_contains($angle, 'left')) return 'three_quarter_left';
-            if (str_contains($angle, 'right')) return 'three_quarter_right';
-            return 'three_quarter_left';
-        }
-        return 'front_medium';
+        return trim($angle);
     }
 
     private function mapTimeOfDay(string $lighting): string

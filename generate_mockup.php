@@ -175,6 +175,7 @@ function assert_root_owner(string $imagePath, array $user): void
 
 function override_prompt_directives(string $prompt, ?string $camera, ?string $time, ?string $human, ?string $imagePath, ?string $json, ?string $sizeOverride = null, ?string $distance = null): string
 {
+    $heightCm = null;
     if ($camera) {
         $cameraVal = match ($camera) {
             'front' => 'straight-on front view, eye-level, orthographic-like perspective',

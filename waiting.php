@@ -878,7 +878,7 @@ function h($v): string {
             box-sizing: border-box;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1300px) {
             .admin-root-prompts {
                 left: 16px;
                 right: 16px;

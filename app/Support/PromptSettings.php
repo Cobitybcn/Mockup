@@ -120,6 +120,37 @@ class PromptSettings
         return $prompt;
     }
 
+    public static function artworkAnalysisPromptVersion(): string
+    {
+        return self::extractPromptVersion(self::artworkAnalysisPrompt());
+    }
+
+    public static function extractPromptVersion(string $prompt): string
+    {
+        $lines = explode("\n", $prompt);
+        foreach (array_slice($lines, 0, 5) as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+
+            // Remove common comment indicators: //, #, /*, *, etc.
+            $clean = preg_replace('/^(\/\/|\#|\/\*|\*)\s*/', '', $line);
+            $clean = trim($clean);
+
+            // Match typical version tags: v6.4, version 6.4, v6.4 beta, etc.
+            if (preg_match('/(v(?:er(?:sion)?)?\.?\s*[0-9]+(?:\.[0-9]+)*(?:\s*(?:beta|alpha|rc|dev|prod))?)/i', $clean, $matches)) {
+                return trim($matches[1]);
+            }
+
+            // Match "version: 6.4 beta" or similar format
+            if (preg_match('/version\s*:\s*([a-z0-9\.\-\s]+)/i', $clean, $matches)) {
+                return 'v' . trim($matches[1]);
+            }
+        }
+        return 'v1.0 (Auto)';
+    }
+
     public static function mockupScaleRules(): string
     {
         $value = trim(self::all()['mockup_scale_rules'] ?? '');
