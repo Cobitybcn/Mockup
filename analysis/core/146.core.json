@@ -1,0 +1,140 @@
+{
+    "core_schema_version": "1.1",
+    "artwork": {
+        "artwork_id": 146,
+        "job_id": "job_1781554341_9282",
+        "source_image": "main_artwork.jpg",
+        "selected_root_file": "base_artwork_gemini_job_1781554341_9282_v2.png",
+        "dimensions": {
+            "width_cm": 120,
+            "height_cm": 80,
+            "depth_cm": 4,
+            "orientation": "horizontal",
+            "aspect_ratio": 1.5
+        }
+    },
+    "root_artwork_views": {
+        "three_quarter_left": {
+            "file": "base_artwork_gemini_job_1781554341_9282_v2.png",
+            "role": "three-quarter left root view"
+        },
+        "frontal": {
+            "file": null,
+            "role": "frontal root view"
+        },
+        "three_quarter_right": {
+            "file": null,
+            "role": "three-quarter right root view"
+        },
+        "selected_view": "three_quarter_left"
+    },
+    "physical_artwork_reference": {
+        "object_type": "stretched_canvas",
+        "is_physical_object": true,
+        "depth_cm": 4,
+        "has_visible_edges": true,
+        "paint_continues_on_edges": null,
+        "edge_finish": null,
+        "view_observations": {
+            "frontal": {
+                "file": null,
+                "visible_edges": [],
+                "canvas_depth_visible": false,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "primary_composition_reference",
+                    "frontal_mockup_reference"
+                ]
+            },
+            "three_quarter_left": {
+                "file": "base_artwork_gemini_job_1781554341_9282_v2.png",
+                "visible_edges": [
+                    "left_edge"
+                ],
+                "canvas_depth_visible": true,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "left_oblique_reference",
+                    "canvas_depth_reference"
+                ]
+            },
+            "three_quarter_right": {
+                "file": null,
+                "visible_edges": [],
+                "canvas_depth_visible": null,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "right_oblique_reference",
+                    "canvas_depth_reference"
+                ]
+            }
+        }
+    },
+    "visual_analysis": {
+        "visual_language": "abstract, structural, symbolic, metaphysical, color fields, linear",
+        "composition": "asymmetrical balance, layered fields",
+        "dominant_colors": [
+            "deep red",
+            "burgundy",
+            "maroon"
+        ],
+        "secondary_colors": [
+            "bright turquoise",
+            "vibrant red",
+            "black",
+            "off-white/pale pink lines"
+        ],
+        "materials_or_surface": "textured, layered, with visible brushwork and incised details",
+        "texture": null,
+        "spatial_depth": "significant, created by layered color and spatial arrangement",
+        "light_behavior": "warm with cool accents, creating dynamic tension",
+        "gesture_or_mark_making": "controlled, yet organic in its subtle variations and incisions",
+        "emotional_energy": "contemplative, intense, silent, deep, restrained tension, nocturnal calm",
+        "symbolic_elements": [
+            "divided territories",
+            "suspended forms",
+            "horizons",
+            "incisions",
+            "red structures"
+        ],
+        "style_family": "Maurizio Valch's 'Sin título' is a masterful abstract composition rendered in deep, resonant reds, punctuated by vivid turquoise and red forms. It embodies his core artistic language through layered color fields, subtle linear incisions, and an overarching atmosphere of contemplative silence, inviting a profound visual and metaphysical engagement."
+    },
+    "artwork_identity": {
+        "short_identity": "A silent landscape of layered consciousness, where vibrant forms emerge from deep, nocturnal territories, evoking contemplation and inner structure.",
+        "expanded_identity": "Maurizio Valch's 'Sin título' is a masterful abstract composition rendered in deep, resonant reds, punctuated by vivid turquoise and red forms. It embodies his core artistic language through layered color fields, subtle linear incisions, and an overarching atmosphere of contemplative silence, inviting a profound visual and metaphysical engagement.",
+        "keywords": [],
+        "do_not_alter_rules": [
+            "Do not repaint the artwork.",
+            "Do not redesign the artwork.",
+            "Do not crop the artwork.",
+            "Do not mirror the artwork.",
+            "Do not recolor the artwork.",
+            "Do not reinterpret the artwork.",
+            "Preserve composition, proportions, colors, marks, texture and visual identity."
+        ]
+    },
+    "publishing_texts": {
+        "suggested_titles": [
+            {
+                "title": "Tectonic Resonance",
+                "subtitle": "A Landscape of Inner Divisions",
+                "description": "This compelling work explores a segmented interior landscape, where undulating lines define psychological territories and geometric accents provide moments of poignant presence within a vast, silent field."
+            },
+            {
+                "title": "Nocturne in Crimson and Azure",
+                "subtitle": "The Deep Silence of a Suspended Moment",
+                "description": "Through a masterfully rendered palette of resonant reds and sudden, luminous blues, the artist evokes a deep, contemplative stillness, suggesting thresholds and hidden dimensions within an expansive, nocturnal terrain."
+            },
+            {
+                "title": "Thresholds of Presence",
+                "subtitle": "Where Forms Emerge from Geological Time",
+                "description": "The artwork's deep fields and subtle linear disruptions suggest a terrain shaped by invisible forces and geological time. Within this context, the isolated, glowing forms become symbolic markers of consciousness or significant thresholds, asserting their presence in a silent, expansive universe."
+            }
+        ]
+    },
+    "technical_metadata": {
+        "created_at": "2026-06-25T15:43:29+00:00",
+        "source_analysis_file": "base_artwork_gemini_job_1781554341_9282_v2.analysis.json",
+        "source_analysis_hash": "b1177762cea412c0a60cd7f47a82f84b"
+    }
+}

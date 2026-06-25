@@ -34,3 +34,22 @@ Codex must first compare documentation with the actual current codebase.
 
 Expected Codex output:
 A technical audit report explaining what is current, what is outdated, what is risky, and what the safest next development steps are.
+
+---
+
+## Core Workflow Status (Stable & Frozen)
+
+The CORE JSON 1.1 architecture and Core Review workflow are now stable and frozen.
+
+### Key Facts:
+1. **Redirection Target**: After selecting the root artwork in `select_root.php`, the system redirects to `core_review.php?id={artwork_id}`.
+2. **Workflow Order**:
+   1. Upload Artwork (`artwork_new.php`)
+   2. Select Root Artwork (`root_select.php` / `waiting.php`)
+   3. Review Artwork Core (`core_review.php`)
+   4. Curated Mockups (`report.php` / `mockup_batch_wait.php`)
+   5. Artwork Details / Publish (`artwork.php` / `publish.php`)
+3. **Data Source**: `core_review.php` reads directly from `analysis/core/{artwork_id}.core.json`.
+4. **Curatorial Exploration Branches**: The 3 proposals parsed from `publishing_texts.suggested_titles` are shown as three future mockup exploration directions (Branch 1, 2, and 3), not final title choices.
+5. **Explore Directions**: The "Explore this direction" buttons are placeholders and remain disabled until Phase 2 mockup generation is developed.
+6. **Future Integrations**: The Mockups Builder must read technical and physical data directly from `analysis/core/{artwork_id}.core.json`.

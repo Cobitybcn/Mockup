@@ -1,0 +1,156 @@
+{
+    "suggested_titles": [
+        {
+            "title": "deep ground",
+            "subtitle": "An abstract work presents a vast, dark field where three intense red and cyan blocks emerge, anchored by subtle white compositional lines.",
+            "description": "A deep, encompassing dark field dominates the canvas, holding three intensely colored rectangular forms within its expanse. The composition is subtly organized by delicate white lines that traverse the surface, creating an implied layered landscape. Vibrant red and energetic cyan pigments are worked with visible texture, contrasting sharply against the rich, muted background. This creates an atmosphere of profound stillness punctuated by concentrated bursts of energy. The medium-large canvas asserts a quiet, weighty presence that draws the viewer into its subtle depths."
+        },
+        {
+            "title": "electric marks",
+            "subtitle": "This expressive painting showcases a richly worked surface where incandescent red and cyan marks burst from a deep, velvety field, delineated by fine linear incisions.",
+            "description": "Incandescent red and electric cyan marks erupt from a deep, velvety field, forming three distinct, textured rectangles. The surface shows a density of pigment, particularly within these energetic blocks, contrasting with the more subdued layering of the background. A raw, almost scratched texture within the vibrant forms suggests a dynamic application of paint. The atmosphere is one of contained power and sudden revelation. The significant scale of the work lends a strong material presence, anchoring the visual tension."
+        },
+        {
+            "title": "horizontal current",
+            "subtitle": "An abstract composition divides a deep, expansive field with subtle white horizontal lines, containing vibrant, angular forms that create spatial tension.",
+            "description": "A wide, dark red-brown field is subtly divided by fine white horizontal lines that cross the canvas, establishing a quiet structural rhythm. These linear elements delineate segments of space, framing three distinct, brightly colored blocks of red and cyan. The composition balances the expansive background with the contained energy of the foreground elements. This interplay creates an atmosphere of measured depth and underlying tension. The substantial format allows for an immersive engagement with its layered spatial narratives."
+        }
+    ],
+    "contextual_proposals": [
+        {
+            "context_name": "Milanese Collector's Study",
+            "context_role": "private collection",
+            "space_type": "private study",
+            "atmosphere": "intellectual, refined, contemplative",
+            "materials": [
+                "dark parquet flooring",
+                "Italian design furniture",
+                "warm textured walls",
+                "sculptural lamps"
+            ],
+            "lighting": "warm evening gallery lighting",
+            "placement": "mounted on a warm textured wall, centered",
+            "camera_view": "front view",
+            "camera_distance": "medium shot",
+            "camera_angle_notes": "eye-level, directly facing the artwork",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The vast dark field of the artwork resonates with the deep tones of the study, enhancing its contemplative nature.",
+            "commercial_reason": "The striking contrast of the red and cyan blocks offers a compelling focal point for a discerning collector seeking intellectual depth.",
+            "mockup_prompt": "An 80x120cm artwork featuring a deep dark red-brown field with three vibrant red and cyan rectangular forms and subtle white lines, mounted on a warm textured wall in a Milanese collector's private study. The room has dark parquet flooring, elegant Italian design furniture, and sculptural lamps. An elegant standing male figure 1.80m, wearing a dark tailored suit, stands observing the artwork from a slight distance. Warm evening gallery lighting casts a refined glow. front view, medium shot, eye-level, directly facing the artwork.",
+            "negative_prompt": "sterile, institutional, generic, stock gallery, empty, cold minimalism, white walls, emotionally distant, casual clothes, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial, sensual poses, theatrical gestures."
+        },
+        {
+            "context_name": "Provençal Country House Salon",
+            "context_role": "luxurious private residence",
+            "space_type": "living room",
+            "atmosphere": "warm, rustic elegance, tranquil",
+            "materials": [
+                "whitewashed walls",
+                "ancient wooden beams",
+                "light stone floor",
+                "natural linen textiles"
+            ],
+            "lighting": "late afternoon Mediterranean light",
+            "placement": "mounted on a whitewashed wall, slightly off-center",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "medium shot",
+            "camera_angle_notes": "slightly from the left, capturing the depth of the room",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The organic yet structured forms within the artwork complement the natural, handcrafted aesthetic of the Provençal interior.",
+            "commercial_reason": "The subtle warmth of the dominant dark field offers a sophisticated anchor against the light-filled rustic setting, appealing to collectors who value understated luxury.",
+            "mockup_prompt": "An 80x120cm artwork featuring a deep dark red-brown field with three vibrant red and cyan rectangular forms and subtle white lines, mounted on a whitewashed wall in a Provençal country house salon. The room has ancient wooden beams, a light stone floor, and natural linen textiles. An elegant standing female figure 1.55m, wearing a long elegant dress, stands pausing to admire the art as late afternoon Mediterranean light, golden and soft, filters through a window. three-quarter left view, medium shot, slightly from the left, capturing the depth of the room.",
+            "negative_prompt": "sterile, institutional, generic, stock gallery, empty, cold minimalism, white walls, emotionally distant, casual clothes, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial, sensual poses, theatrical gestures."
+        },
+        {
+            "context_name": "Private Foundation Viewing Room",
+            "context_role": "prestigious private foundation",
+            "space_type": "exhibition room",
+            "atmosphere": "serious, focused, respectful",
+            "materials": [
+                "warm grey walls",
+                "dark wood paneling",
+                "polished concrete floor",
+                "subtle benches"
+            ],
+            "lighting": "museum-grade spotlights with warmth",
+            "placement": "mounted centrally on a warm grey wall",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "medium-close shot",
+            "camera_angle_notes": "slightly from the right, focusing on the artwork and observer",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The precise arrangement of the field division and blocks creates a visual order that thrives under focused museum-grade illumination.",
+            "commercial_reason": "The artwork's unique visual language and material presence make it a significant acquisition for a foundation aiming to showcase profound abstract works.",
+            "mockup_prompt": "An 80x120cm artwork featuring a deep dark red-brown field with three vibrant red and cyan rectangular forms and subtle white lines, mounted centrally on a warm grey wall in a private foundation exhibition room. The space has dark wood paneling and a polished concrete floor. An elegant standing male figure 1.80m, in refined gallery-opening attire, quietly contemplates the artwork from a short distance. Museum-grade spotlights with warmth precisely illuminate the artwork. three-quarter right view, medium-close shot, slightly from the right, focusing on the artwork and observer.",
+            "negative_prompt": "sterile, institutional, generic, stock gallery, empty, cold minimalism, white walls, emotionally distant, casual clothes, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial, sensual poses, theatrical gestures."
+        },
+        {
+            "context_name": "Minimalist Contemporary Studio",
+            "context_role": "artist's studio visit",
+            "space_type": "artist's atelier",
+            "atmosphere": "creative, spacious, focused",
+            "materials": [
+                "smooth microcement floor",
+                "white plaster walls",
+                "large north-facing window",
+                "simple wooden easel"
+            ],
+            "lighting": "soft architectural wall wash",
+            "placement": "resting on a simple wooden easel in the center of the studio",
+            "camera_view": "seven-eighths left view",
+            "camera_distance": "full shot",
+            "camera_angle_notes": "from a high vantage point, looking down slightly into the studio space",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The vibrant red and cyan color fields, with their energetic application, stand out powerfully in the clean, focused environment of the studio.",
+            "commercial_reason": "Presenting the artwork in an atelier emphasizes its origin and artistic process, appealing to collectors interested in the creative journey and authenticity.",
+            "mockup_prompt": "An 80x120cm artwork featuring a deep dark red-brown field with three vibrant red and cyan rectangular forms and subtle white lines, resting on a simple wooden easel in a minimalist contemporary studio. The studio has a smooth microcement floor, white plaster walls, and a large north-facing window. An elegant standing female figure 1.55m, wearing refined minimalist clothing, stands observing the painting on the easel. Soft architectural wall wash provides gentle, even lighting. seven-eighths left view, full shot, from a high vantage point, looking down slightly into the studio space.",
+            "negative_prompt": "sterile, institutional, generic, stock gallery, empty, cold minimalism, white walls, emotionally distant, casual clothes, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial, sensual poses, theatrical gestures, cluttered studio, messy, dirty."
+        },
+        {
+            "context_name": "Roman Historic Apartment Staircase",
+            "context_role": "prestigious private residence",
+            "space_type": "staircase hall / landing",
+            "atmosphere": "historic, grand, melancholic",
+            "materials": [
+                "tall stucco walls",
+                "travertine marble staircase",
+                "antique wooden railings",
+                "high arched windows"
+            ],
+            "lighting": "blue-hour window light",
+            "placement": "mounted on a pale stucco wall on a staircase landing",
+            "camera_view": "contrapicado seven-eighths left view",
+            "camera_distance": "medium shot",
+            "camera_angle_notes": "low angle, looking up at the artwork and observer from the bottom of the stairs",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The vertical format of the artwork naturally complements the towering verticality and grand scale of the historic staircase hall.",
+            "commercial_reason": "The artwork's deep, rich colors provide a focal point that draws the eye upward, enhancing the grandeur of a historic residential setting for a collector.",
+            "mockup_prompt": "An 80x120cm artwork featuring a deep dark red-brown field with three vibrant red and cyan rectangular forms and subtle white lines, mounted on a pale stucco wall on a Roman historic apartment staircase landing. The space features tall stucco walls, a travertine marble staircase with antique wooden railings, and high arched windows. An elegant standing male figure 1.80m, in a dark tailored suit, is paused on the staircase to look up at the artwork. Blue-hour window light creates deep shadows and soft transitions. contrapicado seven-eighths left view, medium shot, low angle, looking up at the artwork and observer from the bottom of the stairs.",
+            "negative_prompt": "sterile, institutional, generic, stock gallery, empty, cold minimalism, white walls, emotionally distant, casual clothes, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial, sensual poses, theatrical gestures."
+        },
+        {
+            "context_name": "Sculptor's Private Studio",
+            "context_role": "artist's studio visit / creation space",
+            "space_type": "private studio",
+            "atmosphere": "tactile, raw, authentic, reflective",
+            "materials": [
+                "rough stone walls",
+                "unfinished wood floor",
+                "various sculptural tools",
+                "natural light source"
+            ],
+            "lighting": "controlled dramatic side light",
+            "placement": "leaning naturally against a rough stone wall, amidst other works",
+            "camera_view": "contrapicado seven-eighths right view",
+            "camera_distance": "medium shot",
+            "camera_angle_notes": "low angle, looking up from the right, capturing the raw studio environment",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The raw texture of the vibrant red and cyan pigment forms a fascinating dialogue with the tactile materiality of a sculptor's studio.",
+            "commercial_reason": "This unique placement highlights the artistic craftsmanship and material exploration within the painting, appealing to collectors who appreciate process and authenticity.",
+            "mockup_prompt": "An 80x120cm artwork featuring a deep dark red-brown field with three vibrant red and cyan rectangular forms and subtle white lines, leaning naturally against a rough stone wall in a sculptor's private studio. The studio has an unfinished wood floor, various sculptural tools visible subtly, and a natural light source. An elegant standing female figure 1.55m, in refined minimalist clothing, looks thoughtfully at the artwork. Controlled dramatic side light emphasizes textures and forms. contrapicado seven-eighths right view, medium shot, low angle, looking up from the right, capturing the raw studio environment.",
+            "negative_prompt": "sterile, institutional, generic, stock gallery, empty, cold minimalism, white walls, emotionally distant, casual clothes, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial, sensual poses, theatrical gestures, cluttered studio, messy, dirty."
+        }
+    ],
+    "recommended_number_of_contexts": 6,
+    "prompt_version": "v1.0 (Auto)",
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1782391608_7974_v1.png"
+}

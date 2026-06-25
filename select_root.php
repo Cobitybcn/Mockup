@@ -234,9 +234,16 @@ try {
         }
     }
 
-    $redirect = $queuedMockups > 0
-        ? 'mockup_batch_wait.php?image=' . rawurlencode($filename)
-        : 'report.php?image=' . rawurlencode($filename);
+    // Generate CORE JSON version 1.1
+    try {
+        require_once __DIR__ . '/app/Services/CoreArtworkJsonBuilder.php';
+        $coreBuilder = new CoreArtworkJsonBuilder();
+        $coreBuilder->buildForArtwork($artworkId);
+    } catch (Throwable $e) {
+        Logger::log("CORE_JSON_BUILD_TRIGGER_ERROR in select_root.php: " . $e->getMessage(), 'error');
+    }
+
+    $redirect = 'core_review.php?id=' . $artworkId;
 
     echo json_encode([
         'ok' => true,

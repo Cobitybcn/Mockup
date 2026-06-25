@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Mayfair Art Collector Apartment
+- Purpose: private collection viewing
+- Scene Description: A private viewing room with exclusive, refined, quiet luxury atmosphere. Materials: polished stone, brushed bronze accents, tailored upholstery, neutral high-quality rug, warm plaster walls
+- Lighting: museum-grade spotlights with warmth
+- Placement: prominently displayed on a warm plaster wall
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: three-quarter left view
+- Distance: near close-up view
+- Notes: slightly angled from the left, eye-level, capturing depth and refined context
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, stock gallery, cold minimalism, empty, overly bright, fisheye lens, distorted, blurry, casual clothing, bad anatomy
+
+AI PROPOSED MOCKUP DIRECTION:
+An artwork 120cm wide by 80cm high, featuring a dark maroon field with vibrant red and blue geometric forms, prominently displayed on a warm plaster wall in a Mayfair art collector apartment's private viewing room. The room contains polished stone, brushed bronze accents, and a neutral high-quality rug. An elegant standing female figure 1.55m, in a long elegant dress, stands slightly to the right, looking at the artwork. Museum-grade spotlights with warmth illuminate the piece. The camera is three-quarter left view, near close-up view, slightly angled from the left, eye-level, capturing depth and refined context.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

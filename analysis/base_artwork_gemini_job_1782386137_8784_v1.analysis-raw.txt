@@ -1,0 +1,160 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Field Blocks Red",
+      "subtitle": "An abstract composition presents three vivid rectangular blocks suspended across a deep, expansive aubergine field, defining an internal spatial tension.",
+      "description": "Three distinct rectangular blocks anchor the broad, dark field, drawing the eye across the canvas. The composition organizes these luminous forms against a layered, muted landscape. Layers of deep aubergine and reddish-brown pigments create a smooth, subtle surface texture. A quiet, contemplative atmosphere emerges from the vastness of the field. This artwork holds a significant, balanced presence within its horizontal format."
+    },
+    {
+      "title": "Blue Red Strata",
+      "subtitle": "An expressive abstract painting features striking blue and red pigment fields, dynamically contrasted against deep, smoothly applied layers of dark purple and brown.",
+      "description": "The artwork's surface holds distinct fields of dark purple and rich reddish-brown. The composition contrasts these deep, smooth fields with the vibrant, textured blue and red marks within the blocks. Pigments are applied thinly across the expansive background, allowing for subtle tonal shifts. A striking, yet harmonious, atmosphere is created by the interplay of muted grounds and luminous accents. The work's material behavior grants it a profound and tactile presence."
+    },
+    {
+      "title": "Horizon Tension",
+      "subtitle": "A structural abstract work employs subtle horizontal divisions and a vast dark plane to create dynamic spatial tension across its wide, contemplative format.",
+      "description": "A subtle horizon line divides the expansive dark upper field from the lower, layered ground. The composition organizes space through horizontal planes and vertical interruptions, creating a measured pressure. The deep, smooth coloration of the background forms a quiet, consistent surface. An atmosphere of tranquil depth and contained energy settles across the canvas. The artwork's horizontal format presses against the space, holding its visual weight."
+    }
+  ],
+  "contextual_proposals": [
+    {
+      "context_name": "Milanese Collector Apartment",
+      "context_role": "A sophisticated and refined residential setting for a discerning art collector.",
+      "space_type": "Private residence living room",
+      "atmosphere": "Warm, intimate, intellectual, luxurious evening",
+      "materials": [
+        "Dark polished parquet flooring",
+        "warm plaster walls",
+        "bespoke Italian design furniture",
+        "brushed bronze accents",
+        "subtle natural linen curtains"
+      ],
+      "lighting": "Warm evening gallery lighting with soft lamplight, creating intimate pockets of illumination.",
+      "placement": "Mounted centrally on a warm plaster wall above a low, elegant console.",
+      "camera_view": "front view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Front view. Keep the artwork front face legible, elegant and architectural, with no fisheye or distorted architecture. Maintain the artwork as the primary subject.",
+      "human_presence": "elegant standing male figure 1.80m, observing the artwork with hands clasped behind his back, creating a sense of contemplation and intellectual engagement.",
+      "curatorial_reason": "This setting highlights the central movement created by the three colored blocks, inviting a focused and prolonged gaze into the work's internal dynamics.",
+      "commercial_reason": "The elegant residential context and focused observation from the collector emphasize the artwork's value as a significant piece for a private, curated collection.",
+      "mockup_prompt": "front view, near close-up view, the same provided artwork preserved exactly without any change, mounted centrally on a warm plaster wall above a low, elegant console in a Milanese collector apartment. An elegant standing male figure 1.80m observes the artwork with hands clasped behind his back, creating a sense of contemplation and intellectual engagement, serving as a scale reference. Warm evening gallery lighting with soft lamplight creates intimate pockets of illumination. Dark polished parquet flooring, warm plaster walls, bespoke Italian design furniture, brushed bronze accents, and subtle natural linen curtains define the space. Keep the artwork front face legible, elegant and architectural, with no fisheye or distorted architecture. Maintain the artwork as the primary subject. The artwork's physical scale is 120 cm width x 80 cm height.",
+      "negative_prompt": "ugly, deformed, bad lighting, poor composition, low quality, fisheye effect, distorted architecture, blurry, grainy, watermark, text, out of frame, extra limbs, bad anatomy, disfigured, poorly drawn face, poorly drawn feet, extra fingers, too many fingers, missing limbs, tiling, blur, out of focus, duplicate, error, worst quality, low quality, jpeg artifacts, signature, artist name, username, cropped, lowres, overexposed, underexposed, fake, dull, plain, sterile, empty room, white gallery wall, stock photo, casual clothing, messy."
+    },
+    {
+      "context_name": "Paris Left Bank Collector Salon",
+      "context_role": "A culturally rich and privately curated space for art appreciation.",
+      "space_type": "Private residence salon",
+      "atmosphere": "Cultured, warm, intimate, contemplative, subtle evening light",
+      "materials": [
+        "Old herringbone parquet",
+        "classic marble fireplace",
+        "velvet armchairs",
+        "partially visible antique wooden bookshelves",
+        "heavy drapery"
+      ],
+      "lighting": "Soft side light from a tall window during the blue hour, augmented by a warm, discreet wall wash on the artwork.",
+      "placement": "Hung on a warm, muted wall beside a large window, creating a serene viewing spot.",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Three-quarter left view. Keep the artwork front face legible, elegant and architectural, with no fisheye or distorted architecture. Maintain the artwork as the primary subject.",
+      "human_presence": "elegant standing female figure 1.55m, wearing a dark tailored suit and elegant shoes, standing thoughtfully a few steps from the artwork, indicating careful consideration.",
+      "curatorial_reason": "The elegant setting enhances the visual language of expressive color fields, emphasizing the subtle depth and emotional resonance of the deep tones.",
+      "commercial_reason": "The cultured Parisian salon, with its historical elegance and discerning observer, underscores the artwork's appeal to collectors seeking pieces with quiet intellectual depth.",
+      "mockup_prompt": "three-quarter left view, near close-up view, the same provided artwork preserved exactly without any change, hung on a warm, muted wall beside a large window in a Paris Left Bank collector salon. An elegant standing female figure 1.55m, wearing a dark tailored suit and elegant shoes, stands thoughtfully a few steps from the artwork, indicating careful consideration, serving as a scale reference. Soft side light from a tall window during the blue hour, augmented by a warm, discreet wall wash on the artwork. Old herringbone parquet, a classic marble fireplace, velvet armchairs, partially visible antique wooden bookshelves, and heavy drapery define the space. Keep the artwork front face legible, elegant and architectural, with no fisheye or distorted architecture. Maintain the artwork as the primary subject. The artwork's physical scale is 120 cm width x 80 cm height.",
+      "negative_prompt": "ugly, deformed, bad lighting, poor composition, low quality, fisheye effect, distorted architecture, blurry, grainy, watermark, text, out of frame, extra limbs, bad anatomy, disfigured, poorly drawn face, poorly drawn feet, extra fingers, too many fingers, missing limbs, tiling, blur, out of focus, duplicate, error, worst quality, low quality, jpeg artifacts, signature, artist name, username, cropped, lowres, overexposed, underexposed, fake, dull, plain, sterile, empty room, white gallery wall, stock photo, casual clothing, messy."
+    },
+    {
+      "context_name": "SoHo Artist Collector Loft",
+      "context_role": "A creative and intellectual working space where art is made and appreciated, reflecting an artist's personal collection.",
+      "space_type": "Artist's atelier/studio",
+      "atmosphere": "Creative, authentic, subtly sophisticated, industrious, natural light",
+      "materials": [
+        "White-painted brick walls",
+        "worn light wooden floor",
+        "large industrial-style windows",
+        "simple functional furniture",
+        "other canvases"
+      ],
+      "lighting": "Abundant, soft northern light from large industrial windows, late afternoon, providing even illumination.",
+      "placement": "Leaning naturally against a white-painted brick wall, resting on the wooden floor, casually yet prominently displayed among other works in progress.",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Three-quarter right view. Keep the artwork front face legible, elegant and architectural, with no fisheye or distorted architecture. Maintain the artwork as the primary subject.",
+      "human_presence": "elegant standing female figure 1.55m, wearing a minimalist black dress and elegant flat shoes, observing the artwork with a thoughtful expression, embodying a sophisticated studio visitor.",
+      "curatorial_reason": "The informal studio setting emphasizes the unique surface marks and dynamic pigment behavior within the vibrant blue and red elements, revealing the artist's hand.",
+      "commercial_reason": "Positioning the artwork in a sophisticated artist's loft implies its value as a significant piece sought by discerning collectors who appreciate an artwork's origin and creation process.",
+      "mockup_prompt": "three-quarter right view, near close-up view, the same provided artwork preserved exactly without any change, leaning naturally against a white-painted brick wall, resting on the worn light wooden floor, casually yet prominently displayed among other works in progress in a SoHo artist collector loft. An elegant standing female figure 1.55m, wearing a minimalist black dress and elegant flat shoes, observes the artwork with a thoughtful expression, embodying a sophisticated studio visitor, serving as a scale reference. Abundant, soft northern light from large industrial-style windows, late afternoon, provides even illumination. White-painted brick walls, worn light wooden floor, and simple functional furniture define the creative space. Keep the artwork front face legible, elegant and architectural, with no fisheye or distorted architecture. Maintain the artwork as the primary subject. The artwork's physical scale is 120 cm width x 80 cm height.",
+      "negative_prompt": "ugly, deformed, bad lighting, poor composition, low quality, fisheye effect, distorted architecture, blurry, grainy, watermark, text, out of frame, extra limbs, bad anatomy, disfigured, poorly drawn face, poorly drawn feet, extra fingers, too many fingers, missing limbs, tiling, blur, out of focus, duplicate, error, worst quality, low quality, jpeg artifacts, signature, artist name, username, cropped, lowres, overexposed, underexposed, fake, dull, plain, sterile, empty room, white gallery wall, stock photo, casual clothing, messy, dirty studio, cluttered studio, painting supplies everywhere, messy paint, unfinished artwork."
+    },
+    {
+      "context_name": "Venetian Palazzo Interior",
+      "context_role": "A historic and grand setting that provides a dramatic backdrop for contemporary art.",
+      "space_type": "Private viewing room / grand hall",
+      "atmosphere": "Elegant, historic, dramatic, refined decay, warm",
+      "materials": [
+        "Aged plaster walls with subtle texture",
+        "pale stucco",
+        "polished Venetian terrazzo floor",
+        "tall arched windows looking onto a canal"
+      ],
+      "lighting": "Controlled dramatic side light from a tall window, with soft museum-grade spotlights accentuating the artwork, late afternoon.",
+      "placement": "Mounted on an aged plaster wall, commanding attention in the vast space.",
+      "camera_view": "seven-eighths left view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Seven-eighths left view. Keep the artwork front face legible, elegant and architectural, with no fisheye or distorted architecture. Maintain the artwork as the primary subject.",
+      "human_presence": "elegant standing male figure 1.80m, wearing a dark tailored suit, leaning slightly against a wall while contemplating the artwork, conveying a relaxed yet discerning engagement.",
+      "curatorial_reason": "The rich historic context allows the structural geometric division of the dark fields to assert its contemporary form against a backdrop of classical elegance.",
+      "commercial_reason": "The grand Venetian palazzo setting elevates the artwork's status, appealing to high-end collectors who seek works that bridge historical luxury with modern abstraction.",
+      "mockup_prompt": "seven-eighths left view, near close-up view, the same provided artwork preserved exactly without any change, mounted on an aged plaster wall in a Venetian palazzo interior. An elegant standing male figure 1.80m, wearing a dark tailored suit, leans slightly against a wall while contemplating the artwork, conveying a relaxed yet discerning engagement, serving as a scale reference. Controlled dramatic side light from a tall window, with soft museum-grade spotlights accentuating the artwork, late afternoon. Aged plaster walls with subtle texture, pale stucco, and a polished Venetian terrazzo floor define the historic space. Keep the artwork front face legible, elegant and architectural, with no fisheye or distorted architecture. Maintain the artwork as the primary subject. The artwork's physical scale is 120 cm width x 80 cm height.",
+      "negative_prompt": "ugly, deformed, bad lighting, poor composition, low quality, fisheye effect, distorted architecture, blurry, grainy, watermark, text, out of frame, extra limbs, bad anatomy, disfigured, poorly drawn face, poorly drawn feet, extra fingers, too many fingers, missing limbs, tiling, blur, out of focus, duplicate, error, worst quality, low quality, jpeg artifacts, signature, artist name, username, cropped, lowres, overexposed, underexposed, fake, dull, plain, sterile, empty room, white gallery wall, stock photo, casual clothing, messy."
+    },
+    {
+      "context_name": "London Townhouse Collector Room",
+      "context_role": "A private urban sanctuary for a serious collector, emphasizing understated luxury and thoughtful display.",
+      "space_type": "Private residence study/viewing area",
+      "atmosphere": "Refined, intimate, quiet prestige, urban luxury, evening",
+      "materials": [
+        "Dark oak parquet flooring",
+        "discreet white moldings",
+        "warm deep gray walls",
+        "simple bespoke wooden console",
+        "tailored fabric seating"
+      ],
+      "lighting": "Warm evening interior lighting, with a focused, directional spotlight on the artwork, creating an intimate glow.",
+      "placement": "Hung on a warm deep gray wall above a minimalist wooden console.",
+      "camera_view": "low-angle seven-eighths left view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Low-angle seven-eighths left view. Camera placed below the artwork centerline, looking slightly upward. The lower edge of the artwork appears closer to the viewer than the upper edge. Keep the artwork front face legible, architectural and elegant, with no fisheye or distorted architecture. Maintain the artwork as the primary subject.",
+      "human_presence": "elegant standing female figure 1.55m, dressed in an elegant evening dress, standing gracefully to the side, admiring the artwork with quiet reverence.",
+      "curatorial_reason": "The low-angle view and focused light emphasize the red-yellow-blue relationship within the blocks, creating a dynamic visual pressure from below, highlighting their vibrant presence.",
+      "commercial_reason": "The luxurious, private London townhouse setting and the intimate perspective amplify the artwork's value as a highly desirable acquisition for a sophisticated urban collector.",
+      "mockup_prompt": "low-angle seven-eighths left view, near close-up view, the same provided artwork preserved exactly without any change, hung on a warm deep gray wall above a minimalist wooden console in a London townhouse collector room. An elegant standing female figure 1.55m, dressed in an elegant evening dress, stands gracefully to the side, admiring the artwork with quiet reverence, serving as a scale reference. Camera placed below the artwork centerline, looking slightly upward. The lower edge of the artwork appears closer to the viewer than the upper edge. Warm evening interior lighting, with a focused, directional spotlight on the artwork, creates an intimate glow. Dark oak parquet flooring, discreet white moldings, warm deep gray walls, and tailored fabric seating define the space. Keep the artwork front face legible, architectural and elegant, with no fisheye or distorted architecture. Maintain the artwork as the primary subject. The artwork's physical scale is 120 cm width x 80 cm height.",
+      "negative_prompt": "ugly, deformed, bad lighting, poor composition, low quality, fisheye effect, distorted architecture, blurry, grainy, watermark, text, out of frame, extra limbs, bad anatomy, disfigured, poorly drawn face, poorly drawn feet, extra fingers, too many fingers, missing limbs, tiling, blur, out of focus, duplicate, error, worst quality, low quality, jpeg artifacts, signature, artist name, username, cropped, lowres, overexposed, underexposed, fake, dull, plain, sterile, empty room, white gallery wall, stock photo, casual clothing, messy."
+    },
+    {
+      "context_name": "Manhattan Penthouse Living Room",
+      "context_role": "A pinnacle of contemporary luxury, showcasing art as an integral part of an aspirational lifestyle.",
+      "space_type": "High-rise luxury living area",
+      "atmosphere": "Sophisticated, contemporary, expansive, nocturnal, refined",
+      "materials": [
+        "Floor-to-ceiling glass windows revealing a city skyline",
+        "polished natural stone floor",
+        "subtle architectural concrete",
+        "bespoke low-profile furniture",
+        "brushed metal accents"
+      ],
+      "lighting": "Low, warm interior lighting creating reflections on the glass, complemented by a soft, indirect wash on the artwork. Nocturnal city lights visible outside.",
+      "placement": "Mounted on a neutral-toned architectural concrete wall, serving as a focal point against the urban backdrop.",
+      "camera_view": "low-angle seven-eighths right view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Low-angle seven-eighths right view. Camera placed below the artwork centerline, looking slightly upward. The lower edge of the artwork appears closer to the viewer than the upper edge. Keep the artwork front face legible, architectural and elegant, with no fisheye or distorted architecture. Maintain the artwork as the primary subject.",
+      "human_presence": "elegant standing male figure 1.80m, wearing a dark tailored suit, with one hand casually in his pocket, viewing the artwork from a slight distance, embodying quiet confidence.",
+      "curatorial_reason": "The low-angle perspective in this modern context enhances the artwork's architectural strength and its structural tension, making the entire composition feel grounded yet aspirational.",
+      "commercial_reason": "The high-end Manhattan penthouse and its sophisticated resident symbolize the artwork's prestige and its suitability for collectors desiring art that complements a modern, luxurious urban environment.",
+      "mockup_prompt": "low-angle seven-eighths right view, near close-up view, the same provided artwork preserved exactly without any change, mounted on a neutral-toned architectural concrete wall in a Manhattan penthouse living room. An elegant standing male figure 1.80m, wearing a dark tailored suit, with one hand casually in his pocket, views the artwork from a slight distance, embodying quiet confidence, serving as a scale reference. Camera placed below the artwork centerline, looking slightly upward. The lower edge of the artwork appears closer to the viewer than the upper edge. Low, warm interior lighting creates reflections on the floor-to-ceiling glass windows revealing a city skyline, complemented by a soft, indirect wash on the artwork. Polished natural stone floor, subtle architectural concrete, bespoke low-profile furniture, and brushed metal accents define the space. Keep the artwork front face legible, architectural and elegant, with no fisheye or distorted architecture. Maintain the artwork as the primary subject. The artwork's physical scale is 120 cm width x 80 cm height.",
+      "negative_prompt": "ugly, deformed, bad lighting, poor composition, low quality, fisheye effect, distorted architecture, blurry, grainy, watermark, text, out of frame, extra limbs, bad anatomy, disfigured, poorly drawn face, poorly drawn feet, extra fingers, too many fingers, missing limbs, tiling, blur, out of focus, duplicate, error, worst quality, low quality, jpeg artifacts, signature, artist name, username, cropped, lowres, overexposed, underexposed, fake, dull, plain, sterile, empty room, white gallery wall, stock photo, casual clothing, messy."
+    }
+  ]
+}
+```

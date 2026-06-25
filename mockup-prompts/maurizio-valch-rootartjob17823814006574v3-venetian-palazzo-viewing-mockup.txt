@@ -1,0 +1,21 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Venetian Palazzo Viewing
+- Purpose: early arrival to a private viewing
+- Scene Description: A private viewing room in a Venetian palazzo with historic elegance, quietly grand, cultural atmosphere. Materials: aged plaster walls, pale stucco, Venetian terrazzo floor, tall windows
+- Lighting: museum-grade spotlights with warmth, soft architectural wall wash
+- Placement: prominently displayed on a central wall
+- Human Figure: Include exactly one elegant standing male figure (1.80m tall) for scale reference. The full-body figure must remain completely visible from head to shoes, standing on the exact same floor plane as the artwork, positioned at a comparable depth relative to the camera (not blocking or overlapping the artwork), and placed close enough to the artwork to serve as a reliable visual scale reference to verify and audit the physical scale of the artwork. The artwork is 120 cm wide × 80 cm high × 4 cm deep. The human figure is 1.80m tall. The artwork height is 80 cm, so it must appear as approximately 44% of the male figure's full standing height. The artwork must appear clearly shorter than the man, not equal to his full height and not taller than him.
+
+CAMERA DIRECTION:
+- View: three-quarter right view
+- Distance: medium wide
+- Notes: from the right, capturing the artwork's presence within the grand room
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, generic stock, empty, cold minimalism, blank white walls, emotionally distant, touching artwork, covering artwork, obscuring artwork, blocking artwork, competing with artwork, main subject human, casual clothes, sportswear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion dominance, sensual poses, theatrical gestures, cheap furniture, decorative clutter, generic stock decor
+
+AI PROPOSED MOCKUP DIRECTION:
+An abstract painting, 120x80cm, showcasing dark fields with vibrant red and blue textured blocks, prominently displayed on a central wall in a private viewing room within a Venetian palazzo. An elegant standing male figure, 1.80m tall, is observing the artwork from a medium wide three-quarter right view. The room features aged plaster walls, pale stucco, Venetian terrazzo floor, and tall windows, illuminated by warm museum-grade spotlights and soft architectural wall wash, creating a quietly grand and culturally rich atmosphere.

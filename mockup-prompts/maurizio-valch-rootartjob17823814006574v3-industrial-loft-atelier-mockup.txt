@@ -1,0 +1,21 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Industrial Loft Atelier
+- Purpose: visitor observing artwork in an artist's studio
+- Scene Description: A industrial loft studio with raw, creative, urban, blue hour atmosphere. Materials: exposed brick wall, iron columns, large industrial windows, worn wooden floor, low industrial furniture
+- Lighting: blue-hour window light, cool exterior dusk with warm interior light
+- Placement: resting naturally against an exposed brick wall
+- Human Figure: Include exactly one elegant standing female figure (1.55m tall) for scale reference. The full-body figure must remain completely visible from head to shoes, standing on the exact same floor plane as the artwork, positioned at a comparable depth relative to the camera (not blocking or overlapping the artwork), and placed close enough to the artwork to serve as a reliable visual scale reference to verify and audit the physical scale of the artwork. The artwork is 120 cm wide × 80 cm high × 4 cm deep. The human figure is 1.55m tall. The artwork height is 80 cm, so it must appear as approximately 52% of the female figure's full standing height. The artwork must appear clearly shorter than the woman, not equal to her full height and not taller than her.
+
+CAMERA DIRECTION:
+- View: subtle seven-eighths right view
+- Distance: medium
+- Notes: a subtle angle from the right, capturing the artwork's presence within the studio
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, generic stock, empty, cold minimalism, blank white walls, emotionally distant, touching artwork, covering artwork, obscuring artwork, blocking artwork, competing with artwork, main subject human, casual clothes, sportswear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion dominance, sensual poses, theatrical gestures, cheap furniture, decorative clutter, generic stock decor
+
+AI PROPOSED MOCKUP DIRECTION:
+An abstract painting, 120x80cm, with dark fields and vibrant red and blue textured blocks, resting naturally against an exposed brick wall in an industrial loft studio. An elegant standing female figure, 1.55m tall, is observing the artwork from a medium subtle seven-eighths right view. The studio features iron columns, large industrial windows, and a worn wooden floor, illuminated by blue-hour window light with cool exterior dusk and warm interior light, creating a raw, creative, urban atmosphere.

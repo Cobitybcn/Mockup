@@ -2146,18 +2146,37 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                             <input type="hidden" name="context_id" value="<?= h($ctxId) ?>">
                             <input type="hidden" name="prompt" value="<?= h($prompt) ?>">
                             <input type="hidden" name="ajax" value="1">
+                            <input type="hidden" name="camera_override_touched" value="0">
+                            <input type="hidden" name="time_override_touched" value="0">
+                            <input type="hidden" name="human_override_touched" value="0">
+                            <input type="hidden" name="distance_override_touched" value="0">
+                            <input type="hidden" name="size_override_touched" value="0">
                             <?php if ($existingMockup): ?>
                                 <input type="hidden" name="current_mockup_file" value="<?= h(basename((string)$existingMockup['mockup_file'])) ?>">
                             <?php endif; ?>
 
                             <?php
-                            $defaultCamera = 'front';
+                            $defaultCamera = 'custom';
                             $cameraGroup = $ctx['camera_group'] ?? '';
                             $cameraRaw = trim((string)($ctx['camera_view'] ?? $ctx['camera'] ?? $ctx['camera_angle'] ?? ''));
-                            if (str_contains($cameraGroup, 'left') || str_contains($cameraRaw, 'left')) {
-                                $defaultCamera = '3_4_left';
-                            } elseif (str_contains($cameraGroup, 'right') || str_contains($cameraRaw, 'right')) {
-                                $defaultCamera = '3_4_right';
+                            $cameraRawLower = strtolower($cameraRaw);
+                            if (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE) {
+                                if (in_array($cameraRawLower, ['front', 'front view', 'frontal'], true)) {
+                                    $defaultCamera = 'front';
+                                } elseif (in_array($cameraRawLower, ['3_4_left', 'three_quarter_left', 'three-quarter left', 'three quarter left', '3/4 left'], true)) {
+                                    $defaultCamera = '3_4_left';
+                                } elseif (in_array($cameraRawLower, ['3_4_right', 'three_quarter_right', 'three-quarter right', 'three quarter right', '3/4 right'], true)) {
+                                    $defaultCamera = '3_4_right';
+                                } else {
+                                    $defaultCamera = 'custom';
+                                }
+                            } else {
+                                $defaultCamera = 'front';
+                                if (str_contains($cameraGroup, 'left') || str_contains($cameraRaw, 'left')) {
+                                    $defaultCamera = '3_4_left';
+                                } elseif (str_contains($cameraGroup, 'right') || str_contains($cameraRaw, 'right')) {
+                                    $defaultCamera = '3_4_right';
+                                }
                             }
                             if (in_array(($selectorState['camera_override'] ?? ''), ['front', '3_4_left', '3_4_right'], true)) {
                                 $defaultCamera = (string)$selectorState['camera_override'];
@@ -2194,7 +2213,7 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
 
                             <div class="customizer-options">
                                 <div class="opt-group">
-                                    <label>Camera Angle</label>
+                                    <label>Camera Angle <?= (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE && $defaultCamera === 'custom') ? '(<span style="color:#4caf50; font-weight:normal;">Custom camera from prompt: ' . h($cameraRaw) . '</span>)' : '' ?></label>
                                     <div class="selector-icons camera-selector">
                                         <button type="button" class="icon-btn <?= $defaultCamera === 'front' ? 'active' : '' ?>" data-value="front" title="Frontal">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2405,13 +2424,27 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                         $queueStatus = $queueJob ? (string)$queueJob['status'] : '';
                         $isAutoPending = !$existingMockup && in_array($queueStatus, ['queued', 'processing'], true);
 
-                        $defaultCamera = 'front';
+                        $defaultCamera = 'custom';
                         $cameraGroup = $ctx['camera_group'] ?? '';
                         $cameraRaw = trim((string)($ctx['camera_view'] ?? $ctx['camera'] ?? $ctx['camera_angle'] ?? ''));
-                        if (str_contains($cameraGroup, 'left') || str_contains($cameraRaw, 'left')) {
-                            $defaultCamera = '3_4_left';
-                        } elseif (str_contains($cameraGroup, 'right') || str_contains($cameraRaw, 'right')) {
-                            $defaultCamera = '3_4_right';
+                        $cameraRawLower = strtolower($cameraRaw);
+                        if (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE) {
+                            if (in_array($cameraRawLower, ['front', 'front view', 'frontal'], true)) {
+                                $defaultCamera = 'front';
+                            } elseif (in_array($cameraRawLower, ['3_4_left', 'three_quarter_left', 'three-quarter left', 'three quarter left', '3/4 left'], true)) {
+                                $defaultCamera = '3_4_left';
+                            } elseif (in_array($cameraRawLower, ['3_4_right', 'three_quarter_right', 'three-quarter right', 'three quarter right', '3/4 right'], true)) {
+                                $defaultCamera = '3_4_right';
+                            } else {
+                                $defaultCamera = 'custom';
+                            }
+                        } else {
+                            $defaultCamera = 'front';
+                            if (str_contains($cameraGroup, 'left') || str_contains($cameraRaw, 'left')) {
+                                $defaultCamera = '3_4_left';
+                            } elseif (str_contains($cameraGroup, 'right') || str_contains($cameraRaw, 'right')) {
+                                $defaultCamera = '3_4_right';
+                            }
                         }
                         if (in_array(($selectorState['camera_override'] ?? ''), ['front', '3_4_left', '3_4_right'], true)) {
                             $defaultCamera = (string)$selectorState['camera_override'];
@@ -2478,10 +2511,15 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                             <input type="hidden" name="context_id" value="<?= h($ctxId) ?>">
                             <input type="hidden" name="prompt" value="<?= h($prompt) ?>">
                             <input type="hidden" name="ajax" value="1">
+                            <input type="hidden" name="camera_override_touched" value="0">
+                            <input type="hidden" name="time_override_touched" value="0">
+                            <input type="hidden" name="human_override_touched" value="0">
+                            <input type="hidden" name="distance_override_touched" value="0">
+                            <input type="hidden" name="size_override_touched" value="0">
 
                             <div class="customizer-options">
                                 <div class="opt-group">
-                                    <label>Camera Angle</label>
+                                    <label>Camera Angle <?= (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE && $defaultCamera === 'custom') ? '(<span style="color:#4caf50; font-weight:normal;">Custom camera from prompt: ' . h($cameraRaw) . '</span>)' : '' ?></label>
                                     <div class="selector-icons camera-selector">
                                         <button type="button" class="icon-btn <?= $defaultCamera === 'front' ? 'active' : '' ?>" data-value="front" title="Frontal">
                                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="6" width="16" height="12" rx="1.5"></rect><line x1="12" y1="6" x2="12" y2="18" stroke-dasharray="2 2"></line></svg>
@@ -2691,6 +2729,16 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
             group.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             hiddenInput.value = btn.dataset.value;
+
+            // Set touched flag
+            const name = hiddenInput.getAttribute('name');
+            if (name) {
+                const form = btn.closest('form');
+                const touchedInput = form.querySelector(`input[name="${name}_touched"]`);
+                if (touchedInput) {
+                    touchedInput.value = "1";
+                }
+            }
         });
     });
 
@@ -2803,12 +2851,22 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
             let val = parseInt(hiddenInput.value, 10) || 0;
             val = Math.max(-50, val - 5);
             updateBadge(val);
+            const form = container.closest('form');
+            const touchedInput = form.querySelector('input[name="size_override_touched"]');
+            if (touchedInput) {
+                touchedInput.value = "1";
+            }
         });
 
         plusBtn.addEventListener('click', () => {
             let val = parseInt(hiddenInput.value, 10) || 0;
             val = Math.min(50, val + 5);
             updateBadge(val);
+            const form = container.closest('form');
+            const touchedInput = form.querySelector('input[name="size_override_touched"]');
+            if (touchedInput) {
+                touchedInput.value = "1";
+            }
         });
     });
 

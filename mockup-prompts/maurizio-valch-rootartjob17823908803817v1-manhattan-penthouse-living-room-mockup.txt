@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Manhattan Penthouse Living Room
+- Purpose: A contemporary high-rise residence offering an expansive view and a sleek, sophisticated ambiance.
+- Scene Description: A Manhattan penthouse living room with Modern, sophisticated, contemplative, luxurious, urban atmosphere. Materials: warm architectural concrete, floor-to-ceiling glass, low-slung designer furniture, brushed metal accents
+- Lighting: blue-hour window light blending with soft interior lamplight, creating subtle reflections on glass
+- Placement: Mounted on a warm concrete wall overlooking the city skyline, integrating art with panoramic urban views.
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: low-angle seven-eighths right view
+- Distance: near close-up view
+- Notes: Low-angle seven-eighths right view. Camera placed below the artwork centerline, looking slightly upward. The lower edge of the artwork appears closer to the viewer than the upper edge. Keep the artwork front face legible, architectural and elegant, with no fisheye or distorted architecture. Maintain the artwork as the primary subject.
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, generic, cold minimalism, white walls, casual clothing, sportwear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial dominance, sensual poses, theatrical gestures, wide shot, medium distance, medium close, medium wide, full room context, showing full room context, room view, wide view
+
+AI PROPOSED MOCKUP DIRECTION:
+low-angle seven-eighths right view, near close-up view, elegant standing female figure 1.55m in an evening dress viewing the same provided artwork preserved exactly without any change, mounted on a warm architectural concrete wall overlooking the city skyline from a Manhattan penthouse living room. Blue-hour window light blends with soft interior lamplight, creating subtle reflections on glass. Floor-to-ceiling glass, low-slung designer furniture, and brushed metal accents. Modern, sophisticated, contemplative atmosphere. Camera placed below the artwork centerline, looking slightly upward. The lower edge of the artwork appears closer to the viewer than the upper edge. Keep the artwork front face legible, architectural and elegant, with no fisheye or distorted architecture. Maintain the artwork as the primary subject. Artwork scale is 120 cm wide x 80 cm high. The artwork must remain the primary subject.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

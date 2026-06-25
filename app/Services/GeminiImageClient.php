@@ -320,6 +320,19 @@ class GeminiImageClient
             $env['VERTEX_PROJECT_ID'] = (string)VERTEX_PROJECT_ID;
         }
 
+        if (defined('MOCKUP_PROMPT_FIRST_MODE')) {
+            $env['MOCKUP_PROMPT_FIRST_MODE'] = MOCKUP_PROMPT_FIRST_MODE ? 'true' : 'false';
+        }
+        if (defined('MOCKUP_PROMPT_FIRST_NO_MASK_MODE')) {
+            $env['MOCKUP_PROMPT_FIRST_NO_MASK_MODE'] = MOCKUP_PROMPT_FIRST_NO_MASK_MODE ? 'true' : 'false';
+        }
+        if (defined('MOCKUP_USE_PRECOMPOSITION')) {
+            $env['MOCKUP_USE_PRECOMPOSITION'] = MOCKUP_USE_PRECOMPOSITION ? 'true' : 'false';
+        }
+        if (defined('MOCKUP_USE_BACKGROUND_EDIT')) {
+            $env['MOCKUP_USE_BACKGROUND_EDIT'] = MOCKUP_USE_BACKGROUND_EDIT ? 'true' : 'false';
+        }
+
         return $env;
     }
 

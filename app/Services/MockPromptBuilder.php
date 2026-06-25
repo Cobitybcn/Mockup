@@ -21,41 +21,65 @@ class MockPromptBuilder
         }
 
         $cameraView = trim((string)($context['camera_view'] ?? ''));
+        if ($cameraView === '') {
+            $cameraView = trim((string)($context['camera_angle'] ?? ''));
+        }
+        if ($cameraView === '') {
+            $cameraView = 'front view';
+        }
+
         $cameraDistance = trim((string)($context['camera_distance'] ?? ''));
+        if ($cameraDistance === '') {
+            $cameraDistance = 'near close-up view';
+        }
+
         $cameraNotes = trim((string)($context['camera_angle_notes'] ?? ''));
+        if ($cameraNotes === '') {
+            $cameraNotes = 'Keep the artwork front face fully legible, without fisheye, extreme perspective or distorted architecture.';
+        }
+
+        $negativePrompt = trim((string)($context['negative_prompt'] ?? ''));
+        if ($negativePrompt === '') {
+            $negativePrompt = 'Do not alter, repaint, crop, resize, stylize or reinterpret the artwork. Do not cover the artwork. Avoid oversized artwork, tiny artwork, fisheye, extreme wide angle, distorted perspective, blurry artwork surface, generic stock gallery, cheap furniture, cold institutional lighting, influencer pose or fashion editorial dominance.';
+        }
+
         $mockupPrompt = trim((string)($context['mockup_prompt'] ?? ''));
         $lighting = trim((string)($context['lighting'] ?? ''));
         
-        $humanProfile = $context['human_profile'] ?? null;
-        
-        $depthText = $depth ? " × {$depth} cm deep" : " × 4 cm deep";
-        $humanHeightStr = ($humanProfile === 'male_180') ? "1.80m" : "1.55m";
-        $humanHeightCm = ($humanProfile === 'male_180') ? 180 : 155;
-        $genderNoun = ($humanProfile === 'male_180') ? "male" : "female";
-        $genderSubject = ($humanProfile === 'male_180') ? "man" : "woman";
-        $genderPronoun = ($humanProfile === 'male_180') ? "him" : "her";
-        $genderPossessive = ($humanProfile === 'male_180') ? "his" : "her";
-
-        $scaleDirective = "";
-        if ($height && $width) {
-            $pct = (int)round(($height / $humanHeightCm) * 100);
-            $scaleDirective = " The artwork is {$width} cm wide × {$height} cm high{$depthText}. The human figure is {$humanHeightStr} tall. The artwork height is {$height} cm, so it must appear as approximately {$pct}% of the {$genderNoun} figure's full standing height.";
-            if ($height < $humanHeightCm) {
-                $scaleDirective .= " The artwork must appear clearly shorter than the {$genderSubject}, not equal to {$genderPossessive} full height and not taller than {$genderPronoun}.";
-            } else if ($height > $humanHeightCm) {
-                $scaleDirective .= " The artwork must appear taller than the {$genderSubject}'s full standing height.";
-            }
-        }
-
-        if (isset($context['with_human']) && $context['with_human'] === false) {
-            $humanRule = 'Do not include any human figure.';
+        if (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE) {
+            $humanRule = trim((string)($context['human_presence'] ?? 'none'));
         } else {
-            if ($humanProfile === 'female_155') {
-                $humanRule = 'Include exactly one elegant standing female figure (1.55m tall) for scale reference. The full-body figure must remain completely visible from head to shoes, standing on the exact same floor plane as the artwork, positioned at a comparable depth relative to the camera (not blocking or overlapping the artwork), and placed close enough to the artwork to serve as a reliable visual scale reference to verify and audit the physical scale of the artwork.' . $scaleDirective;
-            } else if ($humanProfile === 'male_180') {
-                $humanRule = 'Include exactly one elegant standing male figure (1.80m tall) for scale reference. The full-body figure must remain completely visible from head to shoes, standing on the exact same floor plane as the artwork, positioned at a comparable depth relative to the camera (not blocking or overlapping the artwork), and placed close enough to the artwork to serve as a reliable visual scale reference to verify and audit the physical scale of the artwork.' . $scaleDirective;
+            $humanProfile = $context['human_profile'] ?? null;
+            
+            $depthText = $depth ? " × {$depth} cm deep" : " × 4 cm deep";
+            $humanHeightStr = ($humanProfile === 'male_180') ? "1.80m" : "1.55m";
+            $humanHeightCm = ($humanProfile === 'male_180') ? 180 : 155;
+            $genderNoun = ($humanProfile === 'male_180') ? "male" : "female";
+            $genderSubject = ($humanProfile === 'male_180') ? "man" : "woman";
+            $genderPronoun = ($humanProfile === 'male_180') ? "him" : "her";
+            $genderPossessive = ($humanProfile === 'male_180') ? "his" : "her";
+
+            $scaleDirective = "";
+            if ($height && $width) {
+                $pct = (int)round(($height / $humanHeightCm) * 100);
+                $scaleDirective = " The artwork is {$width} cm wide × {$height} cm high{$depthText}. The human figure is {$humanHeightStr} tall. The artwork height is {$height} cm, so it must appear as approximately {$pct}% of the {$genderNoun} figure's full standing height.";
+                if ($height < $humanHeightCm) {
+                    $scaleDirective .= " The artwork must appear clearly shorter than the {$genderSubject}, not equal to {$genderPossessive} full height and not taller than {$genderPronoun}.";
+                } else if ($height > $humanHeightCm) {
+                    $scaleDirective .= " The artwork must appear taller than the {$genderSubject}'s full standing height.";
+                }
+            }
+
+            if (isset($context['with_human']) && $context['with_human'] === false) {
+                $humanRule = 'Do not include any human figure.';
             } else {
-                $humanRule = 'Include exactly one standing human figure for scale reference. The full-body figure must remain completely visible from head to shoes, standing on the exact same floor plane as the artwork, positioned at a comparable depth relative to the camera (not blocking or overlapping the artwork), and placed close enough to the artwork to serve as a reliable visual scale reference to verify and audit the physical scale of the artwork.' . $scaleDirective;
+                if ($humanProfile === 'female_155') {
+                    $humanRule = 'Include exactly one elegant standing female figure (1.55m tall) for scale reference. The full-body figure must remain completely visible from head to shoes, standing on the exact same floor plane as the artwork, positioned at a comparable depth relative to the camera (not blocking or overlapping the artwork), and placed close enough to the artwork to serve as a reliable visual scale reference to verify and audit the physical scale of the artwork.' . $scaleDirective;
+                } else if ($humanProfile === 'male_180') {
+                    $humanRule = 'Include exactly one elegant standing male figure (1.80m tall) for scale reference. The full-body figure must remain completely visible from head to shoes, standing on the exact same floor plane as the artwork, positioned at a comparable depth relative to the camera (not blocking or overlapping the artwork), and placed close enough to the artwork to serve as a reliable visual scale reference to verify and audit the physical scale of the artwork.' . $scaleDirective;
+                } else {
+                    $humanRule = 'Include exactly one standing human figure for scale reference. The full-body figure must remain completely visible from head to shoes, standing on the exact same floor plane as the artwork, positioned at a comparable depth relative to the camera (not blocking or overlapping the artwork), and placed close enough to the artwork to serve as a reliable visual scale reference to verify and audit the physical scale of the artwork.' . $scaleDirective;
+                }
             }
         }
         
@@ -78,8 +102,20 @@ MOCKUP ART DIRECTION:
 - Scene Description: {$sceneDescription}
 - Lighting: {$lighting}
 - Placement: {$placement}
-- Human Figure: {$humanRule}{$creativePromptBlock}
+- Human Figure: {$humanRule}
+
+CAMERA DIRECTION:
+- View: {$cameraView}
+- Distance: {$cameraDistance}
+- Notes: {$cameraNotes}
+
+NEGATIVE DIRECTIVES:
+- {$negativePrompt}{$creativePromptBlock}
 PROMPT;
+
+        if (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE) {
+            return $finalPrompt;
+        }
 
         // Convert fraction ratios like 120/155 or 80/180 into explicit percentages with height context
         $finalPrompt = preg_replace_callback(

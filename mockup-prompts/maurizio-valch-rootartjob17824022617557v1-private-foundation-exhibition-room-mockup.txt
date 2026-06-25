@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Private Foundation Exhibition Room
+- Purpose: culturally elevated environment
+- Scene Description: A exhibition space with meditative, silent, profound atmosphere. Materials: warm plaster walls, dark wooden bench, polished concrete floor, high ceilings
+- Lighting: soft architectural wall wash, museum-grade spotlights with warmth
+- Placement: centrally on a warm plaster wall
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: contrapicado / low-angle seven-eighths left view
+- Distance: near close-up view
+- Notes: Contrapicado / low-angle seven-eighths left view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, stock gallery, cold minimalism, empty, overly bright, fisheye lens, distorted, blurry, casual clothing, bad anatomy
+
+AI PROPOSED MOCKUP DIRECTION:
+An artwork 120cm wide by 80cm high, featuring a dark maroon field with vibrant red and blue geometric forms, centrally placed on a warm plaster wall in a private foundation exhibition room. The room has a dark wooden bench and polished concrete floor. An elegant standing male figure 1.80m, in gallery-opening attire, stands to the side, looking up at the artwork. Soft architectural wall wash and museum-grade spotlights with warmth illuminate the space. The camera is contrapicado / low-angle seven-eighths left view, near close-up view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

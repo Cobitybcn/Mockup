@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Sculptor's Private Studio
+- Purpose: An authentic working space, offering insight into artistic process and raw material presence.
+- Scene Description: A sculptor's private studio with Creative, authentic, material-focused, introspective atmosphere. Materials: rough concrete walls, wooden work table, stone dust on the floor, metal tools
+- Lighting: north light from tall windows, with some warm task lighting
+- Placement: Leaning naturally against a distressed high concrete wall, surrounded by other works and tools, showing it in an artist's environment.
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: seven-eighths left view
+- Distance: near close-up view
+- Notes: Keep the artwork front face legible, avoid extreme distortion, avoid fisheye, maintain the artwork as the primary subject.
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, generic, cold minimalism, white walls, casual clothing, sportwear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial dominance, sensual poses, theatrical gestures, wide shot, medium distance, medium close, medium wide, full room context, showing full room context, room view, wide view
+
+AI PROPOSED MOCKUP DIRECTION:
+seven-eighths left view, near close-up view, elegant standing female figure 1.55m in refined minimalist clothing viewing the same provided artwork preserved exactly without any change, leaning naturally against a distressed high concrete wall, surrounded by other works and tools in a sculptor's private studio. North light from tall windows, with some warm task lighting. Wooden work table and stone dust on the floor. Creative, authentic, material-focused atmosphere. Keep the artwork front face legible, avoid extreme distortion, avoid fisheye, maintain the artwork as the primary subject. Artwork scale is 120 cm wide x 80 cm high. The artwork must remain the primary subject.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

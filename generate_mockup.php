@@ -185,13 +185,21 @@ function override_prompt_directives(string $prompt, ?string $camera, ?string $ti
         };
 
         if ($cameraVal) {
-            if (preg_match('/-\s*Camera:[^\r\n]*/i', $prompt)) {
-                $prompt = preg_replace('/-\s*Camera:[^\r\n]*/i', '- Camera: ' . $cameraVal, $prompt);
-            } else {
-                if (preg_match('/MOCKUP ART DIRECTION:[^\r\n]*/i', $prompt)) {
-                    $prompt = preg_replace('/(MOCKUP ART DIRECTION:[^\r\n]*)/i', "$1\n- Camera: " . $cameraVal, $prompt);
+            if (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE) {
+                if (preg_match('/-\s*View:[^\r\n]*/i', $prompt)) {
+                    $prompt = preg_replace('/-\s*View:[^\r\n]*/i', '- View: ' . $cameraVal, $prompt);
                 } else {
-                    $prompt .= "\n- Camera: " . $cameraVal;
+                    $prompt = preg_replace('/(CAMERA DIRECTION:[^\r\n]*)/i', "$1\n- View: " . $cameraVal, $prompt);
+                }
+            } else {
+                if (preg_match('/-\s*Camera:[^\r\n]*/i', $prompt)) {
+                    $prompt = preg_replace('/-\s*Camera:[^\r\n]*/i', '- Camera: ' . $cameraVal, $prompt);
+                } else {
+                    if (preg_match('/MOCKUP ART DIRECTION:[^\r\n]*/i', $prompt)) {
+                        $prompt = preg_replace('/(MOCKUP ART DIRECTION:[^\r\n]*)/i', "$1\n- Camera: " . $cameraVal, $prompt);
+                    } else {
+                        $prompt .= "\n- Camera: " . $cameraVal;
+                    }
                 }
             }
 
@@ -322,20 +330,35 @@ function override_prompt_directives(string $prompt, ?string $camera, ?string $ti
     }
 
     if ($distance) {
-        $distanceVal = match ($distance) {
-            'close' => '- Structured Camera Distance: close-up view, room only suggested',
-            'medium' => '- Structured Camera Distance: medium-close view, enough space for context and scale',
-            default => null
-        };
-
-        if ($distanceVal) {
-            if (preg_match('/-\s*Structured Camera Distance:[^\r\n]*/i', $prompt)) {
-                $prompt = preg_replace('/-\s*Structured Camera Distance:[^\r\n]*/i', $distanceVal, $prompt);
-            } else {
-                if (preg_match('/MOCKUP ART DIRECTION:[^\r\n]*/i', $prompt)) {
-                    $prompt = preg_replace('/(MOCKUP ART DIRECTION:[^\r\n]*)/i', "$1\n" . $distanceVal, $prompt);
+        if (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE) {
+            $distanceVal = match ($distance) {
+                'close' => 'close-up view, room only suggested',
+                'medium' => 'medium-close view, enough space for context and scale',
+                default => null
+            };
+            if ($distanceVal) {
+                if (preg_match('/-\s*Distance:[^\r\n]*/i', $prompt)) {
+                    $prompt = preg_replace('/-\s*Distance:[^\r\n]*/i', '- Distance: ' . $distanceVal, $prompt);
                 } else {
-                    $prompt .= "\n" . $distanceVal;
+                    $prompt = preg_replace('/(CAMERA DIRECTION:[^\r\n]*)/i', "$1\n- Distance: " . $distanceVal, $prompt);
+                }
+            }
+        } else {
+            $distanceVal = match ($distance) {
+                'close' => '- Structured Camera Distance: close-up view, room only suggested',
+                'medium' => '- Structured Camera Distance: medium-close view, enough space for context and scale',
+                default => null
+            };
+
+            if ($distanceVal) {
+                if (preg_match('/-\s*Structured Camera Distance:[^\r\n]*/i', $prompt)) {
+                    $prompt = preg_replace('/-\s*Structured Camera Distance:[^\r\n]*/i', $distanceVal, $prompt);
+                } else {
+                    if (preg_match('/MOCKUP ART DIRECTION:[^\r\n]*/i', $prompt)) {
+                        $prompt = preg_replace('/(MOCKUP ART DIRECTION:[^\r\n]*)/i', "$1\n" . $distanceVal, $prompt);
+                    } else {
+                        $prompt .= "\n" . $distanceVal;
+                    }
                 }
             }
         }
@@ -454,24 +477,41 @@ $image = trim((string)($_POST['image'] ?? $_GET['image'] ?? ''));
 $json = trim((string)($_POST['json'] ?? $_GET['json'] ?? ''));
 $contextId = trim((string)($_POST['context_id'] ?? $_GET['context_id'] ?? ''));
 $prompt = trim((string)($_POST['prompt'] ?? $_GET['prompt'] ?? ''));
-$cameraOverride = trim((string)($_POST['camera_override'] ?? ''));
-$timeOverride = trim((string)($_POST['time_override'] ?? ''));
-$humanOverride = trim((string)($_POST['human_override'] ?? ''));
-$distanceOverride = trim((string)($_POST['distance_override'] ?? ''));
-$sizeOverride = trim((string)($_POST['size_override'] ?? '0'));
-$currentMockupFile = basename((string)($_POST['current_mockup_file'] ?? ''));
+$cameraOverrideTouched = (($_POST['camera_override_touched'] ?? '') === '1');
+$timeOverrideTouched = (($_POST['time_override_touched'] ?? $_POST['lighting_override_touched'] ?? '') === '1');
+$humanOverrideTouched = (($_POST['human_override_touched'] ?? '') === '1');
+$distanceOverrideTouched = (($_POST['distance_override_touched'] ?? '') === '1');
+$sizeOverrideTouched = (($_POST['size_override_touched'] ?? '') === '1');
+$anyOverrideTouched = ($cameraOverrideTouched || $timeOverrideTouched || $humanOverrideTouched || $distanceOverrideTouched || $sizeOverrideTouched);
+
 $selectorState = [
-    'camera_override' => in_array($cameraOverride, ['front', '3_4_left', '3_4_right'], true) ? $cameraOverride : '',
-    'time_override' => in_array($timeOverride, ['sunny_day', 'cloudy_day', 'afternoon', 'night'], true) ? $timeOverride : '',
-    'human_override' => in_array($humanOverride, ['none', 'female_155', 'male_180'], true) ? $humanOverride : '',
-    'distance_override' => in_array($distanceOverride, ['close', 'medium'], true) ? $distanceOverride : '',
-    'size_override' => normalize_size_override($sizeOverride),
+    'camera_override' => (in_array($cameraOverride, ['front', '3_4_left', '3_4_right'], true) && (!defined('MOCKUP_PROMPT_FIRST_MODE') || !MOCKUP_PROMPT_FIRST_MODE || $cameraOverrideTouched)) ? $cameraOverride : '',
+    'time_override' => (in_array($timeOverride, ['sunny_day', 'cloudy_day', 'afternoon', 'night'], true) && (!defined('MOCKUP_PROMPT_FIRST_MODE') || !MOCKUP_PROMPT_FIRST_MODE || $timeOverrideTouched)) ? $timeOverride : '',
+    'human_override' => (in_array($humanOverride, ['none', 'female_155', 'male_180'], true) && (!defined('MOCKUP_PROMPT_FIRST_MODE') || !MOCKUP_PROMPT_FIRST_MODE || $humanOverrideTouched)) ? $humanOverride : '',
+    'distance_override' => (in_array($distanceOverride, ['close', 'medium'], true) && (!defined('MOCKUP_PROMPT_FIRST_MODE') || !MOCKUP_PROMPT_FIRST_MODE || $distanceOverrideTouched)) ? $distanceOverride : '',
+    'size_override' => (!defined('MOCKUP_PROMPT_FIRST_MODE') || !MOCKUP_PROMPT_FIRST_MODE || $sizeOverrideTouched) ? normalize_size_override($sizeOverride) : 0,
 ];
 
-if ($currentMockupFile === '' && ($cameraOverride !== '' || $timeOverride !== '' || $humanOverride !== '' || $distanceOverride !== '' || normalize_size_override($sizeOverride) !== 0)) {
+$shouldApplyOverrides = false;
+if (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE) {
+    $shouldApplyOverrides = $anyOverrideTouched;
+} else {
+    $shouldApplyOverrides = ($cameraOverride !== '' || $timeOverride !== '' || $humanOverride !== '' || $distanceOverride !== '' || normalize_size_override($sizeOverride) !== 0);
+}
+
+if ($currentMockupFile === '' && $shouldApplyOverrides) {
     $imagePath = find_image($image);
     if ($imagePath) {
-        $prompt = override_prompt_directives($prompt, $cameraOverride, $timeOverride, $humanOverride, $imagePath, $json, $sizeOverride, $distanceOverride);
+        $prompt = override_prompt_directives(
+            $prompt,
+            (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE && !$cameraOverrideTouched) ? null : $cameraOverride,
+            (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE && !$timeOverrideTouched) ? null : $timeOverride,
+            (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE && !$humanOverrideTouched) ? null : $humanOverride,
+            $imagePath,
+            $json,
+            (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE && !$sizeOverrideTouched) ? '0' : $sizeOverride,
+            (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE && !$distanceOverrideTouched) ? null : $distanceOverride
+        );
     }
 }
 
@@ -535,7 +575,7 @@ try {
         }
     }
 
-    if ($cameraOverride !== '') {
+    if ($cameraOverride !== '' && (!defined('MOCKUP_PROMPT_FIRST_MODE') || !MOCKUP_PROMPT_FIRST_MODE || $cameraOverrideTouched)) {
         $cameraAngle = $cameraOverride;
     }
 
@@ -568,7 +608,14 @@ try {
                 $previousSelectorState = is_array($previousSelectorState) ? $previousSelectorState : [];
                 $generationImagePath = $existingMockupPath;
                 $editBaseFile = $currentMockupFile;
-                $prompt = build_selector_edit_instruction($cameraOverride, $timeOverride, $humanOverride, $sizeOverride, $distanceOverride, $previousSelectorState);
+                $prompt = build_selector_edit_instruction(
+                    (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE && !$cameraOverrideTouched) ? '' : $cameraOverride,
+                    (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE && !$timeOverrideTouched) ? '' : $timeOverride,
+                    (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE && !$humanOverrideTouched) ? '' : $humanOverride,
+                    (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE && !$sizeOverrideTouched) ? '0' : $sizeOverride,
+                    (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE && !$distanceOverrideTouched) ? '' : $distanceOverride,
+                    $previousSelectorState
+                );
             }
         }
     }

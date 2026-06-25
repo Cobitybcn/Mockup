@@ -85,6 +85,10 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
 
     private function finalPrompt(string $contextId, string $contextPrompt): string
     {
+        if (defined('MOCKUP_PROMPT_FIRST_MODE') && MOCKUP_PROMPT_FIRST_MODE && defined('MOCKUP_PROMPT_FIRST_NO_MASK_MODE') && MOCKUP_PROMPT_FIRST_NO_MASK_MODE) {
+            $contextPrompt .= "\n\nARTWORK PRESERVATION DIRECTIVES:\n"
+                . "- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.";
+        }
         return $contextPrompt;
     }
 }

@@ -1,0 +1,21 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Roman Historic Staircase
+- Purpose: pausing at a staircase landing at sunset
+- Scene Description: A staircase hall in a Roman historic apartment with timeless, golden hour, reflective atmosphere. Materials: high ceilings, sober moldings, travertine marble, interior wooden shutters, stone staircase
+- Lighting: late afternoon Mediterranean light, golden light filtering through shutters
+- Placement: centrally positioned on a large landing wall
+- Human Figure: Include exactly one elegant standing male figure (1.80m tall) for scale reference. The full-body figure must remain completely visible from head to shoes, standing on the exact same floor plane as the artwork, positioned at a comparable depth relative to the camera (not blocking or overlapping the artwork), and placed close enough to the artwork to serve as a reliable visual scale reference to verify and audit the physical scale of the artwork. The artwork is 120 cm wide × 80 cm high × 4 cm deep. The human figure is 1.80m tall. The artwork height is 80 cm, so it must appear as approximately 44% of the male figure's full standing height. The artwork must appear clearly shorter than the man, not equal to his full height and not taller than him.
+
+CAMERA DIRECTION:
+- View: subtle seven-eighths left view
+- Distance: wide
+- Notes: a subtle angle from the left, capturing the artwork within the vast architectural space of the staircase hall
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, generic stock, empty, cold minimalism, blank white walls, emotionally distant, touching artwork, covering artwork, obscuring artwork, blocking artwork, competing with artwork, main subject human, casual clothes, sportswear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion dominance, sensual poses, theatrical gestures, cheap furniture, decorative clutter, generic stock decor
+
+AI PROPOSED MOCKUP DIRECTION:
+An abstract painting, 120x80cm, with dark fields and vibrant red and blue textured blocks, centrally positioned on a large landing wall in a Roman historic apartment's staircase hall. An elegant standing male figure, 1.80m tall, is pausing to observe the artwork from a wide subtle seven-eighths left view. The hall boasts high ceilings, sober moldings, travertine marble, interior wooden shutters, and a grand stone staircase, bathed in late afternoon Mediterranean golden light filtering through the shutters, creating a timeless and reflective atmosphere.

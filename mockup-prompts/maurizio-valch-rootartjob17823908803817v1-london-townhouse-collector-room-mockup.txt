@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: London Townhouse Collector Room
+- Purpose: An intimate and culturally rich urban dwelling, designed for thoughtful living and art display.
+- Scene Description: A London townhouse collector room with Cultured, intimate, sophisticated, prestigious atmosphere. Materials: dark charcoal walls, herringbone parquet floor, velvet armchair, brass lighting elements
+- Lighting: controlled dramatic side light from a large window, complemented by warm lamplight
+- Placement: Hung prominently on a dark, rich wall, commanding attention over an antique side table.
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: three-quarter right view
+- Distance: near close-up view
+- Notes: Keep the artwork front face legible, avoid extreme distortion, avoid fisheye, maintain the artwork as the primary subject.
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, generic, cold minimalism, white walls, casual clothing, sportwear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial dominance, sensual poses, theatrical gestures, wide shot, medium distance, medium close, medium wide, full room context, showing full room context, room view, wide view
+
+AI PROPOSED MOCKUP DIRECTION:
+three-quarter right view, near close-up view, elegant standing female figure 1.55m in an elegant long dress viewing the same provided artwork preserved exactly without any change, hung prominently on a dark charcoal wall, commanding attention over an antique side table. Controlled dramatic side light from a large window, complemented by warm lamplight. Herringbone parquet floor, a velvet armchair, and brass lighting elements. Cultured, intimate, sophisticated atmosphere. Keep the artwork front face legible, avoid extreme distortion, avoid fisheye, maintain the artwork as the primary subject. Artwork scale is 120 cm wide x 80 cm high. The artwork must remain the primary subject.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

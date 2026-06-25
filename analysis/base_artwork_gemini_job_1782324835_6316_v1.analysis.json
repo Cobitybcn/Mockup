@@ -1,0 +1,147 @@
+{
+    "suggested_titles": [
+        {
+            "title": "Suspended Fields",
+            "subtitle": "An abstract composition features layered color fields punctuated by geometric forms and textured atmospheric effects.",
+            "description": "The artwork is vertically segmented into four distinct horizontal bands, creating a layered landscape or architectural elevation. The composition organizes these territories with a prominent yellow central field serving as a visual horizon. Diverse textures define each section, from the impasto red and dripping black to the smoother yellow and intricate bottom layer. This interplay of visible structure and surface generates a sober, contemplative, and slightly melancholic atmosphere. The work achieves a profound material presence through its deliberate structural tension and varied textural applications."
+        },
+        {
+            "title": "Red and Yellow Incision",
+            "subtitle": "A contemporary abstraction explores the material presence of paint through contrasting color fields and textural application.",
+            "description": "The canvas presents a bold horizontal division, with a rich red field transitioning into a dark, textured black, then a luminous yellow, and finally a muted mixed-media base. The composition is structured by these stark color blocks, emphasizing tectonic lines and layered planes. Visible drips in the upper black and lower sections contrast with the flatter yellow, highlighting surface activity and depth. This precise handling of color and texture establishes a restrained, silent, and contemplative mood within the piece. The varied material presence and structural order define the artwork's internal scale and visual weight."
+        },
+        {
+            "title": "Threshold Horizon",
+            "subtitle": "A structural abstract painting establishes depth and distance through distinct horizontal divisions and monolithic forms.",
+            "description": "A series of defined horizontal divisions creates distinct spatial territories across the canvas, dominated by a broad yellow expanse at its center. The composition is built upon these precise tectonic lines, which separate varied surface treatments and color fields. Textures range from agitated impasto and drips in the upper red and black sections to a more uniform yellow and intricate, layered bottom, including subtle ladder-like incisions. This visual order and surface variation evoke a silent, contemplative, and somewhat melancholic atmosphere. The deliberate divisions and embedded forms generate a quiet structural tension within the artwork's boundaries."
+        }
+    ],
+    "recommended_number_of_contexts": 6,
+    "contextual_proposals": [
+        {
+            "context_name": "Contemplation in Limestone Alcove",
+            "context_role": "Private Residence Study",
+            "space_type": "Minimalist Andalusian Villa",
+            "atmosphere": "Serene, reflective, warm",
+            "materials": [
+                "Smooth warm limestone walls",
+                "Natural light wood floor",
+                "Bespoke furniture with natural fibers"
+            ],
+            "lighting": "Soft natural daylight filtering from a tall arched window, gentle shadows",
+            "camera_view": "front view",
+            "camera_distance": "full architectural shot",
+            "camera_angle_notes": "N/A",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The artwork's warm reds and yellows resonate with the villa's sun-drenched palette and natural stone, while its structured composition finds balance against the minimalist architecture.",
+            "commercial_reason": "Presenting the work at its true scale within an aspirational private study demonstrates its perfect fit for intimate intellectual spaces, enhancing its perceived value as a focal point for personal reflection.",
+            "mockup_prompt": "An elegant standing male figure 1.80m, dressed in refined casual attire, stands respectfully before the artwork, observing its surface and structure in quiet contemplation. The scene is a sunlit alcove within a minimalist Andalusian villa, featuring smooth, warm limestone walls, a natural light wood floor, and bespoke, understated furniture. Soft natural daylight filters from a tall arched window, casting gentle, elongated shadows. front view, 50mm lens equivalent, camera height at artwork center, full architectural shot. The room and human figure establish the absolute metric scale system. The artwork height is exactly 120 cm, which reads as approximately 120/180 of the standing person's total height. The artwork must appear realistically smaller than the person, leaving ample empty wall clearance above, below, and to both sides. Avoid artificial enlargement. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y curatorialmente dominante, sin aumentar su escala física real. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, artwork content warped, artwork content stretched, artwork content simplified, artwork content extended, artwork physically oversized, artwork larger than its real dimensions, artwork equal to human full height, artwork taller than human figure, close-up view, zoomed-in view, artwork filling the frame artificially, artwork alone without human scale, human figure too far from artwork to verify scale, human figure cropped, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork floating, artwork used as wallpaper, artwork as mural, fisheye distortion, ultra-wide lens, warped perspective, exaggerated theatrical distortion"
+        },
+        {
+            "context_name": "Morning Light in Parisian Salon",
+            "context_role": "Prestigious Living Room",
+            "space_type": "Classic Parisian Apartment",
+            "atmosphere": "Elegant, calm, sophisticated",
+            "materials": [
+                "Classic Haussmannian off-white plaster walls",
+                "Ornate moldings",
+                "Rich herringbone parquet flooring",
+                "Velvet upholstery"
+            ],
+            "lighting": "Gentle morning light streaming from a tall window to the left, soft and even",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "full architectural shot",
+            "camera_angle_notes": "Floor tiles and ceiling lines converge slightly towards the left vanishing point.",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The artwork's structural abstraction and bold color fields provide a contemporary counterpoint to the classic elegance of the Parisian salon, bridging historical and modern aesthetics.",
+            "commercial_reason": "Displaying the artwork in a high-ceilinged, traditional yet updated setting like this demonstrates its versatility and capacity to command attention as a refined centerpiece for discerning collectors.",
+            "mockup_prompt": "An elegant standing female figure 1.55m, dressed in chic, understated attire, pauses gracefully to observe the artwork, her posture one of serene contemplation. The setting is a prestigious living room within a classic Parisian apartment, characterized by off-white plaster walls, subtle ornate moldings, and rich herringbone parquet flooring. Gentle morning light streams from a tall window to the left, illuminating the space softly and evenly. three-quarter left view, 35mm lens equivalent, camera height at artwork center, full architectural shot. The room and human figure establish the absolute metric scale system. The artwork height is exactly 120 cm, which reads as approximately 120/155 of the standing person's total height. The artwork must appear realistically smaller than the person, leaving ample empty wall clearance above, below, and to both sides. Avoid artificial enlargement. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y curatorialmente dominante, sin aumentar su escala física real. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, artwork content warped, artwork content stretched, artwork content simplified, artwork content extended, artwork physically oversized, artwork larger than its real dimensions, artwork equal to human full height, artwork taller than human figure, close-up view, zoomed-in view, artwork filling the frame artificially, artwork alone without human scale, human figure too far from artwork to verify scale, human figure cropped, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork floating, artwork used as wallpaper, artwork as mural, fisheye distortion, ultra-wide lens, warped perspective, exaggerated theatrical distortion"
+        },
+        {
+            "context_name": "Evening Glow in Modern Loft",
+            "context_role": "Contemporary Urban Living Space",
+            "space_type": "High-End Penthouse Loft",
+            "atmosphere": "Sophisticated, intimate, dramatic",
+            "materials": [
+                "Exposed concrete wall (subtle texture)",
+                "Dark polished concrete floor",
+                "Steel accents",
+                "Minimalist dark wood furniture"
+            ],
+            "lighting": "Evening residential glow, focused warm spotlight on the artwork, ambient city lights visible outside",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "full architectural shot",
+            "camera_angle_notes": "Geometric lines of the concrete floor and ceiling beams recede towards the right vanishing point.",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The artwork's structural integrity and stark color contrasts are amplified by the raw, industrial-chic backdrop of the penthouse, creating a compelling dialogue between art and architecture.",
+            "commercial_reason": "Positioning the work within a luxurious, cutting-edge urban environment highlights its appeal to collectors seeking a statement piece that complements a modern, sophisticated lifestyle.",
+            "mockup_prompt": "An elegant standing male figure 1.80m, dressed in a sharp blazer and dark trousers, stands with hands casually clasped, contemplating the artwork in a sophisticated manner. The scene is a high-end penthouse loft with an exposed, subtly textured concrete wall, a dark polished concrete floor, and sleek minimalist dark wood furniture. An evening residential glow permeates the space, with a warm, focused spotlight illuminating the artwork, and ambient city lights visible through large windows in the background. three-quarter right view, 50mm lens equivalent, camera height at artwork center, full architectural shot. The room and human figure establish the absolute metric scale system. The artwork height is exactly 120 cm, which reads as approximately 120/180 of the standing person's total height. The artwork must appear realistically smaller than the person, leaving ample empty wall clearance above, below, and to both sides. Avoid artificial enlargement. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y curatorialmente dominante, sin aumentar su escala física real. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, artwork content warped, artwork content stretched, artwork content simplified, artwork content extended, artwork physically oversized, artwork larger than its real dimensions, artwork equal to human full height, artwork taller than human figure, close-up view, zoomed-in view, artwork filling the frame artificially, artwork alone without human scale, human figure too far from artwork to verify scale, human figure cropped, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork floating, artwork used as wallpaper, artwork as mural, fisheye distortion, ultra-wide lens, warped perspective, exaggerated theatrical distortion"
+        },
+        {
+            "context_name": "Reading Nook in Italian Palazzo",
+            "context_role": "Heritage Residential Library",
+            "space_type": "Restored Italian Palazzo",
+            "atmosphere": "Cultured, tranquil, historically rich",
+            "materials": [
+                "Deep ochre plaster walls",
+                "Dark carved wood paneling",
+                "Antique patterned rug",
+                "Velvet reading chair"
+            ],
+            "lighting": "Soft, filtered light from a tall arched window, diffused and warm",
+            "camera_view": "front view",
+            "camera_distance": "full architectural shot",
+            "camera_angle_notes": "N/A",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The artwork's historical reference points (ladders, horizons, red structures) subtly echo the enduring legacy of the palazzo, creating a timeless dialogue between abstraction and antiquity.",
+            "commercial_reason": "Placing the artwork in a richly appointed, historically significant space validates its enduring aesthetic quality and intellectual depth, appealing to collectors who value heritage and timeless artistry.",
+            "mockup_prompt": "An elegant standing female figure 1.55m, dressed in a classic silk blouse and tailored skirt, stands thoughtfully observing the artwork, perhaps having just risen from a nearby reading chair. The setting is a tranquil reading nook within a restored Italian palazzo, featuring deep ochre plaster walls, dark carved wood paneling, and an antique patterned rug. Soft, filtered light from a tall arched window illuminates the space, creating a diffused and warm atmosphere. front view, 50mm lens equivalent, camera height at artwork center, full architectural shot. The room and human figure establish the absolute metric scale system. The artwork height is exactly 120 cm, which reads as approximately 120/155 of the standing person's total height. The artwork must appear realistically smaller than the person, leaving ample empty wall clearance above, below, and to both sides. Avoid artificial enlargement. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y curatorialmente dominante, sin aumentar su escala física real. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, artwork content warped, artwork content stretched, artwork content simplified, artwork content extended, artwork physically oversized, artwork larger than its real dimensions, artwork equal to human full height, artwork taller than human figure, close-up view, zoomed-in view, artwork filling the frame artificially, artwork alone without human scale, human figure too far from artwork to verify scale, human figure cropped, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork floating, artwork used as wallpaper, artwork as mural, fisheye distortion, ultra-wide lens, warped perspective, exaggerated theatrical distortion"
+        },
+        {
+            "context_name": "Gallery Wall in Minimalist Estate",
+            "context_role": "Grand Entrance Hall",
+            "space_type": "Contemporary Coastal Estate",
+            "atmosphere": "Expansive, sophisticated, airy",
+            "materials": [
+                "Light, textured plaster walls",
+                "Wide plank bleached oak flooring",
+                "Large glass panels framing ocean views"
+            ],
+            "lighting": "Bright, even daylight from large windows, with gentle overhead recessed lighting",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "full architectural shot",
+            "camera_angle_notes": "The long lines of the bleached oak floor and the ceiling recede gently towards the left.",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The artwork's internal horizons and structured fields echo the expansive coastal landscape, while its abstract nature complements the minimalist design of the estate.",
+            "commercial_reason": "Presenting the artwork in such a grand, open, and aspirational setting underscores its ability to enhance a modern luxury home, appealing to collectors desiring impactful, sophisticated decor.",
+            "mockup_prompt": "An elegant standing male figure 1.80m, in a crisp linen shirt and tailored trousers, stands at a thoughtful distance, his gaze moving between the artwork and the panoramic views. The scene is a grand entrance hall within a contemporary coastal estate, featuring light, textured plaster walls, wide plank bleached oak flooring, and expansive glass panels framing ocean views. Bright, even daylight streams in from large windows, supplemented by gentle overhead recessed lighting. three-quarter left view, 35mm lens equivalent, camera height at artwork center, full architectural shot. The room and human figure establish the absolute metric scale system. The artwork height is exactly 120 cm, which reads as approximately 120/180 of the standing person's total height. The artwork must appear realistically smaller than the person, leaving ample empty wall clearance above, below, and to both sides. Avoid artificial enlargement. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y curatorialmente dominante, sin aumentar su escala física real. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, artwork content warped, artwork content stretched, artwork content simplified, artwork content extended, artwork physically oversized, artwork larger than its real dimensions, artwork equal to human full height, artwork taller than human figure, close-up view, zoomed-in view, artwork filling the frame artificially, artwork alone without human scale, human figure too far from artwork to verify scale, human figure cropped, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork floating, artwork used as wallpaper, artwork as mural, fisheye distortion, ultra-wide lens, warped perspective, exaggerated theatrical distortion"
+        },
+        {
+            "context_name": "Art Niche in Mediterranean Retreat",
+            "context_role": "Private Retreat Living Area",
+            "space_type": "Sophisticated Mediterranean Farmhouse",
+            "atmosphere": "Rustic elegance, tranquil, warm",
+            "materials": [
+                "White washed plaster walls",
+                "Terracotta floor tiles",
+                "Exposed dark wood ceiling beams",
+                "Natural linen textiles"
+            ],
+            "lighting": "Warm, late afternoon Mediterranean light, creating soft highlights and deep shadows",
+            "camera_view": "front view",
+            "camera_distance": "full architectural shot",
+            "camera_angle_notes": "N/A",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The artwork's foundational reds and yellows find a natural home in the Mediterranean palette, while its structural layers echo the regional architectural traditions of terraced fields and simple forms.",
+            "commercial_reason": "Presenting the work in a serene, curated Mediterranean setting highlights its ability to provide a moment of concentrated visual interest, appealing to collectors seeking art for tranquil, refined private spaces.",
+            "mockup_prompt": "An elegant standing female figure 1.55m, wearing a flowing linen dress, stands quietly, hands gently clasped, absorbing the artwork's details in a peaceful moment. The setting is a thoughtfully designed art niche within a sophisticated Mediterranean farmhouse, featuring white washed plaster walls, terracotta floor tiles, exposed dark wood ceiling beams, and natural linen textiles. Warm, late afternoon Mediterranean light streams in, creating soft highlights and deep shadows across the room. front view, 50mm lens equivalent, camera height at artwork center, full architectural shot. The room and human figure establish the absolute metric scale system. The artwork height is exactly 120 cm, which reads as approximately 120/155 of the standing person's total height. The artwork must appear realistically smaller than the person, leaving ample empty wall clearance above, below, and to both sides. Avoid artificial enlargement. La obra de arte en la imagen adjunta es la obra de arte final que debe presentarse, no una imagen de inspiración, y no debe ser repintada, rediseñada, mejorada, simplificada, extendida, recortada ni reinterpretada. Nunca modifiques la obra de arte en la imagen adjunta. Preserva la obra de arte exactamente como fue proporcionada, incluyendo composición, proporciones, orientación, estructura interna, bordes, colores, textura, pincelada, marcas, símbolos y contenido visual. La obra de arte debe permanecer completamente visible, correctamente proporcionada, montada naturalmente en la pared y curatorialmente dominante, sin aumentar su escala física real. Solo el entorno circundante, la figura humana, la iluminación, la pared, la arquitectura, el mobiliario y la atmósfera pueden ser generados o modificados.",
+            "negative_prompt": "cheap decor, generic stock interior, ordinary bedroom, visual noise, logos, visible text, labels, watermarks, cropped artwork, altered artwork, rotated artwork, distorted artwork, changed artwork colors, repainted artwork, reimagined artwork, artwork content warped, artwork content stretched, artwork content simplified, artwork content extended, artwork physically oversized, artwork larger than its real dimensions, artwork equal to human full height, artwork taller than human figure, close-up view, zoomed-in view, artwork filling the frame artificially, artwork alone without human scale, human figure too far from artwork to verify scale, human figure cropped, casual clothing, sportswear, jeans, influencer pose, smiling at camera, artwork floating, artwork used as wallpaper, artwork as mural, fisheye distortion, ultra-wide lens, warped perspective, exaggerated theatrical distortion"
+        }
+    ],
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1782324835_6316_v1.png"
+}

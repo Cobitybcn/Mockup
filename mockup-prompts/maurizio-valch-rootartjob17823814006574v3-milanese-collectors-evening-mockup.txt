@@ -1,0 +1,21 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Milanese Collector's Evening
+- Purpose: collector viewing art after dinner
+- Scene Description: A Milanese collector apartment with refined luxury, intimate, warm atmosphere. Materials: dark parquet, Italian design furniture, warm plaster walls, sculptural lamps
+- Lighting: lamplight within a collector interior, warm evening light
+- Placement: centered on a wall above a low console
+- Human Figure: Include exactly one elegant standing female figure (1.55m tall) for scale reference. The full-body figure must remain completely visible from head to shoes, standing on the exact same floor plane as the artwork, positioned at a comparable depth relative to the camera (not blocking or overlapping the artwork), and placed close enough to the artwork to serve as a reliable visual scale reference to verify and audit the physical scale of the artwork. The artwork is 120 cm wide × 80 cm high × 4 cm deep. The human figure is 1.55m tall. The artwork height is 80 cm, so it must appear as approximately 52% of the female figure's full standing height. The artwork must appear clearly shorter than the woman, not equal to her full height and not taller than her.
+
+CAMERA DIRECTION:
+- View: front view
+- Distance: medium
+- Notes: straight on, showing artwork and upper body of figure
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, generic stock, empty, cold minimalism, blank white walls, emotionally distant, touching artwork, covering artwork, obscuring artwork, blocking artwork, competing with artwork, main subject human, casual clothes, sportswear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion dominance, sensual poses, theatrical gestures, cheap furniture, decorative clutter, generic stock decor
+
+AI PROPOSED MOCKUP DIRECTION:
+An abstract painting, 120x80cm, featuring dark fields with vibrant red and blue textured blocks, centered on a warm plaster wall above a low Italian design console in a Milanese collector apartment. An elegant standing female figure, 1.55m tall, is thoughtfully observing the artwork from a medium front view. The room has dark parquet flooring and sculptural lamps, illuminated by warm evening lamplight, exuding an intimate, refined luxury.

@@ -66,6 +66,11 @@ define('DB_USERNAME', app_env('DB_USERNAME', 'root'));
 define('DB_PASSWORD', app_env('DB_PASSWORD', ''));
 define('DB_CHARSET', app_env('DB_CHARSET', 'utf8mb4'));
 define('MOCKUP_WORKER_COUNT', app_env('MOCKUP_WORKER_COUNT', '4'));
+define('MOCKUP_PROMPT_FIRST_MODE', strtolower(app_env('MOCKUP_PROMPT_FIRST_MODE', 'false')) === 'true');
+define('MOCKUP_PROMPT_FIRST_NO_MASK_MODE', strtolower(app_env('MOCKUP_PROMPT_FIRST_NO_MASK_MODE', 'false')) === 'true');
+define('MOCKUP_USE_PRECOMPOSITION', strtolower(app_env('MOCKUP_USE_PRECOMPOSITION', 'false')) === 'true');
+define('MOCKUP_USE_BACKGROUND_EDIT', strtolower(app_env('MOCKUP_USE_BACKGROUND_EDIT', 'false')) === 'true');
+
 
 // Punto #2: ruta configurable al ejecutable PHP (evita rutas hardcodeadas a versiones específicas)
 define('PHP_BINARY_PATH', app_env('PHP_BINARY_PATH', ''));

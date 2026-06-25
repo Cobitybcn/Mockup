@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Collector's Private Viewing Room
+- Purpose: An intimate space designed for art appreciation, emphasizing the artwork's singular presence.
+- Scene Description: A private foundation exhibition room with Exclusive, focused, contemplative, professional atmosphere. Materials: warm gray plaster walls, dark oak floor, plush low sofa, neutral carpet
+- Lighting: warm evening gallery lighting, museum-grade spotlights with warmth
+- Placement: Centered on a warm gray wall, holding visual dominance over a low, plush sofa.
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: front view
+- Distance: near close-up view
+- Notes: Keep the artwork front face legible, avoid extreme distortion, avoid fisheye, maintain the artwork as the primary subject.
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, generic, cold minimalism, white walls, casual clothing, sportwear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial dominance, sensual poses, theatrical gestures, wide shot, medium distance, medium close, medium wide, full room context, showing full room context, room view, wide view
+
+AI PROPOSED MOCKUP DIRECTION:
+front view, near close-up view, elegant standing female figure 1.55m in private-collector attire viewing the same provided artwork preserved exactly without any change, centered on a warm gray plaster wall, holding visual dominance over a low, plush sofa. Warm evening gallery lighting with museum-grade spotlights creates a focused, contemplative atmosphere. Dark oak floor and neutral carpet. Keep the artwork front face legible, avoid extreme distortion, avoid fisheye, maintain the artwork as the primary subject. Artwork scale is 120 cm wide x 80 cm high. The artwork must remain the primary subject.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

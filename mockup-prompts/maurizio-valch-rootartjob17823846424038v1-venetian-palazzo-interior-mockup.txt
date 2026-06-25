@@ -1,0 +1,21 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Venetian palazzo interior
+- Purpose: private residence
+- Scene Description: A grand salon with elegant decay, historical warmth, intimate viewing atmosphere. Materials: aged plaster walls, terrazzo floor, high windows towards a canal, subtle stucco details, antique furniture
+- Lighting: soft architectural wall wash with warmth, late afternoon Mediterranean light filtering through high windows
+- Placement: mounted on an aged plaster wall, within a subtle, ornate frame that highlights the piece.
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: subtle seven-eighths left view
+- Distance: medium wide shot
+- Notes: slightly off-center, showcasing the artwork within its grand setting
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, empty, cold, harsh light, stock photo, casual clothing, bad anatomy, distorted, blurry, oversaturated
+
+AI PROPOSED MOCKUP DIRECTION:
+A 120cm x 80cm horizontal abstract painting, featuring a dark purple field with three vibrant red and turquoise geometric blocks and a thin white horizontal line, is mounted on an aged plaster wall in a Venetian palazzo grand salon. The room features terrazzo flooring, high windows overlooking a canal, and subtle stucco details. Soft architectural wall wash with warmth and late afternoon Mediterranean light illuminates the scene. An elegant standing male figure 1.80m, in a tailored suit, stands observing the artwork from a subtle seven-eighths left view, captured in a medium wide shot, showcasing the artwork within its grand setting.

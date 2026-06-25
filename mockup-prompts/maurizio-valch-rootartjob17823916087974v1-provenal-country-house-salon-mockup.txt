@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 80 cm wide × 120 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Provençal Country House Salon
+- Purpose: luxurious private residence
+- Scene Description: A living room with warm, rustic elegance, tranquil atmosphere. Materials: whitewashed walls, ancient wooden beams, light stone floor, natural linen textiles
+- Lighting: late afternoon Mediterranean light
+- Placement: mounted on a whitewashed wall, slightly off-center
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: three-quarter left view
+- Distance: medium shot
+- Notes: slightly from the left, capturing the depth of the room
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, generic, stock gallery, empty, cold minimalism, white walls, emotionally distant, casual clothes, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial, sensual poses, theatrical gestures.
+
+AI PROPOSED MOCKUP DIRECTION:
+An 80x120cm artwork featuring a deep dark red-brown field with three vibrant red and cyan rectangular forms and subtle white lines, mounted on a whitewashed wall in a Provençal country house salon. The room has ancient wooden beams, a light stone floor, and natural linen textiles. An elegant standing female figure 1.55m, wearing a long elegant dress, stands pausing to admire the art as late afternoon Mediterranean light, golden and soft, filters through a window. three-quarter left view, medium shot, slightly from the left, capturing the depth of the room.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

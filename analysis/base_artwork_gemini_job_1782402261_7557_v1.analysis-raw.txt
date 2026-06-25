@@ -1,0 +1,160 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Luminous Recess Blocks",
+      "subtitle": "This abstract painting presents vibrant rectangular forms, glowing intensely within a deep, textured field of dark maroon.",
+      "description": "Three vibrant blocks of color punctuate the deep, enveloping canvas, drawing the eye into distinct zones. The composition is horizontally structured, with subtle lines dividing the rich dark planes and anchoring the luminous elements. Pigment appears dense in the background, contrasting with the fluid, molten quality of the red and blue within the forms. A solemn, introspective atmosphere emerges from the interplay of deep earth tones and intense, concentrated light. The work holds its presence with a quiet intensity, a contained visual weight."
+    },
+    {
+      "title": "Dark Field Flow",
+      "subtitle": "A structured abstract work where vivid blue pigment appears to melt over strong red fields, set against a vast, deep-toned surface.",
+      "description": "A dominant field of deep maroon stretches across the canvas, establishing a vast, contemplative ground. Subtle horizontal and diagonal lines carve the composition, creating layered territories where vibrant events unfold. The dark pigment of the field holds a visible texture, contrasting sharply with the fluid, almost molten application of bright blue over intense red within the geometric forms. A sense of quiet drama pervades, as if light breaks through an ancient, rich darkness. The piece anchors its scale with profound color density and material depth."
+    },
+    {
+      "title": "Stratified Color Passage",
+      "subtitle": "An abstract composition unfolds across distinct horizontal strata, where brilliant color passages emerge from an expansive, earth-toned depth.",
+      "description": "The canvas is divided by delicate white lines that carve distinct horizontal strata across its surface. This structural division anchors the eye, creating a landscape of planes within the dark expanse. The surface is rich with deep, almost black-red pigment, providing a heavy backdrop for the startlingly bright, roughly rectangular forms. A quiet tension develops between the vast, dark field and the concentrated bursts of luminous red and blue within it. The artwork asserts its presence through measured scale and precise spatial pressure."
+    }
+  ],
+  "contextual_proposals": [
+    {
+      "context_name": "Milanese Collector's Apartment",
+      "context_role": "private residence",
+      "space_type": "living room",
+      "atmosphere": "sophisticated, warm, contemplative",
+      "materials": [
+        "dark parquet",
+        "polished walnut panels",
+        "warm plaster walls",
+        "bespoke Italian furniture",
+        "tailored upholstery"
+      ],
+      "lighting": "warm evening gallery lighting",
+      "placement": "centered on a warm plaster wall",
+      "camera_view": "front view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "straight on, eye-level, focused on the artwork and immediate surroundings",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "The artwork's actual color relationship between the deep maroon and vibrant red/blue creates a focal point that enriches a refined, evening-lit interior space.",
+      "commercial_reason": "The sophisticated interaction of the artwork's actual color relationship with the warm, dark tones of the Milanese apartment enhances its desirability for discerning collectors seeking intimate visual depth.",
+      "mockup_prompt": "An artwork 120cm wide by 80cm high, featuring a dark maroon field with vibrant red and blue geometric forms, centered on a warm plaster wall in a Milanese collector's apartment. The room has dark parquet and polished walnut panels. An elegant standing male figure 1.80m, dressed in a dark tailored suit, stands respectfully to the side, observing. Warm evening gallery lighting casts soft shadows. The camera is front view, near close-up view, straight on, eye-level, focused on the artwork and immediate surroundings.",
+      "negative_prompt": "sterile, institutional, stock gallery, cold minimalism, empty, overly bright, fisheye lens, distorted, blurry, casual clothing, bad anatomy"
+    },
+    {
+      "context_name": "Mayfair Art Collector Apartment",
+      "context_role": "private collection viewing",
+      "space_type": "private viewing room",
+      "atmosphere": "exclusive, refined, quiet luxury",
+      "materials": [
+        "polished stone",
+        "brushed bronze accents",
+        "tailored upholstery",
+        "neutral high-quality rug",
+        "warm plaster walls"
+      ],
+      "lighting": "museum-grade spotlights with warmth",
+      "placement": "prominently displayed on a warm plaster wall",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "slightly angled from the left, eye-level, capturing depth and refined context",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "The dominant color field of deep maroon provides a grounding element that speaks to the artwork's profound aesthetic, ideal for focused contemplation.",
+      "commercial_reason": "Highlighting the artwork's dominant color field within this premium setting underscores its substantial presence and value for high-end collectors.",
+      "mockup_prompt": "An artwork 120cm wide by 80cm high, featuring a dark maroon field with vibrant red and blue geometric forms, prominently displayed on a warm plaster wall in a Mayfair art collector apartment's private viewing room. The room contains polished stone, brushed bronze accents, and a neutral high-quality rug. An elegant standing female figure 1.55m, in a long elegant dress, stands slightly to the right, looking at the artwork. Museum-grade spotlights with warmth illuminate the piece. The camera is three-quarter left view, near close-up view, slightly angled from the left, eye-level, capturing depth and refined context.",
+      "negative_prompt": "sterile, institutional, stock gallery, cold minimalism, empty, overly bright, fisheye lens, distorted, blurry, casual clothing, bad anatomy"
+    },
+    {
+      "context_name": "Industrial Loft Studio",
+      "context_role": "artist's atelier",
+      "space_type": "working studio",
+      "atmosphere": "creative, raw, authentic",
+      "materials": [
+        "exposed brick",
+        "concrete floor",
+        "large industrial windows",
+        "metal frame shelves",
+        "scattered art supplies"
+      ],
+      "lighting": "soft architectural wall wash, controlled dramatic side light",
+      "placement": "naturally leaning against a wall",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "slightly angled from the right, eye-level, showing texture and creative environment",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "The visible texture of the artwork's surface, particularly the brushstrokes in the dark field and the fluid blue application, is accentuated by the honest materiality of the studio space.",
+      "commercial_reason": "Presenting the artwork's texture in an industrial loft studio setting appeals to collectors who appreciate the artistic process and material integrity of the work.",
+      "mockup_prompt": "An artwork 120cm wide by 80cm high, featuring a dark maroon field with vibrant red and blue geometric forms, naturally leaning against an exposed brick wall in a working industrial loft studio. The studio has a concrete floor, large industrial windows, and metal frame shelves. An elegant standing male figure 1.80m, in refined minimalist clothing, contemplates the artwork from a slight distance. Soft architectural wall wash and controlled dramatic side light illuminate the space. The camera is three-quarter right view, near close-up view, slightly angled from the right, eye-level, showing texture and creative environment.",
+      "negative_prompt": "sterile, institutional, stock gallery, cold minimalism, empty, overly bright, fisheye lens, distorted, blurry, casual clothing, bad anatomy"
+    },
+    {
+      "context_name": "Parisian Left Bank Collector Salon",
+      "context_role": "sophisticated architectural setting",
+      "space_type": "salon",
+      "atmosphere": "cultivated, private, elegantly historical",
+      "materials": [
+        "antique parquet",
+        "aged plaster walls",
+        "velvet armchairs",
+        "marble fireplace",
+        "partial library shelves"
+      ],
+      "lighting": "blue-hour window light, warm interior light against cool exterior dusk",
+      "placement": "anchoring a section of an aged plaster wall",
+      "camera_view": "seven-eighths left view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "a deep angle from the left, eye-level, revealing architectural details and soft lighting",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "The structural tension within the artwork, particularly between the vast dark field and the luminous blocks, creates a dynamic interplay that captivates a slow observer.",
+      "commercial_reason": "The artwork's inherent structural tension offers a compelling visual narrative, making it a desirable acquisition for collectors who value depth and sophisticated compositional strength.",
+      "mockup_prompt": "An artwork 120cm wide by 80cm high, featuring a dark maroon field with vibrant red and blue geometric forms, anchoring a section of an aged plaster wall in a Parisian Left Bank collector salon. The room features antique parquet, velvet armchairs, a marble fireplace, and partial library shelves. An elegant standing female figure 1.55m, wearing an elegant black dress, stands with her back slightly to the viewer, admiring the artwork. Blue-hour window light combines with warm interior light against the cool exterior dusk. The camera is seven-eighths left view, near close-up view, a deep angle from the left, eye-level, revealing architectural details and soft lighting.",
+      "negative_prompt": "sterile, institutional, stock gallery, cold minimalism, empty, overly bright, fisheye lens, distorted, blurry, casual clothing, bad anatomy"
+    },
+    {
+      "context_name": "Private Foundation Exhibition Room",
+      "context_role": "culturally elevated environment",
+      "space_type": "exhibition space",
+      "atmosphere": "meditative, silent, profound",
+      "materials": [
+        "warm plaster walls",
+        "dark wooden bench",
+        "polished concrete floor",
+        "high ceilings"
+      ],
+      "lighting": "soft architectural wall wash, museum-grade spotlights with warmth",
+      "placement": "centrally on a warm plaster wall",
+      "camera_view": "contrapicado / low-angle seven-eighths left view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Contrapicado / low-angle seven-eighths left view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "The strong geometric division within the artwork provides a clear, rational structure that resonates with the precise environment of a private foundation.",
+      "commercial_reason": "Highlighting the geometric division of the artwork in this setting reinforces its intellectual and aesthetic value for institutional and serious private collections.",
+      "mockup_prompt": "An artwork 120cm wide by 80cm high, featuring a dark maroon field with vibrant red and blue geometric forms, centrally placed on a warm plaster wall in a private foundation exhibition room. The room has a dark wooden bench and polished concrete floor. An elegant standing male figure 1.80m, in gallery-opening attire, stands to the side, looking up at the artwork. Soft architectural wall wash and museum-grade spotlights with warmth illuminate the space. The camera is contrapicado / low-angle seven-eighths left view, near close-up view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+      "negative_prompt": "sterile, institutional, stock gallery, cold minimalism, empty, overly bright, fisheye lens, distorted, blurry, casual clothing, bad anatomy"
+    },
+    {
+      "context_name": "Mallorcan Finca Interior",
+      "context_role": "luxurious private residence",
+      "space_type": "living area",
+      "atmosphere": "relaxed luxury, warm, Mediterranean",
+      "materials": [
+        "lime-washed walls",
+        "exposed wooden beams",
+        "sandstone floors",
+        "natural linen textiles",
+        "thick stone walls"
+      ],
+      "lighting": "late afternoon Mediterranean light, soft indirect light on stone and wood",
+      "placement": "on a lime-washed wall, integrated into the architecture",
+      "camera_view": "contrapicado / low-angle seven-eighths right view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Contrapicado / low-angle seven-eighths right view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "The artwork's scale format, 120cm wide by 80cm high, perfectly balances the rustic elegance of the finca, establishing a harmonious visual anchor.",
+      "commercial_reason": "Emphasizing the artwork's scale format within this authentic Mediterranean context showcases its ability to elevate and complete a high-end domestic environment.",
+      "mockup_prompt": "An artwork 120cm wide by 80cm high, featuring a dark maroon field with vibrant red and blue geometric forms, on a lime-washed wall in a Mallorcan finca interior living area. The room has exposed wooden beams, sandstone floors, and natural linen textiles. An elegant standing female figure 1.55m, in refined minimalist clothing, stands to the left, admiring the piece. Late afternoon Mediterranean light streams in, creating soft indirect light on the stone and wood. The camera is contrapicado / low-angle seven-eighths right view, near close-up view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+      "negative_prompt": "sterile, institutional, stock gallery, cold minimalism, empty, overly bright, fisheye lens, distorted, blurry, casual clothing, bad anatomy"
+    }
+  ]
+}
+```

@@ -1,0 +1,155 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Three Recess Blocks",
+      "subtitle": "An abstract painting presenting vibrant, textured blocks that interrupt a vast, darker field, creating visual tension within the horizontal plane.",
+      "description": "Three distinct rectangular block forms anchor the composition, placed across the mid-section of the wide canvas. The artwork is organized by subtle horizontal and diagonal lines that define various dark planes and fields. Inside these blocks, vibrant red and energetic turquoise pigments are layered, suggesting an inner dynamism. The atmosphere arises from the dramatic contrast between the deep, receding field and the intense, active pockets of color. This medium-large work holds a contained yet powerful material presence within its broad format."
+    },
+    {
+      "title": "Plum Field Red",
+      "subtitle": "A spatial abstract work featuring a deeply saturated plum field, punctuated by blocks of vivid red and blue pigments that emerge from its depths.",
+      "description": "A vast, deep plum field dominates the entire canvas, acting as the primary visual ground across the expansive surface. The composition organizes this color into subtle horizontal strata and defined geometric areas, creating a sense of structured depth. Pigments within the main field are dense and softly brushed, while the internal blocks showcase impasto textures of brilliant red and electric blue. This material behavior evokes an atmosphere of quiet contemplation disturbed by sudden, intense visual eruptions. The controlled material presence generates a substantial visual weight across the work’s wide expanse."
+    },
+    {
+      "title": "Horizon Line Tension",
+      "subtitle": "A structural abstract painting, where a horizontal line subtly divides the wide format, creating distinct fields punctuated by compressed color masses.",
+      "description": "A prominent, subtle horizon line traverses the upper middle section of the work, serving as a primary structural division across the canvas. The composition is structured by this horizontal element, along with other thin, incised lines that define underlying geometric planes and boundaries. The surface shows a careful layering of rich, deep purplish-red tones, contrasted by the intense, almost clashing, red and blue within the outlined forms. This visual tension creates an atmosphere of restrained energy within a vast, quiet space. The horizontal pressure across the canvas generates a quiet monumentality in this medium-large artwork."
+    }
+  ],
+  "contextual_proposals": [
+    {
+      "context_name": "Milanese Collector Apartment",
+      "context_role": "Luxurious private residence",
+      "space_type": "Living room",
+      "atmosphere": "Sophisticated, intellectual luxury, warm, desirable",
+      "materials": [
+        "dark parquet",
+        "warm plaster walls",
+        "Italian design furniture",
+        "sculptural lamps"
+      ],
+      "lighting": "Warm evening gallery lighting",
+      "placement": "Centered on a warm plaster wall",
+      "camera_view": "front view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Front view. Keep the artwork front face legible, architectural and elegant, with no fisheye or distorted architecture. Maintain the artwork as the primary subject.",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "The structural division created by the subtle horizon line anchors the artwork within the sophisticated, horizontally defined space, creating a harmonious balance with the surrounding design.",
+      "commercial_reason": "The intense color relationship of red and turquoise against the deep plum field offers a compelling focal point, appealing to a discerning collector seeking intellectual luxury and a captivating visual statement.",
+      "mockup_prompt": "A front view, near close-up view, of the provided artwork (120x80cm) preserved exactly, centered on a warm plaster wall in a Milanese collector apartment. The camera focuses on the artwork, maintaining its front face legible, architectural and elegant, with no fisheye or distorted architecture. An elegant standing male figure 1.80m stands to the left, observing the artwork, serving as a scale reference. Warm evening gallery lighting casts soft glow, highlighting dark parquet floors and refined Italian design furniture, creating a warm, sophisticated, and desirable atmosphere. The artwork must remain the primary subject.",
+      "negative_prompt": "sterile, empty, cold, harsh lighting, distorted perspective, blurry, low quality, casual clothes, smiling at camera, bad anatomy, ugly, garish, cluttered, cheap materials"
+    },
+    {
+      "context_name": "Paris Left Bank Collector Salon",
+      "context_role": "Cultured private collection",
+      "space_type": "Salon with partial library",
+      "atmosphere": "Cultured, elegant, private contemplation, warm",
+      "materials": [
+        "old parquet",
+        "velvet armchairs",
+        "dark wood bookcase",
+        "marble fireplace"
+      ],
+      "lighting": "Lamplight within a collector interior",
+      "placement": "Mounted on a warm, aged wall, partially framed by a dark wood bookcase",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Three-quarter left view. Keep the artwork front face legible, architectural and elegant, with no fisheye or distorted architecture. Maintain the artwork as the primary subject.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "The vibrant central movement within the red and turquoise blocks introduces a dynamic counterpoint to the quiet gravitas of the surrounding architectural lines, creating visual intrigue.",
+      "commercial_reason": "The unique texture of the worked surface with its subtle brushstrokes adds tactile richness, making it a valuable acquisition for a collection valuing material depth and historical elegance.",
+      "mockup_prompt": "A three-quarter left view, near close-up view, of the provided artwork (120x80cm) preserved exactly, mounted on a warm, aged wall in a Paris Left Bank collector salon, partially framed by a dark wood bookcase. The camera focuses on the artwork, maintaining its front face legible, architectural and elegant, with no fisheye or distorted architecture. An elegant standing female figure 1.55m stands slightly to the right, looking towards the artwork, providing scale reference. Soft lamplight illuminates the scene, casting warm shadows on old parquet floors and velvet armchairs, conveying a cultured, elegant, and private atmosphere. The artwork must remain the primary subject.",
+      "negative_prompt": "sterile, empty, cold, harsh lighting, distorted perspective, blurry, low quality, casual clothes, smiling at camera, bad anatomy, ugly, garish, cluttered, cheap materials"
+    },
+    {
+      "context_name": "Kyoto Contemporary Collector House",
+      "context_role": "Culturally elevated architectural setting",
+      "space_type": "Viewing room/Living area",
+      "atmosphere": "Silent, contemplative, refined, spiritual, warm",
+      "materials": [
+        "natural wood",
+        "tatami mats (implied floor)",
+        "pure lines",
+        "indirect light fixtures"
+      ],
+      "lighting": "Soft indirect light on stone and wood",
+      "placement": "Mounted on a warm, neutral wall above a low, minimalist wood console",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Three-quarter right view. Keep the artwork front face legible, architectural and elegant, with no fisheye or distorted architecture. Maintain the artwork as the primary subject.",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "The quiet contrast between the dark field and the vivid recess blocks emphasizes the artwork's contemplative dialogue between depth and intensity, aligning with the serene aesthetic.",
+      "commercial_reason": "The composition's balance of subtle horizontal lines and vibrant color points offers a sophisticated visual language, appealing to collectors who appreciate understated elegance and meditative spaces.",
+      "mockup_prompt": "A three-quarter right view, near close-up view, of the provided artwork (120x80cm) preserved exactly, mounted on a warm, neutral wall above a low, minimalist wood console in a Kyoto contemporary collector house, featuring ryokan-inspired interior. The camera focuses on the artwork, maintaining its front face legible, architectural and elegant, with no fisheye or distorted architecture. An elegant standing male figure 1.80m stands respectfully to the left, observing the artwork, providing scale. Soft indirect light illuminates natural wood and pure lines, fostering a silent, contemplative, and refined atmosphere. The artwork must remain the primary subject.",
+      "negative_prompt": "sterile, empty, cold, harsh lighting, distorted perspective, blurry, low quality, casual clothes, smiling at camera, bad anatomy, ugly, garish, cluttered, cheap materials"
+    },
+    {
+      "context_name": "Sculptor’s Private Studio",
+      "context_role": "Artist's atelier",
+      "space_type": "Working studio",
+      "atmosphere": "Creative, artistic, authentic, dramatic, warm",
+      "materials": [
+        "high textured studio walls",
+        "stone dust on floor",
+        "tools on a workbench",
+        "other canvases"
+      ],
+      "lighting": "Controlled dramatic side light",
+      "placement": "Leaning naturally against a high, textured studio wall, among other canvases",
+      "camera_view": "seven-eighths left view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Seven-eighths left view. Keep the artwork front face legible, architectural and elegant, with no fisheye or distorted architecture. Maintain the artwork as the primary subject.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "The irregular geometric division of the composition creates a raw, experimental tension, highlighting the structural integrity visible even in a working artistic environment.",
+      "commercial_reason": "The raw, expressive color fields of red and turquoise within the defined blocks showcase a mastery of pigment, appealing to collectors seeking pieces with tangible artistic process and authentic creative energy.",
+      "mockup_prompt": "A seven-eighths left view, near close-up view, of the provided artwork (120x80cm) preserved exactly, leaning naturally against a high, textured studio wall, among other canvases, in a sculptor’s private studio. The camera focuses on the artwork, maintaining its front face legible, architectural and elegant, with no fisheye or distorted architecture. An elegant standing female figure 1.55m stands in the mid-ground, contemplating the artwork, acting as a scale reference. Controlled dramatic side light illuminates the space, revealing subtle stone dust on the floor and tools on a workbench in the background, creating an atmospheric, creative, and refined artistic atmosphere. The artwork must remain the primary subject.",
+      "negative_prompt": "sterile, empty, cold, harsh lighting, distorted perspective, blurry, low quality, casual clothes, smiling at camera, bad anatomy, ugly, garish, cluttered, cheap materials"
+    },
+    {
+      "context_name": "Venetian Palazzo Interior",
+      "context_role": "Historic private residence",
+      "space_type": "Corridor/Hallway",
+      "atmosphere": "Elegant, historical, warm, contemplative, refined",
+      "materials": [
+        "aged plaster walls",
+        "pale stuccos",
+        "Venetian terrazzo floor",
+        "tall windows"
+      ],
+      "lighting": "Late afternoon Mediterranean light",
+      "placement": "Mounted on an aged plaster wall in a corridor",
+      "camera_view": "low-angle seven-eighths left view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Low-angle seven-eighths left view. Camera placed below the artwork centerline, looking slightly upward. The lower edge of the artwork appears closer to the viewer than the upper edge. Keep the artwork front face legible, architectural and elegant, with no fisheye or distorted architecture.",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "The composition's layered strata of deep colors create a sense of historical depth and visual resonance, perfectly aligning with the elegant decay and rich past of the palazzo setting.",
+      "commercial_reason": "The subtle texture and material behavior of the pigment provide an intimate visual experience, offering a prestigious and unique addition to a private collection within a historic European residence.",
+      "mockup_prompt": "A low-angle seven-eighths left view, near close-up view, of the provided artwork (120x80cm) preserved exactly, mounted on an aged plaster wall in a corridor of a Venetian palazzo interior. Camera placed below the artwork centerline, looking slightly upward. The lower edge of the artwork appears closer to the viewer than the upper edge. Keep the artwork front face legible, architectural and elegant, with no fisheye or distorted architecture. An elegant standing male figure 1.80m is positioned in the mid-ground, observing the artwork, providing scale. Late afternoon Mediterranean light filters softly through tall windows, illuminating aged plaster walls and Venetian terrazzo floors, creating an elegant, historical, and warm atmosphere. The artwork must remain the primary subject.",
+      "negative_prompt": "sterile, empty, cold, harsh lighting, distorted perspective, blurry, low quality, casual clothes, smiling at camera, bad anatomy, ugly, garish, cluttered, cheap materials"
+    },
+    {
+      "context_name": "Manhattan Penthouse Living Room",
+      "context_role": "Luxury private residence",
+      "space_type": "Living room",
+      "atmosphere": "Contemplative, sophisticated, luxurious, nocturnal, warm",
+      "materials": [
+        "floor-to-ceiling glass",
+        "natural stone walls",
+        "subtle reflections",
+        "low profile furniture"
+      ],
+      "lighting": "Low interior lighting against cool exterior dusk (blue-hour window light)",
+      "placement": "Mounted on a sophisticated natural stone wall, facing city lights",
+      "camera_view": "low-angle seven-eighths right view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Low-angle seven-eighths right view. Camera placed below the artwork centerline, looking slightly upward. The lower edge of the artwork appears closer to the viewer than the upper edge. Keep the artwork front face legible, architectural and elegant, with no fisheye or distorted architecture.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "The bold red and turquoise field against the deep plum ground presents a compelling abstract landscape, echoing the dramatic urban vista beyond and creating a dialogue between art and environment.",
+      "commercial_reason": "The dynamic visual weight of the central blocks, combined with the refined abstract language, makes this a statement piece for a luxury living space, offering a unique sophisticated presence for a high-end collector.",
+      "mockup_prompt": "A low-angle seven-eighths right view, near close-up view, of the provided artwork (120x80cm) preserved exactly, mounted on a sophisticated natural stone wall in a Manhattan penthouse living room. Camera placed below the artwork centerline, looking slightly upward. The lower edge of the artwork appears closer to the viewer than the upper edge. Keep the artwork front face legible, architectural and elegant, with no fisheye or distorted architecture. An elegant standing female figure 1.55m stands in the mid-ground, appreciating the artwork, acting as a scale reference. Low interior lighting combined with the soft glow of the nocturnal cityscape visible through floor-to-ceiling glass, creating a contemplative, sophisticated, and luxurious atmosphere. The artwork must remain the primary subject.",
+      "negative_prompt": "sterile, empty, cold, harsh lighting, distorted perspective, blurry, low quality, casual clothes, smiling at camera, bad anatomy, ugly, garish, cluttered, cheap materials"
+    }
+  ]
+}
+```

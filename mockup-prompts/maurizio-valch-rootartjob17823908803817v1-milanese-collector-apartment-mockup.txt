@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Milanese Collector Apartment
+- Purpose: A sophisticated residential interior, blending modern design with a refined art collection.
+- Scene Description: A Milanese collector apartment with Intellectual luxury, quiet, art-integrated, refined atmosphere. Materials: warm plastered walls, dark polished wood floor, Italian design console, low leather armchair
+- Lighting: soft architectural wall wash, controlled dramatic side light
+- Placement: Mounted on a warm-toned wall above a sleek Italian design console, becoming a focal point in the room.
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: three-quarter left view
+- Distance: near close-up view
+- Notes: Keep the artwork front face legible, avoid extreme distortion, avoid fisheye, maintain the artwork as the primary subject.
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, generic, cold minimalism, white walls, casual clothing, sportwear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial dominance, sensual poses, theatrical gestures, wide shot, medium distance, medium close, medium wide, full room context, showing full room context, room view, wide view
+
+AI PROPOSED MOCKUP DIRECTION:
+three-quarter left view, near close-up view, elegant standing male figure 1.80m in refined minimalist clothing viewing the same provided artwork preserved exactly without any change, mounted on a warm plastered wall above a sleek Italian design console. Soft architectural wall wash and controlled dramatic side light. Dark polished wood floor and a low leather armchair. Intellectual luxury, quiet, art-integrated atmosphere. Keep the artwork front face legible, avoid extreme distortion, avoid fisheye, maintain the artwork as the primary subject. Artwork scale is 120 cm wide x 80 cm high. The artwork must remain the primary subject.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

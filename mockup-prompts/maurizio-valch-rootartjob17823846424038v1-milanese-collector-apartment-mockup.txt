@@ -1,0 +1,21 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Milanese collector apartment
+- Purpose: private residence
+- Scene Description: A living room with intellectual, contained luxury, evening contemplation atmosphere. Materials: dark parquet, walnut panels, warm plaster walls, brushed bronze elements
+- Lighting: warm evening gallery lighting
+- Placement: mounted on a warm plaster wall, centered above a low, elegant console table.
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: front view
+- Distance: medium shot
+- Notes: straight on, revealing the artwork's full width and color
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, empty, cold, harsh light, stock photo, casual clothing, bad anatomy, distorted, blurry, oversaturated
+
+AI PROPOSED MOCKUP DIRECTION:
+A 120cm x 80cm horizontal abstract painting, featuring a dark purple field with three vibrant red and turquoise geometric blocks and a thin white horizontal line, is mounted on a warm plaster wall in a Milanese collector's living room. The room has dark parquet flooring, walnut panel accents, and brushed bronze elements. The lighting is warm evening gallery lighting. An elegant standing male figure 1.80m, wearing a tailored suit, stands observing the artwork from a front view. The camera is at a medium shot, straight on.

@@ -11,6 +11,7 @@ require_once __DIR__ . '/Support/RootArtworkCropper.php';
 require_once __DIR__ . '/Support/ProviderSettings.php';
 require_once __DIR__ . '/Support/Logger.php';
 require_once __DIR__ . '/Support/ImageResizer.php';
+require_once __DIR__ . '/Support/JsonStringNormalizer.php';
 require_once __DIR__ . '/Contracts/ArtworkProcessorInterface.php';
 require_once __DIR__ . '/Contracts/ArtworkAnalyzerInterface.php';
 require_once __DIR__ . '/Contracts/ContextSelectorInterface.php';

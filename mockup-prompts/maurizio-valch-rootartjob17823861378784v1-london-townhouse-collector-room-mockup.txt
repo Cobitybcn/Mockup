@@ -1,0 +1,21 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: London Townhouse Collector Room
+- Purpose: A private urban sanctuary for a serious collector, emphasizing understated luxury and thoughtful display.
+- Scene Description: A Private residence study/viewing area with Refined, intimate, quiet prestige, urban luxury, evening atmosphere. Materials: Dark oak parquet flooring, discreet white moldings, warm deep gray walls, simple bespoke wooden console, tailored fabric seating
+- Lighting: Warm evening interior lighting, with a focused, directional spotlight on the artwork, creating an intimate glow.
+- Placement: Hung on a warm deep gray wall above a minimalist wooden console.
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: low-angle seven-eighths left view
+- Distance: near close-up view
+- Notes: Low-angle seven-eighths left view. Camera placed below the artwork centerline, looking slightly upward. The lower edge of the artwork appears closer to the viewer than the upper edge. Keep the artwork front face legible, architectural and elegant, with no fisheye or distorted architecture. Maintain the artwork as the primary subject.
+
+NEGATIVE DIRECTIVES:
+- ugly, deformed, bad lighting, poor composition, low quality, fisheye effect, distorted architecture, blurry, grainy, watermark, text, out of frame, extra limbs, bad anatomy, disfigured, poorly drawn face, poorly drawn feet, extra fingers, too many fingers, missing limbs, tiling, blur, out of focus, duplicate, error, worst quality, low quality, jpeg artifacts, signature, artist name, username, cropped, lowres, overexposed, underexposed, fake, dull, plain, sterile, empty room, white gallery wall, stock photo, casual clothing, messy.
+
+AI PROPOSED MOCKUP DIRECTION:
+low-angle seven-eighths left view, near close-up view, the same provided artwork preserved exactly without any change, hung on a warm deep gray wall above a minimalist wooden console in a London townhouse collector room. An elegant standing female figure 1.55m, dressed in an elegant evening dress, stands gracefully to the side, admiring the artwork with quiet reverence, serving as a scale reference. Camera placed below the artwork centerline, looking slightly upward. The lower edge of the artwork appears closer to the viewer than the upper edge. Warm evening interior lighting, with a focused, directional spotlight on the artwork, creates an intimate glow. Dark oak parquet flooring, discreet white moldings, warm deep gray walls, and tailored fabric seating define the space. Keep the artwork front face legible, architectural and elegant, with no fisheye or distorted architecture. Maintain the artwork as the primary subject. The artwork's physical scale is 120 cm width x 80 cm height.

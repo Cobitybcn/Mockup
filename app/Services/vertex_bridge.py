@@ -18,6 +18,12 @@ from PIL import Image
 
 MOCKUP_USE_PRECOMPOSITION = os.environ.get("MOCKUP_USE_PRECOMPOSITION", "false").lower() == "true"
 MOCKUP_USE_BACKGROUND_EDIT = os.environ.get("MOCKUP_USE_BACKGROUND_EDIT", "false").lower() == "true"
+MOCKUP_PROMPT_FIRST_MODE = os.environ.get("MOCKUP_PROMPT_FIRST_MODE", "false").lower() == "true"
+MOCKUP_PROMPT_FIRST_NO_MASK_MODE = os.environ.get("MOCKUP_PROMPT_FIRST_NO_MASK_MODE", "false").lower() == "true"
+if MOCKUP_PROMPT_FIRST_MODE:
+    MOCKUP_USE_PRECOMPOSITION = False
+    if MOCKUP_PROMPT_FIRST_NO_MASK_MODE:
+        MOCKUP_USE_BACKGROUND_EDIT = False
 
 def get_client():
     import httpx
@@ -112,6 +118,54 @@ def prompt_float_control(prompt, key, default):
         return float(match.group(1))
     except Exception:
         return default
+
+def normalize_camera_text(prompt_text: str) -> str:
+    if not prompt_text:
+        return ""
+    return prompt_text.lower().strip()
+
+def detect_perspective_side(prompt_text: str) -> str | None:
+    normalized = normalize_camera_text(prompt_text)
+    
+    left_patterns = [
+        "three_quarter_left",
+        "three-quarter-left",
+        "three-quarter left",
+        "three quarter left",
+        "left three-quarter",
+        "left three quarter",
+        "left oblique",
+        "3/4 left",
+        "seven-eighths left",
+        "seven eighths left",
+        "7/8 left",
+        "low-angle seven-eighths left",
+        "low angle seven eighths left",
+        "subtle low-angle seven-eighths left view"
+    ]
+    
+    right_patterns = [
+        "three_quarter_right",
+        "three-quarter-right",
+        "three-quarter right",
+        "three quarter right",
+        "right three-quarter",
+        "right three quarter",
+        "right oblique",
+        "3/4 right",
+        "seven-eighths right",
+        "seven eighths right",
+        "7/8 right",
+        "low-angle seven-eighths right",
+        "low angle seven eighths right",
+        "subtle low-angle seven-eighths right view"
+    ]
+    
+    if any(pattern in normalized for pattern in left_patterns):
+        return "left"
+    if any(pattern in normalized for pattern in right_patterns):
+        return "right"
+    return None
 
 def handle_generate_text(args):
     client = get_client()
@@ -212,12 +266,7 @@ def handle_generate_image(args):
         
         if is_mockup and MOCKUP_USE_PRECOMPOSITION:
             # Check camera perspective direction
-            prompt_lower = args.prompt.lower()
-            warp_dir = None
-            if "three_quarter_left" in prompt_lower or "three-quarter-left" in prompt_lower or "3/4 left" in prompt_lower:
-                warp_dir = "left"
-            elif "three_quarter_right" in prompt_lower or "three-quarter-right" in prompt_lower or "3/4 right" in prompt_lower:
-                warp_dir = "right"
+            warp_dir = detect_perspective_side(args.prompt)
                 
             if warp_dir:
                 # Apply 3/4 perspective skew
@@ -510,7 +559,7 @@ def handle_generate_image(args):
             
         return
         
-    elif args.image and not (is_mockup and not MOCKUP_USE_PRECOMPOSITION and not MOCKUP_USE_BACKGROUND_EDIT):
+    elif args.image and (MOCKUP_PROMPT_FIRST_NO_MASK_MODE or not (is_mockup and not MOCKUP_USE_PRECOMPOSITION and not MOCKUP_USE_BACKGROUND_EDIT)):
         # Image-to-image or background replacement using edit_image (Imagen models)
         import io
         img_byte_arr = io.BytesIO()
@@ -526,38 +575,61 @@ def handle_generate_image(args):
             )
         )
         
-        if is_mockup and mask_bytes is not None:
-            mask_ref = types.MaskReferenceImage(
-                reference_id=2,
+        reference_images_list = []
+        if is_mockup and MOCKUP_PROMPT_FIRST_NO_MASK_MODE:
+            subject_ref = types.SubjectReferenceImage(
+                reference_id=1,
                 reference_image=types.Image(
-                    image_bytes=mask_bytes,
-                    mime_type="image/png"
+                    image_bytes=image_bytes,
+                    mime_type=mime_type
                 ),
-                config=types.MaskReferenceConfig(
-                    mask_mode="MASK_MODE_USER_PROVIDED",
-                    mask_dilation=0.015
+                config=types.SubjectReferenceConfig(
+                    subject_type="SUBJECT_TYPE_PRODUCT"
                 )
             )
-            edit_mode = "EDIT_MODE_INPAINT_INSERTION"
-        elif is_mockup and MOCKUP_USE_BACKGROUND_EDIT:
-            mask_ref = types.MaskReferenceImage(
-                reference_id=2,
-                config=types.MaskReferenceConfig(
-                    mask_mode="MASK_MODE_BACKGROUND"
-                )
-            )
+            reference_images_list = [subject_ref]
             edit_mode = None
-        elif not is_mockup:
-            mask_ref = types.MaskReferenceImage(
-                reference_id=2,
-                config=types.MaskReferenceConfig(
-                    mask_mode="MASK_MODE_BACKGROUND"
+            
+            # Text-based preservation directives
+            if "ARTWORK PRESERVATION DIRECTIVES" not in args.prompt:
+                args.prompt += (
+                    "\n\nARTWORK PRESERVATION DIRECTIVES:\n"
+                    "- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view."
                 )
-            )
-            edit_mode = None
         else:
-            mask_ref = None
-            edit_mode = None
+            reference_images_list = [raw_ref]
+            if is_mockup and mask_bytes is not None:
+                mask_ref = types.MaskReferenceImage(
+                    reference_id=2,
+                    reference_image=types.Image(
+                        image_bytes=mask_bytes,
+                        mime_type="image/png"
+                    ),
+                    config=types.MaskReferenceConfig(
+                        mask_mode="MASK_MODE_USER_PROVIDED",
+                        mask_dilation=0.015
+                    )
+                )
+                reference_images_list.append(mask_ref)
+                edit_mode = "EDIT_MODE_INPAINT_INSERTION"
+            elif is_mockup and MOCKUP_USE_BACKGROUND_EDIT:
+                mask_ref = types.MaskReferenceImage(
+                    reference_id=2,
+                    config=types.MaskReferenceConfig(
+                        mask_mode="MASK_MODE_BACKGROUND"
+                    )
+                )
+                reference_images_list.append(mask_ref)
+                edit_mode = None
+            elif not is_mockup:
+                mask_ref = types.MaskReferenceImage(
+                    reference_id=2,
+                    config=types.MaskReferenceConfig(
+                        mask_mode="MASK_MODE_BACKGROUND"
+                    )
+                )
+                reference_images_list.append(mask_ref)
+                edit_mode = None
             
         # Use capability model by default for editing
         model = args.model if args.model else "imagen-3.0-capability-001"
@@ -573,7 +645,7 @@ def handle_generate_image(args):
             lambda: client.models.edit_image(
                 model=model,
                 prompt=args.prompt,
-                reference_images=[raw_ref, mask_ref],
+                reference_images=reference_images_list,
                 config=types.EditImageConfig(**config_args)
             )
         )
@@ -608,6 +680,52 @@ def handle_generate_image(args):
         f.write(image_bytes)
         
     print(f"SUCCESS: Image saved to {args.output}")
+
+    # Write execution log
+    try:
+        log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'logs')
+        os.makedirs(log_dir, exist_ok=True)
+        import datetime
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Read dimensions
+        input_size_str = "N/A"
+        if pil_img:
+            input_size_str = f"{pil_img.width}x{pil_img.height}"
+            
+        output_size_str = "1024x1024" # Default for Imagen
+        
+        with open(os.path.join(log_dir, 'vertex_bridge.log'), 'a', encoding='utf-8') as f:
+            f.write(f"[{timestamp}] JOB: {os.path.basename(args.output) if args.output else 'unknown'}\n")
+            if is_mockup and MOCKUP_PROMPT_FIRST_MODE and MOCKUP_PROMPT_FIRST_NO_MASK_MODE:
+                f.write(f"  MOCKUP_PROMPT_FIRST_MODE=true\n")
+                f.write(f"  MOCKUP_PROMPT_FIRST_NO_MASK_MODE=true\n")
+                f.write(f"  use_precomposition=false\n")
+                f.write(f"  use_background_edit=false\n")
+                f.write(f"  mask_mode=none\n")
+                f.write(f"  external_mask_used=false\n")
+                f.write(f"  grey_canvas_used=false\n")
+                f.write(f"  inpainting_used=false\n")
+                f.write(f"  generation_mode=pure_reference\n")
+                f.write(f"  model_used={model}\n")
+                f.write(f"  input_image_size={input_size_str}\n")
+                f.write(f"  output_image_size={output_size_str}\n")
+            else:
+                f.write(f"  MOCKUP_PROMPT_FIRST_MODE={'true' if MOCKUP_PROMPT_FIRST_MODE else 'false'}\n")
+                f.write(f"  MOCKUP_PROMPT_FIRST_NO_MASK_MODE={'true' if MOCKUP_PROMPT_FIRST_NO_MASK_MODE else 'false'}\n")
+                f.write(f"  use_precomposition={'true' if MOCKUP_USE_PRECOMPOSITION else 'false'}\n")
+                f.write(f"  use_background_edit={'true' if MOCKUP_USE_BACKGROUND_EDIT else 'false'}\n")
+                f.write(f"  mask_mode={'user_provided' if (mask_bytes is not None) else ('background' if MOCKUP_USE_BACKGROUND_EDIT else 'none')}\n")
+                f.write(f"  external_mask_used={'true' if (mask_bytes is not None) else 'false'}\n")
+                f.write(f"  grey_canvas_used={'true' if MOCKUP_USE_PRECOMPOSITION else 'false'}\n")
+                f.write(f"  inpainting_used={'true' if (mask_bytes is not None) else 'false'}\n")
+                f.write(f"  generation_mode={'background_edit' if MOCKUP_USE_BACKGROUND_EDIT else 'text_to_image'}\n")
+                f.write(f"  model_used={model}\n")
+                f.write(f"  input_image_size={input_size_str}\n")
+                f.write(f"  output_image_size={output_size_str}\n")
+    except Exception as le:
+        print(f"[WARN] Failed to write execution log: {le}", file=sys.stderr)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Vertex AI CLI Bridge")

@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Mallorcan Finca Interior
+- Purpose: luxurious private residence
+- Scene Description: A living area with relaxed luxury, warm, Mediterranean atmosphere. Materials: lime-washed walls, exposed wooden beams, sandstone floors, natural linen textiles, thick stone walls
+- Lighting: late afternoon Mediterranean light, soft indirect light on stone and wood
+- Placement: on a lime-washed wall, integrated into the architecture
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: contrapicado / low-angle seven-eighths right view
+- Distance: near close-up view
+- Notes: Contrapicado / low-angle seven-eighths right view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, stock gallery, cold minimalism, empty, overly bright, fisheye lens, distorted, blurry, casual clothing, bad anatomy
+
+AI PROPOSED MOCKUP DIRECTION:
+An artwork 120cm wide by 80cm high, featuring a dark maroon field with vibrant red and blue geometric forms, on a lime-washed wall in a Mallorcan finca interior living area. The room has exposed wooden beams, sandstone floors, and natural linen textiles. An elegant standing female figure 1.55m, in refined minimalist clothing, stands to the left, admiring the piece. Late afternoon Mediterranean light streams in, creating soft indirect light on the stone and wood. The camera is contrapicado / low-angle seven-eighths right view, near close-up view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

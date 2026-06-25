@@ -1,0 +1,158 @@
+{
+    "suggested_titles": [
+        {
+            "title": "Floating Color Blocks",
+            "subtitle": "This abstract painting presents vibrant, textured forms emerging dynamically within a vast, muted field, inviting contemplation of their presence.",
+            "description": "Distinct rectangular forms anchor the upper and middle sections of this expansive composition. The artwork organizes a dark, subtly divided ground against which these intensely colored shapes rise. Vivid red and electric blue pigments are applied with palpable impasto, creating a rough, agitated surface contrast. This material tension generates an atmosphere of emergent energy within a deep, resonant calm. The significant horizontal format holds the visual weight of these forms across a wide and deliberate expanse."
+        },
+        {
+            "title": "Deep Field Incisions",
+            "subtitle": "An abstract expression of layered color, this painting features deeply worked surfaces of bright pigment against a vast, thinly veiled ground.",
+            "description": "The dominant feature is the dark, sweeping field, which holds various segmented planes. The composition is built on horizontal strata, subtly delineated by fine lines. Thick impasto of red and turquoise rests atop this deep ground, creating a stark material difference and vibrant visual texture. An atmosphere of quiet drama unfolds as these charged surfaces appear to break through the dark, soft background. The work achieves a profound material presence through its contrasting pigment densities and expansive horizontal scale."
+        },
+        {
+            "title": "Segmented Horizon Lines",
+            "subtitle": "This abstract work explores spatial tension through geometric divisions and luminous color intervals across a broad, horizontally stretching plane.",
+            "description": "A broad, dark horizontal plane extends across the canvas, subtly segmented by delicate linear divisions. The composition thoughtfully balances larger, deep fields with smaller, brightly textured forms that defy their grounding. The deep, rich background is offset by the vibrant, almost raw application of reds and blues that pulse with internal light. A quiet, contemplative atmosphere is created, suggesting distant landscapes or abstract cartographies. This work's medium-large scale emphasizes its layered structure and compelling spatial dialogue."
+        }
+    ],
+    "contextual_proposals": [
+        {
+            "context_name": "Milanese Collector's Evening",
+            "context_role": "collector viewing art after dinner",
+            "space_type": "Milanese collector apartment",
+            "atmosphere": "refined luxury, intimate, warm",
+            "materials": [
+                "dark parquet",
+                "Italian design furniture",
+                "warm plaster walls",
+                "sculptural lamps"
+            ],
+            "lighting": "lamplight within a collector interior, warm evening light",
+            "placement": "centered on a wall above a low console",
+            "camera_view": "front view",
+            "camera_distance": "medium",
+            "camera_angle_notes": "straight on, showing artwork and upper body of figure",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The actual color relationship between the deep background and vibrant foreground elements finds harmony in the sophisticated Milanese palette.",
+            "commercial_reason": "The structural tension of the floating forms is underscored by the architectural lines and refined furniture of the apartment, appealing to discerning collectors.",
+            "mockup_prompt": "An abstract painting, 120x80cm, featuring dark fields with vibrant red and blue textured blocks, centered on a warm plaster wall above a low Italian design console in a Milanese collector apartment. An elegant standing female figure, 1.55m tall, is thoughtfully observing the artwork from a medium front view. The room has dark parquet flooring and sculptural lamps, illuminated by warm evening lamplight, exuding an intimate, refined luxury.",
+            "negative_prompt": "sterile, institutional, generic stock, empty, cold minimalism, blank white walls, emotionally distant, touching artwork, covering artwork, obscuring artwork, blocking artwork, competing with artwork, main subject human, casual clothes, sportswear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion dominance, sensual poses, theatrical gestures, cheap furniture, decorative clutter, generic stock decor"
+        },
+        {
+            "context_name": "Artist's Minimalist Studio",
+            "context_role": "artist contemplating her work",
+            "space_type": "minimalist contemporary studio",
+            "atmosphere": "calm, contemplative, creative",
+            "materials": [
+                "polished concrete floor",
+                "white walls",
+                "large industrial windows",
+                "simple wooden easel"
+            ],
+            "lighting": "controlled dramatic side light, soft north light",
+            "placement": "on a simple wooden easel",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "intimate",
+            "camera_angle_notes": "slightly from the left, showing the artwork on the easel and part of the figure",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The central movement implied by the placement of the intense color forms against the dark field is emphasized within the uncluttered studio space.",
+            "commercial_reason": "The rich texture of the impastoed red and blue elements becomes a focal point for an artist seeking to appreciate the materiality of the work in a contemplative setting.",
+            "mockup_prompt": "An abstract painting, 120x80cm, with dark fields and vibrant red and blue textured blocks, positioned on a simple wooden easel in a minimalist contemporary studio. An elegant standing female figure, 1.55m tall, is observing the artwork from an intimate three-quarter left view. The studio features polished concrete floors, white walls, and large industrial windows providing soft north light with controlled dramatic side light, creating a calm, creative atmosphere.",
+            "negative_prompt": "sterile, institutional, generic stock, empty, cold minimalism, blank white walls, emotionally distant, touching artwork, covering artwork, obscuring artwork, blocking artwork, competing with artwork, main subject human, casual clothes, sportswear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion dominance, sensual poses, theatrical gestures, cheap furniture, decorative clutter, generic stock decor"
+        },
+        {
+            "context_name": "Venetian Palazzo Viewing",
+            "context_role": "early arrival to a private viewing",
+            "space_type": "private viewing room in a Venetian palazzo",
+            "atmosphere": "historic elegance, quietly grand, cultural",
+            "materials": [
+                "aged plaster walls",
+                "pale stucco",
+                "Venetian terrazzo floor",
+                "tall windows"
+            ],
+            "lighting": "museum-grade spotlights with warmth, soft architectural wall wash",
+            "placement": "prominently displayed on a central wall",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "medium wide",
+            "camera_angle_notes": "from the right, capturing the artwork's presence within the grand room",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The dominant color field of deep purples and reds gains depth and historical resonance against the faded elegance of the palazzo's walls.",
+            "commercial_reason": "The expansive scale format of the artwork commands attention within the high-ceilinged room, signifying its importance to a sophisticated male collector.",
+            "mockup_prompt": "An abstract painting, 120x80cm, showcasing dark fields with vibrant red and blue textured blocks, prominently displayed on a central wall in a private viewing room within a Venetian palazzo. An elegant standing male figure, 1.80m tall, is observing the artwork from a medium wide three-quarter right view. The room features aged plaster walls, pale stucco, Venetian terrazzo floor, and tall windows, illuminated by warm museum-grade spotlights and soft architectural wall wash, creating a quietly grand and culturally rich atmosphere.",
+            "negative_prompt": "sterile, institutional, generic stock, empty, cold minimalism, blank white walls, emotionally distant, touching artwork, covering artwork, obscuring artwork, blocking artwork, competing with artwork, main subject human, casual clothes, sportswear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion dominance, sensual poses, theatrical gestures, cheap furniture, decorative clutter, generic stock decor"
+        },
+        {
+            "context_name": "London Townhouse Corridor",
+            "context_role": "visitor slowing down in a hallway",
+            "space_type": "London townhouse collector room",
+            "atmosphere": "urban sophistication, quiet luxury",
+            "materials": [
+                "discreet white moldings",
+                "dark parquet flooring",
+                "warm plaster walls",
+                "sober contemporary furniture"
+            ],
+            "lighting": "warm evening gallery lighting",
+            "placement": "hanging on a long corridor wall",
+            "camera_view": "seven-eighths left view",
+            "camera_distance": "medium close",
+            "camera_angle_notes": "from the far left, emphasizing depth and perspective",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The geometric division of the abstract field is accentuated by the linear perspective of the townhouse corridor, drawing the viewer's eye into the composition.",
+            "commercial_reason": "The distinct surface marks on the vibrant red and blue blocks offer a moment of tactile engagement, appealing to a collector appreciating material depth in a private urban setting.",
+            "mockup_prompt": "An abstract painting, 120x80cm, with dark fields and vibrant red and blue textured blocks, hanging on a long corridor wall in a London townhouse collector room. An elegant standing female figure, 1.55m tall, is slowing down to observe the artwork from a medium close seven-eighths left view. The corridor features discreet white moldings, dark parquet flooring, warm plaster walls, and sober contemporary furniture, illuminated by warm evening gallery lighting, exuding urban sophistication and quiet luxury.",
+            "negative_prompt": "sterile, institutional, generic stock, empty, cold minimalism, blank white walls, emotionally distant, touching artwork, covering artwork, obscuring artwork, blocking artwork, competing with artwork, main subject human, casual clothes, sportswear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion dominance, sensual poses, theatrical gestures, cheap furniture, decorative clutter, generic stock decor"
+        },
+        {
+            "context_name": "Roman Historic Staircase",
+            "context_role": "pausing at a staircase landing at sunset",
+            "space_type": "staircase hall in a Roman historic apartment",
+            "atmosphere": "timeless, golden hour, reflective",
+            "materials": [
+                "high ceilings",
+                "sober moldings",
+                "travertine marble",
+                "interior wooden shutters",
+                "stone staircase"
+            ],
+            "lighting": "late afternoon Mediterranean light, golden light filtering through shutters",
+            "placement": "centrally positioned on a large landing wall",
+            "camera_view": "subtle seven-eighths left view",
+            "camera_distance": "wide",
+            "camera_angle_notes": "a subtle angle from the left, capturing the artwork within the vast architectural space of the staircase hall",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The subtle axis created by the central forms within the artwork finds resonance with the verticality and structural lines of the historic stone staircase.",
+            "commercial_reason": "The red-yellow-blue relationship in the artwork's vibrant elements is intensified by the warm, golden light of late afternoon, enhancing its appeal as a central acquisition.",
+            "mockup_prompt": "An abstract painting, 120x80cm, with dark fields and vibrant red and blue textured blocks, centrally positioned on a large landing wall in a Roman historic apartment's staircase hall. An elegant standing male figure, 1.80m tall, is pausing to observe the artwork from a wide subtle seven-eighths left view. The hall boasts high ceilings, sober moldings, travertine marble, interior wooden shutters, and a grand stone staircase, bathed in late afternoon Mediterranean golden light filtering through the shutters, creating a timeless and reflective atmosphere.",
+            "negative_prompt": "sterile, institutional, generic stock, empty, cold minimalism, blank white walls, emotionally distant, touching artwork, covering artwork, obscuring artwork, blocking artwork, competing with artwork, main subject human, casual clothes, sportswear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion dominance, sensual poses, theatrical gestures, cheap furniture, decorative clutter, generic stock decor"
+        },
+        {
+            "context_name": "Industrial Loft Atelier",
+            "context_role": "visitor observing artwork in an artist's studio",
+            "space_type": "industrial loft studio",
+            "atmosphere": "raw, creative, urban, blue hour",
+            "materials": [
+                "exposed brick wall",
+                "iron columns",
+                "large industrial windows",
+                "worn wooden floor",
+                "low industrial furniture"
+            ],
+            "lighting": "blue-hour window light, cool exterior dusk with warm interior light",
+            "placement": "resting naturally against an exposed brick wall",
+            "camera_view": "subtle seven-eighths right view",
+            "camera_distance": "medium",
+            "camera_angle_notes": "a subtle angle from the right, capturing the artwork's presence within the studio",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The stacked fields within the artwork's composition provide a counterpoint to the raw, open structure of the industrial loft, highlighting artistic intentionality.",
+            "commercial_reason": "The implied horizon lines in the abstract painting offer a sense of expansive possibility, making it attractive for collectors seeking works that transcend their immediate surroundings in a creative, urban environment.",
+            "mockup_prompt": "An abstract painting, 120x80cm, with dark fields and vibrant red and blue textured blocks, resting naturally against an exposed brick wall in an industrial loft studio. An elegant standing female figure, 1.55m tall, is observing the artwork from a medium subtle seven-eighths right view. The studio features iron columns, large industrial windows, and a worn wooden floor, illuminated by blue-hour window light with cool exterior dusk and warm interior light, creating a raw, creative, urban atmosphere.",
+            "negative_prompt": "sterile, institutional, generic stock, empty, cold minimalism, blank white walls, emotionally distant, touching artwork, covering artwork, obscuring artwork, blocking artwork, competing with artwork, main subject human, casual clothes, sportswear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion dominance, sensual poses, theatrical gestures, cheap furniture, decorative clutter, generic stock decor"
+        }
+    ],
+    "recommended_number_of_contexts": 6,
+    "prompt_version": "v1.0 (Auto)",
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1782381400_6574_v3.png"
+}

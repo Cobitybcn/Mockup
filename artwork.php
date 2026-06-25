@@ -1100,6 +1100,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                     <p><?= h($selectedSubtitle) ?></p>
                 </div>
                 <div class="topbar-actions">
+                    <a class="button-link secondary" href="core_review.php?id=<?= (int)$id ?>">View Artwork Core</a>
                     <?php if ($rootFile): ?>
                         <a class="button-link" href="report.php?image=<?= rawurlencode($rootFile) ?>">Curatorial Direction</a>
                         <a class="button-link secondary" href="analyze_wait.php?image=<?= rawurlencode($rootFile) ?>">Recalculate Analysis</a>
