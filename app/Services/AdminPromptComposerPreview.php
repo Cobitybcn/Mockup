@@ -62,14 +62,16 @@ class AdminPromptComposerPreview
             }
         }
 
-        // 1.2 Fallback to Artwork Details in database if dimensions not found in CORE JSON
-        if ($artworkId > 0 && ($width === null || $height === null || $depth === null)) {
+        // 1.2 Load root_file from database and fallback to Artwork Details dimensions if not found in CORE JSON
+        $rootFile = '';
+        if ($artworkId > 0) {
             try {
                 $pdo = Database::connection();
-                $stmt = $pdo->prepare("SELECT width, height, depth FROM artworks WHERE id = :id LIMIT 1");
+                $stmt = $pdo->prepare("SELECT root_file, width, height, depth FROM artworks WHERE id = :id LIMIT 1");
                 $stmt->execute(['id' => $artworkId]);
                 $dbArtwork = $stmt->fetch();
                 if ($dbArtwork) {
+                    $rootFile = basename((string)($dbArtwork['root_file'] ?? ''));
                     if ($width === null && isset($dbArtwork['width']) && (float)$dbArtwork['width'] > 0) {
                         $width = (float)$dbArtwork['width'];
                         $fallbackUsed = true;
