@@ -147,8 +147,10 @@ class MockupContextEngine
                 $prop['camera_distance_expected'] = $spec['camera_distance_expected'];
                 $prop['camera_angle_notes_expected'] = $spec['camera_angle_notes_expected'];
                 
-                // Overwrite camera_view for compatibility with legacy components
+                // Overwrite camera fields for compatibility with legacy components and coherence
                 $prop['camera_view'] = $spec['camera_view_expected'];
+                $prop['camera_distance'] = $spec['camera_distance_expected'];
+                $prop['camera_angle_notes'] = $spec['camera_angle_notes_expected'];
             }
 
             $cameraView = trim((string)($prop['camera_view'] ?? $prop['camera_angle'] ?? 'near-frontal subtle 3/4 commercial view'));
@@ -156,6 +158,33 @@ class MockupContextEngine
             $cameraNotes = trim((string)($prop['camera_angle_notes'] ?? ''));
             $mockupPrompt = trim((string)($prop['mockup_prompt'] ?? ''));
             $negativePrompt = trim((string)($prop['negative_prompt'] ?? ''));
+
+            // Clean/harmonize camera description inside mockup_prompt to prevent contradiction
+            if (isset($deterministicSpecs[$position])) {
+                $spec = $deterministicSpecs[$position];
+                
+                // 1. Clean starting camera descriptions that might contradict (e.g. "A low floor wide low-angle view...")
+                $startPatterns = [
+                    '/^A\s+(?:low\s+floor\s+wide\s+)?low-angle\s+view,\s+looking\s+up\s+at\s+the\s+artwork\s+[\'"]?[^\'"]+[\'"]?\s+installed\s+on\s+a?/i' => 'The artwork is installed on',
+                    '/^A\s+(?:low\s+floor\s+wide\s+)?low-angle\s+view\s+of\s+/i' => '',
+                    '/^An?\s+(?:elevated|high-angle|frontal|subtle|left-oblique|right-oblique|artistic|controlled)\s+[^,]+,\s+/i' => '',
+                ];
+                foreach ($startPatterns as $pat => $rep) {
+                    if (preg_match($pat, $mockupPrompt)) {
+                        $mockupPrompt = preg_replace($pat, $rep, $mockupPrompt);
+                        break; // clean at most one prefix
+                    }
+                }
+                
+                // 2. Replace any internal "Camera view is ..." sentence
+                $cameraSentencePattern = '/Camera\s+(?:view\s+)?(?:is|angle\s+is|direction\s+is)\s+[^.]+./i';
+                $replacementSentence = "Camera view is " . $spec['camera_view_expected'] . ".";
+                if (preg_match($cameraSentencePattern, $mockupPrompt)) {
+                    $mockupPrompt = preg_replace($cameraSentencePattern, $replacementSentence, $mockupPrompt);
+                } else {
+                    $mockupPrompt .= " " . $replacementSentence;
+                }
+            }
 
             // Mapear la propuesta dinámica de la IA al formato de MockPromptBuilder
             $mappedContext = [
