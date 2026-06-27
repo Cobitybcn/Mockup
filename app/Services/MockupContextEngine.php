@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/MockupCameraArchetypeResolver.php';
+
 class MockupContextEngine
 {
     private GeminiImageClient $client;
@@ -85,47 +87,75 @@ class MockupContextEngine
         $deterministicSpecs = [
             1 => [
                 'camera_slot' => 1,
-                'camera_group_expected' => 'near_frontal_subtle_3_4',
-                'camera_view_expected' => 'near-frontal physical editorial view, subtle 5–10 degrees, not poster-flat',
+                'camera_group_expected' => 'soft_editorial_left_oblique_non_frontal',
+                'camera_view_expected' => 'soft editorial left-oblique physical view, 15–20 degrees, clearly non-frontal',
                 'camera_distance_expected' => 'close or medium-close premium commercial presentation',
-                'camera_angle_notes_expected' => 'A near-frontal physical editorial view (5-10 degrees oblique) to show canvas depth and avoid a flat poster-like presentation.',
+                'camera_angle_notes_expected' => 'A soft editorial left-oblique room camera: the artwork plane, wall plane, floor lines, furniture perspective, and architectural vanishing direction must share one coherent perspective.',
             ],
             2 => [
                 'camera_slot' => 2,
                 'camera_group_expected' => 'soft_left_oblique',
                 'camera_view_expected' => 'three-quarter left view, soft left-oblique, 10–15 degrees',
                 'camera_distance_expected' => 'close or medium-close view',
-                'camera_angle_notes_expected' => 'A gentle left-oblique angle that shows canvas depth and gives the artwork stronger physical presence without distorting scale.',
+                'camera_angle_notes_expected' => 'A gentle left-oblique room camera: the artwork plane, wall plane, floor lines, furniture perspective, and architectural vanishing direction must share one coherent perspective.',
             ],
             3 => [
                 'camera_slot' => 3,
                 'camera_group_expected' => 'soft_right_oblique',
                 'camera_view_expected' => 'three-quarter right view, soft right-oblique, 10–15 degrees',
                 'camera_distance_expected' => 'close or medium-close view',
-                'camera_angle_notes_expected' => 'A gentle right-oblique angle that shows canvas depth and gives the artwork stronger physical presence without distorting scale.',
+                'camera_angle_notes_expected' => 'A gentle right-oblique room camera: the artwork plane, wall plane, floor lines, furniture perspective, and architectural vanishing direction must share one coherent perspective.',
             ],
             4 => [
                 'camera_slot' => 4,
                 'camera_group_expected' => 'elevated_high_angle_architectural',
                 'camera_view_expected' => 'elevated high-angle architectural view, controlled view from above, not top-down, not surveillance-like',
                 'camera_distance_expected' => 'controlled architectural view',
-                'camera_angle_notes_expected' => 'An elevated high-angle view looking down at the artwork in relation to the space, showing the floor and surrounding architectural details without flattening the geometry.',
+                'camera_angle_notes_expected' => 'An elevated high-angle room camera: the artwork plane, wall plane, floor lines, furniture perspective, and architectural vanishing direction must belong to the same controlled elevated perspective.',
             ],
             5 => [
                 'camera_slot' => 5,
                 'camera_group_expected' => 'controlled_low_angle_contrapicado',
-                'camera_view_expected' => 'controlled low-angle / contrapicado, camera slightly below artwork centerline, looking upward, believable scale',
+                'camera_view_expected' => 'controlled oblique low-angle / contrapicado, low camera looking upward through the room, artistic but believable scale',
                 'camera_distance_expected' => 'medium-close view',
-                'camera_angle_notes_expected' => 'A controlled low-angle camera positioned slightly below the artwork centerline, looking upward to add monumentality while keeping furniture and floor scale realistic.',
+                'camera_angle_notes_expected' => 'A controlled low-angle oblique room camera: the artwork plane, wall plane, floor lines, furniture perspective, and architectural vanishing direction must share one coherent upward contrapicado perspective.',
             ],
             6 => [
                 'camera_slot' => 6,
                 'camera_group_expected' => 'low_floor_wide_7_8_architectural',
-                'camera_view_expected' => 'low floor wide 7/8 architectural view, camera near floor level, stronger oblique depth, controlled wide view, no fisheye, no scale distortion',
+                'camera_view_expected' => 'low floor wide 7/8 architectural view, controlled oblique depth, wide architectural view, no fisheye, no scale distortion',
                 'camera_distance_expected' => 'controlled wide architectural view',
-                'camera_angle_notes_expected' => 'A wide-angle camera situated close to floor level looking at a 7/8 oblique depth to show three-dimensional space, wall/floor intersection, and clean perspective lines.',
+                'camera_angle_notes_expected' => 'A controlled low-floor wide 7/8 architectural room camera: the artwork plane, wall plane, floor lines, furniture perspective, and architectural vanishing direction must share one coherent wide perspective with clean vanishing lines.',
             ]
         ];
+
+        $cameraArchetypeResolution = null;
+        if ($limit === 6) {
+            try {
+                $cameraArchetypeResolution = (new MockupCameraArchetypeResolver())->resolveForArtwork($artworkId);
+                $selectedSet = $cameraArchetypeResolution['selected_set'] ?? null;
+                if (($cameraArchetypeResolution['dimensions']['xl_class'] ?? '') === 'xl' && is_array($selectedSet) && is_array($selectedSet['slots'] ?? null)) {
+                    foreach ($selectedSet['slots'] as $slot => $archetype) {
+                        $slot = (int)$slot;
+                        if (!isset($deterministicSpecs[$slot]) || !is_array($archetype)) {
+                            continue;
+                        }
+                        $deterministicSpecs[$slot]['camera_group_expected'] = (string)($archetype['camera_group'] ?? $deterministicSpecs[$slot]['camera_group_expected']);
+                        $deterministicSpecs[$slot]['camera_view_expected'] = (string)($archetype['camera_view'] ?? $deterministicSpecs[$slot]['camera_view_expected']);
+                        $deterministicSpecs[$slot]['camera_distance_expected'] = (string)($archetype['camera_distance'] ?? $deterministicSpecs[$slot]['camera_distance_expected']);
+                        $deterministicSpecs[$slot]['camera_angle_notes_expected'] = (string)($archetype['camera_angle_notes'] ?? $deterministicSpecs[$slot]['camera_angle_notes_expected']);
+                        $deterministicSpecs[$slot]['camera_archetype_set_id'] = (string)($cameraArchetypeResolution['selected_set_id'] ?? '');
+                        $deterministicSpecs[$slot]['camera_archetype_id'] = (string)($archetype['camera_archetype_id'] ?? '');
+                        $deterministicSpecs[$slot]['camera_archetype_name'] = (string)($archetype['camera_archetype_name'] ?? '');
+                        $deterministicSpecs[$slot]['camera_archetype_source'] = 'core_json';
+                        $deterministicSpecs[$slot]['camera_archetype_reason'] = (string)($archetype['camera_archetype_reason'] ?? '');
+                    }
+                }
+            } catch (Throwable $e) {
+                Logger::log("Camera archetype resolver fallback for artwork_id={$artworkId}: " . $e->getMessage(), 'warning');
+                $cameraArchetypeResolution = null;
+            }
+        }
 
         $finalProposals = [];
 
@@ -146,6 +176,21 @@ class MockupContextEngine
                 $prop['camera_view_expected'] = $spec['camera_view_expected'];
                 $prop['camera_distance_expected'] = $spec['camera_distance_expected'];
                 $prop['camera_angle_notes_expected'] = $spec['camera_angle_notes_expected'];
+
+                if (isset($spec['camera_archetype_set_id'])) {
+                    $dims = is_array($cameraArchetypeResolution['dimensions'] ?? null) ? $cameraArchetypeResolution['dimensions'] : [];
+                    $prop['camera_archetype_set_id'] = $spec['camera_archetype_set_id'];
+                    $prop['camera_archetype_id'] = $spec['camera_archetype_id'] ?? '';
+                    $prop['camera_archetype_name'] = $spec['camera_archetype_name'] ?? '';
+                    $prop['camera_archetype_source'] = $spec['camera_archetype_source'] ?? 'core_json';
+                    $prop['camera_archetype_reason'] = $spec['camera_archetype_reason'] ?? '';
+                    $prop['artwork_dimensions_source'] = $cameraArchetypeResolution['artwork_dimensions_source'] ?? null;
+                    $prop['artwork_orientation_resolved'] = $dims['orientation_resolved'] ?? null;
+                    $prop['artwork_aspect_ratio_resolved'] = $dims['aspect_ratio_resolved'] ?? null;
+                    $prop['artwork_longest_side_cm'] = $dims['longest_side_cm'] ?? null;
+                    $prop['artwork_size_class'] = $dims['size_class'] ?? null;
+                    $prop['artwork_xl_class'] = $dims['xl_class'] ?? null;
+                }
                 
                 // Overwrite camera fields for compatibility with legacy components and coherence
                 $prop['camera_view'] = $spec['camera_view_expected'];
@@ -153,7 +198,7 @@ class MockupContextEngine
                 $prop['camera_angle_notes'] = $spec['camera_angle_notes_expected'];
             }
 
-            $cameraView = trim((string)($prop['camera_view'] ?? $prop['camera_angle'] ?? 'near-frontal subtle 3/4 commercial view'));
+            $cameraView = trim((string)($prop['camera_view'] ?? $prop['camera_angle'] ?? 'soft editorial left-oblique physical view'));
             $cameraDistance = trim((string)($prop['camera_distance'] ?? 'medium-close view'));
             $cameraNotes = trim((string)($prop['camera_angle_notes'] ?? ''));
             $mockupPrompt = trim((string)($prop['mockup_prompt'] ?? ''));
@@ -176,26 +221,35 @@ class MockupContextEngine
                     }
                 }
                 
-                // 2. Replace any internal "Camera view is ..." or "Camera: ..." sentence
-                $cameraSentencePattern = '/Camera\s*(?::|view\s+is|angle\s+is|direction\s+is)\s+[^.]+./i';
-                $replacementSentence = "Camera view is " . $spec['camera_view_expected'] . ".";
-                if (preg_match($cameraSentencePattern, $mockupPrompt)) {
-                    $mockupPrompt = preg_replace($cameraSentencePattern, $replacementSentence, $mockupPrompt);
-                } else {
-                    $mockupPrompt .= " " . $replacementSentence;
-                }
+                // 2. Remove camera narration from mockup_prompt; sovereign camera fields carry it.
+                $cameraSentencePattern = '/\b(?:(?:The\s+)?camera\s*(?::|view\s+is|angle\s+is|direction\s+is|is\s+positioned|takes|captures|provides)|Viewed\s+from|Shot\s+from)\s+[^.]+\.?/i';
+                $mockupPrompt = preg_replace($cameraSentencePattern, '', $mockupPrompt);
             }
 
             // 3. Clean/sanitize any artwork redescriptions to prevent redundant/conflicting details
             // Replace: The artwork '[Title]' ([Description of colors/geometric/style]) -> The artwork
             $mockupPrompt = preg_replace('/(?:The\s+)?(?:artwork|painting|canvas)\s+\'[^\']+\'\s*\([^)]*\)/i', 'The artwork', $mockupPrompt);
+            $mockupPrompt = preg_replace('/(?:The\s+)?(?:artwork|painting|canvas)\s+"[^"]+"\s*\([^)]*\)/i', 'The artwork', $mockupPrompt);
             $mockupPrompt = preg_replace('/(?:The\s+)?(?:artwork|painting|canvas)\s*\([^)]*\)/i', 'The artwork', $mockupPrompt);
             
             // Replace: An abstract artwork with [colors/shapes...] or A vibrant artwork, rich in... -> The artwork (prior to hangs/is hung/is displayed/etc or comma + participle)
             $mockupPrompt = preg_replace('/(?:An?\s+)?(?:[a-z\-]+\s+){0,3}(?:artwork|painting|canvas)(?:\s*(?:with|featuring|showing|having|depicting)|,\s*rich\s+in)\s+.*?(?=\s+(?:hangs|is\s+hung|is\s+elegantly\s+displayed|is\s+displayed|is\s+mounted|is\s+placed)|\s*,\s*(?:[a-z]+\s+)?(?:installed|leaning|placed|mounted|hung|displayed))/i', 'The artwork', $mockupPrompt);
+            $mockupPrompt = preg_replace('/,?\s*making\s+(?:its|the\s+artwork\'s|the\s+painting\'s|the\s+canvas\'s)\s+colou?rs?\s+glow\.?/i', '', $mockupPrompt);
+            $mockupPrompt = preg_replace('/\b(?:its|the\s+artwork\'s|the\s+painting\'s|the\s+canvas\'s)\s+colou?rs?\b[^.]*\./i', '', $mockupPrompt);
+            $mockupPrompt = preg_replace('/\b(?:abstract\s+landscape|vibrant\s+(?:orange|red|yellow|blue|green|purple|pink|black|white|colors?|colours?)|geometric\s+forms?|pictorial\s+style|painted\s+composition|visual\s+composition)\b[,;:\s]*/i', '', $mockupPrompt);
             
             // Remove sentences starting with "The painting features/has..." or "The artwork features/has..."
-            $mockupPrompt = preg_replace('/(?:The\s+)?(?:artwork|painting|canvas)\s+(?:features|has|depicts|portrays)\s+[^.]*\./i', '', $mockupPrompt);
+            $mockupPrompt = preg_replace('/(?:The\s+)?(?:artwork|painting|canvas)\s+(?:features|has|depicts|portrays|shows|contains|is\s+an?\s+abstract|is\s+an?\s+figurative|is\s+an?\s+geometric)\s+[^.]*\./i', '', $mockupPrompt);
+
+            if ($position === 6) {
+                $mockupPrompt = preg_replace('/\b(?:The\s+)?artwork\s+(?:rests\s+casually\s+against|rests\s+against|leans\s+against)\s+the\s+wall,\s*leaning\s+slightly\.?/i', 'The artwork is installed on the wall.', $mockupPrompt);
+                $mockupPrompt = preg_replace('/\b(?:leaning\s+slightly|rests\s+casually\s+against\s+the\s+wall|rests\s+against\s+the\s+wall|leans\s+against\s+the\s+wall)\b\.?/i', '', $mockupPrompt);
+                $mockupPrompt = preg_replace('/\bcommanding\s+attention\b/i', 'presented clearly', $mockupPrompt);
+                $mockupPrompt = preg_replace('/\bin\s+the\s+foreground\b/i', 'within the space', $mockupPrompt);
+                $mockupPrompt = preg_replace('/\bshowcasing\s+the\s+artwork\'s\s+scale\s+within\s+the\s+grand\s+space\b/i', 'showing the artwork within the architectural space', $mockupPrompt);
+            }
+
+            $mockupPrompt = preg_replace('/\s{2,}/', ' ', trim((string)$mockupPrompt));
 
             // Mapear la propuesta dinámica de la IA al formato de MockPromptBuilder
             $mappedContext = [
@@ -223,6 +277,24 @@ class MockupContextEngine
                 $mappedContext['camera_distance_expected'] = $prop['camera_distance_expected'];
                 $mappedContext['camera_angle_notes_expected'] = $prop['camera_angle_notes_expected'];
                 $mappedContext['camera_view_original'] = $prop['camera_view_original'];
+
+                foreach ([
+                    'camera_archetype_set_id',
+                    'camera_archetype_id',
+                    'camera_archetype_name',
+                    'camera_archetype_source',
+                    'camera_archetype_reason',
+                    'artwork_dimensions_source',
+                    'artwork_orientation_resolved',
+                    'artwork_aspect_ratio_resolved',
+                    'artwork_longest_side_cm',
+                    'artwork_size_class',
+                    'artwork_xl_class',
+                ] as $archetypeField) {
+                    if (array_key_exists($archetypeField, $prop)) {
+                        $mappedContext[$archetypeField] = $prop[$archetypeField];
+                    }
+                }
             }
 
             $mappedProfile = [
@@ -265,20 +337,20 @@ class MockupContextEngine
         }
 
         $expectedGroups = [
-            'near_frontal_subtle_3_4',
+            'soft_editorial_left_oblique_non_frontal',
             'soft_left_oblique',
             'soft_right_oblique',
-            'controlled_low_3_4',
-            'stronger_artistic_3_4_7_8',
-            'elevated_3_4_architectural',
+            'elevated_high_angle_architectural',
+            'controlled_low_angle_contrapicado',
+            'low_floor_wide_7_8_architectural',
         ];
         $expectedLabels = [
-            'near-frontal subtle 3/4 commercial view',
-            'soft left-oblique view',
-            'soft right-oblique view',
-            'controlled low 3/4 view',
-            'stronger artistic 3/4 or 7/8 view',
-            'elevated 3/4 architectural view',
+            'soft editorial left-oblique physical view, 15-20 degrees, clearly non-frontal',
+            'three-quarter left view, soft left-oblique, 10-15 degrees',
+            'three-quarter right view, soft right-oblique, 10-15 degrees',
+            'elevated high-angle architectural view, controlled view from above, not top-down, not surveillance-like',
+            'controlled oblique low-angle / contrapicado, low camera looking upward through the room, artistic but believable scale',
+            'low floor wide 7/8 architectural view, controlled oblique depth, wide architectural view, no fisheye, no scale distortion',
         ];
 
         foreach ($expectedGroups as $index => $expectedGroup) {
@@ -318,13 +390,13 @@ class MockupContextEngine
         if ($contextCount === 6) {
             $template .= "\n\nCRITICAL CAMERA VIEW REQUIREMENT:\n"
                 . "You MUST propose exactly 6 mockup contexts in this exact order. Each of the 6 proposals MUST use one of the following camera views, in this exact order:\n"
-                . "1. Proposal 1: camera_view must be 'front view'\n"
-                . "2. Proposal 2: camera_view must be 'three-quarter left view'\n"
-                . "3. Proposal 3: camera_view must be 'three-quarter right view'\n"
-                . "4. Proposal 4: camera_view must be 'high-angle view'\n"
-                . "5. Proposal 5: camera_view must be 'low-angle view'\n"
-                . "6. Proposal 6: camera_view must be 'low floor wide low-angle view'\n"
-                . "Ensure the space description, materials, lighting, and placement naturally match the perspective of each camera view.";
+                . "1. Proposal 1: camera_view must be 'soft editorial left-oblique physical view, 15-20 degrees, clearly non-frontal'\n"
+                . "2. Proposal 2: camera_view must be 'three-quarter left view, soft left-oblique, 10-15 degrees'\n"
+                . "3. Proposal 3: camera_view must be 'three-quarter right view, soft right-oblique, 10-15 degrees'\n"
+                . "4. Proposal 4: camera_view must be 'elevated high-angle architectural view, controlled view from above, not top-down, not surveillance-like'\n"
+                . "5. Proposal 5: camera_view must be 'controlled oblique low-angle / contrapicado, low camera looking upward through the room, artistic but believable scale'\n"
+                . "6. Proposal 6: camera_view must be 'low floor wide 7/8 architectural view, controlled oblique depth, wide architectural view, no fisheye, no scale distortion'\n"
+                . "The mockup_prompt field must describe only the space, installation, light, materials, atmosphere, spatial composition, and the artwork's physical relationship with the environment. Do not repeat the camera there; use the sovereign camera fields only. Do not redescribe artwork colors, symbols, pictorial composition, or painting style.";
         }
         
         // Dynamically replace context count in prompt template
@@ -591,6 +663,17 @@ class MockupContextEngine
             'camera_distance_expected',
             'camera_angle_notes_expected',
             'camera_view_original',
+            'camera_archetype_set_id',
+            'camera_archetype_id',
+            'camera_archetype_name',
+            'camera_archetype_source',
+            'camera_archetype_reason',
+            'artwork_dimensions_source',
+            'artwork_orientation_resolved',
+            'artwork_aspect_ratio_resolved',
+            'artwork_longest_side_cm',
+            'artwork_size_class',
+            'artwork_xl_class',
         ];
 
         $minimal = [];
@@ -792,6 +875,24 @@ class MockupContextEngine
                 $contextJson['camera_distance_expected'] = $prop['camera_distance_expected'];
                 $contextJson['camera_angle_notes_expected'] = $prop['camera_angle_notes_expected'];
                 $contextJson['camera_view_original'] = $prop['camera_view_original'];
+            }
+
+            foreach ([
+                'camera_archetype_set_id',
+                'camera_archetype_id',
+                'camera_archetype_name',
+                'camera_archetype_source',
+                'camera_archetype_reason',
+                'artwork_dimensions_source',
+                'artwork_orientation_resolved',
+                'artwork_aspect_ratio_resolved',
+                'artwork_longest_side_cm',
+                'artwork_size_class',
+                'artwork_xl_class',
+            ] as $archetypeField) {
+                if (array_key_exists($archetypeField, $mapped)) {
+                    $contextJson[$archetypeField] = $mapped[$archetypeField];
+                }
             }
 
             $stmtContext->execute([
