@@ -86,44 +86,44 @@ class MockupContextEngine
             1 => [
                 'camera_slot' => 1,
                 'camera_group_expected' => 'near_frontal_subtle_3_4',
-                'camera_view_expected' => 'near-frontal subtle 3/4 commercial view, approximately 5–10 degrees, never perfectly flat frontal',
+                'camera_view_expected' => 'near-frontal physical editorial view, subtle 5–10 degrees, not poster-flat',
                 'camera_distance_expected' => 'close or medium-close premium commercial presentation',
-                'camera_angle_notes_expected' => 'A near-frontal view with a slight 3/4 angle to reveal the physical canvas depth and avoid a flat poster-like presentation.',
+                'camera_angle_notes_expected' => 'A near-frontal physical editorial view (5-10 degrees oblique) to show canvas depth and avoid a flat poster-like presentation.',
             ],
             2 => [
                 'camera_slot' => 2,
                 'camera_group_expected' => 'soft_left_oblique',
-                'camera_view_expected' => 'soft left-oblique view, approximately 10–15 degrees',
+                'camera_view_expected' => 'three-quarter left view, soft left-oblique, 10–15 degrees',
                 'camera_distance_expected' => 'close or medium-close view',
                 'camera_angle_notes_expected' => 'A gentle left-oblique angle that shows canvas depth and gives the artwork stronger physical presence without distorting scale.',
             ],
             3 => [
                 'camera_slot' => 3,
                 'camera_group_expected' => 'soft_right_oblique',
-                'camera_view_expected' => 'soft right-oblique view, approximately 10–15 degrees',
+                'camera_view_expected' => 'three-quarter right view, soft right-oblique, 10–15 degrees',
                 'camera_distance_expected' => 'close or medium-close view',
                 'camera_angle_notes_expected' => 'A gentle right-oblique angle that shows canvas depth and gives the artwork stronger physical presence without distorting scale.',
             ],
             4 => [
                 'camera_slot' => 4,
-                'camera_group_expected' => 'controlled_low_3_4',
-                'camera_view_expected' => 'controlled low 3/4 view, slightly upward, not floor-level unless scale remains realistic',
-                'camera_distance_expected' => 'medium-close controlled architectural view',
-                'camera_angle_notes_expected' => 'A slightly low 3/4 camera that adds monumentality while keeping artwork scale believable in relation to furniture and architecture.',
+                'camera_group_expected' => 'elevated_high_angle_architectural',
+                'camera_view_expected' => 'elevated high-angle architectural view, controlled view from above, not top-down, not surveillance-like',
+                'camera_distance_expected' => 'controlled architectural view',
+                'camera_angle_notes_expected' => 'An elevated high-angle view looking down at the artwork in relation to the space, showing the floor and surrounding architectural details without flattening the geometry.',
             ],
             5 => [
                 'camera_slot' => 5,
-                'camera_group_expected' => 'stronger_artistic_3_4_or_7_8',
-                'camera_view_expected' => 'stronger artistic 3/4 or 7/8 view, approximately 20–35 degrees',
-                'camera_distance_expected' => 'medium-close or controlled architectural view',
-                'camera_angle_notes_expected' => 'A stronger artistic oblique view with richer depth, more spatial tension, and visible physical canvas presence.',
+                'camera_group_expected' => 'controlled_low_angle_contrapicado',
+                'camera_view_expected' => 'controlled low-angle / contrapicado, camera slightly below artwork centerline, looking upward, believable scale',
+                'camera_distance_expected' => 'medium-close view',
+                'camera_angle_notes_expected' => 'A controlled low-angle camera positioned slightly below the artwork centerline, looking upward to add monumentality while keeping furniture and floor scale realistic.',
             ],
             6 => [
                 'camera_slot' => 6,
-                'camera_group_expected' => 'elevated_3_4_architectural',
-                'camera_view_expected' => 'elevated 3/4 architectural view, never top-down or surveillance-like',
-                'camera_distance_expected' => 'controlled architectural view with artwork still dominant',
-                'camera_angle_notes_expected' => 'An elevated 3/4 architectural camera that shows the artwork in relation to the space while avoiding aerial, drone-like, or top-down views.',
+                'camera_group_expected' => 'low_floor_wide_7_8_architectural',
+                'camera_view_expected' => 'low floor wide 7/8 architectural view, camera near floor level, stronger oblique depth, controlled wide view, no fisheye, no scale distortion',
+                'camera_distance_expected' => 'controlled wide architectural view',
+                'camera_angle_notes_expected' => 'A wide-angle camera situated close to floor level looking at a 7/8 oblique depth to show three-dimensional space, wall/floor intersection, and clean perspective lines.',
             ]
         ];
 
@@ -176,8 +176,8 @@ class MockupContextEngine
                     }
                 }
                 
-                // 2. Replace any internal "Camera view is ..." sentence
-                $cameraSentencePattern = '/Camera\s+(?:view\s+)?(?:is|angle\s+is|direction\s+is)\s+[^.]+./i';
+                // 2. Replace any internal "Camera view is ..." or "Camera: ..." sentence
+                $cameraSentencePattern = '/Camera\s*(?::|view\s+is|angle\s+is|direction\s+is)\s+[^.]+./i';
                 $replacementSentence = "Camera view is " . $spec['camera_view_expected'] . ".";
                 if (preg_match($cameraSentencePattern, $mockupPrompt)) {
                     $mockupPrompt = preg_replace($cameraSentencePattern, $replacementSentence, $mockupPrompt);
@@ -185,6 +185,17 @@ class MockupContextEngine
                     $mockupPrompt .= " " . $replacementSentence;
                 }
             }
+
+            // 3. Clean/sanitize any artwork redescriptions to prevent redundant/conflicting details
+            // Replace: The artwork '[Title]' ([Description of colors/geometric/style]) -> The artwork
+            $mockupPrompt = preg_replace('/(?:The\s+)?(?:artwork|painting|canvas)\s+\'[^\']+\'\s*\([^)]*\)/i', 'The artwork', $mockupPrompt);
+            $mockupPrompt = preg_replace('/(?:The\s+)?(?:artwork|painting|canvas)\s*\([^)]*\)/i', 'The artwork', $mockupPrompt);
+            
+            // Replace: An abstract artwork with [colors/shapes...] -> The artwork (prior to hangs/is hung/is displayed/etc or comma + participle)
+            $mockupPrompt = preg_replace('/(?:An?\s+)?(?:abstract\s+)?(?:artwork|painting|canvas)\s+(?:with|featuring|showing|having)\s+[^,.]*?(?=\s+(?:hangs|is\s+hung|is\s+elegantly\s+displayed|is\s+displayed|is\s+mounted|is\s+placed)|\s*,\s*(?:installed|leaning|placed|mounted|hung|displayed))/i', 'The artwork', $mockupPrompt);
+            
+            // Remove sentences starting with "The painting features/has..." or "The artwork features/has..."
+            $mockupPrompt = preg_replace('/(?:The\s+)?(?:artwork|painting|canvas)\s+(?:features|has|depicts|portrays)\s+[^.]*\./i', '', $mockupPrompt);
 
             // Mapear la propuesta dinámica de la IA al formato de MockPromptBuilder
             $mappedContext = [

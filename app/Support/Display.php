@@ -74,18 +74,18 @@ class Display
 
         // Normalize camera angle/group for SEO filenames.
         $angle = strtolower(trim($cameraAngle));
-        if ($angle === 'front' || $angle === 'frontal' || $angle === 'front view') {
+        if (stripos($angle, 'front') !== false) {
             $angle = 'frontal';
-        } elseif ($angle === 'three_quarter_left' || $angle === '3_4_left' || $angle === '3-4-left' || $angle === 'left' || $angle === 'three-quarter left view') {
+        } elseif (stripos($angle, 'left') !== false) {
             $angle = '3-4-left';
-        } elseif ($angle === 'three_quarter_right' || $angle === '3_4_right' || $angle === '3-4-right' || $angle === 'right' || $angle === 'three-quarter right view') {
+        } elseif (stripos($angle, 'right') !== false) {
             $angle = '3-4-right';
-        } elseif ($angle === 'high_angle_aerial' || $angle === 'high-angle / aerial view' || $angle === 'high-angle view') {
+        } elseif (stripos($angle, 'high') !== false || stripos($angle, 'elevated') !== false || stripos($angle, 'aerial') !== false) {
             $angle = 'high-angle-aerial';
-        } elseif ($angle === 'low_angle_contrapicado' || $angle === 'low-angle / contrapicado view' || $angle === 'low-angle view') {
-            $angle = 'low-angle-contrapicado';
-        } elseif ($angle === 'low_floor_wide_low_angle' || $angle === 'low floor wide low-angle view') {
+        } elseif (stripos($angle, 'low floor') !== false || stripos($angle, 'floor level') !== false || stripos($angle, '7/8') !== false) {
             $angle = 'low-floor-wide-low-angle';
+        } elseif (stripos($angle, 'low-angle') !== false || stripos($angle, 'contrapicado') !== false || stripos($angle, 'low angle') !== false) {
+            $angle = 'low-angle-contrapicado';
         } else {
             $angle = '';
         }
