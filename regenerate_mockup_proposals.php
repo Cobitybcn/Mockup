@@ -23,6 +23,28 @@ function fail_json(string $msg, int $code = 400): void
     exit;
 }
 
+function resolve_root_image_path_for_regeneration(array $artwork): array
+{
+    $candidates = [
+        trim((string)($artwork['root_file'] ?? '')),
+        trim((string)($artwork['main_file'] ?? '')),
+    ];
+
+    foreach ($candidates as $candidate) {
+        if ($candidate === '') {
+            continue;
+        }
+
+        $safeImage = basename($candidate);
+        $imagePath = RESULTS_DIR . DIRECTORY_SEPARATOR . $safeImage;
+        if (is_file($imagePath)) {
+            return [$safeImage, $imagePath];
+        }
+    }
+
+    return ['', ''];
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     fail_json('Method not allowed.', 405);
 }
@@ -51,11 +73,10 @@ if (!$artwork) {
     fail_json('Artwork was not found or access denied.', 404);
 }
 
-$safeImage = basename((string)$artwork['root_file']);
-$imagePath = RESULTS_DIR . DIRECTORY_SEPARATOR . $safeImage;
+[$safeImage, $imagePath] = resolve_root_image_path_for_regeneration($artwork);
 
 if (!is_file($imagePath)) {
-    fail_json('Root image file not found: ' . $safeImage, 404);
+    fail_json('Root image file not found for this artwork. Select a root image before regenerating mockup proposals.', 404);
 }
 
 // Check if API mode is real

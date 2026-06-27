@@ -1,4 +1,5 @@
 <?php
+// LEGACY / DO NOT USE IN PHASE 2.3 FLOW
 declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
@@ -16,6 +17,21 @@ if (!$currentUser) {
 $isAdmin = Auth::isAdmin($currentUser);
 
 $image = basename(trim((string)($_GET['image'] ?? '')));
+
+if (!defined('LEGACY_MOCKUP_FLOW_ENABLED') || !LEGACY_MOCKUP_FLOW_ENABLED) {
+    $resolvedId = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
+    if ($resolvedId <= 0 && $image !== '') {
+        try {
+            $stmt = Database::connection()->prepare("SELECT id FROM artworks WHERE root_file = :root_file LIMIT 1");
+            $stmt->execute(['root_file' => $image]);
+            $resolvedId = (int)$stmt->fetchColumn();
+        } catch (Throwable $e) {}
+    }
+    if ($resolvedId > 0) {
+        header('Location: mockup_prompt_drafts_review.php?id=' . $resolvedId);
+        exit;
+    }
+}
 if ($image === '') {
     header('Location: dashboard.php');
     exit;

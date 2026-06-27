@@ -1,4 +1,5 @@
 <?php
+// LEGACY / DO NOT USE IN PHASE 2.3 FLOW
 declare(strict_types=1);
 
 class MockPromptBuilder

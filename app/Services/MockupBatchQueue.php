@@ -9,7 +9,7 @@ class MockupBatchQueue
     {
         $pdo = Database::connection();
         $stmt = $pdo->prepare('
-            SELECT id, prompt
+            SELECT *
             FROM mockup_contexts
             WHERE artwork_id = :artwork_id
             ORDER BY id ASC
@@ -65,7 +65,7 @@ class MockupBatchQueue
                     'artwork_id' => $artworkId,
                     'artwork_file' => basename($rootFile),
                     'context_id' => $contextId,
-                    'prompt' => (string)$context['prompt'],
+                    'prompt' => self::composeAdminPromptForContext($context),
                     'created_at' => $now,
                     'updated_at' => $now,
                 ]);
@@ -97,7 +97,7 @@ class MockupBatchQueue
 
                 foreach ($contextIds as $contextId) {
                     $contextStmt = $pdo->prepare('
-                        SELECT id, prompt
+                        SELECT *
                         FROM mockup_contexts
                         WHERE artwork_id = :artwork_id AND id = :id
                         LIMIT 1
@@ -167,7 +167,7 @@ class MockupBatchQueue
                         'artwork_id' => $artworkId,
                         'artwork_file' => $rootFile,
                         'context_id' => $contextId,
-                        'prompt' => (string)$context['prompt'],
+                        'prompt' => self::composeAdminPromptForContext($context),
                         'created_at' => $now,
                         'updated_at' => $now,
                     ]);
@@ -374,5 +374,10 @@ class MockupBatchQueue
         $stmt->execute(['artwork_id' => $artworkId]);
 
         return $stmt->fetchAll();
+    }
+
+    public static function composeAdminPromptForContext(array $context): string
+    {
+        return (new AdminPromptComposerPreview())->compose($context);
     }
 }

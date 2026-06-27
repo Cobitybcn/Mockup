@@ -70,6 +70,7 @@ define('MOCKUP_PROMPT_FIRST_MODE', strtolower(app_env('MOCKUP_PROMPT_FIRST_MODE'
 define('MOCKUP_PROMPT_FIRST_NO_MASK_MODE', strtolower(app_env('MOCKUP_PROMPT_FIRST_NO_MASK_MODE', 'false')) === 'true');
 define('MOCKUP_USE_PRECOMPOSITION', strtolower(app_env('MOCKUP_USE_PRECOMPOSITION', 'false')) === 'true');
 define('MOCKUP_USE_BACKGROUND_EDIT', strtolower(app_env('MOCKUP_USE_BACKGROUND_EDIT', 'false')) === 'true');
+define('LEGACY_MOCKUP_FLOW_ENABLED', strtolower(app_env('LEGACY_MOCKUP_FLOW_ENABLED', 'false')) === 'true');
 
 
 // Punto #2: ruta configurable al ejecutable PHP (evita rutas hardcodeadas a versiones específicas)

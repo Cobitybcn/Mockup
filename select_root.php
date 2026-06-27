@@ -217,20 +217,22 @@ try {
         'id' => $artworkId
     ]);
 
-    $initialMockupLimit = ProviderSettings::mockupWorkerCount();
-    $queuedMockups = MockupBatchQueue::enqueueInitialBatch(
-        $artworkId,
-        (int)$status['user_id'],
-        $filename,
-        $initialMockupLimit
-    );
+    if (defined('LEGACY_MOCKUP_FLOW_ENABLED') && LEGACY_MOCKUP_FLOW_ENABLED) {
+        $initialMockupLimit = ProviderSettings::mockupWorkerCount();
+        $queuedMockups = MockupBatchQueue::enqueueInitialBatch(
+            $artworkId,
+            (int)$status['user_id'],
+            $filename,
+            $initialMockupLimit
+        );
 
-    if ($queuedMockups > 0) {
-        // Pre-assign: claim all jobs in one transaction, launch one dedicated worker per job.
-        // This eliminates SQLite write-lock competition between workers.
-        $claimedJobIds = MockupBatchQueue::claimBatch($artworkId, $initialMockupLimit);
-        foreach ($claimedJobIds as $jobId) {
-            start_mockup_queue_worker_for_job($jobId);
+        if ($queuedMockups > 0) {
+            // Pre-assign: claim all jobs in one transaction, launch one dedicated worker per job.
+            // This eliminates SQLite write-lock competition between workers.
+            $claimedJobIds = MockupBatchQueue::claimBatch($artworkId, $initialMockupLimit);
+            foreach ($claimedJobIds as $jobId) {
+                start_mockup_queue_worker_for_job($jobId);
+            }
         }
     }
 

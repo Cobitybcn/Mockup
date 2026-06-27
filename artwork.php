@@ -1103,7 +1103,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                     <a class="button-link secondary" href="core_review.php?id=<?= (int)$id ?>">View Artwork Core</a>
                     <?php if ($rootFile): ?>
                         <a class="button-link" href="mockup_prompt_drafts_review.php?id=<?= (int)$id ?>">Review Final Mockup Prompts</a>
-                        <?php if (Auth::isAdmin($user)): ?>
+                        <?php if (Auth::isAdmin($user) && defined('LEGACY_MOCKUP_FLOW_ENABLED') && LEGACY_MOCKUP_FLOW_ENABLED): ?>
                             <a class="button-link secondary" href="curated_mockups.php?image=<?= rawurlencode($rootFile) ?>&id=<?= (int)$id ?>&legacy=1">Curated Mockups (Legacy)</a>
                         <?php endif; ?>
                         <a class="button-link secondary" href="analyze_wait.php?image=<?= rawurlencode($rootFile) ?>">Recalculate Analysis</a>
@@ -1367,16 +1367,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                                             
                                             <!-- Form for ungenerated state -->
                                             <div class="ungenerated-form" style="<?= $existingMockup ? 'display: none;' : '' ?>">
-                                                <?php if ($rootFile && !$analysisNeedsRefresh): ?>
-                                                    <form class="inline-mockup-form" action="generate_mockup.php" method="post" style="margin: 0; width: 100%;">
-                                                        <input type="hidden" name="image" value="<?= h($rootFile) ?>">
-                                                        <input type="hidden" name="json" value="<?= h($rootBase . '.analysis.json') ?>">
-                                                        <input type="hidden" name="context_id" value="<?= h($ctxId) ?>">
-                                                        <input type="hidden" name="prompt" value="<?= h($ctx['prompt'] ?? '') ?>">
-                                                        <input type="hidden" name="ajax" value="1">
-                                                        <button type="submit" class="button" style="font-size: 11px; width: 100%; padding: 6px 10px;">Generar Mockup</button>
-                                                    </form>
-                                                <?php endif; ?>
+                                                 <span style="font-size: 11px; color: var(--muted); display: block; text-align: center; padding: 6px 0;">Use "Review Final Mockup Prompts" at the top to generate</span>
                                             </div>
                                         </div>
                                     </div>

@@ -71,7 +71,7 @@ if ($id > 0) {
 
 // Check for legacy parameter and admin privilege to bypass redirect
 $legacy = ($_GET['legacy'] ?? $_POST['legacy'] ?? '') === '1';
-if ($legacy && Auth::isAdmin($user)) {
+if ($legacy && Auth::isAdmin($user) && defined('LEGACY_MOCKUP_FLOW_ENABLED') && LEGACY_MOCKUP_FLOW_ENABLED) {
     if ($queuedMockups > 0) {
         header('Location: mockup_batch_wait.php?image=' . urlencode(basename($image)));
     } else {

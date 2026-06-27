@@ -79,27 +79,79 @@ class MockupContextEngine
         $limit = PromptSettings::mockupContextCount();
         $proposals = array_slice($proposals, 0, $limit);
 
+        // Run non-blocking camera distribution validation on original proposals
+        $this->validateCameraDistribution($proposals, $limit);
+
+        $deterministicSpecs = [
+            1 => [
+                'camera_slot' => 1,
+                'camera_group_expected' => 'near_frontal_subtle_3_4',
+                'camera_view_expected' => 'near-frontal subtle 3/4 commercial view, approximately 5–10 degrees, never perfectly flat frontal',
+                'camera_distance_expected' => 'close or medium-close premium commercial presentation',
+                'camera_angle_notes_expected' => 'A near-frontal view with a slight 3/4 angle to reveal the physical canvas depth and avoid a flat poster-like presentation.',
+            ],
+            2 => [
+                'camera_slot' => 2,
+                'camera_group_expected' => 'soft_left_oblique',
+                'camera_view_expected' => 'soft left-oblique view, approximately 10–15 degrees',
+                'camera_distance_expected' => 'close or medium-close view',
+                'camera_angle_notes_expected' => 'A gentle left-oblique angle that shows canvas depth and gives the artwork stronger physical presence without distorting scale.',
+            ],
+            3 => [
+                'camera_slot' => 3,
+                'camera_group_expected' => 'soft_right_oblique',
+                'camera_view_expected' => 'soft right-oblique view, approximately 10–15 degrees',
+                'camera_distance_expected' => 'close or medium-close view',
+                'camera_angle_notes_expected' => 'A gentle right-oblique angle that shows canvas depth and gives the artwork stronger physical presence without distorting scale.',
+            ],
+            4 => [
+                'camera_slot' => 4,
+                'camera_group_expected' => 'controlled_low_3_4',
+                'camera_view_expected' => 'controlled low 3/4 view, slightly upward, not floor-level unless scale remains realistic',
+                'camera_distance_expected' => 'medium-close controlled architectural view',
+                'camera_angle_notes_expected' => 'A slightly low 3/4 camera that adds monumentality while keeping artwork scale believable in relation to furniture and architecture.',
+            ],
+            5 => [
+                'camera_slot' => 5,
+                'camera_group_expected' => 'stronger_artistic_3_4_or_7_8',
+                'camera_view_expected' => 'stronger artistic 3/4 or 7/8 view, approximately 20–35 degrees',
+                'camera_distance_expected' => 'medium-close or controlled architectural view',
+                'camera_angle_notes_expected' => 'A stronger artistic oblique view with richer depth, more spatial tension, and visible physical canvas presence.',
+            ],
+            6 => [
+                'camera_slot' => 6,
+                'camera_group_expected' => 'elevated_3_4_architectural',
+                'camera_view_expected' => 'elevated 3/4 architectural view, never top-down or surveillance-like',
+                'camera_distance_expected' => 'controlled architectural view with artwork still dominant',
+                'camera_angle_notes_expected' => 'An elevated 3/4 architectural camera that shows the artwork in relation to the space while avoiding aerial, drone-like, or top-down views.',
+            ]
+        ];
+
         $finalProposals = [];
 
         $promptBuilder = new MockPromptBuilder();
-
-        $cameraViewsReparto = [
-            'front view',
-            'three-quarter left view',
-            'three-quarter right view',
-            'high-angle view',
-            'low-angle view',
-            'low floor wide low-angle view'
-        ];
-
-        $pIdx = 0;
-        foreach ($proposals as $prop) {
-            if ($limit === 6 && isset($cameraViewsReparto[$pIdx])) {
-                $prop = $this->patchProposalForCameraView($prop, $cameraViewsReparto[$pIdx]);
+        foreach ($proposals as $index => $prop) {
+            $position = $index + 1;
+            
+            // Populate deterministic specifications for the first 6 slots
+            if (isset($deterministicSpecs[$position])) {
+                $spec = $deterministicSpecs[$position];
+                
+                // Preserve Gemini's original camera view/angle
+                $prop['camera_view_original'] = trim((string)($prop['camera_view'] ?? $prop['camera_angle'] ?? ''));
+                
+                // Add deterministic metadata
+                $prop['camera_slot'] = $spec['camera_slot'];
+                $prop['camera_group_expected'] = $spec['camera_group_expected'];
+                $prop['camera_view_expected'] = $spec['camera_view_expected'];
+                $prop['camera_distance_expected'] = $spec['camera_distance_expected'];
+                $prop['camera_angle_notes_expected'] = $spec['camera_angle_notes_expected'];
+                
+                // Overwrite camera_view for compatibility with legacy components
+                $prop['camera_view'] = $spec['camera_view_expected'];
             }
-            $pIdx++;
 
-            $cameraView = trim((string)($prop['camera_view'] ?? $prop['camera_angle'] ?? 'front view'));
+            $cameraView = trim((string)($prop['camera_view'] ?? $prop['camera_angle'] ?? 'near-frontal subtle 3/4 commercial view'));
             $cameraDistance = trim((string)($prop['camera_distance'] ?? 'medium-close view'));
             $cameraNotes = trim((string)($prop['camera_angle_notes'] ?? ''));
             $mockupPrompt = trim((string)($prop['mockup_prompt'] ?? ''));
@@ -112,7 +164,7 @@ class MockupContextEngine
                 'scene' => "A " . ($prop['space_type'] ?? 'interior') . " with " . ($prop['atmosphere'] ?? 'neutral') . " atmosphere. Materials: " . implode(', ', (array)($prop['materials'] ?? [])),
                 'lighting' => $prop['lighting'] ?? 'soft light',
                 'camera' => $this->mapCameraAngle($cameraView, $cameraDistance),
-                'camera_group' => $this->mapCameraGroup($cameraView),
+                'camera_group' => isset($deterministicSpecs[$position]) ? $deterministicSpecs[$position]['camera_group_expected'] : $this->mapCameraGroup($cameraView, $position),
                 'camera_view' => $cameraView,
                 'camera_distance' => $cameraDistance,
                 'camera_angle_notes' => $cameraNotes,
@@ -123,6 +175,15 @@ class MockupContextEngine
                 'mockup_prompt' => $mockupPrompt,
                 'negative_prompt' => $negativePrompt,
             ];
+
+            if (isset($deterministicSpecs[$position])) {
+                $mappedContext['camera_slot'] = $prop['camera_slot'];
+                $mappedContext['camera_group_expected'] = $prop['camera_group_expected'];
+                $mappedContext['camera_view_expected'] = $prop['camera_view_expected'];
+                $mappedContext['camera_distance_expected'] = $prop['camera_distance_expected'];
+                $mappedContext['camera_angle_notes_expected'] = $prop['camera_angle_notes_expected'];
+                $mappedContext['camera_view_original'] = $prop['camera_view_original'];
+            }
 
             $mappedProfile = [
                 'one_line_curatorial_read' => $artworkAnalysis['one_line_curatorial_read'] ?? $artworkAnalysis['style_summary'] ?? 'Contemporary artwork presentation.',
@@ -157,66 +218,45 @@ class MockupContextEngine
         return $minimalAnalysis;
     }
 
-    private function patchProposalForCameraView(array $prop, string $targetView): array
+    private function validateCameraDistribution(array $proposals, int $limit): void
     {
-        $prop['camera_view'] = $targetView;
-        $prop['camera_angle'] = $targetView;
-
-        $mockupPrompt = trim((string)($prop['mockup_prompt'] ?? ''));
-
-        if ($targetView === 'front view') {
-            $prop['camera_distance'] = 'medium view';
-            $prop['camera_angle_notes'] = 'Centered, camera perpendicular to the artwork.';
-            // Clean up visual contradictions
-            $mockupPrompt = str_ireplace(
-                ['three-quarter', '3/4', 'side view', 'high-angle', 'low-angle', 'low floor'],
-                ['frontal', 'frontal', 'frontal view', 'eye-level', 'eye-level', 'eye-level'],
-                $mockupPrompt
-            );
-        } elseif ($targetView === 'three-quarter left view') {
-            $prop['camera_distance'] = 'medium-close view';
-            $prop['camera_angle_notes'] = 'Camera positioned to the left of the artwork, showing the left canvas edge wrapped with paint.';
-            $mockupPrompt = str_ireplace(
-                ['frontal view', 'perpendicular', 'right view', 'high-angle', 'low-angle', 'low floor'],
-                ['three-quarter left view', 'oblique left view', 'left view', 'eye-level', 'eye-level', 'eye-level'],
-                $mockupPrompt
-            );
-        } elseif ($targetView === 'three-quarter right view') {
-            $prop['camera_distance'] = 'medium-close view';
-            $prop['camera_angle_notes'] = 'Camera positioned to the right of the artwork, showing the right canvas edge wrapped with paint.';
-            $mockupPrompt = str_ireplace(
-                ['frontal view', 'perpendicular', 'left view', 'high-angle', 'low-angle', 'low floor'],
-                ['three-quarter right view', 'oblique right view', 'right view', 'eye-level', 'eye-level', 'eye-level'],
-                $mockupPrompt
-            );
-        } elseif ($targetView === 'high-angle view') {
-            $prop['camera_distance'] = 'medium view';
-            $prop['camera_angle_notes'] = 'High-angle shot looking down at the artwork and its surrounding floor area.';
-            $mockupPrompt = str_ireplace(
-                ['frontal view', 'perpendicular', 'low-angle', 'low floor'],
-                ['high-angle view', 'high-angle view', 'high-angle view', 'high-angle view'],
-                $mockupPrompt
-            );
-        } elseif ($targetView === 'low-angle view') {
-            $prop['camera_distance'] = 'medium view';
-            $prop['camera_angle_notes'] = 'Low-angle shot looking slightly up at the artwork.';
-            $mockupPrompt = str_ireplace(
-                ['frontal view', 'perpendicular', 'high-angle', 'low floor'],
-                ['low-angle view', 'low-angle view', 'low-angle view', 'low-angle view'],
-                $mockupPrompt
-            );
-        } elseif ($targetView === 'low floor wide low-angle view') {
-            $prop['camera_distance'] = 'wide view';
-            $prop['camera_angle_notes'] = 'Low floor wide shot, camera placed low to the floor looking up at the artwork and showing the floor details and expansive room.';
-            $mockupPrompt = str_ireplace(
-                ['frontal view', 'perpendicular', 'high-angle', 'close view', 'close-up'],
-                ['low floor wide low-angle view', 'wide low-angle view', 'low-angle view', 'wide view', 'wide view'],
-                $mockupPrompt
-            );
+        if ($limit !== 6) {
+            return;
         }
 
-        $prop['mockup_prompt'] = $mockupPrompt;
-        return $prop;
+        $expectedGroups = [
+            'near_frontal_subtle_3_4',
+            'soft_left_oblique',
+            'soft_right_oblique',
+            'controlled_low_3_4',
+            'stronger_artistic_3_4_7_8',
+            'elevated_3_4_architectural',
+        ];
+        $expectedLabels = [
+            'near-frontal subtle 3/4 commercial view',
+            'soft left-oblique view',
+            'soft right-oblique view',
+            'controlled low 3/4 view',
+            'stronger artistic 3/4 or 7/8 view',
+            'elevated 3/4 architectural view',
+        ];
+
+        foreach ($expectedGroups as $index => $expectedGroup) {
+            $proposal = $proposals[$index] ?? [];
+            $position = $index + 1;
+            $actualView = trim((string)($proposal['camera_view'] ?? $proposal['camera_angle'] ?? ''));
+            $actualGroup = $this->mapCameraGroup($actualView);
+
+            if ($actualGroup !== $expectedGroup) {
+                Logger::log(
+                    "MOCKUP_AUDIT: Camera distribution mismatch at proposal {$position}. " .
+                    "Expected: {$expectedGroup} ({$expectedLabels[$index]}). " .
+                    "Gemini original: '{$actualView}'. " .
+                    "Normalized: {$actualGroup}.",
+                    'warning'
+                );
+            }
+        }
     }
 
     private function buildAnalysisPrompt(array $metadata, array $imageMeta): string
@@ -505,6 +545,12 @@ class MockupContextEngine
             'commercial_reason',
             'mockup_prompt',
             'negative_prompt',
+            'camera_slot',
+            'camera_group_expected',
+            'camera_view_expected',
+            'camera_distance_expected',
+            'camera_angle_notes_expected',
+            'camera_view_original',
         ];
 
         $minimal = [];
@@ -697,6 +743,16 @@ class MockupContextEngine
                 'mockup_prompt' => $mapped['mockup_prompt'] ?? ($prop['mockup_prompt'] ?? ''),
                 'negative_prompt' => $mapped['negative_prompt'] ?? ($prop['negative_prompt'] ?? ''),
             ];
+
+            // Save deterministic fields inside context_json if present in $prop
+            if (isset($prop['camera_slot'])) {
+                $contextJson['camera_slot'] = $prop['camera_slot'];
+                $contextJson['camera_group_expected'] = $prop['camera_group_expected'];
+                $contextJson['camera_view_expected'] = $prop['camera_view_expected'];
+                $contextJson['camera_distance_expected'] = $prop['camera_distance_expected'];
+                $contextJson['camera_angle_notes_expected'] = $prop['camera_angle_notes_expected'];
+                $contextJson['camera_view_original'] = $prop['camera_view_original'];
+            }
 
             $stmtContext->execute([
                 'artwork_id' => $artworkId,

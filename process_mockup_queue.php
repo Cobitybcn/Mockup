@@ -1,4 +1,5 @@
 <?php
+// LEGACY / DO NOT USE IN PHASE 2.3 FLOW
 declare(strict_types=1);
 
 ini_set('max_execution_time', '0');
@@ -7,6 +8,21 @@ ini_set('log_errors', '1');
 ini_set('display_errors', PHP_SAPI === 'cli' ? '1' : '0');
 
 require_once __DIR__ . '/app/bootstrap.php';
+
+if (!defined('LEGACY_MOCKUP_FLOW_ENABLED') || !LEGACY_MOCKUP_FLOW_ENABLED) {
+    if (PHP_SAPI === 'cli') {
+        fwrite(STDERR, "Error: Legacy mockup flow disabled.\n");
+        exit(1);
+    } else {
+        http_response_code(400);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'ok' => false,
+            'error' => 'Legacy mockup flow disabled. Use Phase 2 reviewed mockup generation.'
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+}
 
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
@@ -67,9 +83,11 @@ if ($preAssignedJobId > 0) {
             }
 
             $seoParams = seo_params_for_queue_job($job);
+            $prompt = composed_prompt_for_queue_job($job);
             $generator = ServiceFactory::mockupGenerator();
-            $result = $generator->generate($imagePath, (string)$job['context_id'], (string)$job['prompt'], [
+            $result = $generator->generate($imagePath, (string)$job['context_id'], $prompt, [
                 'seo_params' => $seoParams,
+                'prompt_passthrough_mode' => $prompt,
             ]);
 
             $mockupId = (int)Database::withBusyRetry(function () use ($job, $rootFile, $result): int {
@@ -92,17 +110,15 @@ if ($preAssignedJobId > 0) {
             if ($mockupId > 0) {
                 try {
                     $pdo = Database::connection();
-                    $stmtContext = $pdo->prepare("SELECT * FROM mockup_contexts WHERE id = :id LIMIT 1");
-                    $stmtContext->execute(['id' => (string)$job['context_id']]);
-                    $contextRow = $stmtContext->fetch();
+                    $contextJson = context_json_for_queue_job($job);
                     
                     Logger::logMockupGeneration(
                         $mockupId,
                         (int)$job['artwork_id'],
                         (string)$job['context_id'],
-                        (string)$job['prompt'],
-                        $contextRow ? ($contextRow['camera_view'] ?? '') : '',
-                        $contextRow ? ($contextRow['human_presence'] ?? '') : ''
+                        $prompt,
+                        (string)($contextJson['camera_view'] ?? ''),
+                        (string)($contextJson['human_presence'] ?? '')
                     );
                 } catch (Throwable $logEx) {
                     Logger::log("Failed to log queue mockup audit: " . $logEx->getMessage(), 'error');
@@ -183,9 +199,11 @@ for ($i = 0; $i < $maxJobs; $i++) {
         }
 
         $seoParams = seo_params_for_queue_job($job);
+        $prompt = composed_prompt_for_queue_job($job);
         $generator = ServiceFactory::mockupGenerator();
-        $result = $generator->generate($imagePath, (string)$job['context_id'], (string)$job['prompt'], [
+        $result = $generator->generate($imagePath, (string)$job['context_id'], $prompt, [
             'seo_params' => $seoParams,
+            'prompt_passthrough_mode' => $prompt,
         ]);
 
         $mockupId = (int)Database::withBusyRetry(function () use ($job, $rootFile, $result): int {
@@ -209,17 +227,15 @@ for ($i = 0; $i < $maxJobs; $i++) {
         if ($mockupId > 0) {
             try {
                 $pdo = Database::connection();
-                $stmtContext = $pdo->prepare("SELECT * FROM mockup_contexts WHERE id = :id LIMIT 1");
-                $stmtContext->execute(['id' => (string)$job['context_id']]);
-                $contextRow = $stmtContext->fetch();
+                $contextJson = context_json_for_queue_job($job);
                 
                 Logger::logMockupGeneration(
                     $mockupId,
                     (int)$job['artwork_id'],
                     (string)$job['context_id'],
-                    (string)$job['prompt'],
-                    $contextRow ? ($contextRow['camera_view'] ?? '') : '',
-                    $contextRow ? ($contextRow['human_presence'] ?? '') : ''
+                    $prompt,
+                    (string)($contextJson['camera_view'] ?? ''),
+                    (string)($contextJson['human_presence'] ?? '')
                 );
             } catch (Throwable $logEx) {
                 Logger::log("Failed to log queue mockup audit: " . $logEx->getMessage(), 'error');
@@ -298,4 +314,31 @@ function seo_params_for_queue_job(array $job): array
         'imageType' => 'mockup',
         'extension' => 'jpg',
     ];
+}
+
+function context_row_for_queue_job(array $job): array
+{
+    $stmt = Database::connection()->prepare('SELECT * FROM mockup_contexts WHERE id = :id AND artwork_id = :artwork_id LIMIT 1');
+    $stmt->execute([
+        'id' => (string)$job['context_id'],
+        'artwork_id' => (int)$job['artwork_id'],
+    ]);
+    $context = $stmt->fetch();
+    if (!$context) {
+        throw new RuntimeException('No se encontro el contexto para componer el prompt ADMIN V7.');
+    }
+
+    return $context;
+}
+
+function context_json_for_queue_job(array $job): array
+{
+    $context = context_row_for_queue_job($job);
+    $contextJson = json_decode((string)($context['context_json'] ?? ''), true);
+    return is_array($contextJson) ? $contextJson : [];
+}
+
+function composed_prompt_for_queue_job(array $job): string
+{
+    return MockupBatchQueue::composeAdminPromptForContext(context_row_for_queue_job($job));
 }

@@ -72,14 +72,20 @@ class Display
             $parts[] = self::slugify($mockupContext);
         }
 
-        // Normalize camera angle: frontal, 3-4-left, 3-4-right
+        // Normalize camera angle/group for SEO filenames.
         $angle = strtolower(trim($cameraAngle));
-        if ($angle === 'front' || $angle === 'frontal') {
+        if ($angle === 'front' || $angle === 'frontal' || $angle === 'front view') {
             $angle = 'frontal';
-        } elseif ($angle === 'three_quarter_left' || $angle === '3_4_left' || $angle === '3-4-left' || $angle === 'left') {
+        } elseif ($angle === 'three_quarter_left' || $angle === '3_4_left' || $angle === '3-4-left' || $angle === 'left' || $angle === 'three-quarter left view') {
             $angle = '3-4-left';
-        } elseif ($angle === 'three_quarter_right' || $angle === '3_4_right' || $angle === '3-4-right' || $angle === 'right') {
+        } elseif ($angle === 'three_quarter_right' || $angle === '3_4_right' || $angle === '3-4-right' || $angle === 'right' || $angle === 'three-quarter right view') {
             $angle = '3-4-right';
+        } elseif ($angle === 'high_angle_aerial' || $angle === 'high-angle / aerial view' || $angle === 'high-angle view') {
+            $angle = 'high-angle-aerial';
+        } elseif ($angle === 'low_angle_contrapicado' || $angle === 'low-angle / contrapicado view' || $angle === 'low-angle view') {
+            $angle = 'low-angle-contrapicado';
+        } elseif ($angle === 'low_floor_wide_low_angle' || $angle === 'low floor wide low-angle view') {
+            $angle = 'low-floor-wide-low-angle';
         } else {
             $angle = '';
         }

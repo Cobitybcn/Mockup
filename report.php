@@ -1,9 +1,27 @@
 <?php
+// LEGACY / DO NOT USE IN PHASE 2.3 FLOW
 declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
 $currentUser = Auth::requireUser();
+
+if (!defined('LEGACY_MOCKUP_FLOW_ENABLED') || !LEGACY_MOCKUP_FLOW_ENABLED) {
+    $imgParam = basename(trim((string)($_GET['image'] ?? $_POST['image'] ?? '')));
+    $artIdParam = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
+    $resolvedId = $artIdParam;
+    if ($resolvedId <= 0 && $imgParam !== '') {
+        try {
+            $stmt = Database::connection()->prepare("SELECT id FROM artworks WHERE root_file = :root_file LIMIT 1");
+            $stmt->execute(['root_file' => $imgParam]);
+            $resolvedId = (int)$stmt->fetchColumn();
+        } catch (Throwable $e) {}
+    }
+    if ($resolvedId > 0) {
+        header('Location: mockup_prompt_drafts_review.php?id=' . $resolvedId);
+        exit;
+    }
+}
 
 function h($v): string
 {
@@ -2344,8 +2362,8 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                                 </div>
                             </div>
 
-                            <button type="submit" style="margin-top: 18px;" <?= $isAutoPending ? 'disabled' : '' ?>>
-                                <?= $existingMockup ? 'Regenerar' : ($isAutoPending ? 'Generating...' : 'Generate Mockup') ?>
+                            <button type="submit" style="margin-top: 18px;" disabled title="Legacy mockup flow disabled. Use Phase 2 reviewed mockup generation.">
+                                Legacy mockup flow disabled
                             </button>
                         </form>
 
@@ -2377,8 +2395,8 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                             }
                         }
                     ?>
-                    <?php if ($isAdmin): ?>
                     <div class="contexts-row-header" style="grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; margin-top: 20px; margin-bottom: 4px;">
+                        <?php if ($isAdmin && defined('LEGACY_MOCKUP_FLOW_ENABLED') && LEGACY_MOCKUP_FLOW_ENABLED): ?>
                         <button type="button"
                                 class="batch-generate-button"
                                 data-context-ids="<?= h(implode(',', $batchContextIds)) ?>"
@@ -2386,11 +2404,11 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                                 style="width: auto; padding: 8px 12px; font-size: 10px; letter-spacing: .08em; border: 1px solid var(--gal-accent); background: var(--gal-accent); color: #fff; border-radius: var(--gal-radius); text-transform: uppercase; font-weight: 700; cursor: pointer;">
                             <?= $batchHasActiveJob ? 'Generating...' : 'Legacy Batch Generator' ?>
                         </button>
+                        <?php endif; ?>
                         <span style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; color: var(--gal-muted);">Pending Proposals · Batch <?= h($batchIndex + 2) ?></span>
                         <div style="flex: 1; height: 1px; background: var(--gal-border);"></div>
                         <span style="font-size: 9px; color: var(--gal-muted); font-style: italic;">Ready for parallel generation</span>
                     </div>
-                    <?php endif; ?>
                     <?php foreach ($pendingBatch as $entry): ?>
                     <?php $i = $entry['i']; $ctx = $entry['ctx']; ?>
                     <?php
@@ -2603,8 +2621,8 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                                 </div>
                             </div>
 
-                            <button type="submit" style="margin-top: 18px;" <?= $isAutoPending ? 'disabled' : '' ?>>
-                                <?= $isAutoPending ? 'Generating...' : 'Generate Mockup' ?>
+                            <button type="submit" style="margin-top: 18px;" disabled title="Legacy mockup flow disabled. Use Phase 2 reviewed mockup generation.">
+                                Legacy mockup flow disabled
                             </button>
                         </form>
 

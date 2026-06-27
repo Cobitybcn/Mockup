@@ -1,4 +1,5 @@
 <?php
+// LEGACY / DO NOT USE IN PHASE 2.3 FLOW
 declare(strict_types=1);
 
 ini_set('max_execution_time', '180');
@@ -9,6 +10,16 @@ ini_set('log_errors', '1');
 set_time_limit(180); // punto #7: margen suficiente para timeout Python de 150 s
 
 require_once __DIR__ . '/app/bootstrap.php';
+
+if (!defined('LEGACY_MOCKUP_FLOW_ENABLED') || !LEGACY_MOCKUP_FLOW_ENABLED) {
+    http_response_code(400);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'ok' => false,
+        'error' => 'Legacy mockup flow disabled. Use Phase 2 reviewed mockup generation.'
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
 
 $jsonResponseRequested = (string)($_POST['ajax'] ?? $_GET['ajax'] ?? '') === '1' ||
     str_contains((string)($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json') ||

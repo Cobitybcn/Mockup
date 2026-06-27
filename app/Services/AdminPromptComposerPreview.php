@@ -116,52 +116,14 @@ class AdminPromptComposerPreview
             Logger::log("Artwork dimensions fallback used for artwork_id={$artworkId}. Reasons: {$reasonStr}", "warning");
         }
 
-        // Check if the ADMIN master prompt template contains variables for physical size
-        $hasDimensionVariables = (strpos($adminPrompt, '{{ARTWORK_WIDTH_CM}}') !== false
-            || strpos($adminPrompt, '{{ARTWORK_HEIGHT_CM}}') !== false
-            || strpos($adminPrompt, '{{ARTWORK_DEPTH_CM}}') !== false);
-
-        // First replace the variables if present
-        $normalizedAdmin = str_replace(
-            ['{{ARTWORK_WIDTH_CM}}', '{{ARTWORK_HEIGHT_CM}}', '{{ARTWORK_DEPTH_CM}}'],
-            [(string)$width, (string)$height, (string)$depth],
-            $normalizedAdmin
-        );
-
-        // Build the dynamic scale rules text blocks
-        $scaleCorrectionRule = "Scale correction rule:\n"
-            . "The artwork must be rendered at its actual physical size according to the Core JSON dimensions. Do not enlarge the canvas for visual dominance or dramatic impact. When a human figure is present, use the person as the primary scale reference. The artwork should appear as a real collectible artwork of the stated dimensions, not as an oversized installation piece. The human figure may be naturally cropped in close-up, near close-up, high-angle, low-angle, or low floor compositions. Do not enlarge the artwork or canvas to force full-body human figures, furniture, or the entire room into the frame.";
-
-        if ($hasDimensionVariables) {
-            // Do not inject a duplicate size statement since the variables were already present (and replaced)
-            $dimensionsBlock = $scaleCorrectionRule;
+        // Calculate orientation
+        $orientation = 'landscape';
+        if ($width > $height) {
+            $orientation = 'landscape';
+        } elseif ($width < $height) {
+            $orientation = 'portrait';
         } else {
-            // Inject the physical size sentence explicitly along with the scale rules
-            $dimensionsLine = "The artwork physical size is {$width} cm wide × {$height} cm high × {$depth} cm deep.";
-            $dimensionsBlock = "Artwork physical dimensions:\n"
-                . $dimensionsLine . "\n\n"
-                . $scaleCorrectionRule;
-        }
-
-        $negativeScaleRule = "Negative scale rule:\n"
-            . "No oversized artwork. No enlarged canvas for impact. No gallery-installation scale unless the Core JSON dimensions justify it. No artwork larger than its declared physical dimensions when compared to a standing person, furniture, windows, doorways, floorboards, or wall height. Do not create a monumental canvas unless the actual artwork dimensions justify it. No mural-scale painting. No oversized installation artwork. No physically impossible scale compared with the human figure, furniture, doors, windows, floorboards, or wall height.";
-
-        $target = '* Keep the physical scale believable.';
-        $replacement = "* Keep the physical scale believable.\n\n"
-            . "  " . str_replace("\n", "\n  ", $dimensionsBlock) . "\n\n"
-            . "  " . str_replace("\n", "\n  ", $negativeScaleRule);
-
-        if (strpos($normalizedAdmin, $target) !== false) {
-            $normalizedAdmin = str_replace($target, $replacement, $normalizedAdmin);
-        } else {
-            $header = "PHYSICAL ARTWORK RULES:";
-            if (strpos($normalizedAdmin, $header) !== false) {
-                $normalizedAdmin = str_replace(
-                    $header, 
-                    $header . "\n\n" . $dimensionsBlock . "\n\n" . $negativeScaleRule, 
-                    $normalizedAdmin
-                );
-            }
+            $orientation = 'square';
         }
 
         // Parse context fields
@@ -170,8 +132,22 @@ class AdminPromptComposerPreview
         // Build context block
         $contextBlock = $this->buildContextBlock($fields);
         
-        // Perform replacement exactly
-        $composed = str_replace('{{MOCKUP_CONTEXT_PROPOSAL}}', $contextBlock, $normalizedAdmin);
+        // Replace template variables
+        $replacements = [
+            '{{MOCKUP_CONTEXT_PROPOSAL}}' => $contextBlock,
+            '{{MOCKUP_CONTEXT_NEGATIVE_PROMPT}}' => $fields['negative_prompt'],
+            '{{ARTWORK_WIDTH_CM}}' => (string)$width,
+            '{{ARTWORK_HEIGHT_CM}}' => (string)$height,
+            '{{ARTWORK_DEPTH_CM}}' => (string)$depth,
+            '{{ARTWORK_ORIENTATION}}' => $orientation,
+            '{{ARTWORK_ROOT_FILE}}' => $rootFile,
+        ];
+
+        $composed = str_replace(
+            array_keys($replacements),
+            array_values($replacements),
+            $normalizedAdmin
+        );
         
         return $composed;
     }
@@ -193,9 +169,8 @@ class AdminPromptComposerPreview
         // Merge fields logically: row level or json level
         $name = $proposal['context_name'] ?? $json['context_name'] ?? $proposal['name'] ?? $json['name'] ?? '';
         $purpose = $json['context_role'] ?? $proposal['context_role'] ?? $proposal['purpose'] ?? $json['purpose'] ?? '';
-        
-        // scene_description maps to mockup_prompt, scene or scene_description
-        $sceneDesc = $json['scene_description'] ?? $proposal['scene_description'] ?? $json['scene'] ?? $proposal['scene'] ?? $json['mockup_prompt'] ?? $proposal['mockup_prompt'] ?? '';
+        $spaceType = $json['space_type'] ?? $proposal['space_type'] ?? '';
+        $atmosphere = $json['atmosphere'] ?? $proposal['atmosphere'] ?? '';
         
         $materials = $json['materials'] ?? $proposal['materials'] ?? '';
         if (is_array($materials)) {
@@ -204,20 +179,37 @@ class AdminPromptComposerPreview
 
         $lighting = $json['lighting'] ?? $proposal['lighting'] ?? '';
         $placement = $json['placement'] ?? $proposal['placement'] ?? '';
-        $cameraView = $json['camera_view'] ?? $proposal['camera_view'] ?? '';
-        $cameraDistance = $json['camera_distance'] ?? $proposal['camera_distance'] ?? '';
-        $cameraNotes = $json['camera_angle_notes'] ?? $proposal['camera_angle_notes'] ?? $json['camera_notes'] ?? $proposal['camera_notes'] ?? '';
+        $cameraView = $json['camera_view_expected'] ?? $proposal['camera_view_expected'] ?? $json['camera_view'] ?? $proposal['camera_view'] ?? '';
+        $cameraGroup = $json['camera_group'] ?? $proposal['camera_group'] ?? $json['camera_group_expected'] ?? $proposal['camera_group_expected'] ?? '';
+        $cameraDistance = $json['camera_distance_expected'] ?? $proposal['camera_distance_expected'] ?? $json['camera_distance'] ?? $proposal['camera_distance'] ?? '';
+        $cameraNotes = $json['camera_angle_notes_expected'] ?? $proposal['camera_angle_notes_expected'] ?? $json['camera_angle_notes'] ?? $proposal['camera_angle_notes'] ?? $json['camera_notes'] ?? $proposal['camera_notes'] ?? '';
+        $humanPresence = $json['human_presence'] ?? $proposal['human_presence'] ?? 'none';
+        $curatorialReason = $json['curatorial_reason'] ?? $proposal['curatorial_reason'] ?? '';
+        $commercialReason = $json['commercial_reason'] ?? $proposal['commercial_reason'] ?? '';
+        
+        // mockup_prompt
+        $mockupPrompt = $json['mockup_prompt'] ?? $proposal['mockup_prompt'] ?? $json['scene_description'] ?? $proposal['scene_description'] ?? $json['scene'] ?? $proposal['scene'] ?? '';
+        
+        // negative_prompt
+        $negPrompt = $json['negative_prompt'] ?? $proposal['negative_prompt'] ?? $proposal['prompt_negative'] ?? $json['prompt_negative'] ?? '';
 
         return [
             'context_name' => trim((string)$name),
             'purpose' => trim((string)$purpose),
-            'scene_description' => trim((string)$sceneDesc),
+            'space_type' => trim((string)$spaceType),
+            'atmosphere' => trim((string)$atmosphere),
             'materials' => trim((string)$materials),
             'lighting' => trim((string)$lighting),
             'placement' => trim((string)$placement),
             'camera_view' => trim((string)$cameraView),
+            'camera_group' => trim((string)$cameraGroup),
             'camera_distance' => trim((string)$cameraDistance),
             'camera_angle_notes' => trim((string)$cameraNotes),
+            'human_presence' => trim((string)$humanPresence),
+            'curatorial_reason' => trim((string)$curatorialReason),
+            'commercial_reason' => trim((string)$commercialReason),
+            'mockup_prompt' => trim((string)$mockupPrompt),
+            'negative_prompt' => trim((string)$negPrompt),
         ];
     }
 
@@ -227,18 +219,21 @@ class AdminPromptComposerPreview
     private function buildContextBlock(array $fields): string
     {
         return "MOCKUP CONTEXT PROPOSAL:\n"
-            . "Use the following context only as subordinated scene data. These values define the\n"
-            . "environment, placement, lighting and camera direction, but they do not override the\n"
-            . "artwork fidelity rules, scale rules, human figure policy, camera proximity rules, or\n"
-            . "negative directives stated in the admin master prompt.\n\n"
             . "* Scene Name: {$fields['context_name']}\n"
             . "* Purpose: {$fields['purpose']}\n"
-            . "* Scene Description: {$fields['scene_description']}\n"
+            . "* Space Type: {$fields['space_type']}\n"
+            . "* Atmosphere: {$fields['atmosphere']}\n"
             . "* Materials: {$fields['materials']}\n"
             . "* Lighting: {$fields['lighting']}\n"
             . "* Placement: {$fields['placement']}\n"
             . "* Camera View: {$fields['camera_view']}\n"
+            . "* Camera Group: {$fields['camera_group']}\n"
             . "* Camera Distance: {$fields['camera_distance']}\n"
-            . "* Camera Notes: {$fields['camera_angle_notes']}";
+            . "* Camera Notes: {$fields['camera_angle_notes']}\n"
+            . "* Human Presence: {$fields['human_presence']}\n"
+            . "* Curatorial Reason: {$fields['curatorial_reason']}\n"
+            . "* Commercial Reason: {$fields['commercial_reason']}\n"
+            . "* Mockup Prompt: {$fields['mockup_prompt']}\n"
+            . "* Negative Prompt: {$fields['negative_prompt']}";
     }
 }
