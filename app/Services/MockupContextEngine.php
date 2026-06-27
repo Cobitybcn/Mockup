@@ -191,8 +191,8 @@ class MockupContextEngine
             $mockupPrompt = preg_replace('/(?:The\s+)?(?:artwork|painting|canvas)\s+\'[^\']+\'\s*\([^)]*\)/i', 'The artwork', $mockupPrompt);
             $mockupPrompt = preg_replace('/(?:The\s+)?(?:artwork|painting|canvas)\s*\([^)]*\)/i', 'The artwork', $mockupPrompt);
             
-            // Replace: An abstract artwork with [colors/shapes...] -> The artwork (prior to hangs/is hung/is displayed/etc or comma + participle)
-            $mockupPrompt = preg_replace('/(?:An?\s+)?(?:abstract\s+)?(?:artwork|painting|canvas)\s+(?:with|featuring|showing|having|depicting)\s+.*?(?=\s+(?:hangs|is\s+hung|is\s+elegantly\s+displayed|is\s+displayed|is\s+mounted|is\s+placed)|\s*,\s*(?:[a-z]+\s+)?(?:installed|leaning|placed|mounted|hung|displayed))/i', 'The artwork', $mockupPrompt);
+            // Replace: An abstract artwork with [colors/shapes...] or A vibrant artwork, rich in... -> The artwork (prior to hangs/is hung/is displayed/etc or comma + participle)
+            $mockupPrompt = preg_replace('/(?:An?\s+)?(?:[a-z\-]+\s+){0,3}(?:artwork|painting|canvas)(?:\s*(?:with|featuring|showing|having|depicting)|,\s*rich\s+in)\s+.*?(?=\s+(?:hangs|is\s+hung|is\s+elegantly\s+displayed|is\s+displayed|is\s+mounted|is\s+placed)|\s*,\s*(?:[a-z]+\s+)?(?:installed|leaning|placed|mounted|hung|displayed))/i', 'The artwork', $mockupPrompt);
             
             // Remove sentences starting with "The painting features/has..." or "The artwork features/has..."
             $mockupPrompt = preg_replace('/(?:The\s+)?(?:artwork|painting|canvas)\s+(?:features|has|depicts|portrays)\s+[^.]*\./i', '', $mockupPrompt);
