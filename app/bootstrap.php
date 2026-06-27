@@ -32,4 +32,9 @@ require_once __DIR__ . '/Services/GeminiMockupGenerator.php';
 require_once __DIR__ . '/Services/OpenAIArtworkProcessor.php';
 require_once __DIR__ . '/Services/OpenAIArtworkAnalyzer.php';
 require_once __DIR__ . '/Services/OpenAIMockupGenerator.php';
+require_once __DIR__ . '/Services/MockupBranchContextBuilder.php';
+require_once __DIR__ . '/Services/MockupBranchPromptDraftBuilder.php';
+require_once __DIR__ . '/Services/MockupPromptApprovalService.php';
+require_once __DIR__ . '/Services/AdminPromptComposerPreview.php';
 require_once __DIR__ . '/Services/ServiceFactory.php';
+

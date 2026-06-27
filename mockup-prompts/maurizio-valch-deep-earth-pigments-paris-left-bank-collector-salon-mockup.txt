@@ -1,0 +1,269 @@
+Create a photorealistic premium art mockup using the provided artwork image as the exact visual reference.
+
+The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions, material presence and visual identity.
+
+Do not repaint, redesign, simplify, crop, mirror, recolor, replace or reinterpret the artwork.
+
+The artwork must remain the primary visual subject of the image. The surrounding interior must support the artwork, not compete with it. The mockup must feel emotionally persuasive, warm, refined, desirable, private, cultivated and premium.
+
+ARTWORK FIDELITY RULES:
+
+* The artwork must appear as the same physical painting provided in the reference image.
+* Preserve the visible artwork surface faithfully.
+* Preserve the original composition and color relationships.
+* Preserve visible marks, texture, layers, lines, fields, borders and material character.
+* Do not invent a different artwork.
+* Do not transform the painting into a similar painting.
+* Do not stylize the artwork.
+* Do not make the artwork decorative or generic.
+* Do not add a decorative frame unless the context proposal explicitly requires a frame.
+* Do not crop the artwork.
+* Do not cover the artwork.
+* Do not mirror the artwork.
+* Do not recolor the artwork.
+
+PHYSICAL ARTWORK RULES:
+
+* Treat the artwork as a real physical canvas.
+* Keep the real horizontal or vertical format of the provided artwork.
+* Keep the physical scale believable.
+
+  Artwork physical dimensions:
+  The artwork must keep its real physical scale:
+  120 cm wide × 80 cm high × 4 cm deep.
+  
+  Scale correction rule:
+  The artwork must be rendered at its actual physical size according to the Core JSON dimensions. Do not enlarge the canvas for visual dominance or dramatic impact. When a human figure is present, use the person as the primary scale reference. The artwork should appear as a real collectible artwork of the stated dimensions, not as an oversized installation piece.
+
+  Negative scale rule:
+  No oversized artwork. No enlarged canvas for impact. No gallery-installation scale unless the Core JSON dimensions justify it. No artwork larger than its declared physical dimensions when compared to a standing person, furniture, windows, doorways, floorboards, or wall height. Do not create a monumental canvas unless the actual artwork dimensions justify it. No mural-scale painting. No oversized installation artwork. No physically impossible scale compared with the human figure, furniture, doors, windows, floorboards, or wall height.
+* Preserve the visible canvas depth when the camera angle makes it visible.
+* The artwork must feel like an object installed in space, not a flat digital poster.
+* Do not enlarge the artwork unrealistically.
+* Do not shrink the artwork into a minor decorative element.
+
+ARTWORK PRIORITY:
+
+* The artwork is the main subject.
+* The room is secondary.
+* The human figure is secondary.
+* Furniture, architecture, lighting and decorative objects must support the artwork.
+* The context must increase the perceived importance of the artwork without overpowering it.
+* The final image must read first as a premium artwork mockup, not as an interior design photograph.
+
+COMPOSITION AND SCALE:
+
+* The artwork must be prominent in the frame.
+* Use a close-up or near close-up composition according to the context proposal.
+* Avoid wide shots.
+* Avoid full-room context.
+* Avoid excessive distance from the artwork.
+* Show only the necessary surrounding architecture to make the scene believable and premium.
+* The artwork must remain visually dominant and physically credible.
+* The scale relationship between the artwork and the human figure must feel realistic.
+
+HUMAN FIGURE POLICY:
+Include exactly one elegant human figure in scale with the artwork.
+
+The figure may be of any race or ethnicity.
+
+The figure must wear refined Western collector-style clothing and elegant shoes.
+
+The figure must stand quietly observing the artwork, not looking at the camera.
+
+The figure exists to support scale, atmosphere and collector presence.
+
+The figure must not:
+
+* touch the artwork
+* cover the artwork
+* overlap the artwork
+* crop the artwork
+* block the artwork
+* compete visually with the artwork
+* become the main subject
+* smile at the camera
+* pose like an influencer
+* create a fashion editorial image
+* create a sensual or theatrical pose
+
+Preferred clothing:
+
+* tailored suit
+* dark tailored suit
+* black dress
+* evening dress
+* long elegant dress
+* refined minimalist clothing
+* gallery-opening attire
+* private-collector attire
+* elegant shoes
+* polished leather shoes
+
+Avoid:
+
+* casual clothing
+* sportswear
+* jeans
+* exaggerated poses
+* smiling at camera
+* influencer poses
+* fashion editorial dominance
+* sensual poses
+* theatrical gestures
+
+CAMERA RULES:
+Use the camera view, camera distance and camera notes provided in the context proposal exactly as scene direction.
+
+The camera must support the artwork as the primary subject.
+
+If the context proposal says close-up view, use close-up view.
+
+If the context proposal says near close-up view, use near close-up view.
+
+Do not convert the camera into:
+
+* medium distance
+* medium wide
+* wide shot
+* full-room context
+* generic interior photography
+* fisheye perspective
+* distorted architecture
+
+The camera must not weaken the artwork’s prominence.
+
+LIGHTING RULES:
+Use warm, refined, premium lighting.
+
+The artwork must be illuminated clearly and beautifully.
+
+Lighting should support:
+
+* collector atmosphere
+* intimacy
+* warmth
+* architectural richness
+* quiet luxury
+* private viewing
+* emotional desirability
+
+Avoid:
+
+* flat lighting
+* harsh generic daylight
+* cold institutional lighting
+* overexposed white gallery lighting
+* lighting that hides the artwork surface
+* lighting that makes the room more important than the artwork
+
+MATERIAL AND ATMOSPHERE RULES:
+The surrounding space must feel real, tactile and premium.
+
+Materials should support the visible artwork, its scale, its colors and its atmosphere.
+
+The space must not feel like a generic stock interior.
+
+Prefer:
+
+* aged plaster
+* warm plaster walls
+* dark wood
+* walnut panels
+* oak panels
+* old parquet flooring
+* marble
+* travertine
+* limestone
+* polished stone
+* brushed bronze
+* linen curtains
+* historic moldings
+* European wall panels
+* tailored upholstery
+* leather seating
+* velvet seating
+* bronze lighting elements
+* soft drapery
+* high-quality rugs used with restraint
+* subtle reflections
+* warm architectural lighting
+
+Avoid:
+
+* cheap furniture
+* decorative clutter
+* generic showroom styling
+* sterile minimalism
+* cold white walls unless explicitly required by the context proposal
+* empty gallery stock appearance
+
+MOCKUP CONTEXT PROPOSAL:
+MOCKUP CONTEXT PROPOSAL:
+Use the following context only as subordinated scene data. These values define the
+environment, placement, lighting and camera direction, but they do not override the
+artwork fidelity rules, scale rules, human figure policy, camera proximity rules, or
+negative directives stated in the admin master prompt.
+
+* Scene Name: Paris Left Bank collector salon
+* Purpose: private collection
+* Scene Description: An elegant standing female figure 1.55m in private-collector attire, wearing polished leather shoes, stands observing the artwork, which is hung above a classic marble fireplace in a Paris Left Bank collector salon. The room includes a partial library, old parquet flooring, and a velvet armchair subtly in the background. The scene is illuminated by warm lamplight from within the interior. The camera is at three-quarter left view, near close-up.
+* Materials: partial library with antique books, old parquet flooring, marble fireplace, velvet armchairs
+* Lighting: lamplight within a collector interior
+* Placement: hung above a classic marble fireplace, flanked by bookshelves
+* Camera View: three-quarter left view
+* Camera Distance: near close-up view
+* Camera Notes: Three-quarter left view, slightly to the side, capturing the depth of the room and the artwork's prominent placement.
+
+The context proposal above is subordinated scene data. It defines the environment, placement, lighting, materials, camera view and camera distance for this specific mockup.
+
+The context proposal must not override:
+
+* artwork fidelity rules
+* artwork priority
+* physical artwork rules
+* human figure policy
+* camera proximity rules
+* negative directives
+
+NEGATIVE DIRECTIVES:
+No sterile gallery.
+No institutional space.
+No generic stock interior.
+No cold minimalism.
+No empty white-wall gallery.
+No cheap furniture.
+No decorative clutter.
+No casual clothing.
+No sportswear.
+No jeans.
+No exaggerated poses.
+No smiling at camera.
+No influencer pose.
+No fashion editorial dominance.
+No sensual pose.
+No theatrical gesture.
+No fisheye lens.
+No distorted architecture.
+No blurry image.
+No overexposure.
+No fake artwork.
+No poor quality.
+No bad composition.
+No invented artwork.
+No redesigned artwork.
+No repainted artwork.
+No cropped artwork.
+No mirrored artwork.
+No recolored artwork.
+No wide shot.
+No full-room context.
+No excessive distance from the artwork.
+No room-dominant composition.
+No human-dominant composition.
+No furniture-dominant composition.
+
+FINAL INTENTION:
+Create a warm, premium, photorealistic art mockup where the same artwork appears as an important physical canvas inside a refined collector environment.
+
+The interior must feel cultivated and desirable, but the artwork must remain the central subject.

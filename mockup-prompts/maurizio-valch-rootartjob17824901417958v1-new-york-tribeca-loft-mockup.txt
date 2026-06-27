@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 3 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: New York Tribeca Loft
+- Purpose: Urban artist-collector residence
+- Scene Description: A New York Tribeca loft with Urban chic, contemporary, creative living atmosphere. Materials: exposed brick, large glass windows, polished concrete floors, dark leather furniture
+- Lighting: Blue-hour window light, warm interior light against cool exterior dusk
+- Placement: On a large, open exposed brick wall, serving as a primary visual anchor
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: three-quarter right view
+- Distance: medium-close view
+- Notes: Camera positioned to the right of the artwork, showing the right canvas edge wrapped with paint.
+
+NEGATIVE DIRECTIVES:
+- suburban home, bright fluorescent lights, messy industrial space, cluttered decor, office wear
+
+AI PROPOSED MOCKUP DIRECTION:
+A vibrant New York Tribeca loft interior during blue hour, featuring exposed brick walls, polished concrete floors, and large glass windows. The artwork is displayed on a main brick wall, lit by warm interior lights contrasting with the twilight outside. An elegant standing male figure 1.80m stands to the left, admiring the artwork from a three-quarter right, medium-close perspective.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

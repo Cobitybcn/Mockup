@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: architect's studio residence
+- Purpose: atelier
+- Scene Description: A working studio / exhibition area with creative, refined, quietly contemplative atmosphere. Materials: warm concrete walls, long wooden table, architectural models, large northern light windows
+- Lighting: controlled dramatic side light
+- Placement: leaning naturally against a warm concrete wall, near architectural models
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: seven-eighths left view
+- Distance: near close-up view
+- Notes: Seven-eighths left view, providing a dynamic angle that emphasizes the artwork within its creative context.
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, generic, stock gallery, empty, cold minimalism, white walls, casual clothing, sportwear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial, sensual poses, theatrical gestures, fisheye lens, distorted, blurry, over-exposed, fake, poor quality, bad composition
+
+AI PROPOSED MOCKUP DIRECTION:
+An elegant standing female figure 1.55m in refined minimalist clothing, wearing polished leather shoes, stands in an architect's studio residence, contemplating the artwork. The artwork is leaning naturally against a warm concrete wall. In the foreground, architectural models rest on a long wooden table. Controlled dramatic side light streams from large northern light windows. The camera is at seven-eighths left view, near close-up.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Lisbon Tiled Townhouse
+- Purpose: historic, elegant private residence
+- Scene Description: A collector's private viewing room with intimate, historical charm, quiet discovery, soft light atmosphere. Materials: historic azulejo tiled wall (subtly patterned), dark rich wood flooring, aged plaster ceiling, wrought iron balcony details
+- Lighting: soft indirect light from a nearby window, augmented by an elegant lamplight
+- Placement: mounted on a subtly patterned historic azulejo tiled wall, creating a rich backdrop
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: contrapicado / low-angle seven-eighths right view
+- Distance: close-up view
+- Notes: Contrapicado / low-angle seven-eighths right view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.
+
+NEGATIVE DIRECTIVES:
+- modern interior, sterile environment, bright harsh lights, plain walls, casual clothing, empty room, new tiles.
+
+AI PROPOSED MOCKUP DIRECTION:
+A charming Lisbon tiled townhouse, specifically a collector's private viewing room, showcasing a historic azulejo tiled wall with subtle patterns. Dark rich wood flooring and an aged plaster ceiling are visible, along with wrought iron balcony details. The artwork is mounted on the azulejo tiled wall, illuminated by soft indirect light from a nearby window and an elegant lamplight. An elegant standing female figure 1.55m is observing the piece from a contrapicado / low-angle seven-eighths right view, close-up view, with the camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

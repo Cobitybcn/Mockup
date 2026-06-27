@@ -2377,18 +2377,20 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                             }
                         }
                     ?>
+                    <?php if ($isAdmin): ?>
                     <div class="contexts-row-header" style="grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; margin-top: 20px; margin-bottom: 4px;">
                         <button type="button"
                                 class="batch-generate-button"
                                 data-context-ids="<?= h(implode(',', $batchContextIds)) ?>"
                                 <?= $batchHasActiveJob ? 'disabled' : '' ?>
                                 style="width: auto; padding: 8px 12px; font-size: 10px; letter-spacing: .08em; border: 1px solid var(--gal-accent); background: var(--gal-accent); color: #fff; border-radius: var(--gal-radius); text-transform: uppercase; font-weight: 700; cursor: pointer;">
-                            <?= $batchHasActiveJob ? 'Generating...' : 'Generate Batch' ?>
+                            <?= $batchHasActiveJob ? 'Generating...' : 'Legacy Batch Generator' ?>
                         </button>
                         <span style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; color: var(--gal-muted);">Pending Proposals · Batch <?= h($batchIndex + 2) ?></span>
                         <div style="flex: 1; height: 1px; background: var(--gal-border);"></div>
                         <span style="font-size: 9px; color: var(--gal-muted); font-style: italic;">Ready for parallel generation</span>
                     </div>
+                    <?php endif; ?>
                     <?php foreach ($pendingBatch as $entry): ?>
                     <?php $i = $entry['i']; $ctx = $entry['ctx']; ?>
                     <?php
@@ -2620,6 +2622,10 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
         </div>
 
             <div class="back">
+                <?php if ($artworkId): ?>
+                    <a href="artwork_details.php?id=<?= (int)$artworkId ?>">Back to step 4 (Artwork Details)</a>
+                    &nbsp;·&nbsp;
+                <?php endif; ?>
                 <a href="artwork_new.php">Back to step 1</a>
                 &nbsp;·&nbsp;
                 <a href="dashboard.php">Dashboard</a>
@@ -2958,7 +2964,7 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                 batchPollingTimer = window.setTimeout(pollBatchStatus, 1000);
             } catch (error) {
                 button.disabled = false;
-                button.textContent = 'Generate Batch';
+                button.textContent = 'Legacy Batch Generator';
                 contextIds.forEach((contextId) => {
                     const card = document.querySelector(`.card[data-context-id="${CSS.escape(String(contextId))}"]`);
                     if (!card) {

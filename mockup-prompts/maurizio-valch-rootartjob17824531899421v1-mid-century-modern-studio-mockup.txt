@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Mid-Century Modern Studio
+- Purpose: artist's private working studio
+- Scene Description: A architect's studio residence with creative, focused, mid-century inspired, diffused light atmosphere. Materials: exposed brick wall, concrete floor, large factory-style windows, simple wooden easel, metal shelving
+- Lighting: diffused daylight from large windows, soft practical studio lights
+- Placement: resting naturally against a textured exposed brick wall, on a simple wooden easel
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: seven-eighths left view
+- Distance: close-up view
+- Notes: Seven-eighths view from the left, slightly from above, showing the immediate context of the studio.
+
+NEGATIVE DIRECTIVES:
+- sterile gallery, art exhibition, finished home interior, bright lights, unorganized mess, dirty studio.
+
+AI PROPOSED MOCKUP DIRECTION:
+A mid-century modern architect's studio residence, with an exposed brick wall and concrete floor. The artwork rests naturally against the textured exposed brick wall, on a simple wooden easel. Diffused daylight streams from large factory-style windows, complemented by soft practical studio lights. An elegant standing female figure 1.55m is observing the piece from a seven-eighths left view, close-up view, slightly from above.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Milanese collector apartment
+- Purpose: private residence
+- Scene Description: A private viewing room with intellectual luxury, sophisticated, contemporary atmosphere. Materials: dark parquet, warm plaster walls, Italian design furniture, sculptural lamps
+- Lighting: museum-grade spotlights with warmth
+- Placement: mounted on a warm, textured plaster wall, central to the room
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: three-quarter right view
+- Distance: near close-up view
+- Notes: Three-quarter right view, capturing the artwork's depth and interaction with the sophisticated Milanese setting.
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, generic, stock gallery, empty, cold minimalism, white walls, casual clothing, sportwear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial, sensual poses, theatrical gestures, fisheye lens, distorted, blurry, over-exposed, fake, poor quality, bad composition
+
+AI PROPOSED MOCKUP DIRECTION:
+An elegant standing female figure 1.55m in gallery-opening attire, wearing elegant shoes, is positioned, observing the artwork that is centrally mounted on a warm, textured plaster wall in a Milanese collector apartment. The room features dark parquet flooring and subtle Italian design furniture. Museum-grade spotlights with warmth specifically illuminate the artwork. The camera is at three-quarter right view, near close-up.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

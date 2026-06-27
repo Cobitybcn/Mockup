@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Cycladic collector house
+- Purpose: private residence
+- Scene Description: A living space with minimalist, serene, Mediterranean, sublime atmosphere. Materials: white minimalist architecture, soft arches, pale stone floors, ceramic objects
+- Lighting: late afternoon Mediterranean light, soft architectural wall wash
+- Placement: hung on a subtly textured white wall in an arched alcove
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: contrapicado / low-angle seven-eighths left view
+- Distance: near close-up view
+- Notes: Contrapicado / low-angle seven-eighths left view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.
+
+NEGATIVE DIRECTIVES:
+- sterile, institutional, generic, stock gallery, empty, cold minimalism, white walls, casual clothing, sportwear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial, sensual poses, theatrical gestures, fisheye lens, distorted, blurry, over-exposed, fake, poor quality, bad composition
+
+AI PROPOSED MOCKUP DIRECTION:
+An elegant standing female figure 1.55m in an elegant long dress, wearing elegant shoes, stands in a Cycladic collector house living space, looking up slightly at the artwork, which is hung on a subtly textured white wall within a soft arched alcove. Pale stone floors and ceramic objects are present. Late afternoon Mediterranean light fills the room, complemented by a soft architectural wall wash. The camera is at contrapicado / low-angle seven-eighths left view, below the artwork centerline, looking slightly upward, not eye-level, no fisheye, near close-up.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

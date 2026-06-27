@@ -1,0 +1,122 @@
+[
+    {
+        "id": 1304,
+        "artwork_file": "base_artwork_gemini_job_1782468817_5176_v1.png",
+        "mockup_file": "maurizio-valch-rootartjob17824688175176v1-minimalist-contemporary-studio-mockup-02.jpg",
+        "context_id": "1632",
+        "created_at": "2026-06-26T10:20:03+00:00",
+        "context_name": "Minimalist contemporary studio",
+        "camera_view": "high-angle view",
+        "camera_distance": "medium view"
+    },
+    {
+        "id": 1303,
+        "artwork_file": "base_artwork_gemini_job_1782468817_5176_v1.png",
+        "mockup_file": "maurizio-valch-rootartjob17824688175176v1-florentine-renaissance-townhouse-mockup-02.jpg",
+        "context_id": "1631",
+        "created_at": "2026-06-26T10:19:27+00:00",
+        "context_name": "Florentine Renaissance townhouse",
+        "camera_view": "three-quarter right view",
+        "camera_distance": "medium-close view"
+    },
+    {
+        "id": 1302,
+        "artwork_file": "base_artwork_gemini_job_1782468817_5176_v1.png",
+        "mockup_file": "maurizio-valch-rootartjob17824688175176v1-new-york-tribeca-loft-mockup-02.jpg",
+        "context_id": "1630",
+        "created_at": "2026-06-26T10:18:14+00:00",
+        "context_name": "New York Tribeca loft",
+        "camera_view": "three-quarter left view",
+        "camera_distance": "medium-close view"
+    },
+    {
+        "id": 1301,
+        "artwork_file": "base_artwork_gemini_job_1782468817_5176_v1.png",
+        "mockup_file": "maurizio-valch-rootartjob17824688175176v1-paris-left-bank-collector-salon-mockup-02.jpg",
+        "context_id": "1629",
+        "created_at": "2026-06-26T10:17:28+00:00",
+        "context_name": "Paris Left Bank collector salon",
+        "camera_view": "front view",
+        "camera_distance": "medium view"
+    },
+    {
+        "id": 1300,
+        "artwork_file": "base_artwork_gemini_job_1782468817_5176_v1.png",
+        "mockup_file": "maurizio-valch-rootartjob17824688175176v1-paris-left-bank-collector-salon-mockup.jpg",
+        "context_id": "1629",
+        "created_at": "2026-06-26T10:16:51+00:00",
+        "context_name": "Paris Left Bank collector salon",
+        "camera_view": "front view",
+        "camera_distance": "medium view"
+    },
+    {
+        "id": 1299,
+        "artwork_file": "base_artwork_gemini_job_1782468817_5176_v1.png",
+        "mockup_file": "maurizio-valch-rootartjob17824688175176v1-london-townhouse-collector-room-mockup.jpg",
+        "context_id": "1634",
+        "created_at": "2026-06-26T10:16:21+00:00",
+        "context_name": "London townhouse collector room",
+        "camera_view": "low floor wide low-angle view",
+        "camera_distance": "wide view"
+    },
+    {
+        "id": 1298,
+        "artwork_file": "base_artwork_gemini_job_1782468817_5176_v1.png",
+        "mockup_file": "maurizio-valch-rootartjob17824688175176v1-florentine-renaissance-townhouse-mockup.jpg",
+        "context_id": "1631",
+        "created_at": "2026-06-26T10:16:20+00:00",
+        "context_name": "Florentine Renaissance townhouse",
+        "camera_view": "three-quarter right view",
+        "camera_distance": "medium-close view"
+    },
+    {
+        "id": 1297,
+        "artwork_file": "base_artwork_gemini_job_1782468817_5176_v1.png",
+        "mockup_file": "maurizio-valch-rootartjob17824688175176v1-ibizan-minimalist-villa-mockup.jpg",
+        "context_id": "1633",
+        "created_at": "2026-06-26T10:16:01+00:00",
+        "context_name": "Ibizan minimalist villa",
+        "camera_view": "low-angle view",
+        "camera_distance": "medium view"
+    },
+    {
+        "id": 1296,
+        "artwork_file": "base_artwork_gemini_job_1782468817_5176_v1.png",
+        "mockup_file": "maurizio-valch-rootartjob17824688175176v1-new-york-tribeca-loft-mockup.jpg",
+        "context_id": "1630",
+        "created_at": "2026-06-26T10:16:00+00:00",
+        "context_name": "New York Tribeca loft",
+        "camera_view": "three-quarter left view",
+        "camera_distance": "medium-close view"
+    },
+    {
+        "id": 1295,
+        "artwork_file": "base_artwork_gemini_job_1782468817_5176_v1.png",
+        "mockup_file": "maurizio-valch-rootartjob17824688175176v1-minimalist-contemporary-studio-mockup.jpg",
+        "context_id": "1632",
+        "created_at": "2026-06-26T10:15:58+00:00",
+        "context_name": "Minimalist contemporary studio",
+        "camera_view": "high-angle view",
+        "camera_distance": "medium view"
+    },
+    {
+        "id": 1294,
+        "artwork_file": "base_artwork_gemini_job_1782455910_5769_v1.png",
+        "mockup_file": "maurizio-valch-rootartjob17824559105769v1-private-foundation-exhibition-room-mockup.jpg",
+        "context_id": "1628",
+        "created_at": "2026-06-26T06:57:41+00:00",
+        "context_name": "Private Foundation Exhibition Room",
+        "camera_view": "contrapicado / low-angle seven-eighths right view",
+        "camera_distance": "near close-up view"
+    },
+    {
+        "id": 1293,
+        "artwork_file": "base_artwork_gemini_job_1782455910_5769_v1.png",
+        "mockup_file": "maurizio-valch-rootartjob17824559105769v1-renaissance-old-master-atelier-mockup-02.jpg",
+        "context_id": "1627",
+        "created_at": "2026-06-26T06:56:55+00:00",
+        "context_name": "Renaissance / Old Master Atelier",
+        "camera_view": "contrapicado / low-angle seven-eighths left view",
+        "camera_distance": "close-up view"
+    }
+]

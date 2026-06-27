@@ -1,0 +1,127 @@
+{
+    "core_schema_version": "1.1",
+    "artwork": {
+        "artwork_id": 371,
+        "job_id": "job_1782455910_5769",
+        "source_image": "main_artwork.jpg",
+        "selected_root_file": "base_artwork_gemini_job_1782455910_5769_v1.png",
+        "dimensions": {
+            "width_cm": 120,
+            "height_cm": 80,
+            "depth_cm": 3,
+            "orientation": "horizontal",
+            "aspect_ratio": 1.5
+        }
+    },
+    "root_artwork_views": {
+        "three_quarter_left": {
+            "file": "base_artwork_gemini_job_1782455910_5769_v2.png",
+            "role": "three-quarter left root view"
+        },
+        "frontal": {
+            "file": "base_artwork_gemini_job_1782455910_5769_v1.png",
+            "role": "frontal root view"
+        },
+        "three_quarter_right": {
+            "file": "base_artwork_gemini_job_1782455910_5769_v3.png",
+            "role": "three-quarter right root view"
+        },
+        "selected_view": "frontal"
+    },
+    "physical_artwork_reference": {
+        "object_type": "stretched_canvas",
+        "is_physical_object": true,
+        "depth_cm": 3,
+        "has_visible_edges": true,
+        "paint_continues_on_edges": null,
+        "edge_finish": null,
+        "view_observations": {
+            "frontal": {
+                "file": "base_artwork_gemini_job_1782455910_5769_v1.png",
+                "visible_edges": [],
+                "canvas_depth_visible": false,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "primary_composition_reference",
+                    "frontal_mockup_reference"
+                ]
+            },
+            "three_quarter_left": {
+                "file": "base_artwork_gemini_job_1782455910_5769_v2.png",
+                "visible_edges": [
+                    "left_edge"
+                ],
+                "canvas_depth_visible": true,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "left_oblique_reference",
+                    "canvas_depth_reference"
+                ]
+            },
+            "three_quarter_right": {
+                "file": "base_artwork_gemini_job_1782455910_5769_v3.png",
+                "visible_edges": [
+                    "right_edge"
+                ],
+                "canvas_depth_visible": true,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "right_oblique_reference",
+                    "canvas_depth_reference"
+                ]
+            }
+        }
+    },
+    "visual_analysis": {
+        "visual_language": null,
+        "composition": null,
+        "dominant_colors": [],
+        "secondary_colors": [],
+        "materials_or_surface": null,
+        "texture": null,
+        "spatial_depth": null,
+        "light_behavior": null,
+        "gesture_or_mark_making": null,
+        "emotional_energy": null,
+        "symbolic_elements": [],
+        "style_family": null
+    },
+    "artwork_identity": {
+        "short_identity": "This abstract composition features a prominent vertical red axis dividing two distinct visual fields, anchored by a warm and expansive color palette.",
+        "expanded_identity": "A prominent dark red vertical axis anchors the composition, positioned slightly left of center. The canvas divides into two distinct yet harmonizing visual territories. Layered fields of warm earth tones meet expansive skies with broad, visible brushstrokes. An atmosphere of balanced opposition emerges from the structured formal elements. The painting holds its medium-large scale with quiet authority and deliberate placement.",
+        "keywords": [],
+        "do_not_alter_rules": [
+            "Do not repaint the artwork.",
+            "Do not redesign the artwork.",
+            "Do not crop the artwork.",
+            "Do not mirror the artwork.",
+            "Do not recolor the artwork.",
+            "Do not reinterpret the artwork.",
+            "Preserve composition, proportions, colors, marks, texture and visual identity."
+        ]
+    },
+    "publishing_texts": {
+        "suggested_titles": [
+            {
+                "title": "Vertical Red Axis",
+                "subtitle": "This abstract composition features a prominent vertical red axis dividing two distinct visual fields, anchored by a warm and expansive color palette.",
+                "description": "A prominent dark red vertical axis anchors the composition, positioned slightly left of center. The canvas divides into two distinct yet harmonizing visual territories. Layered fields of warm earth tones meet expansive skies with broad, visible brushstrokes. An atmosphere of balanced opposition emerges from the structured formal elements. The painting holds its medium-large scale with quiet authority and deliberate placement."
+            },
+            {
+                "title": "Orange Field Layers",
+                "subtitle": "An expressive abstract painting builds an atmospheric landscape through layered fields of vibrant orange and yellow, punctuated by geometric red forms.",
+                "description": "Rich orange and ochre fields dominate the lower half, creating a sense of grounded depth. The composition unfolds with a visible texture of dense pigment, building a subtle relief. Broad, expressive brushstrokes define planes of color, from deep reds to soft blues and luminous yellows. This material richness cultivates an atmosphere of vibrant, yet controlled, energy. The surface holds its substantial dimensions with confident and deliberate weight."
+            },
+            {
+                "title": "Split Horizon Tension",
+                "subtitle": "The structural division of this geometric landscape creates a compelling spatial tension between earthly tones and an open, light-filled horizon.",
+                "description": "A clear horizon line on the right plane opens the spatial field, presenting an abstract, sun-like form. The composition thoughtfully balances geometric segmentation with organic forms and atmospheric color transitions. The tension between the left's compressed landscape and the right's open vista is palpable. It creates a resonant atmosphere of dual perspectives within a unified plane. The work commands presence through its powerful structural and chromatic dialogue."
+            }
+        ]
+    },
+    "technical_metadata": {
+        "created_at": "2026-06-26T06:40:35+00:00",
+        "source_analysis_file": "base_artwork_gemini_job_1782455910_5769_v1.analysis.json",
+        "source_analysis_hash": "bb3c15692eb7d6ccde093f2f4ed672a4"
+    }
+}

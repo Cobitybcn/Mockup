@@ -1,0 +1,70 @@
+{
+    "artwork_id": 366,
+    "core_schema_version": "1.1",
+    "source_core_json": "analysis/core/366.core.json",
+    "branches": [
+        {
+            "branch_id": 1,
+            "source_title": "Luminous Blocks Recess",
+            "source_subtitle": "An abstract artwork displays three distinct, vibrantly colored geometric forms set within a deep, layered field of dark reds and browns.",
+            "source_description": "The artwork prominently features three luminous block-like forms, asymmetrically placed across an expansive, dark terrain. The composition is organized by subtle horizontal divisions, suggesting layered fields that recede into depth. Within these blocks, vibrant turquoise and energetic red pigments are applied with visible texture and active brushwork. A profound, almost atmospheric quality emerges from the interplay of deep background and luminous foreground elements. This piece holds a quiet, yet powerful, structural presence across its considerable horizontal format.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": null,
+                "space_character": null,
+                "lighting_bias": null,
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": "base_artwork_gemini_job_1782392482_6423_v1.png",
+                "three_quarter_left": "base_artwork_gemini_job_1782392482_6423_v2.png",
+                "three_quarter_right": "base_artwork_gemini_job_1782392482_6423_v3.png",
+                "fallback": "base_artwork_gemini_job_1782392482_6423_v1.png"
+            }
+        },
+        {
+            "branch_id": 2,
+            "source_title": "Maroon Surface Marks",
+            "source_subtitle": "This expressive piece features a rich, dark surface where contrasting areas of bright red and turquoise emerge with visible textural complexity.",
+            "source_description": "A vast field of deep maroon dominates the canvas, creating a rich and resonant visual ground. Against this, areas of reddish-brown and vivid, almost electric, blue and red appear as distinct, textured events. The surface reveals an interplay of smooth, deep pigment with areas of gestural mark-making and layered color within the focal forms. An atmosphere of enigmatic depth and restrained energy is carefully constructed through this material dialogue. The work asserts a significant, tactile presence through its carefully worked and deeply colored surface.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": null,
+                "space_character": null,
+                "lighting_bias": null,
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": "base_artwork_gemini_job_1782392482_6423_v1.png",
+                "three_quarter_left": "base_artwork_gemini_job_1782392482_6423_v2.png",
+                "three_quarter_right": "base_artwork_gemini_job_1782392482_6423_v3.png",
+                "fallback": "base_artwork_gemini_job_1782392482_6423_v1.png"
+            }
+        },
+        {
+            "branch_id": 3,
+            "source_title": "Layered Field Threshold",
+            "source_subtitle": "A spatial composition defined by horizontal divisions and subtle linear elements creates a sense of profound depth and quiet tension across the canvas.",
+            "source_description": "Horizontal lines subtly define a series of layered fields across the artwork, with the darkest expanse resting at the top. The composition creates a sensation of deep spatial recession, punctuated by brightly articulated forms that act as visual anchors. Fine white lines trace delicate thresholds, dividing the rich, dark and reddish-brown planes. This creates a contemplative atmosphere, drawing the eye across the canvas's quiet, expansive breadth. The structural tension between these receding layers and vibrant focal points establishes a compelling visual weight.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": "contemplative",
+                "space_character": null,
+                "lighting_bias": null,
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": "base_artwork_gemini_job_1782392482_6423_v1.png",
+                "three_quarter_left": "base_artwork_gemini_job_1782392482_6423_v2.png",
+                "three_quarter_right": "base_artwork_gemini_job_1782392482_6423_v3.png",
+                "fallback": "base_artwork_gemini_job_1782392482_6423_v1.png"
+            }
+        }
+    ]
+}

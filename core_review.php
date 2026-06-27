@@ -471,10 +471,14 @@ $curatedMockupsUrl = $queuedMockups > 0
                     <p>Core metadata and visual exploration dashboard for the selected artwork.</p>
                 </div>
                 <div class="topbar-actions">
+                    <a class="button-link secondary" href="artwork_details.php?id=<?= (int)$id ?>">Artwork Details</a>
                     <?php if (!empty($artwork['root_file'])): ?>
-                        <a class="button-link" href="<?= htmlspecialchars($curatedMockupsUrl, ENT_QUOTES, 'UTF-8') ?>">Curated Mockups</a>
+                        <a class="button-link" href="mockup_prompt_drafts_review.php?id=<?= (int)$id ?>">Review Final Mockup Prompts</a>
+                        <?php if (Auth::isAdmin($user)): ?>
+                            <a class="button-link secondary" href="curated_mockups.php?image=<?= rawurlencode($rootFile) ?>&id=<?= (int)$id ?>&legacy=1">Curated Mockups (Legacy)</a>
+                        <?php endif; ?>
                     <?php endif; ?>
-                    <a class="button-link secondary" href="artwork.php?id=<?= (int)$id ?>">Artwork Details</a>
+                    <a class="button-link secondary" href="mockup_branches_review.php?id=<?= (int)$id ?>">View Mockup Branch Contexts</a>
                 </div>
             </div>
 

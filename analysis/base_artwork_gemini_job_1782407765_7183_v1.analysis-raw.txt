@@ -1,0 +1,155 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Field of forms",
+      "subtitle": "An abstract painting presenting three vividly colored, textured blocks resting within a vast, subtly delineated reddish-brown field.",
+      "description": "Three illuminated, rectangular forms emerge prominently within an expansive, dark, layered ground. The composition organizes these vivid elements across a vast, horizontally striated field, creating a sense of distance and presence. Rich reddish-brown hues form the deep surface, dramatically contrasted by saturated red and brilliant cyan impasto within the focal blocks. This interplay conjures an atmosphere of profound depth, where energetic points activate a quiet, encompassing space. The work's medium scale holds a weighty, contained energy, anchoring the visual tension on its surface."
+    },
+    {
+      "title": "Deep earth pigments",
+      "subtitle": "This expressive abstract artwork features fields of deep red and black hues, punctuated by vibrant impasto within distinct rectangular areas.",
+      "description": "A profound, earthy red-brown field dominates the canvas, creating a deep, resonant ground for focused activity. Within this expansive plane, three distinct rectangular structures are carefully positioned, guiding the viewer's gaze across subtle horizontal divisions. The surface explores dense pigment, where deep crimson tones meet vibrant, heavily worked impasto of red and cyan in these striking forms. An atmosphere of ancient, primal energy emanates from the material depth and the sharp contrast of contained brilliance. Its measured scale and material richness imbue the work with a significant, tangible presence."
+    },
+    {
+      "title": "Stratified red field",
+      "subtitle": "The abstract composition creates a layered spatial tension through horizontal divisions that cut across a rich, dark terrestrial plane.",
+      "description": "An expansive, dark red field settles across the canvas, delineated by subtle horizontal strata that define a deep, abstract landscape. Three distinct luminous blocks interrupt this planar depth, placed asymmetrically to generate a compelling, dynamic tension. The surface reveals layers of deep red-brown pigment, textured by fine lines and erupting into vivid, thickly applied red and blue within the central forms. The visible structure and color relationship evoke a feeling of contained power, a meditative journey across a profound territory. This work's horizontal format and internal divisions create a powerful spatial pressure, holding its visual weight."
+    }
+  ],
+  "contextual_proposals": [
+    {
+      "context_name": "Venetian palazzo interior",
+      "context_role": "private residence",
+      "space_type": "living room",
+      "atmosphere": "historical and warm, luxurious, contemplative",
+      "materials": [
+        "aged plaster",
+        "stuccos",
+        "venetian terrazzo floors",
+        "dark wood panels"
+      ],
+      "lighting": "warm evening gallery lighting",
+      "placement": "hung on an aged pale plaster wall, above a refined dark wood console table",
+      "camera_view": "front view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Eye-level front view, observing the artwork and its immediate surroundings.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "The artwork's actual color relationship between deep reds and vibrant primary accents resonates with the historical richness and faded grandeur of the palazzo.",
+      "commercial_reason": "The scale format of the artwork makes it an ideal focal point, asserting its presence without overwhelming the intricate details of a classic Venetian interior.",
+      "mockup_prompt": "An elegant standing female figure 1.55m in refined minimalist clothing, wearing elegant shoes, stands facing the artwork on a warm, aged plaster wall in a Venetian palazzo living room. The room features high windows with views towards a canal, with subtle reflections. The floor is venetian terrazzo, and there are dark wood panels on an adjacent wall. Warm evening gallery lighting illuminates the artwork. The camera is at eye-level, front view, near close-up.",
+      "negative_prompt": "sterile, institutional, generic, stock gallery, empty, cold minimalism, white walls, casual clothing, sportwear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial, sensual poses, theatrical gestures, fisheye lens, distorted, blurry, over-exposed, fake, poor quality, bad composition"
+    },
+    {
+      "context_name": "Paris Left Bank collector salon",
+      "context_role": "private collection",
+      "space_type": "salon",
+      "atmosphere": "cultivated elegance, private, intellectual",
+      "materials": [
+        "partial library with antique books",
+        "old parquet flooring",
+        "marble fireplace",
+        "velvet armchairs"
+      ],
+      "lighting": "lamplight within a collector interior",
+      "placement": "hung above a classic marble fireplace, flanked by bookshelves",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Three-quarter left view, slightly to the side, capturing the depth of the room and the artwork's prominent placement.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "The central movement created by the staggered forms in the artwork mirrors the curated flow of intellectual curiosity within a Left Bank salon.",
+      "commercial_reason": "The visible surface marks and textural interplay offer a rich tactile experience that complements the refined materiality of antique parquet and velvet, enhancing desirability.",
+      "mockup_prompt": "An elegant standing female figure 1.55m in private-collector attire, wearing polished leather shoes, stands observing the artwork, which is hung above a classic marble fireplace in a Paris Left Bank collector salon. The room includes a partial library, old parquet flooring, and a velvet armchair subtly in the background. The scene is illuminated by warm lamplight from within the interior. The camera is at three-quarter left view, near close-up.",
+      "negative_prompt": "sterile, institutional, generic, stock gallery, empty, cold minimalism, white walls, casual clothing, sportwear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial, sensual poses, theatrical gestures, fisheye lens, distorted, blurry, over-exposed, fake, poor quality, bad composition"
+    },
+    {
+      "context_name": "Milanese collector apartment",
+      "context_role": "private residence",
+      "space_type": "private viewing room",
+      "atmosphere": "intellectual luxury, sophisticated, contemporary",
+      "materials": [
+        "dark parquet",
+        "warm plaster walls",
+        "Italian design furniture",
+        "sculptural lamps"
+      ],
+      "lighting": "museum-grade spotlights with warmth",
+      "placement": "mounted on a warm, textured plaster wall, central to the room",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Three-quarter right view, capturing the artwork's depth and interaction with the sophisticated Milanese setting.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "The stacked fields and horizontal divisions within the artwork create a visual dialogue with the precise, elegant design of the Italian apartment interior.",
+      "commercial_reason": "The textural contrast between the smooth dark background and the vibrant impastoed forms elevates the artwork's visual interest, appealing to collectors who appreciate material depth.",
+      "mockup_prompt": "An elegant standing female figure 1.55m in gallery-opening attire, wearing elegant shoes, is positioned, observing the artwork that is centrally mounted on a warm, textured plaster wall in a Milanese collector apartment. The room features dark parquet flooring and subtle Italian design furniture. Museum-grade spotlights with warmth specifically illuminate the artwork. The camera is at three-quarter right view, near close-up.",
+      "negative_prompt": "sterile, institutional, generic, stock gallery, empty, cold minimalism, white walls, casual clothing, sportwear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial, sensual poses, theatrical gestures, fisheye lens, distorted, blurry, over-exposed, fake, poor quality, bad composition"
+    },
+    {
+      "context_name": "architect's studio residence",
+      "context_role": "atelier",
+      "space_type": "working studio / exhibition area",
+      "atmosphere": "creative, refined, quietly contemplative",
+      "materials": [
+        "warm concrete walls",
+        "long wooden table",
+        "architectural models",
+        "large northern light windows"
+      ],
+      "lighting": "controlled dramatic side light",
+      "placement": "leaning naturally against a warm concrete wall, near architectural models",
+      "camera_view": "seven-eighths left view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Seven-eighths left view, providing a dynamic angle that emphasizes the artwork within its creative context.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "The artwork's geometric division and layered composition offer a compelling abstract interpretation of spatial design, aligning with an architect's aesthetic.",
+      "commercial_reason": "Its visual axis, formed by the interaction of lines and forms, makes it a sophisticated piece for integration into a highly designed, discerning living or working space.",
+      "mockup_prompt": "An elegant standing female figure 1.55m in refined minimalist clothing, wearing polished leather shoes, stands in an architect's studio residence, contemplating the artwork. The artwork is leaning naturally against a warm concrete wall. In the foreground, architectural models rest on a long wooden table. Controlled dramatic side light streams from large northern light windows. The camera is at seven-eighths left view, near close-up.",
+      "negative_prompt": "sterile, institutional, generic, stock gallery, empty, cold minimalism, white walls, casual clothing, sportwear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial, sensual poses, theatrical gestures, fisheye lens, distorted, blurry, over-exposed, fake, poor quality, bad composition"
+    },
+    {
+      "context_name": "Cycladic collector house",
+      "context_role": "private residence",
+      "space_type": "living space",
+      "atmosphere": "minimalist, serene, Mediterranean, sublime",
+      "materials": [
+        "white minimalist architecture",
+        "soft arches",
+        "pale stone floors",
+        "ceramic objects"
+      ],
+      "lighting": "late afternoon Mediterranean light, soft architectural wall wash",
+      "placement": "hung on a subtly textured white wall in an arched alcove",
+      "camera_view": "contrapicado / low-angle seven-eighths left view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Contrapicado / low-angle seven-eighths left view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "The dominant color field of deep red-brown provides a grounding contrast against the stark white of Cycladic architecture, enhancing the artwork's presence.",
+      "commercial_reason": "The interplay of red and blue forms against the dark field creates a captivating visual tension that appeals to collectors seeking art with bold, yet balanced, color relationships.",
+      "mockup_prompt": "An elegant standing female figure 1.55m in an elegant long dress, wearing elegant shoes, stands in a Cycladic collector house living space, looking up slightly at the artwork, which is hung on a subtly textured white wall within a soft arched alcove. Pale stone floors and ceramic objects are present. Late afternoon Mediterranean light fills the room, complemented by a soft architectural wall wash. The camera is at contrapicado / low-angle seven-eighths left view, below the artwork centerline, looking slightly upward, not eye-level, no fisheye, near close-up.",
+      "negative_prompt": "sterile, institutional, generic, stock gallery, empty, cold minimalism, white walls, casual clothing, sportwear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial, sensual poses, theatrical gestures, fisheye lens, distorted, blurry, over-exposed, fake, poor quality, bad composition"
+    },
+    {
+      "context_name": "Kyoto contemporary collector house",
+      "context_role": "private residence",
+      "space_type": "gallery corridor",
+      "atmosphere": "serene, contemplative, modern traditional",
+      "materials": [
+        "natural wood panels",
+        "subtle dry garden view",
+        "indirect lighting",
+        "pure architectural lines"
+      ],
+      "lighting": "blue-hour window light, warm interior light",
+      "placement": "hung on a natural wood panel wall in a serene corridor",
+      "camera_view": "contrapicado / low-angle seven-eighths right view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Contrapicado / low-angle seven-eighths right view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "The structural tension within the artwork, particularly its precise lines and contained forms, offers a visual counterpoint to the quiet precision of Kyoto-inspired design.",
+      "commercial_reason": "The artwork creates a 'threshold effect' with its contrasting energetic forms against a vast field, inviting prolonged contemplation and adding significant value to a collector's contemplative space.",
+      "mockup_prompt": "An elegant standing female figure 1.55m in refined minimalist clothing, wearing polished leather shoes, stands in a serene gallery corridor of a Kyoto contemporary collector house, looking slightly upward at the artwork, which is hung on a natural wood panel wall. A subtle dry garden view is visible through indirect lighting. Blue-hour window light mixes with warm interior light. The camera is at contrapicado / low-angle seven-eighths right view, below the artwork centerline, looking slightly upward, not eye-level, no fisheye, near close-up.",
+      "negative_prompt": "sterile, institutional, generic, stock gallery, empty, cold minimalism, white walls, casual clothing, sportwear, jeans, exaggerated poses, smiling at camera, influencer poses, fashion editorial, sensual poses, theatrical gestures, fisheye lens, distorted, blurry, over-exposed, fake, poor quality, bad composition"
+    }
+  ]
+}
+```

@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 3 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Renaissance / Old Master Atelier
+- Purpose: Artist's studio/atelier
+- Scene Description: A Historic art workspace with Reverent, timeless, focused, quiet creative energy. atmosphere. Materials: rough plaster walls, dark timber beams, worn stone floor, antique wooden easel
+- Lighting: Controlled dramatic side light from a tall window, creating chiaroscuro effects.
+- Placement: Resting on an antique wooden easel, slightly angled.
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: contrapicado / low-angle seven-eighths left view
+- Distance: close-up view
+- Notes: Contrapicado / low-angle seven-eighths left view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.
+
+NEGATIVE DIRECTIVES:
+- modern art supplies, fluorescent lighting, casual clothing, sterile environment, white walls, chaotic studio, uninspired, flat light.
+
+AI PROPOSED MOCKUP DIRECTION:
+A timeless Renaissance / Old Master atelier with rough plaster walls and dark timber beams. The artwork rests on an antique wooden easel, illuminated by controlled dramatic side light. An elegant standing male figure, 1.80m, in historically inspired but refined clothing, looks up at the artwork. Contrapicado / low-angle seven-eighths left view, close-up view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

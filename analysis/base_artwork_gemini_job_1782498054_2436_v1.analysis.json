@@ -1,0 +1,161 @@
+{
+    "suggested_titles": [
+        {
+            "title": "swirling pink current",
+            "subtitle": "An expressive abstract painting presents a vibrant, spiraling form that dynamically expands across the composition with rich color.",
+            "description": "The vibrant pink spiral form holds a dominant position, anchoring the right half of the canvas. It gathers momentum from the center, coiling outwards across a fragmented, richly hued background. Pigment applies thickly, giving the surface a palpable, worked texture, especially in the luminous pink. This creates an atmosphere of vibrant energy and contained movement within the expansive field. The monumental scale lends significant visual weight, asserting its presence."
+        },
+        {
+            "title": "layered pink surface",
+            "subtitle": "This textured abstract work showcases intense fuchsia pigment applied with visible marks over a complex, dark background.",
+            "description": "Rich pink pigment defines a swirling, dynamic mass, which presses against and over darker, underlying color blocks. The composition organizes around this central, expanding movement, which cuts across varied green and red sections. The surface is heavily worked, revealing incised marks and layered impasto that build depth and tactile interest. This creates a dense, earthy atmosphere punctuated by moments of intense, glowing color. The horizontal format holds this powerful visual event with significant material presence."
+        },
+        {
+            "title": "divided color field",
+            "subtitle": "A large abstract artwork organizes bold, organic shapes against a geometric background, creating spatial tension and dynamic flow.",
+            "description": "A prominent, horizontally divided field underlies the sweeping, organic forms of the artwork. The composition is structured by the tension between the central, swirling pink element and the segmented background planes. Strong fuchsia, deep red, and dark green pigments are applied with palpable texture, suggesting a weathered, ancient quality. This juxtaposition generates an atmosphere of primal energy and contained structural pressure. Its extra-large format commands attention, holding a powerful spatial dialogue."
+        }
+    ],
+    "contextual_proposals": [
+        {
+            "context_name": "Milanese collector apartment living room",
+            "context_role": "private residence",
+            "space_type": "living room",
+            "atmosphere": "refined, contemplative, warm evening",
+            "materials": [
+                "dark walnut panels",
+                "polished concrete floor",
+                "plush wool rug",
+                "minimalist leather armchair",
+                "aged brass details"
+            ],
+            "lighting": "warm evening gallery lighting, soft architectural wall wash on the artwork",
+            "placement": "mounted centrally on a wide walnut panel wall",
+            "camera_view": "front view",
+            "camera_distance": "medium view",
+            "camera_angle_notes": "Straight-on eye-level view, centered composition of the artwork within the refined living space.",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The dominant color field of fuchsia pink finds depth against the warm, dark wood, enhancing its vibrancy.",
+            "commercial_reason": "The central movement of the spiral is perfectly framed for a collector appreciating dynamic energy in a calm setting.",
+            "mockup_prompt": "A Milanese collector apartment living room with dark walnut panels and a polished concrete floor, featuring warm evening gallery lighting. The monumental artwork is mounted centrally on the walnut wall. An elegant standing male figure 1.80m observes the piece. front view, medium view, Straight-on eye-level view, centered composition of the artwork within the refined living space.",
+            "negative_prompt": "sterile environment, cold lighting, white walls, clutter, casual clothing, figure touching artwork, fisheye lens"
+        },
+        {
+            "context_name": "London townhouse collector's library",
+            "context_role": "private collector",
+            "space_type": "library/study",
+            "atmosphere": "intimate, scholarly, late afternoon Mediterranean light",
+            "materials": [
+                "rich dark wood bookshelves",
+                "leather-bound books",
+                "antique globe",
+                "deep green velvet armchair",
+                "subtle plaster walls"
+            ],
+            "lighting": "late afternoon Mediterranean light filtering through a tall window, supplemented by a warm desk lamp",
+            "placement": "hung above a discreet credenza, flanked by bookshelves",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "medium-close view",
+            "camera_angle_notes": "Slight angle from the left, showing the depth of the canvas edge and the textural elements.",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The layered surface and incised marks are highlighted by the soft, directional light, revealing its material depth.",
+            "commercial_reason": "The warm color relationship between the pink, red, and green fields resonates with the rich tones of the library, appealing to collectors who value textural complexity.",
+            "mockup_prompt": "A London townhouse collector's library with rich dark wood bookshelves and a deep green velvet armchair, bathed in late afternoon Mediterranean light. The artwork is hung above a discreet credenza. An elegant standing female figure 1.55m stands to the side. three-quarter left view, medium-close view, Slight angle from the left, showing the depth of the canvas edge and the textural elements.",
+            "negative_prompt": "stark white walls, institutional feel, overly bright lighting, modern clutter, figure blocking artwork, wide angle distortion"
+        },
+        {
+            "context_name": "Parisian Haussmannian apartment private dining room",
+            "context_role": "sophisticated entertainment",
+            "space_type": "dining room",
+            "atmosphere": "elegant, refined, warm, blue-hour window light",
+            "materials": [
+                "ornate historic moldings",
+                "subtle grey-beige painted walls",
+                "polished herringbone parquet floor",
+                "dark wood dining table",
+                "linen drapery"
+            ],
+            "lighting": "blue-hour window light against warm interior lamplight, subtle uplighting on the artwork",
+            "placement": "centrally mounted on a large wall, focal point of the dining space",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "medium-close view",
+            "camera_angle_notes": "Angled from the right, capturing the artwork's dimensionality and interaction with the architectural features.",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The structural tension created by the divided background planes engages with the classic geometry of the Haussmannian architecture.",
+            "commercial_reason": "The horizontal format offers an expansive visual anchor for a sophisticated dining experience, desirable for collectors valuing strong compositional presence.",
+            "mockup_prompt": "A Parisian Haussmannian apartment private dining room with ornate historic moldings and a polished herringbone parquet floor, illuminated by blue-hour window light and warm lamplight. The artwork is mounted centrally on a large wall. An elegant standing male figure 1.80m observes it. three-quarter right view, medium-close view, Angled from the right, capturing the artwork's dimensionality and interaction with the architectural features.",
+            "negative_prompt": "modern minimalist decor, cold lighting, busy patterns, casual clothing, figure touching artwork, harsh shadows"
+        },
+        {
+            "context_name": "Los Angeles hillside residence entrance hall",
+            "context_role": "statement piece, modern luxury",
+            "space_type": "double-height entrance hall",
+            "atmosphere": "expansive, contemporary, afternoon light through large glass",
+            "materials": [
+                "light travertine walls",
+                "wide plank oak flooring",
+                "large glass windows",
+                "minimalist metal railing",
+                "sculptural staircase"
+            ],
+            "lighting": "soft, diffused afternoon light streaming from high windows",
+            "placement": "mounted high on a prominent travertine wall, above eye-level",
+            "camera_view": "high-angle / aerial view",
+            "camera_distance": "elevated medium view",
+            "camera_angle_notes": "Elevated high-angle / aerial view, camera above the artwork looking downward, visible floor/context allowed when necessary, not frontal, not eye-level.",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The circular form's dynamism is perceived from an elevated perspective, emphasizing its sweeping motion within the grand space.",
+            "commercial_reason": "The monumental scale of the work, seen from above, creates an impressive visual impact in a modern, open-plan residence, attracting buyers seeking architectural integration.",
+            "mockup_prompt": "A double-height entrance hall of a Los Angeles hillside residence with light travertine walls and wide plank oak flooring, illuminated by soft afternoon light through large glass windows. The artwork is mounted high on a prominent travertine wall. An elegant standing female figure 1.55m stands below. high-angle / aerial view, elevated medium view, Elevated high-angle / aerial view, camera above the artwork looking downward, visible floor/context allowed when necessary, not frontal, not eye-level.",
+            "negative_prompt": "flat lighting, confined space, clutter, casual attire, figure obscuring view, generic gallery"
+        },
+        {
+            "context_name": "Minimalist contemporary studio",
+            "context_role": "artist's private creative space",
+            "space_type": "artist studio",
+            "atmosphere": "creative, focused, industrial chic, soft natural light",
+            "materials": [
+                "polished concrete floor",
+                "raw concrete wall",
+                "large industrial windows",
+                "metal work table",
+                "minimal art supplies"
+            ],
+            "lighting": "soft, diffused natural light from large windows, casting gentle shadows",
+            "placement": "leaning naturally against a raw concrete wall, amidst other canvases",
+            "camera_view": "low-angle / contrapicado view",
+            "camera_distance": "medium view",
+            "camera_angle_notes": "Low-angle / contrapicado view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The raw, expressive surface marks of the painting gain a deeper context when viewed within the artist's minimalist workspace.",
+            "commercial_reason": "This perspective highlights the physical presence and process of creation, appealing to collectors interested in the genesis and material quality of the art.",
+            "mockup_prompt": "A minimalist contemporary artist studio with polished concrete floor, raw concrete wall, and large industrial windows, lit by soft natural light. The artwork leans naturally against the concrete wall, among other canvases. An elegant standing male figure 1.80m looks up at the piece. low-angle / contrapicado view, medium view, Low-angle / contrapicado view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+            "negative_prompt": "cluttered studio, messy art supplies, sterile white walls, harsh shadows, figure touching artwork, wide-angle distortion"
+        },
+        {
+            "context_name": "Roman historic apartment corridor",
+            "context_role": "private collection, historical depth",
+            "space_type": "long, arched corridor",
+            "atmosphere": "grand, aged, warm, contemplative, dramatic side light",
+            "materials": [
+                "aged plaster walls with subtle texture",
+                "original terracotta tile floor",
+                "arched doorways",
+                "antique wooden console"
+            ],
+            "lighting": "controlled dramatic side light from a high window, emphasizing textures and forms",
+            "placement": "mounted on an aged plaster wall within an arched alcove",
+            "camera_view": "low floor wide low-angle view",
+            "camera_distance": "wide view",
+            "camera_angle_notes": "Low floor wide low-angle view, camera near the floor below the artwork, looking upward with wider architectural context allowed, not eye-level, no fisheye.",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The layered pigment and textured surface interact with the aged plaster, creating a dialogue between the artwork's physicality and the historical environment.",
+            "commercial_reason": "This dramatic, expansive view positions the work as a powerful, integrated element within a historically rich private collection, appealing to connoisseurs of unique spatial installations.",
+            "mockup_prompt": "A long, arched corridor in a Roman historic apartment with aged plaster walls and original terracotta tile floor, illuminated by controlled dramatic side light. The artwork is mounted on an aged plaster wall within an arched alcove. An elegant standing female figure 1.55m walks along the corridor, approaching the piece. low floor wide low-angle view, wide view, Low floor wide low-angle view, camera near the floor below the artwork, looking upward with wider architectural context allowed, not eye-level, no fisheye.",
+            "negative_prompt": "modern furniture, cold lighting, busy decor, pristine new surfaces, figure blocking art, distortion"
+        }
+    ],
+    "recommended_number_of_contexts": 6,
+    "prompt_version": "v1.0 (Auto)",
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1782498054_2436_v1.png"
+}

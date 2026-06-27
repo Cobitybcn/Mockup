@@ -1102,7 +1102,10 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                 <div class="topbar-actions">
                     <a class="button-link secondary" href="core_review.php?id=<?= (int)$id ?>">View Artwork Core</a>
                     <?php if ($rootFile): ?>
-                        <a class="button-link" href="report.php?image=<?= rawurlencode($rootFile) ?>">Curatorial Direction</a>
+                        <a class="button-link" href="mockup_prompt_drafts_review.php?id=<?= (int)$id ?>">Review Final Mockup Prompts</a>
+                        <?php if (Auth::isAdmin($user)): ?>
+                            <a class="button-link secondary" href="curated_mockups.php?image=<?= rawurlencode($rootFile) ?>&id=<?= (int)$id ?>&legacy=1">Curated Mockups (Legacy)</a>
+                        <?php endif; ?>
                         <a class="button-link secondary" href="analyze_wait.php?image=<?= rawurlencode($rootFile) ?>">Recalculate Analysis</a>
                         <a class="button-link secondary" href="<?= h(media_url($rootFile, true)) ?>">Download Root</a>
                     <?php endif; ?>

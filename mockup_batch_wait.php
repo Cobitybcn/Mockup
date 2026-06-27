@@ -944,6 +944,9 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
     </style>
 </head>
 <body>
+<div style="background: #e06c75; color: #fff; text-align: center; padding: 12px; font-weight: bold; font-family: system-ui, sans-serif; position: relative; z-index: 1000; border-bottom: 2px solid #be5046;">
+    LEGACY MOCKUP BATCH FLOW — This page belongs to the old batch generation system and should not be used for Phase 2.3 testing.
+</div>
 <div class="wait-wrap">
     <main class="wait-panel">
         <div class="wait-header-row">

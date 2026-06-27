@@ -1,0 +1,70 @@
+{
+    "artwork_id": 146,
+    "core_schema_version": "1.1",
+    "source_core_json": "analysis/core/146.core.json",
+    "branches": [
+        {
+            "branch_id": 1,
+            "source_title": "Tectonic Resonance",
+            "source_subtitle": "A Landscape of Inner Divisions",
+            "source_description": "This compelling work explores a segmented interior landscape, where undulating lines define psychological territories and geometric accents provide moments of poignant presence within a vast, silent field.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": "silent",
+                "space_character": "interior",
+                "lighting_bias": null,
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": null,
+                "three_quarter_left": "base_artwork_gemini_job_1781554341_9282_v2.png",
+                "three_quarter_right": null,
+                "fallback": "base_artwork_gemini_job_1781554341_9282_v2.png"
+            }
+        },
+        {
+            "branch_id": 2,
+            "source_title": "Nocturne in Crimson and Azure",
+            "source_subtitle": "The Deep Silence of a Suspended Moment",
+            "source_description": "Through a masterfully rendered palette of resonant reds and sudden, luminous blues, the artist evokes a deep, contemplative stillness, suggesting thresholds and hidden dimensions within an expansive, nocturnal terrain.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": "contemplative",
+                "space_character": null,
+                "lighting_bias": "nocturnal",
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": null,
+                "three_quarter_left": "base_artwork_gemini_job_1781554341_9282_v2.png",
+                "three_quarter_right": null,
+                "fallback": "base_artwork_gemini_job_1781554341_9282_v2.png"
+            }
+        },
+        {
+            "branch_id": 3,
+            "source_title": "Thresholds of Presence",
+            "source_subtitle": "Where Forms Emerge from Geological Time",
+            "source_description": "The artwork's deep fields and subtle linear disruptions suggest a terrain shaped by invisible forces and geological time. Within this context, the isolated, glowing forms become symbolic markers of consciousness or significant thresholds, asserting their presence in a silent, expansive universe.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": "silent",
+                "space_character": null,
+                "lighting_bias": null,
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": null,
+                "three_quarter_left": "base_artwork_gemini_job_1781554341_9282_v2.png",
+                "three_quarter_right": null,
+                "fallback": "base_artwork_gemini_job_1781554341_9282_v2.png"
+            }
+        }
+    ]
+}

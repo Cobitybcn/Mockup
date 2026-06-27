@@ -46,6 +46,8 @@ class MockupContextEngine
 
                 $normalized = $this->normalizeAnalysisResponse($profile, $imageMeta);
                 $normalized['prompt_version'] = PromptSettings::artworkAnalysisPromptVersion();
+                // Preserve the image path so generateMockupPrompts() can call imageMeta() correctly.
+                $normalized['image_path'] = $imagePath;
                 $expectedCount = PromptSettings::mockupContextCount();
                 $actualCount = count((array)($normalized['contextual_proposals'] ?? []));
                 if ($actualCount < $expectedCount) {
@@ -81,7 +83,22 @@ class MockupContextEngine
 
         $promptBuilder = new MockPromptBuilder();
 
+        $cameraViewsReparto = [
+            'front view',
+            'three-quarter left view',
+            'three-quarter right view',
+            'high-angle view',
+            'low-angle view',
+            'low floor wide low-angle view'
+        ];
+
+        $pIdx = 0;
         foreach ($proposals as $prop) {
+            if ($limit === 6 && isset($cameraViewsReparto[$pIdx])) {
+                $prop = $this->patchProposalForCameraView($prop, $cameraViewsReparto[$pIdx]);
+            }
+            $pIdx++;
+
             $cameraView = trim((string)($prop['camera_view'] ?? $prop['camera_angle'] ?? 'front view'));
             $cameraDistance = trim((string)($prop['camera_distance'] ?? 'medium-close view'));
             $cameraNotes = trim((string)($prop['camera_angle_notes'] ?? ''));
@@ -140,6 +157,68 @@ class MockupContextEngine
         return $minimalAnalysis;
     }
 
+    private function patchProposalForCameraView(array $prop, string $targetView): array
+    {
+        $prop['camera_view'] = $targetView;
+        $prop['camera_angle'] = $targetView;
+
+        $mockupPrompt = trim((string)($prop['mockup_prompt'] ?? ''));
+
+        if ($targetView === 'front view') {
+            $prop['camera_distance'] = 'medium view';
+            $prop['camera_angle_notes'] = 'Centered, camera perpendicular to the artwork.';
+            // Clean up visual contradictions
+            $mockupPrompt = str_ireplace(
+                ['three-quarter', '3/4', 'side view', 'high-angle', 'low-angle', 'low floor'],
+                ['frontal', 'frontal', 'frontal view', 'eye-level', 'eye-level', 'eye-level'],
+                $mockupPrompt
+            );
+        } elseif ($targetView === 'three-quarter left view') {
+            $prop['camera_distance'] = 'medium-close view';
+            $prop['camera_angle_notes'] = 'Camera positioned to the left of the artwork, showing the left canvas edge wrapped with paint.';
+            $mockupPrompt = str_ireplace(
+                ['frontal view', 'perpendicular', 'right view', 'high-angle', 'low-angle', 'low floor'],
+                ['three-quarter left view', 'oblique left view', 'left view', 'eye-level', 'eye-level', 'eye-level'],
+                $mockupPrompt
+            );
+        } elseif ($targetView === 'three-quarter right view') {
+            $prop['camera_distance'] = 'medium-close view';
+            $prop['camera_angle_notes'] = 'Camera positioned to the right of the artwork, showing the right canvas edge wrapped with paint.';
+            $mockupPrompt = str_ireplace(
+                ['frontal view', 'perpendicular', 'left view', 'high-angle', 'low-angle', 'low floor'],
+                ['three-quarter right view', 'oblique right view', 'right view', 'eye-level', 'eye-level', 'eye-level'],
+                $mockupPrompt
+            );
+        } elseif ($targetView === 'high-angle view') {
+            $prop['camera_distance'] = 'medium view';
+            $prop['camera_angle_notes'] = 'High-angle shot looking down at the artwork and its surrounding floor area.';
+            $mockupPrompt = str_ireplace(
+                ['frontal view', 'perpendicular', 'low-angle', 'low floor'],
+                ['high-angle view', 'high-angle view', 'high-angle view', 'high-angle view'],
+                $mockupPrompt
+            );
+        } elseif ($targetView === 'low-angle view') {
+            $prop['camera_distance'] = 'medium view';
+            $prop['camera_angle_notes'] = 'Low-angle shot looking slightly up at the artwork.';
+            $mockupPrompt = str_ireplace(
+                ['frontal view', 'perpendicular', 'high-angle', 'low floor'],
+                ['low-angle view', 'low-angle view', 'low-angle view', 'low-angle view'],
+                $mockupPrompt
+            );
+        } elseif ($targetView === 'low floor wide low-angle view') {
+            $prop['camera_distance'] = 'wide view';
+            $prop['camera_angle_notes'] = 'Low floor wide shot, camera placed low to the floor looking up at the artwork and showing the floor details and expansive room.';
+            $mockupPrompt = str_ireplace(
+                ['frontal view', 'perpendicular', 'high-angle', 'close view', 'close-up'],
+                ['low floor wide low-angle view', 'wide low-angle view', 'low-angle view', 'wide view', 'wide view'],
+                $mockupPrompt
+            );
+        }
+
+        $prop['mockup_prompt'] = $mockupPrompt;
+        return $prop;
+    }
+
     private function buildAnalysisPrompt(array $metadata, array $imageMeta): string
     {
         $notes = trim((string)($metadata['artist_notes'] ?? ''));
@@ -155,6 +234,18 @@ class MockupContextEngine
         $contextCount = PromptSettings::mockupContextCount();
         $template = PromptSettings::artworkAnalysisPrompt();
         $this->logPromptSourceDebug($template);
+
+        if ($contextCount === 6) {
+            $template .= "\n\nCRITICAL CAMERA VIEW REQUIREMENT:\n"
+                . "You MUST propose exactly 6 mockup contexts in this exact order. Each of the 6 proposals MUST use one of the following camera views, in this exact order:\n"
+                . "1. Proposal 1: camera_view must be 'front view'\n"
+                . "2. Proposal 2: camera_view must be 'three-quarter left view'\n"
+                . "3. Proposal 3: camera_view must be 'three-quarter right view'\n"
+                . "4. Proposal 4: camera_view must be 'high-angle view'\n"
+                . "5. Proposal 5: camera_view must be 'low-angle view'\n"
+                . "6. Proposal 6: camera_view must be 'low floor wide low-angle view'\n"
+                . "Ensure the space description, materials, lighting, and placement naturally match the perspective of each camera view.";
+        }
         
         // Dynamically replace context count in prompt template
         $template = preg_replace(
@@ -530,24 +621,32 @@ class MockupContextEngine
 
     private function imageMeta(string $path, array $metadata): array
     {
-        $size = @getimagesize($path);
-        $width = $size ? (int)$size[0] : 0;
-        $height = $size ? (int)$size[1] : 0;
-        $orientation = 'unknown';
+        // Guard: getimagesize('') throws a ValueError in PHP 8 even with @ suppression.
+        // If path is empty or file does not exist, return safe zero defaults.
+        $width = 0;
+        $height = 0;
+        if ($path !== '' && is_file($path)) {
+            $size = @getimagesize($path);
+            $width  = $size ? (int)$size[0] : 0;
+            $height = $size ? (int)$size[1] : 0;
+        } elseif ($path !== '') {
+            Logger::log("imageMeta: path is set but file does not exist: {$path}", 'warning');
+        }
 
+        $orientation = 'unknown';
         if ($width > 0 && $height > 0) {
             $orientation = $width > $height ? 'horizontal' : ($height > $width ? 'vertical' : 'square');
         }
 
         return [
-            'width_px' => $width,
-            'height_px' => $height,
+            'width_px'    => $width,
+            'height_px'   => $height,
             'orientation' => $orientation,
             'aspect_ratio' => $height > 0 ? round($width / $height, 4) : null,
             'physical_size' => [
-                'width_cm' => $metadata['width_cm'] ?? $metadata['width'] ?? null,
+                'width_cm'  => $metadata['width_cm']  ?? $metadata['width']  ?? null,
                 'height_cm' => $metadata['height_cm'] ?? $metadata['height'] ?? null,
-                'depth_cm' => $metadata['depth_cm'] ?? $metadata['depth'] ?? null,
+                'depth_cm'  => $metadata['depth_cm']  ?? $metadata['depth']  ?? null,
             ],
         ];
     }

@@ -1,0 +1,70 @@
+{
+    "artwork_id": 370,
+    "core_schema_version": "1.1",
+    "source_core_json": "analysis/core/370.core.json",
+    "branches": [
+        {
+            "branch_id": 1,
+            "source_title": "Vertical Block, Golden Sphere",
+            "source_subtitle": "This abstract composition features a striking vertical block anchoring the left edge, balanced by a radiant golden sphere presiding over a layered horizon.",
+            "source_description": "A prominent vertical block of reddish-brown pigment firmly holds the left edge, defining a significant boundary within the canvas. The composition organizes itself around this division, spreading into layered fields on the right. Visible brushstrokes and subtle textural shifts create a worked surface across the expansive orange and yellow fields. An atmosphere of tranquil yet dynamic observation emerges from the interplay of grounded forms and celestial light. The piece conveys a robust structural presence through its considered scale and defined architectural masses.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": null,
+                "space_character": null,
+                "lighting_bias": null,
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": "base_artwork_gemini_job_1782453189_9421_v1.png",
+                "three_quarter_left": "base_artwork_gemini_job_1782453189_9421_v2.png",
+                "three_quarter_right": "base_artwork_gemini_job_1782453189_9421_v3.png",
+                "fallback": "base_artwork_gemini_job_1782453189_9421_v1.png"
+            }
+        },
+        {
+            "branch_id": 2,
+            "source_title": "Saturated Fields, Worked Surface",
+            "source_subtitle": "An expressive abstract painting showcasing deeply saturated color fields, from warm oranges to serene blues, applied with a subtly worked, tactile surface quality.",
+            "source_description": "The dominant central field gathers rich, saturated orange pigments, extending across the lower half of the composition. The entire canvas is organized into distinct horizontal and vertical color blocks, each contributing to a visual narrative. Pigment density varies, with certain areas revealing fine brushwork and slight impasto, suggesting a carefully worked surface. This technique generates an atmosphere of grounded warmth, infused with clear, resonant light. The painting's material presence feels substantial, asserting its weight through vibrant color blocks.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": "warm",
+                "space_character": null,
+                "lighting_bias": null,
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": "base_artwork_gemini_job_1782453189_9421_v1.png",
+                "three_quarter_left": "base_artwork_gemini_job_1782453189_9421_v2.png",
+                "three_quarter_right": "base_artwork_gemini_job_1782453189_9421_v3.png",
+                "fallback": "base_artwork_gemini_job_1782453189_9421_v1.png"
+            }
+        },
+        {
+            "branch_id": 3,
+            "source_title": "Divided Horizon, Spatial Strata",
+            "source_subtitle": "This geometric abstract work explores compositional pressure through a bold vertical division, establishing a stratified landscape under an expansive, open sky.",
+            "source_description": "A strong vertical line divides the canvas, acting as a structural axis that grounds the composition on its left side. The artwork is meticulously organized into distinct horizontal strata on the right, creating a sense of an open, abstracted landscape. The color application varies from smooth washes in the sky to denser, more textured fields below, articulating different spatial planes. This arrangement establishes an atmosphere of expansive calm, punctuated by focused geometric elements. The broad horizontal format presses outward, creating a palpable spatial tension within its contained structure.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": "calm",
+                "space_character": null,
+                "lighting_bias": null,
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": "base_artwork_gemini_job_1782453189_9421_v1.png",
+                "three_quarter_left": "base_artwork_gemini_job_1782453189_9421_v2.png",
+                "three_quarter_right": "base_artwork_gemini_job_1782453189_9421_v3.png",
+                "fallback": "base_artwork_gemini_job_1782453189_9421_v1.png"
+            }
+        }
+    ]
+}

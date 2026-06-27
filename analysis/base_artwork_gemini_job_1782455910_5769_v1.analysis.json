@@ -1,0 +1,155 @@
+{
+    "suggested_titles": [
+        {
+            "title": "Vertical Red Axis",
+            "subtitle": "This abstract composition features a prominent vertical red axis dividing two distinct visual fields, anchored by a warm and expansive color palette.",
+            "description": "A prominent dark red vertical axis anchors the composition, positioned slightly left of center. The canvas divides into two distinct yet harmonizing visual territories. Layered fields of warm earth tones meet expansive skies with broad, visible brushstrokes. An atmosphere of balanced opposition emerges from the structured formal elements. The painting holds its medium-large scale with quiet authority and deliberate placement."
+        },
+        {
+            "title": "Orange Field Layers",
+            "subtitle": "An expressive abstract painting builds an atmospheric landscape through layered fields of vibrant orange and yellow, punctuated by geometric red forms.",
+            "description": "Rich orange and ochre fields dominate the lower half, creating a sense of grounded depth. The composition unfolds with a visible texture of dense pigment, building a subtle relief. Broad, expressive brushstrokes define planes of color, from deep reds to soft blues and luminous yellows. This material richness cultivates an atmosphere of vibrant, yet controlled, energy. The surface holds its substantial dimensions with confident and deliberate weight."
+        },
+        {
+            "title": "Split Horizon Tension",
+            "subtitle": "The structural division of this geometric landscape creates a compelling spatial tension between earthly tones and an open, light-filled horizon.",
+            "description": "A clear horizon line on the right plane opens the spatial field, presenting an abstract, sun-like form. The composition thoughtfully balances geometric segmentation with organic forms and atmospheric color transitions. The tension between the left's compressed landscape and the right's open vista is palpable. It creates a resonant atmosphere of dual perspectives within a unified plane. The work commands presence through its powerful structural and chromatic dialogue."
+        }
+    ],
+    "contextual_proposals": [
+        {
+            "context_name": "Venetian Palazzo Interior",
+            "context_role": "Luxurious private residence",
+            "space_type": "Historic private salon",
+            "atmosphere": "Refined, warm, contemplative, antique charm",
+            "materials": [
+                "aged plaster walls",
+                "dark carved wood paneling",
+                "polished marble floor",
+                "velvet seating"
+            ],
+            "lighting": "Warm evening gallery lighting, soft and ambient, highlighting the artwork.",
+            "placement": "Mounted on a warm plaster wall, centered.",
+            "camera_view": "front view",
+            "camera_distance": "near close-up view",
+            "camera_angle_notes": "Straight-on view, capturing the artwork's direct presence.",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The strong primary color fields within the artwork resonate with the historic richness and deep tones of the palazzo setting.",
+            "commercial_reason": "This context appeals to collectors seeking to integrate significant abstract art into their traditional, high-end residences.",
+            "mockup_prompt": "A refined Venetian palazzo salon with warm aged plaster walls and dark carved wood panels. The artwork is centrally mounted, bathed in warm evening gallery lighting. An elegant standing male figure, 1.80m, wearing a dark tailored suit, observes the art. Front view, near close-up view, straight-on view, capturing the artwork's direct presence.",
+            "negative_prompt": "cold lighting, modern minimalist furniture, white walls, casual attire, empty room, unkempt."
+        },
+        {
+            "context_name": "Mayfair Art Collector Apartment",
+            "context_role": "Private art collection setting",
+            "space_type": "Contemporary collector's living room",
+            "atmosphere": "Sophisticated, modern luxury, quiet evening contemplation.",
+            "materials": [
+                "textured grey microcement walls",
+                "polished dark wood flooring",
+                "bespoke linen upholstered armchairs",
+                "brushed bronze accents"
+            ],
+            "lighting": "Blue-hour window light blending with warm interior spotlights, creating depth and intimacy.",
+            "placement": "Mounted on a textured microcement wall, subtly lit.",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "near close-up view",
+            "camera_angle_notes": "Capturing the left side of the artwork and its spatial relationship within the room.",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The artwork's precise geometric division and vibrant color field provide a striking counterpoint within this meticulously curated modern interior.",
+            "commercial_reason": "Ideal for collectors who appreciate how contemporary abstract art enhances a minimalist yet warm luxury apartment setting.",
+            "mockup_prompt": "A chic Mayfair art collector's living room with textured grey microcement walls and polished dark wood flooring. The artwork is mounted and subtly lit, with blue-hour light filtering from a large window. An elegant standing female figure, 1.55m, wearing a long elegant dress, observes the artwork. Three-quarter left view, near close-up view, capturing the left side of the artwork and its spatial relationship within the room.",
+            "negative_prompt": "harsh light, sterile environment, cluttered room, bright daylight, casual clothes, white gallery walls."
+        },
+        {
+            "context_name": "Kyoto Contemporary Collector House",
+            "context_role": "Sophisticated architectural setting",
+            "space_type": "Serene art viewing room",
+            "atmosphere": "Calm, refined, tranquil, modern Japanese aesthetic.",
+            "materials": [
+                "warm minimal concrete walls",
+                "dark bamboo wood floors",
+                "muted natural linen textiles",
+                "shoji screen elements"
+            ],
+            "lighting": "Soft architectural wall wash, gentle and indirect, emphasizing texture and form.",
+            "placement": "Mounted on a warm minimal concrete wall.",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "Highlighting the right side of the artwork and its detailed surface.",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The work's distinct horizontal and vertical elements, along with its color balance, find harmony in the architectural lines and tranquil palette of this Japanese-inspired space.",
+            "commercial_reason": "Appeals to a discerning clientele valuing serene environments and the integration of abstract art with sophisticated, culturally-aware architecture.",
+            "mockup_prompt": "A serene art viewing room in a Kyoto contemporary collector house, featuring warm minimal concrete walls and dark bamboo floors. The artwork is mounted on the concrete wall, illuminated by a soft architectural wall wash. An elegant standing male figure, 1.80m, in refined minimalist clothing, contemplates the piece. Three-quarter right view, close-up view, highlighting the right side of the artwork and its detailed surface.",
+            "negative_prompt": "overwhelming clutter, traditional Japanese furniture, bright colors, harsh shadows, unfocused, messy, white walls."
+        },
+        {
+            "context_name": "Bohemian Working Studio",
+            "context_role": "Artist's studio/atelier",
+            "space_type": "Creative working space",
+            "atmosphere": "Authentic, lived-in, inspiring, organized chaos.",
+            "materials": [
+                "exposed brick walls",
+                "aged wooden floorboards",
+                "paint-splattered drop cloths",
+                "art supplies"
+            ],
+            "lighting": "Natural daylight from a large window, complemented by practical task lamps, soft and even.",
+            "placement": "Leaning naturally against an exposed brick wall, alongside other canvases.",
+            "camera_view": "seven-eighths left view",
+            "camera_distance": "near close-up view",
+            "camera_angle_notes": "Capturing a dynamic angled view, showing the artwork within its creative environment.",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The artwork's vibrant orange field and bold geometric forms stand out against the raw, textural backdrop of the working studio, showcasing its inherent power.",
+            "commercial_reason": "Attracts buyers interested in the artist's process and the origin of creative expression, offering a glimpse into the art world's authentic side.",
+            "mockup_prompt": "A bohemian working studio with exposed brick walls and aged wooden floorboards. The artwork is leaning naturally against the brick wall, surrounded by other canvases and art supplies. Natural daylight fills the space. An elegant standing female figure, 1.55m, in tailored but comfortable clothing, holds a sketchbook and observes the piece. Seven-eighths left view, near close-up view, capturing a dynamic angled view, showing the artwork within its creative environment.",
+            "negative_prompt": "pristine environment, sterile studio, empty room, bright white walls, disheveled figure, overly messy, no art supplies."
+        },
+        {
+            "context_name": "Renaissance / Old Master Atelier",
+            "context_role": "Artist's studio/atelier",
+            "space_type": "Historic art workspace",
+            "atmosphere": "Reverent, timeless, focused, quiet creative energy.",
+            "materials": [
+                "rough plaster walls",
+                "dark timber beams",
+                "worn stone floor",
+                "antique wooden easel"
+            ],
+            "lighting": "Controlled dramatic side light from a tall window, creating chiaroscuro effects.",
+            "placement": "Resting on an antique wooden easel, slightly angled.",
+            "camera_view": "contrapicado / low-angle seven-eighths left view",
+            "camera_distance": "close-up view",
+            "camera_angle_notes": "Contrapicado / low-angle seven-eighths left view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+            "human_presence": "elegant standing male figure 1.80m",
+            "curatorial_reason": "The artwork's clear axis and structural tension gain an added dimension when placed within the context of a revered historical artistic lineage.",
+            "commercial_reason": "Appeals to collectors who appreciate the dialogue between contemporary abstraction and the enduring traditions of art history and mastery.",
+            "mockup_prompt": "A timeless Renaissance / Old Master atelier with rough plaster walls and dark timber beams. The artwork rests on an antique wooden easel, illuminated by controlled dramatic side light. An elegant standing male figure, 1.80m, in historically inspired but refined clothing, looks up at the artwork. Contrapicado / low-angle seven-eighths left view, close-up view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+            "negative_prompt": "modern art supplies, fluorescent lighting, casual clothing, sterile environment, white walls, chaotic studio, uninspired, flat light."
+        },
+        {
+            "context_name": "Private Foundation Exhibition Room",
+            "context_role": "Space for contemplation",
+            "space_type": "Minimalist chapel-like art room",
+            "atmosphere": "Sacred, quiet, focused, serene.",
+            "materials": [
+                "warm plaster walls",
+                "light microcement floor",
+                "elegant leather bench"
+            ],
+            "lighting": "Warm museum-grade spotlights with warmth, creating a halo effect around the artwork.",
+            "placement": "Mounted on a warm plaster wall, centrally positioned for contemplation.",
+            "camera_view": "contrapicado / low-angle seven-eighths right view",
+            "camera_distance": "near close-up view",
+            "camera_angle_notes": "Contrapicado / low-angle seven-eighths right view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+            "human_presence": "elegant standing female figure 1.55m",
+            "curatorial_reason": "The powerful scale and format of the work, along with its dominant blue field, command focus and introspection within this pristine viewing environment.",
+            "commercial_reason": "Positions the artwork as a significant piece worthy of institutional collection or a high-level private foundation, emphasizing its cultural value.",
+            "mockup_prompt": "A private foundation exhibition room, minimalist and chapel-like, with warm plaster walls and a light microcement floor. The artwork is centrally mounted and illuminated by warm museum-grade spotlights. An elegant standing female figure, 1.55m, in refined minimalist clothing, looks intently at the artwork. Contrapicado / low-angle seven-eighths right view, near close-up view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+            "negative_prompt": "clutter, distracting elements, harsh shadows, bright natural light, generic gallery, cold atmosphere, white walls."
+        }
+    ],
+    "recommended_number_of_contexts": 6,
+    "prompt_version": "v1.0 (Auto)",
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1782455910_5769_v1.png"
+}

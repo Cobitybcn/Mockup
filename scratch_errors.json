@@ -1,0 +1,15 @@
+[
+    "[2026-06-26 05:56:33] [ERROR] Error generando mockup Gemini despues de 74.7s. Error: Vertex bridge failed (exit code 1): [DEBUG] Image details: size=(1024, 736), mode=RGB",
+    "[2026-06-26 05:56:33] [ERROR] Error en worker pre-asignado (job 841): Vertex bridge failed (exit code 1): [DEBUG] Image details: size=(1024, 736), mode=RGB",
+    "[2026-06-26 05:56:33] [ERROR] Error generando mockup Gemini despues de 74.75s. Error: Vertex bridge failed (exit code 1): [DEBUG] Image details: size=(1024, 736), mode=RGB",
+    "[2026-06-26 05:56:33] [ERROR] Error en worker pre-asignado (job 843): Vertex bridge failed (exit code 1): [DEBUG] Image details: size=(1024, 736), mode=RGB",
+    "[2026-06-26 06:41:51] [ERROR] Error generando mockup Gemini despues de 75.98s. Error: Vertex bridge failed (exit code 1): [DEBUG] Image details: size=(1024, 736), mode=RGB",
+    "[2026-06-26 06:41:51] [ERROR] Error en worker pre-asignado (job 850): Vertex bridge failed (exit code 1): [DEBUG] Image details: size=(1024, 736), mode=RGB",
+    "[2026-06-26 07:48:34] [ERROR] Error in regenerating mockup contexts for artwork_id=371: Path cannot be empty",
+    "[2026-06-26 07:58:17] [ERROR] Error in regenerating mockup contexts for artwork_id=371: Path cannot be empty",
+    "[2026-06-26 08:10:55] [ERROR] Error in regenerating mockup contexts for artwork_id=371: Path cannot be empty",
+    "[2026-06-26 08:59:14] [ERROR] Error in regenerating mockup contexts for artwork_id=371: Path cannot be empty",
+    "[2026-06-26 09:01:09] [ERROR] Error in regenerating mockup contexts for artwork_id=371: Path cannot be empty",
+    "[2026-06-26 10:15:21] [GEMINI] Iniciando generacion de mockup Gemini. Contexto: 1633, Obra: base_artwork_gemini_job_1782468817_5176_v1.png",
+    "[2026-06-26 10:15:21] [GEMINI] Iniciando generacion de mockup Gemini. Contexto: 1634, Obra: base_artwork_gemini_job_1782468817_5176_v1.png"
+]

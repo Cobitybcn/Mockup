@@ -1,0 +1,127 @@
+{
+    "core_schema_version": "1.1",
+    "artwork": {
+        "artwork_id": 375,
+        "job_id": "job_1782498404_9005",
+        "source_image": "main_artwork.jpg",
+        "selected_root_file": "base_artwork_gemini_job_1782498404_9005_v1.png",
+        "dimensions": {
+            "width_cm": 140,
+            "height_cm": 120,
+            "depth_cm": 3,
+            "orientation": "horizontal",
+            "aspect_ratio": 1.1667
+        }
+    },
+    "root_artwork_views": {
+        "three_quarter_left": {
+            "file": "base_artwork_gemini_job_1782498404_9005_v2.png",
+            "role": "three-quarter left root view"
+        },
+        "frontal": {
+            "file": "base_artwork_gemini_job_1782498404_9005_v1.png",
+            "role": "frontal root view"
+        },
+        "three_quarter_right": {
+            "file": "base_artwork_gemini_job_1782498404_9005_v3.png",
+            "role": "three-quarter right root view"
+        },
+        "selected_view": "frontal"
+    },
+    "physical_artwork_reference": {
+        "object_type": "stretched_canvas",
+        "is_physical_object": true,
+        "depth_cm": 3,
+        "has_visible_edges": true,
+        "paint_continues_on_edges": null,
+        "edge_finish": null,
+        "view_observations": {
+            "frontal": {
+                "file": "base_artwork_gemini_job_1782498404_9005_v1.png",
+                "visible_edges": [],
+                "canvas_depth_visible": false,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "primary_composition_reference",
+                    "frontal_mockup_reference"
+                ]
+            },
+            "three_quarter_left": {
+                "file": "base_artwork_gemini_job_1782498404_9005_v2.png",
+                "visible_edges": [
+                    "left_edge"
+                ],
+                "canvas_depth_visible": true,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "left_oblique_reference",
+                    "canvas_depth_reference"
+                ]
+            },
+            "three_quarter_right": {
+                "file": "base_artwork_gemini_job_1782498404_9005_v3.png",
+                "visible_edges": [
+                    "right_edge"
+                ],
+                "canvas_depth_visible": true,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "right_oblique_reference",
+                    "canvas_depth_reference"
+                ]
+            }
+        }
+    },
+    "visual_analysis": {
+        "visual_language": null,
+        "composition": null,
+        "dominant_colors": [],
+        "secondary_colors": [],
+        "materials_or_surface": null,
+        "texture": null,
+        "spatial_depth": null,
+        "light_behavior": null,
+        "gesture_or_mark_making": null,
+        "emotional_energy": null,
+        "symbolic_elements": [],
+        "style_family": null
+    },
+    "artwork_identity": {
+        "short_identity": "This expressive abstract painting showcases a dynamic spiral form that unfurls with textured energy across its vibrant and deeply worked surface.",
+        "expanded_identity": "A prominent, deeply textured spiral form anchors the center of the canvas, drawing the viewer's gaze inward. The composition radiates outward from this core, balanced by a thick vertical band on the right edge. Bold strokes of rich turquoise and fiery orange pigments are heavily impastoed, revealing a tactile, almost sculptural surface. This intense interplay of form and color creates an atmosphere of vibrant movement and raw, primal energy. Its substantial scale holds significant visual weight and structural tension within its boundaries.",
+        "keywords": [],
+        "do_not_alter_rules": [
+            "Do not repaint the artwork.",
+            "Do not redesign the artwork.",
+            "Do not crop the artwork.",
+            "Do not mirror the artwork.",
+            "Do not recolor the artwork.",
+            "Do not reinterpret the artwork.",
+            "Preserve composition, proportions, colors, marks, texture and visual identity."
+        ]
+    },
+    "publishing_texts": {
+        "suggested_titles": [
+            {
+                "title": "Coiling Center",
+                "subtitle": "This expressive abstract painting showcases a dynamic spiral form that unfurls with textured energy across its vibrant and deeply worked surface.",
+                "description": "A prominent, deeply textured spiral form anchors the center of the canvas, drawing the viewer's gaze inward. The composition radiates outward from this core, balanced by a thick vertical band on the right edge. Bold strokes of rich turquoise and fiery orange pigments are heavily impastoed, revealing a tactile, almost sculptural surface. This intense interplay of form and color creates an atmosphere of vibrant movement and raw, primal energy. Its substantial scale holds significant visual weight and structural tension within its boundaries."
+            },
+            {
+                "title": "Impastoed Layers",
+                "subtitle": "An abstract expressionist work, it presents a heavily worked surface with dense impasto layers, creating a vibrant dialogue between rough textures and intense colors.",
+                "description": "The canvas surface is marked by dense, heavily applied pigments that define its tactile presence. Multiple layers of vivid turquoise and burnt orange build up, creating significant impasto and visible brushstrokes throughout the composition. This material richness organizes the piece into a pulsating visual field, enhancing the dynamic interaction of its forms. The tangible texture lends an atmosphere of energetic immediacy and material depth to the artwork. The physicality of the surface contributes to the painting's commanding and immersive presence."
+            },
+            {
+                "title": "Vertical Division",
+                "subtitle": "This large-scale abstract painting exhibits a strong vertical element providing a counterpoint to the central spiral, creating a powerful spatial tension within its format.",
+                "description": "A robust vertical bar stands firm on the right, providing a clear structural division against the fluid central spiral. This compositional choice organizes the visual weight, establishing a dynamic push and pull across the canvas. Areas of intense teal and textured orange are built up with considerable impasto, creating a deeply material and varied surface. The resulting atmosphere is one of contained energy and profound structural balance, despite the expressive forms. Its impressive 140x120 cm format asserts a dominant presence, reinforcing the internal spatial pressures."
+            }
+        ]
+    },
+    "technical_metadata": {
+        "created_at": "2026-06-26T18:28:34+00:00",
+        "source_analysis_file": "base_artwork_gemini_job_1782498404_9005_v1.analysis.json",
+        "source_analysis_hash": "106f671ad696863d25ac6941de64d649"
+    }
+}

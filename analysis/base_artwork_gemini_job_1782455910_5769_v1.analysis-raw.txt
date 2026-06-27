@@ -1,0 +1,160 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "vertical divide, sun",
+      "subtitle": "An abstract composition presents a stark vertical division, anchoring a celestial orb and scattered red forms across a vast, segmented landscape.",
+      "description": "A prominent reddish-brown vertical column anchors the center of the composition, dividing the canvas into two distinct realms. The organization unfolds with an earthy, undulating left side contrasting a planar, expansive right, dominated by a bold, golden sun-like sphere. Colors transition from deep oranges and reds to lighter yellows and blues, rendered with visible, textured brushwork. The visible elements cultivate an atmosphere of ancient landscape meeting cosmic presence, a silent meditation on elemental forces. The artwork holds a substantial scale, projecting a contained yet expansive structural tension."
+    },
+    {
+      "title": "worked color fields",
+      "subtitle": "This expressive work explores the dynamic interplay of richly worked color fields, where warm earth tones meet expansive, cool sky blues.",
+      "description": "The dominant orange and red color fields ground the composition, extending across the lower half with palpable material weight. The canvas organizes into layered horizontal and vertical sections, each distinct in its color and implied texture. Pigment density varies, showing robust brushstrokes in the warm tones and smoother applications in the celestial blue. This material rendering generates an atmosphere of primal energy and a meditative, almost geological calm. The worked surface conveys a deliberate and significant material presence."
+    },
+    {
+      "title": "horizontal strata, blocks",
+      "subtitle": "A structural abstract painting establishes a dynamic tension between clear horizontal strata and precise geometric blocks against a vertical axis.",
+      "description": "The artwork's primary structural tension resides in the interplay of strong horizontal strata and a bold vertical axis that divides the pictorial space. The composition organizes itself through distinct color planes, some appearing as distant horizons, others as foreground. Textural nuances are apparent, with thicker impasto in the warm foregrounds yielding to smoother, more ethereal gradients in the upper areas. This clear spatial division creates an atmosphere of balanced yet dynamic equilibrium, where geometric elements hold their ground. The formal pressure of the intersecting divisions firmly establishes its commanding presence."
+    }
+  ],
+  "contextual_proposals": [
+    {
+      "context_name": "Mayfair art collector apartment",
+      "context_role": "private collection",
+      "space_type": "elegant living room",
+      "atmosphere": "refined, warm, contemplative, soft evening light",
+      "materials": [
+        "dark walnut panels",
+        "aged plaster walls",
+        "polished oak flooring",
+        "linen curtains",
+        "tailored velvet seating"
+      ],
+      "lighting": "warm evening gallery lighting, subtle downlights",
+      "placement": "centrally mounted on a prominent wall",
+      "camera_view": "front view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "Straight-on frontal view, capturing the artwork's full presence and detail.",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "Highlights the bold central division and the vibrant orange-red field, emphasizing its structural and chromatic impact.",
+      "commercial_reason": "Positions the artwork as a significant centerpiece, suitable for a collector seeking a strong, modern statement piece.",
+      "mockup_prompt": "An elegant living room within a Mayfair art collector apartment, featuring rich dark walnut panels and aged plaster walls. The artwork is centrally mounted on a prominent wall, illuminated by warm evening gallery lighting. An elegant standing male figure 1.80m in a dark tailored suit stands admiring the piece. Front view, close-up view, capturing the artwork's full presence and detail.",
+      "negative_prompt": "cluttered, stark white walls, sterile, harsh daylight, casual clothing, distracting elements"
+    },
+    {
+      "context_name": "Architect's studio residence, contemporary brutalist villa",
+      "context_role": "atelier / studio",
+      "space_type": "contemporary studio space",
+      "atmosphere": "creative, focused, warm minimal, late afternoon light",
+      "materials": [
+        "warm minimal concrete walls",
+        "large glass windows",
+        "dark metal accents",
+        "reclaimed wood floor",
+        "drafting table"
+      ],
+      "lighting": "late afternoon Mediterranean light, architectural spot lighting",
+      "placement": "resting naturally against a concrete wall, near a large window",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "A three-quarter left perspective, offering a dynamic view of the artwork within its working context.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "Showcases the distinct material texture and layered color fields, contrasting the precise geometric forms with the raw studio environment.",
+      "commercial_reason": "Appeals to collectors who appreciate art in its creative environment, highlighting its authenticity and artistic process.",
+      "mockup_prompt": "A contemporary brutalist villa serving as an architect's studio residence, with warm minimal concrete walls and large glass windows. The artwork rests naturally against a concrete wall, bathed in soft late afternoon Mediterranean light. An elegant standing female figure 1.55m in refined minimalist clothing observes the artwork. Three-quarter left view, near close-up view, offering a dynamic view of the artwork within its working context.",
+      "negative_prompt": "messy, cluttered tools, unfinished work, sterile white studio, bad lighting, casual clothes"
+    },
+    {
+      "context_name": "Roman historic apartment",
+      "context_role": "private collection",
+      "space_type": "grand salon",
+      "atmosphere": "historic, sophisticated, intimate, blue-hour",
+      "materials": [
+        "aged plaster walls",
+        "intricate historic moldings",
+        "dark parquet flooring",
+        "bespoke antique furniture",
+        "heavy linen drapes"
+      ],
+      "lighting": "blue-hour window light mixed with warm lamplight",
+      "placement": "mounted on a wall between two tall windows",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "A three-quarter right view, capturing the artwork's interplay with the elegant historic space.",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "Emphasizes the relationship between the strong geometric blocks and the soft-edged color fields, enhancing its timeless quality within a classic setting.",
+      "commercial_reason": "Illustrates the artwork's versatility and ability to complement and elevate a richly historical and sophisticated interior.",
+      "mockup_prompt": "A grand salon within a Roman historic apartment, featuring aged plaster walls and intricate historic moldings. The artwork is mounted on a wall between two tall windows, illuminated by blue-hour window light and warm lamplight. An elegant standing male figure 1.80m in a tailored suit stands contemplating the art. Three-quarter right view, close-up view, capturing the artwork's interplay with the elegant historic space.",
+      "negative_prompt": "modern furniture, stark interior, bright overhead lights, museum plaque, casual clothing, empty room"
+    },
+    {
+      "context_name": "Kyoto contemporary collector house",
+      "context_role": "private collection",
+      "space_type": "minimalist living area",
+      "atmosphere": "serene, contemplative, warm minimalist, diffused daylight",
+      "materials": [
+        "light wood panels",
+        "shoji screens",
+        "polished concrete floor",
+        "natural linen textiles"
+      ],
+      "lighting": "soft, diffused daylight from a large window, subtle ceiling lights",
+      "placement": "mounted on a serene light wood panel wall",
+      "camera_view": "high-angle view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "High-angle view, looking down slightly onto the artwork and its immediate surroundings, providing a sense of quiet observation.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "Highlights the structural layout and the subtle relationship between the stacked fields and the precise blocks, viewed from an encompassing perspective.",
+      "commercial_reason": "Appeals to collectors favoring minimalist aesthetics and serene environments, showcasing the artwork's ability to anchor a refined space.",
+      "mockup_prompt": "A minimalist living area in a Kyoto contemporary collector house, characterized by light wood panels and shoji screens. The artwork is mounted on a serene light wood panel wall, softly illuminated by diffused daylight. An elegant standing female figure 1.55m in refined minimalist clothing stands nearby, observing from a slight distance. High-angle view, near close-up view, looking down slightly onto the artwork and its immediate surroundings, providing a sense of quiet observation.",
+      "negative_prompt": "busy patterns, vibrant colors in decor, cold interior, dark room, casual wear, fisheye lens, wide angle distortion"
+    },
+    {
+      "context_name": "Boutique hotel art lounge",
+      "context_role": "public display/private viewing",
+      "space_type": "intimate lounge area",
+      "atmosphere": "sophisticated, inviting, evening, ambient warmth",
+      "materials": [
+        "dark textured plaster",
+        "brushed bronze details",
+        "low leather seating",
+        "muted patterned rug",
+        "dark wood ceiling"
+      ],
+      "lighting": "warm hospitality-style illumination, accent spotlights on artwork",
+      "placement": "mounted on a dark textured plaster wall, above a low console",
+      "camera_view": "low-angle view",
+      "camera_distance": "close-up view",
+      "camera_angle_notes": "Contrapicado / low-angle seven-eighths left view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "Draws attention to the powerful ground of the composition and the floating red blocks, emphasizing its commanding presence when viewed from below.",
+      "commercial_reason": "Demonstrates its suitability for upscale public and private spaces, offering a compelling visual anchor in a refined setting.",
+      "mockup_prompt": "An intimate lounge area within a boutique hotel art lounge, featuring dark textured plaster walls and brushed bronze details. The artwork is mounted on a dark textured plaster wall, illuminated by warm hospitality-style illumination. An elegant standing male figure 1.80m in a tailored suit gazes up at the piece. Low-angle view, close-up view. Contrapicado / low-angle seven-eighths left view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+      "negative_prompt": "bright walls, generic hotel lobby, uninviting, harsh light, casual clothes, distracting furniture"
+    },
+    {
+      "context_name": "Sculptor's private studio, industrial loft",
+      "context_role": "atelier / studio",
+      "space_type": "working studio space",
+      "atmosphere": "authentic, raw, creative, late afternoon golden light",
+      "materials": [
+        "exposed brick walls",
+        "raw concrete floor",
+        "large industrial windows",
+        "metal workbenches",
+        "canvases stacked"
+      ],
+      "lighting": "late afternoon golden light streaming through large windows, diffused general lighting",
+      "placement": "leaning against an exposed brick wall, slightly offset from other art materials",
+      "camera_view": "low floor wide low-angle view",
+      "camera_distance": "near close-up view",
+      "camera_angle_notes": "Contrapicado / low-angle seven-eighths right view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "Highlights the physical presence of the artwork's surface and the boldness of its primary color fields, contrasting with the tactile studio environment.",
+      "commercial_reason": "Connects the artwork to the creative process, appealing to collectors who value artistic authenticity and origin.",
+      "mockup_prompt": "A sculptor's private studio in an industrial loft, featuring exposed brick walls and a raw concrete floor. The artwork leans against an exposed brick wall, bathed in late afternoon golden light. An elegant standing female figure 1.55m in refined minimalist clothing stands near, reflecting on the art. Low floor wide low-angle view, near close-up view. Contrapicado / low-angle seven-eighths right view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+      "negative_prompt": "messy tools, chaotic scene, sterile white studio, bad lighting, casual clothes, unfinished sculptures, fisheye effect"
+    }
+  ]
+}
+```

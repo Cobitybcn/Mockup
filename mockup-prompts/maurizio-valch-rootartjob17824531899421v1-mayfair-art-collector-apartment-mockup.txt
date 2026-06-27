@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 4 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Mayfair Art Collector Apartment
+- Purpose: refined luxury residence
+- Scene Description: A Manhattan penthouse living room with sophisticated, warm, evening art viewing atmosphere. Materials: dark walnut paneling, polished brass accents, deep velvet seating, herringbone oak flooring, warm plaster walls
+- Lighting: warm evening gallery lighting, subtle spotlights on the artwork, ambient lamplight
+- Placement: mounted on a warm plaster wall in a spacious living area, above an antique credenza
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: front view
+- Distance: near close-up view
+- Notes: Straight-on front view, eye-level, no distortion.
+
+NEGATIVE DIRECTIVES:
+- sterile, cold, white walls, harsh lighting, casual attire, empty room, unrefined furniture, distracting decor.
+
+AI PROPOSED MOCKUP DIRECTION:
+A sophisticated Manhattan penthouse living room at dusk, featuring dark walnut paneling and warm plaster walls. The artwork is mounted centrally on a warm plaster wall above a polished antique credenza, bathed in warm evening gallery lighting. An elegant standing male figure 1.80m is observing the piece from a front view, near close-up view, at eye-level, without distortion.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

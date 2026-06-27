@@ -329,4 +329,19 @@ class ProviderSettings
         $workers = (int)trim($value);
         return max(1, min(self::MAX_MOCKUP_WORKERS, $workers));
     }
+
+    public static function readForRoot(string $imagePath): array
+    {
+        $metaPath = RESULTS_DIR . DIRECTORY_SEPARATOR . pathinfo(basename($imagePath), PATHINFO_FILENAME) . '.meta.json';
+
+        if (!is_file($metaPath)) {
+            return [];
+        }
+
+        $data = json_decode((string)file_get_contents($metaPath), true);
+
+        return is_array($data) && isset($data['provider_settings']) && is_array($data['provider_settings'])
+            ? $data['provider_settings']
+            : [];
+    }
 }

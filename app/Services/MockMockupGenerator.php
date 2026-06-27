@@ -40,8 +40,13 @@ class MockMockupGenerator implements MockupGeneratorInterface
         $promptName = pathinfo($outputName, PATHINFO_FILENAME) . '.txt';
         $outputPath = $resultsDir . DIRECTORY_SEPARATOR . $outputName;
 
+        $finalPrompt = $prompt;
+        if (isset($metadata['prompt_passthrough_mode']) && is_string($metadata['prompt_passthrough_mode'])) {
+            $finalPrompt = $metadata['prompt_passthrough_mode'];
+        }
+
         // Save prompt text
-        file_put_contents($promptsDir . DIRECTORY_SEPARATOR . $promptName, $prompt);
+        file_put_contents($promptsDir . DIRECTORY_SEPARATOR . $promptName, $finalPrompt);
 
         // Determine mime type to draw mockup image
         $mime = ($ext === 'jpg' || $ext === 'jpeg') ? 'image/jpeg' : 'image/png';

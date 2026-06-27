@@ -25,6 +25,7 @@ $adminPromptKeys = [
     'root_artwork_rules_left',
     'root_artwork_rules_right',
     'artwork_analysis_prompt',
+    'mockup_final_request',
     'root_artwork_count',
     'mockup_context_count',
 ];
@@ -564,6 +565,71 @@ $rootViews = [
                         </div>
                     </div>
                 </div><!-- /analysis -->
+
+                <!-- ══════════════════════════════════════════
+                     SECTION 3 — MOCKUP FINAL REQUEST / ADMIN V7
+                ══════════════════════════════════════════ -->
+                <?php
+                    $finalRequestKey      = 'mockup_final_request';
+                    $finalRequestActive   = (string)($settings[$finalRequestKey] ?? '');
+                    $finalRequestDefault  = (string)($defaultDirectives[$finalRequestKey] ?? '');
+                    $finalRequestHasDefault = trim($finalRequestDefault) !== '';
+                    $showPlaceholderWarning = (strpos($finalRequestActive, '{{MOCKUP_CONTEXT_PROPOSAL}}') === false);
+                ?>
+                <div class="prompt-section">
+                    <div class="prompt-section-header">
+                        <div class="prompt-section-header-left">
+                            <h2 class="prompt-section-title">Petición final de mockups / Admin V7</h2>
+                            <span class="section-badge" style="background: #1a73e8; color: #fff; border: none;">Admin V7</span>
+                        </div>
+                    </div>
+
+                    <div class="prompt-section-body">
+                        <div class="analysis-field">
+                            <label for="<?= h($finalRequestKey) ?>">Prompt final de generación</label>
+                            <small>Este prompt es la autoridad final para generar mockups. Debe contener el marcador <code>{{MOCKUP_CONTEXT_PROPOSAL}}</code>, donde el sistema insertará una propuesta de contexto subordinada. No debe devolver JSON.</small>
+
+                            <?php if ($showPlaceholderWarning): ?>
+                                <div class="notice error" style="margin-top: 10px; margin-bottom: 10px; border-left: 4px solid var(--danger); background: #FFF5F5; color: var(--danger); padding: 12px; font-size: 13px; border-radius: var(--radius);">
+                                    <strong>¡Atención!</strong> Falta el marcador obligatorio <code>{{MOCKUP_CONTEXT_PROPOSAL}}</code>. El generador Phase 2.3 fallará si este marcador no está presente.
+                                </div>
+                            <?php endif; ?>
+
+                            <textarea
+                                id="<?= h($finalRequestKey) ?>"
+                                name="<?= h($finalRequestKey) ?>"
+                                style="min-height: 420px;"
+                            ><?= h($finalRequestActive) ?></textarea>
+
+                            <?php if ($finalRequestHasDefault): ?>
+                            <button
+                                type="button"
+                                class="default-editor-toggle"
+                                data-panel="panel-<?= h($finalRequestKey) ?>"
+                                aria-expanded="false"
+                            >
+                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                    <path d="M3 1.5L7 5L3 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Valor por defecto
+                            </button>
+                            <div class="default-editor-panel" id="panel-<?= h($finalRequestKey) ?>">
+                                <span class="default-editor-label">Texto de restauración</span>
+                                <textarea
+                                    id="<?= h($finalRequestKey) ?>_default"
+                                    name="default_directives[<?= h($finalRequestKey) ?>]"
+                                ><?= h($finalRequestDefault) ?></textarea>
+                                <button
+                                    type="button"
+                                    class="secondary restore-btn use-default-directive"
+                                    data-target="<?= h($finalRequestKey) ?>"
+                                    data-source="<?= h($finalRequestKey) ?>_default"
+                                >↩ Restaurar</button>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div><!-- /mockup final request -->
 
             </div><!-- /prompts-workspace -->
 

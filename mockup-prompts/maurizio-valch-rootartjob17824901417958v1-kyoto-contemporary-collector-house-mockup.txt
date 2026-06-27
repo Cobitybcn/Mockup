@@ -1,0 +1,24 @@
+ARTWORK TECHNICAL DATA:
+- Artwork size: vertical canvas, 80 cm wide × 120 cm high × 3 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Kyoto Contemporary Collector House
+- Purpose: Contemplative display
+- Scene Description: A Kyoto contemporary collector house with Minimalist, contemplative, harmonious, serene atmosphere. Materials: light wood panels, tatami-inspired flooring, simple shoji screens
+- Lighting: Soft architectural wall wash, creating subtle highlights
+- Placement: Mounted on a serene light wood panel wall, allowing ample space around it
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: low-angle view
+- Distance: medium view
+- Notes: Low-angle shot looking slightly up at the artwork.
+
+NEGATIVE DIRECTIVES:
+- cluttered room, busy patterns, direct harsh light, western-style furniture, casual attire
+
+AI PROPOSED MOCKUP DIRECTION:
+A serene Kyoto contemporary collector house, featuring light wood panels, tatami-inspired flooring, and a backdrop of simple shoji screens. The artwork is mounted on a main wall, subtly illuminated by soft architectural wall wash. An elegant standing male figure 1.80m stands nearby, viewed from a low angle, slightly looking up towards the artwork, medium distance.
+
+ARTWORK PRESERVATION DIRECTIVES:
+- The provided artwork image is the authoritative visual reference for the artwork. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions and visual identity. Do not repaint, redesign, simplify, crop, mirror, recolor or reinterpret the artwork. The artwork may only undergo natural geometric perspective caused by the requested camera view.

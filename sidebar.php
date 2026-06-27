@@ -58,8 +58,8 @@ if ($sidebarUser) {
 $step1Active = ($currentPage === 'artwork_new.php');
 $step2Active = ($currentPage === 'root_select.php' || $currentPage === 'waiting.php');
 $step3Active = ($currentPage === 'core_review.php');
-$step4Active = ($currentPage === 'report.php');
-$step5Active = ($currentPage === 'artwork.php' || $currentPage === 'publish.php');
+$step4Active = ($currentPage === 'artwork.php' || $currentPage === 'publish.php' || $currentPage === 'artwork_details.php');
+$step5Active = ($currentPage === 'report.php' || $currentPage === 'curated_mockups.php' || $currentPage === 'mockup_batch_wait.php' || $currentPage === 'mockup_branches_review.php' || $currentPage === 'mockup_prompt_drafts_review.php' || $currentPage === 'prompt_inspector.php' || $currentPage === 'approve_mockup_prompt_draft.php' || $currentPage === 'generate_mockup_from_approved_prompt.php');
 
 // Menu active states
 $dashboardActive = ($currentPage === 'dashboard.php');
@@ -135,46 +135,19 @@ if ($step3Disabled && $sidebarUser) {
     }
 }
 
-// Step 4 link determination (Curated Mockups)
+// Step 4 link determination (Artwork Details)
 $step4Url = '#';
 $step4Disabled = true;
 
-if ($sidebarContextRootFile !== '') {
-    $step4Url = 'report.php?image=' . urlencode($sidebarContextRootFile);
+if ($sidebarContextArtworkId > 0) {
+    $step4Url = 'artwork_details.php?id=' . urlencode((string)$sidebarContextArtworkId);
     $step4Disabled = false;
-} elseif ($currentPage === 'report.php' && $currentImageParam !== '') {
-    $step4Url = 'report.php?image=' . urlencode($currentImageParam);
+} elseif (($currentPage === 'artwork.php' || $currentPage === 'publish.php' || $currentPage === 'artwork_details.php') && $currentArtworkIdParam > 0) {
+    $step4Url = 'artwork_details.php?id=' . urlencode((string)$currentArtworkIdParam);
     $step4Disabled = false;
 }
 
 if ($step4Disabled && $sidebarUser) {
-    try {
-        $db = Database::connection();
-        $stmt = $db->prepare("SELECT root_file FROM artworks WHERE user_id = :user_id AND status = 'done' AND root_file IS NOT NULL AND root_file != '' ORDER BY created_at DESC LIMIT 1");
-        $stmt->execute(['user_id' => $sidebarUser['id']]);
-        $latestArtwork = $stmt->fetch();
-        if ($latestArtwork && !empty($latestArtwork['root_file'])) {
-            $step4Url = 'report.php?image=' . urlencode(basename($latestArtwork['root_file']));
-            $step4Disabled = false;
-        }
-    } catch (Throwable $e) {
-        // Fallback silently if DB is not ready
-    }
-}
-
-// Step 5 link determination (Publish = Artwork details)
-$step5Url = '#';
-$step5Disabled = true;
-
-if ($sidebarContextArtworkId > 0) {
-    $step5Url = 'artwork.php?id=' . urlencode((string)$sidebarContextArtworkId);
-    $step5Disabled = false;
-} elseif (($currentPage === 'artwork.php' || $currentPage === 'publish.php') && $currentArtworkIdParam > 0) {
-    $step5Url = 'artwork.php?id=' . urlencode((string)$currentArtworkIdParam);
-    $step5Disabled = false;
-}
-
-if ($step5Disabled && $sidebarUser) {
     try {
         $db = Database::connection();
         $stmt = $db->prepare("
@@ -190,7 +163,44 @@ if ($step5Disabled && $sidebarUser) {
         $stmt->execute(['user_id' => $sidebarUser['id']]);
         $latestArtworkId = $stmt->fetchColumn();
         if ($latestArtworkId) {
-            $step5Url = 'artwork.php?id=' . urlencode((string)$latestArtworkId);
+            $step4Url = 'artwork_details.php?id=' . urlencode((string)$latestArtworkId);
+            $step4Disabled = false;
+        }
+    } catch (Throwable $e) {
+        // Fallback silently if DB is not ready
+    }
+}
+
+// Step 5 link determination (Curated Mockups)
+$step5Url = '#';
+$step5Disabled = true;
+
+if ($sidebarContextRootFile !== '' && $sidebarContextArtworkId > 0) {
+    $step5Url = 'curated_mockups.php?image=' . urlencode($sidebarContextRootFile) . '&id=' . urlencode((string)$sidebarContextArtworkId);
+    $step5Disabled = false;
+} elseif ($sidebarContextRootFile !== '') {
+    $step5Url = 'curated_mockups.php?image=' . urlencode($sidebarContextRootFile);
+    $step5Disabled = false;
+} elseif ($sidebarContextArtworkId > 0) {
+    $step5Url = 'curated_mockups.php?id=' . urlencode((string)$sidebarContextArtworkId);
+    $step5Disabled = false;
+} elseif (($currentPage === 'report.php' || $currentPage === 'curated_mockups.php' || $currentPage === 'mockup_batch_wait.php') && $currentImageParam !== '') {
+    if ($currentArtworkIdParam > 0) {
+        $step5Url = 'curated_mockups.php?image=' . urlencode($currentImageParam) . '&id=' . urlencode((string)$currentArtworkIdParam);
+    } else {
+        $step5Url = 'curated_mockups.php?image=' . urlencode($currentImageParam);
+    }
+    $step5Disabled = false;
+}
+
+if ($step5Disabled && $sidebarUser) {
+    try {
+        $db = Database::connection();
+        $stmt = $db->prepare("SELECT id, root_file FROM artworks WHERE user_id = :user_id AND status = 'done' AND root_file IS NOT NULL AND root_file != '' ORDER BY created_at DESC LIMIT 1");
+        $stmt->execute(['user_id' => $sidebarUser['id']]);
+        $latestArtwork = $stmt->fetch();
+        if ($latestArtwork && !empty($latestArtwork['root_file'])) {
+            $step5Url = 'curated_mockups.php?image=' . urlencode(basename($latestArtwork['root_file'])) . '&id=' . urlencode((string)$latestArtwork['id']);
             $step5Disabled = false;
         }
     } catch (Throwable $e) {
@@ -270,15 +280,15 @@ if ($step5Disabled && $sidebarUser) {
             </a>
         <?php endif; ?>
 
-        <!-- Step 4: Curated Mockups -->
+        <!-- Step 4: Artwork Details -->
         <?php if ($step4Disabled && !$step4Active): ?>
-            <div class="step-item disabled" title="No root artwork selected yet. Please upload and select one first.">
+            <div class="step-item disabled" title="No artwork ready yet. Create/select a root artwork first.">
                 <div class="step-num-container">
                     <span class="step-number">4</span>
                 </div>
                 <div class="step-details">
-                    <span class="step-label">Curated Mockups</span>
-                    <span class="step-subtitle">Create multiple mockups.</span>
+                    <span class="step-label">Artwork Details</span>
+                    <span class="step-subtitle">Artwork metadata and publishing assets.</span>
                 </div>
             </div>
         <?php else: ?>
@@ -288,21 +298,21 @@ if ($step5Disabled && $sidebarUser) {
                     <?php if ($step4Active): ?><span class="step-indicator"></span><?php endif; ?>
                 </div>
                 <div class="step-details">
-                    <span class="step-label">Curated Mockups</span>
-                    <span class="step-subtitle">Create multiple mockups.</span>
+                    <span class="step-label">Artwork Details</span>
+                    <span class="step-subtitle">Artwork metadata and publishing assets.</span>
                 </div>
             </a>
         <?php endif; ?>
 
-        <!-- Step 5: Publish -->
+        <!-- Step 5: Curated Mockups -->
         <?php if ($step5Disabled && !$step5Active): ?>
-            <div class="step-item disabled" title="No artwork ready to publish yet. Create/select a root artwork first.">
+            <div class="step-item disabled" title="No root artwork selected yet. Please upload and select one first.">
                 <div class="step-num-container">
                     <span class="step-number">5</span>
                 </div>
                 <div class="step-details">
-                    <span class="step-label">Artwork Details</span>
-                    <span class="step-subtitle">Artwork metadata and publishing assets.</span>
+                    <span class="step-label">Curated Mockups</span>
+                    <span class="step-subtitle">Create multiple mockups.</span>
                 </div>
             </div>
         <?php else: ?>
@@ -312,8 +322,8 @@ if ($step5Disabled && $sidebarUser) {
                     <?php if ($step5Active): ?><span class="step-indicator"></span><?php endif; ?>
                 </div>
                 <div class="step-details">
-                    <span class="step-label">Artwork Details</span>
-                    <span class="step-subtitle">Artwork metadata and publishing assets.</span>
+                    <span class="step-label">Curated Mockups</span>
+                    <span class="step-subtitle">Create multiple mockups.</span>
                 </div>
             </a>
         <?php endif; ?>
