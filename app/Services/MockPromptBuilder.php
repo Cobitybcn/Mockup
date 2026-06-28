@@ -93,6 +93,17 @@ class MockPromptBuilder
         $sceneDescription = $context['scene'] ?? 'not specified';
         $placement = $context['placement'] ?? 'hanging';
 
+        // Phase 2.9 — Vital Presence layer (additive). Absent -> no section, so old
+        // contexts and callers without vital_presence compose exactly as before.
+        $vitalPresenceBlock = '';
+        $vitalPresence = $context['vital_presence'] ?? null;
+        if (is_array($vitalPresence)) {
+            $directive = trim((string)($vitalPresence['directive'] ?? ''));
+            if ($directive !== '') {
+                $vitalPresenceBlock = "\n\nVITAL PRESENCE:\n- {$directive}";
+            }
+        }
+
         $finalPrompt = <<<PROMPT
 ARTWORK TECHNICAL DATA:
 - Artwork size: {$widthText}.
@@ -108,7 +119,7 @@ MOCKUP ART DIRECTION:
 CAMERA DIRECTION:
 - View: {$cameraView}
 - Distance: {$cameraDistance}
-- Notes: {$cameraNotes}
+- Notes: {$cameraNotes}{$vitalPresenceBlock}
 
 NEGATIVE DIRECTIVES:
 - {$negativePrompt}{$creativePromptBlock}

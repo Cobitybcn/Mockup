@@ -2,6 +2,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/MockupCameraArchetypeResolver.php';
+require_once __DIR__ . '/MockupContextIdentity.php';
+require_once __DIR__ . '/MockupVitalPresenceResolver.php';
 
 class MockupContextEngine
 {
@@ -309,6 +311,11 @@ class MockupContextEngine
                 '_artist_profile_prompt' => $artworkMetadata['artist_profile_prompt'] ?? '',
                 '_artist_profile' => $artworkMetadata['artist_profile'] ?? [],
             ];
+
+            // Phase 2.9 - Vital Presence (additive, secondary layer).
+            $vitalPresence = MockupVitalPresenceResolver::resolveFromContext(array_merge($prop, $mappedContext));
+            $mappedContext['vital_presence'] = $vitalPresence;
+            $prop['vital_presence'] = $vitalPresence;
 
             // Generar el prompt con las reglas rígidas de preservación y escala física
             $finalPrompt = $promptBuilder->build($mappedContext, $mappedProfile, $imageMeta);
@@ -893,6 +900,20 @@ class MockupContextEngine
                 if (array_key_exists($archetypeField, $mapped)) {
                     $contextJson[$archetypeField] = $mapped[$archetypeField];
                 }
+            }
+
+            // Phase 2.9 - canonical world identity and Vital Presence (ADDITIVE; new contexts only).
+            $identitySource = array_merge($contextJson, $mapped, $prop);
+            $identity = MockupContextIdentity::resolve($identitySource);
+            $contextJson['selected_world_id'] = $identity['selected_world_id'];
+            $contextJson['selected_family_id'] = $identity['selected_family_id'];
+            $contextJson['selected_variant_id'] = $identity['selected_variant_id'];
+            $contextJson['identity_source'] = $identity['identity_source'];
+
+            if (isset($prop['vital_presence']) && is_array($prop['vital_presence'])) {
+                $contextJson['vital_presence'] = $prop['vital_presence'];
+            } else {
+                $contextJson['vital_presence'] = MockupVitalPresenceResolver::resolveFromContext($identitySource);
             }
 
             $stmtContext->execute([
