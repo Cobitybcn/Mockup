@@ -1,0 +1,324 @@
+Create a photorealistic premium art mockup using the provided artwork image as the exact authoritative visual reference.
+
+The artwork image is the product. The room is only the premium human, cultural, architectural, seasonal, and material context that enriches the artwork’s presentation.
+
+ARTWORK TECHNICAL DATA
+
+Artwork root reference file: base_artwork_gemini_job_1782584432_8444_v1.png
+Artwork physical width: 80 cm
+Artwork physical height: 120 cm
+Artwork physical depth: 2 cm
+Artwork orientation: portrait
+
+Use these physical dimensions as factual scale data. Do not reinterpret them as decorative suggestions.
+
+ABSOLUTE ARTWORK FIDELITY
+
+Recreate the provided artwork faithfully inside the mockup scene.
+
+Preserve exactly:
+
+* composition
+* colors
+* marks
+* surface texture
+* proportions
+* orientation
+* format
+* visual identity
+* physical presence
+
+Do not repaint, redesign, crop, mirror, recolor, simplify, reinterpret, stylize, beautify, extend, repair, or modify the artwork.
+
+The artwork must appear as a real physical canvas or real physical artwork installed in the space, not as a flat digital poster pasted onto a wall.
+
+If canvas depth is visible, show believable physical thickness and side depth. The artwork must keep its real proportions and must not be warped.
+
+SELECTED MOCKUP CONTEXT PROPOSAL
+
+Use the following selected mockup context proposal as the authoritative scene, context, atmosphere, lighting, materials, scale, installation, and camera direction for this mockup:
+
+MOCKUP CONTEXT PROPOSAL:
+* Scene Name: Graphic Test v2 - True Floor Nadir Brutalist Vertical Artwork
+* Purpose: controlled graphic test v2 for stabilized camera slot
+* Space Type: Brutalist monumental concrete gallery
+* Atmosphere: monumental, restrained, structural, architectural, bottom-up
+* Materials: exposed concrete, tall vertical wall, concrete beams, columns, skylight openings, polished concrete floor
+* Lighting: Controlled skylight and high architectural daylight with strong vertical shadows.
+* Placement: hanging
+* Camera View: Nadir Extremo Arquitectónico: Camera is positioned at true floor level, approximately 2-8 cm from the floor, almost touching the ground and looking sharply upward from below the artwork zone. The floor must be felt as the starting plane of the image, while walls, columns, beams, slabs, doors, luminaires, wall joints, or vertical architectural planes tower upward through the composition. Use a disciplined low oblique architectural rotation with one coherent upward vanishing direction shared by the artwork, wall, floor, ceiling, furniture, and architectural verticals. Avoid flattening into a straight-on product wall view. Build the drama through a true bottom-up architectural view, not through warping the artwork. The lower floor edge or near floor plane should anchor the frame, and the architecture should rise overhead. Extreme nadir views work best in spaces with mass, height, and clear architectural structure: brutalist architecture, exposed concrete galleries, tall vertical walls, architectural atriums, industrial minimalist lofts, high ceiling collector spaces, concrete beams, slabs, columns, skylights, or vertical openings. The drama comes from rising monumental but restrained architecture, not from enlarging or deforming the artwork. Floor lines, vertical wall planes, ceiling height, columns, door frames, beams, luminaires, furniture legs, wall joints, and overhead structural planes carry the nadir effect. The artwork remains identifiable and visually important without being centered like a product shot.
+* Camera Group: camera_slot_nadir_extremo_arquitectonico
+* Camera Distance: defined by selected stabilized camera slot geometry, lens block, camera height, composition block and depth of field block
+* Camera Notes: Camera Slot: Nadir Extremo Arquitectónico
+Camera height: Camera is positioned at true floor level, approximately 2-8 cm from the floor, almost touching the ground and looking sharply upward from below the artwork zone. The floor must be felt as the starting plane of the image, while walls, columns, beams, slabs, doors, luminaires, wall joints, or vertical architectural planes tower upward through the composition.
+Lens: Use a controlled architectural wide-normal lens equivalent, about 28-35 mm, wide enough to feel the low viewpoint but restrained enough to avoid fisheye, stretched edges, or impossible room geometry.
+Vertical tilt: Use an unmistakable steep upward nadir or contrapicado tilt, not a high-angle view and not a normal frontal wall view. The camera looks from near the floor toward the wall, ceiling, beams, slabs, skylights, and vertical structure. The artwork may be seen from below, but the tilt must not force extreme distortion of the artwork plane.
+Lateral rotation: Use a disciplined low oblique architectural rotation with one coherent upward vanishing direction shared by the artwork, wall, floor, ceiling, furniture, and architectural verticals. Avoid flattening into a straight-on product wall view.
+Composition: Build the drama through a true bottom-up architectural view, not through warping the artwork. The lower floor edge or near floor plane should anchor the frame, and the architecture should rise overhead. Extreme nadir views work best in spaces with mass, height, and clear architectural structure: brutalist architecture, exposed concrete galleries, tall vertical walls, architectural atriums, industrial minimalist lofts, high ceiling collector spaces, concrete beams, slabs, columns, skylights, or vertical openings. The drama comes from rising monumental but restrained architecture, not from enlarging or deforming the artwork. Floor lines, vertical wall planes, ceiling height, columns, door frames, beams, luminaires, furniture legs, wall joints, and overhead structural planes carry the nadir effect. The artwork remains identifiable and visually important without being centered like a product shot.
+Human subject: No human figure requested by this camera slot.
+Scale: The artwork remains a physically plausible canvas in the room. Canvas perspective protection: the canvas is a rigid rectangular physical object; do not bend, warp, taper, stretch, curve, turn it into a wedge, exaggerate side thickness, deform texture, or break the artwork identity. Artwork fidelity protection: preserve the exact abstract artwork from the reference image; do not replace it with figurative, classical, historical, portrait, landscape, decorative, or old-master-style painting.
+Depth of field: Keep the artwork, canvas edges, canvas thickness, and artwork texture sharp and legible. Only very close floor foreground or distant ceiling and architectural planes may soften slightly; the blur must remain subtle, optical, and photographic.
+Slot negative directives: no fisheye; no canvas wedge; no artwork deformation; no heroic oversized artwork; no artwork substitution; no artwork reinterpretation; no classical painting substitution; no low domestic rooms; no cozy living rooms; no cramped rooms; no pets; no crowds; no children
+* Camera Slot: Nadir Extremo Arquitectónico
+* Camera Slot Geometry:
+Camera Slot: Nadir Extremo Arquitectónico
+Camera height: Camera is positioned at true floor level, approximately 2-8 cm from the floor, almost touching the ground and looking sharply upward from below the artwork zone. The floor must be felt as the starting plane of the image, while walls, columns, beams, slabs, doors, luminaires, wall joints, or vertical architectural planes tower upward through the composition.
+Lens: Use a controlled architectural wide-normal lens equivalent, about 28-35 mm, wide enough to feel the low viewpoint but restrained enough to avoid fisheye, stretched edges, or impossible room geometry.
+Vertical tilt: Use an unmistakable steep upward nadir or contrapicado tilt, not a high-angle view and not a normal frontal wall view. The camera looks from near the floor toward the wall, ceiling, beams, slabs, skylights, and vertical structure. The artwork may be seen from below, but the tilt must not force extreme distortion of the artwork plane.
+Lateral rotation: Use a disciplined low oblique architectural rotation with one coherent upward vanishing direction shared by the artwork, wall, floor, ceiling, furniture, and architectural verticals. Avoid flattening into a straight-on product wall view.
+Composition: Build the drama through a true bottom-up architectural view, not through warping the artwork. The lower floor edge or near floor plane should anchor the frame, and the architecture should rise overhead. Extreme nadir views work best in spaces with mass, height, and clear architectural structure: brutalist architecture, exposed concrete galleries, tall vertical walls, architectural atriums, industrial minimalist lofts, high ceiling collector spaces, concrete beams, slabs, columns, skylights, or vertical openings. The drama comes from rising monumental but restrained architecture, not from enlarging or deforming the artwork. Floor lines, vertical wall planes, ceiling height, columns, door frames, beams, luminaires, furniture legs, wall joints, and overhead structural planes carry the nadir effect. The artwork remains identifiable and visually important without being centered like a product shot.
+Human subject: No human figure requested by this camera slot.
+Scale: The artwork remains a physically plausible canvas in the room. Canvas perspective protection: the canvas is a rigid rectangular physical object; do not bend, warp, taper, stretch, curve, turn it into a wedge, exaggerate side thickness, deform texture, or break the artwork identity. Artwork fidelity protection: preserve the exact abstract artwork from the reference image; do not replace it with figurative, classical, historical, portrait, landscape, decorative, or old-master-style painting.
+Depth of field: Keep the artwork, canvas edges, canvas thickness, and artwork texture sharp and legible. Only very close floor foreground or distant ceiling and architectural planes may soften slightly; the blur must remain subtle, optical, and photographic.
+Slot negative directives: no fisheye; no canvas wedge; no artwork deformation; no heroic oversized artwork; no artwork substitution; no artwork reinterpretation; no classical painting substitution; no low domestic rooms; no cozy living rooms; no cramped rooms; no pets; no crowds; no children
+* Human Presence: none
+* Curatorial Reason: The artwork's warm palette, golden sun motif, and expansive horizontal lines resonate perfectly with the sun-drenched, earthy aesthetic of a Mediterranean interior. It creates a harmonious and aspirational vision.
+* Commercial Reason: Positions the artwork within a highly desirable, luxurious, and seasonally relevant living environment, enhancing its appeal to a market seeking warmth, natural beauty, and sophisticated comfort.
+* Mockup Prompt: Brutalist exposed concrete gallery with a very tall vertical wall, high ceiling, concrete beams, slabs, columns, skylight openings and strong architectural height. Camera starts from true floor level looking sharply upward. The artwork is mounted at a natural gallery height on the tall wall. The room is monumental but restrained; the visual drama comes from rising architecture, floor plane, wall mass, columns and ceiling structure, not from enlarging or deforming the artwork.
+* Negative Prompt: no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended
+
+The selected context proposal may contain deterministic camera fields assigned by the system. When present, these camera fields override looser or conflicting camera wording from the contextual scene description.
+
+Do not ignore this context block. It defines the specific mockup direction to generate.
+
+PRIMARY IMAGE PRIORITIES
+
+1. Artistic camera handling is the first priority.
+   The camera must actively build the image. It must create depth, elegance, product presence, spatial credibility, and commercial strength.
+
+2. Premium human-cultural context is the second priority.
+   The environment must feel like a specific human world: cultural, architectural, historical, seasonal, studio-based, or collector-oriented. Avoid generic interiors.
+
+3. The context must fit the artwork.
+   The space, materials, atmosphere, light, and camera must respond to the artwork’s colors, rhythm, density, silence, contrast, symbolic tension, or emotional tone.
+
+4. The final mockup must enrich the artwork.
+   The result must feel more valuable, more specific, more visually rich, and more commercially powerful than a simple artwork-on-wall mockup.
+
+SCENE AND CONTEXT RULES
+
+Use the selected mockup proposal as the main scene direction.
+
+The context must be visually specific. Avoid vague vintage luxury, generic beige rooms, hotel-like decoration, real-estate render interiors, or repeated warm stock interiors.
+
+If the scene is antique, make it authentically old-world.
+If the scene is modern, make it clearly contemporary.
+If the scene is Mediterranean, use refined southern European architecture, mineral walls, limewash, stone, travertine, terracotta, linen, filtered sunlight, shutters, or summer air.
+If the scene is Eastern or Oriental-inspired, make it premium, restrained, respectful, and architecturally refined. Avoid exotic clichés.
+If the scene is historical, express the period through architecture, furniture, materials, light, and atmosphere, not theatrical props.
+If the scene is Renaissance, Belle Époque, or 1940s Paris, keep it believable, elegant, and premium.
+If the scene is a collector interior, make it specific, lived, cultivated, and visually controlled, not generic.
+
+Do not default to the same beige room, brown furniture, vague vintage armchair, soft natural light, or winter atmosphere.
+
+SEASONAL CONTEXT RULES
+
+Use seasonal awareness only when compatible with the selected context proposal.
+
+Europe and North America are the main buying markets. If the current season is spring or summer, avoid making the scene feel completely wintery, dim, closed, heavy, or brown unless the selected proposal explicitly requires a moody interior.
+
+Seasonal cues may include:
+
+* clearer daylight
+* refined summer light
+* Mediterranean sun filtered through curtains or shutters
+* breathable interior atmosphere
+* lighter mineral materials
+* soft seasonal freshness
+* controlled brightness with premium contrast
+
+Do not turn the scene into a vacation postcard. Keep it collector-grade, elegant, architectural, and commercially refined.
+
+LIGHTING RULES
+
+Lighting must be intentional and must create visual contrast.
+
+Use one clear lighting strategy:
+
+* Mediterranean directional sunlight
+* soft summer daylight
+* premium gallery spotlight
+* moody evening collector light
+* chiaroscuro historical light
+* cool architectural daylight
+* dark wall with focused artwork illumination
+* warm interior light contrasted with deeper shadows
+
+Avoid flat ambient lighting. Avoid generic evenly lit rooms. Avoid six similar warm beige interiors.
+
+CAMERA RULES
+
+The selected camera direction is mandatory.
+
+The camera must not make the artwork look like a poster. Even when the selected proposal is frontal, the artwork must still feel like a physical object with real material presence, believable wall contact, subtle depth, and natural perspective.
+
+Allowed camera directions:
+
+* frontal physical editorial view
+* near-frontal subtle depth view
+* soft left-oblique view
+* soft right-oblique view
+* controlled low 3/4 view
+* artistic stronger 3/4 or 7/8 view
+* elevated 3/4 architectural view
+* controlled high-angle architectural view
+* controlled low-angle or contrapicado view
+* low floor wide low-angle view only when explicitly selected
+
+Avoid:
+
+* flat pasted poster effect
+* fisheye
+* extreme wide angle
+* distorted architecture
+* surveillance-like top-down view
+* uncontrolled aerial view
+* uncontrolled floor-level distortion
+* product scale distortion
+
+If using high-angle, aerial, low-angle, contrapicado, or low floor wide low-angle views, preserve believable architecture, furniture scale, wall geometry, and artwork proportions. Do not flatten these views into a generic frontal close-up.
+
+If using a low-angle or contrapicado view, keep it controlled. The camera may sit slightly below the artwork centerline, but not so low that furniture scale becomes unbelievable.
+
+SCALE AND COMPOSITION RULES
+
+The artwork must be the primary subject, but its scale must remain physically believable.
+
+Respect the artwork’s real physical dimensions:
+
+* width: 80 cm
+* height: 120 cm
+* depth: 2 cm
+* orientation: portrait
+
+The artwork must be coherent in relation to:
+
+* sofas
+* chairs
+* consoles
+* easels
+* doors
+* paneling
+* ceiling height
+* floor level
+* architectural features
+
+Do not enlarge the artwork unrealistically just to dominate the frame.
+Do not shrink the artwork until it loses commercial impact.
+
+The mockup should feel like a premium product photograph, not a decorative background image.
+
+The artwork should occupy a strong visual position in the composition, usually close or medium-close, with enough surrounding architecture to create context and atmosphere.
+
+PHYSICAL INSTALLATION RULES
+
+The artwork may be:
+
+* mounted on a wall
+* leaning against a wall
+* displayed on an easel
+* installed in a collector room
+* placed in a refined studio context
+* integrated into a premium architectural interior
+
+The installation must be physically plausible.
+
+If mounted, it should cast subtle realistic shadows.
+If leaning, it must have correct contact with floor and wall.
+If on an easel, the easel must support the artwork believably.
+If shown at an angle, the canvas side depth must be visible and coherent.
+
+HUMAN CONTEXT WITHOUT VISIBLE HUMANS
+
+Do not include visible people, human figures, silhouettes, faces, hands, bodies, mannequins, animals, pets, birds, or insects.
+
+Human context must be expressed through:
+
+* architecture
+* furniture
+* books
+* collector objects
+* studio tools
+* historical period
+* cultural design language
+* seasonal light
+* materials
+* lived refinement
+* traces of human taste
+
+Do not add theatrical props, costumes, or narrative figures.
+
+STYLE AND MATERIAL QUALITY
+
+The mockup must look photorealistic, premium, editorial, and commercially usable.
+
+Use high-quality materials when appropriate to the selected context:
+
+* limewash
+* mineral plaster
+* stone
+* travertine
+* marble
+* terracotta
+* dark wood
+* pale oak
+* walnut
+* bronze
+* black metal
+* linen
+* paper screens
+* lacquer
+* aged European walls
+* refined paneling
+* architectural concrete
+* polished or matte floors
+
+Avoid cheap furniture, generic stock interiors, fake luxury, oversaturated decoration, clutter, unrealistic reflections, and AI-looking objects.
+
+CONTEXT NEGATIVE PROMPT
+
+Apply the following negative prompt from the selected mockup context when present:
+
+no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended
+
+GLOBAL NEGATIVE RULES
+
+No visible people.
+No animals.
+No pets.
+No birds.
+No insects.
+No human silhouettes.
+No mannequins.
+No poster effect.
+No flat pasted artwork.
+No altered artwork.
+No cropped artwork.
+No mirrored artwork.
+No changed colors.
+No redesigned composition.
+No fake frame unless explicitly requested.
+No incorrect canvas proportions.
+No distorted perspective.
+No fisheye.
+No warped architecture.
+No unrealistic artwork scale.
+No excessive wide-angle view.
+No generic beige vintage room.
+No repeated vague warm luxury interior.
+No winter default unless explicitly intended.
+No decorative clichés.
+No theatrical historical scene.
+No exotic clichés.
+No real-estate render look.
+No hotel lobby look.
+No Pinterest-style decoration.
+No cheap furniture.
+No clutter.
+No text, watermark, signature overlay, logo, UI elements, or labels.
+
+FINAL RESULT
+
+Generate a premium photorealistic art mockup where the artwork remains exact, physical, believable, and commercially powerful.
+
+The image must be visually enriched by artistic camera handling, specific human-cultural context, seasonal awareness, strong material quality, and a meaningful relationship between the artwork and the environment.

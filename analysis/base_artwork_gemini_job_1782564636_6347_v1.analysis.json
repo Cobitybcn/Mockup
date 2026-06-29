@@ -1,0 +1,154 @@
+{
+    "suggested_titles": [
+        {
+            "title": "Crimson Fields",
+            "subtitle": "An Abstract Study in Depth and Contrast",
+            "description": "Evokes vast landscapes and underlying structures through rich, deep reds and contrasting energetic forms."
+        },
+        {
+            "title": "Contained Energy",
+            "subtitle": "Dynamic Tension on a Deep Horizon",
+            "description": "Highlights the vibrant, electric elements held within expansive, somber planes, creating a powerful visual tension."
+        },
+        {
+            "title": "Horizon Study in Maroon",
+            "subtitle": "Geometric Abstraction with Luminous Accents",
+            "description": "Explores abstract horizons and architectural geometries, using a sophisticated maroon base illuminated by striking color blocks."
+        }
+    ],
+    "recommended_number_of_contexts": 6,
+    "contextual_proposals": [
+        {
+            "context_name": "Modern Architectural Loft",
+            "context_role": "Showcases the artwork's contemporary relevance and geometric precision in a minimalist, premium setting.",
+            "space_type": "Expansive living area in a contemporary architectural loft",
+            "atmosphere": "Serene, sophisticated, and clean with strong lines and a sense of calm grandeur.",
+            "materials": [
+                "Light grey polished concrete walls",
+                "Natural white oak flooring",
+                "Black steel window frames",
+                "White plaster ceiling"
+            ],
+            "lighting": "Controlled, cool architectural daylight from large windows, evenly diffused, highlighting the artwork's colors without glare.",
+            "camera_view": "front view",
+            "camera_distance": "medium-close",
+            "camera_angle_notes": "A subtle near-frontal 3/4 view (5-10 degrees) slightly below eye-level, revealing the canvas's physical thickness and texture, grounding it as a real object within the crisp architectural space.",
+            "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+            "curatorial_reason": "The artwork's geometric abstraction and clean lines resonate perfectly with the modernist aesthetic, allowing its vibrant internal forms to pop against a neutral, refined background. The depth of the maroons is enhanced by the cool light.",
+            "commercial_reason": "Appeals to a sophisticated collector base appreciating contemporary design and minimalist elegance, highlighting the artwork's versatility for modern luxury interiors.",
+            "mockup_prompt": "A near-frontal subtle 3/4 view (5-10 degrees) slightly below eye-level of the artwork 'Crimson Fields' mounted on a light grey polished concrete wall in a contemporary architectural loft living area. The room features natural white oak flooring and black steel window frames in the background. Controlled, cool architectural daylight diffuses evenly into the space. The artwork is the focal point, scaled believably and positioned at eye-level over a minimalist long console (not visible). No people, no animals. The canvas thickness is subtly visible.",
+            "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended."
+        },
+        {
+            "context_name": "Mediterranean Summer Retreat",
+            "context_role": "Injects a seasonal, airy feel while providing a warm, earthy contrast that amplifies the artwork's deep hues and electric accents.",
+            "space_type": "Spacious living room in a contemporary Mediterranean residence",
+            "atmosphere": "Open, breathable, and sun-drenched with a relaxed, natural elegance, evoking a summer afternoon.",
+            "materials": [
+                "Rough white limewash walls",
+                "Matte terracotta floor tiles",
+                "Natural linen curtains",
+                "Dark stained wooden beams",
+                "Woven straw details"
+            ],
+            "lighting": "Soft, filtered Mediterranean sunlight streaming through large windows, creating gentle shadows and a warm glow on the terracotta and limewash.",
+            "camera_view": "three-quarter left view",
+            "camera_distance": "medium-close",
+            "camera_angle_notes": "A soft left-oblique view (10-15 degrees) at eye-level, allowing for a broader view of the Mediterranean textures and light, while still keeping the artwork dominant and showcasing its depth within the space.",
+            "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+            "curatorial_reason": "The artwork's intense maroon and vibrant red elements find a deep resonance with the earthy tones of terracotta and sun-baked limewash, while the electric blue provides a striking, unexpected contrast against the natural Mediterranean palette. The warmth of the setting enhances the artwork's own color temperature.",
+            "commercial_reason": "Broadens market appeal by showcasing the artwork in a desirable, relaxed, and seasonally appropriate premium lifestyle context, particularly appealing to European and North American buyers with vacation homes or a desire for a light, sophisticated aesthetic.",
+            "mockup_prompt": "A soft left-oblique view (10-15 degrees) at eye-level of the artwork 'Crimson Fields' positioned on a rough white limewash wall in a contemporary Mediterranean living room. The room features matte terracotta floor tiles, natural linen curtains partially open, and subtle dark stained wooden beams. Soft, filtered Mediterranean sunlight streams in from a large window on the left. The artwork feels perfectly scaled and integrated, showcasing its physical presence. No people, no animals.",
+            "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended."
+        },
+        {
+            "context_name": "Refined Eastern Zen Chamber",
+            "context_role": "Highlights the artwork's meditative depth and striking contrast within a meticulously crafted, serene Eastern-inspired environment.",
+            "space_type": "Collector's study or tea room in a premium Eastern-inspired home",
+            "atmosphere": "Tranquil, balanced, and deeply contemplative with a rich, subdued elegance.",
+            "materials": [
+                "Dark, polished ebony wood panels",
+                "Cream-colored rice paper screen (shoji-inspired)",
+                "Charcoal raw silk wall covering",
+                "Matte black stone flooring",
+                "Subtle bronze accents"
+            ],
+            "lighting": "Controlled ambient light, softly illuminating the room, with focused warm spotlighting specifically on the artwork to enhance its texture and colors.",
+            "camera_view": "three-quarter right view",
+            "camera_distance": "medium-close",
+            "camera_angle_notes": "A soft right-oblique view (10-15 degrees) slightly above eye-level, capturing the quiet dignity of the Eastern aesthetic and presenting the artwork as a focal point within this curated setting, revealing its true dimensionality.",
+            "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+            "curatorial_reason": "The artwork's deep maroon tones and contained energy find a harmonious placement within the disciplined aesthetic of Eastern design, where rich materials and thoughtful simplicity create a backdrop for contemplation. The electric blue offers a vibrant counterpoint, preventing the space from becoming overly somber.",
+            "commercial_reason": "Appeals to a global collector market with an appreciation for sophisticated cross-cultural aesthetics and curated, serene environments. Positions the artwork as a piece that transcends specific cultural boundaries while respecting design traditions.",
+            "mockup_prompt": "A soft right-oblique view (10-15 degrees) slightly above eye-level of the artwork 'Crimson Fields' mounted on a charcoal raw silk wall covering in a premium Eastern-inspired collector's study. Dark, polished ebony wood panels frame the space, alongside a cream-colored rice paper screen. Matte black stone flooring is visible. Controlled ambient light fills the room, with focused warm spotlighting on the artwork. No people, no animals.",
+            "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no exotic clichés."
+        },
+        {
+            "context_name": "Belle Époque Salon Noir",
+            "context_role": "Provides a dramatic, high-contrast historical setting that allows the artwork's modern tension to stand out against a backdrop of classic opulence.",
+            "space_type": "Dark, moody collector's salon in an authentic old-world European mansion",
+            "atmosphere": "Luxurious, enigmatic, and deeply dramatic with a sense of historical richness and intimate contemplation.",
+            "materials": [
+                "Deep plum velvet wall coverings",
+                "Ornate dark wood paneling with gold leaf accents",
+                "Polished dark marble fireplace mantel",
+                "Herringbone parquet flooring",
+                "Heavy brocade curtains"
+            ],
+            "lighting": "Chiaroscuro-inspired lighting from a distant window and strategically placed art lamps, creating deep shadows and luminous highlights, focusing intensely on the artwork.",
+            "camera_view": "high-angle view",
+            "camera_distance": "controlled architectural distance",
+            "camera_angle_notes": "An elevated 3/4 architectural view (20-35 degrees), looking slightly down into the room, emphasizing the artwork's presence within the grand, dark space and showcasing the elegant interplay of light and shadow on the historical features. The artwork is still the dominant element.",
+            "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+            "curatorial_reason": "The artwork's deep, rich maroons and vibrant reds find an unexpectedly harmonious, yet contrasting, home amidst the opulent and dramatic palette of a Belle Époque salon. The modern abstract forms gain a timeless quality when placed against a historically rich backdrop, making the electric blue 'pop' even more intensely.",
+            "commercial_reason": "Appeals to collectors with an appreciation for historical elegance and a taste for juxtaposition, demonstrating the artwork's capacity to transcend specific periods and create a bold statement in a luxurious, established setting.",
+            "mockup_prompt": "An elevated 3/4 architectural view (20-35 degrees) looking slightly down into a Belle Époque salon. The artwork 'Crimson Fields' is prominently displayed on a deep plum velvet wall, flanked by ornate dark wood paneling with subtle gold leaf accents. A polished dark marble fireplace mantel is visible below the artwork. Chiaroscuro-inspired lighting from a distant window and strategically placed art lamps creates deep shadows and luminous highlights, focusing intensely on the artwork. Herringbone parquet flooring is seen below. No people, no animals.",
+            "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended."
+        },
+        {
+            "context_name": "Artist's Atelier Study",
+            "context_role": "Connects the artwork to its creative origins, providing an authentic, inspiring setting that speaks to craftsmanship and artistic endeavor.",
+            "space_type": "Refined artist's studio or creative workspace",
+            "atmosphere": "Authentic, contemplative, and slightly raw, with a sense of ongoing creative process and focused work.",
+            "materials": [
+                "Aged, textured white plaster walls",
+                "Dark stained wooden easel",
+                "Scuffed concrete floor",
+                "Natural canvas textiles",
+                "Raw metal details"
+            ],
+            "lighting": "Directional side light from a large industrial-style window, casting soft, elongated shadows and highlighting the artwork's surface texture and depth.",
+            "camera_view": "low-angle view",
+            "camera_distance": "close",
+            "camera_angle_notes": "A controlled low 3/4 view, slightly upward (not floor-level), making the artwork appear more monumental and central to the creative space. This angle emphasizes its physical presence and the height of the studio.",
+            "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+            "curatorial_reason": "Placing the artwork in an atelier context underscores its material presence and the artistic process. The raw, authentic materials of the studio complement the artwork's own textural quality, allowing its colors to feel both grounded and vibrant. The dramatic low angle emphasizes its significance.",
+            "commercial_reason": "Appeals to collectors who value the story and origin of art, providing an aspirational glimpse into the creative world. Positions the artwork as a serious piece of craftsmanship, enhancing its perceived value.",
+            "mockup_prompt": "A controlled low 3/4 view, slightly upward, of the artwork 'Crimson Fields' displayed on a dark stained wooden easel in a refined artist's studio. The background features aged, textured white plaster walls and a scuffed concrete floor. Directional side light streams in from a large industrial-style window on the left, casting soft, elongated shadows. The artwork appears monumental and central to the creative space, its canvas thickness clearly visible. No people, no animals.",
+            "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended."
+        },
+        {
+            "context_name": "Minimalist Gallery Installation",
+            "context_role": "Maximizes the artwork's visual impact by presenting it as a singular, powerful statement within a rigorously minimalist, expansive architectural setting.",
+            "space_type": "Exhibition hall or grand entrance in a minimalist architectural residence",
+            "atmosphere": "Stark, profound, and monumental, focusing entirely on the artwork's form and color against a vast, clean backdrop.",
+            "materials": [
+                "Smooth, light grey microcement floor",
+                "Textured raw concrete wall (large expanse)",
+                "White plaster ceiling",
+                "Subtle black metal trim"
+            ],
+            "lighting": "Cool, even architectural daylight from unseen skylights and strategic recessed lighting, creating a bright yet focused illumination, emphasizing the artwork's clean lines.",
+            "camera_view": "low floor wide low-angle view",
+            "camera_distance": "controlled architectural distance",
+            "camera_angle_notes": "A low floor wide low-angle view, looking up at the artwork, which is positioned closer to the floor. This perspective creates a sense of scale and grandeur, making the artwork feel imposing and fully integrated into the vast minimalist space.",
+            "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+            "curatorial_reason": "This context directly amplifies the artwork's inherent geometric abstraction, sharp contrasts, and spatial rhythm. The minimalist setting allows the deep maroon fields and electric accents to assert their full power without distraction, making the artwork a monumental, almost architectural, element itself.",
+            "commercial_reason": "Positions the artwork as museum-quality or major collector-grade. The dramatic, immersive presentation highlights its potential as a significant statement piece in large, contemporary spaces, appealing to high-end architectural enthusiasts and serious collectors.",
+            "mockup_prompt": "A low floor wide low-angle view, looking up at the artwork 'Crimson Fields' installed on a textured raw concrete wall within an expansive, minimalist gallery-like space. The artwork is positioned closer to the smooth, light grey microcement floor, dominating the frame. Cool, even architectural daylight floods the space from unseen skylights and recessed lighting, highlighting the artwork's forms. Subtle black metal trim is visible in the background. The artwork's scale feels grand and imposing. No people, no animals.",
+            "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended."
+        }
+    ],
+    "prompt_version": "v1.0 (Auto)",
+    "image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1782564636_6347_v1.png"
+}

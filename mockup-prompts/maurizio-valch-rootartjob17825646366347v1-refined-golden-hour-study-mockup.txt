@@ -1,0 +1,49 @@
+WORLD VISUAL CONTRACT:
+- selected world: premium_domestic_lifestyle_world (Premium Domestic Lifestyle World)
+- selected family: quiet_luxury_living_space (Quiet Luxury Living Space)
+- selected variant: quiet_luxury_window_light (Quiet Luxury Window Light)
+- visual anchor: controlled premium domestic room where the artwork remains the reason for the image
+- material anchor: limewash, plaster, stone, pale wood, refined rug, premium indirect or natural light
+- color atmosphere anchor: warm premium neutrals, polished daylight, restrained luxury, no influencer lifestyle color
+- spatial anchor: room-scale aspirational domestic space with negative space around the artwork
+- required architectural language: aspirational domestic room such as living room, bedroom, dining room, suite, or elegant entry, with controlled commercial polish and negative space
+- required material palette: limewash, plaster, stone, or warm neutral painted wall; stone, pale wood, or refined rug; clean ceiling with premium indirect or natural light; warm_premium
+- required color atmosphere: aspirational domestic room with refined natural light and controlled commercial polish; polished_daylight_or_soft_golden_light; warm premium neutrals, polished daylight, restrained luxury, no influencer lifestyle color
+- required spatial behavior: wall_hanging; room_scale_context_where_artwork_remains_reason_for_image; room-scale aspirational domestic space with negative space around the artwork
+- scene directives: Use polished domestic materials for bedroom, dining, living, suite, or elegant entry contexts.; Keep lifestyle cues secondary.; The artwork remains the reason for the image.
+- forbidden visual drift: generic lounge; real estate ad; hotel catalog; furniture showroom; rustic Tuscan room; no influencer lifestyle; no real estate ad; no hotel catalog look; no furniture showroom; no pets; no artwork substitution; influencer lifestyle; decor ad; pet; animal; crowd; generic neutral interior; Mediterranean villa; showroom; unrelated gallery
+- this scene must not become a generic neutral interior, Mediterranean villa, rustic Tuscan room, generic lounge, showroom, or unrelated gallery unless that is the selected world.
+
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 2 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Refined Golden Hour Study
+- Purpose: To present the artwork within an aspirational, yet understated, domestic environment that emphasizes its sophisticated palette and contemplative depth, bathed in soft, warm natural light.
+- Scene Description: A A premium, contemporary living room or private study within a palazzo-style residence. with Serene, contemplative, and quietly luxurious, evoking the gentle warmth and calm of a late afternoon. The overall mood is one of sophisticated tranquility and restrained elegance, with seasonal cues of late summer or early autumn daylight. atmosphere. Materials: Limewash plaster walls in a warm, muted off-white or greige tone, Large format polished stone tiles in a pale, warm grey for the floor, A minimalist, low-slung, dark wood console table with a clean, architectural line, A single, sculptural armchair in natural linen or premium wool upholstery, in a neutral, earthy tone, Clean, unfussy plaster ceiling
+- Lighting: Soft, diffused, golden late afternoon sunlight entering from a large window off-camera, casting gentle, elongated shadows and creating a warm, inviting glow on the walls and artwork. The light is natural and directional, highlighting textures without harshness.
+- Placement: hanging
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: Reflejo Dorado de Tarde / Palazzo: Camera height is elegant human standing height, approximately 150-170 cm, as if observed calmly from inside a palazzo room. Use a soft three-quarter rotation that catches reflected late light while keeping the artwork plane legible. The composition is stable, warm, and architectural, with golden afternoon reflection supporting the room rather than repainting the artwork; keep elegant balance but avoid perfect symmetry unless the room itself naturally demands it.
+- Distance: defined by selected camera slot geometry, lens block, camera height, and composition block
+- Notes: Camera Slot: Reflejo Dorado de Tarde / Palazzo
+Camera height: Camera height is elegant human standing height, approximately 150-170 cm, as if observed calmly from inside a palazzo room.
+Lens: Use a refined 40-50 mm lens equivalent with natural compression and no exaggerated room depth.
+Vertical tilt: Keep vertical tilt minimal and steady, preserving dignified wall geometry and a calm institutional reading.
+Lateral rotation: Use a soft three-quarter rotation that catches reflected late light while keeping the artwork plane legible.
+Composition: The composition is stable, warm, and architectural, with golden afternoon reflection supporting the room rather than repainting the artwork; keep elegant balance but avoid perfect symmetry unless the room itself naturally demands it.
+Human subject: No human figure requested by this camera slot.
+Scale: The artwork is a plausible XL wall-mounted object in a refined interior, neither miniaturized nor monumentally enlarged. Canvas integrity: the canvas is a rigid physical rectangle; the front face must not bend, curve, stretch, or become a wedge, lateral thickness stays moderate and plausible, and canvas plane, wall plane, floor lines, furniture, and architecture share one coherent vanishing logic.
+Depth of field: Use minimal depth of field. The room, artwork, canvas edges, and artwork texture should remain mostly crisp; any softness is barely perceptible and limited to distant secondary planes.
+Slot negative directives: no artwork color redescription; no fashion-model posing; no animals; no crowds; no children; no pets
+
+VITAL PRESENCE:
+- The scene may include optional, subtle living or atmospheric presence (plant, moss, partial vegetation, water, humidity, vapor, illuminated dust, reflection, organic shadow, light ray), without any added human or animal figures. Vital presence is secondary and ambient: it must not dominate the composition, must not replace or obscure the artwork, must not define the artwork scale by itself, and must not turn the image into a fashion or lifestyle editorial. Do not force a human figure; a human appears only as an explicit camera scale reference.
+
+NEGATIVE DIRECTIVES:
+- no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default.
+
+AI PROPOSED MOCKUP DIRECTION:
+Artwork, an abstract painting with a deep maroon and reddish-brown background featuring vibrant rectangular blocks of red and turquoise/blue with white linear accents, is elegantly mounted on a limewash plaster wall in a contemporary palazzo-style living room. The room features large format pale grey polished stone floor tiles. A minimalist dark wood console table is subtly positioned beneath the artwork, and a sculptural armchair in natural linen upholstery is partially visible in the midground, adding architectural depth. Soft, golden late afternoon sunlight streams into the room from an unseen window, creating gentle reflections and warm highlights on the wall and artwork. The view is from elegant human standing height (approx. 160cm), with a soft three-quarter rotation, showing architectural depth and vanishing lines, composing a stable, warm, and refined atmosphere. The artwork is the clear focal point, positioned slightly off-center to allow for receding architectural space. Minimal depth of field ensures the artwork and its immediate surroundings are crisp.

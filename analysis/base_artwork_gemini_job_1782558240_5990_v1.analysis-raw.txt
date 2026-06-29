@@ -1,0 +1,160 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Layered Fields, Recess Blocks",
+      "subtitle": "A series of horizontally divided fields subtly presses against the vibrant, embedded blocks, creating a tension of contained energy within the canvas.",
+      "description": "The dominant turquoise block anchors the upper left quadrant of this dynamic composition. Horizontal lines carve the dark field into distinct, undulating strata, creating a sense of layered territories. Visible brushstrokes and scraped surfaces imbue the rich, deep pigments with a tactile and raw quality. This visual organization generates an atmosphere of quiet exploration across an abstracted, earthy expanse. Its medium-large scale asserts a significant material presence, grounding the work in its environment."
+    },
+    {
+      "title": "Deep Ground Scored",
+      "subtitle": "A rich, deep maroon pigment forms the primary ground, intricately scored by fine lines that reveal underlying textures and define internal boundaries.",
+      "description": "The expansive field of deep maroon pigment dominates the canvas, serving as a profound backdrop. Irregular horizontal lines, subtly incised, traverse this surface, introducing a delicate counterpoint to its density. The vibrant turquoise and terracotta blocks are applied with visible texture, their edges intentionally raw and pronounced. This interplay of smooth and textured surfaces fosters an atmosphere of geological depth and ancient earth. The dense material quality of the paint provides a substantial and compelling visual weight."
+    },
+    {
+      "title": "Horizon Strata Division",
+      "subtitle": "The canvas presents a sophisticated division of space through its multiple horizontal strata, each defined by delicate lines that imply a vast, layered horizon.",
+      "description": "A structural division organizes the visual field into distinct horizontal strata, suggesting an expansive yet contained landscape. These divisions are subtly marked by thin, almost etched lines that introduce a delicate rhythm to the composition. The vivid color blocks are strategically placed within these layers, breaking the horizontality with their bold presence and textural variations. This precise spatial organization evokes a feeling of quiet contemplation and structural integrity. The painting's considerable format ensures a strong compositional pressure and a commanding visual impact."
+    }
+  ],
+  "contextual_proposals": [
+    {
+      "context_name": "Milanese Collector's Salon",
+      "context_role": "Private Art Collection",
+      "space_type": "Sophisticated private residence",
+      "atmosphere": "Refined, intimate, cultivated",
+      "materials": [
+        "Dark wood panels",
+        "polished marble flooring",
+        "brushed bronze accents",
+        "tailored linen upholstery"
+      ],
+      "lighting": "Warm evening gallery lighting, focused spotlights illuminating the artwork",
+      "placement": "Mounted prominently on a feature wall",
+      "camera_view": "front view",
+      "camera_distance": "medium view",
+      "camera_angle_notes": "Straight-on eye-level view, showcasing the artwork's direct visual impact.",
+      "human_presence": "none",
+      "curatorial_reason": "The dominant color field of deep maroon provides a rich, contemplative background that anchors the modern aesthetic within a classic Italian setting.",
+      "commercial_reason": "The striking interplay between the large turquoise block and its warm surroundings generates a captivating focal point for any discerning collection, offering significant visual return.",
+      "mockup_prompt": "A sophisticated private residence, Milanese collector apartment, featuring warm evening gallery lighting. The artwork is mounted prominently on a dark wood panel feature wall, with polished marble flooring and tailored linen upholstery visible. This creates a refined, intimate, and cultivated atmosphere. human_presence: none. camera_view: front view. camera_distance: medium view. camera_angle_notes: Straight-on eye-level view, showcasing the artwork's direct visual impact.",
+      "negative_prompt": "sterile, cold, empty, white walls, generic furniture, harsh daylight"
+    },
+    {
+      "context_name": "Parisian Left Bank Study",
+      "context_role": "Private Art Collection",
+      "space_type": "Collector's study / historic salon",
+      "atmosphere": "Elegant, intellectual, warm",
+      "materials": [
+        "Aged plaster walls",
+        "historic moldings",
+        "classic parquet flooring",
+        "leather-bound books",
+        "velvet armchair"
+      ],
+      "lighting": "Soft architectural wall wash, gentle late afternoon light filtering through large windows",
+      "placement": "Mounted on a warm-toned wall above a low console table",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "medium-close view",
+      "camera_angle_notes": "Slightly angled view from the left, capturing depth and the artwork's interaction with the space.",
+      "human_presence": "none",
+      "curatorial_reason": "The structural tension created by the intersecting horizontal lines establishes a subtle, yet powerful, spatial dynamic, harmonizing with the historical architectural details.",
+      "commercial_reason": "The unique placement of the vibrant red and turquoise elements against the earthy field offers an unexpected visual anchor, perfect for an intimate display in a cultivated study, appealing to connoisseurs.",
+      "mockup_prompt": "A collector's study in a Paris Left Bank salon, exuding an elegant, intellectual, and warm atmosphere. The artwork is mounted on an aged plaster wall with historic moldings, above a low console. Soft architectural wall wash and gentle late afternoon light illuminate the scene, revealing classic parquet flooring and a velvet armchair. human_presence: none. camera_view: three-quarter left view. camera_distance: medium-close view. camera_angle_notes: Slightly angled view from the left, capturing depth and the artwork's interaction with the space.",
+      "negative_prompt": "modern furniture, bright white walls, cold lighting, clutter, generic decor"
+    },
+    {
+      "context_name": "London Townhouse Library",
+      "context_role": "Private Art Collection",
+      "space_type": "Private library / lounge",
+      "atmosphere": "Cozy, sophisticated, contemplative",
+      "materials": [
+        "Walnut paneling",
+        "deep carpet",
+        "tailored upholstery",
+        "bronze lighting fixtures",
+        "fireplace"
+      ],
+      "lighting": "Warm interior light from discreet downlights and a floor lamp, creating soft shadows and highlights",
+      "placement": "Mounted on a rich walnut-paneled wall",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "medium-close view",
+      "camera_angle_notes": "Angled view from the right, providing a sense of depth and the artwork's presence within the cozy environment.",
+      "human_presence": "none",
+      "curatorial_reason": "The visible surface marks and incised lines reveal a thoughtful artistic process, adding narrative depth to the overall aesthetic within this contemplative setting.",
+      "commercial_reason": "The balanced asymmetry of the distinct color blocks ensures visual intrigue from various angles, enhancing its desirability as a personal statement piece within a luxurious private library.",
+      "mockup_prompt": "A private library in a London townhouse, with a cozy, sophisticated, and contemplative atmosphere. The artwork is mounted on a rich walnut-paneled wall. Warm interior light from discreet downlights and a floor lamp creates soft shadows. Deep carpet, tailored upholstery, and a fireplace are visible. human_presence: none. camera_view: three-quarter right view. camera_distance: medium-close view. camera_angle_notes: Angled view from the right, providing a sense of depth and the artwork's presence within the cozy environment.",
+      "negative_prompt": "harsh light, modern minimalist, industrial, sterile, bright colors, distracting objects"
+    },
+    {
+      "context_name": "Brutalist Villa Living Area",
+      "context_role": "Private Art Collection",
+      "space_type": "Contemporary brutalist villa living space",
+      "atmosphere": "Architectural, bold, quietly luxurious",
+      "materials": [
+        "Microcement walls",
+        "polished concrete floor",
+        "large glass windows",
+        "dark wood accents",
+        "minimalist furniture"
+      ],
+      "lighting": "Controlled dramatic side light, with cool exterior dusk visible through expansive windows",
+      "placement": "Mounted on a wide microcement wall",
+      "camera_view": "high-angle / aerial view",
+      "camera_distance": "medium-wide view",
+      "camera_angle_notes": "Elevated high-angle / aerial view, camera above the artwork looking downward, visible floor/context allowed when necessary, not frontal, not eye-level.",
+      "human_presence": "none",
+      "curatorial_reason": "The overall layered composition, viewed from above, highlights its abstract topography and the deliberate positioning of its color masses within the structured fields of the brutalist architecture.",
+      "commercial_reason": "Its large format, observed from an elevated perspective, demonstrates its commanding presence and how it integrates as an essential element within a refined, architectural space, appealing to collectors of significant contemporary works.",
+      "mockup_prompt": "A living space within a contemporary brutalist villa, featuring an architectural, bold, and quietly luxurious atmosphere. The artwork is mounted on a wide microcement wall. Controlled dramatic side light illuminates the scene, with cool exterior dusk visible through large glass windows. Polished concrete floor and dark wood accents are present. human_presence: none. camera_view: high-angle / aerial view. camera_distance: medium-wide view. camera_angle_notes: Elevated high-angle / aerial view, camera above the artwork looking downward, visible floor/context allowed when necessary, not frontal, not eye-level.",
+      "negative_prompt": "ornate, traditional, warm interior light only, cluttered, soft edges"
+    },
+    {
+      "context_name": "Minimalist Contemporary Studio",
+      "context_role": "Atelier / Studio",
+      "space_type": "Artist's private working studio",
+      "atmosphere": "Clean, focused, creative, sparse",
+      "materials": [
+        "Smooth plaster walls",
+        "concrete floor",
+        "large north-facing window",
+        "simple wooden stool",
+        "minimalist art supplies"
+      ],
+      "lighting": "Soft indirect light from a large window, bright but diffused, revealing subtle textures",
+      "placement": "Leaning naturally against a wall",
+      "camera_view": "low-angle / contrapicado view",
+      "camera_distance": "medium view",
+      "camera_angle_notes": "Low-angle / contrapicado view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+      "human_presence": "none",
+      "curatorial_reason": "The textural density and nuanced application of pigment are dramatically emphasized when viewed from a lower perspective, revealing the material's inherent quality in its raw studio context.",
+      "commercial_reason": "The striking contrast between the earthy tones and the vibrant blue, elevated by the low viewpoint, asserts its unique aesthetic power, making it a compelling piece for a collector seeking works born from a pure creative environment.",
+      "mockup_prompt": "An artist's private working studio with a clean, focused, creative, and sparse atmosphere. The artwork is leaning naturally against a smooth plaster wall. Soft indirect light from a large north-facing window fills the concrete floor space. A simple wooden stool and minimalist art supplies are subtly visible. human_presence: none. camera_view: low-angle / contrapicado view. camera_distance: medium view. camera_angle_notes: Low-angle / contrapicado view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+      "negative_prompt": "messy, cluttered, Renaissance studio, dark, ornate, painting on easel"
+    },
+    {
+      "context_name": "Renaissance Master's Atelier",
+      "context_role": "Atelier / Studio",
+      "space_type": "Historic artist's studio",
+      "atmosphere": "Timeless, traditional, evocative, warm",
+      "materials": [
+        "Aged wooden floorboards",
+        "textured plaster walls",
+        "heavy linen drapes",
+        "antique easel",
+        "period art tools"
+      ],
+      "lighting": "Warm morning light from a large, high window, diffused and directional, casting soft, long shadows",
+      "placement": "On an easel",
+      "camera_view": "low floor wide low-angle view",
+      "camera_distance": "wide view",
+      "camera_angle_notes": "Low floor wide low-angle view, camera near the floor below the artwork, looking upward with wider architectural context allowed, not eye-level, no fisheye.",
+      "human_presence": "none",
+      "curatorial_reason": "The deliberate placement of the colorful blocks within the sweeping dark field gains sculptural weight when seen from below, emphasizing their anchor-like quality amidst a backdrop of artistic heritage.",
+      "commercial_reason": "This expansive view from the floor, set within a historic studio, highlights the artwork's capacity to transcend temporal contexts, showcasing its timeless appeal to a sophisticated buyer appreciating art's enduring legacy.",
+      "mockup_prompt": "A historic artist's studio, a Renaissance Old Master atelier, evoking a timeless, traditional, and warm atmosphere. The artwork is prominently displayed on an antique easel. Warm morning light from a large, high window is diffused and directional, casting soft, long shadows across aged wooden floorboards and textured plaster walls. Heavy linen drapes and period art tools are visible. human_presence: none. camera_view: low floor wide low-angle view. camera_distance: wide view. camera_angle_notes: Low floor wide low-angle view, camera near the floor below the artwork, looking upward with wider architectural context allowed, not eye-level, no fisheye.",
+      "negative_prompt": "modern studio, minimalist, sterile, cold light, clutter, messy paints, contemporary furniture"
+    }
+  ]
+}
+```

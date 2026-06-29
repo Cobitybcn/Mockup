@@ -1,0 +1,27 @@
+You are given two reference images.
+
+REFERENCE IMAGE A - SCENE / WORLD REFERENCE
+Use this image only as the physical mockup environment reference. Preserve its architectural identity, spatial mood, lighting atmosphere, wall and floor materials, color palette, depth, and cinematic character.
+
+REFERENCE IMAGE B - ROOT ARTWORK REFERENCE
+Use this image as the exact artwork to install in the scene. Preserve the artwork identity, composition, colors, proportions, surface, and physical presence. Do not repaint, reinterpret, crop, replace, stylize, or simplify the artwork.
+
+TASK
+Create a new mockup image showing the exact artwork from Reference Image B installed inside the same physical world suggested by Reference Image A, but seen from a new camera angle.
+
+CAMERA CHANGE
+Change only the camera position according to this camera slot:
+
+Low floor / raton / camara baja desde suelo: place the camera near the concrete floor, very low, looking across the same loft room toward the artwork wall. Floor reflections, leather/wood furniture edges, window verticals, brick wall, and wall-mounted artwork must create strong physical depth. No generic gallery.
+
+Reconstruct the same room as a real 3D space and photograph it from this new camera position.
+
+STRICT RULES
+- Do not create a new room.
+- Do not copy the original camera angle from Reference Image A.
+- Do not change the artwork.
+- Do not use the artwork visible in Reference Image A if it differs from Reference Image B.
+- Do not flatten the camera into a frontal catalog view.
+- Do not make a generic gallery mockup.
+- Preserve strong physical perspective: wall plane, floor lines, architectural depth, and real lens behavior.
+- The camera slot is the dominant instruction.

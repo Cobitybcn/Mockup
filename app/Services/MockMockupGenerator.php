@@ -44,6 +44,7 @@ class MockMockupGenerator implements MockupGeneratorInterface
         if (isset($metadata['prompt_passthrough_mode']) && is_string($metadata['prompt_passthrough_mode'])) {
             $finalPrompt = $metadata['prompt_passthrough_mode'];
         }
+        $finalPrompt = (new MockupWorldVisualPromptEnhancer())->enhancePromptForContextId($finalPrompt, $contextId);
 
         // Save prompt text
         file_put_contents($promptsDir . DIRECTORY_SEPARATOR . $promptName, $finalPrompt);

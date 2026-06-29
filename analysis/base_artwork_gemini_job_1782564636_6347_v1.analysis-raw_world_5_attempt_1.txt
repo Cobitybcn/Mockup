@@ -1,0 +1,28 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Mid-Century Concrete Horizon",
+      "context_role": "To present the artwork in a sophisticated, architecturally strong mid-century setting that emphasizes its abstract depth and rich colors, appealing to a collector of design and art.",
+      "space_type": "Refined mid-century collector's loft with exposed concrete architectural elements",
+      "atmosphere": "Contemplative, sophisticated, warm architectural, blending industrial honesty with mid-century refinement, imbued with a subtle burgundy undertone.",
+      "materials": [
+        "Polished concrete walls with subtle warm plaster finishes or dark walnut wood panel accents",
+        "Large-format warm grey stone or polished concrete flooring",
+        "A single refined mid-century design armchair in dark wood with deep burgundy or muted forest green upholstery",
+        "Low, minimalist dark wood console table",
+        "Brushed bronze accents"
+      ],
+      "lighting": "Soft, filtered warm daylight entering from expansive loft windows, complemented by focused warm gallery spotlighting on the artwork, creating a gentle chiaroscuro effect in the architectural recesses.",
+      "camera_view": "Borgoña Recovecos / Cámara 3/4 en Loft de Hormigón: Camera height is human but tucked into an architectural recess, approximately 120-160 cm depending on the loft edge. Use a 3/4 view from a recess, corner, or architectural edge, with a burgundy-toned spatial mood and one clean vanishing direction. The artwork is partially contextualized by loft recesses and concrete architecture, creating depth and intimacy without hiding the piece; allow strong off-center framing through recesses, corners, side planes, or architectural edges.",
+      "camera_distance": "Controlled architectural distance, showcasing the artwork as the focal point within the receding space, balanced by distinct foreground elements.",
+      "camera_angle_notes": "The 3/4 view from an architectural recess enhances the physical presence of the canvas by clearly revealing its thickness and placing it within a dynamic, deep perspective. This angle emphasizes the structural qualities of both the artwork and the loft, creating an elegant visual journey that draws the eye into the space and towards the art.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's abstract composition and deep, rich colors are ideally complemented by the clean lines and material honesty of a mid-century concrete loft. The architectural elements echo the geometric tension and layered planes within the painting, while the warm design furniture and wood accents enhance its emotional depth and sophistication. The 'burgundy-toned spatial mood' mandated by the camera resonates perfectly with the artwork's dominant palette, ensuring a harmonious visual dialogue.",
+      "commercial_reason": "This setting positions the artwork as a centerpiece in a highly curated, architecturally significant environment. It directly appeals to collectors who appreciate both significant design and impactful abstract art, demonstrating its versatility and ability to elevate a sophisticated living space. The visual depth and dynamic camera angle increase its commercial appeal by making it feel tangible and integrated, suggesting it is an essential piece for a discerning collector.",
+      "mockup_prompt": "A large abstract painting featuring deep burgundy and red tones, with vibrant blue and red geometric shapes, is prominently displayed on a warm, dark walnut wood panel accent wall. This wall is set within a refined mid-century collector's concrete loft featuring clean architectural lines and distinct recesses. The floor is large-format warm grey polished concrete. In the foreground, positioned subtly to support the artwork without competing, is a single, elegant low-profile mid-century design armchair (e.g., a Finn Juhl style, dark wood frame, muted burgundy upholstery). Soft, filtered warm daylight enters from large loft windows, creating gentle shadows, while a focused warm gallery spotlight illuminates the artwork, enhancing its texture and colors. The camera is positioned from a human height (120-160 cm) within an architectural recess of the concrete loft, providing a 3/4 view with a clean vanishing direction, showcasing lateral depth and recess edges, creating a subtle burgundy-toned spatial mood. The artwork is slightly off-center, framed by the architectural lines and concrete structure. The artwork is a physical stretched canvas with visible thickness and accurate proportions, not a flat image. No visible people or animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no rustic Tuscan villa, no Mediterranean retreat, no generic beige room, no furniture showroom, no chair closeup, no furniture ad, no pet, no crowd, no generic neutral interior, no Mediterranean villa, no rustic Tuscan room, no generic lounge, no showroom, no unrelated gallery."
+    }
+  ]
+}
+```

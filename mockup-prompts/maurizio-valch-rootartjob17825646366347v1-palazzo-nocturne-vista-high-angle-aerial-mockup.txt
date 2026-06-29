@@ -1,0 +1,49 @@
+WORLD VISUAL CONTRACT:
+- selected world: historical_european_world (Historical European World)
+- selected family: european_palazzo_gallery (European Palazzo Gallery)
+- selected variant: palazzo_late_light (Palazzo Late Light)
+- visual anchor: restrained historical European palazzo room framing contemporary artwork
+- material anchor: aged plaster, warm stone, parquet or terrazzo, restrained moulding or arches
+- color atmosphere anchor: warm historical neutrals, aged cream, muted stone, golden late light
+- spatial anchor: tall old-European proportions, quiet architectural gravity, artwork-first wall
+- required architectural language: old European room with tall proportions, arches, moulding, or stone details kept restrained
+- required material palette: aged plaster, limewash, warm stone, or muted historic color; stone, terrazzo, parquet, or old timber floor; tall ceiling, beams or moulding allowed if secondary; warm_historical
+- required color atmosphere: historic European room with warm late light and refined restraint; golden_late_day_or_soft_window_light; warm historical neutrals, aged cream, muted stone, golden late light
+- required spatial behavior: wall_hanging; artwork_primary_with_architectural_gravity; tall old-European proportions, quiet architectural gravity, artwork-first wall
+- scene directives: Use old plaster or stone architecture.; Let warm light support the artwork.; Do not turn the room into a period drama.
+- forbidden visual drift: generic modern lounge; Mediterranean villa; rustic farmhouse; museum spectacle; period drama; no costumes; no pets; no crowds; no museum spectacle; no artwork substitution; royal event; costume drama; crowd; pet; animal; generic neutral interior; rustic Tuscan room; generic lounge; showroom; unrelated gallery
+- this scene must not become a generic neutral interior, Mediterranean villa, rustic Tuscan room, generic lounge, showroom, or unrelated gallery unless that is the selected world.
+
+ARTWORK TECHNICAL DATA:
+- Artwork size: horizontal canvas, 120 cm wide × 80 cm high × 2 cm deep.
+
+MOCKUP ART DIRECTION:
+- Scene Name: Palazzo Nocturne Vista
+- Purpose: To present the artwork as a contemporary focal point within a refined, historically rich European architectural setting, leveraging a unique elevated perspective to highlight spatial depth and the artwork's commanding presence amidst classic proportions and warm, fading light.
+- Scene Description: A Grand European Palazzo Salon with Refined, contemplative, and stately. A historical European room, but not overly ornate or cluttered. The atmosphere should be one of quiet grandeur, softened by the late-day golden light filtering through tall windows. There's a subtle tension between the ancient architecture and the modern abstract artwork. atmosphere. Materials: Aged plaster walls in muted cream or warm stone, Subtle, restrained classical mouldings or cornices, Polished dark parquet or large format stone slab floor, Tall arched windows with heavy linen drapes, Dark wood console table (optional, as a compositional element)
+- Lighting: Golden late-day light, softly filtering through tall arched windows, casting long shadows and highlighting the texture of the plaster walls and the floor. The artwork itself is softly illuminated by the ambient window light, ensuring its colors remain vibrant and distinct. The overall mood is warm, rich, and slightly subdued.
+- Placement: hanging
+- Human Figure: none
+
+CAMERA DIRECTION:
+- View: Vista Aérea con Contexto de Ventanas: Camera height is elevated above normal eye level, high enough to read the room, windows, floor plane, and artwork together. Use a gentle diagonal rotation so window context and the artwork wall are both visible without splitting perspectives. The room is comprehensible from above, with window light and floor geometry giving context while the artwork remains identifiable; allow a moderate offset so floor, windows, and surrounding architecture carry part of the frame.
+- Distance: defined by selected camera slot geometry, lens block, camera height, and composition block
+- Notes: Camera Slot: Vista Aérea con Contexto de Ventanas
+Camera height: Camera height is elevated above normal eye level, high enough to read the room, windows, floor plane, and artwork together.
+Lens: Use a controlled 35-45 mm architectural lens equivalent; the view is elevated and spatial, not a distant drone image.
+Vertical tilt: Use a calm downward high-angle tilt that relates windows, floor, furniture, wall, and artwork through one camera.
+Lateral rotation: Use a gentle diagonal rotation so window context and the artwork wall are both visible without splitting perspectives.
+Composition: The room is comprehensible from above, with window light and floor geometry giving context while the artwork remains identifiable; allow a moderate offset so floor, windows, and surrounding architecture carry part of the frame.
+Human subject: No human figure requested by this camera slot.
+Scale: The artwork occupies a plausible portion of the wall in an aerial composition with visible floor plane and surrounding architecture. Canvas integrity: the canvas is a rigid physical rectangle; the front face must not bend, curve, stretch, or become a wedge, lateral thickness stays moderate and plausible, and canvas plane, wall plane, floor lines, furniture, and architecture share one coherent vanishing logic.
+Depth of field: Use little to no depth of field because the elevated architectural view needs readable spatial geometry. Keep the artwork, canvas edges, floor lines, windows, and main room planes crisp.
+Slot negative directives: no drone distance; no surveillance view; no decorative random people; no pets; no crowds; no children
+
+VITAL PRESENCE:
+- The scene may include optional, subtle living or atmospheric presence (plant, moss, partial vegetation, water, humidity, vapor, illuminated dust, reflection, organic shadow, light ray), without any added human or animal figures. Vital presence is secondary and ambient: it must not dominate the composition, must not replace or obscure the artwork, must not define the artwork scale by itself, and must not turn the image into a fashion or lifestyle editorial. Do not force a human figure; a human appears only as an explicit camera scale reference.
+
+NEGATIVE DIRECTIVES:
+- No people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default, no drone distance, no surveillance view, no decorative random people, no pets, no crowds, no children, no museum spectacle, no period drama, no costumes, no royal event, no costume drama, no artwork substitution, no rustic Tuscan room, no generic lounge, no showroom, no unrelated gallery.
+
+AI PROPOSED MOCKUP DIRECTION:
+A large, horizontal abstract painting with deep maroon/burgundy tones, vivid red and turquoise geometric accents, and thin white lines, is prominently displayed on an aged plaster wall in a grand European palazzo salon. The room features tall proportions, subtle classical mouldings, and a polished dark parquet floor. Tall arched windows are visible, letting in golden late-day light that softly illuminates the space and the artwork. A single, dark wood console table is positioned on the floor plane as a compositional element, not obstructing the artwork. Camera is elevated above normal eye level, high enough to read the room, windows, floor plane, and artwork together, with a gentle diagonal rotation so the window context and the artwork wall are both visible. The room is comprehensible from above, with window light and floor geometry giving context while the artwork remains identifiable. A moderate offset allows floor, windows, and surrounding architecture to carry part of the frame. The artwork is a rigid physical rectangle, its front face not bending or curving, lateral thickness is moderate and plausible. Little to no depth of field, keeping artwork, canvas edges, floor lines, windows, and main room planes crisp. The colors and textures of the artwork are perfectly preserved. No people, no animals.

@@ -1,0 +1,156 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Ascension in Cobalt",
+      "subtitle": "A geometric landscape of deep blue and crimson ascent",
+      "description": "An abstract vision where vibrant architectural forms meet an expansive cobalt sky, punctuated by ladders reaching towards a distant light."
+    },
+    {
+      "title": "Crimson Horizon",
+      "subtitle": "Bold forms and the promise of new perspectives",
+      "description": "Dynamic planes of color create a landscape of discovery, with a striking red structure anchoring the scene against a luminous blue."
+    },
+    {
+      "title": "Ladders to the Moon",
+      "subtitle": "Contemplative journey through an abstract world",
+      "description": "A surreal and graphic composition featuring symbolic ladders against a powerful blue and red palette, inviting introspection and aspiration."
+    }
+  ],
+  "recommended_number_of_contexts": 6,
+  "contextual_proposals": [
+    {
+      "context_name": "Mediterranean Coastal Atelier",
+      "context_role": "Showcases the artwork's vibrant colors and dreamlike quality within a sun-drenched, sophisticated European setting, appealing to collectors who appreciate both contemporary art and relaxed elegance.",
+      "space_type": "Artist's studio or light-filled living space with sea views",
+      "atmosphere": "Serene, airy, sun-drenched, artistic, spring/summer atmosphere. Breathable and inspiring.",
+      "materials": [
+        "White plaster walls",
+        "Limewashed surfaces",
+        "Polished concrete floor in light grey",
+        "Wrought iron accents (e.g., window frames)",
+        "Linen drapes in natural tones",
+        "Terracotta planters with subtle greenery"
+      ],
+      "lighting": "Soft, diffused Mediterranean sunlight streaming from large windows, casting gentle shadows and highlighting the artwork's texture. Clear daylight, fresh and warm.",
+      "camera_view": "soft editorial left-oblique physical view, 15-20 degrees, clearly non-frontal",
+      "camera_distance": "medium-close",
+      "camera_angle_notes": "The soft left-oblique angle reveals the artwork's physical depth and presence on the wall, showing it as a substantial object. It captures the interplay of light and shadow on the canvas surface, enhancing its materiality while subtly framing it within the spacious, sun-kissed room.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's strong blues and reds resonate perfectly with the vivid palette of the Mediterranean coast, while its abstract architectural forms complement the clean, minimalist lines of contemporary Southern European design. The open, airy space allows the artwork's colors to breathe and its serene atmosphere to be fully appreciated.",
+      "commercial_reason": "This context broadens the artwork's appeal to a sophisticated European and North American market, showcasing its versatility in both contemporary and subtly rustic-chic settings. The aspirational coastal setting implies a lifestyle of discerning taste, adding premium commercial value.",
+      "mockup_prompt": "Contemporary Mediterranean coastal atelier, light-filled, with white plaster walls and polished light grey concrete floor. The artwork is mounted centrally on a large, clean wall. Sunlight streams through large wrought iron windows, illuminating the artwork with soft, diffused light, casting subtle shadows. Linen drapes in natural tones gently frame the view. A subtle terracotta planter with minimalist greenery is placed in the foreground, respecting the clear lines of the space. Architectural minimalist furniture in light wood or natural linen.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended."
+    },
+    {
+      "context_name": "Minimalist Architectural Loft",
+      "context_role": "Highlights the artwork's geometric abstraction and bold color fields in a sleek, modern, and discerning architectural environment, appealing to contemporary art collectors and urban dwellers.",
+      "space_type": "Spacious, high-ceilinged urban loft with a focus on clean lines",
+      "atmosphere": "Contemporary, sophisticated, urban, sleek, calm, showcasing architectural precision.",
+      "materials": [
+        "Raw concrete walls",
+        "Large format polished grey porcelain tiles",
+        "Black metal window frames",
+        "Oak wood paneling (dark, subtle)",
+        "Fluted glass partition"
+      ],
+      "lighting": "Cool architectural daylight entering from a large window, creating crisp light and shadow zones, with subtle gallery track lighting focused on the artwork.",
+      "camera_view": "three-quarter left view, soft left-oblique, 10-15 degrees",
+      "camera_distance": "medium",
+      "camera_angle_notes": "The soft left-oblique view with a subtle angle prevents a flat presentation, adding a sense of three-dimensionality to the artwork. It allows a glimpse into the depth of the room, grounding the artwork within a carefully composed architectural space while emphasizing its visual strength.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's clean lines, block-like forms, and strong color contrasts find a natural home in a minimalist architectural interior. The raw concrete and cool tones of the space allow the artwork's vibrant reds and blues to truly pop, creating a focal point of artistic intensity within a composed environment.",
+      "commercial_reason": "This context appeals directly to the market for high-end contemporary design and art. It positions the artwork as a statement piece in a sophisticated, curated urban dwelling, making it highly desirable for collectors seeking modern aesthetic integration.",
+      "mockup_prompt": "Spacious urban loft with high ceilings, featuring raw concrete walls and large format polished grey porcelain tiles. The artwork is hung on a prominent concrete wall. Cool architectural daylight streams from a large black metal framed window, defining the space. Subtle gallery track lighting highlights the artwork. A premium, architectural minimalist armchair in dark leather or grey fabric is positioned subtly in the foreground, and a dark oak wood console table. Fluted glass partition in the background adds subtle visual texture.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended."
+    },
+    {
+      "context_name": "Refined Pan-Asian Collector's Den",
+      "context_role": "Presents the artwork in a tranquil, culturally rich, and contemplative environment, highlighting its serene yet vibrant qualities and attracting a global collector base with an appreciation for refined Eastern aesthetics.",
+      "space_type": "Private study or meditation room within a contemporary pan-Asian residence",
+      "atmosphere": "Serene, contemplative, sophisticated, rich in cultural heritage, minimalist yet warm.",
+      "materials": [
+        "Dark lacquered wood panels",
+        "Shoji-inspired paper screens",
+        "Tatami mat flooring",
+        "Bronze accents",
+        "Woven silk textiles"
+      ],
+      "lighting": "Soft, indirect light filtered through paper screens, creating a gentle, even illumination with warm undertones. Focused spotlighting on the artwork for emphasis.",
+      "camera_view": "three-quarter right view, soft right-oblique, 10-15 degrees",
+      "camera_distance": "medium-close",
+      "camera_angle_notes": "This soft right-oblique perspective allows the artwork's canvas thickness to be subtly visible, anchoring it in the physical space. It draws the viewer's eye into the serene, textured environment, creating an intimate connection between the artwork and its cultured surroundings.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's strong color fields, simplified forms, and sense of quiet contemplation align with the principles of refined Asian aesthetics, emphasizing balance and visual harmony. The bold red and blue provide a striking contrast against the warm, dark wood and paper screens, making the piece a focal point in a culturally resonant space.",
+      "commercial_reason": "This context taps into the growing appreciation for pan-Asian luxury and design, positioning the artwork as a sophisticated addition to a global art collection. It suggests a thoughtful curation, appealing to buyers who value cultural depth and serene environments.",
+      "mockup_prompt": "Refined pan-Asian collector's den, featuring dark lacquered wood panels on walls, tatami mat flooring, and soft light filtering through shoji-inspired paper screens. The artwork is mounted on a prominent lacquered wood wall. A low, minimalist console table in dark wood with a single, elegant bronze sculptural object is placed beneath the artwork. Soft, indirect light creates a tranquil ambiance, with a focused spotlight subtly illuminating the artwork. Woven silk cushions on the floor in complementary tones.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no exotic clichés."
+    },
+    {
+      "context_name": "1940s Parisian Collector's Salon",
+      "context_role": "Positions the artwork within a historically rich and elegant European setting, appealing to collectors with an appreciation for both historical depth and modern artistic expression, highlighting its timeless appeal.",
+      "space_type": "Luxurious salon or grand apartment living room from the 1940s",
+      "atmosphere": "Refined, sophisticated, historically elegant, cultured, with a touch of classic Parisian charm.",
+      "materials": [
+        "Rich dark wood parquet flooring",
+        "Molded plaster walls in a subtle cream or soft grey",
+        "Velvet upholstery in deep jewel tones",
+        "Polished brass accents",
+        "Ornate fireplace mantel"
+      ],
+      "lighting": "Chiaroscuro-inspired lighting with controlled pools of warm, incandescent light and deep shadows, emphasizing the artwork's presence.",
+      "camera_view": "elevated high-angle architectural view, controlled view from above, not top-down, not surveillance-like",
+      "camera_distance": "controlled architectural distance",
+      "camera_angle_notes": "The elevated high-angle view provides an expansive, elegant perspective of the salon, allowing the artwork to be seen as a focal point within a meticulously curated historical space. This perspective subtly emphasizes the grandeur of the room while keeping the artwork visually dominant and physically grounded.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's bold, modernist aesthetic creates an intriguing dialogue with the classic elegance of a 1940s Parisian salon. The vibrant colors would stand out beautifully against a backdrop of rich materials and historical detailing, showcasing the artwork's ability to transcend eras and blend with diverse collections, much like the avant-garde art collected during that period.",
+      "commercial_reason": "This context broadens the artwork's market appeal by demonstrating its suitability for traditional, high-end interiors, not just modern ones. It evokes a sense of timeless investment and sophisticated collecting, linking it to a prestigious cultural heritage.",
+      "mockup_prompt": "Luxurious 1940s Parisian collector's salon with rich dark wood parquet flooring and molded plaster walls in soft grey. The artwork is hung above an ornate, dark marble fireplace mantel. A velvet armchair in a deep emerald green is subtly placed to the side. Controlled, warm incandescent lighting casts pools of light and shadow, giving the room a chiaroscuro effect and highlighting the artwork. Polished brass decorative objects on the mantel.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended."
+    },
+    {
+      "context_name": "Dark Moody Collector's Gallery",
+      "context_role": "Creates dramatic visual impact, focusing intense attention on the artwork's colors and forms, and appealing to serious collectors who desire a powerful presentation for their pieces.",
+      "space_type": "Private gallery space or dedicated art viewing room",
+      "atmosphere": "Dramatic, intimate, high-contrast, contemplative, premium, emphasizing the artwork as a jewel.",
+      "materials": [
+        "Charcoal grey velvet wall covering",
+        "Dark polished concrete floor",
+        "Blackened steel frames (e.g., door frame)",
+        "Subtle dark wood elements"
+      ],
+      "lighting": "Low ambient light with focused, adjustable gallery spotlights creating a chiaroscuro effect, making the artwork glow from within the darkness.",
+      "camera_view": "controlled oblique low-angle / contrapicado, low camera looking upward through the room, artistic but believable scale",
+      "camera_distance": "close",
+      "camera_angle_notes": "The low-angle perspective adds a sense of monumentality and reverence to the artwork, making it appear more imposing and significant. It accentuates the physical presence of the canvas and its interaction with the dramatic lighting, drawing the viewer's gaze upwards into its vibrant world.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's vibrant red and deep blue demand a high-contrast environment to maximize their intensity. Placing it in a dark, moody setting allows the colors to radiate, emphasizing its symbolic tension and emotional depth. The ladders, in particular, gain a sense of mystery and purpose when emerging from shadow.",
+      "commercial_reason": "This context showcases the artwork's ability to be a powerful focal point, perfect for a collector who desires a truly impactful presentation. It suggests a 'museum-quality' display, enhancing its perceived value and exclusivity.",
+      "mockup_prompt": "Dark moody collector's private gallery space, with charcoal grey velvet wall covering and dark polished concrete floor. The artwork is centrally mounted, dramatically illuminated by focused, adjustable gallery spotlights that make its colors glow against the low ambient light. Deep shadows define the room's architecture, creating an intimate and contemplative atmosphere. A subtle, minimalist black bench is placed in the foreground.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended."
+    },
+    {
+      "context_name": "Architectural Artist's Studio",
+      "context_role": "Connects the artwork to its creative origins and process, appealing to art connoisseurs and artists themselves, while highlighting its structural and material qualities.",
+      "space_type": "Spacious artist's studio with industrial-chic architectural elements",
+      "atmosphere": "Creative, authentic, inspiring, industrial-chic, focusing on materiality and process.",
+      "materials": [
+        "Unfinished brick wall (white-washed)",
+        "Wide plank light wood flooring",
+        "Steel beams and exposed piping (minimalist)",
+        "Large industrial windows",
+        "Canvas fabric accents"
+      ],
+      "lighting": "Bright, even, natural light from large north-facing industrial windows, augmented by adjustable studio lighting, creating a working yet refined atmosphere.",
+      "camera_view": "low floor wide 7/8 architectural view, controlled oblique depth, wide architectural view, no fisheye, no scale distortion",
+      "camera_distance": "controlled architectural distance",
+      "camera_angle_notes": "The wide 7/8 architectural view from a low vantage point provides a comprehensive sense of the studio's scale and depth, showcasing the artwork within its creative habitat. This view allows the canvas's physical presence to be understood in context with the working space, without distorting its proportions or making it feel small.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's abstract, almost constructivist forms and visible brushstrokes suggest a direct connection to the artist's hand and process. Placing it in an architectural studio environment that mirrors its own structural simplicity and bold use of color creates a harmonious visual narrative, emphasizing its authenticity and artistic integrity. The ladders in the painting find a conceptual echo in a space of creation and aspiration.",
+      "commercial_reason": "This context appeals to buyers who appreciate the story behind the art and the creative journey. It gives the artwork an authentic, grounded appeal, making it desirable for those who collect based on artistic merit and the tangible connection to the creative process.",
+      "mockup_prompt": "Spacious artist's studio with an unfinished white-washed brick wall and wide plank light wood flooring. The artwork is prominently displayed on the brick wall. Bright, even natural light floods the studio from large industrial north-facing windows. Adjustable studio track lighting is subtly visible. A tall, sturdy wooden easel with a blank canvas is positioned in the foreground, suggesting ongoing work. Minimalist steel beams and exposed piping add an industrial-chic touch.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended."
+    }
+  ]
+}
+```

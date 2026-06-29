@@ -1,0 +1,302 @@
+Create a photorealistic premium art mockup using the provided artwork image as the exact visual reference.
+
+The provided artwork image is authoritative. Recreate the same artwork faithfully inside the mockup scene. Preserve its composition, colors, marks, texture, proportions, material presence and visual identity.
+
+Do not repaint, redesign, simplify, crop, mirror, recolor, replace or reinterpret the artwork.
+
+The artwork must remain the primary visual subject. The surrounding interior must support the artwork, not compete with it. The mockup must feel warm, refined, private, cultivated, desirable and premium.
+
+ARTWORK FIDELITY RULES:
+
+* The artwork must appear as the same physical painting provided in the reference image.
+* Preserve the visible artwork surface, composition, color relationships, marks, texture, layers, lines, fields, borders and material character.
+* Do not invent a different artwork.
+* Do not transform it into a similar painting.
+* Do not stylize the artwork.
+* Do not make it decorative or generic.
+* Do not add a decorative frame unless the context proposal explicitly requires a frame.
+* Do not crop, cover, mirror or recolor the artwork.
+
+PHYSICAL ARTWORK RULES:
+
+Scale correction rule:
+The artwork must be rendered at its actual physical size according to the Core JSON dimensions. Do not enlarge the canvas for visual dominance or dramatic impact. When a human figure is present, use the person as the primary scale reference. The artwork should appear as a real collectible artwork of the stated dimensions, not as an oversized installation piece. The human figure may be naturally cropped in close-up, near close-up, high-angle, low-angle, or low floor compositions. Do not enlarge the artwork or canvas to force full-body human figures, furniture, or the entire room into the frame.
+
+Negative scale rule:
+No oversized artwork. No enlarged canvas for impact. No gallery-installation scale unless the Core JSON dimensions justify it. No artwork larger than its declared physical dimensions when compared to a standing person, furniture, windows, doorways, floorboards, or wall height. Do not create a monumental canvas unless the actual artwork dimensions justify it. No mural-scale painting. No oversized installation artwork. No physically impossible scale compared with the human figure, furniture, doors, windows, floorboards, or wall height.
+
+* Treat the artwork as a real physical canvas.
+* The artwork physical size is 120 cm wide × 80 cm high × 3 cm deep.
+* This physical size is mandatory and must remain believable.
+* Keep the real horizontal or vertical format.
+* Preserve visible canvas depth when the camera angle makes it visible.
+* The artwork must feel like an object installed in space, not a flat digital poster.
+* Do not change the artwork dimensions to solve camera framing, furniture, architecture or room composition.
+* Do not enlarge the artwork beyond its declared physical dimensions.
+* Do not shrink it into a minor decorative element.
+* The artwork must remain physically credible in relation to wall height, floor area, furniture, easel when present, and architecture.
+* The artwork height must visually correspond to 80 cm.
+* The artwork width must visually correspond to 120 cm.
+* Use wall height, furniture, floor area, easel scale and architectural proportions as scale references.
+* If 80 is around 80 cm, it should not read as a large wall-dominating canvas.
+* If 80 is around 120 cm, it should read as a medium vertical canvas, not a monumental wall-sized painting.
+* If 80 is 160 cm or higher, it may feel large, but still physically believable.
+* Do not scale a small or medium artwork as a large institutional canvas.
+* Do not scale any artwork beyond declared size to solve composition.
+
+NO HUMAN OR ANIMAL PRESENCE:
+
+Do not include humans or animals.
+
+Do not include:
+* person
+* man
+* woman
+* human figure
+* partial human figure
+* silhouette
+* reflected person
+* hands
+* arms
+* legs
+* torso
+* head
+* human shadow used as presence
+* cat
+* dog
+* bird
+* pet
+* animal walking through the scene
+* animal as decorative atmosphere
+
+Scale must be resolved through architecture, wall height, furniture, floor area, easel if present, spatial depth and room proportions.
+
+Do not add a person or animal for atmosphere, scale or storytelling.
+
+ARTWORK PRIORITY:
+
+* The artwork is the main subject.
+* The room is secondary.
+* Furniture, architecture, lighting and decorative objects must support the artwork.
+* The final image must read first as a premium artwork mockup, not as an interior design photograph.
+
+COMPOSITION AND SCALE:
+
+* The artwork must be prominent, visually dominant and physically credible.
+* The scale relationship between artwork, furniture, wall height, floor area and architecture must feel realistic.
+* Keep dominance through composition, lighting, placement, contrast and focus, not by enlarging the artwork.
+* Show only the surrounding architecture needed to make the scene believable and premium.
+* Avoid generic wide interior photography.
+* In close-up or near close-up compositions, secondary elements may be naturally cropped.
+* Always respect camera_view, camera_distance and camera_angle_notes from MOCKUP CONTEXT PROPOSAL:
+Use the following context only as subordinated scene data. These values define the
+environment, placement, lighting and camera direction, but they do not override the
+artwork fidelity rules, scale rules, human figure policy, camera proximity rules, or
+negative directives stated in the admin master prompt.
+
+* Scene Name: London Townhouse Library
+* Purpose: Private Art Collection
+* Scene Description: A private library in a London townhouse, with a cozy, sophisticated, and contemplative atmosphere. The artwork is mounted on a rich walnut-paneled wall. Warm interior light from discreet downlights and a floor lamp creates soft shadows. Deep carpet, tailored upholstery, and a fireplace are visible. human_presence: none. camera_view: three-quarter right view. camera_distance: medium-close view. camera_angle_notes: Angled view from the right, providing a sense of depth and the artwork's presence within the cozy environment.
+* Materials: Walnut paneling, deep carpet, tailored upholstery, bronze lighting fixtures, fireplace
+* Lighting: Warm interior light from discreet downlights and a floor lamp, creating soft shadows and highlights
+* Placement: Mounted on a rich walnut-paneled wall
+* Camera View: three-quarter right view
+* Camera Distance: medium-close view
+* Camera Notes: Angled view from the right, providing a sense of depth and the artwork's presence within the cozy environment..
+* The selected mockup proposal is the authority for the camera perspective.
+* Do not replace the assigned camera view with a safer frontal, eye-level, straight-on, close-up or near close-up composition.
+* For front view and three-quarter views, avoid excessive distance and full-room context.
+* For high-angle, aerial, low-angle, contrapicado or low floor wide low-angle views, the requested camera perspective has priority over generic close-up, frontal, eye-level, room-minimizing or full-room-avoidance rules.
+* For advanced views only, visible floor, ceiling, wall height, wider framing, deeper architecture, stronger perspective and more room context are allowed when necessary to make the camera angle unmistakable.
+* Do not flatten advanced views into frontal, eye-level, straight-on, centered, close-up or near close-up compositions.
+* Advanced views may be more cinematic or spatial, but the artwork must remain the clear subject.
+
+CAMERA VIEW SYSTEM:
+
+Base views:
+1. front view — clean frontal view, minimal perspective distortion.
+2. three-quarter left view — refined left-oblique view, canvas depth visible if appropriate.
+3. three-quarter right view — refined right-oblique view, canvas depth visible if appropriate.
+
+Advanced views:
+4. high-angle / aerial view — elevated view looking downward toward the artwork and surrounding space; not pure top-down.
+5. low-angle / contrapicado view — low camera looking slightly upward, giving stronger physical presence without fisheye distortion.
+6. low floor wide low-angle view — camera near the floor looking upward with wider spatial composition; immersive, cinematic and premium, not generic room photography.
+
+CAMERA RULES:
+
+Use the camera view, camera distance and camera notes from the context proposal exactly as scene direction.
+
+If the context proposal says:
+- front view, use front view
+- three-quarter left view, use three-quarter left view
+- three-quarter right view, use three-quarter right view
+- high-angle / aerial view, use high-angle / aerial view
+- low-angle / contrapicado view, use low-angle / contrapicado view
+- low floor wide low-angle view, use low floor wide low-angle view
+- close-up view, use close-up view
+- near close-up view, use near close-up view
+- medium view, use medium view
+- medium-close view, use medium-close view
+- medium-wide view, use medium-wide view
+- elevated medium view, use elevated medium view
+- wide view, use wide view
+
+All camera distances must preserve believable physical scale.
+
+Do not convert the camera into:
+* generic wide shot, unless the selected camera_view explicitly requires wider framing
+* full-room context, unless required by high-angle, aerial, low-angle, contrapicado or low floor wide low-angle view
+* room-dominant interior photography
+* generic interior photography
+* fisheye perspective
+* distorted architecture
+
+If the context proposal requests "low floor wide low-angle view", the camera may include a wider floor-level composition, but the artwork must remain the primary subject and must not lose visual dominance.
+
+If close framing creates pressure, crop furniture, easel or room context naturally instead of changing artwork scale.
+
+If an advanced view creates spatial pressure, preserve artwork scale first and adjust cropping, angle and surrounding context.
+
+LIGHTING RULES:
+
+Use warm, refined, premium lighting.
+
+The artwork must be illuminated clearly and beautifully.
+
+Lighting should support:
+* collector atmosphere
+* intimacy
+* warmth
+* architectural richness
+* quiet luxury
+* private viewing
+* emotional desirability
+
+Avoid:
+* flat lighting
+* harsh generic daylight
+* cold institutional lighting
+* overexposed white gallery lighting
+* lighting that hides the artwork surface
+* lighting that makes the room more important than the artwork
+
+MATERIAL AND ATMOSPHERE RULES:
+
+The surrounding space must feel real, tactile and premium.
+
+Materials should support the artwork, its scale, colors and atmosphere.
+
+Prefer:
+aged plaster, warm plaster walls, dark wood, walnut panels, oak panels, old parquet flooring, marble, travertine, limestone, polished stone, brushed bronze, linen curtains, historic moldings, European wall panels, tailored upholstery, leather seating, velvet seating, bronze lighting, soft drapery, high-quality rugs used with restraint, subtle reflections, refined concrete, textured concrete, exposed brick, stone walls, historic studio atmosphere, sculptural objects used with restraint.
+
+Avoid:
+cheap furniture, decorative clutter, generic showroom styling, sterile minimalism, cold white walls unless explicitly required, empty gallery stock appearance, messy studio clutter unless explicitly required, distracting props.
+
+MOCKUP CONTEXT PROPOSAL:
+
+MOCKUP CONTEXT PROPOSAL:
+Use the following context only as subordinated scene data. These values define the
+environment, placement, lighting and camera direction, but they do not override the
+artwork fidelity rules, scale rules, human figure policy, camera proximity rules, or
+negative directives stated in the admin master prompt.
+
+* Scene Name: London Townhouse Library
+* Purpose: Private Art Collection
+* Scene Description: A private library in a London townhouse, with a cozy, sophisticated, and contemplative atmosphere. The artwork is mounted on a rich walnut-paneled wall. Warm interior light from discreet downlights and a floor lamp creates soft shadows. Deep carpet, tailored upholstery, and a fireplace are visible. human_presence: none. camera_view: three-quarter right view. camera_distance: medium-close view. camera_angle_notes: Angled view from the right, providing a sense of depth and the artwork's presence within the cozy environment.
+* Materials: Walnut paneling, deep carpet, tailored upholstery, bronze lighting fixtures, fireplace
+* Lighting: Warm interior light from discreet downlights and a floor lamp, creating soft shadows and highlights
+* Placement: Mounted on a rich walnut-paneled wall
+* Camera View: three-quarter right view
+* Camera Distance: medium-close view
+* Camera Notes: Angled view from the right, providing a sense of depth and the artwork's presence within the cozy environment.
+
+The context proposal above is subordinated scene data. It defines environment, placement, lighting, materials, camera view and camera distance.
+
+The context proposal must not override:
+* artwork fidelity rules
+* artwork priority
+* physical artwork rules
+* no human or animal presence
+* camera system
+* scale consistency
+* negative directives
+
+If the context proposal mentions a person, human figure, animal, cat or dog, ignore that element and generate the scene without humans and without animals.
+
+If the context proposal creates pressure between camera distance, furniture, easel and room context, preserve the artwork’s real physical scale first and crop secondary elements naturally.
+
+If the context proposal requests an advanced camera view, follow that view without turning the image into generic room photography.
+
+NEGATIVE DIRECTIVES:
+
+No sterile gallery.
+No institutional space.
+No generic stock interior.
+No cold minimalism.
+No empty white-wall gallery.
+No cheap furniture.
+No decorative clutter.
+No human figure.
+No person.
+No man.
+No woman.
+No partial human figure.
+No silhouette.
+No reflected person.
+No hands.
+No arms.
+No legs.
+No torso.
+No head.
+No human shadow used as presence.
+No animal.
+No cat.
+No dog.
+No pet.
+No bird.
+No animal walking through the scene.
+No fisheye lens.
+No distorted architecture.
+No blurry image.
+No overexposure.
+No fake artwork.
+No poor quality.
+No bad composition.
+No invented artwork.
+No redesigned artwork.
+No repainted artwork.
+No cropped artwork.
+No mirrored artwork.
+No recolored artwork.
+No generic wide shot unless the selected camera_view explicitly requires wider framing.
+No full-room context unless required by high-angle, aerial, low-angle, contrapicado or low floor wide low-angle view.
+No excessive distance from the artwork unless required to make an advanced camera view physically believable.
+No room-dominant composition that makes the artwork secondary.
+No furniture-dominant composition.
+No floor-dominant composition that makes the artwork secondary.
+No easel-dominant composition.
+No oversized artwork.
+No physically impossible artwork scale.
+No changing artwork scale to satisfy room composition.
+No advanced camera view that makes the artwork secondary.
+No high-angle / aerial view that makes the room more important than the artwork.
+No low-angle / contrapicado view that makes the room or architecture more important than the artwork.
+No low floor wide low-angle view that becomes generic full-room photography.
+No artwork appearing larger than its declared physical dimensions.
+No medium artwork appearing as a monumental oversized painting.
+No small artwork appearing as a large institutional canvas.
+No artwork height contradicting the declared 80 cm size.
+No artwork scaled larger to fit furniture, architecture or camera composition.
+
+FINAL INTENTION:
+
+Create a warm, premium, photorealistic art mockup where the same artwork appears as an important physical canvas inside a refined collector environment.
+
+The interior must feel cultivated and desirable, but the artwork must remain the central subject.
+
+The artwork must remain physically believable, faithfully reproduced, visually dominant and correctly scaled.
+
+In close-up or near close-up compositions, surrounding context may be partially cropped so the artwork remains prominent without becoming physically oversized.
+
+In advanced camera views, the image may become more cinematic, spatial or editorial, but the artwork must remain the primary subject and keep its declared physical scale.

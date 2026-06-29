@@ -1,0 +1,160 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Seated Figure, Red",
+      "subtitle": "An expressive figurative painting presents a partially obscured body seated upon a light-toned chair, its form dramatically cast against a deep, dark backdrop.",
+      "description": "A seated, partially draped figure dominates the central vertical axis of the canvas. The composition places the figure on a stylized chair, framed against a dark, undefined space above a vibrant red ground. Bold yellow hues define the limbs, contrasting with the intricate red texture of the organic form obscuring the torso. The scene evokes a mood of intimate mystery and sensual intensity. The tall, rectangular format emphasizes the figure's presence and its weight within the structured space."
+    },
+    {
+      "title": "Yellow Form, Red Ground",
+      "subtitle": "This expressive artwork features a strong interplay of vibrant yellow forms and rich red fields, rendered with visible, textural brushstrokes against a deep, somber background.",
+      "description": "Bright yellow anatomical forms emerge from the deep indigo background, resting upon a distinct red ground. The composition is organized by the dynamic diagonal of the extended leg and the static verticality of the chair's back. Pigments are applied with evident brushwork, especially in the textured red mass and the fluid yellow contours of the figure. A palpable sense of drama and hidden narrative is conveyed through these stark color and textural contrasts. The painting's surface holds a compelling material presence within its medium scale."
+    },
+    {
+      "title": "Red Floor, Dark Recess",
+      "subtitle": "A dynamic structural division creates a defined red territory, supporting a figurative element that extends into a dark, ambiguous spatial recess above.",
+      "description": "A vivid red floor sharply divides the lower portion of the canvas, anchoring the central figure. The composition is structured around the stark contrast between this intense red plane and the deep, dark blue field above it. Visible brushstrokes articulate the forms, from the luminous yellow limbs to the textured red mass at the figure's core. This spatial tension generates an atmosphere of dramatic enclosure and staged intimacy. The substantial vertical format contains this powerful visual event with impactful scale."
+    }
+  ],
+  "contextual_proposals": [
+    {
+      "context_name": "Mayfair Art Collector Apartment",
+      "context_role": "Luxurious private residence",
+      "space_type": "Elegant living room",
+      "atmosphere": "Refined, intimate, sophisticated",
+      "materials": [
+        "Dark walnut wall panels",
+        "brushed bronze accents",
+        "aged plaster ceiling",
+        "deep velvet sofa",
+        "muted Persian rug"
+      ],
+      "lighting": "Warm evening gallery lighting, soft architectural wall wash accentuating the artwork",
+      "placement": "Centrally on a prominent wall in a private collection living room",
+      "camera_view": "front view",
+      "camera_distance": "medium view",
+      "camera_angle_notes": "Straight-on frontal view, centered, eye-level composition.",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "The dominant seated figure holds significant visual weight, creating a compelling focal point within a carefully curated interior.",
+      "commercial_reason": "The striking red field and yellow form stand out, enhancing the sophisticated material richness of a collector's apartment.",
+      "mockup_prompt": "A Mayfair art collector's elegant living room with dark walnut wall panels, brushed bronze accents, and a deep velvet sofa. Warm evening gallery lighting softly illuminates the artwork, centrally placed on a prominent wall. An elegant standing male figure, 1.80m tall, stands contemplatively to the side of the artwork. front view, medium view, Straight-on frontal view, centered, eye-level composition.",
+      "negative_prompt": "Clutter, sterile environment, white walls, harsh lighting, casual clothing, figure covering artwork."
+    },
+    {
+      "context_name": "Parisian Left Bank Collector Salon",
+      "context_role": "Culturally elevated historical setting",
+      "space_type": "Historic salon",
+      "atmosphere": "Warm, classic, contemplative",
+      "materials": [
+        "Ornate historic moldings",
+        "subtle off-white aged plaster walls",
+        "antique parquet flooring",
+        "heavy linen curtains",
+        "leather armchair"
+      ],
+      "lighting": "Soft indirect late afternoon light filtering through large windows, supplemented by a lamplight",
+      "placement": "Hung on a wall within an architectural niche, creating a focused viewing area",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "medium-close view",
+      "camera_angle_notes": "Dynamic three-quarter left perspective, offering depth and spatial context.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "The expressive figurative composition draws the viewer into a narrative, its visible texture enriching the historical ambiance of the room.",
+      "commercial_reason": "The intense color relationship between the deep blue and red field provides a strong visual anchor, appealing to collectors seeking bold yet refined statements.",
+      "mockup_prompt": "A Parisian Left Bank collector salon with ornate historic moldings and aged plaster walls. Soft indirect late afternoon light filters through heavy linen curtains, illuminating the artwork, which is hung within an architectural niche. A refined leather armchair is subtly placed. An elegant standing female figure, 1.55m tall, is thoughtfully observing the artwork from the left. three-quarter left view, medium-close view, Dynamic three-quarter left perspective, offering depth and spatial context.",
+      "negative_prompt": "Modern furniture, stark white walls, empty room, direct harsh sunlight, figure blocking artwork."
+    },
+    {
+      "context_name": "Belle Époque Parisian Atelier",
+      "context_role": "Artist's working studio",
+      "space_type": "Large, light-filled atelier",
+      "atmosphere": "Creative, authentic, subtly bohemian",
+      "materials": [
+        "Tall arched windows",
+        "worn wooden floorboards",
+        "paint-splattered work table",
+        "aged brick wall",
+        "canvas rolls"
+      ],
+      "lighting": "Natural, soft diffused daylight from large north-facing windows, with some warm spotlights on the work",
+      "placement": "Resting naturally against a subtly textured wall, amidst other art materials",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "medium-close view",
+      "camera_angle_notes": "Engaging three-quarter right perspective, highlighting the artwork in its creative environment.",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "The bold figurative form, with its clear structural division, stands out as a focal piece even within the raw context of an artist's studio.",
+      "commercial_reason": "The expressive use of yellow pigment and its material behavior resonates strongly, showing the artwork's authentic artistic process and unique visual language.",
+      "mockup_prompt": "A Belle Époque Parisian atelier with tall arched windows, worn wooden floorboards, and an aged brick wall. Soft diffused daylight from large north-facing windows illuminates the space, with warm spotlights on the artwork. The painting rests naturally against a subtly textured wall, surrounded by canvas rolls and a paint-splattered work table. An elegant standing male figure, 1.80m tall, stands observing the artwork from the right, with a thoughtful expression. three-quarter right view, medium-close view, Engaging three-quarter right perspective, highlighting the artwork in its creative environment.",
+      "negative_prompt": "Overly clean studio, messy clutter, sterile environment, modern art studio, figure obstructing view."
+    },
+    {
+      "context_name": "Los Angeles Hillside Residence",
+      "context_role": "Sophisticated contemporary living",
+      "space_type": "Open-plan living area with expansive views",
+      "atmosphere": "Modern, airy, luxurious, with a touch of drama",
+      "materials": [
+        "Polished concrete floors",
+        "vast floor-to-ceiling glass windows",
+        "warm minimal concrete walls",
+        "custom dark wood shelving"
+      ],
+      "lighting": "Blue-hour window light casting subtle cool tones, combined with soft interior architectural lighting providing warmth",
+      "placement": "Mounted on a large, minimalist concrete wall as a central art piece",
+      "camera_view": "high-angle / aerial view",
+      "camera_distance": "medium-wide view",
+      "camera_angle_notes": "Elevated high-angle / aerial view, camera above the artwork looking downward, visible floor/context allowed when necessary, not frontal, not eye-level.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "The striking scale and structural tension of the artwork create a powerful focal point, designed to be admired from various perspectives within a modern home.",
+      "commercial_reason": "The compelling color fields and dominant figure offer a strong visual statement that complements the luxurious and expansive nature of a hillside residence.",
+      "mockup_prompt": "An open-plan living area in a Los Angeles hillside residence with polished concrete floors, vast floor-to-ceiling glass windows, and warm minimal concrete walls. Blue-hour window light combines with soft interior architectural lighting. The artwork is mounted on a large, minimalist concrete wall as a central art piece. An elegant standing female figure, 1.55m tall, is visible below the artwork, adding a sense of scale. high-angle / aerial view, medium-wide view, Elevated high-angle / aerial view, camera above the artwork looking downward, visible floor/context allowed when necessary, not frontal, not eye-level.",
+      "negative_prompt": "Clutter, traditional decor, harsh overhead lighting, figure blocking artwork."
+    },
+    {
+      "context_name": "Private Foundation Exhibition Room",
+      "context_role": "Dedicated art viewing space",
+      "space_type": "Intimate, focused exhibition room",
+      "atmosphere": "Contemplative, respectful, scholarly",
+      "materials": [
+        "Dark, textured plaster walls",
+        "quiet oak flooring",
+        "single minimalist bench in black leather",
+        "subtle recessed lighting"
+      ],
+      "lighting": "Controlled dramatic side light illuminating the texture of the artwork, with dim ambient light elsewhere",
+      "placement": "Centered on a dark wall, specifically lit for private viewing",
+      "camera_view": "low-angle / contrapicado view",
+      "camera_distance": "medium view",
+      "camera_angle_notes": "Low-angle / contrapicado view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "The dramatic tension inherent in the compositional division is intensified by the focused lighting, inviting a deeper, more intimate contemplation of the work.",
+      "commercial_reason": "The evocative surface marks and material behavior of the pigment are highlighted by the specialized lighting, showcasing the artwork's intrinsic value for discerning collectors.",
+      "mockup_prompt": "An intimate private foundation exhibition room with dark, textured plaster walls and quiet oak flooring. Controlled dramatic side light illuminates the artwork, centered on a dark wall. A single minimalist bench in black leather is visible. An elegant standing male figure, 1.80m tall, stands in thoughtful observation near the artwork. low-angle / contrapicado view, medium view, Low-angle / contrapicado view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+      "negative_prompt": "Bright lighting, white walls, cluttered room, generic gallery, figure blocking artwork."
+    },
+    {
+      "context_name": "Sculptor's Private Studio",
+      "context_role": "Artist's personal creative environment",
+      "space_type": "Raw, industrial loft studio",
+      "atmosphere": "Authentic, focused, slightly gritty, and inspiring",
+      "materials": [
+        "Exposed brick walls",
+        "concrete floor",
+        "large industrial windows",
+        "scattered tools",
+        "raw canvas",
+        "steel workbenches"
+      ],
+      "lighting": "Natural, cool daylight from industrial windows, with some warm overhead task lighting",
+      "placement": "Leaning against a distressed concrete wall, amongst other unfinished works and art supplies",
+      "camera_view": "low floor wide low-angle view",
+      "camera_distance": "wide view",
+      "camera_angle_notes": "Low floor wide low-angle view, camera near the floor below the artwork, looking upward with wider architectural context allowed, not eye-level, no fisheye.",
+      "human_presence": "none",
+      "curatorial_reason": "The artwork's inherent expressive quality and visible surface texture are emphasized within the raw, creative energy of a sculptor's studio, suggesting a deep material engagement.",
+      "commercial_reason": "The unique scale format and the dramatic visual axis of the piece project a powerful, independent presence, suitable for collectors seeking art with an authentic genesis.",
+      "mockup_prompt": "A sculptor's private studio, a raw industrial loft with exposed brick walls, a concrete floor, and large industrial windows. Cool daylight streams from the windows, supplemented by warm overhead task lighting. The artwork leans against a distressed concrete wall, surrounded by scattered tools, raw canvas, and steel workbenches, suggesting a space of active creation. low floor wide low-angle view, wide view, Low floor wide low-angle view, camera near the floor below the artwork, looking upward with wider architectural context allowed, not eye-level, no fisheye.",
+      "negative_prompt": "Figure present, clean studio, bright white walls, modern sleek decor, finished look."
+    }
+  ]
+}
+```

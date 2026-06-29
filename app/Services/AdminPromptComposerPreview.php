@@ -185,12 +185,15 @@ class AdminPromptComposerPreview
         $cameraGroup = $json['camera_group'] ?? $proposal['camera_group'] ?? $json['camera_group_expected'] ?? $proposal['camera_group_expected'] ?? '';
         $cameraDistance = $json['camera_distance_expected'] ?? $proposal['camera_distance_expected'] ?? $json['camera_distance'] ?? $proposal['camera_distance'] ?? '';
         $cameraNotes = $json['camera_angle_notes_expected'] ?? $proposal['camera_angle_notes_expected'] ?? $json['camera_angle_notes'] ?? $proposal['camera_angle_notes'] ?? $json['camera_notes'] ?? $proposal['camera_notes'] ?? '';
+        $cameraSlotName = $json['camera_slot_name'] ?? $proposal['camera_slot_name'] ?? '';
+        $cameraSlotGeometry = $json['camera_slot_geometry'] ?? $proposal['camera_slot_geometry'] ?? '';
         $humanPresence = $json['human_presence'] ?? $proposal['human_presence'] ?? 'none';
         $curatorialReason = $json['curatorial_reason'] ?? $proposal['curatorial_reason'] ?? '';
         $commercialReason = $json['commercial_reason'] ?? $proposal['commercial_reason'] ?? '';
         
         // mockup_prompt
         $mockupPrompt = $json['mockup_prompt'] ?? $proposal['mockup_prompt'] ?? $json['scene_description'] ?? $proposal['scene_description'] ?? $json['scene'] ?? $proposal['scene'] ?? '';
+        $mockupPrompt = $this->sanitizeMockupPromptCameraNarration((string)$mockupPrompt);
         
         // negative_prompt
         $negPrompt = $json['negative_prompt'] ?? $proposal['negative_prompt'] ?? $proposal['prompt_negative'] ?? $json['prompt_negative'] ?? '';
@@ -207,12 +210,20 @@ class AdminPromptComposerPreview
             'camera_group' => trim((string)$cameraGroup),
             'camera_distance' => trim((string)$cameraDistance),
             'camera_angle_notes' => trim((string)$cameraNotes),
+            'camera_slot_name' => trim((string)$cameraSlotName),
+            'camera_slot_geometry' => trim((string)$cameraSlotGeometry),
             'human_presence' => trim((string)$humanPresence),
             'curatorial_reason' => trim((string)$curatorialReason),
             'commercial_reason' => trim((string)$commercialReason),
             'mockup_prompt' => trim((string)$mockupPrompt),
             'negative_prompt' => trim((string)$negPrompt),
         ];
+    }
+
+    private function sanitizeMockupPromptCameraNarration(string $text): string
+    {
+        $text = preg_replace('/\b(?:Camera\s*(?::|view\s+is|angle\s+is|direction\s+is)|Viewed\s+from|Shot\s+from)\s+[^.]+\.?/i', '', $text);
+        return trim((string)preg_replace('/\s{2,}/', ' ', (string)$text));
     }
 
     /**
@@ -232,6 +243,8 @@ class AdminPromptComposerPreview
             . "* Camera Group: {$fields['camera_group']}\n"
             . "* Camera Distance: {$fields['camera_distance']}\n"
             . "* Camera Notes: {$fields['camera_angle_notes']}\n"
+            . "* Camera Slot: {$fields['camera_slot_name']}\n"
+            . "* Camera Slot Geometry:\n{$fields['camera_slot_geometry']}\n"
             . "* Human Presence: {$fields['human_presence']}\n"
             . "* Curatorial Reason: {$fields['curatorial_reason']}\n"
             . "* Commercial Reason: {$fields['commercial_reason']}\n"

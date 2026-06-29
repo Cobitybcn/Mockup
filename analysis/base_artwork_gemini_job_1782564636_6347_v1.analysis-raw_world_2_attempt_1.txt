@@ -1,0 +1,28 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Refined Golden Hour Study",
+      "context_role": "To present the artwork within an aspirational, yet understated, domestic environment that emphasizes its sophisticated palette and contemplative depth, bathed in soft, warm natural light.",
+      "space_type": "A premium, contemporary living room or private study within a palazzo-style residence.",
+      "atmosphere": "Serene, contemplative, and quietly luxurious, evoking the gentle warmth and calm of a late afternoon. The overall mood is one of sophisticated tranquility and restrained elegance, with seasonal cues of late summer or early autumn daylight.",
+      "materials": [
+        "Limewash plaster walls in a warm, muted off-white or greige tone",
+        "Large format polished stone tiles in a pale, warm grey for the floor",
+        "A minimalist, low-slung, dark wood console table with a clean, architectural line",
+        "A single, sculptural armchair in natural linen or premium wool upholstery, in a neutral, earthy tone",
+        "Clean, unfussy plaster ceiling"
+      ],
+      "lighting": "Soft, diffused, golden late afternoon sunlight entering from a large window off-camera, casting gentle, elongated shadows and creating a warm, inviting glow on the walls and artwork. The light is natural and directional, highlighting textures without harshness.",
+      "camera_view": "Reflejo Dorado de Tarde / Palazzo: Camera height is elegant human standing height, approximately 150-170 cm, as if observed calmly from inside a palazzo room. Use a soft three-quarter rotation that catches reflected late light while keeping the artwork plane legible. The composition is stable, warm, and architectural, with golden afternoon reflection supporting the room rather than repainting the artwork; keep elegant balance but avoid perfect symmetry unless the room itself naturally demands it.",
+      "camera_distance": "Controlled architectural distance, showcasing the artwork as the focal point within a spacious yet intimate room, allowing for a clear sense of depth and scale.",
+      "camera_angle_notes": "The subtle 3/4 angle captures the artwork's physical presence and canvas thickness, avoiding a flat, poster-like appearance. The stable, architectural composition, combined with the golden light, establishes a sophisticated atmosphere that enhances the artwork's inherent warmth and depth, making it feel integral to a refined living space.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's deep, rich maroon and reddish-brown background, punctuated by vibrant red and turquoise/blue forms, finds resonance with the warm, neutral palette and soft lighting of this 'Quiet Luxury' setting. The golden hour light draws out the hidden warmth in the artwork's dark tones, while the refined architectural lines and ample negative space allow the piece to command attention without being overwhelmed, fostering contemplation. The contrast between the artwork's abstract energy and the room's calm sophistication creates a dynamic visual dialogue.",
+      "commercial_reason": "This context elevates the artwork's commercial appeal by placing it in an aspirational, high-end domestic setting that embodies 'quiet luxury' — a highly sought-after aesthetic. It demonstrates how the artwork seamlessly integrates into and enhances a refined living environment, appealing to discerning collectors who value understated elegance and art that enriches their daily lives. The premium architectural backdrop and sophisticated lighting strategy highlight the artwork's quality and potential as a signature piece.",
+      "mockup_prompt": "Artwork, an abstract painting with a deep maroon and reddish-brown background featuring vibrant rectangular blocks of red and turquoise/blue with white linear accents, is elegantly mounted on a limewash plaster wall in a contemporary palazzo-style living room. The room features large format pale grey polished stone floor tiles. A minimalist dark wood console table is subtly positioned beneath the artwork, and a sculptural armchair in natural linen upholstery is partially visible in the midground, adding architectural depth. Soft, golden late afternoon sunlight streams into the room from an unseen window, creating gentle reflections and warm highlights on the wall and artwork. The view is from elegant human standing height (approx. 160cm), with a soft three-quarter rotation, showing architectural depth and vanishing lines, composing a stable, warm, and refined atmosphere. The artwork is the clear focal point, positioned slightly off-center to allow for receding architectural space. Minimal depth of field ensures the artwork and its immediate surroundings are crisp.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default."
+    }
+  ]
+}
+```

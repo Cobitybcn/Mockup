@@ -22,7 +22,7 @@ class OpenAIMockupGenerator implements MockupGeneratorInterface
         $t0 = microtime(true);
         Logger::log("Iniciando generacion de mockup OpenAI. Contexto: {$contextId}, Obra: " . basename($imagePath), 'openai');
 
-        $finalPrompt = $this->finalPrompt($contextId, $prompt);
+        $finalPrompt = $this->finalPrompt($contextId, $prompt, $metadata);
         
         try {
             $b64 = $this->callImageEdit($imagePath, $finalPrompt, (string)($metadata['root_reference_path'] ?? ''));
@@ -68,9 +68,13 @@ class OpenAIMockupGenerator implements MockupGeneratorInterface
         ];
     }
 
-    private function finalPrompt(string $contextId, string $contextPrompt): string
+    private function finalPrompt(string $contextId, string $contextPrompt, array $metadata = []): string
     {
-        return $contextPrompt;
+        if (isset($metadata['prompt_passthrough_mode']) && is_string($metadata['prompt_passthrough_mode'])) {
+            $contextPrompt = $metadata['prompt_passthrough_mode'];
+        }
+
+        return (new MockupWorldVisualPromptEnhancer())->enhancePromptForContextId($contextPrompt, $contextId);
     }
 
     private function callImageEdit(string $imagePath, string $prompt, string $rootReferencePath = ''): string

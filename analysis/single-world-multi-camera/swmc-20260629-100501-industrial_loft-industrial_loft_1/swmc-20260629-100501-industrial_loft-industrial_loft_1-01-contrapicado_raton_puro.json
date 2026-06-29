@@ -1,0 +1,17 @@
+{
+    "generation_mode": "single_world_multi_camera",
+    "result_id": "swmc-20260629-100501-industrial_loft-industrial_loft_1-01-contrapicado_raton_puro",
+    "artwork_id": 381,
+    "artwork_root_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1782564636_6347_v1.png",
+    "world_mother_id": "industrial_loft/industrial_loft_1",
+    "world_mother_path": "C:\\laragon\\www\\mockups\\storage\\world_mothers\\industrial_loft\\industrial_loft_1.jpg",
+    "time_of_day": "day",
+    "vital_presence_mode": "none",
+    "camera_set": "standard_6",
+    "camera_slot_id": "contrapicado_raton_puro",
+    "camera_slot_name": "Nadir Controlado",
+    "result_path": "C:\\laragon\\www\\mockups\\analysis\\single-world-multi-camera\\swmc-20260629-100501-industrial_loft-industrial_loft_1\\swmc-20260629-100501-industrial_loft-industrial_loft_1-01-contrapicado_raton_puro.png",
+    "prompt_path": "C:\\laragon\\www\\mockups\\analysis\\single-world-multi-camera\\swmc-20260629-100501-industrial_loft-industrial_loft_1\\swmc-20260629-100501-industrial_loft-industrial_loft_1-01-contrapicado_raton_puro.prompt.txt",
+    "elapsed_seconds": 33.93,
+    "created_at": "2026-06-29T10:05:35+00:00"
+}

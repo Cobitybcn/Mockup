@@ -1,0 +1,70 @@
+{
+    "artwork_id": 376,
+    "core_schema_version": "1.1",
+    "source_core_json": "analysis/core/376.core.json",
+    "branches": [
+        {
+            "branch_id": 1,
+            "source_title": "Red Blocks Blue",
+            "source_subtitle": "An abstract painting explores the delicate balance of irregular red blocks positioned across an expansive, deeply saturated blue field, punctuated by fine white lines.",
+            "source_description": "Four irregular red blocks anchor the vast blue field, scattered across its vertical expanse. The composition is organized by subtle white lines that traverse and divide the deep blue, creating an underlying structure. The red forms feature thick impasto, contrasting sharply with the smoother, layered brushwork of the intense blue ground. This interplay generates an atmosphere of serene mystery, where small, vibrant elements command attention within a boundless depth. The work holds a quiet, yet powerful, material presence on a substantial canvas.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": "intense",
+                "space_character": null,
+                "lighting_bias": null,
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": "base_artwork_gemini_job_1782552032_4777_v1.png",
+                "three_quarter_left": "base_artwork_gemini_job_1782552032_4777_v2.png",
+                "three_quarter_right": "base_artwork_gemini_job_1782552032_4777_v3.png",
+                "fallback": "base_artwork_gemini_job_1782552032_4777_v1.png"
+            }
+        },
+        {
+            "branch_id": 2,
+            "source_title": "Deep Blue Surface",
+            "source_subtitle": "An expressive abstract work emphasizes the rich, textured surface of a deep blue field, highlighted by bold, heavily impastoed red elements and subtle linear incisions.",
+            "source_description": "A vast deep blue field dominates the canvas, serving as the expansive primary surface. The composition is structured by delicate white lines that are subtly incised or thinly painted across the rich blue. The blue pigment shows layered brushwork and depth, while the four red elements display a distinct, thick impasto application that stands proud from the surface. This contrast in material application creates an atmosphere of focused attention on texture and chromatic intensity. The worked surface and vibrant accents lend a dynamic tension to its medium-large scale.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": null,
+                "space_character": null,
+                "lighting_bias": null,
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": "base_artwork_gemini_job_1782552032_4777_v1.png",
+                "three_quarter_left": "base_artwork_gemini_job_1782552032_4777_v2.png",
+                "three_quarter_right": "base_artwork_gemini_job_1782552032_4777_v3.png",
+                "fallback": "base_artwork_gemini_job_1782552032_4777_v1.png"
+            }
+        },
+        {
+            "branch_id": 3,
+            "source_title": "Divided Blue Field",
+            "source_subtitle": "This spatial abstract painting employs horizontal and diagonal white lines to create subtle divisions, generating a nuanced tension within the expansive blue field.",
+            "source_description": "The expansive blue field is subtly divided by horizontal and diagonal white lines, creating distinct internal territories. The composition organizes these divisions, with four vivid red blocks strategically placed within the resulting segments. The rich blue background presents a deep, layered quality, while the white lines appear as fine, almost etched marks, and the red forms assert themselves with dense texture. This structural interplay cultivates a contemplative atmosphere of ordered space and isolated elements. The vertical format emphasizes the work's inherent quiet monumentality.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": "contemplative",
+                "space_character": null,
+                "lighting_bias": null,
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": "base_artwork_gemini_job_1782552032_4777_v1.png",
+                "three_quarter_left": "base_artwork_gemini_job_1782552032_4777_v2.png",
+                "three_quarter_right": "base_artwork_gemini_job_1782552032_4777_v3.png",
+                "fallback": "base_artwork_gemini_job_1782552032_4777_v1.png"
+            }
+        }
+    ]
+}

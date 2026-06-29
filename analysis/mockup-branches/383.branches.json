@@ -1,0 +1,70 @@
+{
+    "artwork_id": 383,
+    "core_schema_version": "1.1",
+    "source_core_json": "analysis/core/383.core.json",
+    "branches": [
+        {
+            "branch_id": 1,
+            "source_title": "Red Structure, Blue Expanse",
+            "source_subtitle": "An abstract landscape of vivid color and bold geometry.",
+            "source_description": "A striking composition featuring a prominent red architectural form beneath a deep blue sky, punctuated by a luminous white disc and ascending ladders.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": null,
+                "space_character": null,
+                "lighting_bias": null,
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": "base_artwork_gemini_job_1782592212_4302_v1.png",
+                "three_quarter_left": "base_artwork_gemini_job_1782592212_4302_v2.png",
+                "three_quarter_right": "base_artwork_gemini_job_1782592212_4302_v3.png",
+                "fallback": "base_artwork_gemini_job_1782592212_4302_v1.png"
+            }
+        },
+        {
+            "branch_id": 2,
+            "source_title": "Ascending Horizon",
+            "source_subtitle": "Journey through abstracted planes and vibrant light.",
+            "source_description": "Bold blocks of color define a surreal landscape with ladders leading to unseen heights, all under a vast, captivating blue sky with a singular celestial body.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": null,
+                "space_character": null,
+                "lighting_bias": null,
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": "base_artwork_gemini_job_1782592212_4302_v1.png",
+                "three_quarter_left": "base_artwork_gemini_job_1782592212_4302_v2.png",
+                "three_quarter_right": "base_artwork_gemini_job_1782592212_4302_v3.png",
+                "fallback": "base_artwork_gemini_job_1782592212_4302_v1.png"
+            }
+        },
+        {
+            "branch_id": 3,
+            "source_title": "Vivid Landscape Geometry",
+            "source_subtitle": "Contemplative forms in a world of stark contrast.",
+            "source_description": "An exploration of form and color, presenting a simplified yet potent landscape with a dramatic red building, an expansive blue sky, and symbolic ladders connecting different planes.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": "contemplative",
+                "space_character": null,
+                "lighting_bias": null,
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": "base_artwork_gemini_job_1782592212_4302_v1.png",
+                "three_quarter_left": "base_artwork_gemini_job_1782592212_4302_v2.png",
+                "three_quarter_right": "base_artwork_gemini_job_1782592212_4302_v3.png",
+                "fallback": "base_artwork_gemini_job_1782592212_4302_v1.png"
+            }
+        }
+    ]
+}

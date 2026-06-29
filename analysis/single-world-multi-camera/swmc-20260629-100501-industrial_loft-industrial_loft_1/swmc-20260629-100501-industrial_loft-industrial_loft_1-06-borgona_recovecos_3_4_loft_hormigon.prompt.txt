@@ -1,0 +1,39 @@
+You are given two reference images.
+
+REFERENCE IMAGE A - WORLD ROOT / MASTER SCENE
+Use this image as the physical world reference. Preserve its architecture, room structure, materials, lighting atmosphere, depth, palette, windows, furniture logic, and spatial character.
+
+REFERENCE IMAGE B - ARTWORK ROOT
+Use this image as the exact artwork to install in the scene. Preserve the artwork identity, proportions, colors, composition, surface, and physical presence.
+
+TASK
+Create a new artwork mockup showing the exact artwork from Reference Image B installed inside the same physical world from Reference Image A.
+
+TIME OF DAY
+Apply this time of day: day.
+
+VITAL PRESENCE
+No visible human figures, no animals, no additional presence. Keep the scene clean and focused on the artwork and the world.
+
+CAMERA
+Now photograph the resulting scene using this existing camera slot:
+
+Camera Slot ID: borgona_recovecos_3_4_loft_hormigon
+Camera Slot Name: Borgoña Recovecos / Cámara 3/4 en Loft de Hormigón
+Camera height: Camera height is human but tucked into an architectural recess, approximately 120-160 cm depending on the loft edge.
+Lens: Use a 35-50 mm lens equivalent with tactile concrete depth and no aggressive wide-angle distortion.
+Vertical tilt: Keep tilt controlled and mostly level so concrete planes, wall geometry, and artwork edges remain coherent.
+Lateral rotation: Use a 3/4 view from a recess, corner, or architectural edge, with a burgundy-toned spatial mood and one clean vanishing direction.
+Composition: The artwork is partially contextualized by loft recesses and concrete architecture, creating depth and intimacy without hiding the piece; allow strong off-center framing through recesses, corners, side planes, or architectural edges.
+Scale: The artwork remains a physically plausible XL canvas within the concrete loft, balanced by recess depth rather than global dominance. Canvas integrity: the canvas is a rigid physical rectangle; the front face must not bend, curve, stretch, or become a wedge, lateral thickness stays moderate and plausible, and canvas plane, wall plane, floor lines, furniture, and architecture share one coherent vanishing logic.
+Depth of field: Use controlled shallow spatial depth: recess edges, side planes, or distant loft surfaces may soften subtly, while the artwork face, canvas edges, and artwork texture remain fully sharp and legible.
+Slot negative directives: no artwork deformation; no random decorative people; no animals; no crowds; no children; no pets
+
+STRICT RULES
+- Do not invent a new room.
+- Do not change the artwork.
+- Do not use the artwork visible in the world reference if it differs from the artwork root.
+- Do not flatten the scene into a generic frontal catalog mockup.
+- Preserve real wall/floor perspective, architectural depth, lens behavior, and camera angle.
+- The camera slot is the final photographic instruction.
+- Keep the same world across all 6 outputs.

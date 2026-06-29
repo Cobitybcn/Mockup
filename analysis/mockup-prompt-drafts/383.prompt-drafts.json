@@ -1,0 +1,80 @@
+{
+    "schema": "mockup_prompt_drafts.v1",
+    "artwork_id": 383,
+    "source_core_json": "analysis/core/383.core.json",
+    "source_branches_json": "analysis/mockup-branches/383.branches.json",
+    "generated_at": "2026-06-27T20:47:49+00:00",
+    "generation_mode": "read_only_prompt_draft",
+    "prompt_drafts": [
+        {
+            "branch_index": 1,
+            "context_name": "Red Structure, Blue Expanse",
+            "source_branch_label": "Branch 1: Red Structure, Blue Expanse",
+            "resolved_root_view": {
+                "view_type": "fallback",
+                "file": "base_artwork_gemini_job_1782592212_4302_v1.png",
+                "fallback_used": true
+            },
+            "prompt_blocks": {
+                "artwork_reference": "Use the resolved root view file 'base_artwork_gemini_job_1782592212_4302_v1.png' as the authoritative physical reference for the artwork. The artwork's original composition, proportions, colors, marks, textures, and overall visual identity must be preserved exactly, with no modifications.",
+                "physical_artwork_spec": "The physical object is a 'stretched_canvas' with dimensions of 120cm width × 80cm height × 2cm depth (horizontal orientation). Visible edges: Yes. Edge finish: not specified. Paint continues on edges: not detected.",
+                "scene_context": "The scene is a gallery/residential space with a refined and contemplative atmosphere. Context description: An abstract landscape of vivid color and bold geometry.. A striking composition featuring a prominent red architectural form beneath a deep blue sky, punctuated by a luminous white disc and ascending ladders.",
+                "artwork_placement": "The artwork must be hung flat and centered on a vertical wall. All edges of the canvas must be visible to show its 2cm depth, casting realistic, soft shadows onto the wall.",
+                "camera_direction": "The camera view is biased towards a frontal angle. The composition must be a close-up or near close-up, focusing on the artwork as the primary visual subject. Avoid wide shots, fisheye lenses, and distorted room architecture.",
+                "scale_direction": "Maintain realistic physical scale. The artwork's physical dimensions of 120cm width by 80cm height must look accurate and proportionate relative to its immediate surroundings.",
+                "lighting_direction": "The lighting in the room is soft natural light. The light must cast subtle, soft shadows from the canvas onto the wall to emphasize the canvas depth of 2cm.",
+                "material_direction": "The materials in the space feature refined materials, providing a clean and tactile texture to the surrounding environment.",
+                "commercial_direction": "The environment is styled for a premium exhibition presentation, avoiding a generic stock-room appearance.",
+                "negative_prompt": "Avoid distorted perspective, cropped edges, altered colors, simplified artwork, wide shots (unless explicitly requested), fisheye perspective, distorted room architecture, generic stock-room appearance, excessive depth-of-field blur, or any redesign/repainting of the artwork."
+            },
+            "final_prompt": "[ARTWORK REFERENCE]\nUse the resolved root view file 'base_artwork_gemini_job_1782592212_4302_v1.png' as the authoritative physical reference for the artwork. The artwork's original composition, proportions, colors, marks, textures, and overall visual identity must be preserved exactly, with no modifications.\n\n[PHYSICAL ARTWORK SPECIFICATION]\nThe physical object is a 'stretched_canvas' with dimensions of 120cm width × 80cm height × 2cm depth (horizontal orientation). Visible edges: Yes. Edge finish: not specified. Paint continues on edges: not detected.\n\n[SCENE CONTEXT]\nThe scene is a gallery/residential space with a refined and contemplative atmosphere. Context description: An abstract landscape of vivid color and bold geometry.. A striking composition featuring a prominent red architectural form beneath a deep blue sky, punctuated by a luminous white disc and ascending ladders.\n\n[ARTWORK PLACEMENT]\nThe artwork must be hung flat and centered on a vertical wall. All edges of the canvas must be visible to show its 2cm depth, casting realistic, soft shadows onto the wall.\n\n[CAMERA DIRECTION]\nThe camera view is biased towards a frontal angle. The composition must be a close-up or near close-up, focusing on the artwork as the primary visual subject. Avoid wide shots, fisheye lenses, and distorted room architecture.\n\n[SCALE DIRECTION]\nMaintain realistic physical scale. The artwork's physical dimensions of 120cm width by 80cm height must look accurate and proportionate relative to its immediate surroundings.\n\n[LIGHTING DIRECTION]\nThe lighting in the room is soft natural light. The light must cast subtle, soft shadows from the canvas onto the wall to emphasize the canvas depth of 2cm.\n\n[MATERIAL DIRECTION]\nThe materials in the space feature refined materials, providing a clean and tactile texture to the surrounding environment.\n\n[COMMERCIAL DIRECTION]\nThe environment is styled for a premium exhibition presentation, avoiding a generic stock-room appearance.\n\n[NEGATIVE PROMPT]\nAvoid distorted perspective, cropped edges, altered colors, simplified artwork, wide shots (unless explicitly requested), fisheye perspective, distorted room architecture, generic stock-room appearance, excessive depth-of-field blur, or any redesign/repainting of the artwork."
+        },
+        {
+            "branch_index": 2,
+            "context_name": "Ascending Horizon",
+            "source_branch_label": "Branch 2: Ascending Horizon",
+            "resolved_root_view": {
+                "view_type": "fallback",
+                "file": "base_artwork_gemini_job_1782592212_4302_v1.png",
+                "fallback_used": true
+            },
+            "prompt_blocks": {
+                "artwork_reference": "Use the resolved root view file 'base_artwork_gemini_job_1782592212_4302_v1.png' as the authoritative physical reference for the artwork. The artwork's original composition, proportions, colors, marks, textures, and overall visual identity must be preserved exactly, with no modifications.",
+                "physical_artwork_spec": "The physical object is a 'stretched_canvas' with dimensions of 120cm width × 80cm height × 2cm depth (horizontal orientation). Visible edges: Yes. Edge finish: not specified. Paint continues on edges: not detected.",
+                "scene_context": "The scene is a gallery/residential space with a refined and contemplative atmosphere. Context description: Journey through abstracted planes and vibrant light.. Bold blocks of color define a surreal landscape with ladders leading to unseen heights, all under a vast, captivating blue sky with a singular celestial body.",
+                "artwork_placement": "The artwork must be hung flat and centered on a vertical wall. All edges of the canvas must be visible to show its 2cm depth, casting realistic, soft shadows onto the wall.",
+                "camera_direction": "The camera view is biased towards a frontal angle. The composition must be a close-up or near close-up, focusing on the artwork as the primary visual subject. Avoid wide shots, fisheye lenses, and distorted room architecture.",
+                "scale_direction": "Maintain realistic physical scale. The artwork's physical dimensions of 120cm width by 80cm height must look accurate and proportionate relative to its immediate surroundings.",
+                "lighting_direction": "The lighting in the room is soft natural light. The light must cast subtle, soft shadows from the canvas onto the wall to emphasize the canvas depth of 2cm.",
+                "material_direction": "The materials in the space feature refined materials, providing a clean and tactile texture to the surrounding environment.",
+                "commercial_direction": "The environment is styled for a premium exhibition presentation, avoiding a generic stock-room appearance.",
+                "negative_prompt": "Avoid distorted perspective, cropped edges, altered colors, simplified artwork, wide shots (unless explicitly requested), fisheye perspective, distorted room architecture, generic stock-room appearance, excessive depth-of-field blur, or any redesign/repainting of the artwork."
+            },
+            "final_prompt": "[ARTWORK REFERENCE]\nUse the resolved root view file 'base_artwork_gemini_job_1782592212_4302_v1.png' as the authoritative physical reference for the artwork. The artwork's original composition, proportions, colors, marks, textures, and overall visual identity must be preserved exactly, with no modifications.\n\n[PHYSICAL ARTWORK SPECIFICATION]\nThe physical object is a 'stretched_canvas' with dimensions of 120cm width × 80cm height × 2cm depth (horizontal orientation). Visible edges: Yes. Edge finish: not specified. Paint continues on edges: not detected.\n\n[SCENE CONTEXT]\nThe scene is a gallery/residential space with a refined and contemplative atmosphere. Context description: Journey through abstracted planes and vibrant light.. Bold blocks of color define a surreal landscape with ladders leading to unseen heights, all under a vast, captivating blue sky with a singular celestial body.\n\n[ARTWORK PLACEMENT]\nThe artwork must be hung flat and centered on a vertical wall. All edges of the canvas must be visible to show its 2cm depth, casting realistic, soft shadows onto the wall.\n\n[CAMERA DIRECTION]\nThe camera view is biased towards a frontal angle. The composition must be a close-up or near close-up, focusing on the artwork as the primary visual subject. Avoid wide shots, fisheye lenses, and distorted room architecture.\n\n[SCALE DIRECTION]\nMaintain realistic physical scale. The artwork's physical dimensions of 120cm width by 80cm height must look accurate and proportionate relative to its immediate surroundings.\n\n[LIGHTING DIRECTION]\nThe lighting in the room is soft natural light. The light must cast subtle, soft shadows from the canvas onto the wall to emphasize the canvas depth of 2cm.\n\n[MATERIAL DIRECTION]\nThe materials in the space feature refined materials, providing a clean and tactile texture to the surrounding environment.\n\n[COMMERCIAL DIRECTION]\nThe environment is styled for a premium exhibition presentation, avoiding a generic stock-room appearance.\n\n[NEGATIVE PROMPT]\nAvoid distorted perspective, cropped edges, altered colors, simplified artwork, wide shots (unless explicitly requested), fisheye perspective, distorted room architecture, generic stock-room appearance, excessive depth-of-field blur, or any redesign/repainting of the artwork."
+        },
+        {
+            "branch_index": 3,
+            "context_name": "Vivid Landscape Geometry",
+            "source_branch_label": "Branch 3: Vivid Landscape Geometry",
+            "resolved_root_view": {
+                "view_type": "fallback",
+                "file": "base_artwork_gemini_job_1782592212_4302_v1.png",
+                "fallback_used": true
+            },
+            "prompt_blocks": {
+                "artwork_reference": "Use the resolved root view file 'base_artwork_gemini_job_1782592212_4302_v1.png' as the authoritative physical reference for the artwork. The artwork's original composition, proportions, colors, marks, textures, and overall visual identity must be preserved exactly, with no modifications.",
+                "physical_artwork_spec": "The physical object is a 'stretched_canvas' with dimensions of 120cm width × 80cm height × 2cm depth (horizontal orientation). Visible edges: Yes. Edge finish: not specified. Paint continues on edges: not detected.",
+                "scene_context": "The scene is a gallery/residential space with a contemplative atmosphere. Context description: Contemplative forms in a world of stark contrast.. An exploration of form and color, presenting a simplified yet potent landscape with a dramatic red building, an expansive blue sky, and symbolic ladders connecting different planes.",
+                "artwork_placement": "The artwork must be hung flat and centered on a vertical wall. All edges of the canvas must be visible to show its 2cm depth, casting realistic, soft shadows onto the wall.",
+                "camera_direction": "The camera view is biased towards a frontal angle. The composition must be a close-up or near close-up, focusing on the artwork as the primary visual subject. Avoid wide shots, fisheye lenses, and distorted room architecture.",
+                "scale_direction": "Maintain realistic physical scale. The artwork's physical dimensions of 120cm width by 80cm height must look accurate and proportionate relative to its immediate surroundings.",
+                "lighting_direction": "The lighting in the room is soft natural light. The light must cast subtle, soft shadows from the canvas onto the wall to emphasize the canvas depth of 2cm.",
+                "material_direction": "The materials in the space feature refined materials, providing a clean and tactile texture to the surrounding environment.",
+                "commercial_direction": "The environment is styled for a premium exhibition presentation, avoiding a generic stock-room appearance.",
+                "negative_prompt": "Avoid distorted perspective, cropped edges, altered colors, simplified artwork, wide shots (unless explicitly requested), fisheye perspective, distorted room architecture, generic stock-room appearance, excessive depth-of-field blur, or any redesign/repainting of the artwork."
+            },
+            "final_prompt": "[ARTWORK REFERENCE]\nUse the resolved root view file 'base_artwork_gemini_job_1782592212_4302_v1.png' as the authoritative physical reference for the artwork. The artwork's original composition, proportions, colors, marks, textures, and overall visual identity must be preserved exactly, with no modifications.\n\n[PHYSICAL ARTWORK SPECIFICATION]\nThe physical object is a 'stretched_canvas' with dimensions of 120cm width × 80cm height × 2cm depth (horizontal orientation). Visible edges: Yes. Edge finish: not specified. Paint continues on edges: not detected.\n\n[SCENE CONTEXT]\nThe scene is a gallery/residential space with a contemplative atmosphere. Context description: Contemplative forms in a world of stark contrast.. An exploration of form and color, presenting a simplified yet potent landscape with a dramatic red building, an expansive blue sky, and symbolic ladders connecting different planes.\n\n[ARTWORK PLACEMENT]\nThe artwork must be hung flat and centered on a vertical wall. All edges of the canvas must be visible to show its 2cm depth, casting realistic, soft shadows onto the wall.\n\n[CAMERA DIRECTION]\nThe camera view is biased towards a frontal angle. The composition must be a close-up or near close-up, focusing on the artwork as the primary visual subject. Avoid wide shots, fisheye lenses, and distorted room architecture.\n\n[SCALE DIRECTION]\nMaintain realistic physical scale. The artwork's physical dimensions of 120cm width by 80cm height must look accurate and proportionate relative to its immediate surroundings.\n\n[LIGHTING DIRECTION]\nThe lighting in the room is soft natural light. The light must cast subtle, soft shadows from the canvas onto the wall to emphasize the canvas depth of 2cm.\n\n[MATERIAL DIRECTION]\nThe materials in the space feature refined materials, providing a clean and tactile texture to the surrounding environment.\n\n[COMMERCIAL DIRECTION]\nThe environment is styled for a premium exhibition presentation, avoiding a generic stock-room appearance.\n\n[NEGATIVE PROMPT]\nAvoid distorted perspective, cropped edges, altered colors, simplified artwork, wide shots (unless explicitly requested), fisheye perspective, distorted room architecture, generic stock-room appearance, excessive depth-of-field blur, or any redesign/repainting of the artwork."
+        }
+    ],
+    "warnings": []
+}

@@ -1,0 +1,70 @@
+{
+    "artwork_id": 382,
+    "core_schema_version": "1.1",
+    "source_core_json": "analysis/core/382.core.json",
+    "branches": [
+        {
+            "branch_id": 1,
+            "source_title": "Horizon Lines",
+            "source_subtitle": "An abstract interplay of sky, earth, and light.",
+            "source_description": "This piece captures a stylized landscape, evoking the vastness of a sun-drenched horizon through bold geometric forms and a rich, earthy palette.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": null,
+                "space_character": null,
+                "lighting_bias": null,
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": "base_artwork_gemini_job_1782584432_8444_v1.png",
+                "three_quarter_left": "base_artwork_gemini_job_1782584432_8444_v2.png",
+                "three_quarter_right": "base_artwork_gemini_job_1782584432_8444_v3.png",
+                "fallback": "base_artwork_gemini_job_1782584432_8444_v1.png"
+            }
+        },
+        {
+            "branch_id": 2,
+            "source_title": "Terra Sol",
+            "source_subtitle": "Geometric forms under a radiant sun.",
+            "source_description": "A contemporary abstract work that interprets a natural vista, featuring strong lines and blocks of color that speak to both geological formations and celestial bodies.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": null,
+                "space_character": null,
+                "lighting_bias": null,
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": "base_artwork_gemini_job_1782584432_8444_v1.png",
+                "three_quarter_left": "base_artwork_gemini_job_1782584432_8444_v2.png",
+                "three_quarter_right": "base_artwork_gemini_job_1782584432_8444_v3.png",
+                "fallback": "base_artwork_gemini_job_1782584432_8444_v1.png"
+            }
+        },
+        {
+            "branch_id": 3,
+            "source_title": "Coastal Geometry",
+            "source_subtitle": "Abstract views of a vibrant, sunlit landscape.",
+            "source_description": "With its warm color temperatures and distinct compositional divide, the artwork presents a vibrant, almost architectural take on a sunlit coastal or desert environment.",
+            "branch_role": "curatorial_exploration_direction",
+            "mockup_direction": {
+                "atmosphere": "warm",
+                "space_character": null,
+                "lighting_bias": null,
+                "material_affinity": [],
+                "camera_bias": null,
+                "commercial_positioning": null
+            },
+            "root_view_strategy": {
+                "frontal": "base_artwork_gemini_job_1782584432_8444_v1.png",
+                "three_quarter_left": "base_artwork_gemini_job_1782584432_8444_v2.png",
+                "three_quarter_right": "base_artwork_gemini_job_1782584432_8444_v3.png",
+                "fallback": "base_artwork_gemini_job_1782584432_8444_v1.png"
+            }
+        }
+    ]
+}

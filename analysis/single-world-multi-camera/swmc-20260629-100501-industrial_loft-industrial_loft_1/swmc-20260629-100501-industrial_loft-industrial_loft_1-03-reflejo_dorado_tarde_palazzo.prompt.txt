@@ -1,0 +1,39 @@
+You are given two reference images.
+
+REFERENCE IMAGE A - WORLD ROOT / MASTER SCENE
+Use this image as the physical world reference. Preserve its architecture, room structure, materials, lighting atmosphere, depth, palette, windows, furniture logic, and spatial character.
+
+REFERENCE IMAGE B - ARTWORK ROOT
+Use this image as the exact artwork to install in the scene. Preserve the artwork identity, proportions, colors, composition, surface, and physical presence.
+
+TASK
+Create a new artwork mockup showing the exact artwork from Reference Image B installed inside the same physical world from Reference Image A.
+
+TIME OF DAY
+Apply this time of day: day.
+
+VITAL PRESENCE
+No visible human figures, no animals, no additional presence. Keep the scene clean and focused on the artwork and the world.
+
+CAMERA
+Now photograph the resulting scene using this existing camera slot:
+
+Camera Slot ID: reflejo_dorado_tarde_palazzo
+Camera Slot Name: Reflejo Dorado de Tarde / Palazzo
+Camera height: Camera height is elegant human standing height, approximately 150-170 cm, as if observed calmly from inside a palazzo room.
+Lens: Use a refined 40-50 mm lens equivalent with natural compression and no exaggerated room depth.
+Vertical tilt: Keep vertical tilt minimal and steady, preserving dignified wall geometry and a calm institutional reading.
+Lateral rotation: Use a soft three-quarter rotation that catches reflected late light while keeping the artwork plane legible.
+Composition: The composition is stable, warm, and architectural, with golden afternoon reflection supporting the room rather than repainting the artwork; keep elegant balance but avoid perfect symmetry unless the room itself naturally demands it.
+Scale: The artwork is a plausible XL wall-mounted object in a refined interior, neither miniaturized nor monumentally enlarged. Canvas integrity: the canvas is a rigid physical rectangle; the front face must not bend, curve, stretch, or become a wedge, lateral thickness stays moderate and plausible, and canvas plane, wall plane, floor lines, furniture, and architecture share one coherent vanishing logic.
+Depth of field: Use minimal depth of field. The room, artwork, canvas edges, and artwork texture should remain mostly crisp; any softness is barely perceptible and limited to distant secondary planes.
+Slot negative directives: no artwork color redescription; no fashion-model posing; no animals; no crowds; no children; no pets
+
+STRICT RULES
+- Do not invent a new room.
+- Do not change the artwork.
+- Do not use the artwork visible in the world reference if it differs from the artwork root.
+- Do not flatten the scene into a generic frontal catalog mockup.
+- Preserve real wall/floor perspective, architectural depth, lens behavior, and camera angle.
+- The camera slot is the final photographic instruction.
+- Keep the same world across all 6 outputs.

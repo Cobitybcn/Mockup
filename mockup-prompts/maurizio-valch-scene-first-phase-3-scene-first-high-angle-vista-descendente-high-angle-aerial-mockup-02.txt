@@ -1,0 +1,31 @@
+You are given two reference images.
+
+REFERENCE IMAGE A - SCENE / WORLD REFERENCE
+Use this image only as the physical mockup environment reference. Preserve its architectural identity, spatial mood, lighting atmosphere, wall and floor materials, color palette, depth, and cinematic character.
+
+SCENE CHARACTER HINT
+Use this short text only to clarify Reference Image A's world: organic modernist concrete atrium, sculptural curved architecture, tall oval windows, daylight, white plaster/concrete, indoor plants, luxury living room, multi-level balcony, cinematic shadows
+
+
+REFERENCE IMAGE B - ROOT ARTWORK REFERENCE
+Use this image as the exact artwork to install in the scene. Preserve the artwork identity, composition, colors, proportions, surface, and physical presence. Do not repaint, reinterpret, crop, replace, stylize, or simplify the artwork.
+
+TASK
+Create a new mockup image showing the exact artwork from Reference Image B installed inside the same physical world suggested by Reference Image A, but seen from a new camera angle.
+
+CAMERA CHANGE
+Change only the camera position according to this camera slot:
+
+High-angle / vista descendente: use an elevated aerial interior viewpoint similar in altitude to the scene reference, but not the same camera angle. Look down into the same room, preserving the window context, brick wall, floor plane, lamp/furniture cues, and cinematic warm/cool lighting.
+
+Reconstruct the same room as a real 3D space and photograph it from this new camera position.
+
+STRICT RULES
+- Do not create a new room.
+- Do not copy the original camera angle from Reference Image A.
+- Do not change the artwork.
+- Do not use the artwork visible in Reference Image A if it differs from Reference Image B.
+- Do not flatten the camera into a frontal catalog view.
+- Do not make a generic gallery mockup.
+- Preserve strong physical perspective: wall plane, floor lines, architectural depth, and real lens behavior.
+- The camera slot is the dominant instruction.

@@ -1,0 +1,58 @@
+{
+    "generation_mode": "world_mother_image_first_camera_slots_manual_test",
+    "batch_id": "world-mother-slots-383-20260629-133051",
+    "artwork_id": 383,
+    "root_image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1782327312_3763_v1.png",
+    "world_mother_path": "C:\\laragon\\www\\mockups\\storage\\world_mothers\\contemporary_art_museum\\test_1.webp",
+    "camera_set": "standard_6",
+    "model": "gemini-3-pro-image",
+    "results": [
+        {
+            "generation_mode": "world_mother_image_first_camera_slots_manual_test",
+            "batch_id": "world-mother-slots-383-20260629-133051",
+            "artwork_id": 383,
+            "root_image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1782327312_3763_v1.png",
+            "world_mother_path": "C:\\laragon\\www\\mockups\\storage\\world_mothers\\contemporary_art_museum\\test_1.webp",
+            "camera_set": "standard_6",
+            "camera_slot_id": "nadir_extremo_arquitectonico",
+            "camera_slot_name": "Nadir Extremo Arquitectónico",
+            "output_path": "C:\\laragon\\www\\mockups\\results\\world_mother_slots_artwork_383_01_nadir_extremo_arquitectonico_20260629_133051.png",
+            "prompt_path": "C:\\laragon\\www\\mockups\\results\\world_mother_slots_artwork_383_01_nadir_extremo_arquitectonico_20260629_133051.prompt.txt",
+            "model": "gemini-3-pro-image",
+            "elapsed_seconds": 33.99,
+            "created_at": "2026-06-29T13:31:25+00:00"
+        },
+        {
+            "generation_mode": "world_mother_image_first_camera_slots_manual_test",
+            "batch_id": "world-mother-slots-383-20260629-133051",
+            "artwork_id": 383,
+            "root_image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1782327312_3763_v1.png",
+            "world_mother_path": "C:\\laragon\\www\\mockups\\storage\\world_mothers\\contemporary_art_museum\\test_1.webp",
+            "camera_set": "standard_6",
+            "camera_slot_id": "vista_aerea_contexto_ventanas",
+            "camera_slot_name": "Vista Aérea con Contexto de Ventanas",
+            "output_path": "C:\\laragon\\www\\mockups\\results\\world_mother_slots_artwork_383_02_vista_aerea_contexto_ventanas_20260629_133125.png",
+            "prompt_path": "C:\\laragon\\www\\mockups\\results\\world_mother_slots_artwork_383_02_vista_aerea_contexto_ventanas_20260629_133125.prompt.txt",
+            "model": "gemini-3-pro-image",
+            "elapsed_seconds": 31.73,
+            "created_at": "2026-06-29T13:31:57+00:00"
+        },
+        {
+            "generation_mode": "world_mother_image_first_camera_slots_manual_test",
+            "batch_id": "world-mother-slots-383-20260629-133051",
+            "artwork_id": 383,
+            "root_image_path": "C:\\laragon\\www\\mockups\\results\\base_artwork_gemini_job_1782327312_3763_v1.png",
+            "world_mother_path": "C:\\laragon\\www\\mockups\\storage\\world_mothers\\contemporary_art_museum\\test_1.webp",
+            "camera_set": "standard_6",
+            "camera_slot_id": "pasillo_obra_descentrada_proxima",
+            "camera_slot_name": "Pasillo, Obra Descentrada y Próxima",
+            "output_path": "C:\\laragon\\www\\mockups\\results\\world_mother_slots_artwork_383_03_pasillo_obra_descentrada_proxima_20260629_133157.png",
+            "prompt_path": "C:\\laragon\\www\\mockups\\results\\world_mother_slots_artwork_383_03_pasillo_obra_descentrada_proxima_20260629_133157.prompt.txt",
+            "model": "gemini-3-pro-image",
+            "elapsed_seconds": 33.28,
+            "created_at": "2026-06-29T13:32:30+00:00"
+        }
+    ],
+    "contact_sheet_path": "C:\\laragon\\www\\mockups\\analysis\\world-mother-image-first-slots\\world-mother-slots-383-20260629-133051\\contact_sheet.jpg",
+    "created_at": "2026-06-29T13:32:31+00:00"
+}

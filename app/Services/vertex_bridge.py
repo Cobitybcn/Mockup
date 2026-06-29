@@ -253,18 +253,36 @@ def handle_generate_image(args):
     is_gemini_image = "gemini" in model_lower and "image" in model_lower
     
     pil_img = None
+    gemini_reference_images = []
     mask_bytes = None
     
     if args.image:
-        base_image_path = args.image[0]
-        if not os.path.isfile(base_image_path):
-            raise FileNotFoundError(f"Base image not found at: {base_image_path}")
-            
-        # Open and align image dimensions to prevent 1-pixel rounding errors in Vertex AI backend
-        pil_img = Image.open(base_image_path).convert("RGBA")
+        if is_gemini_image and len(args.image) > 1:
+            for image_path in args.image:
+                if not os.path.isfile(image_path):
+                    raise FileNotFoundError(f"Reference image not found at: {image_path}")
+                ref_img = Image.open(image_path).convert("RGB")
+                w, h = ref_img.size
+                max_dim = 1024
+                if w > max_dim or h > max_dim:
+                    ratio = min(max_dim / w, max_dim / h)
+                    new_w = max(8, int(w * ratio) // 8 * 8)
+                    new_h = max(8, int(h * ratio) // 8 * 8)
+                    ref_img = ref_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+                gemini_reference_images.append(ref_img)
+            pil_img = gemini_reference_images[0]
+        else:
+            base_image_path = args.image[0]
+            if not os.path.isfile(base_image_path):
+                raise FileNotFoundError(f"Base image not found at: {base_image_path}")
+                
+            # Open and align image dimensions to prevent 1-pixel rounding errors in Vertex AI backend
+            pil_img = Image.open(base_image_path).convert("RGBA")
+            w, h = pil_img.size
+        
         w, h = pil_img.size
         
-        if is_mockup and MOCKUP_USE_PRECOMPOSITION:
+        if not gemini_reference_images and is_mockup and MOCKUP_USE_PRECOMPOSITION:
             # Check camera perspective direction
             warp_dir = detect_perspective_side(args.prompt)
                 
@@ -479,7 +497,14 @@ def handle_generate_image(args):
             
         gemini_prompt = args.prompt
         contents = []
-        if pil_img:
+        if gemini_reference_images:
+            for idx, ref_img in enumerate(gemini_reference_images, start=1):
+                img_rgb = ref_img
+                if img_rgb.mode != "RGB":
+                    img_rgb = img_rgb.convert("RGB")
+                contents.append(img_rgb)
+                print(f"[DEBUG] Gemini reference image {idx}: size={img_rgb.size}, mode={img_rgb.mode}", file=sys.stderr)
+        elif pil_img:
             # Convert pre-composed image to RGB for Gemini generate_content
             img_rgb = pil_img
             if img_rgb.mode != "RGB":

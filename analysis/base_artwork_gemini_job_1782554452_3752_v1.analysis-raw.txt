@@ -1,0 +1,159 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Converging plane passage",
+      "subtitle": "This architectural abstraction presents a dynamic composition where angular planes of vibrant color converge, inviting the viewer into a precisely structured spatial narrative.",
+      "description": "The artwork centers on a powerful series of geometric blocks, forming a pathway that recedes deeply into the canvas. Diagonal lines strongly organize the composition, creating a vivid sense of perspective and spatial depth. Layers of dense, rich pigment in red, yellow, and orange exhibit visible brushstrokes, imbuing the surface with palpable texture. This structured geometry generates an atmosphere of contained energy and profound stillness. The painting's large scale lends a commanding presence, anchoring the entire visual field."
+    },
+    {
+      "title": "Vivid color geometry",
+      "subtitle": "A compelling geometric painting reveals an intense interplay of primary and secondary colors articulated through distinct, textured architectural forms that structure space.",
+      "description": "The dominant visual is a complex array of angled forms, reminiscent of a stark, vibrant architectural landscape. These shapes are meticulously arranged in a dynamic, receding composition that draws the eye into its depths. The surface comes alive with fields of intense red, yellow, and orange, heavily worked with visible impasto and brush marks against a serene cyan sky. This rich materiality creates an atmosphere of structured vitality and quiet contemplation. The artwork's considerable format projects a robust and enduring material presence."
+    },
+    {
+      "title": "Structural edge division",
+      "subtitle": "Through precise structural divisions and sharp edges, this artwork establishes a profound spatial tension where vibrant planes of color define an abstract architectural threshold.",
+      "description": "The artwork's compelling subject is the dramatic intersection of angular planes, defining a series of bold structural edges. The composition is masterfully organized by powerful diagonal divisions that create a sense of pressure and directional movement. Pigments are applied with a dense, textural quality across red, yellow, and orange fields, creating an almost palpable surface against the flat blue sky. This interplay of form and color generates an atmosphere of rigorous order and focused intensity. The overall tension of the structural edges asserts a strong and unwavering visual weight."
+    }
+  ],
+  "contextual_proposals": [
+    {
+      "context_name": "Milanese collector apartment",
+      "context_role": "Private art collection",
+      "space_type": "Sophisticated living room",
+      "atmosphere": "Refined, warm, intimate, collected",
+      "materials": [
+        "Polished dark wood floors",
+        "warm plaster walls",
+        "bespoke leather armchair",
+        "brushed bronze accents",
+        "muted linen curtains"
+      ],
+      "lighting": "Soft architectural wall wash, warm evening gallery lighting",
+      "placement": "Centered on a feature wall above a minimalist sideboard",
+      "camera_view": "front view",
+      "camera_distance": "medium view",
+      "camera_angle_notes": "Straight-on frontal view, capturing the artwork's full presence within the refined setting.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "The strong geometric divisions of the artwork find a harmonious counterpoint within the classical proportions of this Milanese interior.",
+      "commercial_reason": "The vibrant red field, yellow, and blue relationship makes the artwork a captivating focal point in a discerning private collection.",
+      "mockup_prompt": "A sophisticated living room in a Milanese collector apartment, featuring polished dark wood floors and warm plaster walls. The artwork is centered on a feature wall above a minimalist dark wood sideboard, illuminated by soft architectural wall wash lighting, creating a warm evening gallery atmosphere. An elegant standing female figure, 1.55m, with Mediterranean features, wearing an elegant black dress, is observing the artwork calmly from a front view, medium view.",
+      "negative_prompt": "Cluttered decor, harsh lighting, sterile white walls, modern generic furniture, aggressive posture, direct eye contact with camera."
+    },
+    {
+      "context_name": "Paris Left Bank collector salon",
+      "context_role": "Private art collection",
+      "space_type": "Elegant salon",
+      "atmosphere": "Historically rich, cultivated, serene, warm afternoon light",
+      "materials": [
+        "Old parquet flooring",
+        "warm gray wall panels",
+        "velvet seating",
+        "large windows with soft drapery",
+        "aged bronze console"
+      ],
+      "lighting": "Late afternoon Parisian light filtering through tall windows, complemented by warm lamplight from a bespoke floor lamp",
+      "placement": "Mounted on a wall panel between two tall windows, creating a framed view",
+      "camera_view": "three-quarter left view",
+      "camera_distance": "medium-close view",
+      "camera_angle_notes": "Three-quarter left angle, slightly off-center, capturing depth and the artwork's relationship to the elegant room.",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "The structural tension and receding lines of the composition resonate with the classical architectural lines of the Parisian salon.",
+      "commercial_reason": "The distinct forms and the bright blue field offer a striking visual anchor, enhancing the cultural depth of a prestigious Parisian art collection.",
+      "mockup_prompt": "An elegant salon in a Paris Left Bank collector apartment, with old parquet flooring and warm gray wall panels. The artwork is mounted on a wall panel between two tall windows with soft drapery, bathed in late afternoon Parisian light and soft lamplight. An elegant standing male figure, 1.80m, Caucasian, in a dark tailored suit, is reading a book near the artwork, in a three-quarter left view, medium-close view.",
+      "negative_prompt": "Stark white walls, harsh spotlighting, sterile modern furniture, model-like posing, direct gaze at camera, generic room."
+    },
+    {
+      "context_name": "Marrakech collector residence",
+      "context_role": "Art collector's private space",
+      "space_type": "Riad interior courtyard lounge",
+      "atmosphere": "Exotic, tranquil, refined, warm, shaded light",
+      "materials": [
+        "Tadelakt plaster walls in a warm tone",
+        "dark cedarwood accents",
+        "deep upholstered seating with Moroccan textiles",
+        "polished zellige tile floor"
+      ],
+      "lighting": "Soft, diffused light from an open-air courtyard, creating gentle shadows, supplemented by discrete warm uplighting",
+      "placement": "Set against a textured tadelakt wall, slightly recessed into an alcove",
+      "camera_view": "three-quarter right view",
+      "camera_distance": "medium-close view",
+      "camera_angle_notes": "Three-quarter right angle, offering a perspective that highlights the artwork's material texture and integration into the unique space.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "The vibrant color relationships within the artwork echo the rich chromatic palette and geometric traditions of Moroccan design.",
+      "commercial_reason": "The dynamic forms and strong visual movement make the artwork a captivating statement piece for a sophisticated residence in Marrakech.",
+      "mockup_prompt": "A tranquil lounge within a Marrakech collector's riad, featuring warm tadelakt plaster walls and polished zellige tile floor. The artwork is set against a textured wall, slightly recessed into an alcove, illuminated by soft, diffused courtyard light and discrete warm uplighting. An elegant standing female figure, 1.55m, Middle Eastern-looking, in an elegant flowing dress, observes the artwork with thoughtful contemplation from a three-quarter right view, medium-close view.",
+      "negative_prompt": "Overly bright light, cluttered orientalist decor, generic hotel lobby, overtly religious symbols, tourist-like posing."
+    },
+    {
+      "context_name": "New York Tribeca loft",
+      "context_role": "Urban private collection",
+      "space_type": "Industrial chic living space",
+      "atmosphere": "Contemporary, spacious, art-focused, high energy",
+      "materials": [
+        "Exposed brick wall",
+        "polished concrete floor",
+        "black steel framed windows",
+        "minimalist dark furniture",
+        "industrial-style lighting fixtures"
+      ],
+      "lighting": "Bright, even ambient light, with targeted museum-grade spotlights on the artwork",
+      "placement": "Mounted on a large exposed brick wall, anchoring a seating area",
+      "camera_view": "high-angle / aerial view",
+      "camera_distance": "medium-wide view",
+      "camera_angle_notes": "Elevated high-angle / aerial view, camera above the artwork looking downward, visible floor/context allowed when necessary, not frontal, not eye-level.",
+      "human_presence": "elegant standing male figure 1.80m",
+      "curatorial_reason": "The clear structural lines and geometric blocks of the piece stand in striking dialogue with the urban industrial aesthetic of the Tribeca loft.",
+      "commercial_reason": "The bold composition and vibrant color fields offer a powerful artistic statement, ideal for a contemporary urban collector seeking visual impact.",
+      "mockup_prompt": "A spacious industrial chic living space in a New York Tribeca loft, with exposed brick walls and polished concrete floors. The artwork is mounted on a large exposed brick wall, illuminated by bright ambient light and targeted museum-grade spotlights. An elegant standing male figure, 1.80m, Asian, in refined minimalist clothing, gestures towards the artwork in a conversation. Elevated high-angle / aerial view, camera above the artwork looking downward, visible floor/context allowed when necessary, not frontal, not eye-level. The camera view is high-angle / aerial view, medium-wide view.",
+      "negative_prompt": "Cold lighting, cluttered industrial items, generic office space, forced smile, unnatural pose."
+    },
+    {
+      "context_name": "Bohemian working studio",
+      "context_role": "Artist's personal space",
+      "space_type": "Creative studio environment",
+      "atmosphere": "Creative, lived-in, authentic, natural light",
+      "materials": [
+        "Worn wooden floorboards",
+        "paint-splattered work table",
+        "shelves with art supplies",
+        "large north-facing window",
+        "raw canvas rolls"
+      ],
+      "lighting": "Soft, diffuse natural light from a large window, illuminating the artwork subtly",
+      "placement": "Leaning against a neutral-colored studio wall, amidst other works in progress or stored canvases",
+      "camera_view": "low-angle / contrapicado view",
+      "camera_distance": "medium view",
+      "camera_angle_notes": "Low-angle / contrapicado view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye.",
+      "human_presence": "elegant standing female figure 1.55m",
+      "curatorial_reason": "The work's textured surface and expressive brushwork are highlighted by the organic, raw environment of the artist's studio.",
+      "commercial_reason": "The visible forms and vivid color relationships within the artwork reveal the creative process, appealing to collectors interested in an artist's journey.",
+      "mockup_prompt": "A bohemian working studio with worn wooden floorboards and a neutral-colored studio wall. The artwork leans against the wall, illuminated by soft, diffuse natural light from a large north-facing window. An elegant standing female figure, 1.55m, mixed-race, wearing relaxed artist attire and holding a sketchbook, contemplates the work. Low-angle / contrapicado view, camera below the artwork centerline, looking slightly upward, not eye-level, no fisheye. The camera view is low-angle / contrapicado view, medium view.",
+      "negative_prompt": "Overly messy studio, chaotic paint splatters on artwork, sterile white gallery, commercial art fair booth, formal evening wear, aggressive posing."
+    },
+    {
+      "context_name": "Contemporary brutalist villa",
+      "context_role": "Architectural statement art",
+      "space_type": "Minimalist double-height living area",
+      "atmosphere": "Monumental, serene, architectural, interplay of light and shadow",
+      "materials": [
+        "Raw concrete walls",
+        "large format stone flooring",
+        "minimalist steel staircase",
+        "vast floor-to-ceiling glass panels"
+      ],
+      "lighting": "Controlled dramatic side light from high windows, creating strong architectural shadows, emphasizing the texture of concrete and art",
+      "placement": "Centered on a massive raw concrete wall, commanding the space",
+      "camera_view": "low floor wide low-angle view",
+      "camera_distance": "wide view",
+      "camera_angle_notes": "Low floor wide low-angle view, camera near the floor below the artwork, looking upward with wider architectural context allowed, not eye-level, no fisheye.",
+      "human_presence": "none",
+      "curatorial_reason": "The work's structural divisions and tension find a powerful resonance with the minimalist, robust forms of brutalist architecture.",
+      "commercial_reason": "The artwork's distinct axis and bold blocks create a definitive statement, perfectly complementing the strong aesthetic of a contemporary architectural residence.",
+      "mockup_prompt": "A minimalist double-height living area within a contemporary brutalist villa, featuring raw concrete walls and large format stone flooring. The artwork is centered on a massive concrete wall, illuminated by controlled dramatic side light from high windows, casting architectural shadows. Low floor wide low-angle view, camera near the floor below the artwork, looking upward with wider architectural context allowed, not eye-level, no fisheye. The camera view is low floor wide low-angle view, wide view.",
+      "negative_prompt": "Soft romantic decor, cluttered furniture, traditional architecture, warm colors, artificial light sources, fisheye distortion."
+    }
+  ]
+}
+```

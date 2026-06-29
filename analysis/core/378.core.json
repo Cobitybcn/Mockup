@@ -1,0 +1,127 @@
+{
+    "core_schema_version": "1.1",
+    "artwork": {
+        "artwork_id": 378,
+        "job_id": "job_1782554452_3752",
+        "source_image": "main_artwork.jpg",
+        "selected_root_file": "base_artwork_gemini_job_1782554452_3752_v1.png",
+        "dimensions": {
+            "width_cm": 120,
+            "height_cm": 80,
+            "depth_cm": 3,
+            "orientation": "horizontal",
+            "aspect_ratio": 1.5
+        }
+    },
+    "root_artwork_views": {
+        "three_quarter_left": {
+            "file": "base_artwork_gemini_job_1782554452_3752_v2.png",
+            "role": "three-quarter left root view"
+        },
+        "frontal": {
+            "file": "base_artwork_gemini_job_1782554452_3752_v1.png",
+            "role": "frontal root view"
+        },
+        "three_quarter_right": {
+            "file": "base_artwork_gemini_job_1782554452_3752_v3.png",
+            "role": "three-quarter right root view"
+        },
+        "selected_view": "frontal"
+    },
+    "physical_artwork_reference": {
+        "object_type": "stretched_canvas",
+        "is_physical_object": true,
+        "depth_cm": 3,
+        "has_visible_edges": true,
+        "paint_continues_on_edges": null,
+        "edge_finish": null,
+        "view_observations": {
+            "frontal": {
+                "file": "base_artwork_gemini_job_1782554452_3752_v1.png",
+                "visible_edges": [],
+                "canvas_depth_visible": false,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "primary_composition_reference",
+                    "frontal_mockup_reference"
+                ]
+            },
+            "three_quarter_left": {
+                "file": "base_artwork_gemini_job_1782554452_3752_v2.png",
+                "visible_edges": [
+                    "left_edge"
+                ],
+                "canvas_depth_visible": true,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "left_oblique_reference",
+                    "canvas_depth_reference"
+                ]
+            },
+            "three_quarter_right": {
+                "file": "base_artwork_gemini_job_1782554452_3752_v3.png",
+                "visible_edges": [
+                    "right_edge"
+                ],
+                "canvas_depth_visible": true,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "right_oblique_reference",
+                    "canvas_depth_reference"
+                ]
+            }
+        }
+    },
+    "visual_analysis": {
+        "visual_language": null,
+        "composition": null,
+        "dominant_colors": [],
+        "secondary_colors": [],
+        "materials_or_surface": null,
+        "texture": null,
+        "spatial_depth": null,
+        "light_behavior": null,
+        "gesture_or_mark_making": null,
+        "emotional_energy": null,
+        "symbolic_elements": [],
+        "style_family": null
+    },
+    "artwork_identity": {
+        "short_identity": "This architectural abstraction presents a dynamic composition where angular planes of vibrant color converge, inviting the viewer into a precisely structured spatial narrative.",
+        "expanded_identity": "The artwork centers on a powerful series of geometric blocks, forming a pathway that recedes deeply into the canvas. Diagonal lines strongly organize the composition, creating a vivid sense of perspective and spatial depth. Layers of dense, rich pigment in red, yellow, and orange exhibit visible brushstrokes, imbuing the surface with palpable texture. This structured geometry generates an atmosphere of contained energy and profound stillness. The painting's large scale lends a commanding presence, anchoring the entire visual field.",
+        "keywords": [],
+        "do_not_alter_rules": [
+            "Do not repaint the artwork.",
+            "Do not redesign the artwork.",
+            "Do not crop the artwork.",
+            "Do not mirror the artwork.",
+            "Do not recolor the artwork.",
+            "Do not reinterpret the artwork.",
+            "Preserve composition, proportions, colors, marks, texture and visual identity."
+        ]
+    },
+    "publishing_texts": {
+        "suggested_titles": [
+            {
+                "title": "Converging plane passage",
+                "subtitle": "This architectural abstraction presents a dynamic composition where angular planes of vibrant color converge, inviting the viewer into a precisely structured spatial narrative.",
+                "description": "The artwork centers on a powerful series of geometric blocks, forming a pathway that recedes deeply into the canvas. Diagonal lines strongly organize the composition, creating a vivid sense of perspective and spatial depth. Layers of dense, rich pigment in red, yellow, and orange exhibit visible brushstrokes, imbuing the surface with palpable texture. This structured geometry generates an atmosphere of contained energy and profound stillness. The painting's large scale lends a commanding presence, anchoring the entire visual field."
+            },
+            {
+                "title": "Vivid color geometry",
+                "subtitle": "A compelling geometric painting reveals an intense interplay of primary and secondary colors articulated through distinct, textured architectural forms that structure space.",
+                "description": "The dominant visual is a complex array of angled forms, reminiscent of a stark, vibrant architectural landscape. These shapes are meticulously arranged in a dynamic, receding composition that draws the eye into its depths. The surface comes alive with fields of intense red, yellow, and orange, heavily worked with visible impasto and brush marks against a serene cyan sky. This rich materiality creates an atmosphere of structured vitality and quiet contemplation. The artwork's considerable format projects a robust and enduring material presence."
+            },
+            {
+                "title": "Structural edge division",
+                "subtitle": "Through precise structural divisions and sharp edges, this artwork establishes a profound spatial tension where vibrant planes of color define an abstract architectural threshold.",
+                "description": "The artwork's compelling subject is the dramatic intersection of angular planes, defining a series of bold structural edges. The composition is masterfully organized by powerful diagonal divisions that create a sense of pressure and directional movement. Pigments are applied with a dense, textural quality across red, yellow, and orange fields, creating an almost palpable surface against the flat blue sky. This interplay of form and color generates an atmosphere of rigorous order and focused intensity. The overall tension of the structural edges asserts a strong and unwavering visual weight."
+            }
+        ]
+    },
+    "technical_metadata": {
+        "created_at": "2026-06-27T10:15:48+00:00",
+        "source_analysis_file": "base_artwork_gemini_job_1782554452_3752_v1.analysis.json",
+        "source_analysis_hash": "b9983acefedd4f78adf26ba51e2156d9"
+    }
+}

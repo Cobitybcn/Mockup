@@ -1,0 +1,74 @@
+{
+    "schema": "phase29_visual_test.v1",
+    "context_ids": [
+        1936,
+        1937,
+        1938,
+        1939,
+        1940,
+        1941
+    ],
+    "created_at": "2026-06-28T22:49:26+00:00",
+    "results": [
+        {
+            "context_id": 1936,
+            "context_name": "Gallery Ascent",
+            "status": "generated",
+            "mockup_id": 1479,
+            "mockup_file": "maurizio-valch-rootartjob17825646366347v1-gallery-ascent-mockup.jpg",
+            "prompt_file": "maurizio-valch-rootartjob17825646366347v1-gallery-ascent-mockup.txt",
+            "elapsed_seconds": 37.14,
+            "has_vital_presence": true
+        },
+        {
+            "context_id": 1937,
+            "context_name": "Collector's Silent Study",
+            "status": "generated",
+            "mockup_id": 1480,
+            "mockup_file": "maurizio-valch-rootartjob17825646366347v1-collectors-silent-study-low-floor-wide-low-angle-mockup.jpg",
+            "prompt_file": "maurizio-valch-rootartjob17825646366347v1-collectors-silent-study-low-floor-wide-low-angle-mockup.txt",
+            "elapsed_seconds": 36.01,
+            "has_vital_presence": true
+        },
+        {
+            "context_id": 1938,
+            "context_name": "Refined Golden Hour Study",
+            "status": "generated",
+            "mockup_id": 1481,
+            "mockup_file": "maurizio-valch-rootartjob17825646366347v1-refined-golden-hour-study-mockup.jpg",
+            "prompt_file": "maurizio-valch-rootartjob17825646366347v1-refined-golden-hour-study-mockup.txt",
+            "elapsed_seconds": 33.94,
+            "has_vital_presence": true
+        },
+        {
+            "context_id": 1939,
+            "context_name": "Palazzo Nocturne Vista",
+            "status": "generated",
+            "mockup_id": 1482,
+            "mockup_file": "maurizio-valch-rootartjob17825646366347v1-palazzo-nocturne-vista-high-angle-aerial-mockup.jpg",
+            "prompt_file": "maurizio-valch-rootartjob17825646366347v1-palazzo-nocturne-vista-high-angle-aerial-mockup.txt",
+            "elapsed_seconds": 38.5,
+            "has_vital_presence": true
+        },
+        {
+            "context_id": 1940,
+            "context_name": "Atelier Passage: Earth Tones & Vision",
+            "status": "generated",
+            "mockup_id": 1483,
+            "mockup_file": "maurizio-valch-rootartjob17825646366347v1-atelier-passage-earth-tones-vision-frontal-mockup.jpg",
+            "prompt_file": "maurizio-valch-rootartjob17825646366347v1-atelier-passage-earth-tones-vision-frontal-mockup.txt",
+            "elapsed_seconds": 32.65,
+            "has_vital_presence": true
+        },
+        {
+            "context_id": 1941,
+            "context_name": "Mid-Century Concrete Horizon",
+            "status": "generated",
+            "mockup_id": 1484,
+            "mockup_file": "maurizio-valch-rootartjob17825646366347v1-mid-century-concrete-horizon-mockup.jpg",
+            "prompt_file": "maurizio-valch-rootartjob17825646366347v1-mid-century-concrete-horizon-mockup.txt",
+            "elapsed_seconds": 36.75,
+            "has_vital_presence": true
+        }
+    ]
+}

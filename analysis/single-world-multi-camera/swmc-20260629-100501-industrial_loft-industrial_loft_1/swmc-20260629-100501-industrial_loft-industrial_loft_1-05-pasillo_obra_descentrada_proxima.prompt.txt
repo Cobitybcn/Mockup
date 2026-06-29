@@ -1,0 +1,39 @@
+You are given two reference images.
+
+REFERENCE IMAGE A - WORLD ROOT / MASTER SCENE
+Use this image as the physical world reference. Preserve its architecture, room structure, materials, lighting atmosphere, depth, palette, windows, furniture logic, and spatial character.
+
+REFERENCE IMAGE B - ARTWORK ROOT
+Use this image as the exact artwork to install in the scene. Preserve the artwork identity, proportions, colors, composition, surface, and physical presence.
+
+TASK
+Create a new artwork mockup showing the exact artwork from Reference Image B installed inside the same physical world from Reference Image A.
+
+TIME OF DAY
+Apply this time of day: day.
+
+VITAL PRESENCE
+No visible human figures, no animals, no additional presence. Keep the scene clean and focused on the artwork and the world.
+
+CAMERA
+Now photograph the resulting scene using this existing camera slot:
+
+Camera Slot ID: pasillo_obra_descentrada_proxima
+Camera Slot Name: Pasillo, Obra Descentrada y Próxima
+Camera height: Camera height is natural standing or slightly lowered human height, close enough to feel the corridor edge.
+Lens: Use a 35-45 mm lens equivalent suited to corridor depth, with controlled perspective and no stretched hallway exaggeration.
+Vertical tilt: Keep vertical tilt nearly level, allowing corridor lines and the artwork plane to stay believable.
+Lateral rotation: Use an offset three-quarter corridor angle, with the artwork deliberately off-center and close rather than symmetrically framed.
+Composition: Place the artwork on a long wall plane rather than a short frontal display wall. The wall should extend laterally into the scene like a gallery passage, corridor, or elongated architectural plane, creating a clear vanishing direction. Use floor lines, ceiling lines, wall joints, lighting tracks, windows, columns, doorways, or distant wall planes to reinforce depth. The artwork may sit off-center and relatively close to the viewer, while the architecture recedes naturally to one side. Avoid product-style centered symmetry.
+Scale: The artwork reads as a substantial XL piece in a corridor offset composition, not as a wall-filling billboard. Canvas integrity: the canvas is a rigid physical rectangle; the front face must not bend, curve, stretch, or become a wedge, lateral thickness stays moderate and plausible, and canvas plane, wall plane, floor lines, furniture, and architecture share one coherent vanishing logic.
+Depth of field: Set the focus plane firmly on the artwork. Keep the artwork surface, canvas edges, canvas thickness, artwork texture, and the wall area immediately around the artwork sharp and fully legible. Use a visible natural depth-of-field falloff with a subtle diorama-like effect only away from the artwork plane. The distant corridor, far wall planes, remote columns, background windows, far doorways, ceiling depth, floor depth, and the corridor end should fall noticeably but naturally out of focus. Foreground architectural edges may be slightly soft if they are closer to the camera than the artwork. The blur must feel optical and photographic, not artificial. Never blur the artwork, its canvas edges, its texture, or the immediate wall around it.
+Slot negative directives: no billboard scaling; no fashion-model posing; no animals; no crowds; no children; no pets
+
+STRICT RULES
+- Do not invent a new room.
+- Do not change the artwork.
+- Do not use the artwork visible in the world reference if it differs from the artwork root.
+- Do not flatten the scene into a generic frontal catalog mockup.
+- Preserve real wall/floor perspective, architectural depth, lens behavior, and camera angle.
+- The camera slot is the final photographic instruction.
+- Keep the same world across all 6 outputs.

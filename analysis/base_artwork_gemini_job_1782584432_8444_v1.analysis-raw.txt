@@ -1,0 +1,154 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Golden Horizon Study",
+      "subtitle": "An abstract evocation of vast, sun-drenched landscapes.",
+      "description": "This piece captures the elemental warmth of a distant horizon under a powerful golden sun, rendered through geometric abstraction and vibrant color blocks."
+    },
+    {
+      "title": "Terra Chroma Diptych",
+      "subtitle": "Layered earth tones meet an expansive sky in a dual perspective.",
+      "description": "A dynamic interplay of rich, earthy reds and oranges against a serene sky, structured by distinct vertical and horizontal planes, hinting at human presence within a grand natural setting."
+    },
+    {
+      "title": "Sundown Geometry",
+      "subtitle": "Abstract forms capturing the essence of dusk over a stylized terrain.",
+      "description": "Bold shapes and a striking palette define a landscape infused with the unique light of a setting or rising sun, translating natural grandeur into a contemporary abstract idiom."
+    }
+  ],
+  "recommended_number_of_contexts": 6,
+  "contextual_proposals": [
+    {
+      "context_name": "Mediterranean Sunlit Retreat",
+      "context_role": "Showcases the artwork's warmth and expansive feeling within a relaxed, elegant summer residence, appealing to buyers seeking serene yet vibrant living spaces.",
+      "space_type": "Contemporary Mediterranean Living Area",
+      "atmosphere": "Breezy, sun-drenched, sophisticated, tranquil, spring/summer atmosphere.",
+      "materials": [
+        "Limewash walls in a warm off-white",
+        "Terracotta tile flooring with subtle texture",
+        "Natural linen sofa in cream or light beige",
+        "Aged light oak console table"
+      ],
+      "lighting": "Controlled Mediterranean sunlight, soft and diffused through large windows, creating gentle shadows.",
+      "camera_view": "near-frontal physical editorial view, subtle 5-10 degrees, not poster-flat",
+      "camera_distance": "medium-close",
+      "camera_angle_notes": "The subtle 3/4 angle highlights the artwork's canvas thickness and physical presence, adding depth while keeping it as the central focus. Eye-level view maintains a natural, inviting perspective.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's warm palette, golden sun motif, and expansive horizontal lines resonate perfectly with the sun-drenched, earthy aesthetic of a Mediterranean interior. It creates a harmonious and aspirational vision.",
+      "commercial_reason": "Positions the artwork within a highly desirable, luxurious, and seasonally relevant living environment, enhancing its appeal to a market seeking warmth, natural beauty, and sophisticated comfort.",
+      "mockup_prompt": "Contemporary Mediterranean living area with limewash walls, terracotta tile flooring, and a natural linen sofa. Artwork is installed above a low, light oak console. Controlled Mediterranean sunlight streams gently through large windows. Camera: near-frontal physical editorial view, subtle 5-10 degrees, not poster-flat. Artwork at eye-level.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended"
+    },
+    {
+      "context_name": "Modern Zen Collector's Nook",
+      "context_role": "Highlights the artwork's geometric abstraction and contemplative mood within a refined Eastern-inspired setting, appealing to discerning collectors valuing tranquility and minimalist elegance.",
+      "space_type": "Premium Eastern / Oriental-inspired reading or contemplation nook",
+      "atmosphere": "Serene, balanced, contemplative, elegant, minimalist.",
+      "materials": [
+        "Smooth plaster walls in a cool, muted grey-green",
+        "Dark wenge wood flooring",
+        "Shoji-style rice paper screen room divider",
+        "Low-profile minimalist bench in dark wood with linen cushion",
+        "Subtle bronze accent elements"
+      ],
+      "lighting": "Soft, ambient light filtered through shoji screens, with a focused, subtle spotlight on the artwork, creating a serene glow.",
+      "camera_view": "three-quarter left view, soft left-oblique, 10-15 degrees",
+      "camera_distance": "medium-close",
+      "camera_angle_notes": "A soft left-oblique view adds spatial depth and invites the viewer into the scene, showcasing the artwork as an integral part of a carefully curated environment without being overly direct.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's structured yet fluid composition and contemplative feel are perfectly complemented by the minimalist aesthetic and natural materials of an Eastern-inspired space, emphasizing balance and harmony.",
+      "commercial_reason": "Positions the artwork as a sophisticated statement piece within a globally inspired, premium collector's environment, broadening its market appeal to those who appreciate cross-cultural design and tranquility.",
+      "mockup_prompt": "Premium Eastern / Oriental-inspired reading nook with smooth plaster walls in muted grey-green, dark wenge wood flooring, and a shoji-style rice paper screen. Artwork is centrally placed on the wall. A low-profile dark wood minimalist bench with a linen cushion is positioned in front. Soft, ambient light filtered through screens, with a subtle spotlight on the artwork. Camera: three-quarter left view, soft left-oblique, 10-15 degrees.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended"
+    },
+    {
+      "context_name": "Dramatic Collector's Lounge",
+      "context_role": "Emphasizes the artwork's vibrant colors and strong presence by contrasting it with a moody, sophisticated setting, highlighting its collectible quality and visual impact.",
+      "space_type": "Dark, moody collector's lounge or library",
+      "atmosphere": "Intimate, dramatic, sophisticated, rich, evening-based.",
+      "materials": [
+        "Dark charcoal grey walls, possibly with a subtle textured finish",
+        "Rich, polished dark timber flooring",
+        "Deep emerald green velvet armchair",
+        "Polished brass and smoky glass side table",
+        "A large antique Persian rug in deep jewel tones"
+      ],
+      "lighting": "Premium low ambient lighting with focused gallery-style illumination directly on the artwork, creating a dramatic contrast and making the colors pop.",
+      "camera_view": "three-quarter right view, soft right-oblique, 10-15 degrees",
+      "camera_distance": "medium-close",
+      "camera_angle_notes": "The soft right-oblique perspective creates a sense of inviting intimacy, showcasing the artwork as a focal point within a curated, high-end collector's space, emphasizing depth and visual richness.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's intense warm colors and abstract forms are dramatically accentuated against a dark, moody backdrop, allowing its vibrancy to truly shine and creating a powerful visual statement.",
+      "commercial_reason": "Positions the artwork as a luxurious acquisition for sophisticated collectors who appreciate bold statements and a rich, curated environment. It conveys exclusivity and artistic value.",
+      "mockup_prompt": "Dark, moody collector's lounge with charcoal grey textured walls, polished dark timber flooring, and a deep emerald green velvet armchair. Artwork is centrally displayed on the main wall. A polished brass and smoky glass side table sits next to the armchair. Premium low ambient lighting with focused gallery-style illumination on the artwork. Camera: three-quarter right view, soft right-oblique, 10-15 degrees.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended"
+    },
+    {
+      "context_name": "Atelier Parisian Charm",
+      "context_role": "Connects the artwork to a historical lineage of modernist art within a culturally rich, elegant Parisian setting, appealing to buyers who value timeless sophistication and a storied past.",
+      "space_type": "1940s Parisian collector apartment or artist's atelier",
+      "atmosphere": "Cultured, intellectual, art-filled, slightly bohemian yet refined, authentic old-world European charm.",
+      "materials": [
+        "Aged, cream-colored plaster walls with subtle patina",
+        "Classic herringbone parquet flooring",
+        "Rich dark wood bookshelves filled with volumes",
+        "Vintage velvet slipper chair in muted terracotta",
+        "Brass-framed mirror"
+      ],
+      "lighting": "Soft, natural daylight from a tall window, combined with the warm glow of an elegant table lamp, creating a comfortable, inviting atmosphere.",
+      "camera_view": "elevated high-angle architectural view, controlled view from above, not top-down, not surveillance-like",
+      "camera_distance": "controlled architectural distance",
+      "camera_angle_notes": "An elevated architectural view provides a comprehensive sense of the curated space, showcasing the artwork in context with elegant furniture and refined details, emphasizing its place within a cultivated environment.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's abstract yet structured composition evokes a sense of early to mid-20th-century modernism, aligning perfectly with the intellectual and artistic spirit of a 1940s Parisian atelier or collector's apartment.",
+      "commercial_reason": "This context imbues the artwork with a sense of history and timeless artistic value, associating it with a sophisticated European aesthetic and a legacy of art appreciation.",
+      "mockup_prompt": "1940s Parisian collector apartment with aged, cream-colored plaster walls, classic herringbone parquet flooring, and dark wood bookshelves filled with books. Artwork is displayed on a prominent wall. A vintage velvet slipper chair in muted terracotta and a brass-framed mirror are nearby. Soft natural daylight from a tall window, complemented by the warm glow of an elegant table lamp. Camera: elevated high-angle architectural view, controlled view from above, not top-down, not surveillance-like, capturing the artwork in relation to the overall room design.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended"
+    },
+    {
+      "context_name": "Monumental Mineral Gallery",
+      "context_role": "Positions the artwork within a minimalist, almost sculptural architectural setting, emphasizing its form, scale, and intrinsic aesthetic power, appealing to those who appreciate monumental art and contemporary design.",
+      "space_type": "Minimalist architectural interior with noble materials, gallery hybrid.",
+      "atmosphere": "Serene, monumental, precise, understated luxury, contemporary.",
+      "materials": [
+        "Large-format travertine wall",
+        "Polished concrete floor",
+        "Limewash ceiling",
+        "Brushed stainless steel console"
+      ],
+      "lighting": "Cool, even architectural daylight from unseen skylights and large windows, with subtle, precise track lighting highlighting the artwork's texture and colors.",
+      "camera_view": "controlled low-angle / contrapicado, camera slightly below artwork centerline, looking upward, believable scale",
+      "camera_distance": "controlled architectural distance",
+      "camera_angle_notes": "A controlled low-angle view elevates the artwork, giving it a monumental presence and highlighting its relationship to the architectural height of the space, without distorting its scale.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's strong geometric forms and bold color blocks find resonance in a minimalist architectural space defined by noble materials. The clean lines and natural textures provide a sophisticated backdrop that amplifies its artistic impact.",
+      "commercial_reason": "Showcases the artwork's ability to command a prominent space in a high-design, contemporary setting, appealing to buyers who seek art as a foundational element in their architectural vision.",
+      "mockup_prompt": "Minimalist architectural interior with a prominent large-format travertine wall, polished concrete floor, and limewash ceiling. Artwork is installed centrally on the travertine wall. A sleek brushed stainless steel console is positioned beneath it. Cool, even architectural daylight from unseen skylights and large windows, with subtle track lighting accentuating the artwork. Camera: controlled low-angle / contrapicado, camera slightly below artwork centerline, looking upward, believable scale, emphasizing the artwork's vertical presence.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended"
+    },
+    {
+      "context_name": "Rustic Tuscan Summer Villa",
+      "context_role": "Directly echoes the artwork’s warm, expansive, and earthy landscape feel, grounding it in an authentic southern European summer environment and emphasizing its natural inspiration.",
+      "space_type": "Authentic Southern European summer interior (e.g., Tuscan villa, Spanish finca)",
+      "atmosphere": "Warm, rustic, relaxed, breathable, sun-kissed, summer-like.",
+      "materials": [
+        "Rough, uneven plaster walls in a warm off-white",
+        "Aged terracotta floor tiles",
+        "Exposed dark wood ceiling beams",
+        "Simple, handcrafted natural wood bench",
+        "Heavy linen curtains in natural flax color"
+      ],
+      "lighting": "Soft, filtered summer sunlight flooding the room, creating an airy and inviting atmosphere, with warm light reflecting off the walls.",
+      "camera_view": "low floor wide 7/8 architectural view, camera near floor level, stronger oblique depth, controlled wide view, no fisheye, no scale distortion",
+      "camera_distance": "controlled architectural distance",
+      "camera_angle_notes": "This low, wide 7/8 view emphasizes the artwork's connection to the expansive ground and horizon implied in its composition, creating a deep spatial tension that draws the viewer into the scene and reinforces its grounding within the space.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's palette of reds, oranges, and yellows, combined with its abstract landscape feel and golden sun, perfectly mirrors the aesthetic of a summer day in southern Europe, making this context a natural extension of its visual identity.",
+      "commercial_reason": "Creates an immersive, highly desirable lifestyle context that resonates with the artwork's inherent warmth and natural inspiration, appealing to buyers seeking art that evokes a sense of vacation, relaxation, and authenticity.",
+      "mockup_prompt": "Authentic Southern European summer interior, like a Tuscan villa, with rough, uneven plaster walls in warm off-white, aged terracotta floor tiles, and exposed dark wood ceiling beams. Artwork rests casually against the wall, leaning slightly. A simple, handcrafted natural wood bench is nearby. Soft, filtered summer sunlight floods the room. Camera: low floor wide 7/8 architectural view, camera near floor level, stronger oblique depth, controlled wide view, no fisheye, no scale distortion, highlighting the artwork's relationship to the floor and the expansive interior.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended"
+    }
+  ]
+}
+```

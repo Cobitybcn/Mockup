@@ -18,6 +18,8 @@ require_once __DIR__ . '/Contracts/ContextSelectorInterface.php';
 require_once __DIR__ . '/Contracts/MockupGeneratorInterface.php';
 require_once __DIR__ . '/Services/MockPromptBuilder.php';
 require_once __DIR__ . '/Services/MockContextSelector.php';
+require_once __DIR__ . '/Services/MockupContextWorldRegistry.php';
+require_once __DIR__ . '/Services/MockupWorldVisualPromptEnhancer.php';
 require_once __DIR__ . '/Services/MockArtworkProcessor.php';
 require_once __DIR__ . '/Services/MockArtworkAnalyzer.php';
 require_once __DIR__ . '/Services/MockMockupGenerator.php';
