@@ -5,7 +5,8 @@ class ImageResizer
 {
     /**
      * Resizes a mockup image proportionally so that its shortest side becomes exactly 2200 px.
-     * Keeps the original image with a '.original' suffix and overwrites the original file path.
+     * Keeps the app-compatible resized image at the original file path, stores a resized copy
+     * under results/resized, and stores the original generated file under results/originals.
      *
      * @param string $filePath Absolute path to the generated image file.
      * @return bool True if successful, false otherwise.
@@ -77,11 +78,22 @@ class ImageResizer
             return false;
         }
 
-        // Backup the original generated image separately in the same folder.
         $ext = pathinfo($filePath, PATHINFO_EXTENSION);
         $dir = pathinfo($filePath, PATHINFO_DIRNAME);
         $filename = pathinfo($filePath, PATHINFO_FILENAME);
-        $backupPath = $dir . DIRECTORY_SEPARATOR . $filename . '.original.' . $ext;
+        $originalsDir = $dir . DIRECTORY_SEPARATOR . 'originals';
+        $resizedDir = $dir . DIRECTORY_SEPARATOR . 'resized';
+
+        foreach ([$originalsDir, $resizedDir] as $targetDir) {
+            if (!is_dir($targetDir) && !@mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
+                Logger::log("ImageResizer: Failed to create directory " . $targetDir, 'error');
+                imagedestroy($srcImage);
+                return false;
+            }
+        }
+
+        $backupPath = $originalsDir . DIRECTORY_SEPARATOR . $filename . '.original.' . $ext;
+        $resizedCopyPath = $resizedDir . DIRECTORY_SEPARATOR . basename($filePath);
 
         if (!@copy($filePath, $backupPath)) {
             Logger::log("ImageResizer: Failed to create original backup at " . $backupPath, 'error');
@@ -166,11 +178,14 @@ class ImageResizer
             Logger::log("ImageResizer: Failed to save resized image to " . $filePath, 'error');
             // Restore backup to original file path
             @copy($backupPath, $filePath);
-            @unlink($backupPath);
             return false;
         }
 
-        Logger::log("ImageResizer: Successfully resized " . basename($filePath) . " and backed up the original.", 'image');
+        if (!@copy($filePath, $resizedCopyPath)) {
+            Logger::log("ImageResizer: Failed to create resized copy at " . $resizedCopyPath, 'warning');
+        }
+
+        Logger::log("ImageResizer: Successfully resized " . basename($filePath) . ", backed up the original, and copied resized output.", 'image');
         return true;
     }
 }

@@ -1099,15 +1099,15 @@ function h($v): string {
     </div>
     <div class="loader-status-panel">
         <div class="spinner"></div>
-        <div class="loader-text" data-typewriter data-typewriter-speed="28">Analyzing Artwork Structure...</div>
-        <div class="loader-sub" data-typewriter data-typewriter-speed="18" data-typewriter-delay="720">Generating curatorial contexts based on your selection.</div>
+        <div class="loader-text" data-typewriter data-typewriter-speed="28">Preparing Mockup Review...</div>
+        <div class="loader-sub" data-typewriter data-typewriter-speed="18" data-typewriter-delay="720">Preparing direct mockup combinations from the selected root image.</div>
         <div class="loader-tip" id="loaderTip"></div>
     </div>
     <?php if ($isAdmin): ?>
         <aside class="admin-overlay-prompts" aria-label="Admin mockup prompts while analyzing">
             <h3 data-typewriter data-typewriter-speed="24" data-typewriter-delay="220">Admin - Mockup Prompts</h3>
-            <p data-typewriter data-typewriter-speed="12" data-typewriter-delay="820">Los textos apareceran aca apenas el analisis termine de crear las propuestas.</p>
-            <div class="admin-overlay-empty" id="adminOverlayPromptEmpty" data-typewriter data-typewriter-speed="14" data-typewriter-delay="1560">No mockup prompts yet. Generating analysis and contexts...</div>
+            <p data-typewriter data-typewriter-speed="12" data-typewriter-delay="820">Los textos apareceran aca cuando se preparen las combinaciones directas.</p>
+            <div class="admin-overlay-empty" id="adminOverlayPromptEmpty" data-typewriter data-typewriter-speed="14" data-typewriter-delay="1560">No mockup prompts yet. Preparing direct world mother combinations...</div>
             <div id="adminOverlayPromptList"></div>
         </aside>
     <?php endif; ?>

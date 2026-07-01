@@ -79,111 +79,7 @@ try {
             'id' => $artworkId
         ]);
 
-    // --- RUN ANALYSIS AND CONTEXT GENERATION ON SELECTED IMAGE ---
     $measurements = $status['measurements'] ?? [];
-    $artistProfile = ArtistProfile::findForUser((int)$status['user_id']);
-    
-    $metadata = [
-        'title' => $status['title'] ?? 'Untitled',
-        'artist_notes' => $status['artist_notes'] ?? '',
-        'region' => trim((string)($artistProfile['preferred_regions'] ?? '')),
-        'artist_profile' => $artistProfile,
-        'artist_profile_prompt' => ArtistProfile::forPrompt($artistProfile),
-        'width_cm' => $measurements['unit'] === 'cm' ? ($measurements['width'] ?? null) : null,
-        'height_cm' => $measurements['unit'] === 'cm' ? ($measurements['height'] ?? null) : null,
-        'depth_cm' => $measurements['unit'] === 'cm' ? ($measurements['depth'] ?? null) : null,
-        'target_market' => $artistProfile['target_audience'] ?? 'collectors',
-        'preferred_style' => $status['preferred_style'] ?? '',
-    ];
-
-    $appMode = ServiceFactory::appMode();
-
-    if ($appMode === 'mock') {
-        // --- MOCK MODE ---
-        $analyzer = ServiceFactory::artworkAnalyzer();
-        $analysisResponse = $analyzer->analyze($selectedPath, $metadata);
-
-        if (!is_dir(ANALYSIS_DIR)) {
-            mkdir(ANALYSIS_DIR, 0775, true);
-        }
-        $jsonName = pathinfo(basename($selectedPath), PATHINFO_FILENAME) . '.analysis.json';
-        file_put_contents(
-            ANALYSIS_DIR . DIRECTORY_SEPARATOR . $jsonName,
-            json_encode($analysisResponse, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-        );
-
-        $engine = new MockupContextEngine();
-        $mockAnalysis = [
-            'image_path' => $selectedPath,
-            'artwork_analysis' => [
-                'visual_language' => ['abstract', 'geometric'],
-                'emotional_energy' => ['contemplative', 'calm'],
-                'dominant_colors' => ['#eaeaea', '#333333'],
-                'secondary_colors' => ['#9a7b56'],
-                'color_temperature' => 'neutral',
-                'contrast_level' => 'medium',
-                'composition_type' => 'centered',
-                'spatial_presence' => 'balanced',
-                'artwork_function' => 'statement piece',
-                'suggested_audience' => ['collectors', 'architects'],
-                'commercial_positioning' => 'premium',
-                'one_line_curatorial_read' => 'A study in geometry and mineral calm (Mock).',
-                'style_summary' => 'Geometric abstract artwork (Mock).',
-                'seasonal_strategy' => [
-                    'primary_season' => 'neutral'
-                ],
-                'audience_profile' => [
-                    'primary' => 'collectors'
-                ]
-            ],
-            'recommended_number_of_contexts' => 5,
-            'contextual_proposals' => [
-                [
-                    'context_name' => 'Silent Mineral Room (Mock)',
-                    'context_role' => 'primary presentation',
-                    'space_type' => 'minimal architectural interior',
-                    'atmosphere' => 'silent, mineral',
-                    'materials' => ['stone', 'plaster'],
-                    'lighting' => 'soft day light',
-                    'camera_angle' => 'three-quarter view',
-                    'human_presence' => 'none',
-                    'curatorial_reason' => 'El espacio mineral y silencioso resalta las formas de la obra.',
-                    'commercial_reason' => 'Posiciona la obra para coleccionistas minimalistas.'
-                ],
-                [
-                    'context_name' => 'Collector\'s Study (Mock)',
-                    'context_role' => 'scale reference',
-                    'space_type' => 'luxury office',
-                    'atmosphere' => 'warm, professional',
-                    'materials' => ['wood', 'leather'],
-                    'lighting' => 'warm sunset light',
-                    'camera_angle' => 'frontal view',
-                    'human_presence' => 'optional standing male figure 1.80m',
-                    'curatorial_reason' => 'Wood and leather bring sophistication and a sense of real scale.',
-                    'commercial_reason' => 'Ideal para entornos corporativos o estudios privados.'
-                ]
-            ]
-        ];
-        $engine->generateMockupPrompts($artworkId, $mockAnalysis, $metadata);
-
-    } else {
-        // --- REAL API MODE (GEMINI MULTIMODAL) ---
-        $engine = new MockupContextEngine();
-        
-        $contextAnalysis = $engine->analyzeArtworkContext($selectedPath, $metadata);
-        $contextAnalysis['image_path'] = $selectedPath;
-        
-        if (!is_dir(ANALYSIS_DIR)) {
-            mkdir(ANALYSIS_DIR, 0775, true);
-        }
-        $jsonName = pathinfo(basename($selectedPath), PATHINFO_FILENAME) . '.analysis.json';
-        file_put_contents(
-            ANALYSIS_DIR . DIRECTORY_SEPARATOR . $jsonName,
-            json_encode($contextAnalysis, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-        );
-
-        $engine->generateMockupPrompts($artworkId, $contextAnalysis, $metadata);
-    }
 
     // Save metadata json file
     $metaName = pathinfo($filename, PATHINFO_FILENAME) . '.meta.json';
@@ -217,35 +113,7 @@ try {
         'id' => $artworkId
     ]);
 
-    if (defined('LEGACY_MOCKUP_FLOW_ENABLED') && LEGACY_MOCKUP_FLOW_ENABLED) {
-        $initialMockupLimit = ProviderSettings::mockupWorkerCount();
-        $queuedMockups = MockupBatchQueue::enqueueInitialBatch(
-            $artworkId,
-            (int)$status['user_id'],
-            $filename,
-            $initialMockupLimit
-        );
-
-        if ($queuedMockups > 0) {
-            // Pre-assign: claim all jobs in one transaction, launch one dedicated worker per job.
-            // This eliminates SQLite write-lock competition between workers.
-            $claimedJobIds = MockupBatchQueue::claimBatch($artworkId, $initialMockupLimit);
-            foreach ($claimedJobIds as $jobId) {
-                start_mockup_queue_worker_for_job($jobId);
-            }
-        }
-    }
-
-    // Generate CORE JSON version 1.1
-    try {
-        require_once __DIR__ . '/app/Services/CoreArtworkJsonBuilder.php';
-        $coreBuilder = new CoreArtworkJsonBuilder();
-        $coreBuilder->buildForArtwork($artworkId);
-    } catch (Throwable $e) {
-        Logger::log("CORE_JSON_BUILD_TRIGGER_ERROR in select_root.php: " . $e->getMessage(), 'error');
-    }
-
-    $redirect = 'core_review.php?id=' . $artworkId;
+    $redirect = 'mockup_combinations_review.php?id=' . $artworkId . '&world_mother_category=selected';
 
     echo json_encode([
         'ok' => true,

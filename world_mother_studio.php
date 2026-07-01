@@ -33,6 +33,39 @@ function wms_upload_file(array $file): string
     return $path;
 }
 
+/**
+ * @return array<int,string>
+ */
+function wms_upload_files(array $files): array
+{
+    if (isset($files['tmp_name']) && is_array($files['tmp_name'])) {
+        $paths = [];
+        $count = count($files['tmp_name']);
+        if ($count < 1 || $count > 4) {
+            throw new RuntimeException('Sube entre 1 y 4 imagenes de referencia.');
+        }
+        for ($i = 0; $i < $count; $i++) {
+            $error = (int)($files['error'][$i] ?? UPLOAD_ERR_NO_FILE);
+            if ($error === UPLOAD_ERR_NO_FILE) {
+                continue;
+            }
+            $paths[] = wms_upload_file([
+                'name' => $files['name'][$i] ?? '',
+                'type' => $files['type'][$i] ?? '',
+                'tmp_name' => $files['tmp_name'][$i] ?? '',
+                'error' => $error,
+                'size' => $files['size'][$i] ?? 0,
+            ]);
+        }
+        if (!$paths) {
+            throw new RuntimeException('Sube al menos una imagen de referencia.');
+        }
+        return $paths;
+    }
+
+    return [wms_upload_file($files)];
+}
+
 $library = new WorldMotherLibrary();
 $generator = new WorldMotherGenerator($library);
 $error = '';
@@ -40,14 +73,18 @@ $notice = '';
 $analysis = null;
 $jobId = trim((string)($_POST['job_id'] ?? $_GET['job_id'] ?? ''));
 $referencePath = '';
+$referencePaths = [];
 $generated = null;
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'analyze') {
-        $referencePath = wms_upload_file((array)($_FILES['reference_image'] ?? []));
-        $analysis = $generator->analyzeReference($referencePath, ['notes' => trim((string)($_POST['notes'] ?? ''))]);
+        $uploadField = isset($_FILES['reference_images']) ? (array)$_FILES['reference_images'] : (array)($_FILES['reference_image'] ?? []);
+        $referencePaths = wms_upload_files($uploadField);
+        $referencePath = $referencePaths[0] ?? '';
+        $analysis = $generator->analyzeReferences($referencePaths, ['notes' => trim((string)($_POST['notes'] ?? ''))]);
         $jobId = date('Ymd_His') . '_' . random_int(1000, 9999);
         $analysis['reference_path'] = $referencePath;
+        $analysis['reference_paths'] = $referencePaths;
         $analysis['created_by_user_id'] = (int)$user['id'];
         $dir = __DIR__ . '/analysis/world-mother-studio';
         if (!is_dir($dir)) {
@@ -65,23 +102,32 @@ try {
         if (!is_array($analysis)) {
             throw new RuntimeException('El analisis previo no es valido.');
         }
-        $referencePath = (string)($analysis['reference_path'] ?? '');
+        $referencePaths = array_values(array_filter(array_map('strval', (array)($analysis['reference_paths'] ?? []))));
+        $referencePath = (string)($analysis['reference_path'] ?? ($referencePaths[0] ?? ''));
+        if (!$referencePaths && $referencePath !== '') {
+            $referencePaths = [$referencePath];
+        }
         $choice = trim((string)($_POST['category_choice'] ?? ''));
         $newCategory = trim((string)($_POST['new_category'] ?? ''));
-        $category = $choice === '__new__' ? $newCategory : $choice;
+        $category = $newCategory !== '' ? $newCategory : $choice;
         $category = WorldMotherGenerator::safeSlug($category);
         if ($category === '') {
-            throw new RuntimeException('Selecciona o crea una categoria.');
+            throw new RuntimeException('Escribe un nombre de carpeta o selecciona una categoria existente.');
         }
-        $generated = $generator->generateOriginalWorldMother($referencePath, $category, $analysis, [
+        $generated = $generator->generateOriginalWorldMotherSet($referencePaths, $category, $analysis, [
             'notes' => trim((string)($_POST['generation_notes'] ?? '')),
+            'count' => 4,
         ]);
-        $notice = 'Mundo Madre generado y guardado.';
+        $notice = 'Set de 4 mundos madre generado y guardado.';
     } elseif ($jobId !== '') {
         $analysisPath = __DIR__ . '/analysis/world-mother-studio/' . basename($jobId) . '.analysis.json';
         if (is_file($analysisPath)) {
             $analysis = json_decode((string)file_get_contents($analysisPath), true);
             $referencePath = is_array($analysis) ? (string)($analysis['reference_path'] ?? '') : '';
+            $referencePaths = is_array($analysis) ? array_values(array_filter(array_map('strval', (array)($analysis['reference_paths'] ?? [])))) : [];
+            if (!$referencePaths && $referencePath !== '') {
+                $referencePaths = [$referencePath];
+            }
         }
     }
 } catch (Throwable $e) {
@@ -139,12 +185,12 @@ $categories = $library->categories();
                     <form method="post" enctype="multipart/form-data">
                         <input type="hidden" name="action" value="analyze">
                         <div class="field">
-                            <label>Reference Image</label>
-                            <input type="file" name="reference_image" accept="image/jpeg,image/png,image/webp" required>
+                            <label>Reference Images (1-4)</label>
+                            <input type="file" name="reference_images[]" accept="image/jpeg,image/png,image/webp" multiple required>
                         </div>
                         <div class="field">
-                            <label>Notes</label>
-                            <textarea name="notes" rows="4" placeholder="Example: concrete gallery, low light, strong wall planes, no furniture dominance..."></textarea>
+                            <label>World Mother Guidelines</label>
+                            <textarea name="notes" rows="4" placeholder="Example: blue-hour coastal room, low bed, soft paper screens, calm luxury, no visible artwork, no people..."></textarea>
                         </div>
                         <button class="button-link" type="submit">Analyze Reference</button>
                     </form>
@@ -155,6 +201,11 @@ $categories = $library->categories();
                         <form method="post">
                             <input type="hidden" name="action" value="generate">
                             <input type="hidden" name="job_id" value="<?= h($jobId) ?>">
+                            <div class="field">
+                                <label>Final World Mother Folder Name</label>
+                                <input type="text" name="new_category" value="<?= h($analysis['new_category_suggestion'] ?? '') ?>" placeholder="Example: blue_hour_atelier">
+                                <span style="display:block; color:var(--muted); font-size:12px; margin-top:6px;">This name is editable and takes priority over the suggested category list below.</span>
+                            </div>
                             <?php foreach ((array)($analysis['category_candidates'] ?? []) as $idx => $candidate): ?>
                                 <label class="candidate">
                                     <input type="radio" name="category_choice" value="<?= h($candidate['category_slug'] ?? '') ?>" <?= $idx === 0 ? 'checked' : '' ?>>
@@ -164,8 +215,7 @@ $categories = $library->categories();
                             <?php endforeach; ?>
                             <label class="candidate">
                                 <input type="radio" name="category_choice" value="__new__">
-                                Create new category
-                                <input type="text" name="new_category" value="<?= h($analysis['new_category_suggestion'] ?? '') ?>" style="margin-top:8px;">
+                                Use the custom folder name above
                             </label>
                             <div class="field">
                                 <label>Generation Notes</label>
@@ -178,9 +228,11 @@ $categories = $library->categories();
 
                 <aside class="panel-box">
                     <h2>Analysis</h2>
-                    <?php if ($referencePath !== '' && is_file($referencePath)): ?>
-                        <img class="ref-img" src="<?= h(str_replace('\\', '/', str_replace(__DIR__ . DIRECTORY_SEPARATOR, '', $referencePath))) ?>" alt="">
-                    <?php endif; ?>
+                    <?php foreach (($referencePaths ?: ($referencePath !== '' ? [$referencePath] : [])) as $refPath): ?>
+                        <?php if (is_file($refPath)): ?>
+                            <img class="ref-img" style="margin-bottom:10px;" src="<?= h(str_replace('\\', '/', str_replace(__DIR__ . DIRECTORY_SEPARATOR, '', $refPath))) ?>" alt="">
+                        <?php endif; ?>
+                    <?php endforeach; ?>
                     <?php if (is_array($analysis)): ?>
                         <div class="analysis-list">
                             <strong>Scene Type</strong><?= h($analysis['scene_type'] ?? '') ?>
@@ -199,8 +251,14 @@ $categories = $library->categories();
                     <?php if (is_array($generated)): ?>
                         <hr style="border:0; border-top:1px dashed var(--line); margin:24px 0;">
                         <h2>Generated</h2>
-                        <img class="ref-img" src="<?= h($generated['relative_path'] ?? '') ?>" alt="">
-                        <p><code><?= h($generated['relative_path'] ?? '') ?></code></p>
+                        <?php foreach ((array)($generated['images'] ?? []) as $image): ?>
+                            <img class="ref-img" style="margin-bottom:10px;" src="<?= h($image['relative_path'] ?? '') ?>" alt="">
+                            <p><code><?= h($image['relative_path'] ?? '') ?></code></p>
+                        <?php endforeach; ?>
+                        <?php if (empty($generated['images']) && !empty($generated['relative_path'])): ?>
+                            <img class="ref-img" src="<?= h($generated['relative_path'] ?? '') ?>" alt="">
+                            <p><code><?= h($generated['relative_path'] ?? '') ?></code></p>
+                        <?php endif; ?>
                         <p><code><?= h($generated['audit_file'] ?? '') ?></code></p>
                     <?php endif; ?>
                 </aside>

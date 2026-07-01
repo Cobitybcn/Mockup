@@ -36,6 +36,41 @@ final class WorldMotherGenerator
     }
 
     /**
+     * @param array<int,string> $imagePaths
+     * @return array<string,mixed>
+     */
+    public function analyzeReferences(array $imagePaths, array $metadata = []): array
+    {
+        $imagePaths = array_values(array_filter(array_map('strval', $imagePaths), static fn (string $path): bool => is_file($path)));
+        if (!$imagePaths) {
+            throw new RuntimeException('World mother reference images not found.');
+        }
+        if (count($imagePaths) > 4) {
+            throw new RuntimeException('World Mother Studio accepts up to 4 reference images.');
+        }
+        if (count($imagePaths) === 1) {
+            $analysis = $this->analyzeReference($imagePaths[0], $metadata);
+            $analysis['reference_paths'] = $imagePaths;
+            return $analysis;
+        }
+
+        $analysis = ProviderSettings::isRealMode() && ProviderSettings::imageProvider() === 'gemini'
+            ? $this->analyzeReferencesWithGemini($imagePaths, $metadata)
+            : $this->fallbackAnalysis($imagePaths[0], $metadata);
+
+        $analysis = $this->normalizeAnalysis($analysis, $imagePaths[0], $metadata);
+        $analysis['reference_paths'] = $imagePaths;
+        $analysis['reference_files'] = array_map('basename', $imagePaths);
+        $analysis['category_candidates'] = $this->rankCategories($analysis);
+        $analysis['new_category_suggestion'] = $this->suggestNewCategory($analysis);
+        $analysis['analysis_source'] = ProviderSettings::isRealMode() && ProviderSettings::imageProvider() === 'gemini'
+            ? 'gemini_multi_reference'
+            : 'local_fallback';
+
+        return $analysis;
+    }
+
+    /**
      * @param array<string,mixed> $analysis
      * @return array<string,mixed>
      */
@@ -99,6 +134,106 @@ final class WorldMotherGenerator
             'file_name' => $fileName,
             'relative_path' => 'storage/world_mothers/' . $categorySlug . '/' . $fileName,
             'absolute_path' => $outputPath,
+            'audit_file' => 'analysis/world-mother-generation-audit/' . $auditName,
+        ];
+    }
+
+    /**
+     * @param array<int,string> $referencePaths
+     * @param array<string,mixed> $analysis
+     * @param array<string,mixed> $options
+     * @return array<string,mixed>
+     */
+    public function generateOriginalWorldMotherSet(array $referencePaths, string $categorySlug, array $analysis, array $options = []): array
+    {
+        $referencePaths = array_values(array_filter(array_map('strval', $referencePaths), static fn (string $path): bool => is_file($path)));
+        if (!$referencePaths) {
+            throw new RuntimeException('Reference images not found.');
+        }
+        if (count($referencePaths) > 4) {
+            throw new RuntimeException('World Mother Studio accepts up to 4 reference images.');
+        }
+
+        $categorySlug = self::safeSlug($categorySlug);
+        if ($categorySlug === '') {
+            throw new RuntimeException('A category is required.');
+        }
+
+        $count = max(1, min(8, (int)($options['count'] ?? 4)));
+        $categoryDir = $this->library->basePath() . DIRECTORY_SEPARATOR . $categorySlug;
+        if (!is_dir($categoryDir) && !mkdir($categoryDir, 0775, true) && !is_dir($categoryDir)) {
+            throw new RuntimeException('Could not create world mother category folder.');
+        }
+
+        $stamp = date('Ymd_His') . '_' . random_int(1000, 9999);
+        $variantRoles = $this->worldMotherVariantRoles();
+        $basePrompt = $this->buildGenerationPrompt($analysis, $categorySlug, $options)
+            . "\nGenerate a coherent set of world mother references. Each output belongs to the same world identity but must solve a different mockup use case."
+            . "\nThe references are ingredients, not the destination. Build a new environment world that could plausibly generate many different camera views later."
+            . "\nDo not make small retouches of the uploaded references. Synthesize them into a richer original environment with stronger architectural, material, lighting, and spatial identity."
+            . "\nAcross the set, avoid repeating the same camera, wall, ceiling, window, furniture, and object layout. The variants must feel related, not cloned."
+            . "\nMost variants must be spatially enriched by perspective: diagonal views, oblique walls, receding floor lines, visible depth layers, architectural rhythm, foreground/midground/background separation, and clear vanishing direction. Avoid a set dominated by flat frontal rooms.";
+
+        $images = [];
+        for ($i = 1; $i <= $count; $i++) {
+            $variantRole = $variantRoles[($i - 1) % count($variantRoles)];
+            $fileName = 'world_mother_' . $stamp . '_' . str_pad((string)$i, 2, '0', STR_PAD_LEFT) . '.png';
+            $outputPath = $categoryDir . DIRECTORY_SEPARATOR . $fileName;
+            $prompt = $basePrompt
+                . "\n\nVARIANT {$i} OF {$count}: " . $variantRole['label']
+                . "\nPurpose: " . $variantRole['purpose']
+                . "\nComposition: " . $variantRole['composition']
+                . "\nKeep the same world identity, but vary camera position, useful wall/floor geometry, depth, light angle, object arrangement, and architectural emphasis."
+                . "\nThis variant must be usable as a future mockup environment reference.";
+
+            if (ProviderSettings::isRealMode() && ProviderSettings::imageProvider() === 'gemini') {
+                $parts = [$this->client->textPart($prompt)];
+                foreach ($referencePaths as $referencePath) {
+                    $parts[] = $this->client->imagePart($referencePath);
+                }
+                $b64 = $this->client->generateImage($parts);
+                $bytes = base64_decode($b64);
+                if ($bytes === false) {
+                    throw new RuntimeException('Gemini did not return a valid image.');
+                }
+                file_put_contents($outputPath, $bytes);
+            } else {
+                $this->drawMockWorldMother($referencePaths[($i - 1) % count($referencePaths)], $outputPath, $analysis, $categorySlug);
+            }
+
+            $images[] = [
+                'file_name' => $fileName,
+                'relative_path' => 'storage/world_mothers/' . $categorySlug . '/' . $fileName,
+                'absolute_path' => $outputPath,
+                'variant_index' => $i,
+                'variant_role' => $variantRole['id'],
+            ];
+        }
+
+        $auditDir = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'analysis' . DIRECTORY_SEPARATOR . 'world-mother-generation-audit';
+        if (!is_dir($auditDir)) {
+            mkdir($auditDir, 0775, true);
+        }
+        $auditName = $categorySlug . '_' . $stamp . '.set-generation.json';
+        $auditPath = $auditDir . DIRECTORY_SEPARATOR . $auditName;
+        $audit = [
+            'schema' => 'world_mother_set_generation_audit.v1',
+            'generated_at' => date(DATE_ATOM),
+            'mode' => ProviderSettings::isRealMode() ? ProviderSettings::imageProvider() : 'mock',
+            'category_slug' => $categorySlug,
+            'reference_paths' => $referencePaths,
+            'images' => $images,
+            'analysis' => $analysis,
+            'base_prompt' => $basePrompt,
+            'options' => $options,
+        ];
+        file_put_contents($auditPath, json_encode($audit, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+
+        return [
+            'category_slug' => $categorySlug,
+            'images' => $images,
+            'relative_path' => (string)($images[0]['relative_path'] ?? ''),
+            'absolute_path' => (string)($images[0]['absolute_path'] ?? ''),
             'audit_file' => 'analysis/world-mother-generation-audit/' . $auditName,
         ];
     }
@@ -209,6 +344,38 @@ final class WorldMotherGenerator
     }
 
     /**
+     * @param array<int,string> $imagePaths
+     * @return array<string,mixed>
+     */
+    private function analyzeReferencesWithGemini(array $imagePaths, array $metadata): array
+    {
+        $knownCategories = implode(', ', array_map(
+            static fn (array $category): string => (string)$category['category_slug'],
+            $this->library->categories()
+        ));
+        $notes = trim((string)($metadata['notes'] ?? ''));
+        $prompt = "Analyze these uploaded interior/reference images as one WORLD MOTHER source set for future artwork mockups.\n"
+            . "Synthesize their shared usable world identity. Return strict JSON only with keys: scene_type, architecture_language, wall_language, floor_language, ceiling_language, lighting, materials, palette, mood, scale, camera_potential, negative_risks, style_details, category_keywords.\n"
+            . "A World Mother must be an environment reference, not a finished artwork mockup. Identify if the images contain paintings, frames, people, animals, logos, text, clutter, or anything that should be removed in clean generated worlds.\n"
+            . "Known existing category slugs: {$knownCategories}\n"
+            . "User world guidelines: {$notes}";
+
+        $parts = [$this->client->textPart($prompt)];
+        foreach ($imagePaths as $imagePath) {
+            $parts[] = $this->client->imagePart($imagePath);
+        }
+
+        $text = $this->client->generateText($parts, 'gemini-2.5-flash');
+        $json = $this->extractJson($text);
+        $decoded = json_decode($json, true);
+        if (!is_array($decoded)) {
+            throw new RuntimeException('World Mother multi-reference analysis did not return valid JSON.');
+        }
+
+        return $decoded;
+    }
+
+    /**
      * @return array<string,mixed>
      */
     private function fallbackAnalysis(string $imagePath, array $metadata): array
@@ -312,12 +479,32 @@ final class WorldMotherGenerator
      */
     private function suggestNewCategory(array $analysis): string
     {
-        $basis = implode(' ', array_filter([
+        $basis = strtolower(implode(' ', array_filter([
+            $analysis['user_notes'] ?? '',
+            implode(' ', (array)($analysis['category_keywords'] ?? [])),
             $analysis['scene_type'] ?? '',
             $analysis['architecture_language'] ?? '',
             is_array($analysis['mood'] ?? null) ? implode(' ', $analysis['mood']) : '',
-        ]));
-        $slug = self::safeSlug($basis);
+        ])));
+        $tokens = preg_split('/[^a-z0-9]+/', $basis) ?: [];
+        $stopWords = array_flip([
+            'a', 'an', 'and', 'area', 'as', 'at', 'for', 'from', 'in', 'is', 'likely', 'of', 'or', 'space', 'the',
+            'within', 'with', 'room', 'rooms', 'interior', 'interiors', 'living', 'reception', 'hall', 'house',
+            'residence', 'residential', 'grand', 'large', 'small', 'world', 'mother', 'reference', 'image',
+        ]);
+        $selected = [];
+        foreach ($tokens as $token) {
+            $token = trim((string)$token);
+            if (strlen($token) < 4 || isset($stopWords[$token]) || in_array($token, $selected, true)) {
+                continue;
+            }
+            $selected[] = $token;
+            if (count($selected) >= 4) {
+                break;
+            }
+        }
+
+        $slug = self::safeSlug(implode('_', $selected));
         return $slug !== '' ? $slug : 'new_world_mother';
     }
 
@@ -329,12 +516,18 @@ final class WorldMotherGenerator
         $notes = trim((string)($options['notes'] ?? ''));
         $referenceDirective = !empty($options['reference_free'])
             ? "No reference image is provided. Build the scene from the category, artwork analysis, and context metadata only.\n"
-            : "Use the uploaded reference image only as architectural/style guidance. Do not copy it exactly.\n";
+            : "Use the uploaded reference image set as visual DNA, mood, material direction, architectural clues, lighting clues, and spatial inspiration. Do not copy it, trace it, lightly clean it, preserve its exact layout, or keep its exact camera angle and object placement.\n";
         return "Create one original WORLD MOTHER reference image for future artwork mockups.\n"
             . "Category: {$categorySlug}\n"
             . $referenceDirective
-            . "Generate a clean, realistic, artwork-ready environment with strong wall/floor/lighting geometry, suitable for inserting a separate artwork later.\n"
-            . "Do not include paintings, framed art, posters, logos, readable text, people, animals, or dominant decorative objects. Leave usable wall space.\n"
+            . "Your task is to invent a richer and more useful environment world from those inputs. The result must feel like a designed world mother, not an edited version of the reference image.\n"
+            . "If the user provides a named style, place, architecture, era, mood, material, artist movement, or cultural reference, expand that world intelligently with coherent architectural vocabulary, surfaces, light behavior, furniture/object language, atmosphere, and spatial depth. Do not reduce the concept to one obvious repeated motif.\n"
+            . "If the user prompt is weak, generic, or empty, still create a sophisticated, photorealistic, premium environment with strong world identity, layered materials, believable light, clear scale, and enough spatial variety for multiple future camera slots.\n"
+            . "Generate an artwork-ready environment with memorable world identity, strong wall/floor/lighting geometry, depth layers, material contrast, atmosphere, and useful negative space.\n"
+            . "Favor environments with real perspective and spatial travel: diagonal room axes, receding floor or ceiling lines, side planes, corridors, mezzanines, openings, stairs, windows, columns, or furniture alignment that create depth. Avoid static flat-on symmetrical room records unless one variant explicitly needs a primary wall.\n"
+            . "Always leave at least one credible usable artwork zone: wall, floor-leaning area, easel-adjacent area, or architectural plane where a separate artwork can later be inserted.\n"
+            . "Do not include paintings, framed art, posters, logos, readable text, people, animals, or dominant decorative objects. Avoid overfilled clutter, avoid empty showroom sterility unless requested, and avoid furniture or props becoming the subject.\n"
+            . "Make the result useful for later camera transformations: frontal, oblique, detail, low angle, aerial, and close-up views.\n"
             . "Scene type: " . (string)($analysis['scene_type'] ?? '') . "\n"
             . "Architecture: " . (string)($analysis['architecture_language'] ?? '') . "\n"
             . "Walls: " . (string)($analysis['wall_language'] ?? '') . "\n"
@@ -346,7 +539,41 @@ final class WorldMotherGenerator
             . "Mood: " . implode(', ', (array)($analysis['mood'] ?? [])) . "\n"
             . "Camera potential: " . implode(', ', (array)($analysis['camera_potential'] ?? [])) . "\n"
             . "Avoid: " . implode(', ', (array)($analysis['negative_risks'] ?? [])) . "\n"
-            . "User generation notes: {$notes}";
+            . "User generation notes: {$notes}\n"
+            . "Preserve the world identity more than the exact uploaded composition.";
+    }
+
+    /**
+     * @return array<int,array{id:string,label:string,purpose:string,composition:string}>
+     */
+    private function worldMotherVariantRoles(): array
+    {
+        return [
+            [
+                'id' => 'primary_wall',
+                'label' => 'Primary Artwork Wall',
+                'purpose' => 'Main reference for wall-mounted artwork mockups with clear usable wall, believable floor contact, and strong room identity.',
+                'composition' => 'Medium-wide premium interior view, clear artwork-ready wall or architectural plane, visible floor contact, coherent light, and enough surrounding objects to define the world without clutter. Even when frontal, include subtle perspective through side planes, floor depth, ceiling rhythm, or diagonal light.',
+            ],
+            [
+                'id' => 'oblique_depth',
+                'label' => 'Oblique Depth View',
+                'purpose' => 'Reference for side, 3/4, corridor, and depth-based camera slots.',
+                'composition' => 'Strong diagonal or side-oriented space with foreground, midground, and background layers, visible wall/floor/ceiling geometry, receding depth lines, side planes, and a useful artwork zone that can be approached from an angle.',
+            ],
+            [
+                'id' => 'light_drama',
+                'label' => 'Light Drama View',
+                'purpose' => 'Reference for golden-hour, blue-hour, shadow, reflection, and atmospheric light mockups.',
+                'composition' => 'Same world identity with distinctive natural or artificial light, shadow pattern, glow, reflection, texture reveal, or atmospheric contrast while preserving an artwork-ready zone. Use light and shadow to describe perspective, depth, diagonals, and spatial planes.',
+            ],
+            [
+                'id' => 'architectural_context',
+                'label' => 'Architectural Context View',
+                'purpose' => 'Reference for wider environmental cameras that need richer surrounding architecture and spatial identity.',
+                'composition' => 'Wider environmental view showing the strongest architectural identity of the world: ceiling, openings, columns, arches, windows, structural rhythm, furniture, spatial transitions, material rhythm, and deep room perspective, while keeping a credible artwork placement area.',
+            ],
+        ];
     }
 
     /**

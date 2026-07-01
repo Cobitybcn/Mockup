@@ -30,16 +30,25 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
         Logger::log("Iniciando generacion de mockup Gemini. Contexto: {$contextId}, Obra: " . basename($imagePath), 'gemini');
 
         $finalPrompt = $this->finalPrompt($contextId, $prompt, $metadata);
+        $roleContract = "IMAGE ROLE CONTRACT:\n"
+            . "- IMAGE 1 is the ROOT ARTWORK. It is the only source for the artwork content, colors, marks, composition, texture and proportions.\n"
+            . "- IMAGE 2, when present, is the WORLD MOTHER. Use it only for environment identity, materials, light and atmosphere.\n"
+            . "- Never replace the ROOT ARTWORK with a blank wall, empty canvas, decorative panel or object from the WORLD MOTHER.\n"
+            . "- If the camera or environment conflicts with the artwork, preserve IMAGE 1 and adapt the environment around it.";
+        $submittedPrompt = $roleContract . "\n\n" . $finalPrompt;
         $parts = [
-            $this->client->textPart($finalPrompt),
+            $this->client->textPart($submittedPrompt),
+            $this->client->textPart("IMAGE 1 - ROOT ARTWORK: exact artwork to preserve inside the mockup."),
             $this->client->imagePart($imagePath),
         ];
         $rootReferencePath = (string)($metadata['root_reference_path'] ?? '');
         if ($rootReferencePath !== '' && is_file($rootReferencePath) && realpath($rootReferencePath) !== realpath($imagePath)) {
+            $parts[] = $this->client->textPart("ADDITIONAL ROOT ARTWORK REFERENCE: same artwork identity, still authoritative for the artwork only.");
             $parts[] = $this->client->imagePart($rootReferencePath);
         }
         $worldMotherReferencePath = (string)($metadata['world_mother_reference_path'] ?? '');
         if ($worldMotherReferencePath !== '' && is_file($worldMotherReferencePath)) {
+            $parts[] = $this->client->textPart("IMAGE 2 - WORLD MOTHER: environment reference only. Do not use this image as the artwork content.");
             $parts[] = $this->client->imagePart($worldMotherReferencePath);
         }
 
@@ -63,7 +72,7 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
             }
             $promptName = pathinfo($outputName, PATHINFO_FILENAME) . '.txt';
 
-            file_put_contents($promptsDir . DIRECTORY_SEPARATOR . $promptName, $finalPrompt);
+            file_put_contents($promptsDir . DIRECTORY_SEPARATOR . $promptName, $submittedPrompt);
             file_put_contents($resultsDir . DIRECTORY_SEPARATOR . $outputName, $imageData);
             
             // Apply ImageResizer to scale the generated mockup proportionally to 2200 px on shortest side

@@ -5,13 +5,11 @@ final class MockupCombinationEngine
 {
     private PDO $pdo;
     private WorldMotherLibrary $worldMothers;
-    private WorldMotherGenerator $worldMotherGenerator;
 
-    public function __construct(?PDO $pdo = null, ?WorldMotherLibrary $worldMothers = null, ?WorldMotherGenerator $worldMotherGenerator = null)
+    public function __construct(?PDO $pdo = null, ?WorldMotherLibrary $worldMothers = null)
     {
         $this->pdo = $pdo ?: Database::connection();
         $this->worldMothers = $worldMothers ?: new WorldMotherLibrary();
-        $this->worldMotherGenerator = $worldMotherGenerator ?: new WorldMotherGenerator($this->worldMothers);
     }
 
     /**
@@ -30,8 +28,6 @@ final class MockupCombinationEngine
         }
 
         $cameraSlots = $this->activeCameraSlots();
-        $contexts = $this->loadContextRows($artworkId);
-        $artworkAnalysis = $this->loadArtworkAnalysisProfile($artworkId);
         $worldImages = $this->worldMotherImagesByCategory();
         $flatWorldImages = [];
         foreach ($worldImages as $images) {
@@ -41,10 +37,13 @@ final class MockupCombinationEngine
         }
 
         $notes = [];
-        if (!$contexts) {
-            $notes[] = 'No mockup_contexts rows found; using safe fallback context shells from available world mother categories.';
-            $contexts = $this->fallbackContextRowsFromWorldMothers($flatWorldImages);
-        }
+        $directProfile = [
+            'source' => 'direct_world_mother_flow',
+            'text' => '',
+            'keywords' => [],
+            'orientation' => '',
+            'size_class' => '',
+        ];
         if (!$flatWorldImages) {
             $notes[] = 'No selected world mother images found in storage/world_mothers; add curated reference images to that folder before generating combinations.';
         }
@@ -52,11 +51,16 @@ final class MockupCombinationEngine
             $notes[] = 'No enabled camera slots found in app/Config/mockup_camera_slots.php.';
         }
 
-        $rankedWorldMotherCategories = $this->rankWorldMotherCategories($contexts, $artworkAnalysis, $worldImages);
         $selectedWorldMotherCategory = WorldMotherGenerator::safeSlug((string)($options['selected_world_mother_category'] ?? ''));
+        if ($selectedWorldMotherCategory === '' && isset($worldImages['selected'])) {
+            $selectedWorldMotherCategory = 'selected';
+        }
+
+        $rankedWorldMotherCategories = $this->directWorldMotherCategories($worldImages, $selectedWorldMotherCategory);
         if ($selectedWorldMotherCategory === '' && $rankedWorldMotherCategories) {
             $selectedWorldMotherCategory = (string)($rankedWorldMotherCategories[0]['category_slug'] ?? '');
         }
+        $contexts = $this->directContextRowsForCameraSlots($artworkId, $cameraSlots, $selectedWorldMotherCategory);
         $rootPath = $this->resolveRootArtworkPath($artwork);
         $usedSlots = [];
         $combinations = [];
@@ -66,9 +70,7 @@ final class MockupCombinationEngine
         for ($i = 0; $i < $targetCount; $i++) {
             $context = $contexts[$i % max(1, count($contexts))] ?? [];
             $contextJson = $this->decodeJson((string)($context['context_json'] ?? ''));
-            $categoryDecision = $selectedWorldMotherCategory !== ''
-                ? $this->categoryDecisionForSelectedWorldMother($selectedWorldMotherCategory, $rankedWorldMotherCategories, $artworkAnalysis)
-                : $this->selectWorldMotherCategory($context, $contextJson, $artworkAnalysis, $worldImages, []);
+            $categoryDecision = $this->categoryDecisionForSelectedWorldMother($selectedWorldMotherCategory, $rankedWorldMotherCategories, $directProfile);
             $category = (string)($categoryDecision['category_slug'] ?? '');
 
             $suggestedSlotId = (string)($slotIds[$i % max(1, count($slotIds))] ?? '');
@@ -130,7 +132,7 @@ final class MockupCombinationEngine
             'artwork_id' => $artworkId,
             'generated_at' => date(DATE_ATOM),
             'root_artwork_path' => $rootPath,
-            'artwork_analysis_profile' => $artworkAnalysis,
+            'direct_world_mother_profile' => $directProfile,
             'available_camera_slots' => array_values($cameraSlots),
             'suggested_world_mother_categories' => $rankedWorldMotherCategories,
             'selected_world_mother_category' => $selectedWorldMotherCategory,
@@ -179,155 +181,6 @@ final class MockupCombinationEngine
     }
 
     /**
-     * @return array<int,array<string,mixed>>
-     */
-    private function loadContextRows(int $artworkId): array
-    {
-        $stmt = $this->pdo->prepare('SELECT * FROM mockup_contexts WHERE artwork_id = :artwork_id ORDER BY id ASC LIMIT 24');
-        $stmt->execute(['artwork_id' => $artworkId]);
-        $rows = $stmt->fetchAll();
-        return is_array($rows) ? $rows : [];
-    }
-
-    /**
-     * @return array<string,mixed>
-     */
-    private function loadArtworkAnalysisProfile(int $artworkId): array
-    {
-        $profile = [
-            'source' => 'none',
-            'text' => '',
-            'keywords' => [],
-            'orientation' => '',
-            'size_class' => '',
-        ];
-
-        $corePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'analysis' . DIRECTORY_SEPARATOR . 'core' . DIRECTORY_SEPARATOR . $artworkId . '.core.json';
-        if (is_file($corePath)) {
-            $core = $this->decodeJson((string)file_get_contents($corePath));
-            $profile['source'] = 'analysis/core/' . $artworkId . '.core.json';
-            $profile['text'] = $this->analysisTextFromCore($core);
-            $profile['keywords'] = $this->extractProfileKeywords($profile['text']);
-            $profile['orientation'] = (string)($core['artwork']['dimensions']['orientation'] ?? '');
-            $longest = max(
-                (float)($core['artwork']['dimensions']['width_cm'] ?? 0),
-                (float)($core['artwork']['dimensions']['height_cm'] ?? 0)
-            );
-            $profile['size_class'] = $longest >= 100 ? 'xl' : ($longest > 0 ? 'standard' : '');
-            return $profile;
-        }
-
-        try {
-            $stmt = $this->pdo->prepare('SELECT analysis_json FROM artwork_analysis WHERE artwork_id = :artwork_id ORDER BY id DESC LIMIT 1');
-            $stmt->execute(['artwork_id' => $artworkId]);
-            $analysis = $stmt->fetchColumn();
-            if (is_string($analysis) && trim($analysis) !== '') {
-                $json = $this->decodeJson($analysis);
-                $profile['source'] = 'artwork_analysis.analysis_json';
-                $profile['text'] = $this->flattenText($json);
-                $profile['keywords'] = $this->extractProfileKeywords($profile['text']);
-            }
-        } catch (Throwable $e) {
-            $profile['source'] = 'unavailable';
-        }
-
-        return $profile;
-    }
-
-    /**
-     * @param array<string,mixed> $core
-     */
-    private function analysisTextFromCore(array $core): string
-    {
-        $parts = [];
-        foreach ([
-            $core['artwork_identity']['short_identity'] ?? '',
-            $core['artwork_identity']['expanded_identity'] ?? '',
-            $core['visual_analysis']['visual_language'] ?? '',
-            $core['visual_analysis']['composition'] ?? '',
-            $core['visual_analysis']['materials_or_surface'] ?? '',
-            $core['visual_analysis']['texture'] ?? '',
-            $core['visual_analysis']['spatial_depth'] ?? '',
-            $core['visual_analysis']['light_behavior'] ?? '',
-            $core['visual_analysis']['gesture_or_mark_making'] ?? '',
-            $core['visual_analysis']['emotional_energy'] ?? '',
-            $core['visual_analysis']['style_family'] ?? '',
-        ] as $value) {
-            if (trim((string)$value) !== '') {
-                $parts[] = (string)$value;
-            }
-        }
-
-        foreach ([
-            $core['visual_analysis']['dominant_colors'] ?? [],
-            $core['visual_analysis']['secondary_colors'] ?? [],
-            $core['visual_analysis']['symbolic_elements'] ?? [],
-            $core['artwork_identity']['keywords'] ?? [],
-        ] as $values) {
-            if (is_array($values)) {
-                $parts[] = implode(' ', array_map('strval', $values));
-            }
-        }
-
-        foreach ((array)($core['publishing_texts']['suggested_titles'] ?? []) as $suggestion) {
-            if (is_array($suggestion)) {
-                $parts[] = implode(' ', array_map('strval', [
-                    $suggestion['title'] ?? '',
-                    $suggestion['subtitle'] ?? '',
-                    $suggestion['description'] ?? '',
-                ]));
-            }
-        }
-
-        return trim(implode(' ', array_filter($parts)));
-    }
-
-    /**
-     * @param mixed $value
-     */
-    private function flattenText($value): string
-    {
-        if (is_scalar($value) || $value === null) {
-            return trim((string)$value);
-        }
-        if (!is_array($value)) {
-            return '';
-        }
-
-        $parts = [];
-        foreach ($value as $child) {
-            $text = $this->flattenText($child);
-            if ($text !== '') {
-                $parts[] = $text;
-            }
-        }
-
-        return implode(' ', $parts);
-    }
-
-    /**
-     * @return array<int,string>
-     */
-    private function extractProfileKeywords(string $text): array
-    {
-        $tokens = preg_split('/[^a-z0-9]+/i', strtolower($text)) ?: [];
-        $stop = array_flip([
-            'the', 'and', 'with', 'from', 'that', 'this', 'under', 'beneath', 'through', 'into', 'all', 'una', 'las', 'los', 'con', 'para', 'por', 'del', 'que',
-            'artwork', 'composition', 'featuring', 'prominent', 'suggested', 'description', 'subtitle',
-        ]);
-        $keywords = [];
-        foreach ($tokens as $token) {
-            $token = trim($token);
-            if (strlen($token) < 4 || isset($stop[$token])) {
-                continue;
-            }
-            $keywords[$token] = true;
-        }
-
-        return array_slice(array_keys($keywords), 0, 80);
-    }
-
-    /**
      * @return array<string,array<int,array<string,mixed>>>
      */
     private function worldMotherImagesByCategory(): array
@@ -345,68 +198,76 @@ final class MockupCombinationEngine
     }
 
     /**
-     * @param array<int,array<string,mixed>> $images
+     * @param array<string,array<string,mixed>> $cameraSlots
      * @return array<int,array<string,mixed>>
      */
-    private function fallbackContextRowsFromWorldMothers(array $images): array
+    private function directContextRowsForCameraSlots(int $artworkId, array $cameraSlots, string $worldMotherCategory): array
     {
         $rows = [];
-        foreach (array_slice($images, 0, 6) as $image) {
-            $category = (string)($image['category_slug'] ?? '');
-            $title = (string)($image['category_name'] ?? $category);
+        $slotList = array_values($cameraSlots);
+        $count = max(1, count($slotList));
+        for ($i = 0; $i < $count; $i++) {
+            $slot = $slotList[$i] ?? [];
+            $slotName = trim((string)($slot['slot_name'] ?? $slot['slot_id'] ?? 'selected camera slot'));
             $json = [
-                'context_name' => $title,
-                'selected_world_id' => $category,
-                'space_type' => $title,
-                'atmosphere' => 'Reference-led mockup world selected from the real world mother image library.',
-                'materials' => [],
-                'lighting' => '',
-                'placement' => 'artwork-first placement compatible with the reference image',
-                'curatorial_reason' => 'Fallback combination built from an available world mother category because no context proposal row was available.',
-                'commercial_reason' => 'Keeps the review flow available without generating images.',
-                'mockup_prompt' => 'Use the selected world mother reference image as the visual anchor for the environment.',
+                'direct_world_mother_mode' => true,
+                'context_name' => 'Selected world mother',
+                'context_role' => 'direct world mother plus selected camera slot',
+                'selected_world_id' => $worldMotherCategory,
+                'space_type' => 'Use only the selected world mother reference image as the environment source.',
+                'atmosphere' => 'Inherit atmosphere from the selected world mother image.',
+                'materials' => 'Inherit materials from the selected world mother image.',
+                'lighting' => 'Inherit lighting from the selected world mother image.',
+                'placement' => '',
+                'human_presence' => 'none unless required by the selected camera slot.',
+                'mockup_prompt' => '',
                 'negative_prompt' => '',
+                'camera_slot_name' => $slotName,
             ];
             $rows[] = [
                 'id' => 0,
-                'artwork_id' => 0,
-                'context_name' => $title,
+                'artwork_id' => $artworkId,
+                'context_name' => 'Selected world mother',
                 'context_json' => json_encode($json, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
                 'prompt' => '',
             ];
         }
 
-        if (!$rows) {
-            foreach (array_slice($this->worldMothers->categories(), 0, 6) as $categoryRow) {
-                $category = (string)($categoryRow['category_slug'] ?? '');
-                if ($category === '') {
-                    continue;
-                }
-                $title = (string)($categoryRow['category_name'] ?? $category);
-                $json = [
-                    'context_name' => $title,
-                    'selected_world_id' => $category,
-                    'space_type' => $title,
-                    'atmosphere' => 'Category-led mockup world generated because no context proposal row or world mother image was available.',
-                    'materials' => [],
-                    'lighting' => '',
-                    'placement' => 'artwork-first placement compatible with a generated world mother reference image',
-                    'curatorial_reason' => 'Fallback combination built from an existing world mother category.',
-                    'commercial_reason' => 'Keeps the review flow available by generating the missing scene mother from category metadata.',
-                    'mockup_prompt' => 'Generate and use a category-compatible world mother reference image as the visual anchor for the environment.',
-                    'negative_prompt' => '',
-                ];
-                $rows[] = [
-                    'id' => 0,
-                    'artwork_id' => 0,
-                    'context_name' => $title,
-                    'context_json' => json_encode($json, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-                    'prompt' => '',
-                ];
+        return $rows;
+    }
+
+    /**
+     * @param array<string,array<int,array<string,mixed>>> $worldImages
+     * @return array<int,array<string,mixed>>
+     */
+    private function directWorldMotherCategories(array $worldImages, string $selectedWorldMotherCategory): array
+    {
+        $ranked = [];
+        foreach ($this->worldMothers->categories() as $category) {
+            $slug = (string)($category['category_slug'] ?? '');
+            if ($slug === '') {
+                continue;
             }
+            $isSelected = $selectedWorldMotherCategory !== '' && $slug === $selectedWorldMotherCategory;
+            $ranked[] = [
+                'category_slug' => $slug,
+                'category_name' => (string)($category['category_name'] ?? ucwords(str_replace('_', ' ', $slug))),
+                'relative_path' => (string)($category['relative_path'] ?? 'storage/world_mothers/' . $slug),
+                'absolute_path' => (string)($category['absolute_path'] ?? ''),
+                'image_count' => count($worldImages[$slug] ?? []),
+                'score' => $isSelected ? 1 : 0,
+                'matched_terms' => [],
+                'reason' => $isSelected
+                    ? 'Directly selected scene mother folder. No artwork analysis or curatorial ranking was used.'
+                    : 'Available scene mother folder. No artwork analysis or curatorial ranking was used.',
+            ];
         }
 
-        return $rows;
+        usort($ranked, static fn (array $a, array $b): int => ((int)$b['score'] <=> (int)$a['score'])
+            ?: ((int)$b['image_count'] <=> (int)$a['image_count'])
+            ?: strcmp((string)$a['category_slug'], (string)$b['category_slug']));
+
+        return $ranked;
     }
 
     private function resolveRootArtworkPath(array $artwork): string
@@ -424,107 +285,11 @@ final class MockupCombinationEngine
     }
 
     /**
-     * @param array<int,array<string,mixed>> $contexts
-     * @param array<string,mixed> $artworkAnalysis
-     * @param array<string,array<int,array<string,mixed>>> $worldImages
-     * @return array<int,array<string,mixed>>
-     */
-    private function rankWorldMotherCategories(array $contexts, array $artworkAnalysis, array $worldImages): array
-    {
-        $contextTextParts = [];
-        foreach ($contexts as $context) {
-            $contextJson = $this->decodeJson((string)($context['context_json'] ?? ''));
-            $contextTextParts[] = implode(' ', array_filter([
-                $context['context_name'] ?? '',
-                $contextJson['selected_world_id'] ?? '',
-                $contextJson['assigned_world_id'] ?? '',
-                $contextJson['context_world_id'] ?? '',
-                $contextJson['selected_family_id'] ?? '',
-                $contextJson['assigned_family_id'] ?? '',
-                $contextJson['space_type'] ?? '',
-                $contextJson['atmosphere'] ?? '',
-                is_array($contextJson['materials'] ?? null) ? implode(' ', $contextJson['materials']) : ($contextJson['materials'] ?? ''),
-                $contextJson['mockup_prompt'] ?? '',
-            ]));
-        }
-
-        $contextText = strtolower(implode(' ', $contextTextParts));
-        $analysisText = strtolower((string)($artworkAnalysis['text'] ?? ''));
-        $analysisKeywords = (array)($artworkAnalysis['keywords'] ?? []);
-        $ranked = [];
-
-        foreach ($this->worldMothers->categories() as $category) {
-            $slug = (string)($category['category_slug'] ?? '');
-            if ($slug === '') {
-                continue;
-            }
-
-            $score = 0;
-            $matchedTerms = [];
-            foreach (preg_split('/[_\-\s]+/', $slug) ?: [] as $token) {
-                $token = strtolower(trim($token));
-                if (strlen($token) < 4) {
-                    continue;
-                }
-                if (str_contains($contextText, $token)) {
-                    $score += 3;
-                    $matchedTerms[] = "context:{$token}";
-                }
-                if (str_contains($analysisText, $token)) {
-                    $score += 2;
-                    $matchedTerms[] = "analysis:{$token}";
-                }
-            }
-            foreach ($this->categoryAffinityTerms($slug) as $term) {
-                $term = strtolower(trim($term));
-                if (strlen($term) < 4) {
-                    continue;
-                }
-                if (str_contains($analysisText, $term)) {
-                    $score += 2;
-                    $matchedTerms[] = "analysis:{$term}";
-                }
-                if (str_contains($contextText, $term)) {
-                    $score += 1;
-                    $matchedTerms[] = "context:{$term}";
-                }
-            }
-            foreach ($analysisKeywords as $keyword) {
-                $keyword = strtolower((string)$keyword);
-                if (strlen($keyword) >= 4 && str_contains(str_replace('_', ' ', $slug), $keyword)) {
-                    $score += 2;
-                    $matchedTerms[] = "keyword:{$keyword}";
-                }
-            }
-
-            $imageCount = count($worldImages[$slug] ?? []);
-            $ranked[] = [
-                'category_slug' => $slug,
-                'category_name' => (string)($category['category_name'] ?? ucwords(str_replace('_', ' ', $slug))),
-                'relative_path' => (string)($category['relative_path'] ?? 'storage/world_mothers/' . $slug),
-                'absolute_path' => (string)($category['absolute_path'] ?? ''),
-                'image_count' => $imageCount,
-                'score' => $score,
-                'matched_terms' => array_values(array_unique($matchedTerms)),
-                'reason' => $matchedTerms
-                    ? 'Suggested by artwork/context affinity.'
-                    : 'Available scene mother category; no strong text match found.',
-            ];
-        }
-
-        usort($ranked, static fn (array $a, array $b): int => ((int)$b['score'] <=> (int)$a['score'])
-            ?: ((int)$b['image_count'] <=> (int)$a['image_count'])
-            ?: strcmp((string)$a['category_slug'], (string)$b['category_slug']));
-
-        return $ranked;
-    }
-
-    /**
      * @param array<int,array<string,mixed>> $rankedCategories
-     * @param array<string,mixed> $artworkAnalysis
+     * @param array<string,mixed> $directProfile
      * @return array<string,mixed>
      */
-    private function categoryDecisionForSelectedWorldMother(string $category, array $rankedCategories, array $artworkAnalysis): array
+    private function categoryDecisionForSelectedWorldMother(string $category, array $rankedCategories, array $directProfile): array
     {
         foreach ($rankedCategories as $rank => $candidate) {
             if ((string)($candidate['category_slug'] ?? '') !== $category) {
@@ -535,9 +300,9 @@ final class MockupCombinationEngine
                 'category_slug' => $category,
                 'score' => (int)($candidate['score'] ?? 0),
                 'rank' => $rank + 1,
-                'reason' => 'User-selected scene mother category from the ranked list. All camera slots use this same scene mother.',
+                'reason' => 'User-selected scene mother category from the ranked list. Camera slots reconstruct this visual world from their own viewpoint.',
                 'matched_terms' => (array)($candidate['matched_terms'] ?? []),
-                'analysis_source' => (string)($artworkAnalysis['source'] ?? 'none'),
+                'source' => (string)($directProfile['source'] ?? 'direct_world_mother_flow'),
                 'image_count' => (int)($candidate['image_count'] ?? 0),
                 'fixed_scene_mother' => true,
             ];
@@ -547,144 +312,12 @@ final class MockupCombinationEngine
             'category_slug' => $category,
             'score' => 0,
             'rank' => null,
-            'reason' => 'User-selected scene mother category. All camera slots use this same scene mother.',
+                'reason' => 'User-selected scene mother category. Camera slots reconstruct this visual world from their own viewpoint.',
             'matched_terms' => [],
-            'analysis_source' => (string)($artworkAnalysis['source'] ?? 'none'),
+            'source' => (string)($directProfile['source'] ?? 'direct_world_mother_flow'),
             'image_count' => 0,
             'fixed_scene_mother' => true,
         ];
-    }
-
-    /**
-     * @param array<string,array<int,array<string,mixed>>> $worldImages
-     * @param array<string,bool> $usedCategories
-     */
-    /**
-     * @return array<string,mixed>
-     */
-    private function selectWorldMotherCategory(array $context, array $contextJson, array $artworkAnalysis, array $worldImages, array $usedCategories): array
-    {
-        if (!$worldImages) {
-            return [
-                'category_slug' => '',
-                'score' => 0,
-                'reason' => 'No world mother categories are available.',
-                'matched_terms' => [],
-                'analysis_source' => (string)($artworkAnalysis['source'] ?? 'none'),
-            ];
-        }
-
-        $contextText = strtolower(implode(' ', array_filter([
-            $context['context_name'] ?? '',
-            $contextJson['selected_world_id'] ?? '',
-            $contextJson['assigned_world_id'] ?? '',
-            $contextJson['context_world_id'] ?? '',
-            $contextJson['selected_family_id'] ?? '',
-            $contextJson['assigned_family_id'] ?? '',
-            $contextJson['space_type'] ?? '',
-            $contextJson['atmosphere'] ?? '',
-            is_array($contextJson['materials'] ?? null) ? implode(' ', $contextJson['materials']) : ($contextJson['materials'] ?? ''),
-            $contextJson['mockup_prompt'] ?? '',
-        ])));
-        $analysisText = strtolower((string)($artworkAnalysis['text'] ?? ''));
-        $analysisKeywords = (array)($artworkAnalysis['keywords'] ?? []);
-
-        $bestSlug = '';
-        $bestScore = -1;
-        $bestMatchedTerms = [];
-        foreach (array_keys($worldImages) as $slug) {
-            $score = 0;
-            $matchedTerms = [];
-            foreach (preg_split('/[_\-\s]+/', $slug) ?: [] as $token) {
-                $token = strtolower(trim($token));
-                if (strlen($token) < 4) {
-                    continue;
-                }
-                if (str_contains($contextText, $token)) {
-                    $score += 3;
-                    $matchedTerms[] = "context:{$token}";
-                }
-                if (str_contains($analysisText, $token)) {
-                    $score += 2;
-                    $matchedTerms[] = "analysis:{$token}";
-                }
-            }
-            foreach ($this->categoryAffinityTerms($slug) as $term) {
-                if (str_contains($analysisText, $term)) {
-                    $score += 2;
-                    $matchedTerms[] = "analysis:{$term}";
-                }
-                if (str_contains($contextText, $term)) {
-                    $score += 1;
-                    $matchedTerms[] = "context:{$term}";
-                }
-            }
-            foreach ($analysisKeywords as $keyword) {
-                $keyword = strtolower((string)$keyword);
-                if (strlen($keyword) >= 4 && str_contains(str_replace('_', ' ', $slug), $keyword)) {
-                    $score += 2;
-                    $matchedTerms[] = "keyword:{$keyword}";
-                }
-            }
-            if (!isset($usedCategories[$slug])) {
-                $score += 1;
-            }
-            if ($score > $bestScore) {
-                $bestScore = $score;
-                $bestSlug = $slug;
-                $bestMatchedTerms = array_values(array_unique($matchedTerms));
-            }
-        }
-
-        $bestSlug = $bestSlug !== '' ? $bestSlug : (string)array_key_first($worldImages);
-        return [
-            'category_slug' => $bestSlug,
-            'score' => $bestScore,
-            'reason' => $bestMatchedTerms
-                ? 'Selected by matching artwork analysis/context terms against available world mother categories.'
-                : 'Selected as the next available real world mother category; no strong analysis/category text match was found.',
-            'matched_terms' => $bestMatchedTerms,
-            'analysis_source' => (string)($artworkAnalysis['source'] ?? 'none'),
-        ];
-    }
-
-    /**
-     * @return array<int,string>
-     */
-    private function categoryAffinityTerms(string $slug): array
-    {
-        $map = [
-            'artist_atelier' => ['abstract', 'gesture', 'paint', 'surface', 'studio', 'canvas'],
-            'attic_studio' => ['surreal', 'symbolic', 'quiet', 'studio', 'landscape'],
-            'belle_epoque' => ['vivid', 'dramatic', 'red', 'blue', 'collector', 'historical'],
-            'contemporary_art_museum' => ['bold', 'geometry', 'geometric', 'architectural', 'large', 'blue'],
-            'industrial_loft' => ['architectural', 'structure', 'red', 'bold', 'geometry', 'ladder'],
-        ];
-
-        return $map[$slug] ?? preg_split('/[_\-\s]+/', strtolower($slug)) ?: [];
-    }
-
-    /**
-     * @param array<string,array<int,array<string,mixed>>> $worldImages
-     * @param array<int,array<string,mixed>> $flatWorldImages
-     * @param array<string,bool> $usedImages
-     * @return array<string,mixed>
-     */
-    private function selectWorldMotherImage(string $category, array $worldImages, array $flatWorldImages, array $usedImages): array
-    {
-        $pool = $worldImages[$category] ?? [];
-        foreach ($pool as $image) {
-            if (!isset($usedImages[(string)($image['relative_path'] ?? '')])) {
-                return $image;
-            }
-        }
-        foreach ($flatWorldImages as $image) {
-            if (!isset($usedImages[(string)($image['relative_path'] ?? '')])) {
-                return $image;
-            }
-        }
-
-        return $pool[0] ?? $flatWorldImages[0] ?? [];
     }
 
     /**
@@ -703,7 +336,7 @@ final class MockupCombinationEngine
             return $pool[0];
         }
 
-        if ($this->usesStableRandomWorldMotherRotation($category, count($pool))) {
+        if ($this->usesStableRandomWorldMotherRotation($category, count($pool), $cameraSlotId)) {
             $rotatedPool = $this->stableRandomWorldMotherPool($pool, $category, $artworkId);
             $selected = $rotatedPool[max(0, $combinationIndex - 1) % count($rotatedPool)];
             $selected['world_mother_selection_strategy'] = 'stable_full_pool_rotation';
@@ -742,9 +375,9 @@ final class MockupCombinationEngine
         return $pool[0];
     }
 
-    private function usesStableRandomWorldMotherRotation(string $category, int $poolCount): bool
+    private function usesStableRandomWorldMotherRotation(string $category, int $poolCount, string $cameraSlotId): bool
     {
-        return $poolCount > 2 || in_array($category, ['artist_atelier'], true);
+        return $poolCount > 1;
     }
 
     /**
@@ -807,9 +440,6 @@ final class MockupCombinationEngine
         $leftAttackSlots = [
             'diagonal_estudio_moderno',
             'obra_apoyada_suelo_7_8',
-            'borde_canvas_closeup',
-            'esquina_obra_perspectiva_extrema',
-            'rasante_superficie_pintura',
             'pasillo_obra_descentrada_proxima',
         ];
 
@@ -829,73 +459,6 @@ final class MockupCombinationEngine
         }
 
         return 'right';
-    }
-
-    /**
-     * @param array<string,mixed> $context
-     * @param array<string,mixed> $contextJson
-     * @param array<string,mixed> $artworkAnalysis
-     * @return array<string,mixed>
-     */
-    private function generateMissingWorldMother(string $category, array $context, array $contextJson, array $artworkAnalysis): array
-    {
-        $contextTitle = trim((string)($context['context_name'] ?? $contextJson['context_name'] ?? ''));
-        if ($contextTitle === '') {
-            $contextTitle = ucwords(str_replace('_', ' ', $category));
-        }
-        $contextDescription = $this->compactDescription($contextJson);
-        $materials = $contextJson['materials'] ?? [];
-        if (!is_array($materials)) {
-            $materials = array_filter(array_map('trim', explode(',', (string)$materials)));
-        }
-
-        $analysis = [
-            'scene_type' => $contextTitle,
-            'architecture_language' => trim((string)($contextJson['space_type'] ?? $contextTitle)),
-            'wall_language' => trim((string)($contextJson['world_wall_language'] ?? 'clean generous wall planes suitable for artwork placement')),
-            'floor_language' => trim((string)($contextJson['world_floor_language'] ?? 'credible floor plane with realistic perspective and scale grounding')),
-            'ceiling_language' => trim((string)($contextJson['world_ceiling_language'] ?? 'architectural ceiling geometry compatible with the selected camera')),
-            'lighting' => trim((string)($contextJson['lighting'] ?? $contextJson['world_lighting_bias'] ?? 'refined natural or architectural lighting')),
-            'materials' => array_values(array_filter(array_map('strval', $materials))),
-            'palette' => ['neutral', 'premium', 'artwork-first'],
-            'mood' => array_values(array_filter([
-                trim((string)($contextJson['atmosphere'] ?? '')),
-                trim((string)($contextJson['curatorial_reason'] ?? '')),
-            ])),
-            'camera_potential' => array_values(array_filter([
-                trim((string)($contextJson['camera_view_expected'] ?? $contextJson['camera_view'] ?? '')),
-                trim((string)($contextJson['camera_angle_notes_expected'] ?? $contextJson['camera_angle_notes'] ?? '')),
-            ])),
-            'negative_risks' => array_values(array_filter([
-                'no existing artwork',
-                'no framed art',
-                'no readable text',
-                'no logos',
-                'no people',
-                trim((string)($contextJson['negative_prompt'] ?? '')),
-            ])),
-            'category_keywords' => array_values(array_filter(preg_split('/[_\-\s]+/', strtolower($category)) ?: [])),
-        ];
-
-        $generated = $this->worldMotherGenerator->generateOriginalWorldMotherForCategory($category, $analysis, [
-            'reference_free' => true,
-            'context_title' => $contextTitle,
-            'context_description' => $contextDescription,
-            'artwork_analysis_text' => (string)($artworkAnalysis['text'] ?? ''),
-            'notes' => 'Automatic fallback from MockupCombinationEngine: create the missing scene mother using the selected category and context metadata.',
-        ]);
-
-        $fileName = (string)($generated['file_name'] ?? basename((string)($generated['absolute_path'] ?? '')));
-        return array_replace($generated, [
-            'world_mother_id' => $category . '/' . pathinfo($fileName, PATHINFO_FILENAME),
-            'category_slug' => $category,
-            'category_name' => ucwords(str_replace('_', ' ', $category)),
-            'file_name' => $fileName,
-            'title' => ucwords(str_replace(['_', '-'], ' ', pathinfo($fileName, PATHINFO_FILENAME))),
-            'extension' => strtolower(pathinfo($fileName, PATHINFO_EXTENSION)),
-            'modified_at' => date('c'),
-            'file_size' => is_file((string)($generated['absolute_path'] ?? '')) ? filesize((string)$generated['absolute_path']) : 0,
-        ]);
     }
 
     /**
@@ -954,7 +517,7 @@ final class MockupCombinationEngine
         }
         $contextDescription = $this->compactDescription($contextJson);
         if (!empty($categoryDecision['fixed_scene_mother'])) {
-            $contextDescription = trim('Single selected scene mother: ' . (string)($worldMother['category_slug'] ?? '') . ' | Camera slot: ' . (string)($cameraSlot['slot_name'] ?? $selectedSlotId) . ($contextDescription !== '' ? ' | ' . $contextDescription : ''));
+            $contextDescription = trim('Selected visual world: ' . (string)($worldMother['category_slug'] ?? '') . ' | Camera slot: ' . (string)($cameraSlot['slot_name'] ?? $selectedSlotId) . ($contextDescription !== '' ? ' | ' . $contextDescription : ''));
         }
         $baseCompatibilityReason = trim((string)($contextJson['curatorial_reason'] ?? $contextJson['commercial_reason'] ?? ''));
         $selectionReason = trim((string)($categoryDecision['reason'] ?? ''));
@@ -965,7 +528,7 @@ final class MockupCombinationEngine
             $matchedTerms ? 'Matched terms: ' . implode(', ', array_slice(array_map('strval', $matchedTerms), 0, 8)) . '.' : '',
         ])));
         if ($compatibilityReason === '') {
-            $compatibilityReason = 'Selected by artwork analysis, context metadata, and world mother category affinity.';
+            $compatibilityReason = 'Selected directly from the world mother folder and camera slot.';
         }
         $generationReady = $rootPath !== ''
             && is_file($rootPath)
@@ -975,6 +538,7 @@ final class MockupCombinationEngine
 
         $proposal = $this->contextProposalForComposer(
             (int)$artwork['id'],
+            $index,
             $contextTitle,
             $contextJson,
             $worldMother,
@@ -1031,6 +595,7 @@ final class MockupCombinationEngine
      */
     private function contextProposalForComposer(
         int $artworkId,
+        int $combinationIndex,
         string $contextTitle,
         array $contextJson,
         array $worldMother,
@@ -1044,6 +609,7 @@ final class MockupCombinationEngine
             $json = $this->fixedSceneMotherContextJson($json, $worldMother, $cameraSlot);
         }
         $json['context_name'] = $contextTitle;
+        $json['direct_world_mother_mode'] = !empty($json['direct_world_mother_mode']) || !empty($categoryDecision['fixed_scene_mother']);
         $json['world_mother_category'] = (string)($worldMother['category_slug'] ?? '');
         $json['world_mother_reference_image'] = (string)($worldMother['relative_path'] ?? '');
         $json['world_mother_reference_mode'] = $this->cameraReferenceMode($selectedSlotId);
@@ -1108,7 +674,7 @@ final class MockupCombinationEngine
             $cameraReferenceMode
         );
 
-        $json['context_role'] = 'single fixed scene mother with camera variation';
+        $json['context_role'] = 'selected world mother visual DNA reconstructed through the camera slot';
         $json['space_type'] = $scene['space_type'];
         $json['atmosphere'] = $scene['atmosphere'];
         $json['materials'] = $scene['materials'];
@@ -1123,19 +689,17 @@ final class MockupCombinationEngine
         $json['camera_view'] = 'Selected camera slot viewpoint: ' . $slotName . '.';
         $json['camera_group'] = $slotId !== '' ? $slotId : $slotName;
         $json['camera_distance'] = $cameraReferenceMode === 'reconstructed_view'
-            ? 'Use the distance required by the selected camera slot; the world mother supplies room identity, not camera position.'
-            : 'Use the distance required by the selected camera slot while preserving the fixed scene mother.';
+            ? 'Use the distance required by the selected camera slot. The world mother image provides visual DNA for the environment, but not the camera position, layout, crop, or perspective.'
+            : 'Use the distance required by the selected camera slot while keeping the world mother visual identity recognizable.';
         $json['camera_angle_notes'] = $cameraReferenceMode === 'reconstructed_view'
-            ? 'The camera slot is authoritative for viewpoint. The world mother reference supplies materials, architecture, palette, and lighting, but not its original camera angle.'
-            : 'The camera slot geometry is authoritative for viewpoint only; the scene identity remains the supplied world mother image.';
-        $json['curatorial_reason'] = $cameraReferenceMode === 'reconstructed_view'
-            ? 'The selected world mother defines the architectural and material language. The selected camera slot defines the actual camera position, so extreme viewpoints are rebuilt from the same room DNA instead of copied from the reference photo.'
-            : 'The selected world mother image is the binding visual source for the environment. The artwork is placed into that same room language so the camera study changes viewpoint without changing scene identity.';
-        $json['commercial_reason'] = 'Maintains a coherent collector-room series: one recognizable premium interior, multiple camera readings, stable material identity, and consistent perceived value.';
+            ? 'The camera slot is authoritative for viewpoint, lens, crop, height, and perspective. The world mother image supplies environment identity, object vocabulary, material language, palette, and lighting, but the room must be rebuilt from the selected camera viewpoint rather than preserving the source photo layout.'
+            : 'The camera slot geometry is authoritative for viewpoint; the scene keeps the supplied world mother visual identity without freezing the source photo composition.';
+        $json['curatorial_reason'] = '';
+        $json['commercial_reason'] = '';
         $json['mockup_prompt'] = trim($scene['mockup_prompt'] . "\n\n" . $cameraRole);
 
         $negative = trim((string)($json['negative_prompt'] ?? ''));
-        $sceneNegative = 'do not change the scene mother, no unrelated gallery, no white cube gallery unless present in the world mother image, no generic showroom, no replacement room, no different furniture style, no different wall color family, no invented minimalist museum';
+        $sceneNegative = 'no unrelated gallery, no white cube gallery unless present in the world mother image, no generic showroom, no replacement room style, no different furniture family, no different wall color family, no invented minimalist museum, no frozen copy of the source photo composition';
         $json['negative_prompt'] = trim($negative !== '' ? $negative . '; ' . $sceneNegative : $sceneNegative);
 
         return $json;
@@ -1258,7 +822,7 @@ final class MockupCombinationEngine
     ): string {
         if ($cameraReferenceMode === 'reconstructed_view') {
             return trim(sprintf(
-                'Scene mother variant: %s #%d. %s Camera role: build "%s" as a new camera construction using the same room DNA. The mother reference supplies architecture, materials, palette, wall/floor language, lighting, and furnishing family; it does not supply the final camera angle, crop, height, or perspective.',
+                'Scene mother variant: %s #%d. %s Camera role: build "%s" as a new camera construction using the same visual DNA. The mother reference supplies environment identity, object vocabulary, material language, palette, wall/floor language, lighting, and furnishing family; it does not supply the final camera angle, layout, crop, height, or perspective.',
                 $variantRole,
                 $variantIndex,
                 $variantDirective,
@@ -1267,7 +831,7 @@ final class MockupCombinationEngine
         }
 
         return trim(sprintf(
-            'Scene mother variant: %s #%d. %s Camera role: apply "%s" only as a viewpoint over this same scene mother. Reframe, crop, elevate, lower, or rotate the camera, but do not replace the room, palette, furniture family, wall language, or lighting character.',
+            'Scene mother variant: %s #%d. %s Camera role: apply "%s" as the viewpoint over this selected visual world. Reframe, crop, elevate, lower, or rotate the camera while keeping the room identity, palette, furniture family, wall language, and lighting character recognizable.',
             $variantRole,
             $variantIndex,
             $variantDirective,
@@ -1282,8 +846,8 @@ final class MockupCombinationEngine
     {
         if ($category === 'dark_wood_study') {
             $mockupPrompt = $cameraReferenceMode === 'reconstructed_view'
-                ? 'Use the supplied world mother reference image as a room DNA source: ' . $referencePath . '. Preserve the dark wood library/study identity, bookcases, dark paneling, brown leather seating, heavy table, patterned rug, warm spotlights, amber shadows, and moody private collector atmosphere. Reconstruct the room as needed for the selected camera slot; do not inherit the reference photo camera angle.'
-                : 'Use the supplied world mother reference image as the binding environment source: ' . $referencePath . '. Preserve its recognizable room DNA: dark wood library/study, bookcases, dark paneling, brown leather seating, heavy table, patterned rug, warm spotlights, amber shadows, and a moody private collector atmosphere. Install the artwork on the available warm brown wall area as a real physical canvas. The camera may change according to the selected camera slot, but the generated room must still read as the same dark wood study, not a white cube gallery, not a modern minimalist loft, and not a generic showroom.';
+                ? 'Use the supplied world mother reference image as a room DNA source: ' . $referencePath . '. Preserve the dark wood library/study identity, bookcases, dark paneling, brown leather seating, heavy table, patterned rug, warm spotlights, amber shadows, and moody private collector atmosphere. Reconstruct the room as needed for the selected camera slot; do not inherit the reference photo camera angle, layout, or crop.'
+                : 'Use the supplied world mother reference image as a room DNA source: ' . $referencePath . '. Keep its recognizable dark wood study identity, palette, furniture family, wall language, and lighting character. Install the artwork as a real physical canvas in a compatible part of that visual world. The camera may change according to the selected camera slot; the generated room must still read as a dark wood study, not a white cube gallery, not a modern minimalist loft, and not a generic showroom.';
             return [
                 'space_type' => 'Dark private collector library study from the supplied world mother reference image.',
                 'atmosphere' => 'Moody, intimate, old-world collector study with warm spot lighting, dark wood, leather, books, and a cultivated private-library feeling. The room must stay warm, dark, enclosed, and materially rich rather than becoming a white gallery or bright loft.',
@@ -1295,20 +859,20 @@ final class MockupCombinationEngine
 
         if ($cameraReferenceMode === 'reconstructed_view') {
             return [
-                'space_type' => $categoryTitle . ' scene mother reconstructed from the supplied visual reference.',
-                'atmosphere' => 'Reference-led premium interior. Preserve the supplied world mother image as the source for room identity, palette, materials, and lighting, while allowing a new camera construction.',
-                'materials' => 'Materials, furniture family, wall language, floor language, and lighting must be inferred from and remain consistent with the supplied world mother reference image.',
+                'space_type' => $categoryTitle . ' visual world reconstructed from the supplied reference.',
+                'atmosphere' => 'Reference-led premium interior. Use the supplied world mother image as source DNA for room identity, object vocabulary, palette, materials, and lighting while rebuilding the scene for the selected camera.',
+                'materials' => 'Objects, materials, furniture family, wall language, floor language, and lighting should be inferred from the supplied world mother reference image without preserving its source photo layout.',
                 'lighting' => 'Use the lighting character visible in the supplied world mother image; do not invent a conflicting time of day or unrelated gallery lighting.',
-                'mockup_prompt' => 'Use the supplied world mother reference image as a room DNA source: ' . $referencePath . '. Preserve its recognizable color palette, materials, furniture family, wall language, floor language, and lighting character. Reconstruct the viewpoint required by the selected camera slot; the reference photo camera angle, crop, and perspective are not binding.',
+                'mockup_prompt' => 'Use the supplied world mother reference image as visual DNA for the environment: ' . $referencePath . '. Keep its recognizable room identity, object vocabulary, color palette, materials, furniture family, wall language, floor language, and lighting character. Rebuild the environment through the viewpoint required by the selected camera slot; the reference photo camera angle, layout, crop, and perspective are not binding.',
             ];
         }
 
         return [
             'space_type' => $categoryTitle . ' scene mother from the supplied visual reference.',
-            'atmosphere' => 'Reference-led premium interior. Preserve the supplied world mother image as the dominant source for room identity, palette, furnishings, materials, and lighting.',
-            'materials' => 'Materials, furniture, wall language, floor language, and lighting must be inferred from and remain consistent with the supplied world mother reference image.',
+            'atmosphere' => 'Reference-led premium interior. Use the supplied world mother image as the dominant source for room identity, palette, furnishings, materials, and lighting.',
+            'materials' => 'Materials, furniture, wall language, floor language, and lighting must be inferred from the supplied world mother reference image.',
             'lighting' => 'Use the lighting character visible in the supplied world mother image; do not invent a conflicting time of day or unrelated gallery lighting.',
-            'mockup_prompt' => 'Use the supplied world mother reference image as the binding environment source: ' . $referencePath . '. Preserve its recognizable room DNA, color palette, materials, furniture family, wall language, floor language, and lighting character. The selected camera slot may only reframe or rotate this same environment; it must not replace the room with a different interior style.',
+            'mockup_prompt' => 'Use the supplied world mother reference image as visual DNA for the environment: ' . $referencePath . '. Keep its recognizable room identity, color palette, materials, furniture family, wall language, floor language, and lighting character. The selected camera slot may reframe, crop, rotate, or rebuild the scene viewpoint; it must not replace the room with a different interior style.',
         ];
     }
 
@@ -1338,7 +902,6 @@ final class MockupCombinationEngine
             'vertical_tilt_block',
             'lateral_rotation_block',
             'composition_block',
-            'scale_block',
             'depth_of_field_block',
         ] as $key) {
             $value = trim((string)($slot[$key] ?? ''));
@@ -1346,12 +909,45 @@ final class MockupCombinationEngine
                 $parts[] = $value;
             }
         }
+        $integrity = $this->cameraIntegrityBlock($slot);
+        if ($integrity !== '') {
+            $parts[] = $integrity;
+        }
         $negativeDirectives = $slot['negative_directives'] ?? [];
         if (is_array($negativeDirectives) && $negativeDirectives) {
             $parts[] = 'Camera negatives: ' . implode(', ', array_filter(array_map('strval', $negativeDirectives))) . '.';
         }
 
         return implode("\n", $parts);
+    }
+
+    private function cameraIntegrityBlock(array $slot): string
+    {
+        $scaleBlock = trim((string)($slot['scale_block'] ?? ''));
+        if ($scaleBlock === '') {
+            return '';
+        }
+
+        $sentences = preg_split('/(?<=[.!?])\s+/', $scaleBlock) ?: [];
+        $keep = [];
+        foreach ($sentences as $sentence) {
+            $sentence = trim($sentence);
+            if ($sentence === '') {
+                continue;
+            }
+            if (preg_match('/\b(XL|scale|substantial|monumental|billboard|mural|door|person|adult|height|portion of the wall|global dominance)\b/i', $sentence)) {
+                continue;
+            }
+            if (preg_match('/\b(canvas|artwork|identity|fidelity|preserve|rigid|rectangular|poster|print|screen|warp|bend|curve|wedge|substitution|replace|repaint|recolor|deform|melt|tear|orientation|aspect ratio|thickness|texture)\b/i', $sentence)) {
+                $keep[] = $sentence;
+            }
+        }
+
+        if (!$keep) {
+            return '';
+        }
+
+        return 'Camera object integrity: ' . implode(' ', array_values(array_unique($keep)));
     }
 
     /**

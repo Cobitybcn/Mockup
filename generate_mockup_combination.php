@@ -127,11 +127,10 @@ try {
 
     $contextId = 'combination_' . $combinationIndex;
     $worldMotherReferenceMode = (string)($combination['world_mother_reference_mode'] ?? 'literal_scene_view');
-    $worldMotherGeneratorPath = $worldMotherReferenceMode === 'literal_scene_view' ? $worldMotherPath : '';
     $result = ServiceFactory::mockupGenerator()->generate($rootPath, $contextId, (string)$combination['final_prompt_preview'], [
         'seo_params' => $seoParams,
         'root_reference_path' => $rootPath,
-        'world_mother_reference_path' => $worldMotherGeneratorPath,
+        'world_mother_reference_path' => $worldMotherPath,
         'world_mother_reference_mode' => $worldMotherReferenceMode,
         'world_mother_reference_path_original' => $worldMotherPath,
         'prompt_passthrough_mode' => (string)$combination['final_prompt_preview'],

@@ -27,6 +27,32 @@ function h($v): string
           max-width: 860px;
           margin: 30px auto;
       }
+      .root-mode-grid {
+          display: grid;
+          gap: 22px;
+      }
+      .root-mode-label {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          margin-bottom: 18px;
+          padding-bottom: 14px;
+          border-bottom: 1px dashed var(--line);
+      }
+      .root-mode-label h2 {
+          margin: 0;
+          font-family: var(--font-serif);
+          font-size: 26px;
+          font-weight: 500;
+      }
+      .root-mode-label span {
+          max-width: 360px;
+          color: var(--muted);
+          font-size: 12px;
+          line-height: 1.45;
+          text-align: right;
+      }
       .dropzone-container {
           position: relative;
           border: 1.5px dashed var(--line);
@@ -140,6 +166,16 @@ function h($v): string
           margin: 0;
           padding: 14px 28px;
       }
+      @media (max-width: 720px) {
+          .root-mode-label {
+              align-items: flex-start;
+              flex-direction: column;
+          }
+          .root-mode-label span {
+              max-width: none;
+              text-align: left;
+          }
+      }
   </style>
 </head>
 <body>
@@ -172,8 +208,12 @@ function h($v): string
         It is critical to specify the exact canvas sizes to maintain realistic scaling in future mockups.
       </p>
 
-      <div class="form-container">
+      <div class="form-container root-mode-grid">
         <form action="start_generate.php" method="post" enctype="multipart/form-data" class="panel">
+          <div class="root-mode-label">
+            <h2>Generate Root Artwork</h2>
+            <span>Use this when the source photo still needs cleanup, isolation, frontal correction or candidate generation.</span>
+          </div>
           
           <div class="form-group" style="margin-bottom: 24px;">
             <label style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Primary Image of the Artwork</label>
@@ -224,48 +264,108 @@ function h($v): string
           </div>
 
         </form>
+
+        <form action="upload_existing_root.php" method="post" enctype="multipart/form-data" class="panel">
+          <div class="root-mode-label">
+            <h2>Use Existing Root Artwork</h2>
+            <span>Use this when your artwork image is already frontal, clean and ready for camera slots. Gemini root generation is skipped.</span>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 24px;">
+            <label style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Ready Root Artwork Image</label>
+
+            <div class="dropzone-container" id="existingRootDropzone">
+                <svg class="dropzone-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <div class="dropzone-text" id="existingRootDropzoneText">Drag and drop your finished root image here, or <span>browse files</span></div>
+                <div class="dropzone-info">Supports PNG, JPG, JPEG or WEBP. No root generation or artwork analysis will run.</div>
+                <img id="existingRootPreviewImage" class="dropzone-preview" alt="Existing root preview" />
+                <input type="file" name="existing_root_artwork" id="existingRootFileInput" accept="image/*" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label style="margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Physical Dimensions</label>
+            <small style="margin: 4px 0 14px 0; color: var(--muted); font-size: 11.5px; line-height: 1.4;">
+              Provide the artwork dimensions for realistic scale in future mockups.
+            </small>
+
+            <div class="dim-input-group">
+              <div class="dim-input-field">
+                <label>Width</label>
+                <input type="number" name="width" step="0.1" placeholder="e.g. 80" required min="0.1">
+              </div>
+              <div class="dim-input-field">
+                <label>Height</label>
+                <input type="number" name="height" step="0.1" placeholder="e.g. 100" required min="0.1">
+              </div>
+              <div class="dim-input-field">
+                <label>Depth (optional)</label>
+                <input type="number" name="depth" step="0.1" placeholder="e.g. 4">
+              </div>
+              <div class="dim-input-field">
+                <label>Unit</label>
+                <select name="unit">
+                  <option value="cm" selected>cm</option>
+                  <option value="in">inches</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-actions">
+            <span style="font-size: 11px; color: var(--muted);">Bypass Mode: stores this file as the final root artwork.</span>
+            <button type="submit" class="button secondary">Use This Root Artwork</button>
+          </div>
+        </form>
       </div>
     </div>
   </main>
 </div>
 
 <script>
-    const fileInput = document.getElementById('fileInput');
-    const dropzone = document.getElementById('dropzone');
-    const dropzoneText = document.getElementById('dropzoneText');
-    const previewImage = document.getElementById('previewImage');
+    bindDropzone('fileInput', 'dropzone', 'dropzoneText', 'previewImage');
+    bindDropzone('existingRootFileInput', 'existingRootDropzone', 'existingRootDropzoneText', 'existingRootPreviewImage');
 
-    fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            updateDropzoneWithFile(file);
-        }
-    });
+    function bindDropzone(fileInputId, dropzoneId, dropzoneTextId, previewImageId) {
+        const fileInput = document.getElementById(fileInputId);
+        const dropzone = document.getElementById(dropzoneId);
+        const dropzoneText = document.getElementById(dropzoneTextId);
+        const previewImage = document.getElementById(previewImageId);
 
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropzone.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            dropzone.classList.add('dragover');
-        }, false);
-    });
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                updateDropzoneWithFile(dropzone, dropzoneText, previewImage, file);
+            }
+        });
 
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropzone.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            dropzone.classList.remove('dragover');
-        }, false);
-    });
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropzone.classList.add('dragover');
+            }, false);
+        });
 
-    dropzone.addEventListener('drop', (e) => {
-        const dt = e.dataTransfer;
-        const file = dt.files[0];
-        if (file) {
-            fileInput.files = dt.files;
-            updateDropzoneWithFile(file);
-        }
-    });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+            }, false);
+        });
 
-    function updateDropzoneWithFile(file) {
+        dropzone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+            if (file) {
+                fileInput.files = dt.files;
+                updateDropzoneWithFile(dropzone, dropzoneText, previewImage, file);
+            }
+        });
+    }
+
+    function updateDropzoneWithFile(dropzone, dropzoneText, previewImage, file) {
         dropzone.classList.add('has-preview');
         dropzoneText.innerHTML = `Selected: <strong>${file.name}</strong> (Click to replace)`;
         const reader = new FileReader();
