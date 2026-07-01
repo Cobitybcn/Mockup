@@ -20,6 +20,8 @@ require_once __DIR__ . '/Services/MockPromptBuilder.php';
 require_once __DIR__ . '/Services/MockContextSelector.php';
 require_once __DIR__ . '/Services/MockupContextWorldRegistry.php';
 require_once __DIR__ . '/Services/MockupWorldVisualPromptEnhancer.php';
+require_once __DIR__ . '/Services/WorldMotherLibrary.php';
+require_once __DIR__ . '/Services/WorldMotherGenerator.php';
 require_once __DIR__ . '/Services/MockArtworkProcessor.php';
 require_once __DIR__ . '/Services/MockArtworkAnalyzer.php';
 require_once __DIR__ . '/Services/MockMockupGenerator.php';
@@ -38,5 +40,6 @@ require_once __DIR__ . '/Services/MockupBranchContextBuilder.php';
 require_once __DIR__ . '/Services/MockupBranchPromptDraftBuilder.php';
 require_once __DIR__ . '/Services/MockupPromptApprovalService.php';
 require_once __DIR__ . '/Services/AdminPromptComposerPreview.php';
+require_once __DIR__ . '/Services/MockupCombinationEngine.php';
 require_once __DIR__ . '/Services/ServiceFactory.php';
 

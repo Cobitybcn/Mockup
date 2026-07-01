@@ -25,7 +25,12 @@ class OpenAIMockupGenerator implements MockupGeneratorInterface
         $finalPrompt = $this->finalPrompt($contextId, $prompt, $metadata);
         
         try {
-            $b64 = $this->callImageEdit($imagePath, $finalPrompt, (string)($metadata['root_reference_path'] ?? ''));
+            $b64 = $this->callImageEdit(
+                $imagePath,
+                $finalPrompt,
+                (string)($metadata['root_reference_path'] ?? ''),
+                (string)($metadata['world_mother_reference_path'] ?? '')
+            );
             $imageData = base64_decode($b64);
 
             if ($imageData === false) {
@@ -77,7 +82,7 @@ class OpenAIMockupGenerator implements MockupGeneratorInterface
         return (new MockupWorldVisualPromptEnhancer())->enhancePromptForContextId($contextPrompt, $contextId);
     }
 
-    private function callImageEdit(string $imagePath, string $prompt, string $rootReferencePath = ''): string
+    private function callImageEdit(string $imagePath, string $prompt, string $rootReferencePath = '', string $worldMotherReferencePath = ''): string
     {
         $fields = [
             'model' => ProviderSettings::openAIImageModel(),
@@ -90,6 +95,13 @@ class OpenAIMockupGenerator implements MockupGeneratorInterface
 
         if ($rootReferencePath !== '' && is_file($rootReferencePath) && realpath($rootReferencePath) !== realpath($imagePath)) {
             $fields['image[1]'] = new CURLFile($rootReferencePath, $this->mime($rootReferencePath), basename($rootReferencePath));
+        }
+        if ($worldMotherReferencePath !== '' && is_file($worldMotherReferencePath)) {
+            $fields['image[' . count(array_filter(array_keys($fields), static fn($key): bool => str_starts_with((string)$key, 'image['))) . ']'] = new CURLFile(
+                $worldMotherReferencePath,
+                $this->mime($worldMotherReferencePath),
+                basename($worldMotherReferencePath)
+            );
         }
 
         $ch = curl_init('https://api.openai.com/v1/images/edits');

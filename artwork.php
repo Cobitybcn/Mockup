@@ -423,6 +423,29 @@ if (!is_array($artwork)) {
     die('Artwork not found.');
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'select_root_candidate') {
+    $candidateId = max(0, (int)($_POST['candidate_id'] ?? 0));
+    $candidateFile = basename((string)($_POST['candidate_file'] ?? ''));
+    if ($candidateId > 0 && $candidateFile !== '' && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $candidateFile)) {
+        Database::withBusyRetry(function () use ($pdo, $id, $user, $candidateId, $candidateFile): void {
+            $pdo->prepare('UPDATE root_artwork_candidates SET is_selected = 0 WHERE artwork_id = :artwork_id')
+                ->execute(['artwork_id' => $id]);
+            $pdo->prepare('UPDATE root_artwork_candidates SET is_selected = 1 WHERE id = :id AND artwork_id = :artwork_id')
+                ->execute(['id' => $candidateId, 'artwork_id' => $id]);
+            $pdo->prepare('UPDATE artworks SET root_file = :root_file, updated_at = :updated_at WHERE id = :id AND user_id = :user_id')
+                ->execute([
+                    'root_file' => $candidateFile,
+                    'updated_at' => date('c'),
+                    'id' => $id,
+                    'user_id' => (int)$user['id'],
+                ]);
+        }, 12);
+    }
+
+    header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&root_selected=1');
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_sheet') {
     $update = $pdo->prepare('
         UPDATE artworks
@@ -1045,6 +1068,51 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             transform: rotate(45deg);
         }
 
+        .beta-focus-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 18px;
+        }
+
+        .beta-root-card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .beta-root-card.selected {
+            border: 2px solid var(--accent);
+        }
+
+        .beta-root-card img {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: contain;
+            background: var(--surface-soft);
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            display: block;
+        }
+
+        .beta-root-card h3 {
+            margin: 10px 0 8px;
+            font-size: 15px;
+        }
+
+        .beta-root-card button,
+        .beta-root-card .button-link {
+            width: 100%;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        .beta-hidden-stage {
+            display: none !important;
+        }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -1065,6 +1133,10 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
 
             .metadata-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .beta-focus-grid {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -1090,30 +1162,28 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
         </header>
 
         <div class="alert-strip">
-            Permanent artwork sheet: root image, title options, premium descriptions, contextual proposals and generated mockups.
+            Beta mockup flow: choose one root artwork, choose one scene mother, then generate the camera-slot views.
         </div>
 
         <div class="workspace">
             <div class="workspace-header">
                 <div>
                     <h1>Artwork Details</h1>
-                    <p><?= h($selectedSubtitle) ?></p>
+                    <p>Root selection and scene-mother camera workflow.</p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link secondary" href="core_review.php?id=<?= (int)$id ?>">View Artwork Core</a>
                     <?php if ($rootFile): ?>
-                        <a class="button-link" href="mockup_prompt_drafts_review.php?id=<?= (int)$id ?>">Review Final Mockup Prompts</a>
-                        <?php if (Auth::isAdmin($user) && defined('LEGACY_MOCKUP_FLOW_ENABLED') && LEGACY_MOCKUP_FLOW_ENABLED): ?>
-                            <a class="button-link secondary" href="curated_mockups.php?image=<?= rawurlencode($rootFile) ?>&id=<?= (int)$id ?>&legacy=1">Curated Mockups (Legacy)</a>
-                        <?php endif; ?>
-                        <a class="button-link secondary" href="analyze_wait.php?image=<?= rawurlencode($rootFile) ?>">Recalculate Analysis</a>
-                        <a class="button-link secondary" href="<?= h(media_url($rootFile, true)) ?>">Download Root</a>
+                        <a class="button-link" href="mockup_combinations_review.php?id=<?= (int)$id ?>">Review Mockup Combinations</a>
+                        <a class="button-link secondary" href="mockup_combination_results.php?id=<?= (int)$id ?>">Results</a>
                     <?php endif; ?>
                 </div>
             </div>
 
             <?php if (isset($_GET['saved'])): ?>
                 <div class="notice">Artwork sheet saved.</div>
+            <?php endif; ?>
+            <?php if (isset($_GET['root_selected'])): ?>
+                <div class="notice">Root artwork selected.</div>
             <?php endif; ?>
 
             <?php if ($analysisNeedsRefresh): ?>
@@ -1122,7 +1192,57 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                 </div>
             <?php endif; ?>
 
-            <section class="artwork-sheet">
+            <section class="panel">
+                <div class="section-heading">
+                    <h2>Choose Root Artwork</h2>
+                    <p>Select the root image for the scene-mother camera workflow.</p>
+                </div>
+                <?php if (!empty($rootCandidatesList)): ?>
+                    <div class="beta-focus-grid">
+                        <?php
+                        $viewLabels = [
+                            'frontal'             => 'Frontal',
+                            'three-quarter-left'  => '3/4 Left',
+                            'three-quarter-right' => '3/4 Right',
+                        ];
+                        foreach (array_slice($rootCandidatesList, 0, 3) as $rca):
+                            $rcaFile = basename((string)($rca['file_name'] ?? ''));
+                            if ($rcaFile === '' || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $rcaFile)) {
+                                continue;
+                            }
+                            $rcaLabel = $viewLabels[$rca['view_type']] ?? $rca['view_type'];
+                            $rcaIsSelected = !empty($rca['is_selected']) || $rcaFile === $rootFile;
+                        ?>
+                            <article class="beta-root-card <?= $rcaIsSelected ? 'selected' : '' ?>">
+                                <a href="<?= h(media_url($rcaFile)) ?>" target="_blank">
+                                    <img src="<?= h(media_url($rcaFile)) ?>" alt="<?= h($rcaLabel) ?>">
+                                </a>
+                                <h3><?= h($rcaLabel) ?></h3>
+                                <form method="post">
+                                    <input type="hidden" name="action" value="select_root_candidate">
+                                    <input type="hidden" name="candidate_id" value="<?= (int)$rca['id'] ?>">
+                                    <input type="hidden" name="candidate_file" value="<?= h($rcaFile) ?>">
+                                    <button type="submit" <?= $rcaIsSelected ? 'disabled' : '' ?>><?= $rcaIsSelected ? 'Selected' : 'Select This Root' ?></button>
+                                </form>
+                            </article>
+                        <?php endforeach; ?>
+                    </div>
+                <?php elseif ($rootFile && is_file($rootPath)): ?>
+                    <div class="beta-focus-grid">
+                        <article class="beta-root-card selected">
+                            <a href="<?= h(media_url($rootFile)) ?>" target="_blank">
+                                <img src="<?= h(media_url($rootFile)) ?>" alt="Selected root artwork">
+                            </a>
+                            <h3>Selected Root</h3>
+                            <a class="button-link" href="mockup_combinations_review.php?id=<?= (int)$id ?>">Continue</a>
+                        </article>
+                    </div>
+                <?php else: ?>
+                    <div class="notice">No root artwork candidates available yet.</div>
+                <?php endif; ?>
+            </section>
+
+            <section class="artwork-sheet beta-hidden-stage">
                 <aside class="root-panel">
                     <div style="background: var(--surface); border: 1px solid var(--line); padding: 16px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 12px;">
                         <label style="margin-top: 0; font-size: 11px; text-transform: uppercase; font-weight: 600; color: var(--ink); letter-spacing: 0.05em; display: block; margin-bottom: 6px;">Slug / Filename Customizer</label>

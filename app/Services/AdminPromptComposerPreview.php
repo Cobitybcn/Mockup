@@ -150,6 +150,25 @@ class AdminPromptComposerPreview
             array_values($replacements),
             $normalizedAdmin
         );
+
+        $detailOverride = $this->detailSlotCompositionOverride(
+            $fields['camera_slot_id'],
+            $width,
+            $height,
+            $orientation
+        );
+        if ($detailOverride !== '') {
+            $composed = rtrim($composed) . "\n\n" . $detailOverride;
+        }
+        $floorLeaningOverride = $this->floorLeaningSlotOverride(
+            $fields['camera_slot_id'],
+            $width,
+            $height,
+            $orientation
+        );
+        if ($floorLeaningOverride !== '') {
+            $composed = rtrim($composed) . "\n\n" . $floorLeaningOverride;
+        }
         
         return $composed;
     }
@@ -186,7 +205,11 @@ class AdminPromptComposerPreview
         $cameraDistance = $json['camera_distance_expected'] ?? $proposal['camera_distance_expected'] ?? $json['camera_distance'] ?? $proposal['camera_distance'] ?? '';
         $cameraNotes = $json['camera_angle_notes_expected'] ?? $proposal['camera_angle_notes_expected'] ?? $json['camera_angle_notes'] ?? $proposal['camera_angle_notes'] ?? $json['camera_notes'] ?? $proposal['camera_notes'] ?? '';
         $cameraSlotName = $json['camera_slot_name'] ?? $proposal['camera_slot_name'] ?? '';
+        $cameraSlotId = $json['camera_slot_id'] ?? $proposal['camera_slot_id'] ?? '';
         $cameraSlotGeometry = $json['camera_slot_geometry'] ?? $proposal['camera_slot_geometry'] ?? '';
+        $worldMotherCategory = $json['world_mother_category'] ?? $proposal['world_mother_category'] ?? '';
+        $worldMotherReferenceImage = $json['world_mother_reference_image'] ?? $proposal['world_mother_reference_image'] ?? '';
+        $combinationNotes = $json['mockup_combination_notes'] ?? $proposal['mockup_combination_notes'] ?? '';
         $humanPresence = $json['human_presence'] ?? $proposal['human_presence'] ?? 'none';
         $curatorialReason = $json['curatorial_reason'] ?? $proposal['curatorial_reason'] ?? '';
         $commercialReason = $json['commercial_reason'] ?? $proposal['commercial_reason'] ?? '';
@@ -210,8 +233,12 @@ class AdminPromptComposerPreview
             'camera_group' => trim((string)$cameraGroup),
             'camera_distance' => trim((string)$cameraDistance),
             'camera_angle_notes' => trim((string)$cameraNotes),
+            'camera_slot_id' => trim((string)$cameraSlotId),
             'camera_slot_name' => trim((string)$cameraSlotName),
             'camera_slot_geometry' => trim((string)$cameraSlotGeometry),
+            'world_mother_category' => trim((string)$worldMotherCategory),
+            'world_mother_reference_image' => trim((string)$worldMotherReferenceImage),
+            'mockup_combination_notes' => trim((string)$combinationNotes),
             'human_presence' => trim((string)$humanPresence),
             'curatorial_reason' => trim((string)$curatorialReason),
             'commercial_reason' => trim((string)$commercialReason),
@@ -233,6 +260,8 @@ class AdminPromptComposerPreview
     {
         return "MOCKUP CONTEXT PROPOSAL:\n"
             . "* Scene Name: {$fields['context_name']}\n"
+            . "* World Mother Category: {$fields['world_mother_category']}\n"
+            . "* World Mother Reference Image: {$fields['world_mother_reference_image']}\n"
             . "* Purpose: {$fields['purpose']}\n"
             . "* Space Type: {$fields['space_type']}\n"
             . "* Atmosphere: {$fields['atmosphere']}\n"
@@ -243,12 +272,72 @@ class AdminPromptComposerPreview
             . "* Camera Group: {$fields['camera_group']}\n"
             . "* Camera Distance: {$fields['camera_distance']}\n"
             . "* Camera Notes: {$fields['camera_angle_notes']}\n"
+            . "* Camera Slot ID: {$fields['camera_slot_id']}\n"
             . "* Camera Slot: {$fields['camera_slot_name']}\n"
             . "* Camera Slot Geometry:\n{$fields['camera_slot_geometry']}\n"
+            . "* Mockup Combination Notes: {$fields['mockup_combination_notes']}\n"
             . "* Human Presence: {$fields['human_presence']}\n"
             . "* Curatorial Reason: {$fields['curatorial_reason']}\n"
             . "* Commercial Reason: {$fields['commercial_reason']}\n"
             . "* Mockup Prompt: {$fields['mockup_prompt']}\n"
             . "* Negative Prompt: {$fields['negative_prompt']}";
+    }
+
+    private function detailSlotCompositionOverride(string $cameraSlotId, float $width, float $height, string $orientation): string
+    {
+        $detailSlots = [
+            'detalle_textura_lienzo',
+            'borde_canvas_closeup',
+            'esquina_obra_perspectiva_extrema',
+            'rasante_superficie_pintura',
+        ];
+        if (!in_array($cameraSlotId, $detailSlots, true)) {
+            return '';
+        }
+
+        $formatRule = match ($orientation) {
+            'portrait' => 'Because the artwork is portrait, any visible canvas fragment must still feel like part of a taller-than-wide physical artwork. Do not square it, widen it, compress its height, or complete the visible fragment into a square painting.',
+            'landscape' => 'Because the artwork is landscape, any visible canvas fragment must still feel like part of a wider-than-tall physical artwork. Do not make it portrait, square it, compress its width, or complete the visible fragment into a different format.',
+            default => 'Because the artwork is square, any visible canvas fragment must still feel like part of a square physical artwork. Do not stretch it into portrait or landscape.',
+        };
+
+        $slotRule = $cameraSlotId === 'borde_canvas_closeup'
+            ? 'For Borde de Canvas Close-up, prioritize the physical side edge, canvas thickness, wall contact, cast shadow, and a faithful partial slice of the painted face. The whole artwork should usually not be visible.'
+            : 'For this material-detail camera slot, prioritize a faithful physical fragment of the artwork surface over showing the whole artwork.';
+
+        return trim(<<<TEXT
+SELECTED DETAIL CAMERA OVERRIDE
+
+This selected camera slot intentionally allows camera-frame cropping of the artwork. This overrides generic "do not crop", "no cropped artwork", and "show the whole artwork" instructions only for photographic framing.
+
+Do not crop, resize, repaint, extend, redesign, or alter the artwork itself. Instead, place the real artwork in the scene with its true physical dimensions ({$width} cm wide x {$height} cm high), true orientation ({$orientation}), and true aspect ratio, then let the close camera frame show only the necessary fragment.
+
+{$formatRule}
+
+{$slotRule}
+TEXT);
+    }
+
+    private function floorLeaningSlotOverride(string $cameraSlotId, float $width, float $height, string $orientation): string
+    {
+        if ($cameraSlotId !== 'obra_apoyada_suelo_7_8') {
+            return '';
+        }
+
+        $heightComparison = $height < 180.0
+            ? "The {$height} cm artwork height should read clearly below a normal adult human height"
+            : "The {$height} cm artwork height should read according to its supplied physical dimensions";
+
+        return trim(<<<TEXT
+SELECTED FLOOR-LEANING ARTWORK OVERRIDE
+
+This selected camera slot requires a real leaning artwork installation. The artwork is not hanging and not wall-mounted. It may lean against a real wall or against a real stable support object when that object could plausibly hold a canvas in an atelier, studio, storage room, or collector preview.
+
+Place the real physical artwork with believable gravity: its bottom edge must rest on the real floor or on a clearly stable low support surface, and its back upper edge must lean gently against a wall or load-bearing object at about 5-12 degrees. The floor/support/wall relationship must be physically legible through contact shadows, grounded bottom contact, and coherent perspective.
+
+The artwork must keep its true physical dimensions ({$width} cm wide x {$height} cm high), true orientation ({$orientation}), true aspect ratio, and believable scale. It must not become a monumental billboard, room divider, oversized slab, stage prop, or architectural panel. {$heightComparison} and far below a typical 205 cm interior door when the supplied dimensions support that comparison.
+
+Do not invent a giant plinth, oversized display block, impossible platform, or arbitrary support just to hold the artwork. If the artwork leans on an object, the object must be real, stable, correctly scaled, visually connected to the floor, and coherent with the room; the artwork contact point must be visible or strongly implied.
+TEXT);
     }
 }

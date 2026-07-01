@@ -362,6 +362,7 @@ try {
                         onmouseout="this.style.background='#7C3626'"
                         title="Regenerate all mockup context proposals for this artwork using the current ADMIN master prompt. Does not repeat core analysis or root artwork generation."
                     >↺ Regenerate Mockup Proposals</button>
+                    <a class="button-link" href="mockup_combinations_review.php?id=<?= (int)$id ?>">Review Combinations</a>
                     <a class="button-link secondary" href="mockup_branches_review.php?id=<?= (int)$id ?>">Back to Branch Contexts</a>
                     <a class="button-link secondary" href="artwork_details.php?id=<?= (int)$id ?>">Artwork Details</a>
                 </div>
