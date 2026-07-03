@@ -80,6 +80,120 @@ try {
             exit;
         }
 
+        if ($action === 'set_canonical') {
+            $artworkId = max(0, (int)($_POST['artwork_id'] ?? 0));
+            $decoded = json_decode((string)$sheet['related_artwork_ids'], true);
+            $memberIds = is_array($decoded) ? array_map('intval', $decoded) : [];
+            if (!in_array($artworkId, $memberIds, true)) {
+                throw new RuntimeException('Esa obra no pertenece a esta ficha.');
+            }
+            $stmt = $pdo->prepare('SELECT root_file, main_file FROM artworks WHERE id = ? AND user_id = ?');
+            $stmt->execute([$artworkId, $userId]);
+            $artwork = $stmt->fetch();
+            $sourceFile = $artwork ? basename((string)($artwork['root_file'] ?: $artwork['main_file'] ?: '')) : '';
+            $pdo->prepare('UPDATE artwork_sheets SET canonical_artwork_id = ?, source_image_file = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+                ->execute([$artworkId, $sourceFile, date('c'), $sheetId, $userId]);
+            $_SESSION['ficha_notice'] = 'Obra #' . $artworkId . ' es ahora la portada.';
+            header('Location: ficha.php?id=' . $sheetId);
+            exit;
+        }
+
+        if ($action === 'detach_artwork' || $action === 'move_artwork') {
+            $artworkId = max(0, (int)($_POST['artwork_id'] ?? 0));
+            $targetSheetId = max(0, (int)($_POST['target_sheet_id'] ?? 0));
+            $decoded = json_decode((string)$sheet['related_artwork_ids'], true);
+            $memberIds = is_array($decoded) ? array_values(array_map('intval', $decoded)) : [];
+            if (!in_array($artworkId, $memberIds, true)) {
+                throw new RuntimeException('Esa obra no pertenece a esta ficha.');
+            }
+            if (count($memberIds) <= 1) {
+                throw new RuntimeException('Es la única obra de la ficha: eliminá la ficha completa en su lugar.');
+            }
+
+            $remaining = array_values(array_diff($memberIds, [$artworkId]));
+            $pdo->beginTransaction();
+            try {
+                $newCanonical = (int)$sheet['canonical_artwork_id'];
+                $sourceFile = (string)$sheet['source_image_file'];
+                if ($newCanonical === $artworkId) {
+                    $newCanonical = $remaining[0];
+                    $stmt = $pdo->prepare('SELECT root_file, main_file FROM artworks WHERE id = ? AND user_id = ?');
+                    $stmt->execute([$newCanonical, $userId]);
+                    $artwork = $stmt->fetch();
+                    $sourceFile = $artwork ? basename((string)($artwork['root_file'] ?: $artwork['main_file'] ?: '')) : '';
+                }
+                $pdo->prepare('UPDATE artwork_sheets SET canonical_artwork_id = ?, source_image_file = ?, related_artwork_ids = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+                    ->execute([$newCanonical, $sourceFile, json_encode($remaining, JSON_UNESCAPED_SLASHES), date('c'), $sheetId, $userId]);
+
+                if ($action === 'move_artwork' && $targetSheetId > 0) {
+                    $target = $service->sheet($targetSheetId, $userId);
+                    $targetDecoded = json_decode((string)$target['related_artwork_ids'], true);
+                    $targetIds = is_array($targetDecoded) ? array_values(array_map('intval', $targetDecoded)) : [];
+                    if (!in_array($artworkId, $targetIds, true)) {
+                        $targetIds[] = $artworkId;
+                    }
+                    $pdo->prepare('UPDATE artwork_sheets SET related_artwork_ids = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+                        ->execute([json_encode($targetIds, JSON_UNESCAPED_SLASHES), date('c'), $targetSheetId, $userId]);
+                    $pdo->prepare('UPDATE mockup_sheets SET artwork_sheet_id = ?, updated_at = ? WHERE user_id = ? AND artwork_sheet_id = ? AND artwork_id = ?')
+                        ->execute([$targetSheetId, date('c'), $userId, $sheetId, $artworkId]);
+                    $noticeText = 'Obra #' . $artworkId . ' movida a la Ficha #' . $targetSheetId . ' junto con sus mockups.';
+                } else {
+                    $pdo->prepare('UPDATE mockup_sheets SET artwork_sheet_id = NULL, updated_at = ? WHERE user_id = ? AND artwork_sheet_id = ? AND artwork_id = ?')
+                        ->execute([date('c'), $userId, $sheetId, $artworkId]);
+                    $noticeText = 'Obra #' . $artworkId . ' desacoplada: quedó sin ficha (podés reagruparla desde el asistente).';
+                }
+                $pdo->commit();
+            } catch (Throwable $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                throw $e;
+            }
+            $_SESSION['ficha_notice'] = $noticeText;
+            header('Location: ficha.php?id=' . $sheetId);
+            exit;
+        }
+
+        if ($action === 'detach_mockup' || $action === 'move_mockup') {
+            $mockupSheetId = max(0, (int)($_POST['mockup_sheet_id'] ?? 0));
+            $targetSheetId = max(0, (int)($_POST['target_sheet_id'] ?? 0));
+            $stmt = $pdo->prepare('SELECT id FROM mockup_sheets WHERE id = ? AND user_id = ? AND artwork_sheet_id = ?');
+            $stmt->execute([$mockupSheetId, $userId, $sheetId]);
+            if (!$stmt->fetch()) {
+                throw new RuntimeException('Ese mockup no pertenece a esta ficha.');
+            }
+            if ($action === 'move_mockup' && $targetSheetId > 0) {
+                $target = $service->sheet($targetSheetId, $userId);
+                $pdo->prepare('UPDATE mockup_sheets SET artwork_sheet_id = ?, artwork_id = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+                    ->execute([$targetSheetId, (int)$target['canonical_artwork_id'], date('c'), $mockupSheetId, $userId]);
+                $_SESSION['ficha_notice'] = 'Mockup movido a la Ficha #' . $targetSheetId . '.';
+            } else {
+                $pdo->prepare('UPDATE mockup_sheets SET artwork_sheet_id = NULL, updated_at = ? WHERE id = ? AND user_id = ?')
+                    ->execute([date('c'), $mockupSheetId, $userId]);
+                $_SESSION['ficha_notice'] = 'Mockup desacoplado: quedó en la bandeja de huérfanos.';
+            }
+            header('Location: ficha.php?id=' . $sheetId);
+            exit;
+        }
+
+        if ($action === 'delete_sheet') {
+            $pdo->beginTransaction();
+            try {
+                $pdo->prepare('UPDATE mockup_sheets SET artwork_sheet_id = NULL, updated_at = ? WHERE user_id = ? AND artwork_sheet_id = ?')
+                    ->execute([date('c'), $userId, $sheetId]);
+                $pdo->prepare('DELETE FROM artwork_sheets WHERE id = ? AND user_id = ?')->execute([$sheetId, $userId]);
+                $pdo->commit();
+            } catch (Throwable $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                throw $e;
+            }
+            $_SESSION['fichas_notice'] = 'Ficha #' . $sheetId . ' eliminada. Sus obras y mockups NO se borraron: quedaron sin agrupar.';
+            header('Location: fichas.php');
+            exit;
+        }
+
         throw new RuntimeException('Acción inválida.');
     }
 } catch (Throwable $e) {
@@ -109,6 +223,11 @@ $stmt = $pdo->prepare('SELECT * FROM mockup_sheets WHERE user_id = ? AND artwork
 $stmt->execute([$userId, $sheetId]);
 $mockups = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Otras fichas del usuario, para los selectores de "mover a"
+$stmt = $pdo->prepare('SELECT id, title, canonical_artwork_id FROM artwork_sheets WHERE user_id = ? AND id <> ? ORDER BY id');
+$stmt->execute([$userId, $sheetId]);
+$otherSheets = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 $canonicalArtwork = $members[$canonicalId] ?? null;
 $canonicalFile = $canonicalArtwork ? basename((string)($canonicalArtwork['root_file'] ?: $canonicalArtwork['main_file'] ?: '')) : '';
 $pageTitle = trim((string)$sheet['title']) ?: 'Ficha #' . $sheetId;
@@ -136,6 +255,11 @@ $pageTitle = trim((string)$sheet['title']) ?: 'Ficha #' . $sheetId;
         .asset-item img { width:100%; aspect-ratio:1; object-fit:cover; display:block; }
         .asset-item .meta { display:block; padding:4px 6px; font-size:10px; }
         .asset-item.is-canonical { border:2px solid var(--accent); }
+        .asset-actions { display:flex; gap:3px; padding:4px 6px 6px; align-items:center; }
+        .asset-actions select { flex:1; min-width:0; font-size:10px; padding:2px; border:1px solid var(--line); border-radius:4px; background:var(--surface-soft); }
+        .asset-actions button { font-size:10px; padding:2px 6px; cursor:pointer; }
+        .danger-zone { margin-top:16px; border-top:1px solid var(--line); padding-top:12px; }
+        .danger-zone button { color:var(--danger, #b42318); border-color:var(--danger, #b42318); }
         @media (max-width:1100px) { .ficha-layout { flex-direction:column; } .ficha-meta { width:100%; position:static; } }
     </style>
 </head>
@@ -177,6 +301,18 @@ $pageTitle = trim((string)$sheet['title']) ?: 'Ficha #' . $sheetId;
                             <div class="asset-item <?= $memberId === $canonicalId ? 'is-canonical' : '' ?>">
                                 <?php if ($url !== ''): ?><img src="<?= h($url) ?>" loading="lazy" decoding="async"><?php endif; ?>
                                 <span class="meta">#<?= $memberId ?><?= $memberId === $canonicalId ? ' ★ portada' : '' ?></span>
+                                <div class="asset-actions">
+                                    <select onchange="artworkAction(<?= $memberId ?>, this.value); this.selectedIndex = 0;">
+                                        <option value="">Acciones…</option>
+                                        <?php if ($memberId !== $canonicalId): ?>
+                                            <option value="canonical">★ Usar como portada</option>
+                                        <?php endif; ?>
+                                        <option value="detach">Desacoplar (dejar sin ficha)</option>
+                                        <?php foreach ($otherSheets as $other): ?>
+                                            <option value="move:<?= (int)$other['id'] ?>">Mover a Ficha #<?= (int)$other['id'] ?><?= trim((string)$other['title']) !== '' ? ' · ' . h(mb_substr((string)$other['title'], 0, 24)) : '' ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -192,6 +328,15 @@ $pageTitle = trim((string)$sheet['title']) ?: 'Ficha #' . $sheetId;
                                     <?php if ($url !== ''): ?>
                                         <a href="<?= h($url) ?>" target="_blank"><img src="<?= h($url) ?>" loading="lazy" decoding="async"></a>
                                     <?php endif; ?>
+                                    <div class="asset-actions">
+                                        <select onchange="mockupAction(<?= (int)$mockup['id'] ?>, this.value); this.selectedIndex = 0;">
+                                            <option value="">Acciones…</option>
+                                            <option value="detach">Desacoplar (a huérfanos)</option>
+                                            <?php foreach ($otherSheets as $other): ?>
+                                                <option value="move:<?= (int)$other['id'] ?>">Mover a Ficha #<?= (int)$other['id'] ?><?= trim((string)$other['title']) !== '' ? ' · ' . h(mb_substr((string)$other['title'], 0, 24)) : '' ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -236,10 +381,53 @@ $pageTitle = trim((string)$sheet['title']) ?: 'Ficha #' . $sheetId;
                         <input type="hidden" name="action" value="generate_meta">
                         <button type="submit" class="button-link secondary" onclick="this.textContent='Generando...';">✨ Proponer metadatos con IA</button>
                     </form>
+                    <div class="danger-zone">
+                        <form method="post" onsubmit="return confirm('¿Eliminar la Ficha #<?= $sheetId ?>? Las obras y mockups NO se borran: quedan sin agrupar y podés rearmarlos desde el asistente.');">
+                            <input type="hidden" name="id" value="<?= $sheetId ?>">
+                            <input type="hidden" name="action" value="delete_sheet">
+                            <button type="submit" class="button-link secondary">🗑 Eliminar ficha (conserva obras y mockups)</button>
+                        </form>
+                    </div>
                 </aside>
             </div>
         </div>
     </main>
 </div>
+<script>
+function postFichaAction(fields) {
+    var form = document.createElement('form');
+    form.method = 'post';
+    fields.id = <?= $sheetId ?>;
+    Object.keys(fields).forEach(function (name) {
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = fields[name];
+        form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
+}
+function artworkAction(artworkId, value) {
+    if (!value) { return; }
+    if (value === 'canonical') {
+        postFichaAction({ action: 'set_canonical', artwork_id: artworkId });
+    } else if (value === 'detach') {
+        if (confirm('¿Desacoplar la obra #' + artworkId + ' de esta ficha? Sus mockups quedan como huérfanos.')) {
+            postFichaAction({ action: 'detach_artwork', artwork_id: artworkId });
+        }
+    } else if (value.indexOf('move:') === 0) {
+        postFichaAction({ action: 'move_artwork', artwork_id: artworkId, target_sheet_id: value.slice(5) });
+    }
+}
+function mockupAction(mockupSheetId, value) {
+    if (!value) { return; }
+    if (value === 'detach') {
+        postFichaAction({ action: 'detach_mockup', mockup_sheet_id: mockupSheetId });
+    } else if (value.indexOf('move:') === 0) {
+        postFichaAction({ action: 'move_mockup', mockup_sheet_id: mockupSheetId, target_sheet_id: value.slice(5) });
+    }
+}
+</script>
 </body>
 </html>

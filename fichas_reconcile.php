@@ -97,10 +97,23 @@ function reconcile_build_proposal(PDO $pdo, int $userId): array
         $parent[$find($a)] = $find($b);
     };
 
-    // 1) Agrupaciones ya confirmadas por el usuario (corridas previas del asistente);
-    //    si no existen, las pistas exportadas de los gestores de prueba.
+    // 1) Semilla, por prioridad: fichas actuales en la base (reflejan desacoples y
+    //    eliminaciones del usuario) → agrupaciones confirmadas → pistas de los gestores de prueba.
+    $stmtSeed = $pdo->prepare('SELECT related_artwork_ids, canonical_artwork_id FROM artwork_sheets WHERE user_id = ?');
+    $stmtSeed->execute([$userId]);
+    $currentSheets = $stmtSeed->fetchAll(PDO::FETCH_ASSOC);
     $confirmed = json_decode((string)@file_get_contents(FICHA_CONFIRMED_PATH), true);
-    if (is_array($confirmed) && (int)($confirmed['user_id'] ?? 0) === $userId) {
+    if ($currentSheets) {
+        foreach ($currentSheets as $row) {
+            $decoded = json_decode((string)$row['related_artwork_ids'], true);
+            $members = is_array($decoded) ? $decoded : [];
+            $members[] = (int)$row['canonical_artwork_id'];
+            $members = array_values(array_filter(array_unique(array_map('intval', $members)), fn($id) => isset($index[$id])));
+            for ($i = 1; $i < count($members); $i++) {
+                $union($index[$members[0]], $index[$members[$i]]);
+            }
+        }
+    } elseif (is_array($confirmed) && (int)($confirmed['user_id'] ?? 0) === $userId) {
         foreach ((array)($confirmed['groups'] ?? []) as $group) {
             $members = array_values(array_filter(array_map('intval', (array)($group['artwork_ids'] ?? [])), fn($id) => isset($index[$id])));
             for ($i = 1; $i < count($members); $i++) {

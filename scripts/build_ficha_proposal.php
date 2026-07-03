@@ -42,11 +42,23 @@ $union = function (int $a, int $b) use (&$parent, $find): void {
     $parent[$find($a)] = $find($b);
 };
 
-// 1a) agrupaciones confirmadas o pistas
+// 1a) semilla por prioridad: fichas actuales en DB → confirmadas → pistas
 $confirmedPath = __DIR__ . '/../storage/ficha_confirmed_groups.json';
 $hintsPath = __DIR__ . '/../storage/artwork_sheets_hints_20260703.json';
+$stmtSeed = $pdo->prepare('SELECT related_artwork_ids, canonical_artwork_id FROM artwork_sheets WHERE user_id = ?');
+$stmtSeed->execute([$userId]);
+$currentSheets = $stmtSeed->fetchAll(PDO::FETCH_ASSOC);
 $confirmed = json_decode((string)@file_get_contents($confirmedPath), true);
-if (is_array($confirmed) && (int)($confirmed['user_id'] ?? 0) === $userId) {
+if ($currentSheets) {
+    $seedGroups = [];
+    foreach ($currentSheets as $row) {
+        $decoded = json_decode((string)$row['related_artwork_ids'], true);
+        $members = is_array($decoded) ? $decoded : [];
+        $members[] = (int)$row['canonical_artwork_id'];
+        $seedGroups[] = array_values(array_unique(array_map('intval', $members)));
+    }
+    echo "semilla: fichas actuales en la base (" . count($seedGroups) . ")\n";
+} elseif (is_array($confirmed) && (int)($confirmed['user_id'] ?? 0) === $userId) {
     $seedGroups = array_map(fn($g) => (array)($g['artwork_ids'] ?? []), (array)$confirmed['groups']);
     echo "semilla: agrupaciones confirmadas (" . count($seedGroups) . ")\n";
 } else {
