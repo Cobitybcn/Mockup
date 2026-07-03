@@ -173,7 +173,24 @@ function user_can_access_exact_result_file(PDO $pdo, int $userId, string $file):
         'file' => $file,
     ]);
 
-    return (bool)$stmt->fetchColumn();
+    if ($stmt->fetchColumn()) {
+        return true;
+    }
+
+    // Mockups anexados a una ficha del usuario (pueden no existir en mockups/jobs,
+    // p. ej. archivos adoptados directamente desde results/).
+    if ($fileColumn === 'mockup_file') {
+        $stmt = $pdo->prepare('SELECT 1 FROM mockup_sheets WHERE user_id = :user_id AND mockup_file = :file LIMIT 1');
+        $stmt->execute([
+            'user_id' => $userId,
+            'file' => $file,
+        ]);
+        if ($stmt->fetchColumn()) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function canonical_generated_file(string $file): string
