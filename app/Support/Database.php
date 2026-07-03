@@ -435,6 +435,18 @@ class Database
             )
         ");
         $pdo->exec("CREATE INDEX IF NOT EXISTS idx_mockup_sheets_artwork ON mockup_sheets (artwork_id, mockup_file)");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS artwork_embeddings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                artwork_id INTEGER NOT NULL UNIQUE,
+                source_file TEXT NOT NULL,
+                model TEXT NOT NULL DEFAULT 'multimodalembedding@001',
+                embedding_json TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
+            )
+        ");
     }
 
     private static function migrateMysql(PDO $pdo): void
@@ -713,6 +725,20 @@ class Database
                 KEY idx_mockup_sheets_user (user_id),
                 CONSTRAINT mockup_sheets_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 CONSTRAINT mockup_sheets_artwork_fk FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS artwork_embeddings (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                artwork_id INT UNSIGNED NOT NULL,
+                source_file VARCHAR(255) NOT NULL,
+                model VARCHAR(80) NOT NULL DEFAULT 'multimodalembedding@001',
+                embedding_json MEDIUMTEXT NOT NULL,
+                created_at VARCHAR(40) NOT NULL,
+                PRIMARY KEY (id),
+                UNIQUE KEY artwork_embeddings_artwork_unique (artwork_id),
+                CONSTRAINT artwork_embeddings_artwork_fk FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
     }

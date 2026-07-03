@@ -1070,6 +1070,144 @@ def handle_generate_image(args):
         print(f"[WARN] Failed to write execution log: {le}", file=sys.stderr)
 
 
+def handle_embed_image(args):
+    """Compute multimodal embeddings for one image or a batch list.
+
+    Uses the regional multimodalembedding@001 REST endpoint (the shared genai
+    client targets location "global", which does not serve this model).
+    Batch mode reads one path per line ("id<TAB>path" or just "path") and
+    writes JSONL: {"id":..., "path":..., "embedding":[...]} per line.
+    """
+    import base64
+    import io
+    import json
+    import httpx
+    import google.auth
+    import google.auth.transport.requests
+
+    project_id = os.environ.get('VERTEX_PROJECT_ID', 'project-3c7fb926-f021-47c6-9cc')
+    location = os.environ.get('VERTEX_EMBED_LOCATION', 'us-central1')
+    url = (f"https://{location}-aiplatform.googleapis.com/v1/projects/{project_id}"
+           f"/locations/{location}/publishers/google/models/multimodalembedding@001:predict")
+
+    credentials, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+    auth_request = google.auth.transport.requests.Request()
+
+    def autocrop_artwork(img):
+        """Recorta el lienzo dentro de una foto de producto (obra contra fondo neutro).
+
+        Detecta el bounding box de píxeles que difieren del color de fondo (promedio de
+        esquinas) y luego lo contrae un 7% por lado para descartar marco y sombra, de modo
+        que el embedding capture la pintura y no la escena.
+        """
+        small = img.copy().convert("L")
+        small.thumbnail((256, 256))
+        w, h = small.size
+        px = small.load()
+        # Energía de gradiente por fila/columna: la pared es lisa (aunque tenga viñeteado,
+        # el degradé es suave); la pintura y su marco concentran los bordes.
+        col_energy = [0.0] * w
+        row_energy = [0.0] * h
+        for y in range(h - 1):
+            for x in range(w - 1):
+                g = abs(px[x + 1, y] - px[x, y]) + abs(px[x, y + 1] - px[x, y])
+                if g > 8:
+                    col_energy[x] += g
+                    row_energy[y] += g
+
+        def span(energies):
+            peak = sorted(energies)[int(len(energies) * 0.95)]
+            if peak <= 0:
+                return None
+            threshold = peak * 0.12
+            lo = next((i for i, e in enumerate(energies) if e >= threshold), None)
+            hi = next((i for i in range(len(energies) - 1, -1, -1) if energies[i] >= threshold), None)
+            return (lo, hi) if lo is not None and hi is not None and hi > lo else None
+
+        sx = span(col_energy)
+        sy = span(row_energy)
+        if sx is None or sy is None:
+            return img
+        min_x, max_x = sx
+        min_y, max_y = sy
+        box_w, box_h = max_x - min_x, max_y - min_y
+        if box_w < w * 0.2 or box_h < h * 0.2:
+            return img
+        inset_x, inset_y = box_w * 0.07, box_h * 0.07
+        scale_x, scale_y = img.width / w, img.height / h
+        left = int((min_x + inset_x) * scale_x)
+        top = int((min_y + inset_y) * scale_y)
+        right = int((max_x - inset_x) * scale_x)
+        bottom = int((max_y - inset_y) * scale_y)
+        if right - left < 20 or bottom - top < 20:
+            return img
+        return img.crop((left, top, right, bottom))
+
+    def image_payload(path):
+        img = Image.open(path)
+        img = img.convert("RGB")
+        if getattr(args, 'crop_artwork', False):
+            img = autocrop_artwork(img)
+        img.thumbnail((512, 512))
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=88)
+        return base64.b64encode(buf.getvalue()).decode("ascii")
+
+    if getattr(args, 'crop_debug', None):
+        img = Image.open(args.image).convert("RGB")
+        autocrop_artwork(img).save(args.crop_debug)
+        print(json.dumps({"saved": args.crop_debug}))
+        return
+
+    def embed_one(path, client):
+        body = {
+            "instances": [{"image": {"bytesBase64Encoded": image_payload(path)}}],
+            "parameters": {"dimension": 1408},
+        }
+        last_error = None
+        for attempt in range(5):
+            if not credentials.valid:
+                credentials.refresh(auth_request)
+            response = client.post(url, json=body, headers={"Authorization": f"Bearer {credentials.token}"})
+            if response.status_code == 200:
+                return response.json()["predictions"][0]["imageEmbedding"]
+            last_error = f"HTTP {response.status_code}: {response.text[:300]}"
+            if response.status_code in (429, 500, 502, 503):
+                sleep_time = min(24, (2 ** attempt) * 3) + random.uniform(0.5, 2)
+                print(f"Embed retry in {sleep_time:.1f}s ({last_error})", file=sys.stderr)
+                time.sleep(sleep_time)
+                continue
+            break
+        raise RuntimeError(f"Embedding failed for {path}: {last_error}")
+
+    with httpx.Client(timeout=120.0) as client:
+        if args.list:
+            with open(args.list, "r", encoding="utf-8") as f:
+                entries = [line.strip() for line in f if line.strip()]
+            out = open(args.output, "w", encoding="utf-8") if args.output else sys.stdout
+            done = 0
+            try:
+                for entry in entries:
+                    if "\t" in entry:
+                        item_id, path = entry.split("\t", 1)
+                    else:
+                        item_id, path = "", entry
+                    try:
+                        vector = embed_one(path, client)
+                        out.write(json.dumps({"id": item_id, "path": path, "embedding": vector}) + "\n")
+                    except Exception as e:
+                        out.write(json.dumps({"id": item_id, "path": path, "error": str(e)}) + "\n")
+                    out.flush()
+                    done += 1
+                    print(f"progress {done}/{len(entries)}", file=sys.stderr)
+            finally:
+                if out is not sys.stdout:
+                    out.close()
+        else:
+            vector = embed_one(args.image, client)
+            print(json.dumps({"path": args.image, "embedding": vector}))
+
+
 def main():
     parser = argparse.ArgumentParser(description="Vertex AI CLI Bridge")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -1089,7 +1227,15 @@ def main():
     image_parser.add_argument("--model", type=str, help="Imagen or Gemini model name")
     image_parser.add_argument("--aspect_ratio", type=str, default="1:1", help="Aspect ratio (e.g. 1:1, 4:3, 16:9)")
     image_parser.add_argument("--output", type=str, required=True, help="Output file path where image will be saved")
-    
+
+    # Subcommand: embed-image
+    embed_parser = subparsers.add_parser("embed-image", help="Compute multimodal embeddings for images")
+    embed_parser.add_argument("--image", type=str, help="Path to a single image")
+    embed_parser.add_argument("--list", type=str, help="Path to a text file with one image per line (id<TAB>path)")
+    embed_parser.add_argument("--output", type=str, help="Output JSONL path for batch mode (default stdout)")
+    embed_parser.add_argument("--crop-artwork", dest="crop_artwork", action="store_true", help="Auto-crop the canvas out of product shots before embedding")
+    embed_parser.add_argument("--crop-debug", dest="crop_debug", type=str, help="Save the auto-cropped image to this path and exit (no API call)")
+
     args = parser.parse_args()
     
     try:
@@ -1100,13 +1246,17 @@ def main():
             # Read prompt from stdin
             args.prompt = sys.stdin.read()
             
-        if not getattr(args, 'prompt', None):
+        if args.command in ("generate-text", "generate-image") and not getattr(args, 'prompt', None):
             raise ValueError("Must provide either --prompt or --prompt-file.")
-            
+
         if args.command == "generate-text":
             handle_generate_text(args)
         elif args.command == "generate-image":
             handle_generate_image(args)
+        elif args.command == "embed-image":
+            if not args.image and not args.list:
+                raise ValueError("Must provide --image or --list.")
+            handle_embed_image(args)
     except Exception as e:
         error_msg = str(e)
         is_rate_limit = "429" in error_msg or "resource has been exhausted" in error_msg.lower()

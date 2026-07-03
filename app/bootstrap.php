@@ -22,6 +22,7 @@ require_once __DIR__ . '/Services/WorldMotherLibrary.php';
 require_once __DIR__ . '/Services/WorldMotherGenerator.php';
 require_once __DIR__ . '/Services/CameraSlotStudio.php';
 require_once __DIR__ . '/Services/ArtworkSheetService.php';
+require_once __DIR__ . '/Services/ArtworkEmbeddingService.php';
 require_once __DIR__ . '/Services/MockArtworkProcessor.php';
 require_once __DIR__ . '/Services/MockMockupGenerator.php';
 require_once __DIR__ . '/Services/MockupBatchQueue.php';
