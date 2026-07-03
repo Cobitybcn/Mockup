@@ -30,6 +30,147 @@ function ficha_image_url(string $file): string
     return '';
 }
 
+/**
+ * Elimina definitivamente un mockup de una ficha: filas (mockup_sheets, mockups, jobs)
+ * y archivos del disco (imagen, prompt, .meta.json). Devuelve el nombre del archivo.
+ */
+function ficha_delete_mockup_full(PDO $pdo, int $userId, int $sheetId, int $mockupSheetId): string
+{
+    $stmt = $pdo->prepare('SELECT id, mockup_file FROM mockup_sheets WHERE id = ? AND user_id = ? AND artwork_sheet_id = ?');
+    $stmt->execute([$mockupSheetId, $userId, $sheetId]);
+    $row = $stmt->fetch();
+    if (!$row) {
+        throw new RuntimeException('El mockup #' . $mockupSheetId . ' no pertenece a esta ficha.');
+    }
+    $file = basename((string)$row['mockup_file']);
+
+    $pdo->beginTransaction();
+    try {
+        $promptFiles = [];
+        if ($file !== '') {
+            $stmt = $pdo->prepare('SELECT id, prompt_file FROM mockups WHERE user_id = ? AND mockup_file = ?');
+            $stmt->execute([$userId, $file]);
+            $mockupIds = [];
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $mockupRow) {
+                $mockupIds[] = (int)$mockupRow['id'];
+                if (!empty($mockupRow['prompt_file'])) {
+                    $promptFiles[] = basename((string)$mockupRow['prompt_file']);
+                }
+            }
+            if ($mockupIds) {
+                $placeholders = implode(',', array_fill(0, count($mockupIds), '?'));
+                $pdo->prepare("DELETE FROM mockup_generation_jobs WHERE user_id = ? AND mockup_id IN ({$placeholders})")
+                    ->execute(array_merge([$userId], $mockupIds));
+                $pdo->prepare("DELETE FROM mockups WHERE user_id = ? AND id IN ({$placeholders})")
+                    ->execute(array_merge([$userId], $mockupIds));
+            }
+            $pdo->prepare('DELETE FROM mockup_generation_jobs WHERE user_id = ? AND mockup_file = ?')->execute([$userId, $file]);
+        }
+        $pdo->prepare('DELETE FROM mockup_sheets WHERE user_id = ? AND mockup_file = ?')->execute([$userId, $file]);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+
+    if ($file !== '') {
+        $path = RESULTS_DIR . DIRECTORY_SEPARATOR . $file;
+        if (is_file($path)) {
+            @unlink($path);
+        }
+        $metaPath = RESULTS_DIR . DIRECTORY_SEPARATOR . pathinfo($file, PATHINFO_FILENAME) . '.meta.json';
+        if (is_file($metaPath)) {
+            @unlink($metaPath);
+        }
+        foreach (array_unique($promptFiles) as $promptFile) {
+            $promptPath = RESULTS_DIR . DIRECTORY_SEPARATOR . $promptFile;
+            if (is_file($promptPath)) {
+                @unlink($promptPath);
+            }
+        }
+    }
+    return $file;
+}
+
+/**
+ * Elimina definitivamente una vista raíz de una ficha (registro + archivo).
+ * Reasigna portada y mockups antes de borrar (los FK en cascada destruirían la ficha
+ * o sus mockup_sheets). Devuelve true si además se borró el archivo del disco.
+ */
+function ficha_delete_artwork_full(PDO $pdo, ArtworkSheetService $service, int $userId, int $sheetId, int $artworkId): bool
+{
+    $sheet = $service->sheet($sheetId, $userId);
+    $decoded = json_decode((string)$sheet['related_artwork_ids'], true);
+    $memberIds = is_array($decoded) ? array_values(array_map('intval', $decoded)) : [];
+    if (!in_array($artworkId, $memberIds, true)) {
+        throw new RuntimeException('La obra #' . $artworkId . ' no pertenece a esta ficha.');
+    }
+    if (count($memberIds) <= 1) {
+        throw new RuntimeException('La obra #' . $artworkId . ' es la única de la ficha: eliminá la ficha completa en su lugar.');
+    }
+
+    $stmt = $pdo->prepare('SELECT id, root_file, main_file FROM artworks WHERE id = ? AND user_id = ?');
+    $stmt->execute([$artworkId, $userId]);
+    $doomed = $stmt->fetch();
+    if (!$doomed) {
+        throw new RuntimeException('Obra #' . $artworkId . ' inexistente.');
+    }
+    $doomedFile = basename((string)($doomed['root_file'] ?: $doomed['main_file'] ?: ''));
+
+    $remaining = array_values(array_diff($memberIds, [$artworkId]));
+    $pdo->beginTransaction();
+    try {
+        $newCanonical = (int)$sheet['canonical_artwork_id'];
+        $sourceFile = (string)$sheet['source_image_file'];
+        if ($newCanonical === $artworkId) {
+            $newCanonical = $remaining[0];
+            $stmt = $pdo->prepare('SELECT root_file, main_file FROM artworks WHERE id = ? AND user_id = ?');
+            $stmt->execute([$newCanonical, $userId]);
+            $artwork = $stmt->fetch();
+            $sourceFile = $artwork ? basename((string)($artwork['root_file'] ?: $artwork['main_file'] ?: '')) : '';
+        }
+        $pdo->prepare('UPDATE artwork_sheets SET canonical_artwork_id = ?, source_image_file = ?, related_artwork_ids = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+            ->execute([$newCanonical, $sourceFile, json_encode($remaining, JSON_UNESCAPED_SLASHES), date('c'), $sheetId, $userId]);
+
+        $pdo->prepare('UPDATE mockup_sheets SET artwork_id = ?, updated_at = ? WHERE user_id = ? AND artwork_id = ?')
+            ->execute([$newCanonical, date('c'), $userId, $artworkId]);
+
+        if ($doomedFile !== '' && $sourceFile !== '') {
+            $pdo->prepare('UPDATE mockups SET artwork_file = ? WHERE user_id = ? AND artwork_file = ?')
+                ->execute([$sourceFile, $userId, $doomedFile]);
+        }
+
+        $pdo->prepare('DELETE FROM artworks WHERE id = ? AND user_id = ?')->execute([$artworkId, $userId]);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+
+    $fileDeleted = false;
+    if ($doomedFile !== '') {
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM artworks WHERE (root_file = ? OR main_file = ?)');
+        $stmt->execute([$doomedFile, $doomedFile]);
+        if ((int)$stmt->fetchColumn() === 0) {
+            foreach ([RESULTS_DIR, __DIR__ . '/uploads'] as $dir) {
+                $path = rtrim($dir, '/\\') . DIRECTORY_SEPARATOR . $doomedFile;
+                if (is_file($path)) {
+                    $fileDeleted = @unlink($path) || $fileDeleted;
+                }
+            }
+            $metaPath = RESULTS_DIR . DIRECTORY_SEPARATOR . pathinfo($doomedFile, PATHINFO_FILENAME) . '.meta.json';
+            if (is_file($metaPath)) {
+                @unlink($metaPath);
+            }
+        }
+    }
+    return $fileDeleted;
+}
+
 $sheetId = max(0, (int)($_GET['id'] ?? $_POST['id'] ?? 0));
 if ($sheetId <= 0) {
     header('Location: fichas.php');
@@ -156,80 +297,7 @@ try {
 
         if ($action === 'delete_artwork_full') {
             $artworkId = max(0, (int)($_POST['artwork_id'] ?? 0));
-            $decoded = json_decode((string)$sheet['related_artwork_ids'], true);
-            $memberIds = is_array($decoded) ? array_values(array_map('intval', $decoded)) : [];
-            if (!in_array($artworkId, $memberIds, true)) {
-                throw new RuntimeException('Esa obra no pertenece a esta ficha.');
-            }
-            if (count($memberIds) <= 1) {
-                throw new RuntimeException('Es la única obra de la ficha: eliminá la ficha completa en su lugar.');
-            }
-
-            $stmt = $pdo->prepare('SELECT id, root_file, main_file FROM artworks WHERE id = ? AND user_id = ?');
-            $stmt->execute([$artworkId, $userId]);
-            $doomed = $stmt->fetch();
-            if (!$doomed) {
-                throw new RuntimeException('Obra inexistente.');
-            }
-            $doomedFile = basename((string)($doomed['root_file'] ?: $doomed['main_file'] ?: ''));
-
-            $remaining = array_values(array_diff($memberIds, [$artworkId]));
-            $pdo->beginTransaction();
-            try {
-                // 1) Si era portada, reasignar ANTES de borrar (el FK en cascada borraría la ficha entera).
-                $newCanonical = (int)$sheet['canonical_artwork_id'];
-                $sourceFile = (string)$sheet['source_image_file'];
-                if ($newCanonical === $artworkId) {
-                    $newCanonical = $remaining[0];
-                    $stmt = $pdo->prepare('SELECT root_file, main_file FROM artworks WHERE id = ? AND user_id = ?');
-                    $stmt->execute([$newCanonical, $userId]);
-                    $artwork = $stmt->fetch();
-                    $sourceFile = $artwork ? basename((string)($artwork['root_file'] ?: $artwork['main_file'] ?: '')) : '';
-                }
-                $pdo->prepare('UPDATE artwork_sheets SET canonical_artwork_id = ?, source_image_file = ?, related_artwork_ids = ?, updated_at = ? WHERE id = ? AND user_id = ?')
-                    ->execute([$newCanonical, $sourceFile, json_encode($remaining, JSON_UNESCAPED_SLASHES), date('c'), $sheetId, $userId]);
-
-                // 2) Los mockups generados desde esta vista pasan a la portada (el FK en cascada
-                //    borraría sus mockup_sheets si siguieran apuntando a la obra eliminada).
-                $pdo->prepare('UPDATE mockup_sheets SET artwork_id = ?, updated_at = ? WHERE user_id = ? AND artwork_id = ?')
-                    ->execute([$newCanonical, date('c'), $userId, $artworkId]);
-
-                // 3) Preservar linaje: los mockups que nacieron de este archivo pasan a apuntar
-                //    al archivo de la portada, para que futuras reagrupaciones no los pierdan.
-                if ($doomedFile !== '' && $sourceFile !== '') {
-                    $pdo->prepare('UPDATE mockups SET artwork_file = ? WHERE user_id = ? AND artwork_file = ?')
-                        ->execute([$sourceFile, $userId, $doomedFile]);
-                }
-
-                // 4) Borrar la obra (cascada: embeddings, análisis, jobs).
-                $pdo->prepare('DELETE FROM artworks WHERE id = ? AND user_id = ?')->execute([$artworkId, $userId]);
-                $pdo->commit();
-            } catch (Throwable $e) {
-                if ($pdo->inTransaction()) {
-                    $pdo->rollBack();
-                }
-                throw $e;
-            }
-
-            // 5) Borrar el archivo del disco solo si ninguna otra obra lo usa.
-            $fileDeleted = false;
-            if ($doomedFile !== '') {
-                $stmt = $pdo->prepare('SELECT COUNT(*) FROM artworks WHERE (root_file = ? OR main_file = ?)');
-                $stmt->execute([$doomedFile, $doomedFile]);
-                if ((int)$stmt->fetchColumn() === 0) {
-                    foreach ([RESULTS_DIR, __DIR__ . '/uploads'] as $dir) {
-                        $path = rtrim($dir, '/\\') . DIRECTORY_SEPARATOR . $doomedFile;
-                        if (is_file($path)) {
-                            $fileDeleted = @unlink($path) || $fileDeleted;
-                        }
-                    }
-                    $metaPath = RESULTS_DIR . DIRECTORY_SEPARATOR . pathinfo($doomedFile, PATHINFO_FILENAME) . '.meta.json';
-                    if (is_file($metaPath)) {
-                        @unlink($metaPath);
-                    }
-                }
-            }
-
+            $fileDeleted = ficha_delete_artwork_full($pdo, $service, $userId, $sheetId, $artworkId);
             $_SESSION['ficha_notice'] = 'Obra #' . $artworkId . ' eliminada' . ($fileDeleted ? ' junto con su archivo.' : ' (archivo no encontrado o compartido: no se borró).') . ' Sus mockups quedaron en esta ficha.';
             header('Location: ficha.php?id=' . $sheetId);
             exit;
@@ -237,63 +305,62 @@ try {
 
         if ($action === 'delete_mockup_full') {
             $mockupSheetId = max(0, (int)($_POST['mockup_sheet_id'] ?? 0));
-            $stmt = $pdo->prepare('SELECT id, mockup_file FROM mockup_sheets WHERE id = ? AND user_id = ? AND artwork_sheet_id = ?');
-            $stmt->execute([$mockupSheetId, $userId, $sheetId]);
-            $row = $stmt->fetch();
-            if (!$row) {
-                throw new RuntimeException('Ese mockup no pertenece a esta ficha.');
-            }
-            $file = basename((string)$row['mockup_file']);
-
-            $pdo->beginTransaction();
-            try {
-                $promptFiles = [];
-                if ($file !== '') {
-                    $stmt = $pdo->prepare('SELECT id, prompt_file FROM mockups WHERE user_id = ? AND mockup_file = ?');
-                    $stmt->execute([$userId, $file]);
-                    $mockupIds = [];
-                    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $mockupRow) {
-                        $mockupIds[] = (int)$mockupRow['id'];
-                        if (!empty($mockupRow['prompt_file'])) {
-                            $promptFiles[] = basename((string)$mockupRow['prompt_file']);
-                        }
-                    }
-                    if ($mockupIds) {
-                        $placeholders = implode(',', array_fill(0, count($mockupIds), '?'));
-                        $pdo->prepare("DELETE FROM mockup_generation_jobs WHERE user_id = ? AND mockup_id IN ({$placeholders})")
-                            ->execute(array_merge([$userId], $mockupIds));
-                        $pdo->prepare("DELETE FROM mockups WHERE user_id = ? AND id IN ({$placeholders})")
-                            ->execute(array_merge([$userId], $mockupIds));
-                    }
-                    $pdo->prepare('DELETE FROM mockup_generation_jobs WHERE user_id = ? AND mockup_file = ?')->execute([$userId, $file]);
-                }
-                $pdo->prepare('DELETE FROM mockup_sheets WHERE user_id = ? AND mockup_file = ?')->execute([$userId, $file]);
-                $pdo->commit();
-            } catch (Throwable $e) {
-                if ($pdo->inTransaction()) {
-                    $pdo->rollBack();
-                }
-                throw $e;
-            }
-
-            if ($file !== '') {
-                $path = RESULTS_DIR . DIRECTORY_SEPARATOR . $file;
-                if (is_file($path)) {
-                    @unlink($path);
-                }
-                $metaPath = RESULTS_DIR . DIRECTORY_SEPARATOR . pathinfo($file, PATHINFO_FILENAME) . '.meta.json';
-                if (is_file($metaPath)) {
-                    @unlink($metaPath);
-                }
-                foreach (array_unique($promptFiles) as $promptFile) {
-                    $promptPath = RESULTS_DIR . DIRECTORY_SEPARATOR . $promptFile;
-                    if (is_file($promptPath)) {
-                        @unlink($promptPath);
-                    }
-                }
-            }
-
+            $file = ficha_delete_mockup_full($pdo, $userId, $sheetId, $mockupSheetId);
             $_SESSION['ficha_notice'] = 'Mockup ' . $file . ' eliminado del todo (registro y archivo).';
+            header('Location: ficha.php?id=' . $sheetId);
+            exit;
+        }
+
+        if ($action === 'bulk_mockups') {
+            $mode = (string)($_POST['mode'] ?? '');
+            $mockupSheetIds = array_values(array_unique(array_filter(array_map('intval', (array)($_POST['mockup_sheet_ids'] ?? [])))));
+            if (!$mockupSheetIds) {
+                throw new RuntimeException('No hay mockups seleccionados.');
+            }
+            if ($mode === 'detach') {
+                $placeholders = implode(',', array_fill(0, count($mockupSheetIds), '?'));
+                $pdo->prepare("UPDATE mockup_sheets SET artwork_sheet_id = NULL, updated_at = ? WHERE user_id = ? AND artwork_sheet_id = ? AND id IN ({$placeholders})")
+                    ->execute(array_merge([date('c'), $userId, $sheetId], $mockupSheetIds));
+                $_SESSION['ficha_notice'] = count($mockupSheetIds) . ' mockups desacoplados (a huérfanos).';
+            } elseif ($mode === 'delete') {
+                $deleted = 0;
+                $failures = [];
+                foreach ($mockupSheetIds as $mockupSheetId) {
+                    try {
+                        ficha_delete_mockup_full($pdo, $userId, $sheetId, $mockupSheetId);
+                        $deleted++;
+                    } catch (Throwable $e) {
+                        $failures[] = $e->getMessage();
+                    }
+                }
+                $_SESSION['ficha_notice'] = $deleted . ' mockups eliminados del todo (registro y archivo).' . ($failures ? ' Omitidos: ' . count($failures) . '.' : '');
+            } else {
+                throw new RuntimeException('Modo de lote inválido.');
+            }
+            header('Location: ficha.php?id=' . $sheetId);
+            exit;
+        }
+
+        if ($action === 'bulk_artworks') {
+            $mode = (string)($_POST['mode'] ?? '');
+            $artworkIds = array_values(array_unique(array_filter(array_map('intval', (array)($_POST['artwork_ids'] ?? [])))));
+            if (!$artworkIds) {
+                throw new RuntimeException('No hay obras seleccionadas.');
+            }
+            if ($mode !== 'delete') {
+                throw new RuntimeException('Modo de lote inválido.');
+            }
+            $deleted = 0;
+            $failures = [];
+            foreach ($artworkIds as $artworkId) {
+                try {
+                    ficha_delete_artwork_full($pdo, $service, $userId, $sheetId, $artworkId);
+                    $deleted++;
+                } catch (Throwable $e) {
+                    $failures[] = $e->getMessage();
+                }
+            }
+            $_SESSION['ficha_notice'] = $deleted . ' obras eliminadas del todo (sus mockups pasaron a la portada).' . ($failures ? ' Omitidas: ' . implode(' ', array_slice($failures, 0, 2)) : '');
             header('Location: ficha.php?id=' . $sheetId);
             exit;
         }
@@ -404,6 +471,15 @@ $pageTitle = trim((string)$sheet['title']) ?: 'Ficha #' . $sheetId;
         .asset-actions button { font-size:10px; padding:2px 6px; cursor:pointer; }
         .danger-zone { margin-top:16px; border-top:1px solid var(--line); padding-top:12px; }
         .danger-zone button { color:var(--danger, #b42318); border-color:var(--danger, #b42318); }
+        .asset-item { position:relative; }
+        .bulk-check { position:absolute; top:6px; left:6px; width:17px; height:17px; cursor:pointer; z-index:2; accent-color:var(--accent, #b45309); }
+        .asset-item:has(.bulk-check:checked) { outline:3px solid var(--accent, #b45309); outline-offset:-1px; }
+        .bulk-bar { position:sticky; bottom:0; z-index:5; display:none; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--accent, #b45309); border-radius:var(--radius); box-shadow:0 -6px 18px rgba(0,0,0,.10); padding:10px 14px; margin-top:14px; }
+        .bulk-bar.visible { display:flex; }
+        .bulk-bar .meta { flex:1; }
+        .bulk-bar button { font-size:12px; padding:5px 12px; cursor:pointer; }
+        .section-head { display:flex; align-items:baseline; justify-content:space-between; }
+        .select-all-link { font-size:11px; color:var(--muted); cursor:pointer; text-decoration:underline; }
         @media (max-width:1100px) { .ficha-layout { flex-direction:column; } .ficha-meta { width:100%; position:static; } }
     </style>
 </head>
@@ -433,7 +509,10 @@ $pageTitle = trim((string)$sheet['title']) ?: 'Ficha #' . $sheetId;
                         <img class="hero-img" src="<?= h($heroUrl) ?>" alt="<?= h($pageTitle) ?>">
                     <?php endif; ?>
 
-                    <div class="section-title">Vistas raíz (<?= count($members) ?>)</div>
+                    <div class="section-head">
+                        <div class="section-title">Vistas raíz (<?= count($members) ?>)</div>
+                        <span class="select-all-link" onclick="toggleAll('artwork')">marcar / desmarcar todas</span>
+                    </div>
                     <div class="asset-grid">
                         <?php foreach ($memberIds as $memberId): ?>
                             <?php
@@ -443,6 +522,7 @@ $pageTitle = trim((string)$sheet['title']) ?: 'Ficha #' . $sheetId;
                             $url = ficha_image_url($file);
                             ?>
                             <div class="asset-item <?= $memberId === $canonicalId ? 'is-canonical' : '' ?>">
+                                <input type="checkbox" class="bulk-check" data-kind="artwork" value="<?= $memberId ?>" onchange="updateBulkBar()" title="Seleccionar para acciones en lote">
                                 <?php if ($url !== ''): ?><img src="<?= h($url) ?>" loading="lazy" decoding="async"><?php endif; ?>
                                 <span class="meta">#<?= $memberId ?><?= $memberId === $canonicalId ? ' ★ portada' : '' ?></span>
                                 <div class="asset-actions">
@@ -462,7 +542,10 @@ $pageTitle = trim((string)$sheet['title']) ?: 'Ficha #' . $sheetId;
                         <?php endforeach; ?>
                     </div>
 
-                    <div class="section-title">Mockups (<?= count($mockups) ?>)</div>
+                    <div class="section-head">
+                        <div class="section-title">Mockups (<?= count($mockups) ?>)</div>
+                        <?php if ($mockups): ?><span class="select-all-link" onclick="toggleAll('mockup')">marcar / desmarcar todos</span><?php endif; ?>
+                    </div>
                     <?php if (!$mockups): ?>
                         <p class="meta">No hay mockups vinculados a esta ficha.</p>
                     <?php else: ?>
@@ -470,6 +553,7 @@ $pageTitle = trim((string)$sheet['title']) ?: 'Ficha #' . $sheetId;
                             <?php foreach ($mockups as $mockup): ?>
                                 <?php $url = ficha_image_url((string)$mockup['mockup_file']); ?>
                                 <div class="asset-item">
+                                    <input type="checkbox" class="bulk-check" data-kind="mockup" value="<?= (int)$mockup['id'] ?>" onchange="updateBulkBar()" title="Seleccionar para acciones en lote">
                                     <?php if ($url !== ''): ?>
                                         <a href="<?= h($url) ?>" target="_blank"><img src="<?= h($url) ?>" loading="lazy" decoding="async"></a>
                                     <?php endif; ?>
@@ -487,6 +571,13 @@ $pageTitle = trim((string)$sheet['title']) ?: 'Ficha #' . $sheetId;
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
+
+                    <div class="bulk-bar" id="bulk-bar">
+                        <span class="meta" id="bulk-summary"></span>
+                        <button type="button" class="button-link secondary" onclick="bulkDetachMockups()" id="bulk-detach-btn">Desacoplar mockups</button>
+                        <button type="button" class="button-link secondary" style="color:var(--danger, #b42318); border-color:var(--danger, #b42318);" onclick="bulkDeleteSelected()">🗑 Eliminar del todo (con archivos)</button>
+                        <button type="button" class="button-link secondary" onclick="clearSelection()">Cancelar</button>
+                    </div>
                 </div>
 
                 <aside class="ficha-meta">
@@ -568,6 +659,77 @@ function artworkAction(artworkId, value) {
         }
     } else if (value.indexOf('move:') === 0) {
         postFichaAction({ action: 'move_artwork', artwork_id: artworkId, target_sheet_id: value.slice(5) });
+    }
+}
+function selectedByKind(kind) {
+    return Array.from(document.querySelectorAll('.bulk-check[data-kind="' + kind + '"]:checked')).map(function (cb) { return cb.value; });
+}
+function toggleAll(kind) {
+    var boxes = document.querySelectorAll('.bulk-check[data-kind="' + kind + '"]');
+    var anyUnchecked = Array.from(boxes).some(function (cb) { return !cb.checked; });
+    boxes.forEach(function (cb) { cb.checked = anyUnchecked; });
+    updateBulkBar();
+}
+function clearSelection() {
+    document.querySelectorAll('.bulk-check:checked').forEach(function (cb) { cb.checked = false; });
+    updateBulkBar();
+}
+function updateBulkBar() {
+    var artworks = selectedByKind('artwork').length;
+    var mockups = selectedByKind('mockup').length;
+    var bar = document.getElementById('bulk-bar');
+    var parts = [];
+    if (artworks > 0) { parts.push(artworks + ' obra' + (artworks === 1 ? '' : 's')); }
+    if (mockups > 0) { parts.push(mockups + ' mockup' + (mockups === 1 ? '' : 's')); }
+    document.getElementById('bulk-summary').textContent = parts.length ? 'Seleccionados: ' + parts.join(' y ') : '';
+    document.getElementById('bulk-detach-btn').style.display = mockups > 0 ? '' : 'none';
+    bar.classList.toggle('visible', artworks + mockups > 0);
+}
+function postBulk(action, mode, fieldName, values) {
+    var form = document.createElement('form');
+    form.method = 'post';
+    var fields = { id: <?= $sheetId ?>, action: action, mode: mode };
+    Object.keys(fields).forEach(function (name) {
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = fields[name];
+        form.appendChild(input);
+    });
+    values.forEach(function (value) {
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = fieldName + '[]';
+        input.value = value;
+        form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
+}
+function bulkDetachMockups() {
+    var mockups = selectedByKind('mockup');
+    if (!mockups.length) { return; }
+    if (confirm('¿Desacoplar ' + mockups.length + ' mockups de esta ficha? Quedan en la bandeja de huérfanos (no se borra nada).')) {
+        postBulk('bulk_mockups', 'detach', 'mockup_sheet_ids', mockups);
+    }
+}
+function bulkDeleteSelected() {
+    var artworks = selectedByKind('artwork');
+    var mockups = selectedByKind('mockup');
+    if (artworks.length && mockups.length) {
+        alert('Seleccionaste obras Y mockups a la vez. Hacé el lote por separado: primero uno, después el otro.');
+        return;
+    }
+    if (mockups.length) {
+        if (confirm('¿ELIMINAR ' + mockups.length + ' mockups definitivamente?\n\nSe borran registros Y archivos del disco (irreversible).')) {
+            postBulk('bulk_mockups', 'delete', 'mockup_sheet_ids', mockups);
+        }
+        return;
+    }
+    if (artworks.length) {
+        if (confirm('¿ELIMINAR ' + artworks.length + ' obras definitivamente?\n\n- Se borran registros Y archivos de imagen (irreversible).\n- Sus mockups NO se borran: pasan a la portada de la ficha.\n- Debe quedar al menos una obra en la ficha.')) {
+            postBulk('bulk_artworks', 'delete', 'artwork_ids', artworks);
+        }
     }
 }
 function mockupAction(mockupSheetId, value) {
