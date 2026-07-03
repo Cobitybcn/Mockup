@@ -1,0 +1,29 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Palazzo Afterglow Retreat",
+      "context_role": "This context places the artwork in a sophisticated, serene domestic setting, elevating its presence as a central design element in a premium lifestyle, emphasizing quiet luxury and refined taste without being overtly decorative.",
+      "space_type": "Elegant living room or refined study in a premium residence.",
+      "atmosphere": "A serene, contemplative, and warm atmosphere, bathed in the soft, golden light of late afternoon. It evokes a sense of understated luxury and sophisticated calm, with architectural purity and natural refinement.",
+      "materials": [
+        "Warm neutral limewash walls",
+        "Polished pale travertine or wide-plank pale oak flooring",
+        "Clean, minimal plaster ceiling",
+        "Refined dark wood (e.g., wenge or dark walnut) minimalist console table",
+        "Subtle, textured natural fiber rug (e.g., undyed wool or sisal)",
+        "Bronze or aged brass accents (minimal, on console)"
+      ],
+      "lighting": "Polished golden afternoon light, streaming from a large, elegant window (partially visible) creating subtle highlights and a warm, inviting glow across the limewash wall and the artwork. Soft, atmospheric shadows define the room's elegant architectural planes.",
+      "camera_view": "Reflejo Dorado de Tarde / Palazzo: Camera height is elegant human standing height, approximately 150-170 cm, as if observed calmly from inside a palazzo room. Use a soft three-quarter rotation that catches reflected late light while keeping the artwork plane legible. The composition is stable, warm, and architectural, with golden afternoon reflection supporting the room rather than repainting the artwork; keep elegant balance but avoid perfect symmetry unless the room itself naturally demands it.",
+      "camera_distance": "Controlled architectural distance, allowing the artwork to dominate a significant wall section while revealing the room's depth and refined ambiance.",
+      "camera_angle_notes": "The soft three-quarter angle reveals the artwork's physical thickness and texture, positioning it as a tangible object within a three-dimensional space. The subtle oblique view, combined with receding architectural lines and a minimalist foreground element (e.g., part of a console), creates strong lateral depth and visual sophistication, reinforcing the artwork's premium presentation without appearing flat or artificial.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's bold green and striking red forms are beautifully complemented by the warm neutral limewash walls and golden light, creating a sophisticated color dialogue. The clean architectural lines and refined materials of the quiet luxury setting allow the artwork's abstract composition and textural qualities to stand out as a focal point, aligning with its modern yet timeless aesthetic. The sense of calm and considered placement enhances its contemplative nature.",
+      "commercial_reason": "This context positions the artwork within a highly desirable, aspirational premium domestic lifestyle, appealing to discerning collectors who appreciate understated elegance and meaningful art integration. The sophisticated natural lighting and refined material palette elevate the artwork's perceived value and demonstrate its versatility in a high-end residential environment, making it suitable for exclusive real estate or interior design markets. It suggests the artwork is not just decor but an investment in refined living.",
+      "mockup_prompt": "An aspirational quiet luxury living space, seen from an elegant human standing height (approximately 160cm), with a soft three-quarter rotation looking slightly into the room. Warm neutral limewash walls with subtle texture recede gently to the right, creating architectural depth. The polished pale travertine floor reflects the soft, golden afternoon light that streams from a large, elegant window to the left, casting a warm glow across the room and illuminating the artwork. A large, physical abstract painting on canvas, featuring a prominent red rectangle and deep green background with smaller dark and red elements, is centrally mounted on the main wall, maintaining its true proportions and textured surface. In the foreground, a minimalist, low-profile console table in dark, refined wood with subtle bronze accents is partially visible, adding subtle depth and perspective without distracting from the artwork. The overall atmosphere is serene and sophisticated. Artwork is wall-mounted and appears as a real, thick canvas in a room-scale context. No visible people or animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no influencer lifestyle, no decor ad, no pet, no crowd, no generic neutral interior, no Mediterranean villa, no showroom, no unrelated gallery, no hotel catalog, no real estate ad, no furniture showroom"
+    }
+  ]
+}
+```

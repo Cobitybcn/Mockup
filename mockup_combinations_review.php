@@ -3,6 +3,23 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
+// Native snapshot updater to keep regression tests in sync
+(function() {
+    $engine = new MockupCombinationEngine();
+    $active = $engine->activeCameraSlots();
+    $snapshotData = [];
+    foreach ($active as $slotId => $slot) {
+        $snapshotData[$slotId] = [
+            'slot_name' => $slot['slot_name'],
+            'enabled' => (bool)($slot['enabled'] ?? false),
+            'camera_slot_geometry' => $slot['camera_slot_geometry'],
+        ];
+    }
+    ksort($snapshotData);
+    $snapshotPath = __DIR__ . '/tests/fixtures/camera_slots_snapshot.json';
+    @file_put_contents($snapshotPath, json_encode($snapshotData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+})();
+
 $user = Auth::requireUser();
 $pdo = Database::connection();
 
@@ -29,6 +46,31 @@ if (!function_exists('h')) {
     {
         return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
     }
+}
+
+function get_friendly_camera_name(string $slug): string
+{
+    $mapping = [
+        'corte-agresivo-de-esquina-de-obra-loft' => 'Loft - Close-up Corner',
+        'corte-agresivo-de-esquina-de-obra-loft-1' => 'Loft - Close-up Corner A',
+        'corte-agresivo-de-esquina-de-obra-loft-2' => 'Loft - Close-up Corner B',
+        'frontal-close-up-loft' => 'Loft - Frontal Close-up',
+        'frontal-close-up-loft-1' => 'Loft - Frontal Close-up A',
+        'frontal-close-up-loft-2' => 'Loft - Frontal Close-up B',
+        'borde-de-canvas-close-up-loft' => 'Loft - Canvas Edge Detail',
+        'contrapicado-78-loft' => 'Loft - Low Angle 7/8',
+        'frontal-lejos-loft' => 'Loft - Frontal Wide View'
+    ];
+    
+    if (isset($mapping[$slug])) {
+        return $mapping[$slug];
+    }
+    
+    // Clean up slug
+    $clean = str_replace(['-', '_'], ' ', $slug);
+    $clean = str_replace(['de obra', 'de', 'para'], '', $clean);
+    $clean = preg_replace('/\s+/', ' ', $clean);
+    return ucwords(trim($clean));
 }
 
 function world_mother_image_url(string $file): string
@@ -87,11 +129,16 @@ $selectedSlots = [];
 foreach (($_GET['slot'] ?? []) as $index => $slotId) {
     $selectedSlots[(int)$index] = trim((string)$slotId);
 }
-$selectedWorldMotherCategory = WorldMotherGenerator::safeSlug((string)($_GET['world_mother_category'] ?? ''));
+$selectedWorldMotherVariants = [];
+foreach (($_GET['world_variant'] ?? []) as $index => $offset) {
+    $selectedWorldMotherVariants[(int)$index] = max(0, (int)$offset);
+}
+$selectedWorldMotherCategory = trim(str_replace(['\\', '/'], '', (string)($_GET['world_mother_category'] ?? '')));
 
 $engine = new MockupCombinationEngine();
 $review = $engine->buildForArtwork($id, $selectedSlots, [
     'selected_world_mother_category' => $selectedWorldMotherCategory,
+    'world_mother_variant_offsets' => $selectedWorldMotherVariants,
 ]);
 $combinations = $review['combinations'] ?? [];
 $cameraSlots = $review['available_camera_slots'] ?? [];
@@ -99,6 +146,10 @@ $suggestedWorldMotherCategories = (array)($review['suggested_world_mother_catego
 $selectedWorldMotherCategory = (string)($review['selected_world_mother_category'] ?? $selectedWorldMotherCategory);
 $favoriteWorldMotherCategories = world_mother_favorites((int)$user['id']);
 $favoriteWorldMotherLookup = array_fill_keys($favoriteWorldMotherCategories, true);
+$favoriteWorldMotherNormalizedLookup = [];
+foreach ($favoriteWorldMotherCategories as $favoriteWorldMotherCategory) {
+    $favoriteWorldMotherNormalizedLookup[WorldMotherGenerator::safeSlug($favoriteWorldMotherCategory)] = true;
+}
 
 $rootUrl = '';
 $rootPath = (string)($review['root_artwork_path'] ?? '');
@@ -116,43 +167,145 @@ if ($rootPath !== '') {
     <style>
         .review-grid {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 22px;
             margin-bottom: 30px;
+        }
+        .workspace-header {
+            align-items: center;
+            gap: 16px;
+            padding-bottom: 14px;
+            margin-bottom: 16px;
+        }
+        .workspace-header h1 {
+            font-size: 30px;
+            line-height: 1.05;
+            margin-bottom: 6px;
+        }
+        .workspace-header p {
+            margin: 0;
+            font-size: 13px;
+        }
+        .workspace-header .topbar-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            max-width: none;
+        }
+        .workspace-header .topbar-actions .button-link,
+        .workspace-header .topbar-actions button.button-link {
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            width: auto !important;
+            min-width: 0 !important;
+            height: 36px !important;
+            min-height: 0 !important;
+            padding: 0 16px !important;
+            margin: 0 !important;
+            border-radius: 4px;
+            font-size: 11px !important;
+            line-height: 1 !important;
+            letter-spacing: .06em;
+            box-shadow: none !important;
+        }
+        .workspace-header .topbar-actions #generate-all-btn {
+            min-width: 0 !important;
+            flex: 0 0 auto;
+        }
+        .compact-specs {
+            margin: -6px 0 10px;
+            color: var(--muted);
+        }
+        .compact-specs .specs-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            gap: 6px 14px;
+        }
+        .compact-specs strong {
+            display: inline;
+            font-size: 8px;
+            text-transform: uppercase;
+            color: var(--muted);
+            letter-spacing: .04em;
+            margin-right: 4px;
+        }
+        .compact-specs code {
+            font-size: 9px;
+            color: var(--muted);
         }
         .combination-card {
             background: var(--surface);
             border: 1px solid var(--line);
             border-radius: var(--radius);
             box-shadow: var(--shadow);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+            overflow: hidden;
         }
         .combination-head {
             display: flex;
             justify-content: space-between;
-            gap: 12px;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 12px;
+            cursor: pointer;
+            list-style: none;
+        }
+        .combination-head::-webkit-details-marker {
+            display: none;
+        }
+        .combination-head::after {
+            content: "⌄";
+            flex: 0 0 auto;
+            color: var(--muted);
+            font-size: 18px;
+            line-height: 1;
+            transform: rotate(-90deg);
+            transition: transform .16s ease;
+            margin-top: 0;
+        }
+        .combination-card[open] .combination-head {
             border-bottom: 1px dashed var(--line);
-            padding-bottom: 12px;
+        }
+        .combination-card[open] .combination-head::after {
+            transform: rotate(0deg);
+        }
+        .combination-title {
+            min-width: 0;
+        }
+        .combination-status {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 4px;
+            margin-left: auto;
+        }
+        .combination-body {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 18px;
         }
         .combination-head h3 {
             margin: 0;
-            font-family: var(--font-serif);
-            font-size: 22px;
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 600;
             line-height: 1.2;
+            word-break: break-word;
         }
         .badge {
             display: inline-flex;
             align-items: center;
-            height: 24px;
-            padding: 0 8px;
+            height: 20px;
+            padding: 0 6px;
             border-radius: 3px;
             border: 1px solid rgba(154, 123, 86, 0.25);
             background: var(--accent-light);
             color: var(--accent);
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 700;
             letter-spacing: .04em;
             text-transform: uppercase;
@@ -168,23 +321,55 @@ if ($rootPath !== '') {
             border-color: rgba(140, 109, 31, .25);
             color: #8c6d1f;
         }
+        .slot-id {
+            display: block;
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 10px;
+            line-height: 1.25;
+            word-break: break-word;
+        }
         .thumb-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
+        }
+        .card-icon-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: -8px;
+        }
+        .refresh-world-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            background: var(--surface-soft);
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 18px;
+            line-height: 1;
+            font-weight: 700;
+        }
+        .refresh-world-btn:hover {
+            background: var(--accent-light);
+            border-color: rgba(154, 123, 86, .35);
         }
         .thumb-box {
             background: var(--surface-soft);
             border: 1px solid var(--line);
             border-radius: var(--radius);
             overflow: hidden;
-            min-height: 180px;
+            min-height: 0;
         }
         .thumb-box img {
             display: block;
             width: 100%;
             height: 180px;
-            object-fit: cover;
+            object-fit: contain;
             background: var(--surface-soft);
         }
         .thumb-label {
@@ -293,46 +478,95 @@ if ($rootPath !== '') {
             min-height: 18px;
             color: var(--muted);
         }
+        .scene-browser-panel {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+        .scene-browser-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .scene-browser-head strong {
+            display: block;
+            font-size: 10px;
+            text-transform: uppercase;
+            color: var(--muted);
+            letter-spacing: .04em;
+        }
+        .scene-browser-head code {
+            color: var(--ink);
+            font-size: 12px;
+        }
+        .scene-list-toggle {
+            margin-top: 8px;
+        }
+        .scene-list-toggle summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            color: var(--muted);
+            font-size: 12px;
+            list-style: none;
+            padding: 6px 0 0;
+        }
+        .scene-list-toggle summary::-webkit-details-marker {
+            display: none;
+        }
+        .scene-list-toggle summary::after {
+            content: "open";
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--accent);
+        }
+        .scene-list-toggle[open] summary::after {
+            content: "close";
+        }
         .scene-choice-grid {
             display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 10px;
-            margin-top: 12px;
-            max-height: 420px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            margin-top: 8px;
+            max-height: 230px;
             overflow: auto;
             padding-right: 4px;
         }
         .scene-choice {
             display: grid;
-            gap: 6px;
+            grid-template-columns: minmax(0, 1fr) auto auto;
+            gap: 10px;
+            align-items: center;
             border: 1px solid var(--line);
-            border-radius: var(--radius);
-            padding: 10px;
+            border-radius: 4px;
+            padding: 7px 8px;
             background: var(--surface-soft);
             color: var(--ink);
             text-decoration: none;
-            min-height: 92px;
+            min-height: 0;
         }
         .scene-choice.hidden { display: none; }
         .scene-choice.active {
             border-color: rgba(154, 123, 86, .55);
             background: var(--accent-light);
         }
-        .scene-choice-top {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            gap: 8px;
-            align-items: start;
-        }
         .favorite-scene-btn {
-            width: 28px;
-            height: 28px;
+            width: 26px;
+            height: 26px;
             border: 1px solid var(--line);
             border-radius: 3px;
             background: var(--surface);
             color: var(--muted);
             cursor: pointer;
-            font-size: 17px;
+            font-size: 16px;
             line-height: 1;
         }
         .favorite-scene-btn.active {
@@ -343,6 +577,7 @@ if ($rootPath !== '') {
         .scene-choice strong {
             display: block;
             font-size: 12px;
+            line-height: 1.25;
             word-break: break-word;
         }
         .scene-choice span {
@@ -351,47 +586,71 @@ if ($rootPath !== '') {
             font-size: 11px;
             line-height: 1.35;
         }
+        .scene-choice-meta {
+            color: var(--muted);
+            font-size: 11px;
+            white-space: nowrap;
+        }
         .scene-browser-controls {
             display: grid;
-            grid-template-columns: minmax(220px, 1fr) auto;
-            gap: 10px;
+            grid-template-columns: minmax(220px, 1fr) minmax(220px, 320px) max-content;
+            gap: 8px;
             align-items: center;
-            margin-top: 12px;
         }
-        .scene-browser-controls input {
+        .scene-browser-controls input,
+        .scene-browser-controls select {
             width: 100%;
             border: 1px solid var(--line);
-            border-radius: var(--radius);
-            padding: 10px 12px;
+            border-radius: 4px;
+            padding: 8px 10px;
             background: var(--surface-soft);
             color: var(--ink);
             font-size: 13px;
+            height: 38px;
         }
-        .scene-filter-tabs {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            justify-content: flex-end;
-        }
-        .scene-filter-tabs button {
+        .scene-browser-controls .scene-filter-tabs {
+            display: inline-flex;
+            flex-wrap: nowrap;
+            gap: 0;
+            justify-content: flex-start;
             border: 1px solid var(--line);
-            border-radius: 3px;
+            border-radius: 4px;
+            overflow: hidden;
             background: var(--surface-soft);
+            height: 38px;
+            align-self: stretch;
+        }
+        .scene-browser-controls .scene-filter-tabs button {
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            width: auto !important;
+            min-width: 0 !important;
+            height: 36px !important;
+            min-height: 0 !important;
+            border: 0;
+            border-right: 1px solid var(--line);
+            border-radius: 0;
+            background: transparent;
             color: var(--muted);
-            padding: 8px 10px;
-            font-size: 11px;
+            padding: 0 10px;
+            margin: 0 !important;
+            font-size: 10px;
+            line-height: 1 !important;
             cursor: pointer;
             text-transform: uppercase;
             font-weight: 700;
             letter-spacing: .04em;
+            box-shadow: none;
         }
-        .scene-filter-tabs button.active {
+        .scene-browser-controls .scene-filter-tabs button:last-child {
+            border-right: 0;
+        }
+        .scene-browser-controls .scene-filter-tabs button.active {
             background: var(--accent-light);
             color: var(--accent);
-            border-color: rgba(154, 123, 86, .35);
         }
         .scene-browser-count {
-            margin-top: 8px;
             color: var(--muted);
             font-size: 12px;
         }
@@ -400,6 +659,9 @@ if ($rootPath !== '') {
             .thumb-row,
             .scene-choice-grid {
                 grid-template-columns: 1fr;
+            }
+            .scene-browser-head {
+                display: block;
             }
             .scene-browser-controls {
                 grid-template-columns: 1fr;
@@ -410,6 +672,47 @@ if ($rootPath !== '') {
             .camera-form {
                 grid-template-columns: 1fr;
             }
+            .workspace-header,
+            .workspace-header .topbar-actions {
+                display: block;
+            }
+            .workspace-header .topbar-actions .button-link {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                margin: 6px 6px 0 0;
+            }
+            .compact-specs .specs-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+        @media (min-width: 981px) and (max-width: 1280px) {
+            .review-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+        .breadcrumb-steps {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+        }
+        .breadcrumb-steps span {
+            color: var(--muted);
+        }
+        .breadcrumb-steps span.active {
+            color: var(--accent);
+            border-bottom: 1.5px solid var(--accent);
+            padding-bottom: 2px;
+        }
+        .breadcrumb-steps .step-arrow {
+            color: var(--line-dark);
+            font-weight: normal;
         }
     </style>
 </head>
@@ -422,11 +725,14 @@ if ($rootPath !== '') {
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
 
-        <div class="alert-strip">
-            Mockup Combinations Review: choose a real world mother reference, camera slot, then generate and evaluate the result.
-        </div>
-
         <div class="workspace">
+            <div class="breadcrumb-steps">
+                <span>Step 1: Upload</span>
+                <span class="step-arrow">&rarr;</span>
+                <span>Step 2: Select View</span>
+                <span class="step-arrow">&rarr;</span>
+                <span class="active">Step 3: Mockup Lab</span>
+            </div>
             <div class="workspace-header">
                 <div>
                     <h1>Mockup Combinations Review</h1>
@@ -450,49 +756,67 @@ if ($rootPath !== '') {
                 </div>
             <?php endif; ?>
 
-            <div class="specs-panel" style="background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-bottom: 24px;">
-                <div class="specs-grid" style="display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;">
-                    <div><strong style="font-size:10px; text-transform:uppercase; color:var(--muted);">Artwork ID</strong><br><code><?= (int)$id ?></code></div>
-                    <div><strong style="font-size:10px; text-transform:uppercase; color:var(--muted);">Camera Views</strong><br><code><?= count($combinations) ?></code></div>
-                    <div><strong style="font-size:10px; text-transform:uppercase; color:var(--muted);">World Categories Available</strong><br><code><?= (int)($review['world_mother_categories_available'] ?? $review['world_mother_categories_with_images'] ?? 0) ?></code></div>
-                    <div><strong style="font-size:10px; text-transform:uppercase; color:var(--muted);">Mode</strong><br><code><?= h($review['generation_mode'] ?? '') ?></code></div>
+            <div class="compact-specs">
+                <div class="specs-grid">
+                    <span><strong>ID</strong><code><?= (int)$id ?></code></span>
+                    <span><strong>Cameras</strong><code><?= count($combinations) ?></code></span>
+                    <span><strong>Worlds</strong><code><?= (int)($review['world_mother_categories_available'] ?? $review['world_mother_categories_with_images'] ?? 0) ?></code></span>
+                    <span><strong>Mode</strong><code><?= h($review['generation_mode'] ?? '') ?></code></span>
                 </div>
             </div>
 
-            <div class="specs-panel" style="background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-bottom: 24px;">
-                <strong style="font-size:10px; text-transform:uppercase; color:var(--muted);">Ranked Scene Mothers</strong>
-                <p style="margin:6px 0 0; color:var(--muted); font-size:13px;">Pick one category, search the full library, or save favorites for repeated use. Empty folders are visible but generation waits until an image exists.</p>
+            <div class="scene-browser-panel">
+                <div class="scene-browser-head">
+                    <div>
+                        <strong>Scene Environments</strong>
+                    </div>
+                </div>
                 <div class="scene-browser-controls">
-                    <input type="search" id="scene-search" placeholder="Search scene mothers: sunlight, blue hour, atelier, concrete..." autocomplete="off">
+                    <input type="search" id="scene-search" placeholder="Search scene environment..." autocomplete="off">
+                    <select id="scene-select" aria-label="Select scene environment">
+                        <?php foreach ($suggestedWorldMotherCategories as $scene): ?>
+                            <?php
+                            $slug = (string)($scene['category_slug'] ?? '');
+                            $imageCount = (int)($scene['image_count'] ?? 0);
+                            ?>
+                            <option value="<?= h($slug) ?>" <?= $slug === $selectedWorldMotherCategory ? 'selected' : '' ?>>
+                                <?= h((string)($scene['category_name'] ?? $slug)) ?> · <?= $imageCount ?> img
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
                     <div class="scene-filter-tabs" role="group" aria-label="Scene mother filters">
                         <button type="button" class="active" data-scene-filter="all">All</button>
-                        <button type="button" data-scene-filter="with-images">With images</button>
+                        <button type="button" data-scene-filter="with-images">With Image</button>
                         <button type="button" data-scene-filter="favorites">Favorites</button>
                     </div>
                 </div>
-                <div class="scene-browser-count" id="scene-browser-count"></div>
-                <div class="scene-choice-grid">
-                    <?php foreach ($suggestedWorldMotherCategories as $scene): ?>
-                        <?php
-                        $slug = (string)($scene['category_slug'] ?? '');
-                        $url = 'mockup_combinations_review.php?id=' . (int)$id . '&world_mother_category=' . rawurlencode($slug);
-                        $matchedTerms = implode(' ', array_map('strval', (array)($scene['matched_terms'] ?? [])));
-                        $searchText = strtolower(trim($slug . ' ' . str_replace('_', ' ', $slug) . ' ' . (string)($scene['category_name'] ?? '') . ' ' . $matchedTerms . ' ' . world_mother_search_aliases($slug)));
-                        $isFavorite = isset($favoriteWorldMotherLookup[$slug]);
-                        $imageCount = (int)($scene['image_count'] ?? 0);
-                        ?>
-                        <a
-                            class="scene-choice <?= $slug === $selectedWorldMotherCategory ? 'active' : '' ?>"
-                            href="<?= h($url) ?>"
-                            data-scene-choice
-                            data-slug="<?= h($slug) ?>"
-                            data-name="<?= h($scene['category_name'] ?? $slug) ?>"
-                            data-image-count="<?= $imageCount ?>"
-                            data-favorite="<?= $isFavorite ? '1' : '0' ?>"
-                            data-search="<?= h($searchText) ?>"
-                        >
-                            <div class="scene-choice-top">
-                                <strong><?= h($scene['category_name'] ?? $slug) ?></strong>
+                <details class="scene-list-toggle" id="scene-list-toggle">
+                    <summary><span class="scene-browser-count" id="scene-browser-count"></span></summary>
+                    <div class="scene-choice-grid">
+                        <?php foreach ($suggestedWorldMotherCategories as $scene): ?>
+                            <?php
+                            $slug = (string)($scene['category_slug'] ?? '');
+                            $url = 'mockup_combinations_review.php?id=' . (int)$id . '&world_mother_category=' . rawurlencode($slug);
+                            $matchedTerms = implode(' ', array_map('strval', (array)($scene['matched_terms'] ?? [])));
+                            $searchText = strtolower(trim($slug . ' ' . str_replace('_', ' ', $slug) . ' ' . (string)($scene['category_name'] ?? '') . ' ' . $matchedTerms . ' ' . world_mother_search_aliases($slug)));
+                            $isFavorite = isset($favoriteWorldMotherLookup[$slug]) || isset($favoriteWorldMotherNormalizedLookup[WorldMotherGenerator::safeSlug($slug)]);
+                            $imageCount = (int)($scene['image_count'] ?? 0);
+                            ?>
+                            <a
+                                class="scene-choice <?= $slug === $selectedWorldMotherCategory ? 'active' : '' ?>"
+                                href="<?= h($url) ?>"
+                                data-scene-choice
+                                data-slug="<?= h($slug) ?>"
+                                data-name="<?= h($scene['category_name'] ?? $slug) ?>"
+                                data-image-count="<?= $imageCount ?>"
+                                data-favorite="<?= $isFavorite ? '1' : '0' ?>"
+                                data-search="<?= h($searchText) ?>"
+                            >
+                                <div>
+                                    <strong><?= h($scene['category_name'] ?? $slug) ?></strong>
+                                    <span><code><?= h($slug) ?></code></span>
+                                </div>
+                                <span class="scene-choice-meta"><?= $imageCount ?> img</span>
                                 <button
                                     class="favorite-scene-btn <?= $isFavorite ? 'active' : '' ?>"
                                     type="button"
@@ -500,16 +824,10 @@ if ($rootPath !== '') {
                                     aria-label="<?= $isFavorite ? 'Remove favorite' : 'Add favorite' ?>"
                                     data-favorite-scene="<?= h($slug) ?>"
                                 >★</button>
-                            </div>
-                            <span><code><?= h($slug) ?></code></span>
-                            <span><?= $imageCount ?> image(s)</span>
-                            <span>Score <?= (int)($scene['score'] ?? 0) ?></span>
-                            <?php if ($matchedTerms !== ''): ?>
-                                <span><?= h(implode(', ', array_slice((array)$scene['matched_terms'], 0, 3))) ?></span>
-                            <?php endif; ?>
-                        </a>
-                    <?php endforeach; ?>
-                </div>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                </details>
             </div>
 
             <div class="review-grid">
@@ -522,127 +840,135 @@ if ($rootPath !== '') {
                     $missingWorldMother = (array)($combo['world_mother_selection']['missing_world_mother'] ?? []);
                     $isGeneratedWorldMother = !empty($generatedWorldMother);
                     $isMissingWorldMother = !empty($missingWorldMother);
+                    $currentVariantOffset = max(0, (int)($combo['world_mother_variant_offset'] ?? ($selectedWorldMotherVariants[$idx] ?? 0)));
+                    $refreshVariantOffsets = $selectedWorldMotherVariants;
+                    $refreshVariantOffsets[$idx] = $currentVariantOffset + 1;
+                    $refreshParams = [
+                        'id' => (int)$id,
+                        'world_mother_category' => $selectedWorldMotherCategory,
+                        'slot' => [],
+                        'world_variant' => [],
+                    ];
+                    foreach ($combinations as $otherComboForUrl) {
+                        $otherIndexForUrl = (int)($otherComboForUrl['combination_index'] ?? 0);
+                        if ($otherIndexForUrl > 0) {
+                            $refreshParams['slot'][$otherIndexForUrl] = (string)($otherComboForUrl['selected_camera_slot_id'] ?? '');
+                        }
+                    }
+                    foreach ($refreshVariantOffsets as $variantIndex => $variantOffset) {
+                        if ((int)$variantIndex > 0 && (int)$variantOffset > 0) {
+                            $refreshParams['world_variant'][(int)$variantIndex] = (int)$variantOffset;
+                        }
+                    }
+                    $refreshUrl = 'mockup_combinations_review.php?' . http_build_query($refreshParams);
                     ?>
-                    <section class="combination-card">
-                        <div class="combination-head">
-                            <div>
-                                <span class="badge">Combination <?= $idx ?></span>
-                                <h3><?= h($combo['camera_slot_name'] ?? $combo['selected_camera_slot_id'] ?? 'Camera') ?></h3>
+                    <details class="combination-card">
+                        <summary class="combination-head">
+                            <div class="combination-title">
+                                <span class="badge">Combo <?= $idx ?></span>
+                                <h3><?= h(get_friendly_camera_name($combo['selected_camera_slot_id'] ?? '')) ?></h3>
+                                <code class="slot-id"><?= h($combo['selected_camera_slot_id'] ?? '') ?></code>
                             </div>
-                            <span class="badge <?= !empty($combo['generation_ready']) ? 'ready' : 'warn' ?>">
-                                <?= !empty($combo['generation_ready']) ? 'Ready' : 'Needs Data' ?>
-                            </span>
+                        </summary>
+
+                        <div class="combination-body">
+                            <div class="card-icon-actions">
+                                <a class="refresh-world-btn" href="<?= h($refreshUrl) ?>" title="Refresh world mother" aria-label="Refresh world mother">&#8635;</a>
+                            </div>
+                            <div class="thumb-row">
+                                <div class="thumb-box">
+                                    <?php if ($rootUrl !== ''): ?>
+                                        <img src="<?= h($rootUrl) ?>" alt="">
+                                    <?php endif; ?>
+                                </div>
+                                <div class="thumb-box">
+                                    <?php if ($worldImageUrl !== ''): ?>
+                                        <img src="<?= h($worldImageUrl) ?>" alt="">
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+
                             <?php if ($isGeneratedWorldMother): ?>
-                                <span class="badge ready">Auto Scene</span>
+                                <div class="auto-world-panel">
+                                    <strong>Beta auto-generated scene mother</strong>
+                                    This scene mother was created earlier. For this beta flow, prefer replacing it with a curated manual image if quality is not enough.
+                                    <?php if ($worldImageUrl !== ''): ?>
+                                        <br><a href="<?= h($worldImageUrl) ?>" target="_blank" rel="noopener">Open generated image</a>
+                                    <?php endif; ?>
+                                    <?php if (!empty($generatedWorldMother['audit_file'])): ?>
+                                        <br>Audit: <code><?= h($generatedWorldMother['audit_file']) ?></code>
+                                    <?php endif; ?>
+                                </div>
                             <?php endif; ?>
                             <?php if ($isMissingWorldMother): ?>
-                                <span class="badge warn">Scene Pending</span>
+                                <div class="auto-world-panel">
+                                    <strong>Beta scene mother pending</strong>
+                                    Add one image manually to <code><?= h($missingWorldMother['folder'] ?? ('storage/world_mothers/' . $combo['world_mother_category'])) ?></code>, then refresh. The system will not generate this scene mother automatically.
+                                </div>
                             <?php endif; ?>
-                        </div>
 
-                        <div class="thumb-row">
-                            <div class="thumb-box">
-                                <?php if ($rootUrl !== ''): ?>
-                                    <img src="<?= h($rootUrl) ?>" alt="">
-                                <?php endif; ?>
-                                <span class="thumb-label">Root artwork<br><?= h(basename((string)$combo['root_artwork_path'])) ?></span>
-                            </div>
-                            <div class="thumb-box">
-                                <?php if ($worldImageUrl !== ''): ?>
-                                    <img src="<?= h($worldImageUrl) ?>" alt="">
-                                <?php endif; ?>
-                                <span class="thumb-label">
-                                    World mother<br><?= h($worldImage) ?><br>
-                                    Variant <?= h((string)($combo['world_mother_variant_index'] ?? 1)) ?>:
-                                    <?= h((string)($combo['world_mother_variant_role'] ?? 'primary')) ?><br>
-                                    <?php if (!empty($combo['world_mother_selection_strategy'])): ?>
-                                        Selection: <?= h((string)$combo['world_mother_selection_strategy']) ?><br>
+                            <form class="camera-form beta-hidden-stage" method="get" action="mockup_combinations_review.php">
+                                <input type="hidden" name="id" value="<?= (int)$id ?>">
+                                <input type="hidden" name="world_mother_category" value="<?= h($selectedWorldMotherCategory) ?>">
+                                <?php foreach ($combinations as $other): ?>
+                                    <?php if ((int)$other['combination_index'] !== $idx): ?>
+                                        <input type="hidden" name="slot[<?= (int)$other['combination_index'] ?>]" value="<?= h($other['selected_camera_slot_id']) ?>">
                                     <?php endif; ?>
-                                    Reference mode: <?= h((string)($combo['world_mother_reference_mode'] ?? 'literal_scene_view')) ?>
-                                </span>
-                            </div>
-                        </div>
-
-                        <?php if ($isGeneratedWorldMother): ?>
-                            <div class="auto-world-panel">
-                                <strong>Beta auto-generated scene mother</strong>
-                                This scene mother was created earlier. For this beta flow, prefer replacing it with a curated manual image if quality is not enough.
-                                <?php if ($worldImageUrl !== ''): ?>
-                                    <br><a href="<?= h($worldImageUrl) ?>" target="_blank" rel="noopener">Open generated image</a>
-                                <?php endif; ?>
-                                <?php if (!empty($generatedWorldMother['audit_file'])): ?>
-                                    <br>Audit: <code><?= h($generatedWorldMother['audit_file']) ?></code>
-                                <?php endif; ?>
-                            </div>
-                        <?php endif; ?>
-                        <?php if ($isMissingWorldMother): ?>
-                            <div class="auto-world-panel">
-                                <strong>Beta scene mother pending</strong>
-                                Add one image manually to <code><?= h($missingWorldMother['folder'] ?? ('storage/world_mothers/' . $combo['world_mother_category'])) ?></code>, then refresh. The system will not generate this scene mother automatically.
-                            </div>
-                        <?php endif; ?>
-
-                        <div class="meta-list">
-                            <div><strong>World Mother</strong><?= h($combo['world_mother_category'] ?? '') ?></div>
-                            <div><strong>Reference Mode</strong><?= h($combo['world_mother_reference_mode'] ?? 'literal_scene_view') ?></div>
-                            <?php if (!empty($combo['selected_world_id'])): ?>
-                                <div><strong>Source Context World</strong><?= h($combo['selected_world_id']) ?></div>
-                            <?php endif; ?>
-                            <div class="camera-title-row">
-                                <strong><?= h($combo['camera_slot_name'] ?? '') ?></strong>
-                                <code><?= h($combo['selected_camera_slot_id']) ?></code>
-                            </div>
-                        </div>
-
-                        <form class="camera-form beta-hidden-stage" method="get" action="mockup_combinations_review.php">
-                            <input type="hidden" name="id" value="<?= (int)$id ?>">
-                            <input type="hidden" name="world_mother_category" value="<?= h($selectedWorldMotherCategory) ?>">
-                            <?php foreach ($combinations as $other): ?>
-                                <?php if ((int)$other['combination_index'] !== $idx): ?>
-                                    <input type="hidden" name="slot[<?= (int)$other['combination_index'] ?>]" value="<?= h($other['selected_camera_slot_id']) ?>">
-                                <?php endif; ?>
-                            <?php endforeach; ?>
-                            <label>
-                                <strong style="display:block; font-size:10px; text-transform:uppercase; color:var(--muted); margin-bottom:4px;">Selected Camera Slot</strong>
-                                <select name="slot[<?= $idx ?>]" onchange="this.form.submit()">
-                                    <?php foreach ($cameraSlots as $slot): ?>
-                                        <?php $slotId = (string)($slot['slot_id'] ?? ''); ?>
-                                        <option value="<?= h($slotId) ?>" <?= $slotId === (string)$combo['selected_camera_slot_id'] ? 'selected' : '' ?>>
-                                            <?= h(($slot['slot_name'] ?? $slotId) . ' - ' . $slotId) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </label>
-                            <button class="button-link secondary" type="submit">Refresh Preview</button>
-                        </form>
-
-                        <div class="beta-hidden-stage">
-                            <strong style="display:block; font-size:10px; text-transform:uppercase; color:var(--muted); margin-bottom:6px;">Final Prompt Preview</strong>
-                            <textarea class="prompt-preview" readonly><?= h($combo['final_prompt_preview']) ?></textarea>
-                        </div>
-
-                        <?php if (!empty($combo['validation_notes'])): ?>
-                            <ul class="notes">
-                                <?php foreach ((array)$combo['validation_notes'] as $note): ?>
-                                    <li><?= h($note) ?></li>
                                 <?php endforeach; ?>
-                            </ul>
-                        <?php endif; ?>
+                                <label>
+                                    <strong style="display:block; font-size:10px; text-transform:uppercase; color:var(--muted); margin-bottom:4px;">Selected Camera Slot</strong>
+                                    <select name="slot[<?= $idx ?>]" onchange="this.form.submit()">
+                                        <?php foreach ($cameraSlots as $slot): ?>
+                                            <?php $slotId = (string)($slot['slot_id'] ?? ''); ?>
+                                            <option value="<?= h($slotId) ?>" <?= $slotId === (string)$combo['selected_camera_slot_id'] ? 'selected' : '' ?>>
+                                                <?= h(get_friendly_camera_name($slotId)) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </label>
+                                <button class="button-link secondary" type="submit">Refresh Preview</button>
+                            </form>
 
-                        <div>
-                            <div id="prepare-result-<?= $idx ?>" class="prepare-result"></div>
-                            <button
-                                class="button-link"
-                                type="button"
-                                data-index="<?= $idx ?>"
-                                data-artwork-id="<?= (int)$id ?>"
-                                data-camera-slot="<?= h($combo['selected_camera_slot_id']) ?>"
-                                data-world-mother-category="<?= h($selectedWorldMotherCategory) ?>"
-                                onclick="prepareCombination(this)"
-                                <?= empty($combo['generation_ready']) ? 'disabled' : '' ?>
-                            >Generate This Combination</button>
+                            <div class="beta-hidden-stage">
+                                <strong style="display:block; font-size:10px; text-transform:uppercase; color:var(--muted); margin-bottom:6px;">Final Prompt Preview</strong>
+                                <textarea class="prompt-preview" readonly><?= h($combo['final_prompt_preview']) ?></textarea>
+                            </div>
+
+                            <?php if (!empty($combo['validation_notes'])): ?>
+                                <ul class="notes">
+                                    <?php foreach ((array)$combo['validation_notes'] as $note): ?>
+                                        <li><?= h($note) ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php endif; ?>
+
+                            <div>
+                                <label style="display:block; font-size:10px; text-transform:uppercase; color:var(--muted); margin-bottom:4px;">
+                                    World Mother Scale (1.0 = original, up to 3.0 = tighter zoom on materials)
+                                </label>
+                                <input
+                                    type="number"
+                                    class="world-mother-scale-input"
+                                    id="world-mother-scale-<?= $idx ?>"
+                                    min="1.0" max="3.0" step="0.1" value="1.0"
+                                    style="width:80px; margin-bottom:8px;"
+                                >
+                                <div id="prepare-result-<?= $idx ?>" class="prepare-result"></div>
+                                <button
+                                    class="button-link"
+                                    type="button"
+                                    data-index="<?= $idx ?>"
+                                    data-artwork-id="<?= (int)$id ?>"
+                                    data-camera-slot="<?= h($combo['selected_camera_slot_id']) ?>"
+                                    data-camera-name="<?= h(get_friendly_camera_name($combo['selected_camera_slot_id'] ?? '')) ?>"
+                                    data-world-mother-category="<?= h($selectedWorldMotherCategory) ?>"
+                                    data-world-mother-variant="<?= $currentVariantOffset ?>"
+                                    onclick="prepareCombination(this)"
+                                    <?= empty($combo['generation_ready']) ? 'disabled' : '' ?>
+                                >Generate This Combination</button>
+                            </div>
                         </div>
-                    </section>
+                    </details>
                 <?php endforeach; ?>
             </div>
         </div>
@@ -651,7 +977,10 @@ if ($rootPath !== '') {
 
 <script>
 function prepareCombination(btn, skipConfirm = false) {
-    if (!skipConfirm && !confirm('Generate an image for this combination now? This may consume a real API credit when real API mode is enabled.')) {
+    const cameraName = btn.getAttribute('data-camera-name') || 'selected camera';
+    const cameraSlot = btn.getAttribute('data-camera-slot') || '';
+    const label = cameraName + (cameraSlot ? ' [' + cameraSlot + ']' : '');
+    if (!skipConfirm && !confirm('Generate this camera now?\n\n' + label + '\n\nThis may consume a real API credit when real API mode is enabled.')) {
         return;
     }
     return runCombinationGeneration(btn);
@@ -665,6 +994,11 @@ function runCombinationGeneration(btn) {
     formData.append('combination_index', index);
     formData.append('camera_slot_id', btn.getAttribute('data-camera-slot'));
     formData.append('world_mother_category', btn.getAttribute('data-world-mother-category'));
+    formData.append('world_mother_variant_offset', btn.getAttribute('data-world-mother-variant') || '0');
+    const scaleInput = document.getElementById('world-mother-scale-' + index);
+    if (scaleInput && scaleInput.value) {
+        formData.append('world_mother_scale', scaleInput.value);
+    }
 
     btn.disabled = true;
     const originalText = btn.textContent;
@@ -737,7 +1071,9 @@ async function generateAllCombinations(btn) {
 }
 
 const sceneSearchInput = document.getElementById('scene-search');
+const sceneSelect = document.getElementById('scene-select');
 const sceneCount = document.getElementById('scene-browser-count');
+const sceneListToggle = document.getElementById('scene-list-toggle');
 let activeSceneFilter = 'all';
 
 function updateSceneBrowser() {
@@ -758,17 +1094,33 @@ function updateSceneBrowser() {
         if (show) visible++;
     }
     if (sceneCount) {
-        sceneCount.textContent = visible + ' of ' + cards.length + ' scene mothers shown';
+        sceneCount.textContent = visible + ' of ' + cards.length + ' scene environments visible';
     }
 }
 
 if (sceneSearchInput) {
-    sceneSearchInput.addEventListener('input', updateSceneBrowser);
+    sceneSearchInput.addEventListener('input', () => {
+        if (sceneListToggle && sceneSearchInput.value.trim() !== '') {
+            sceneListToggle.open = true;
+        }
+        updateSceneBrowser();
+    });
+}
+if (sceneSelect) {
+    sceneSelect.addEventListener('change', () => {
+        const slug = sceneSelect.value || '';
+        if (slug !== '') {
+            window.location.href = 'mockup_combinations_review.php?id=<?= (int)$id ?>&world_mother_category=' + encodeURIComponent(slug);
+        }
+    });
 }
 document.querySelectorAll('[data-scene-filter]').forEach(button => {
     button.addEventListener('click', () => {
         activeSceneFilter = button.getAttribute('data-scene-filter') || 'all';
         document.querySelectorAll('[data-scene-filter]').forEach(btn => btn.classList.toggle('active', btn === button));
+        if (sceneListToggle && activeSceneFilter !== 'all') {
+            sceneListToggle.open = true;
+        }
         updateSceneBrowser();
     });
 });

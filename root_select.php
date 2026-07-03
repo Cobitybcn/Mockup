@@ -993,16 +993,216 @@ function h($v): string {
         <header class="app-header">
             <a class="user-chip" href="account.php"><?= h($currentUser['email']) ?></a>
         </header>
+        @keyframes loaderDreamMonumentalMist {
+            0% { transform: translate3d(-26vw, -12vh, 0) scale(3); }
+            54% { transform: translate3d(18vw, 4vh, 0) scale(3); }
+            100% { transform: translate3d(62vw, -6vh, 0) scale(3); }
+        }
+
+        @keyframes loaderSepiaBreath {
+            from { background-position: 0% 50%; filter: brightness(0.78) saturate(0.82); }
+            to { background-position: 100% 48%; filter: brightness(0.98) saturate(1.08); }
+        }
+
+        @media (max-width: 640px) {
+            .loader-album-slide,
+            .loader-album-track.dream-b .loader-album-slide,
+            .loader-album-track.dream-c .loader-album-slide {
+                max-width: 68vw;
+            }
+
+            .loader-status-panel {
+                right: 12px;
+                bottom: 12px;
+            }
+        }
+
+        .global-loader {
+            background: var(--gal-bg);
+        }
+
+        .global-loader::before,
+        .loader-album-stage {
+            display: none;
+        }
+
+        .loader-status-panel {
+            position: relative;
+            inset: auto;
+            width: min(360px, calc(100vw - 48px));
+            padding: 26px 24px;
+            opacity: 1;
+            text-align: center;
+            background: transparent;
+            border: 0;
+            box-shadow: none;
+        }
+
+        .spinner {
+            width: 34px;
+            height: 34px;
+            margin: 0 auto 18px;
+            border-width: 2px;
+        }
+
+        .loader-text {
+            margin: 0 0 8px;
+            color: var(--gal-ink);
+            font-size: 22px;
+        }
+
+        .loader-sub {
+            display: block;
+            margin: 0;
+            color: var(--gal-muted);
+            font-size: 13px;
+        }
+
+        .loader-tip {
+            display: none;
+        }
+
+        .admin-overlay-prompts {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            bottom: 24px;
+            z-index: 10001;
+            width: min(560px, calc(100vw - 48px));
+            overflow: auto;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid var(--gal-border);
+            border-radius: 8px;
+            box-shadow: 0 20px 70px rgba(20, 20, 18, 0.16);
+            text-align: left;
+            display: none;
+        }
+
+        .global-loader.active .admin-overlay-prompts {
+            display: block;
+        }
+
+        .admin-overlay-prompts h3 {
+            margin: 0 0 4px;
+            font-family: var(--font-serif);
+            font-size: 22px;
+            font-weight: 500;
+            color: var(--gal-ink);
+        }
+
+        .admin-overlay-prompts > p,
+        .admin-overlay-empty {
+            margin: 0 0 14px;
+            color: var(--gal-muted);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        [data-typewriter].is-typing::after {
+            content: "";
+            display: inline-block;
+            width: 1px;
+            height: 1em;
+            margin-left: 2px;
+            background: currentColor;
+            vertical-align: -0.12em;
+            animation: typewriterCaret 0.75s steps(1) infinite;
+        }
+
+        @keyframes typewriterCaret {
+            0%, 48% { opacity: 1; }
+            49%, 100% { opacity: 0; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            [data-typewriter].is-typing::after {
+                display: none;
+            }
+        }
+
+        .admin-overlay-prompt {
+            margin-top: 10px;
+            border: 1px solid var(--gal-border);
+            border-radius: 6px;
+            background: var(--gal-bg);
+            overflow: hidden;
+        }
+
+        .admin-overlay-prompt summary {
+            margin: 0;
+            padding: 10px 12px;
+            color: var(--gal-ink);
+            font-size: 12px;
+            font-weight: 600;
+            list-style-position: inside;
+        }
+
+        .admin-overlay-meta {
+            display: grid;
+            gap: 3px;
+            padding: 0 12px 10px;
+            color: var(--gal-muted);
+            font-size: 11px;
+            line-height: 1.35;
+        }
+
+        .admin-overlay-actions {
+            display: flex;
+            justify-content: flex-end;
+            padding: 0 12px 10px;
+        }
+
+        .admin-overlay-actions button {
+            width: auto;
+            margin: 0;
+            padding: 7px 10px;
+            font-size: 11px;
+        }
+
+        .admin-overlay-prompt textarea {
+            display: block;
+            width: calc(100% - 24px);
+            min-height: 260px;
+            margin: 0 12px 12px;
+            padding: 10px;
+            resize: vertical;
+            border: 1px solid var(--gal-border);
+            border-radius: 4px;
+            background: #fbfaf7;
+            color: var(--gal-ink);
+            font-family: Consolas, Monaco, monospace;
+            font-size: 11px;
+            line-height: 1.45;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-shell">
+    <?php include __DIR__ . '/sidebar.php'; ?>
+
+    <main class="main-area">
+        <header class="app-header">
+            <a class="user-chip" href="account.php"><?= h($currentUser['email']) ?></a>
+        </header>
 
         <div class="alert-strip">
             Candidate Selection: Review the generated versions and choose the most frontal, clean and cropped image to act as the official root.
         </div>
 
         <div class="workspace">
-            <h1>Select Root Image Version</h1>
-            <p class="page-kicker">
-                We generated <?= h($candidateCount) ?> candidates of your root image to prevent rate/crop errors. Select the best one to proceed.
-            </p>
+            <div class="workspace-header" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; border-bottom: 1px solid var(--gal-border); padding-bottom: 16px;">
+                <div>
+                    <h1 style="margin: 0;">Select Root Image Version</h1>
+                    <p style="margin: 6px 0 0 0; font-size: 14px; color: var(--gal-muted);">We generated <?= h($candidateCount) ?> candidates of your root image to prevent rate/crop errors. Select the best one to proceed.</p>
+                </div>
+                <div class="topbar-actions" style="display: flex; gap: 12px; margin-bottom: 4px;">
+                    <a class="button-link secondary" href="waiting.php?action=cancel&job=<?= urlencode($job) ?>">Cancel Upload</a>
+                    <a class="button-link secondary" href="dashboard.php">Dashboard</a>
+                </div>
+            </div>
 
             <div class="selection-layout">
                 <!-- Left panel: Original reference image -->
@@ -1106,15 +1306,8 @@ function h($v): string {
     <?php if ($isAdmin): ?>
         <aside class="admin-overlay-prompts" aria-label="Admin mockup prompts while analyzing">
             <h3 data-typewriter data-typewriter-speed="24" data-typewriter-delay="220">Admin - Mockup Prompts</h3>
-            <p data-typewriter data-typewriter-speed="12" data-typewriter-delay="820">Los textos apareceran aca cuando se preparen las combinaciones directas.</p>
+            <p data-typewriter data-typewriter-speed="12" data-typewriter-delay="820">Prompts will appear here once direct combinations are prepared.</p>
             <div class="admin-overlay-empty" id="adminOverlayPromptEmpty" data-typewriter data-typewriter-speed="14" data-typewriter-delay="1560">No mockup prompts yet. Preparing direct world mother combinations...</div>
-            <div id="adminOverlayPromptList"></div>
-        </aside>
-    <?php endif; ?>
-</div>
-
-<script>
-    const isAdmin = <?= $isAdmin ? 'true' : 'false' ?>;
     const adminPromptStatusUrl = 'admin_mockup_prompts_status.php?job=<?= rawurlencode($job) ?>';
     const reduceTypewriterMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 

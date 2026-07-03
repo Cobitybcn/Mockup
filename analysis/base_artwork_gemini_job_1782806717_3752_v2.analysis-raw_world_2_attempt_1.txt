@@ -1,0 +1,27 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Golden Hour Palazzo Retreat",
+      "context_role": "Elevates the artwork by placing it in an aspirational, refined domestic setting, making it a curated centerpiece that defines sophisticated living.",
+      "space_type": "Refined Study / Elegant Living Room",
+      "atmosphere": "Aspirational, serene, and contemplative, imbued with the soft, golden warmth of late afternoon light. Exudes restrained luxury and quiet sophistication.",
+      "materials": [
+        "Warm neutral limewash plaster walls",
+        "Pale, polished stone flooring",
+        "Minimalist dark wood console table",
+        "Subtle natural linen window sheers"
+      ],
+      "lighting": "Soft, golden afternoon sunlight filtering through a large window, creating subtle, warm reflections and gentle architectural shadows. Polished, natural daylight.",
+      "camera_view": "Reflejo Dorado de Tarde / Palazzo: Camera height is elegant human standing height, approximately 150-170 cm, as if observed calmly from inside a palazzo room. Use a soft three-quarter rotation that catches reflected late light while keeping the artwork plane legible. The composition is stable, warm, and architectural, with golden afternoon reflection supporting the room rather than repainting the artwork; keep elegant balance but avoid perfect symmetry unless the room itself naturally demands it.",
+      "camera_distance": "Controlled architectural distance, allowing the room's inherent depth and refined elements to be appreciated while maintaining the artwork as the dominant visual focus.",
+      "camera_angle_notes": "The soft three-quarter angle intentionally reveals the physical thickness and texture of the canvas, making the artwork a tangible object. This perspective captures the room's architectural depth and the play of 'Reflejo Dorado' light, enhancing the artwork's sense of mystery and presence.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's vibrant abstract landscape, with its bold reds, deep blues, and graphic ladders, creates a striking visual anchor against the serene, warm neutral limewash walls. The 'Quiet Luxury' setting, with its emphasis on thoughtful curation, complements the artwork's enigmatic quality, inviting introspection. The golden light enhances its rich palette, making the colors resonate more deeply within the refined space.",
+      "commercial_reason": "This context strategically positions the artwork within a highly desirable 'quiet luxury' domestic environment, directly appealing to a discerning market seeking art that enhances a sophisticated living space. The aspirational yet understated ambiance makes the artwork feel like an essential, curated element of a well-appointed home, conveying discerning taste and a peaceful, contemplative lifestyle. The natural light presents the artwork in an inviting and authentic manner.",
+      "mockup_prompt": "An aspirational domestic room, a refined study, viewed with an elegant three-quarter perspective, revealing architectural depth. The main wall, made of very light, warm neutral limewash plaster, holds the artwork as a wall_hanging. To the right, a large window with subtle linen sheers allows soft, golden afternoon light to flood the room, casting gentle, warm reflections and subtle shadows that emphasize the room's quiet luxury. The pale stone flooring recedes into the background, providing a stable foundation. Below the artwork, a minimalist, dark wood console table stands, its refined surface subtly reflecting the ambient light. The artwork, a vibrant abstract landscape with deep blue, bright red, orange, and ladders, is the clear focal point, its physical canvas thickness evident due to the natural angle. The composition is stable and warm, reflecting the room's architectural lines and the afternoon light, with a clear foreground, midground (artwork), and background (window).",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default, no influencer lifestyle, no decor ad, no real estate ad, no hotel catalog look, no furniture showroom"
+    }
+  ]
+}
+```

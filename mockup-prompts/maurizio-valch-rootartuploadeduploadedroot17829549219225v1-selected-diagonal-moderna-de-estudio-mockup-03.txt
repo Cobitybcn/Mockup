@@ -1,0 +1,35 @@
+Generate one premium photographic mockup using this exact camera slot only:
+Camera Slot ID: diagonal_estudio_moderno
+Camera Slot Name: Diagonal Moderna de Estudio
+
+INPUT ROLES:
+IMAGE 1 is the only source of truth for the artwork. Preserve exact artwork identity, orientation, aspect ratio, colors, marks, sparse areas, and composition.
+IMAGE 2 is the world mother for the environment. Keep its room type, material family, light logic, surface character, and spatial identity. Do not replace it with a generic studio, generic gallery, different room type, or invented architecture. Adapt only the camera and artwork placement needed for this slot.
+
+ARTWORK PHYSICAL DATA:
+Artwork title: {{ARTWORK_TITLE}}
+Artwork width: 80 cm
+Artwork height: 120 cm
+Artwork orientation: portrait
+Artwork size class: {{ARTWORK_SIZE_CLASS}}
+
+TASK:
+Create a diagonal editorial composition inside the environment provided by IMAGE 2. Strong diagonal movement should come from architectural lines, light/shadow, floor/wall geometry, furniture edges, or spatial features already present or naturally inferable from IMAGE 2. The artwork is a real rigid physical canvas/object at its supplied dimensions.
+
+CAMERA:
+Use medium or moderately low camera height, approximately 70-140 cm. Use a clean 35-50 mm editorial architectural lens. Keep vertical tilt controlled and mostly natural. Build diagonal movement only from existing or naturally compatible features of IMAGE 2, not by inventing a new studio, new gallery furniture, new windows, new benches, new lighting systems, or by deforming the artwork.
+
+DIAGONAL COMPOSITION:
+Use an off-center three-quarter or diagonal composition. The world mother remains recognizable in material, room type, and spatial character even after camera adaptation. Architecture may recede strongly in one direction if IMAGE 2 supports it, but the artwork must remain optically faithful, sharp, and aligned to the same wall/floor/ceiling perspective logic. Avoid centered product symmetry.
+
+SCALE:
+Respect the supplied artwork dimensions. The artwork must not become a billboard, mural, wall-sized panel, oversized slab, or stage prop. If stronger presence is needed, use camera proximity, crop, and diagonal leading lines rather than changing scale.
+
+PAINTED EDGE:
+If side depth, corner, or thickness is visible, the edge must be painted as a coherent continuation of IMAGE 1. No raw beige canvas edge, unpainted primer, bare wood, exposed stretcher bars, or generic blank side band unless IMAGE 1 explicitly shows it.
+
+ARTWORK FIDELITY:
+Do not repaint, replace, reinterpret, recolor, add marks, add figures, add decorative gestures, or import room-inspired shapes into the artwork.
+
+NEGATIVE PROMPT:
+No centered product symmetry, no flat frontal product wall, no invented studio, no invented gallery, no alternate room type, no replacing IMAGE 2 environment, no world-mother substitution, no invented benches, no invented track lights, no invented windows, no copied IMAGE 2 camera, no artwork deformation, no warped canvas, no melted artwork, no stretched artwork, no compressed artwork, no billboard scaling, no mural scaling, no oversized canvas, no artwork substitution, no invented painting, no decorative brushwork, no room-inspired marks, no raw beige canvas edge, no unpainted canvas edge, no bare wood edge, no poster effect, no digital screen, no pets, no crowds, no children, no visible people, no visible text, no logos, no watermarks.

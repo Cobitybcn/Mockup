@@ -1,15 +1,16 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/app/bootstrap.php';
 $user=Auth::requireUser(); $id=(int)($_GET['id']??$_POST['id']??0); $pdo=Database::connection();
 $q=$pdo->prepare('SELECT * FROM artworks WHERE id=:id AND user_id=:u LIMIT 1');$q->execute(['id'=>$id,'u'=>$user['id']]);$artwork=$q->fetch();if(!$artwork){http_response_code(404);exit('Artwork not found.');}
 $q=$pdo->prepare('SELECT mockup_file FROM mockups WHERE user_id=:u AND artwork_file=:f AND mockup_file != "" ORDER BY id ASC');$q->execute(['u'=>$user['id'],'f'=>$artwork['root_file']]);$available=array_map(fn($r)=>basename((string)$r['mockup_file']),$q->fetchAll());
 $q=$pdo->prepare('SELECT * FROM social_video_workflows WHERE artwork_id=:id LIMIT 1');$q->execute(['id'=>$id]);$workflow=$q->fetch()?:[];$saved=json_decode((string)($workflow['setup_edited_json']??''),true);$sequence=is_array($saved['mockup_sequence']??null)?$saved['mockup_sequence']:$available;$notice='';$error='';
-if($_SERVER['REQUEST_METHOD']==='POST')try{$sequence=array_values(array_filter(array_map('basename',explode(',',(string)($_POST['mockup_sequence']??'')))));if(count($sequence)<2)throw new RuntimeException('Selecciona al menos dos mockups.');$setup=['mockup_sequence'=>$sequence];$now=date('c');$notice='Orden guardado.';$q->execute(['id'=>$id]);$workflow=$q->fetch()?:[];}catch(Throwable $e){$error=$e->getMessage();}
+if($_SERVER['REQUEST_METHOD']==='POST')try{$sequence=array_values(array_filter(array_map('basename',explode(',',(string)($_POST['mockup_sequence']??'')))));if(count($sequence)<2)throw new RuntimeException('Select at least two mockups.');$setup=['mockup_sequence'=>$sequence];$now=date('c');$notice='Sequence order saved.';$q->execute(['id'=>$id]);$workflow=$q->fetch()?:[];}catch(Throwable $e){$error=$e->getMessage();}
 $video=(string)($workflow['video_url']??'');
 function sh(mixed $v):string{return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <title>Social Video - The Artwork Curator</title>
@@ -46,7 +47,6 @@ function sh(mixed $v):string{return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-
             background: var(--gal-bg);
             color: var(--gal-ink);
             line-height: 1.6;
-            zoom: 0.7;
         }
 
         .app-shell {
@@ -268,7 +268,7 @@ function sh(mixed $v):string{return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-
     <main class="main-area">
         <div class="workspace sv">
             <h1>Social Video (beta)</h1>
-            <p>Conecta tus mockups existentes en una sola secuencia. Arrástralos para definir el orden.</p>
+            <p>Connect your existing mockups into a single sequence. Drag them to define the order.</p>
             
             <?php if($notice):?>
                 <div class="notice" style="padding: 12px; background: var(--gal-accent-light); border: 1px solid var(--gal-accent); border-radius: var(--gal-radius); margin-bottom: 20px; color: var(--gal-ink); font-weight: 500; font-size: 14px;">
@@ -283,15 +283,15 @@ function sh(mixed $v):string{return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-
             <?php endif;?>
             
             <div class="hint">
-                Se crearán <?=max(0,count($sequence)-1)?> transiciones entre los mockups. No se generarán escenas, textos ni imágenes nuevas.
+                There will be <?=max(0,count($sequence)-1)?> transitions created between the mockups. No new scenes, text, or images will be generated.
             </div>
             
             <form method="post" id="social-video-form">
                 <input type="hidden" name="id" value="<?=$id?>">
                 <input id="sequence" type="hidden" name="mockup_sequence" value="<?=sh(implode(',',$sequence))?>">
                 
-                <h2 style="font-family: var(--font-serif); font-size: 22px; font-weight: 500; margin: 24px 0 8px;">Orden de mockups</h2>
-                <p style="font-size: 13px; color: var(--gal-muted); margin: 0 0 18px 0; font-style: italic;">Arrastra las tarjetas de mockups para cambiar el orden de aparición en el video.</p>
+                <h2 style="font-family: var(--font-serif); font-size: 22px; font-weight: 500; margin: 24px 0 8px;">Mockup Sequence Order</h2>
+                <p style="font-size: 13px; color: var(--gal-muted); margin: 0 0 18px 0; font-style: italic;">Drag the mockup cards to change the display sequence order in the final video.</p>
                 
                 <div id="mockups" class="mockups">
                     <?php foreach($sequence as $i=>$f):?>
@@ -303,19 +303,19 @@ function sh(mixed $v):string{return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-
                 </div>
                 
                 <div class="actions">
-                    <button type="submit" class="secondary" name="action" value="save">Guardar orden</button>
-                    <button type="submit" name="action" value="generate" formaction="generate_social_video.php">Generar video</button>
+                    <button type="submit" class="secondary" name="action" value="save">Save Order</button>
+                    <button type="submit" name="action" value="generate" formaction="generate_social_video.php">Generate Video</button>
                 </div>
             </form>
             
             <!-- Video Final Card Section -->
             <?php if($video !== ''):?>
-                <h2 style="font-family: var(--font-serif); font-size: 24px; font-weight: 500; margin: 40px 0 16px;">Video Final</h2>
+                <h2 style="font-family: var(--font-serif); font-size: 24px; font-weight: 500; margin: 40px 0 16px;">Final Video Sequence</h2>
                 <div class="contexts">
                     <article class="card generated">
-                        <div class="number">Render Final</div>
-                        <h3>Secuencia de Video</h3>
-                        <span class="purpose">Render 9:16 Vertical</span>
+                        <div class="number">Final Render</div>
+                        <h3>Video Sequence</h3>
+                        <span class="purpose">9:16 Vertical Render</span>
                         
                         <div class="inline-result inline-result-box" style="margin-bottom: 16px; border: 1px solid var(--gal-border); border-radius: var(--gal-radius); overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);">
                             <video controls style="width: 100%; height: 340px; object-fit: contain; display: block;" src="media.php?file=<?=rawurlencode($video)?>"></video>
@@ -323,11 +323,11 @@ function sh(mixed $v):string{return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-
                         
                         <div class="generated-actions" style="display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; gap: 6px;">
-                                <a href="media.php?file=<?=rawurlencode($video)?>&download=1" class="button-link" style="flex: 1;">Descargar</a>
+                                <a href="media.php?file=<?=rawurlencode($video)?>&download=1" class="button-link" style="flex: 1;">Download</a>
                             </div>
-                            <form method="post" action="delete_social_video.php" style="margin: 0; width: 100%;" onsubmit="return confirm('¿Eliminar este video generado?')">
+                            <form method="post" action="delete_social_video.php" style="margin: 0; width: 100%;" onsubmit="return confirm('Delete this generated video?')">
                                 <input type="hidden" name="id" value="<?=$id?>">
-                                <button type="submit" class="secondary danger" style="width: 100%;">Eliminar Video</button>
+                                <button type="submit" class="secondary danger" style="width: 100%;">Delete Video</button>
                             </form>
                         </div>
                     </article>

@@ -1,0 +1,29 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "The Silent Presence Collector's Den",
+      "context_role": "To present the artwork as a cherished, culturally significant piece within an intimate and thoughtful private collection, emphasizing its substantial physical presence through dramatic perspective.",
+      "space_type": "Private collector's study or quiet living room",
+      "atmosphere": "Intimate, silent, culturally literate, with an air of sophisticated contemplation and a warm, inviting evening glow.",
+      "materials": [
+        "Muted warm limewash walls in a soft ochre-grey",
+        "dark wide-plank oak flooring",
+        "deep charcoal wool rug",
+        "low-slung dark wenge wood console table",
+        "subtle bronze architectural accents",
+        "sheer linen window treatment"
+      ],
+      "lighting": "Focused, warm evening lighting from a hidden overhead source or a refined floor lamp, casting subtle shadows and making the artwork's colors glow, complemented by a soft, diffused ambient light from a window treated with sheer linen.",
+      "camera_view": "Contrapicado 7/8: Camera height is low, below normal knee height, with the viewpoint grounded close to the floor but still architectural. Use a 7/8 oblique rotation so the wall, artwork depth, and room volume are visible through one shared perspective. The artwork is seen with strong side depth and believable thickness; use clear asymmetry and negative space toward the vanishing side while keeping surrounding wall and floor aligned to the same camera.",
+      "camera_distance": "Controlled architectural distance, allowing the artwork to be the dominant feature while establishing the depth of the room.",
+      "camera_angle_notes": "The low, oblique angle dramatically emphasizes the artwork's verticality and physical presence, making it feel monumental and deeply integrated into the sophisticated space. It highlights the canvas's real thickness and creates a dynamic, engaging composition that draws the viewer into the room, elevating its perceived importance.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "This intimate collector's den, with its muted, warm palette and refined materials, provides a serene and sophisticated backdrop that allows the artwork's bold abstract forms and vibrant colors to command attention and resonate deeply. The quiet setting elevates the artwork's status as a central cultural object, aligning perfectly with the 'Domestic Collector World' directive.",
+      "commercial_reason": "Positions the artwork as a substantial, impactful investment for a discerning collector. The dramatic camera angle and refined, intimate setting enhance its perceived value and desirability, showcasing its ability to anchor and enrich a premium private residence, appealing to a market that appreciates art as a cultural centerpiece.",
+      "mockup_prompt": "A sophisticated private collector's quiet living room with muted warm limewash walls in an ochre-grey and dark wide-plank oak flooring. The artwork (insert exact artwork here, full size, high detail, physically accurate, original colors, original textures, no modifications) is hung on the wall, acting as the cultural centerpiece. A low-slung dark wenge wood console table is partially visible in the near foreground, providing subtle depth without obscuring the artwork. A deep charcoal wool rug is partially visible on the floor, adding texture. The camera is low (below knee height) with an upward tilt and a 7/8 oblique rotation, showing strong side depth of the artwork and the room's volume. Warm evening lighting from a hidden source makes the artwork's vibrant red and blue glow against the subtle background, complemented by soft, diffused ambient light from a window with sheer linen in the background. No people, no animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no bright harsh light, no overwhelming decor, no busy patterns, no hotel catalog, no furniture showroom."
+    }
+  ]
+}
+```

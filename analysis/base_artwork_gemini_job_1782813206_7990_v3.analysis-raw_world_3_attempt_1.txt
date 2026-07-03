@@ -1,0 +1,29 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Grand Salone Oblique",
+      "context_role": "Elevates the artwork's status by placing it in a grand historical setting, offering a unique, aspirational viewpoint that emphasizes scale and architectural dialogue.",
+      "space_type": "Grand room within a European palazzo or stately historical residence",
+      "atmosphere": "Refined historical grandeur, quiet contemplation, warm and serene late afternoon, bridging classical architecture with modern abstraction.",
+      "materials": [
+        "Aged plaster walls (muted cream or pale stone hue)",
+        "Warm, polished terrazzo floor with subtle geometric patterns",
+        "Restrained classical moulding on walls and ceiling",
+        "Dark polished wood (e.g., a low console or bench)",
+        "Heavy linen or raw silk drapes (seen subtly from above at windows)",
+        "Warm stone or marble accents (e.g., a simple pedestal)"
+      ],
+      "lighting": "Golden late day sunlight streaming softly through a tall arched window, creating gentle highlights on the floor and a warm, diffused glow across the artwork, with deep, soft shadows in corners.",
+      "camera_view": "Nadir Aéreo con Contexto de Ventanas: Camera positioned very high, looking downward from an upper architectural vantage point (e.g., mezzanine edge, high archway, or ceiling-level opening), capturing the room diagonally. The composition prominently features the floor plane, a low furniture piece, the vertical wall displaying the artwork, and the upper section of a tall window or arched opening, all rendered in a deep, converging perspective from above.",
+      "camera_distance": "Controlled architectural distance, allowing the artwork to be central while clearly showing the grandeur and depth of the space from the elevated viewpoint.",
+      "camera_angle_notes": "The high, downward oblique angle dramatically captures the grand scale of the palazzo, emphasizing the room's depth and architectural details like the tall windows and intricate floor patterns from a unique, elevated perspective. The artwork, while seen from above on a vertical plane, maintains its presence and shows its physical thickness, grounding it within the stately historical context. This view transforms the space into a structured composition, making the artwork a focal point within a larger, aspirational design narrative.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's minimalist abstraction and deep green hue create a compelling visual counterpoint to the rich, aged textures and classical proportions of the palazzo. This dialogue accentuates the timeless quality of both the art and the architecture, allowing the artwork's quiet intensity to resonate within a space of refined historical gravity. The contrast between contemporary art and old-world elegance enriches the perception of both.",
+      "commercial_reason": "Positions the artwork as a high-value piece suitable for discerning collectors with grand historical properties or contemporary spaces inspired by classicism. The dramatic, elevated view from above, emphasizing the room's expansive scale and luxurious materials, elevates the artwork's perceived status, making it appear both significant and perfectly integrated into an aspirational, refined environment. This framing suggests the artwork is substantial enough to hold its own in a culturally rich setting.",
+      "mockup_prompt": "Artwork: abstract green painting with red/blue squares and white lines, exact format, proportions, colors, surface texture, and thickness. No cropping or alteration. Placement: Artwork installed prominently on a vertical wall within a grand European palazzo room. Scene: A spacious, old European palazzo room with tall proportions. Walls are aged plaster in a muted historic cream, featuring subtle classical moulding. The floor is warm, polished terrazzo with intricate subtle patterns, extending from the foreground into the mid-ground, seen prominently from above. In the mid-ground, a low, dark polished wooden bench or simple console is positioned, observed from the high aerial perspective, contributing to the room's layout. In the background or along a visible side wall, the upper part of a very tall arched window or a series of arched openings allows golden late afternoon light to stream in, creating soft highlights on the terrazzo floor and a gentle, warm glow across the artwork. Lighting: Golden late day light, soft and warm, originating from the tall window context, illuminating the floor and grazing the artwork. Camera: Nadir Aéreo con Contexto de Ventanas view, positioned very high, looking diagonally downward from an elevated architectural vantage point (e.g., upper mezzanine or high archway), capturing the prominent terrazzo floor, the low dark wood bench, the vertical wall with the artwork, and the upper section of the tall arched window in the background, all rendered with a deep, converging perspective from above. The artwork's physical thickness is clearly visible, ensuring it reads as a real canvas. No visible people, no animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default, no museum spectacle, no period drama, no costumes, no royal event, no crowd, no pet, no artwork substitution, no rustic Tuscan room, no generic lounge, no showroom, no unrelated gallery"
+    }
+  ]
+}
+```

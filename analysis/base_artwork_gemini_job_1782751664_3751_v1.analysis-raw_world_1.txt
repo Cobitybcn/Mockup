@@ -1,0 +1,28 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Collector's Grounded Horizon",
+      "context_role": "Positions the artwork as a significant, contemplative centerpiece within a private, highly curated collection, emphasizing its physical presence and artistic gravitas.",
+      "space_type": "Cultivated private collector's study or a quiet, discerning living room.",
+      "atmosphere": "Intimate, reflective, and subtly grand. The ambiance is one of cultivated silence, allowing the artwork's raw energy to resonate within a sophisticated domestic setting, imbued with soft, serene daylight.",
+      "materials": [
+        "Muted warm limewashed walls (off-white or light taupe)",
+        "Polished concrete floor with a subtle, refined texture",
+        "Low-slung console table in dark ebonized wood or patinated bronze",
+        "Minimalist, low-pile natural fiber rug in a muted tone (e.g., undyed wool or hemp)",
+        "Understated ceiling with concealed, integrated lighting fixtures"
+      ],
+      "lighting": "Soft, diffused natural daylight entering from a large, unseen window, creating subtle, elongated shadows that enhance the room's depth and highlight the artwork's surface texture without harsh reflections.",
+      "camera_view": "Contrapicado 7/8: Camera height is low, below normal knee height, with the viewpoint grounded close to the floor but still architectural. Use a 7/8 oblique rotation so the wall, artwork depth, and room volume are visible through one shared perspective. The artwork is seen with strong side depth and believable thickness; use clear asymmetry and negative space toward the vanishing side while keeping surrounding wall and floor aligned to the same camera.",
+      "camera_distance": "Controlled architectural distance, allowing the artwork to be the dominant visual element while clearly defining the refined architectural context around it.",
+      "camera_angle_notes": "The low, upward-looking angle elevates the artwork, giving it a commanding presence and emphasizing its physical, sculptural quality within the refined domestic space. The 7/8 oblique rotation clearly defines the canvas thickness and the architectural depth of the room, grounding the artwork in a believable physical reality and creating a dynamic, engaging composition.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's raw, layered composition and bold, intense colors are juxtaposed with the serene and cultivated materials of the room, allowing its expressive texture and complex visual narrative to emerge with greater impact. The quiet collector environment respects the artwork's internal tension and provides a backdrop that allows for deep contemplation.",
+      "commercial_reason": "This unique, low-angle perspective presents the artwork monumentally, highlighting its significant physical presence and making it an undeniable focal point. The refined, minimalist collector environment appeals to a high-end market that values substantial, culturally rich pieces for private display, emphasizing the artwork's value as an important acquisition for a discerning collector.",
+      "mockup_prompt": "An artwork featuring a raw, layered composition of horizontal bands in red, black, bright yellow, and distressed earthy green/brown, with visible drips, scratches, small geometric blocks, and a gold circle, prominently wall-hung in a cultivated private collector's quiet living room or study. The camera is set to a low-angle Contrapicado 7/8 view, positioned below knee height, with an upward tilt and a 7/8 oblique rotation, revealing strong side depth of the physical canvas. The room features muted warm limewashed walls, a polished concrete floor with subtle texture, and a low-slung, dark ebonized wood or patinated bronze console table partially cropped in the foreground on the left. A subtle, minimalist natural fiber rug extends from the midground. The lighting is soft, diffused natural daylight entering from a large, unseen window, creating gentle, subtle shadows that highlight the artwork's texture and the room's depth. The artwork is the cultural center, dominant but believably scaled as an XL canvas, elevated and commanding as seen from below. The foreground shows part of the low console; the midground features the artwork on the wall; the background shows the depth of the room with vanishing lines consistent with the camera. No visible people or animals. Preserve all artwork details, format, proportions, colors, and textures exactly.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no bright artificial lighting, no overly decorative elements."
+    }
+  ]
+}
+```

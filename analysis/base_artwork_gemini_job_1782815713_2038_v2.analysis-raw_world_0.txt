@@ -1,0 +1,44 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Crimson Horizons",
+      "subtitle": "Abstract Landscapes in Red",
+      "description": "An evocative abstract work featuring a deep crimson field punctuated by subtle linear pathways and geometric forms, suggesting distant landscapes or architectural traces within an intense color space."
+    },
+    {
+      "title": "Silent Pathways in Red",
+      "subtitle": "Minimalist Contemplation",
+      "description": "A powerful abstract composition in a rich red hue, where delicate white lines and discrete rectangular elements create a sense of layered depth and a quiet, introspective journey."
+    },
+    {
+      "title": "Territory of Red",
+      "subtitle": "Structured Abstract Forms",
+      "description": "Bold and immersive, this artwork commands attention with its vibrant red palette, subtly broken by architectural lines and markers, forming an abstract territory of form and color."
+    }
+  ],
+  "recommended_number_of_contexts": 1,
+  "contextual_proposals": [
+    {
+      "context_name": "Minimalist Gallery Ascent",
+      "context_role": "To present the artwork as a prominent, museum-quality statement piece within a pristine contemporary setting, emphasizing its form and color through a dynamic, unique perspective.",
+      "space_type": "Minimalist Contemporary Art Gallery Wall",
+      "atmosphere": "Serene, contemporary, and art-focused, with a clean and expansive feel. The atmosphere is cool and restrained, allowing the artwork's intense red to be the sole focal point.",
+      "materials": [
+        "Matte off-white mineral wall with subtle texture",
+        "Polished light grey concrete floor",
+        "Simple white ceiling plane"
+      ],
+      "lighting": "Soft, diffused gallery daylight from unseen overhead light sources, combined with subtle, controlled track lighting that casts minimal, clean shadows, highlighting the artwork's texture without glare. Neutral-to-cool color temperature.",
+      "camera_view": "Nadir Controlado: Camera is positioned extremely low, approximately 5-15 cm from the ground, with the lens nearly touching the floor. This is a mouse-level/nadir-inspired architectural viewpoint, not a gentle low 3/4. The floor plane must be large and close in the foreground while wall height, ceiling lines, columns, door frames or architectural verticals rise strongly. Use an assertive oblique angle across the room, not a straight-on product view, with one forceful vanishing direction for architecture and artwork. The wall, floor, ceiling, and artwork should feel pulled into the same steep perspective. Use the nadir effect strongly through the surrounding room geometry: a large foreground floor wedge, floor lines, vertical wall planes, ceiling height, architectural edges, columns, furniture legs or door frames. The artwork remains the visual subject, but the dramatic low viewpoint must be obvious at thumbnail size. Do not produce a polite standing-height gallery view.",
+      "camera_distance": "Controlled architectural distance. The artwork is prominent but the surrounding minimalist architecture defines the dramatic low perspective.",
+      "camera_angle_notes": "The extremely low nadir perspective makes the artwork appear monumental and aspirational, enhancing its physical presence and thickness as it rises from the floor. The strong oblique angle creates deep spatial tension, pulling the viewer's eye upwards along the architectural lines towards the artwork, making it the undeniable protagonist within the clean, towering space.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's strong red and structured abstract quality are powerfully accentuated by the clean, neutral lines of a minimalist gallery. This environment removes all visual clutter, allowing the viewer to fully engage with the artwork's texture, color, and subtle details. The striking camera angle emphasizes the artwork's physicality and artistic weight.",
+      "commercial_reason": "This presentation positions the artwork as a high-value, collectible piece suitable for discerning contemporary art buyers. The stark, architectural setting and dramatic camera angle create an impactful, premium visual that stands out in marketing. It signals the artwork's suitability for sophisticated, modern residential or corporate art collections.",
+      "mockup_prompt": "A minimalist contemporary art gallery space with clean, soaring architectural lines and controlled proportions. The artwork (original image) is wall-mounted centrally, at an elevated height on a matte off-white mineral wall with subtle texture. The camera is extremely low, approximately 5cm from the polished light grey concrete floor, looking up with a strong upward tilt and an assertive oblique angle across the room. A large, reflective wedge of the concrete floor dominates the foreground, with its lines dramatically vanishing into the distance. Vertical off-white wall planes rise strongly towards a simple white ceiling. Subtle, cool track lighting illuminates the artwork from above, creating crisp shadows that highlight its physical thickness and textured surface. The artwork maintains its exact colors, proportions, and composition, appearing as a rigid physical canvas with foreshortening consistent with the extreme low angle and wide architectural lens. No people or animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no warm tones, no clutter, no labels, no busy gallery, no heroic scale, no architectural spectacle"
+    }
+  ]
+}
+```

@@ -1,0 +1,29 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Collector's Den: Floor-Level Gaze",
+      "context_role": "To position the artwork as a central, contemplative piece within a discerning private collection, emphasizing its inherent value and the collector's unique perspective.",
+      "space_type": "Private Collector's Study / Intimate Salon",
+      "atmosphere": "Hushed, intimate, and introspective. A sophisticated evening mood, inviting deep contemplation of the artwork. Cultivated and serene.",
+      "materials": [
+        "Deep charcoal limewash wall",
+        "Wide-plank dark oak flooring",
+        "Low-slung dark leather lounge chair (partial view)",
+        "Refined dark wood console table",
+        "Minimalist sculptural dark ceramic vase",
+        "Understated ceiling with hidden fixtures"
+      ],
+      "lighting": "Low, warm evening light, with a precisely aimed, narrow-beam spotlight subtly illuminating the artwork's surface, creating dramatic shadows and highlighting texture on the limewash wall. Soft ambient glow from a hidden source adds depth to the room's corners and foreground elements.",
+      "camera_view": "Contrapicado 7/8: Camera height is aggressively low, 5-20 cm from the floor, clearly far below knee height. The viewpoint must feel like the lens is near the floor and close to the wall, not standing height, not chest height, and not a normal eye-level gallery view. Use a very strong 7/8 oblique rotation so the wall, artwork side depth, floor plane, and room volume rush toward one shared vanishing direction. The side of the canvas can feel dramatically deep through perspective, while the artwork remains a rigid object. The artwork is seen with aggressive side depth and believable thickness from a near-floor 7/8 viewpoint. Include a large visible floor wedge or floor plane in the lower foreground, with wall/floor junctions and architectural verticals proving the camera is below knee height. Use strong asymmetry, a close foreground edge, and negative space toward the vanishing side while keeping surrounding wall and floor aligned to the same camera. This must feel almost perspective-deformed and must not collapse into a standard standing-height 3/4 gallery photograph.",
+      "camera_distance": "Controlled architectural distance",
+      "camera_angle_notes": "The aggressively low, near-floor viewpoint with a strong 7/8 oblique rotation dramatically exaggerates the canvas's physical depth and presence. A wide, textured dark oak floor plane dominates the lower foreground, with architectural verticals (e.g., furniture legs, wall-floor junction) rising sharply, grounding the artwork within a substantial, perspective-rich space and emphasizing its material reality.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's deep, rich background and vibrant accents resonate powerfully with a moody, sophisticated domestic collector setting. The dark limewash wall provides a complementary yet distinct backdrop, allowing the intense red and turquoise elements to pop with heightened contrast. The intimate, hushed atmosphere fosters a connection to the artwork's abstract, meditative qualities. The unique, low camera perspective invites a fresh, almost reverent contemplation, fitting for a prized piece in a private collection.",
+      "commercial_reason": "This context positions the artwork as a significant, high-value acquisition for a discerning collector, elevating its perceived exclusivity and artistic merit. The intimate setting, devoid of distracting elements, reinforces its status as the cultural focal point of a refined home. The distinctive 'Contrapicado 7/8' camera angle creates a visually memorable and impactful presentation, differentiating the artwork from generic mockups and emphasizing its substantial physical presence and artistic gravitas.",
+      "mockup_prompt": "A quiet and intimate private collector's study in the evening. An abstract painting, with a dark reddish-brown background and vibrant red and turquoise rectangles, is mounted on a deep charcoal limewash wall. The scene is captured with an aggressively low camera angle (5-20cm from the floor) and a strong 7/8 oblique view using a wide architectural lens (24mm), resulting in a visible upward vertical tilt and strong side-depth exaggeration. A large, textured wide-plank dark oak floor wedge dominates the lower foreground, with its grain visible and a prominent wall-floor junction. Architectural verticals rise sharply from the foreground. A low-slung dark leather lounge chair is partially visible in the far-right foreground, angled towards the artwork, its leg emphasizing perspective. A refined dark wood console table with a minimalist sculptural dark ceramic vase is in the background, subtly receding into shadow. Mood lighting comes from a precisely aimed, narrow-beam spotlight directly on the artwork, casting subtle shadows on the limewash wall and highlighting the canvas texture. Soft ambient glow defines the room corners. The artwork is central, dominant, and true to original proportions. Canvas thickness and edges are clearly visible due to aggressive perspective distortion. No people, no animals, no generic decor.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no eye-level view, no standing-height view, no normal 3/4 gallery photo, no gentle low angle, no soft controlled viewpoint, no flat wall view, no melted artwork, no torn canvas, no artwork substitution, no random people, no pets, no crowds, no children"
+    }
+  ]
+}
+```

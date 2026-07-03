@@ -1,0 +1,51 @@
+Generar un mockup fotográfico premium usando únicamente este slot de cámara:
+ID de cámara: camara_contraluz
+Nombre de cámara: CONTRALUZ
+
+ROLES DE IMAGEN:
+IMAGE 1 es la única fuente de verdad para la obra. Preservar identidad exacta, orientación, proporción, colores, marcas, zonas vacías y composición.
+IMAGE 2 es la world mother ambiental cuando exista. Tomar materialidad, luz y clima espacial, pero no copiar su cámara, layout, ubicación de muebles ni contenido artístico.
+
+DATOS FÍSICOS DE LA OBRA:
+Título: root_art_uploaded_uploaded_root_1783027079_5064_v1
+Ancho: 80 cm
+Alto: 120 cm
+Orientación: portrait
+Clase de tamaño: L
+
+CÁMARA:
+La cámara está a altura media-baja, aproximadamente entre 90 y 120 cm desde el suelo, mirando hacia la obra desde una posición ligeramente inferior al centro visual. La cámara no está completamente frontal: busca capturar la luz que entra desde detrás de la obra.
+Usar lente gran angular moderada, entre 28mm y 35mm, con perspectiva natural y ligera profundidad espacial. Evitar distorsión extrema. La lente debe permitir ver la obra, parte del ambiente y el halo de luz de fondo.
+Inclinación vertical levemente ascendente, aproximadamente 5 a 12 grados hacia arriba. La cámara mira hacia la obra y hacia la fuente de luz posterior, permitiendo que el contraluz cree brillo, borde luminoso y atmósfera.
+Rotación lateral suave de 10 a 20 grados respecto a la obra, en vista tres cuartos sutil. La cámara no está totalmente frontal; debe permitir que el contraluz marque profundidad, volumen y separación entre la obra y el fondo.
+
+COMPOSICIÓN:
+La obra aparece completamente visible o casi completamente visible, ubicada en el centro o ligeramente desplazada del centro. La fuente de luz principal está detrás de la obra o detrás del plano donde se encuentra la obra, entrando hacia cámara. El resultado debe ser una escena en contraluz: bordes iluminados, halo suave, sombras profundas en primer plano, atmósfera cinematográfica y alto contraste. Mantener espacio visible alrededor de la obra para que se perciba el ambiente, el suelo o la profundidad. Evitar que la luz queme o tape la pintura.
+
+ESCALA E INTEGRIDAD DE OBRA:
+La obra debe conservar su escala física real en relación con el muro, el suelo, puertas, ventanas, muebles y arquitectura. No debe verse como mural, póster gigante, billboard ni miniatura. En contraluz, la luz puede dramatizar los bordes, pero no debe agrandar visualmente la obra ni deformar sus proporciones.
+
+FOCO:
+La obra y sus bordes deben permanecer nítidos y legibles. El fondo luminoso puede suavizarse levemente por el contraluz, con halo atmosférico y profundidad. No desenfocar la pintura ni perder sus detalles. La fuente de luz posterior puede tener brillo suave, pero sin quemar la obra.
+
+PROMPT NEGATIVO:
+obra deformada, pintura inventada, obra ilegible, obra quemada por la luz, silueta total, escala mural, billboard, miniatura, marco agregado, texto visible, reflejos que tapen la pintura, figura humana dominante, rostro visible, pose de moda, exceso de flare, distorsión extrema, lente ojo de pez, ambiente plano, cámara frontal sin profundidad
+
+ENVIRONMENTAL SCALE REASONING POLICY
+
+Before placing the artwork, infer the physical scale of IMAGE 2 from the visible environment. Use whatever scale evidence is naturally available in the scene: architectural modules, openings, repeated surface units, furniture, fixtures, objects, floor/wall junctions, shadows, spatial depth, human-scale traces, and material patterns.
+
+Do not rely on a single clue. Cross-check the artwork size against at least two or three independent visual anchors whenever the scene provides them. The installed artwork must harmonize with both the supplied artwork dimensions and the inferred scale of the world mother environment.
+
+Treat IMAGE 2 as scale evidence, not only as style evidence. Its objects, room proportions, openings, material units, and spatial distances must constrain the artwork's physical footprint. Empty wall area is not permission to enlarge the artwork.
+
+The artwork may become visually prominent through camera position, crop, lens choice, perspective, lighting, and composition, but its physical size must remain consistent with the surrounding environmental anchors.
+
+WORLD MOTHER ARTWORK QUARANTINE:
+IMAGE 2 may contain paintings, murals, wall drawings, posters, framed images, easel canvases, sketches, portraits, figures, decorative marks, or unfinished studio artwork. Treat all of those as unsafe environmental artifacts, not as content sources.
+
+Never copy, preserve, enlarge, translate, restyle, echo, or remix any artwork, mural, face, figure, brushwork, color composition, easel canvas, poster, frame content, or wall drawing from IMAGE 2 into IMAGE 1 or into the installed artwork. IMAGE 1 is the only artwork content allowed.
+
+If IMAGE 2 contains a large mural, figurative wall painting, colorful wall drawing, poster cluster, or competing artwork, neutralize that area into compatible blank wall, aged plaster, shelving, stacked blank canvases, furniture, shadow, or ordinary studio clutter. Do not keep it as a second prominent artwork in the final image.
+
+The final mockup must contain one primary artwork only: the supplied IMAGE 1 canvas/object. Any secondary canvas-like object may appear only as a blank support, turned-away canvas, neutral stretcher, or indistinct studio prop with no readable image, no face, no figure, and no decorative composition.

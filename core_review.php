@@ -23,6 +23,49 @@ if (!$artwork) {
     die('Artwork not found or access denied.');
 }
 
+// Upload Oblique Perspective Handler
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'upload_oblique') {
+    $viewType = $_POST['view_type'] ?? '';
+    if (in_array($viewType, ['three_quarter_left', 'three_quarter_right'], true)) {
+        $dbViewType = str_replace('_', '-', $viewType);
+        
+        if (isset($_FILES['oblique_file']) && $_FILES['oblique_file']['error'] === UPLOAD_ERR_OK) {
+            $tmpPath = $_FILES['oblique_file']['tmp_name'];
+            $origName = $_FILES['oblique_file']['name'];
+            $ext = pathinfo($origName, PATHINFO_EXTENSION);
+            if (!in_array(strtolower($ext), ['png', 'jpg', 'jpeg', 'webp'], true)) {
+                die('Invalid file extension. Please upload PNG, JPG, JPEG, or WEBP.');
+            }
+            
+            $newName = 'base_artwork_oblique_' . $viewType . '_' . $id . '_' . time() . '.' . $ext;
+            $destPath = RESULTS_DIR . DIRECTORY_SEPARATOR . $newName;
+            
+            if (move_uploaded_file($tmpPath, $destPath)) {
+                Database::withBusyRetry(function() use ($pdo, $id, $newName, $dbViewType) {
+                    $stmt = $pdo->prepare('SELECT id FROM root_artwork_candidates WHERE artwork_id = :artwork_id AND view_type = :view_type LIMIT 1');
+                    $stmt->execute(['artwork_id' => $id, 'view_type' => $dbViewType]);
+                    $candId = $stmt->fetchColumn();
+                    
+                    if ($candId !== false) {
+                        $pdo->prepare('UPDATE root_artwork_candidates SET file_name = :file_name WHERE id = :id')
+                            ->execute(['file_name' => $newName, 'id' => $candId]);
+                    } else {
+                        $pdo->prepare('INSERT INTO root_artwork_candidates (artwork_id, file_name, view_type, is_selected) VALUES (:artwork_id, :file_name, :view_type, 0)')
+                            ->execute([
+                                'artwork_id' => $id,
+                                'file_name' => $newName,
+                                'view_type' => $dbViewType
+                            ]);
+                    }
+                }, 12);
+                
+                header('Location: core_review.php?id=' . $id . '&uploaded=1');
+                exit;
+            }
+        }
+    }
+}
+
 // 1. Read CORE JSON if exists
 $corePath = __DIR__ . '/analysis/core/' . $id . '.core.json';
 $coreJson = null;
@@ -479,13 +522,12 @@ $curatedMockupsUrl = $queuedMockups > 0
                             <a class="button-link secondary" href="curated_mockups.php?image=<?= rawurlencode($rootFile) ?>&id=<?= (int)$id ?>&legacy=1">Curated Mockups (Legacy)</a>
                         <?php endif; ?>
                     <?php endif; ?>
-                    <a class="button-link secondary" href="mockup_branches_review.php?id=<?= (int)$id ?>">View Mockup Branch Contexts</a>
                 </div>
             </div>
 
             <?php if ($coreJson === null): ?>
                 <div class="notice" style="border-left-color: var(--danger); background: rgba(166, 60, 60, 0.03); color: var(--ink);">
-                    <strong>Aviso discreto:</strong> El CORE JSON no existe para esta obra. Estamos mostrando la información básica utilizando la base de datos local y fallbacks heredados.
+                    <strong>Notice:</strong> The Core JSON file does not exist for this artwork. Showing basic information using local database references and legacy fallbacks.
                 </div>
             <?php endif; ?>
 
@@ -508,13 +550,38 @@ $curatedMockupsUrl = $queuedMockups > 0
                             <h3><?= h($view['label']) ?></h3>
                             <p><strong>Filename:</strong> <?= h($view['file']) ?></p>
                             <p><strong>Role:</strong> <?= h($view['role']) ?></p>
+                            
+                            <!-- Replace Perspective Form -->
+                            <?php if ($key !== 'frontal'): ?>
+                                <form method="post" enctype="multipart/form-data" style="margin-top: auto; padding-top: 10px; border-top: 1px dashed var(--line);">
+                                    <input type="hidden" name="action" value="upload_oblique">
+                                    <input type="hidden" name="view_type" value="<?= h($key) ?>">
+                                    <div style="display: flex; gap: 6px; align-items: center;">
+                                        <input type="file" name="oblique_file" accept="image/*" required style="font-size: 10px; width: 100%; min-height: unset; padding: 2px;">
+                                        <button type="submit" class="button" style="padding: 4px 8px; font-size: 9px; margin: 0; min-height: unset; line-height: 1;">Replace</button>
+                                    </div>
+                                </form>
+                            <?php endif; ?>
                         <?php else: ?>
                             <div class="missing-placeholder">
                                 <span>No capture available</span>
                             </div>
                             <h3><?= h($view['label']) ?></h3>
                             <p><strong>Status:</strong> <span class="badge danger">Missing</span></p>
-                            <p><strong>Expected:</strong> <?= h($view['role']) ?></p>
+                            <p style="margin-bottom: 12px;"><strong>Expected:</strong> <?= h($view['role']) ?></p>
+                            
+                            <!-- Upload Oblique Form -->
+                            <?php if ($key !== 'frontal'): ?>
+                                <form method="post" enctype="multipart/form-data" style="margin-top: auto; padding-top: 10px; border-top: 1px dashed var(--line-dark);">
+                                    <input type="hidden" name="action" value="upload_oblique">
+                                    <input type="hidden" name="view_type" value="<?= h($key) ?>">
+                                    <label style="font-size: 9px; text-transform: uppercase; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px;">Upload Perspective</label>
+                                    <div style="display: flex; gap: 6px; align-items: center;">
+                                        <input type="file" name="oblique_file" accept="image/*" required style="font-size: 10px; width: 100%; min-height: unset; padding: 2px;">
+                                        <button type="submit" class="button" style="padding: 4px 8px; font-size: 9px; margin: 0; min-height: unset; line-height: 1;">Upload</button>
+                                    </div>
+                                </form>
+                            <?php endif; ?>
                         <?php endif; ?>
 
                         <?php if ($selectedView === $key): ?>

@@ -99,7 +99,7 @@ final class WorldMotherGenerator
             $b64 = $this->client->generateImage([
                 $this->client->textPart($prompt),
                 $this->client->imagePart($referencePath),
-            ]);
+            ], null, $this->precompositionOverride());
             $bytes = base64_decode($b64);
             if ($bytes === false) {
                 throw new RuntimeException('Gemini did not return a valid image.');
@@ -191,7 +191,7 @@ final class WorldMotherGenerator
                 foreach ($referencePaths as $referencePath) {
                     $parts[] = $this->client->imagePart($referencePath);
                 }
-                $b64 = $this->client->generateImage($parts);
+                $b64 = $this->client->generateImage($parts, null, $this->precompositionOverride());
                 $bytes = base64_decode($b64);
                 if ($bytes === false) {
                     throw new RuntimeException('Gemini did not return a valid image.');
@@ -265,7 +265,7 @@ final class WorldMotherGenerator
         if (ProviderSettings::isRealMode() && ProviderSettings::imageProvider() === 'gemini') {
             $b64 = $this->client->generateImage([
                 $this->client->textPart($prompt),
-            ]);
+            ], null, $this->precompositionOverride());
             $bytes = base64_decode($b64);
             if ($bytes === false) {
                 throw new RuntimeException('Gemini did not return a valid image.');
@@ -303,6 +303,23 @@ final class WorldMotherGenerator
             'audit_file' => 'analysis/world-mother-generation-audit/' . $auditName,
             'auto_generated' => true,
         ];
+    }
+
+    /**
+     * World mother generation prompts always mention "mockups" (they describe the future
+     * use case), which makes vertex_bridge.py classify these calls as is_mockup=True. If a
+     * call sends a single reference image, that would make the mockup precomposition/fill_ratio
+     * block (gated on a single image + is_mockup + MOCKUP_USE_PRECOMPOSITION) structurally
+     * reachable, even though it makes no sense here — there is no artwork or "X cm wide x Y cm
+     * high" size line in this prompt, so it would just paste the reference onto a grey square
+     * before generating. Forced off for every call in this class, independent of the global
+     * flag (which is already false today) — see docs/AUDITORIA_PROMPTS_MOCKUPS_20260701.md, Fase 6.
+     *
+     * @return array<string,string>
+     */
+    private function precompositionOverride(): array
+    {
+        return ['MOCKUP_USE_PRECOMPOSITION' => 'false'];
     }
 
     public static function safeSlug(string $value): string
@@ -405,7 +422,7 @@ final class WorldMotherGenerator
             'materials' => ['plaster', 'concrete', 'wood', 'stone'],
             'palette' => ['neutral', 'warm', 'material'],
             'mood' => ['quiet', 'collector', 'artwork-first'],
-            'scale' => 'suitable for XL artwork mockups',
+            'scale' => 'suitable for believable artwork mockups at the supplied artwork dimensions',
             'camera_potential' => ['frontal', 'three-quarter', 'low angle', 'high angle'],
             'negative_risks' => ['remove existing artwork', 'remove logos/text', 'avoid clutter', 'avoid people and animals'],
             'style_details' => [

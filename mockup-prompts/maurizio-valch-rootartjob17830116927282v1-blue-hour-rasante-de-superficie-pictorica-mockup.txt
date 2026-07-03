@@ -1,0 +1,35 @@
+Generate one premium photographic mockup using this exact camera slot only:
+Camera Slot ID: rasante_superficie_pintura
+Camera Slot Name: Rasante de Superficie Pictórica
+
+INPUT ROLES:
+IMAGE 1 is the only source of truth for the artwork surface. Preserve the visible colors, marks, surface rhythm, existing pigment, weave, and local abstract identity.
+IMAGE 2 may only inform a neutral peripheral surface tone if absolutely needed. Do not import atmosphere, room layout, windows, furniture, props, dramatic light, or architectural narrative.
+
+ARTWORK PHYSICAL DATA:
+Artwork title: root_art_job_1783011692_7282_v1
+Artwork width: 80 cm
+Artwork height: 100 cm
+Artwork orientation: portrait
+Artwork size class: L
+
+TASK:
+Create a rasante close-up view across the physical painting surface of IMAGE 1. The camera is almost parallel to the artwork plane, grazing across the skin of the painting. Partial cropping is expected; this is a material surface photograph, not a full-room mockup.
+
+CAMERA:
+Use a close-focus macro or material-detail lens with natural shallow optical depth. Run the viewpoint laterally along the painting plane so existing pigment, texture, brushwork, shine, and surface transitions create depth. The full artwork does not need to be visible.
+
+STRICT ARTWORK FIDELITY:
+The selected visible area must remain the same artwork from IMAGE 1. Preserve local color relationships, marks, sparse areas, abstract identity, and surface character. Do not redraw, reinterpret, recolor, complete, recompose, replace, or invent any new imagery.
+
+TEXTURE LIMITS:
+Show only physical surface presence already supported by IMAGE 1 and by a normal painted canvas. Do not add artificial impasto, invented relief, scratches, cracks, incisions, extra ridges, wet paint, plastic shine, embossed effects, or new tactile marks.
+
+ATMOSPHERE LIMITS:
+No atmospheric scene-building. No dramatic atelier mood. No cinematic haze. No golden-room storytelling. No full room. No furniture, easels, shelves, table setups, large windows, decorative props, people, pets, or architectural narrative. Background, if any, must be minimal and secondary.
+
+FOCUS:
+The selected focus ridge, mark, pigment area, or texture band must be sharp. Foreground and background surface areas may soften naturally along the grazing plane. Never blur the chosen focus area or turn the surface into an abstract background texture unrelated to IMAGE 1.
+
+NEGATIVE PROMPT:
+No plastic surface, no glossy digital look, no digital screen, no poster-like print, no printed-paper appearance, no invented imagery, no artwork substitution, no artificial impasto, no invented relief, no cracks, no scratches, no incisions, no extra ridges, no wet paint, no embossed effects, no new tactile marks, no full room, no room atmosphere, no furniture, no easel, no table setup, no shelves, no large windows, no dramatic atelier mood, no cinematic haze, no people, no pets, no crowds, no children, no visible text, no logos, no watermarks.

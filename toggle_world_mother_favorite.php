@@ -7,7 +7,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 try {
     $user = Auth::requireUser();
-    $category = WorldMotherGenerator::safeSlug((string)($_POST['category'] ?? $_GET['category'] ?? ''));
+    $category = trim(str_replace(['\\', '/'], '', (string)($_POST['category'] ?? $_GET['category'] ?? '')));
     if ($category === '') {
         http_response_code(400);
         echo json_encode(['ok' => false, 'error' => 'Missing scene mother category.'], JSON_UNESCAPED_UNICODE);
@@ -31,11 +31,16 @@ try {
         }
     }
 
-    $favorite = !in_array($category, $favorites, true);
+    $normalizedCategory = WorldMotherGenerator::safeSlug($category);
+    $favorite = !in_array($category, $favorites, true)
+        && !in_array($normalizedCategory, array_map([WorldMotherGenerator::class, 'safeSlug'], $favorites), true);
     if ($favorite) {
         $favorites[] = $category;
     } else {
-        $favorites = array_values(array_filter($favorites, static fn (string $slug): bool => $slug !== $category));
+        $favorites = array_values(array_filter(
+            $favorites,
+            static fn (string $slug): bool => $slug !== $category && WorldMotherGenerator::safeSlug($slug) !== $normalizedCategory
+        ));
     }
 
     sort($favorites, SORT_STRING);

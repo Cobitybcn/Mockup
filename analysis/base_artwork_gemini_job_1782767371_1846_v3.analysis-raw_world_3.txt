@@ -1,0 +1,29 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Palazzo Alchimia del Verde",
+      "context_role": "This context positions the artwork within a timeless European heritage setting, emphasizing its gravitas and ability to harmonise with refined architectural history while retaining its contemporary edge.",
+      "space_type": "Grand Salon in an old European Palazzo",
+      "atmosphere": "A serene, refined historical elegance, contemplative and bathed in warm, golden late afternoon light. The atmosphere evokes sophisticated dialogue between old-world architecture and striking modern abstraction.",
+      "materials": [
+        "Aged limewash walls in warm off-white/cream",
+        "Wide plank herringbone parquet floor with subtle patina",
+        "Tall arch-top windows with elegant, restrained classical molding",
+        "Subtle, barely visible ornate ceiling medallion",
+        "Minimalist long console table in dark, polished wood or bronze",
+        "Simple antique stone bench"
+      ],
+      "lighting": "Golden late afternoon sunlight streams through tall, unadorned windows, casting soft, elongated shadows across the parquet floor and subtly illuminating the artwork's textures. The room feels warm and inviting, with a distinct contrast between sunlit areas and gently shaded architectural elements.",
+      "camera_view": "Vista Aérea con Contexto de Ventanas: Camera height is elevated above normal eye level, high enough to read the room, windows, floor plane, and artwork together. Use a gentle diagonal rotation so window context and the artwork wall are both visible without splitting perspectives. The room is comprehensible from above, with window light and floor geometry giving context while the artwork remains identifiable; allow a moderate offset so floor, windows, and surrounding architecture carry part of the frame.",
+      "camera_distance": "Controlled architectural distance, allowing the artwork to be central while showcasing the room's elegant proportions and window context.",
+      "camera_angle_notes": "The elevated viewpoint provides a comprehensive, spatial view of the grand palazzo room, with the artwork prominently displayed on a tall, aged plaster wall. The gentle diagonal angle clearly reveals the polished parquet floor extending into the foreground, the grand scale of the room, and the source of the warm late light through large windows, demonstrating the artwork's sophisticated integration into a historically rich architectural environment. The physical thickness and presence of the canvas are subtly discernible.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's bold, abstract geometry and rich, deep green, vibrant red, and dark blue tones find a compelling counterpoint in the classic proportions and warm, aged materials of the palazzo. This historical context enriches the artwork by imbuing it with a sense of timelessness and gravitas, demonstrating its ability to transcend eras. The artwork's deep green resonates with the muted historical palette, while the vibrant red offers a striking modern intervention, creating visual tension and intellectual interest.",
+      "commercial_reason": "This setting positions the artwork as a significant piece suitable for discerning collectors with grand, architecturally rich homes and a sophisticated appreciation for art that bridges history and modernity. It showcases the artwork's versatility and enduring appeal, suggesting it can elevate a historically significant space without being consumed by it. The warm, inviting light and premium materials make the environment desirable, and the elevated camera view offers an aspirational perspective, emphasizing the artwork's prestige and potential for impactful placement.",
+      "mockup_prompt": "An old European palazzo grand salon, viewed from an elevated camera angle looking down at a slight diagonal. A large abstract painting [artwork] hangs prominently on a tall, aged limewash wall in a warm off-white hue. The camera's gentle diagonal rotation reveals a wide plank herringbone parquet floor extending into the foreground, the artwork wall, and tall arch-top windows with restrained classical molding to the side, allowing warm golden late afternoon sunlight to stream in. The light casts soft, elongated shadows on the parquet floor and subtly illuminates the artwork's textures. A minimalist, long, dark polished wood console table sits against the wall beneath the artwork, and a simple antique stone bench is placed in the midground, providing clear compositional geometry on the floor plane. The room features subtle ornate ceiling medallions barely visible in the upper frame. The artwork appears as a physical stretched canvas with discernible thickness. No visible people, animals, or distractions. The room feels spacious and elegantly quiet, with pronounced architectural gravity and rich textures.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no museum spectacle, no period drama, no costumes, no royal event, no crowd, no pet, no rustic Tuscan room, no generic lounge, no showroom, no unrelated gallery"
+    }
+  ]
+}
+```

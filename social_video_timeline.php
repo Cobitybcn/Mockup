@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/app/bootstrap.php';
 
 $user = Auth::requireUser();
 $artworkId = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
@@ -13,7 +14,7 @@ function svt_h(mixed $v): string { return htmlspecialchars((string)$v, ENT_QUOTE
 function svt_json(string $v): array { $r=json_decode($v,true); return is_array($r)?$r:[]; }
 function svt_encode(array $v): string { return json_encode($v, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?: '{}'; }
 function svt_default_timeline(string $origin=''): array {
-    $roles=['Principio','Desarrollo','Desarrollo','Desarrollo','Fin']; $items=[];
+    $roles=['Beginning','Development','Development','Development','End']; $items=[];
     foreach ($roles as $i=>$role) $items[]=['position'=>$i+1,'role'=>$role,'image'=>$i===0?$origin:'','narrative_text'=>'','reference_image'=>'','reference_text'=>''];
     return ['duration_seconds'=>25,'tone_value'=>50,'milestones'=>$items];
 }
@@ -26,13 +27,13 @@ function svt_save(PDO $pdo,int $userId,int $artworkId,array $timeline,string $st
 }
 function svt_upload(array $file,string $kind,int $userId,int $artworkId): string {
     if (($file['error']??UPLOAD_ERR_NO_FILE)===UPLOAD_ERR_NO_FILE) return '';
-    if (($file['error']??UPLOAD_ERR_OK)!==UPLOAD_ERR_OK || !is_uploaded_file((string)($file['tmp_name']??''))) throw new RuntimeException('No se pudo subir un archivo de la timeline.');
-    if ((int)($file['size']??0)>20*1024*1024) throw new RuntimeException('Cada archivo de la timeline tiene un máximo de 20 MB.');
+    if (($file['error']??UPLOAD_ERR_OK)!==UPLOAD_ERR_OK || !is_uploaded_file((string)($file['tmp_name']??''))) throw new RuntimeException('Could not upload timeline file.');
+    if ((int)($file['size']??0)>20*1024*1024) throw new RuntimeException('Each timeline file has a maximum limit of 20 MB.');
     $ext=strtolower(pathinfo((string)($file['name']??''),PATHINFO_EXTENSION)); $allowed=$kind==='text'?['txt','pdf']:['jpg','jpeg','png','webp'];
-    if (!in_array($ext,$allowed,true)) throw new RuntimeException('El tipo de archivo no está permitido para este campo.');
+    if (!in_array($ext,$allowed,true)) throw new RuntimeException('The file type is not allowed for this field.');
     $dir=RESULTS_DIR.DIRECTORY_SEPARATOR.'social-video-timeline'; if (!is_dir($dir)) mkdir($dir,0775,true);
     $name=$kind.'_u'.$userId.'_a'.$artworkId.'_'.time().'_'.bin2hex(random_bytes(4)).'.'.$ext;
-    if (!move_uploaded_file((string)$file['tmp_name'],$dir.DIRECTORY_SEPARATOR.$name)) throw new RuntimeException('No se pudo guardar el archivo.');
+    if (!move_uploaded_file((string)$file['tmp_name'],$dir.DIRECTORY_SEPARATOR.$name)) throw new RuntimeException('Could not save the file.');
     return 'social-video-timeline/'.$name;
 }
 function svt_file_at(array $files, string $name, int $index): array {
@@ -47,9 +48,9 @@ $timeline['milestones']=array_values($timeline['milestones']??[]); if (count($ti
 $notice=''; $error='';
 if ($_SERVER['REQUEST_METHOD']==='POST') try {
     $timeline=['duration_seconds'=>max(16,min(60,(int)($_POST['duration_seconds']??25))),'tone_value'=>max(0,min(100,(int)($_POST['tone_value']??50))),'milestones'=>[]];
-    foreach (range(0,4) as $i) { $old=(array)($saved['timeline']['milestones'][$i]??[]); $image=trim((string)($_POST['milestone_image'][$i]??$old['image']??'')); $own=svt_upload(svt_file_at($_FILES,'milestone_image_upload',$i),'image',(int)$user['id'],$artworkId); if($own!=='')$image=$own; $ref=svt_upload(svt_file_at($_FILES,'reference_image',$i),'image',(int)$user['id'],$artworkId); $doc=svt_upload(svt_file_at($_FILES,'reference_text',$i),'text',(int)$user['id'],$artworkId); $timeline['milestones'][]=['position'=>$i+1,'role'=>$i===0?'Principio':($i===4?'Fin':'Desarrollo'),'image'=>$image,'narrative_text'=>trim((string)($_POST['narrative_text'][$i]??'')),'reference_image'=>$ref?:($old['reference_image']??''),'reference_text'=>$doc?:($old['reference_text']??'')]; }
+    foreach (range(0,4) as $i) { $old=(array)($saved['timeline']['milestones'][$i]??[]); $image=trim((string)($_POST['milestone_image'][$i]??$old['image']??'')); $own=svt_upload(svt_file_at($_FILES,'milestone_image_upload',$i),'image',(int)$user['id'],$artworkId); if($own!=='')$image=$own; $ref=svt_upload(svt_file_at($_FILES,'reference_image',$i),'image',(int)$user['id'],$artworkId); $doc=svt_upload(svt_file_at($_FILES,'reference_text',$i),'text',(int)$user['id'],$artworkId); $timeline['milestones'][]=['position'=>$i+1,'role'=>$i===0?'Beginning':($i===4?'End':'Development'),'image'=>$image,'narrative_text'=>trim((string)($_POST['narrative_text'][$i]??'')),'reference_image'=>$ref?:($old['reference_image']??''),'reference_text'=>$doc?:($old['reference_text']??'')]; }
     $real=array_filter($timeline['milestones'],fn($m)=>$m['image']!==''); $edges=array_filter([$timeline['milestones'][0]['image'],$timeline['milestones'][4]['image']]);
-    if (($_POST['action']??'')==='concept') { if(count($real)<2||$edges===[]) throw new RuntimeException('Añade al menos dos imágenes ancla, incluyendo Principio o Fin.'); $analysisStmt=$pdo->prepare('SELECT analysis_json FROM artwork_analysis WHERE artwork_id=:id ORDER BY id DESC LIMIT 1');$analysisStmt->execute(['id'=>$artworkId]);$analysis=svt_json((string)$analysisStmt->fetchColumn()); $concept=(new SocialVideoService())->conceptFromTimeline($timeline,$artwork,$analysis,ArtistProfile::findForUser((int)$user['id'])); svt_save($pdo,(int)$user['id'],$artworkId,$timeline,'timeline_concept',svt_encode($concept));$notice='Concepto de timeline generado.'; } else { svt_save($pdo,(int)$user['id'],$artworkId,$timeline);$notice='Timeline guardada.'; }
+    if (($_POST['action']??'')==='concept') { if(count($real)<2||$edges===[]) throw new RuntimeException('Add at least two anchor images, including Beginning or End.'); $analysisStmt=$pdo->prepare('SELECT analysis_json FROM artwork_analysis WHERE artwork_id=:id ORDER BY id DESC LIMIT 1');$analysisStmt->execute(['id'=>$artworkId]);$analysis=svt_json((string)$analysisStmt->fetchColumn()); $concept=(new SocialVideoService())->conceptFromTimeline($timeline,$artwork,$analysis,ArtistProfile::findForUser((int)$user['id'])); svt_save($pdo,(int)$user['id'],$artworkId,$timeline,'timeline_concept',svt_encode($concept));$notice='Timeline concept generated.'; } else { svt_save($pdo,(int)$user['id'],$artworkId,$timeline);$notice='Timeline saved.'; }
 } catch(Throwable $e) {$error=$e->getMessage();}
 $realCount=count(array_filter($timeline['milestones'],fn($m)=>trim((string)($m['image']??''))!=='')); $edgeCount=count(array_filter([$timeline['milestones'][0]['image']??'',$timeline['milestones'][4]['image']??'']));
 $wf->execute(['id'=>$artworkId]); $workflow=$wf->fetch()?:[];
@@ -63,9 +64,9 @@ register_shutdown_function(function (): void {
     $videoPanel = '';
     if ($conceptReady) {
         $status = htmlspecialchars(str_replace('_', ' ', (string)($workflow['video_status'] ?? 'concept ready')), ENT_QUOTES, 'UTF-8');
-        $videoPanel = '<section class="svt-help" style="margin:0 0 24px"><h2>Video final</h2><p><strong>Estado:</strong> ' . $status . '</p>';
-        if ($videoUrl === '') { $videoPanel .= '<p>El concepto está listo. Esta acción ejecuta Veo y puede tardar varios minutos.</p><form method="post" action="social_video_run.php"><input type="hidden" name="id" value="' . (int)$artworkId . '"><button type="submit">Generar video final</button></form>'; }
-        if ($videoUrl !== '') { $videoPanel .= '<h3>Video generado</h3><video controls preload="metadata" style="width:100%;max-height:580px" src="media.php?file=' . rawurlencode($videoUrl) . '"></video>'; }
+        $videoPanel = '<section class="svt-help" style="margin:0 0 24px"><h2>Final Video</h2><p><strong>Status:</strong> ' . $status . '</p>';
+        if ($videoUrl === '') { $videoPanel .= '<p>The concept is ready. This action runs Veo and may take several minutes.</p><form method="post" action="social_video_run.php"><input type="hidden" name="id" value="' . (int)$artworkId . '"><button type="submit">Generate Final Video</button></form>'; }
+        if ($videoUrl !== '') { $videoPanel .= '<h3>Generated Video</h3><video controls preload="metadata" style="width:100%;max-height:580px" src="media.php?file=' . rawurlencode($videoUrl) . '"></video>'; }
         $videoPanel .= '</section>';
     }
     $script = <<<'HTML'
@@ -89,15 +90,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const edge = hasImage(cards[0]) || hasImage(cards[4]);
     const valid = count >= 2 && edge;
     if (button) button.disabled = !valid;
-    if (message) message.textContent = valid ? 'Timeline lista para convertir en concepto.' : 'Falta: al menos dos imágenes ancla, incluyendo Principio o Fin.';
+    if (message) message.textContent = valid ? 'Timeline ready to convert to concept.' : 'Missing: at least two anchor images, including Beginning or End.';
   };
   document.querySelectorAll('input[type="file"][name^="milestone_image_upload"]').forEach(input => input.addEventListener('change', update));
-  const emptySlot = slot => { slot.classList.remove('has-image'); slot.textContent = 'Arrastra un mockup o sube una imagen'; };
+  const emptySlot = slot => { slot.classList.remove('has-image'); slot.textContent = 'Drag a mockup or upload below'; };
   const makeMovable = slot => { const image = slot.querySelector('img'); if (!image) return; image.draggable = true; image.addEventListener('dragstart', e => { window.svtTimelineSource = slot.closest('.svt-card').dataset.index; e.dataTransfer.setData('text/plain', slot.closest('.svt-card').querySelector('.milestone-image').value); }); };
   document.querySelectorAll('.svt-card').forEach(card => {
     const field = card.querySelector('.milestone-image'), slot = card.querySelector('.svt-slot');
     const remove = document.createElement('button');
-    remove.type = 'button'; remove.className = 'secondary svt-remove-image'; remove.innerHTML = '&times; Quitar imagen';
+    remove.type = 'button'; remove.className = 'secondary svt-remove-image'; remove.innerHTML = '&times; Remove Image';
     remove.style.display = field.value ? 'block' : 'none';
     remove.addEventListener('click', () => { field.value = ''; const file = card.querySelector('input[type="file"][name^="milestone_image_upload"]'); if (file) file.value = ''; emptySlot(slot); remove.style.display = 'none'; update(); });
     slot.after(remove); makeMovable(slot);
@@ -105,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   document.querySelectorAll('.svt-library img').forEach(image => image.addEventListener('click', function () {
     const preview = document.createElement('div'); preview.className = 'svt-preview';
-    preview.innerHTML = '<img alt="Vista previa del mockup" src="' + image.src + '">';
+    preview.innerHTML = '<img alt="Mockup Preview" src="' + image.src + '">';
     preview.addEventListener('click', () => preview.remove()); document.body.appendChild(preview);
   }));
   update();
@@ -116,4 +117,233 @@ HTML;
     echo str_replace('</body>', $script . '</body>', $html);
 });
 ?>
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Social Video Timeline</title><link rel="stylesheet" href="style.css"><style>.svt{max-width:1500px;margin:0 auto}.svt-head{display:flex;justify-content:space-between;gap:20px;align-items:end}.svt-controls{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:22px 0}.svt-controls input{width:150px}.svt-library{display:flex;gap:10px;overflow:auto;padding:12px;background:var(--surface-soft);border:1px solid var(--line)}.svt-library img{width:110px;height:80px;object-fit:cover;cursor:grab;border:2px solid transparent}.svt-library img:hover{border-color:var(--accent)}.svt-line{display:grid;grid-template-columns:repeat(5,minmax(210px,1fr));gap:14px;position:relative}.svt-card{border:1px solid var(--line);background:var(--surface);padding:14px;border-radius:var(--radius)}.svt-card h3{margin:0 0 8px}.svt-slot{min-height:135px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;background:var(--surface-soft);margin-bottom:10px;text-align:center;padding:8px}.svt-slot.has-image{border-style:solid}.svt-slot img{max-width:100%;max-height:130px}.svt-card textarea{width:100%;min-height:95px;box-sizing:border-box}.svt-card input{width:100%;box-sizing:border-box;margin:7px 0}.svt-help{padding:12px;border-left:3px solid var(--accent);background:var(--surface-soft)}@media(max-width:1050px){.svt-line{grid-template-columns:1fr}.svt-library{flex-wrap:wrap}}</style></head><body><div class="app-shell"><?php include __DIR__.'/sidebar.php';?><main class="main-area"><div class="workspace svt"><div class="svt-head"><div><h1>Social Video (beta)</h1><p>Dirige el recorrido: coloca cinco momentos y escribe qué sucede entre ellos.</p></div><a class="button-link secondary" href="artwork.php?id=<?= $artworkId ?>">Volver a la obra</a></div><?php if($notice):?><div class="notice"><?=svt_h($notice)?></div><?php endif;?><?php if($error):?><div class="notice error"><?=svt_h($error)?></div><?php endif;?><div class="svt-help">Necesitas <strong>dos imágenes ancla</strong> como mínimo, y una debe estar en <strong>Principio o Fin</strong>. Los hitos sin imagen pueden describirse con texto; su imagen intermedia se prototipa antes de generar el video final.</div><h2>Mockups disponibles</h2><div class="svt-library"><?php foreach($mockups as $m):$f=basename((string)$m['mockup_file']);?><img draggable="true" data-file="<?=svt_h($f)?>" src="media.php?file=<?=rawurlencode($f)?>" title="Arrastra a un hito"><?php endforeach;?></div><form method="post" enctype="multipart/form-data"><input type="hidden" name="id" value="<?=$artworkId?>"><div class="svt-controls"><label>Duración total <input name="duration_seconds" type="number" min="16" max="60" value="<?= (int)$timeline['duration_seconds']?>"> s</label><label>Tono: Documental ←→ Artístico <input name="tone_value" type="range" min="0" max="100" value="<?= (int)$timeline['tone_value']?>"></label><output><?= (int)$timeline['tone_value']?></output></div><div class="svt-line"><?php foreach($timeline['milestones'] as $i=>$m):$img=trim((string)$m['image']);?><section class="svt-card" data-index="<?=$i?>"><h3><?=svt_h($m['role'])?> <small><?= $i+1 ?>/5</small></h3><div class="svt-slot <?=$img!==''?'has-image':''?>" data-slot="<?=$i?>"><?php if($img!=='' && !str_contains($img,'/')):?><img src="media.php?file=<?=rawurlencode($img)?>"><?php else:?>Arrastra un mockup o sube una imagen<?php endif;?></div><input class="milestone-image" type="hidden" name="milestone_image[<?=$i?>]" value="<?=svt_h($img)?>"><label>Imagen propia<input type="file" name="milestone_image_upload[<?=$i?>]" accept="image/jpeg,image/png,image/webp"></label><label>Qué sucede en este momento<textarea name="narrative_text[<?=$i?>]" autocomplete="off"><?=svt_h($m['narrative_text'])?></textarea></label><label>Imagen de referencia<input type="file" name="reference_image[<?=$i?>]" accept="image/jpeg,image/png,image/webp"></label><label>Texto o PDF de referencia<input type="file" name="reference_text[<?=$i?>]" accept=".txt,.pdf"></label></section><?php endforeach;?></div><div class="actions"><button class="secondary" name="action" value="save">Guardar timeline</button><button name="action" value="concept" <?=($realCount<2||$edgeCount===0)?'disabled':''?>>Generar concepto de video</button><span><?= $realCount<2||$edgeCount===0 ? 'Falta: al menos dos imágenes ancla, incluyendo Principio o Fin.' : 'Timeline lista para convertir en concepto.' ?></span></div></form></div></main></div><script>document.querySelectorAll('.svt-library img').forEach(i=>i.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',i.dataset.file)));document.querySelectorAll('.svt-slot').forEach(slot=>{slot.addEventListener('dragover',e=>e.preventDefault());slot.addEventListener('drop',e=>{e.preventDefault();let f=e.dataTransfer.getData('text/plain'),n=slot.dataset.slot,card=slot.closest('.svt-card');card.querySelector('.milestone-image').value=f;slot.classList.add('has-image');slot.innerHTML='<img src="media.php?file='+encodeURIComponent(f)+'">';});});</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Social Video Timeline</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .svt {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+        .svt-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            align-items: end;
+        }
+        .svt-controls {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 22px 0;
+        }
+        .svt-controls input {
+            width: 150px;
+        }
+        .svt-library {
+            display: flex;
+            gap: 10px;
+            overflow: auto;
+            padding: 12px;
+            background: var(--surface-soft);
+            border: 1px solid var(--line);
+        }
+        .svt-library img {
+            width: 110px;
+            height: 80px;
+            object-fit: cover;
+            cursor: grab;
+            border: 2px solid transparent;
+        }
+        .svt-library img:hover {
+            border-color: var(--accent);
+        }
+        .svt-line {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(210px, 1fr));
+            gap: 14px;
+            position: relative;
+        }
+        .svt-card {
+            border: 1px solid var(--line);
+            background: var(--surface);
+            padding: 14px;
+            border-radius: var(--radius);
+            display: flex;
+            flex-direction: column;
+        }
+        .svt-card h3 {
+            margin: 0 0 8px;
+        }
+        .svt-slot {
+            min-height: 135px;
+            border: 1px dashed var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface-soft);
+            margin-bottom: 10px;
+            text-align: center;
+            padding: 8px;
+            transition: all 0.2s ease;
+        }
+        .svt-slot.drag-over {
+            border-color: var(--accent);
+            background: var(--accent-light);
+            box-shadow: 0 0 10px rgba(154,123,86,0.15);
+        }
+        .svt-slot.has-image {
+            border-style: solid;
+        }
+        .svt-slot img {
+            max-width: 100%;
+            max-height: 130px;
+        }
+        .svt-card textarea {
+            width: 100%;
+            min-height: 95px;
+            box-sizing: border-box;
+        }
+        .svt-card input {
+            width: 100%;
+            box-sizing: border-box;
+            margin: 7px 0;
+        }
+        .svt-help {
+            padding: 12px;
+            border-left: 3px solid var(--accent);
+            background: var(--surface-soft);
+        }
+        @media(max-width: 1050px){
+            .svt-line {
+                grid-template-columns: 1fr;
+            }
+            .svt-library {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+    <?php include __DIR__.'/sidebar.php';?>
+    <main class="main-area">
+        <div class="workspace svt">
+            <div class="svt-head">
+                <div>
+                    <h1>Social Video (beta)</h1>
+                    <p>Direct the journey: set five moments and describe what happens between them.</p>
+                </div>
+                <a class="button-link secondary" href="artwork.php?id=<?= $artworkId ?>">Back to Artwork</a>
+            </div>
+            
+            <?php if($notice):?><div class="notice"><?=svt_h($notice)?></div><?php endif;?>
+            <?php if($error):?><div class="notice error"><?=svt_h($error)?></div><?php endif;?>
+            
+            <div class="svt-help">
+                You need at least <strong>two anchor images</strong>, and one must be in <strong>Beginning or End</strong>. Milestones without an image can be described with text; their intermediate image will be prototyped before generating the final video.
+            </div>
+            
+            <h2>Available Mockups</h2>
+            <div class="svt-library">
+                <?php foreach($mockups as $m):$f=basename((string)$m['mockup_file']);?>
+                    <img draggable="true" data-file="<?=svt_h($f)?>" src="media.php?file=<?=rawurlencode($f)?>" title="Drag to a milestone">
+                <?php endforeach;?>
+            </div>
+            
+            <form method="post" enctype="multipart/form-data">
+                <input type="hidden" name="id" value="<?=$artworkId?>">
+                <div class="svt-controls">
+                    <label>Total Duration <input name="duration_seconds" type="number" min="16" max="60" value="<?= (int)$timeline['duration_seconds']?>"> s</label>
+                    <label>Tone: Documentary ←→ Artistic <input name="tone_value" type="range" min="0" max="100" value="<?= (int)$timeline['tone_value']?>"></label>
+                    <output><?= (int)$timeline['tone_value']?></output>
+                </div>
+                
+                <div class="svt-line">
+                    <?php foreach($timeline['milestones'] as $i=>$m):
+                        $img=trim((string)$m['image']);
+                        $friendlyRole = $m['role'];
+                        if ($friendlyRole === 'Principio') $friendlyRole = 'Beginning';
+                        if ($friendlyRole === 'Desarrollo') $friendlyRole = 'Development';
+                        if ($friendlyRole === 'Fin') $friendlyRole = 'End';
+                    ?>
+                        <section class="svt-card" data-index="<?=$i?>">
+                            <h3 style="font-size: 14px; font-weight: 600; border-bottom: 1px solid var(--line); padding-bottom: 6px; margin-bottom: 10px;">
+                                <?=svt_h($friendlyRole)?> <span style="font-weight: normal; color: var(--muted); font-size: 11px;">(<?= $i+1 ?>/5)</span>
+                            </h3>
+                            
+                            <div class="svt-slot <?=$img!==''?'has-image':''?>" data-slot="<?=$i?>">
+                                <?php if($img!=='' && !str_contains($img,'/')):?>
+                                    <img src="media.php?file=<?=rawurlencode($img)?>">
+                                <?php else:?>
+                                    Drag a mockup or upload below
+                                <?php endif;?>
+                            </div>
+                            
+                            <input class="milestone-image" type="hidden" name="milestone_image[<?=$i?>]" value="<?=svt_h($img)?>">
+                            
+                            <label style="font-size: 10px; margin-top: 6px; display: block; font-weight: 600; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em;">
+                                Upload Custom Image
+                                <input type="file" name="milestone_image_upload[<?=$i?>]" accept="image/jpeg,image/png,image/webp" style="font-size: 10px; padding: 2px; min-height: unset; margin: 2px 0 0; width: 100%;">
+                            </label>
+                            
+                            <details class="milestone-extra" style="margin-top: 10px; font-size: 11px; border-top: 1px dashed var(--line); padding-top: 8px;">
+                                <summary style="cursor: pointer; color: var(--accent); font-weight: 700; text-transform: uppercase; font-size: 9px; letter-spacing: 0.05em; display: inline-block;">
+                                    Configure Details
+                                </summary>
+                                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                                    <label style="margin: 0; font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em;">
+                                        Narrative Text
+                                        <textarea name="narrative_text[<?=$i?>]" autocomplete="off" style="font-size: 11px; min-height: 60px; width: 100%; margin-top: 3px;"><?=svt_h($m['narrative_text'])?></textarea>
+                                    </label>
+                                    <label style="margin: 0; font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em;">
+                                        Reference Image
+                                        <input type="file" name="reference_image[<?=$i?>]" accept="image/jpeg,image/png,image/webp" style="font-size: 10px; padding: 2px; min-height: unset; margin: 3px 0 0; width: 100%;">
+                                    </label>
+                                    <label style="margin: 0; font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em;">
+                                        Reference PDF/TXT
+                                        <input type="file" name="reference_text[<?=$i?>]" accept=".txt,.pdf" style="font-size: 10px; padding: 2px; min-height: unset; margin: 3px 0 0; width: 100%;">
+                                    </label>
+                                </div>
+                            </details>
+                        </section>
+                    <?php endforeach;?>
+                </div>
+                
+                <div class="actions">
+                    <button class="secondary" name="action" value="save">Save Timeline</button>
+                    <button name="action" value="concept" <?=($realCount<2||$edgeCount===0)?'disabled':''?>>Generate Video Concept</button>
+                    <span><?= $realCount<2||$edgeCount===0 ? 'Missing: at least two anchor images, including Beginning or End.' : 'Timeline ready to convert to concept.' ?></span>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script>
+document.querySelectorAll('.svt-library img').forEach(i=>i.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',i.dataset.file)));
+document.querySelectorAll('.svt-slot').forEach(slot=>{
+    slot.addEventListener('dragover',e=>{
+        e.preventDefault();
+        slot.classList.add('drag-over');
+    });
+    slot.addEventListener('dragleave',e=>{
+        slot.classList.remove('drag-over');
+    });
+    slot.addEventListener('drop',e=>{
+        e.preventDefault();
+        slot.classList.remove('drag-over');
+        let f=e.dataTransfer.getData('text/plain'),n=slot.dataset.slot,card=slot.closest('.svt-card');
+        card.querySelector('.milestone-image').value=f;
+        slot.classList.add('has-image');
+        slot.innerHTML='<img src="media.php?file='+encodeURIComponent(f)+'">';
+    });
+});
+</script>
+</body>
+</html>

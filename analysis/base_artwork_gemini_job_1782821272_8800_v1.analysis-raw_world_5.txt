@@ -1,0 +1,47 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Crimson Strata",
+      "subtitle": "An abstract exploration of layered reds and kinetic lines.",
+      "description": "Dynamic red fields are punctuated by structured white lines and sculptural crimson elements, evoking a sense of powerful, shifting landscapes or emotional depth."
+    },
+    {
+      "title": "Vermillion Currents",
+      "subtitle": "Flowing textures and punctuated forms in intense red.",
+      "description": "Bold brushwork creates a vibrant red foundation, upon which delicate white lines and solid, raised squares establish a compelling visual rhythm and tension."
+    },
+    {
+      "title": "Red Architecture",
+      "subtitle": "Geometric accents within an expressive, monochromatic field.",
+      "description": "The artwork presents an architectural interplay of linear elements and defined blocks against a rich, textured ground of deep red, suggesting structure within flux."
+    }
+  ],
+  "recommended_number_of_contexts": 6,
+  "contextual_proposals": [
+    {
+      "context_name": "Crimson Dynamics in a Midcentury Loft",
+      "context_role": "To present the artwork within a sophisticated, design-centric collector's environment, highlighting its premium appeal and compatibility with timeless modern aesthetics.",
+      "space_type": "Midcentury collector's atelier loft or refined living area.",
+      "atmosphere": "Refined, urban, artistic, and contemplative, infused with a distinct midcentury design sensibility. The ambiance is warm, slightly moody, with an almost burgundy-tinged spatial mood that complements the artwork's intensity.",
+      "materials": [
+        "Warm neutral plaster wall",
+        "Subtle dark wood panel accent (e.g., walnut)",
+        "Polished concrete floor (as 'stone')",
+        "Low-slung, dark leather midcentury armchair (e.g., a Falcon Chair or similar)",
+        "Simple brushed brass floor lamp",
+        "Clean-lined dark wood credenza (e.g., teak or rosewood)"
+      ],
+      "lighting": "Soft, warm, indirect daylight filtering from an implied large window, supplemented by refined accent lighting focused on the artwork. This creates subtle shadows and enhances the 'burgundy-toned spatial mood' in the deeper recesses of the loft.",
+      "camera_view": "Borgoña Recovecos / Cámara 3/4 en Loft de Hormigón: Camera height is human but tucked into an architectural recess, approximately 120-160 cm depending on the loft edge. Use a 3/4 view from a recess, corner, or architectural edge, with a burgundy-toned spatial mood and one clean vanishing direction. The artwork is partially contextualized by loft recesses and concrete architecture, creating depth and intimacy without hiding the piece; allow strong off-center framing through recesses, corners, side planes, or architectural edges.",
+      "camera_distance": "Controlled architectural distance, allowing both the artwork and key elements of the midcentury interior to be appreciated.",
+      "camera_angle_notes": "The 3/4 view from a recessed corner of the loft reveals the artwork as a central, physically present object. It is framed by architectural planes of warm plaster and refined concrete elements, emphasizing the artwork's thickness and integrating it dynamically into the midcentury space. The off-center framing, as directed by the camera, enhances artistic tension and spatial depth.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's intense, dynamic red and abstract forms find a powerful counterpoint in the clean, structural elegance of a midcentury architectural loft. The 'burgundy-toned spatial mood' explicitly requested by the camera creates a deep chromatic resonance with the artwork, intensifying its emotional impact. The controlled geometry of the midcentury design provides a sophisticated anchor for the artwork's expressive movement, allowing it to stand out as a significant piece.",
+      "commercial_reason": "This context elevates the artwork to a collector's item, showcasing its compatibility with highly curated, design-forward interiors. The distinct midcentury aesthetic appeals to a discerning market that values timeless design and art. The dramatic camera angle and rich, yet controlled, environment make the artwork highly desirable for contemporary collectors seeking statement pieces that integrate seamlessly into sophisticated settings.",
+      "mockup_prompt": "A large, vertically oriented abstract painting with intense red brushstrokes, white linear elements, and raised red squares, hangs prominently on a warm neutral plaster wall in a sophisticated midcentury collector's atelier loft. The floor is polished concrete. In the foreground, partially visible on one side, is a low-slung, dark leather midcentury armchair (e.g., a Falcon Chair). A simple, clean-lined dark wood credenza is subtly placed in the midground, ensuring furniture remains low visual weight and supports the artwork. An exposed concrete architectural beam or pillar is subtly visible in the background, defining a loft recess and adding textural depth. The camera is positioned at human height (120-160 cm), tucked into an architectural recess, capturing a 3/4 view with a clean vanishing direction, creating a burgundy-toned spatial mood. The artwork is slightly off-center, framed by the receding architectural planes of plaster and concrete. Soft, warm daylight filters in, supplemented by refined accent lighting, illuminating the artwork and enhancing the rich, slightly moody atmosphere. The artwork is an XL physical canvas with visible thickness, precisely as provided. No people, no animals, no digital distortion.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no rustic Tuscan villa, no Mediterranean retreat, no generic beige room, no furniture showroom, no chair closeup, no furniture ad, no pet, no animal, no crowd, no generic neutral interior, no Mediterranean villa, no rustic Tuscan room, no generic lounge, no showroom, no unrelated gallery"
+    }
+  ]
+}
+```

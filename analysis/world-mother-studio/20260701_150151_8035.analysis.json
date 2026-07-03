@@ -1,0 +1,129 @@
+{
+    "scene_type": "Grand Hall / Reception Room",
+    "architecture_language": "Catalan Modernisme / Art Nouveau. Characterized by organic, flowing, biomorphic forms; an absence of rigid straight lines; sculptural and curvilinear surfaces; and an integration of decorative arts into the architectural structure. Highly expressive and unique.",
+    "wall_language": "Undulating, plastered, and textured surfaces in a light, off-white or cream color. The walls seamlessly merge with the ceiling and integrate with wooden wainscoting and window frames, creating a continuous, cave-like or fluid environment. Some walls might feature integrated, sculpted elements like shelves or seating.",
+    "floor_language": "Highly polished, warm-toned wooden parquet flooring, laid in intricate geometric patterns (likely herringbone or similar mosaic of small blocks). The reflective surface enhances the sense of space and grandeur.",
+    "ceiling_language": "The dominant architectural feature. A dramatic, sculptural plaster ceiling with a swirling, vortex-like, or seashell motif, radiating outwards from the central chandelier. The texture is organic and rough, complementing the smooth curves. It creates a dynamic and ethereal overhead canopy.",
+    "lighting": "Primarily natural light filtered through large, ornate stained glass windows, creating colorful patterns on the floor and walls. The overall ambience is bright yet soft when natural light is present. A prominent, ornate central chandelier provides warm, ambient artificial light, which would become the main light source during evening/night scenarios, casting dramatic shadows and highlighting the sculptural ceiling. User guidelines specify 'horario de la tarde o noche', implying a shift towards artificial and softer, dramatic natural light.",
+    "materials": [
+        "Plaster/Stucco (walls, ceiling): Sculptural, textured, light-colored.",
+        "Wood (flooring, wainscoting, window frames, doors, built-in furniture): Rich, warm-toned, highly carved, and polished, featuring natural grains and organic shapes.",
+        "Stained Glass (windows): Vibrant, colorful, and intricately patterned, comprising both clear and opaque sections.",
+        "Metal (chandelier): Ornate, likely brass or bronze, adding a touch of antique luxury.",
+        "Glass (windows): Clear and colored elements."
+    ],
+    "palette": [
+        "A dominant base of warm neutrals (cream",
+        "off-white) on walls and ceiling",
+        "providing a backdrop for rich",
+        "warm wood tones (various browns",
+        "oranges) from the floor",
+        "doors",
+        "and window frames. Vibrant accents are introduced through the stained glass in blues",
+        "greens",
+        "yellows",
+        "and reds. The chandelier emits a golden glow. The overall palette is sophisticated",
+        "warm",
+        "and inviting with bursts of jewel-toned color."
+    ],
+    "mood": [
+        "Dreamlike",
+        "elegant",
+        "grand",
+        "artistic",
+        "unique",
+        "organic",
+        "historical",
+        "awe-inspiring",
+        "and somewhat whimsical. The flowing forms evoke a sense of movement and natural wonder. It feels like a space designed for contemplation or intimate gatherings despite its grandeur. The evening/night lighting would shift the mood to more dramatic",
+        "intimate",
+        "and mysterious."
+    ],
+    "scale": "Medium to large-sized room with high, sculptural ceilings and expansive windows, giving a sense of openness and grandeur. The architectural elements are robust and commanding, suggesting an impressive and well-appointed space.",
+    "camera_potential": [
+        "Excellent for wide-angle shots to capture the entire room's unique architecture and sweeping curves. Low-angle shots would highlight the dramatic ceiling and chandelier. Close-ups can focus on the intricate details of the stained glass",
+        "wood carvings",
+        "and plaster textures. The panoramic nature of the main window wall provides opportunities for expansive views."
+    ],
+    "negative_risks": [
+        "Exterior views through windows (trees, distant buildings, bright sky): Should be replaced to match the 'horario de la tarde o noche' guideline, possibly with abstract light, a dark sky, or blurred, atmospheric street scenes.",
+        "The built-in wooden bench and integrated shelf (image 3): These are architectural features but might be considered 'clutter' if the generated world needs to be a completely empty canvas for placement of new objects.",
+        "Reflections in the floor that are too specific or distracting (e.g., reflections of specific objects if they were present).",
+        "Any faint signs of wear or imperfections that are not desired in a pristine, generated world."
+    ],
+    "style_details": [
+        "Biomorphic and curvilinear architectural forms.",
+        "Extensive use of stained glass, emphasizing the 'Gaudi-style vitrales' guideline.",
+        "Sculptural plasterwork on ceilings and walls.",
+        "Integrated custom-carved wooden elements (wainscoting, window frames, doors, built-in furniture).",
+        "Ornate, period-appropriate chandelier.",
+        "Highly polished geometric wood parquet flooring."
+    ],
+    "category_keywords": [
+        "modernismo_catalan_espa_referencia",
+        "Art Nouveau",
+        "Organic Architecture",
+        "Curvilinear Design",
+        "Stained Glass",
+        "Sculptural Interior",
+        "Ornate",
+        "Historical Interior",
+        "Luxury Interior",
+        "Unique Architecture",
+        "Gaudi Inspired",
+        "Parlor",
+        "Lounge",
+        "Grand Salon"
+    ],
+    "reference_file": "world_mother_ref_20260701_150117_2264.png",
+    "user_notes": "horario de la tarde o noche, elegir mas vitrales estilo gaudi",
+    "reference_paths": [
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_150117_2264.png",
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_150117_4632.png",
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_150117_6732.png"
+    ],
+    "reference_files": [
+        "world_mother_ref_20260701_150117_2264.png",
+        "world_mother_ref_20260701_150117_4632.png",
+        "world_mother_ref_20260701_150117_6732.png"
+    ],
+    "category_candidates": [
+        {
+            "category_slug": "modernismo_catalan_espa_referencia",
+            "category_name": "Modernismo Catalan Espa Referencia",
+            "image_count": 8,
+            "score": 16,
+            "matched_terms": [
+                "modernismo",
+                "catalan",
+                "espa",
+                "referencia"
+            ]
+        },
+        {
+            "category_slug": "Atelier",
+            "category_name": "Atelier",
+            "image_count": 7,
+            "score": 0,
+            "matched_terms": []
+        },
+        {
+            "category_slug": "en espera",
+            "category_name": "En Espera",
+            "image_count": 122,
+            "score": 0,
+            "matched_terms": []
+        },
+        {
+            "category_slug": "selected",
+            "category_name": "Selected",
+            "image_count": 4,
+            "score": 0,
+            "matched_terms": []
+        }
+    ],
+    "new_category_suggestion": "horario_tarde_noche_elegir",
+    "analysis_source": "gemini_multi_reference",
+    "reference_path": "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_150117_2264.png",
+    "created_by_user_id": 1
+}

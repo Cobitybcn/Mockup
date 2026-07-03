@@ -1,0 +1,108 @@
+{
+    "scene_type": "Grand Interior Room",
+    "architecture_language": "Catalan Modernisme, with strong Gaudi influence (Casa Batlló, La Pedrera, Sagrada Familia). Characterized by organic, fluid, and biomorphic forms, absence of straight lines, and nature-inspired motifs.",
+    "wall_language": "Sculptural, smoothly rendered plaster or stucco walls that flow seamlessly into ceiling and support structures. Predominantly off-white/cream, with a textured wooden wainscoting/baseboard. Curved and undulating, avoiding harsh angles.",
+    "floor_language": "Polished parquet flooring, featuring a distinct, warm-toned geometric pattern (e.g., herringbone or basketweave) that reflects light, adding depth and richness to the space.",
+    "ceiling_language": "Highly distinctive, sculptural, and organic ceiling with a prominent spiral or whirlpool motif. Textured plaster/stucco, creating a dynamic sense of movement and integration with the overall architectural flow. Features integrated lighting elements.",
+    "lighting": "Combination of ample natural light filtering through ornate, stained-glass windows, and warm artificial lighting from a central, decorative ceiling fixture (chandelier). Accent lighting from recessed spotlights highlights architectural features and wall surfaces, creating a soft, inviting ambiance.",
+    "materials": [
+        "Plaster/stucco (walls",
+        "ceiling",
+        "columns)",
+        "polished wood (floor",
+        "doors",
+        "window frames",
+        "wainscoting)",
+        "stained glass (windows)",
+        "metal (chandelier fixture)."
+    ],
+    "palette": [
+        "Dominant warm neutrals (off-white",
+        "cream for walls/ceiling)",
+        "rich warm browns and oranges (wood)",
+        "and vibrant",
+        "jewel-toned blues",
+        "greens",
+        "and yellows from the stained glass. Accents of gold/brass from the light fixture."
+    ],
+    "mood": [
+        "Organic",
+        "ethereal",
+        "whimsical",
+        "grand",
+        "sophisticated",
+        "and fluid. Evokes a sense of natural harmony",
+        "artistic craftsmanship",
+        "and serene elegance. The space feels alive and inviting."
+    ],
+    "scale": "Spacious and grand, with high, dramatically sculpted ceilings and large, commanding window features. The overall impression is one of generous proportions.",
+    "camera_potential": [
+        "Excellent for wide-angle shots to capture the expansive",
+        "flowing architecture. Medium shots can highlight intricate details of windows",
+        "doors",
+        "and the ceiling. Low-angle shots emphasize the unique ceiling structure. Reflective floor offers opportunities for interesting perspectives and compositions."
+    ],
+    "negative_risks": [
+        "The images contain small items (vases/bottles) on built-in shelving in one of the shots. These should be removed for a clean generated world. The exterior view through the windows is generic but could be simplified or blurred further depending on the desired focus for generated mockups."
+    ],
+    "style_details": "Signature Gaudi-esque organic curves, sculptural columns, nature-inspired stained glass patterns, integrated architectural elements, and a dynamic, textured ceiling with a central spiral motif. The entire space exhibits a seamless, handcrafted quality.",
+    "category_keywords": [
+        "Catalan Modernisme",
+        "Gaudí Architecture",
+        "Art Nouveau Interior",
+        "Organic Design",
+        "Biomorphic Architecture",
+        "Sculptural Interior",
+        "Modernist Interior",
+        "Casa Batlló Style",
+        "Flowing Forms",
+        "Curved Walls",
+        "Stained Glass",
+        "Parquet Floor",
+        "High Ceilings",
+        "Luxury Interior",
+        "Whimsical Architecture",
+        "Ethereal Space"
+    ],
+    "reference_file": "world_mother_ref_20260701_144423_8295.png",
+    "user_notes": "mundo modernista catalán con maxima influencia de gaudí en casa batlo, la pedrera y sagrada familia",
+    "reference_paths": [
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_144423_8295.png",
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_144423_5184.png",
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_144423_8363.png",
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_144423_2665.png"
+    ],
+    "reference_files": [
+        "world_mother_ref_20260701_144423_8295.png",
+        "world_mother_ref_20260701_144423_5184.png",
+        "world_mother_ref_20260701_144423_8363.png",
+        "world_mother_ref_20260701_144423_2665.png"
+    ],
+    "category_candidates": [
+        {
+            "category_slug": "Atelier",
+            "category_name": "Atelier",
+            "image_count": 7,
+            "score": 0,
+            "matched_terms": []
+        },
+        {
+            "category_slug": "en espera",
+            "category_name": "En Espera",
+            "image_count": 122,
+            "score": 0,
+            "matched_terms": []
+        },
+        {
+            "category_slug": "selected",
+            "category_name": "Selected",
+            "image_count": 4,
+            "score": 0,
+            "matched_terms": []
+        }
+    ],
+    "new_category_suggestion": "mundo_modernista_catal_maxima",
+    "analysis_source": "gemini_multi_reference",
+    "reference_path": "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_144423_8295.png",
+    "created_by_user_id": 1
+}

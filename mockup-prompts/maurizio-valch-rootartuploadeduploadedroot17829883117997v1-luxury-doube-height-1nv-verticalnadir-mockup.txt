@@ -1,0 +1,7 @@
+Create a realistic interior art mockup.
+
+The input image already contains the artwork placed in the exact required perspective.
+Keep the artwork unchanged.
+
+Use the world mother reference only for atmosphere, materials, lighting, and color temperature.
+Generate the surrounding room so the wall, floor, shadows, and architecture support the artwork perspective.

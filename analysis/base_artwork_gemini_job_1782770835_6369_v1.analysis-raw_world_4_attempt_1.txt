@@ -1,0 +1,45 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Oceanic Rhythms",
+      "subtitle": "An abstract exploration of deep blue hues and vibrant red accents.",
+      "description": "This piece evokes the vastness of the sea, with subtle white lines hinting at horizons or currents, punctuated by bold, energetic forms."
+    },
+    {
+      "title": "Azure Depths",
+      "subtitle": "A contemporary abstract work with rich textures and contrasting forms.",
+      "description": "Immerse yourself in the profound blues and dynamic orange-red elements, suggesting an internal landscape or a distant, mysterious vista."
+    },
+    {
+      "title": "Crimson Signals on Blue",
+      "subtitle": "A minimalist yet expressive composition of color and line.",
+      "description": "Striking red forms float amidst a deep blue, textured field, connected by delicate white lines, creating a sense of balance and tension."
+    }
+  ],
+  "recommended_number_of_contexts": 1,
+  "contextual_proposals": [
+    {
+      "context_name": "Atelier Corridor Reflection",
+      "context_role": "Showcases the artwork in a refined, authentic artist's studio environment, emphasizing its material quality and contemplative nature.",
+      "space_type": "Artist's working studio corridor / elongated wall",
+      "atmosphere": "Quiet, contemplative, organized, authentic artist's studio, filled with soft, consistent daylight.",
+      "materials": [
+        "Smooth painted plaster wall (off-white or light grey)",
+        "Light grey polished concrete floor",
+        "Matte white studio ceiling",
+        "Subtle black metal studio hardware or minimalist wooden studio furniture in the background"
+      ],
+      "lighting": "Soft, consistent north light, gently illuminating the artwork and creating subtle depth in the studio corridor, with a low contrast ambient light.",
+      "camera_view": "Pasillo, Obra Descentrada y Próxima: Camera height is natural standing or slightly lowered human height, close enough to feel the corridor edge. Use an offset three-quarter corridor angle, with the artwork deliberately off-center and close rather than symmetrically framed. Place the artwork on a long wall plane rather than a short frontal display wall. The wall should extend laterally into the scene like a gallery passage, corridor, or elongated architectural plane, creating a clear vanishing direction. Use floor lines, ceiling lines, wall joints, lighting tracks, windows, columns, doorways, or distant wall planes to reinforce depth. The artwork may sit off-center and relatively close to the viewer, while the architecture recedes naturally to one side. Avoid product-style centered symmetry.",
+      "camera_distance": "Controlled architectural distance, allowing for appreciation of artwork texture and depth within the studio space.",
+      "camera_angle_notes": "The subtle 3/4 oblique angle and the receding studio corridor highlight the artwork's physical presence and depth, making it feel integral to the refined creative environment while maintaining its role as the focal point.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's deep blue and textured surface find a serene counterpart in the clean, neutral tones of a refined studio. This context underscores the artwork's authenticity and its connection to the creative process, presenting it in an environment that values artistic integrity over ostentation.",
+      "commercial_reason": "Positions the artwork within a premium, authentic artist's space, appealing to collectors who appreciate provenance and the craftsmanship inherent in a studio setting. The clean backdrop ensures the artwork's colors and textures are the primary focus, enhancing its perceived value.",
+      "mockup_prompt": "A vertical abstract painting with a deep blue textured background, vivid orange-red rectangular shapes, and delicate white lines, hanging on a pristine, smooth painted plaster wall in a refined artist's studio. The artwork is positioned off-center to the left, slightly above eye-level, revealing its physical canvas thickness. The wall extends laterally to the right into a clean studio corridor, receding with architectural depth. The floor is smooth, light grey polished concrete. Soft, diffused north light enters from an unseen window, gently illuminating the artwork and creating subtle depth in the studio corridor. Subtle studio traces like a lean, minimalist wooden easel or a stack of clean canvases are visible in the distant background, without clutter. The camera is at natural standing height, capturing an offset three-quarter corridor angle, with a clear vanishing direction towards the right, making the artwork prominent but integrated into the expansive, quiet studio environment. Ensure the artwork surface, canvas edges, canvas thickness, artwork texture, and the immediate wall area around the artwork are sharp and fully legible, with a subtle natural depth-of-field falloff in the distant corridor.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no messy clutter, no wet paint chaos, no artwork substitution, no messy workshop, no paint chaos, no generic vintage room, no winter default unless seasonally intended, no mineral gallery, no generic showroom, no luxury corridor, no Mediterranean villa, no rustic Tuscan room, no pets, no pet, no animal, no crowd, no generic neutral interior, no generic lounge, no showroom, no unrelated gallery."
+    }
+  ]
+}
+```

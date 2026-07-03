@@ -1,0 +1,29 @@
+```json
+{
+  "recommended_number_of_contexts": 1,
+  "contextual_proposals": [
+    {
+      "context_name": "Atelier Corridor of Contemplation",
+      "context_role": "To present the artwork in an authentic, refined working environment, emphasizing its material presence and artistic context without distracting clutter.",
+      "space_type": "Artist's working studio / atelier passage",
+      "atmosphere": "Quiet, contemplative, professional, bathed in soft daylight, with subtle hints of creative process and premium restraint.",
+      "materials": [
+        "Smooth painted plaster wall (light, neutral tone)",
+        "Light concrete floor with subtle texture",
+        "Subtle faint pin marks on the wall (only in periphery)",
+        "Minimalist studio ceiling with integrated soft lighting tracks",
+        "Possibly a stacked, bare canvas or wooden easel in the receding background"
+      ],
+      "lighting": "Soft, diffused north light entering from an unseen large window or skylight, creating gentle, even illumination with subtle highlights on the artwork's texture. No harsh shadows.",
+      "camera_view": "Pasillo, Obra Descentrada y Próxima: Camera height is natural standing or slightly lowered human height, close enough to feel the corridor edge. Use an offset three-quarter corridor angle, with the artwork deliberately off-center and close rather than symmetrically framed. Place the artwork on a long wall plane rather than a short frontal display wall. The wall should extend laterally into the scene like a gallery passage, corridor, or elongated architectural plane, creating a clear vanishing direction. Use floor lines, ceiling lines, wall joints, lighting tracks, windows, columns, doorways, or distant wall planes to reinforce depth. The artwork may sit off-center and relatively close to the viewer, while the architecture recedes naturally to one side. Avoid product-style centered symmetry.",
+      "camera_distance": "Medium-close to controlled architectural distance, allowing the artwork to feel substantial while revealing the receding depth of the studio space.",
+      "camera_angle_notes": "The oblique three-quarter angle reveals the physical thickness and dimensionality of the canvas, making it feel like a real object in a tangible space. The off-center placement and receding architecture create dynamic spatial tension, drawing the eye along the wall and into the studio depth while keeping the artwork dominant.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "Placing the artwork within a clean, premium artist's studio grounds it in its creative origins. The neutral, understated environment allows the artwork's bold colors and abstract forms to stand out, highlighting its artistic integrity and professional execution.",
+      "commercial_reason": "This context lends authenticity and gravitas to the artwork, appealing to buyers who value the artistic process and a refined, yet functional, aesthetic. It suggests the artwork is ready for a discerning collector's space, having originated from a place of considered creation. The clean atelier enhances its premium market positioning.",
+      "mockup_prompt": "A clean artist's working studio with premium restraint. The large abstract painting, featuring a dominant red rectangle on a green background, hangs off-center on a long, smooth painted plaster wall. The wall extends laterally into the scene like a gallery passage, with a light concrete floor showing subtle texture. Soft, even north light fills the space, casting gentle shadows. Subtle traces of artistic process are visible in the receding background, such as a bare stacked canvas or faint pin marks on a distant wall, but the main wall around the artwork is pristine. The camera is at natural standing height, capturing an offset three-quarter corridor angle, with the architecture receding naturally to one side, emphasizing depth through visible floor lines and the extended wall plane. The artwork and its immediate surroundings are in sharp focus, with a natural photographic depth-of-field falloff in the distant parts of the studio. No people, no animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no messy clutter, no wet paint chaos, no generic neutral interior, no unrelated gallery, no luxury corridor, no showroom."
+    }
+  ]
+}
+```

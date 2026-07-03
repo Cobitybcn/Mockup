@@ -1,0 +1,28 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Palazzo's Gilded Dusk",
+      "context_role": "To showcase the artwork's contemporary sophistication within a historically rich, yet restrained, European setting, appealing to collectors who appreciate layered aesthetics and architectural grandeur.",
+      "space_type": "Refined gallery hall within a historic European palazzo.",
+      "atmosphere": "Serene, sophisticated, rich, and contemplative. The late afternoon golden light filtering into a spacious, high-ceilinged room creates a quiet grandeur, where history meets contemporary art.",
+      "materials": [
+        "Aged limewash walls in a warm, muted cream",
+        "Subtle classical plaster mouldings",
+        "Polished terrazzo floor with an intricate pattern in warm, pale tones",
+        "Tall arched windows with light, flowing linen drapes",
+        "Minimalist dark bronze console table"
+      ],
+      "lighting": "Golden late-day light, soft and directional, filtering through tall arched windows, casting long, elegant shadows and bathing the room in a warm, diffused glow, with subtle illumination on the artwork.",
+      "camera_view": "Vista Aérea con Contexto de Ventanas: Camera height is elevated above normal eye level, high enough to read the room, windows, floor plane, and artwork together. Use a gentle diagonal rotation so window context and the artwork wall are both visible without splitting perspectives. The room is comprehensible from above, with window light and floor geometry giving context while the artwork remains identifiable; allow a moderate offset so floor, windows, and surrounding architecture carry part of the frame.",
+      "camera_distance": "Controlled architectural distance.",
+      "camera_angle_notes": "The elevated, high-angle view provides an expansive sense of the grand palazzo space, allowing the artwork's geometric abstraction to visually connect with the architectural lines of the floor and walls. The slight diagonal rotation ensures both the artwork's prominence and the room's context (windows, floor patterns) are clearly visible, creating a sophisticated spatial composition that enhances the artwork's presence and its potential for display in architecturally significant homes.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's deep, rich colors and strong, abstract forms find a sophisticated counterpoint in the warm, historical palette and restrained grandeur of a European palazzo. The interplay of contemporary abstraction against classical architecture highlights the artwork's timeless appeal and versatility. The golden late light brings out the subtle textures and tonal shifts in the painting.",
+      "commercial_reason": "This setting appeals to a discerning market segment that values art within culturally significant, architecturally rich environments. It positions the artwork as a sophisticated addition to a premium collection, demonstrating its ability to elevate and integrate into a historically refined space. The elevated camera view showcases the artwork's scale and presence within a grand setting, suggesting its suitability for large, distinguished residences.",
+      "mockup_prompt": "A large, abstract artwork featuring deep blues, browns, reds, and geometric shapes is hung prominently on an aged limewash wall in a grand European palazzo gallery. The room has tall proportions, subtle classical plaster mouldings, and a polished terrazzo floor with an intricate pattern. Tall arched windows with light linen drapes allow golden late-day light to stream in, casting soft, warm hues and elegant shadows across the room and subtly illuminating the artwork. A minimalist dark bronze console table is positioned against the wall, creating a foreground element. The camera is elevated above normal eye level, high enough to read the entire room, including the windows, the patterned floor plane, and the artwork together. The view uses a gentle diagonal rotation so both the window context and the artwork wall are visible without splitting perspectives. The room's architecture, furniture, and floor geometry are clearly comprehensible from this high-angle perspective, with the artwork remaining the identifiable central subject. The artwork is presented as a real physical canvas with visible thickness, not a flat image. No visible people or animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no drone distance, no surveillance view, no decorative random people, no pets, no crowds, no children, no museum spectacle, no period drama, no costumes, no rustic farmhouse, no museum spectacle, no artwork substitution, no royal event, no costume drama, no crowd, no pet, no animal, no generic neutral interior, no rustic Tuscan room, no generic lounge, no showroom, no unrelated gallery."
+    }
+  ]
+}
+```

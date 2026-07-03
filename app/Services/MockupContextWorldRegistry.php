@@ -942,7 +942,7 @@ class MockupContextWorldRegistry
     private function minimumArtworkControls(): array
     {
         return [
-            'artwork remains the primary visual subject',
+            'artwork remains clearly installed, readable, and correctly scaled',
             'context supports the artwork, never replaces it',
             'no artwork substitution',
             'no scale distortion',

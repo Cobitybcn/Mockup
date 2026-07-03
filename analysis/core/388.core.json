@@ -1,0 +1,127 @@
+{
+    "core_schema_version": "1.1",
+    "artwork": {
+        "artwork_id": 388,
+        "job_id": "job_1782767502_6062",
+        "source_image": "main_artwork.jpg",
+        "selected_root_file": "base_artwork_gemini_job_1782767502_6062_v1.png",
+        "dimensions": {
+            "width_cm": 80,
+            "height_cm": 120,
+            "depth_cm": 2,
+            "orientation": "vertical",
+            "aspect_ratio": 0.6667
+        }
+    },
+    "root_artwork_views": {
+        "three_quarter_left": {
+            "file": "base_artwork_gemini_job_1782767502_6062_v2.png",
+            "role": "three-quarter left root view"
+        },
+        "frontal": {
+            "file": "base_artwork_gemini_job_1782767502_6062_v1.png",
+            "role": "frontal root view"
+        },
+        "three_quarter_right": {
+            "file": "base_artwork_gemini_job_1782767502_6062_v3.png",
+            "role": "three-quarter right root view"
+        },
+        "selected_view": "frontal"
+    },
+    "physical_artwork_reference": {
+        "object_type": "stretched_canvas",
+        "is_physical_object": true,
+        "depth_cm": 2,
+        "has_visible_edges": true,
+        "paint_continues_on_edges": null,
+        "edge_finish": null,
+        "view_observations": {
+            "frontal": {
+                "file": "base_artwork_gemini_job_1782767502_6062_v1.png",
+                "visible_edges": [],
+                "canvas_depth_visible": false,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "primary_composition_reference",
+                    "frontal_mockup_reference"
+                ]
+            },
+            "three_quarter_left": {
+                "file": "base_artwork_gemini_job_1782767502_6062_v2.png",
+                "visible_edges": [
+                    "left_edge"
+                ],
+                "canvas_depth_visible": true,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "left_oblique_reference",
+                    "canvas_depth_reference"
+                ]
+            },
+            "three_quarter_right": {
+                "file": "base_artwork_gemini_job_1782767502_6062_v3.png",
+                "visible_edges": [
+                    "right_edge"
+                ],
+                "canvas_depth_visible": true,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "right_oblique_reference",
+                    "canvas_depth_reference"
+                ]
+            }
+        }
+    },
+    "visual_analysis": {
+        "visual_language": null,
+        "composition": null,
+        "dominant_colors": [],
+        "secondary_colors": [],
+        "materials_or_surface": null,
+        "texture": null,
+        "spatial_depth": null,
+        "light_behavior": null,
+        "gesture_or_mark_making": null,
+        "emotional_energy": null,
+        "symbolic_elements": [],
+        "style_family": null
+    },
+    "artwork_identity": {
+        "short_identity": "A study in elemental balance and striking contrast.",
+        "expanded_identity": "An abstract composition featuring bold red forms anchored on a deep green field, with a dark, foundational element below.",
+        "keywords": [],
+        "do_not_alter_rules": [
+            "Do not repaint the artwork.",
+            "Do not redesign the artwork.",
+            "Do not crop the artwork.",
+            "Do not mirror the artwork.",
+            "Do not recolor the artwork.",
+            "Do not reinterpret the artwork.",
+            "Preserve composition, proportions, colors, marks, texture and visual identity."
+        ]
+    },
+    "publishing_texts": {
+        "suggested_titles": [
+            {
+                "title": "Veridian Grounding: Abstract Forms",
+                "subtitle": "A study in elemental balance and striking contrast.",
+                "description": "An abstract composition featuring bold red forms anchored on a deep green field, with a dark, foundational element below."
+            },
+            {
+                "title": "Crimson Stratum: Abstract Composition",
+                "subtitle": "Textured layers of color creating spatial and emotional depth.",
+                "description": "Dynamic red and dark blue elements against a verdant background, suggesting a profound landscape or architectural abstraction."
+            },
+            {
+                "title": "Elemental Resonance: A Modern Study",
+                "subtitle": "Exploring color, tension, and form in a contemporary abstract expression.",
+                "description": "Vibrant and intense color blocks within a thoughtful arrangement, evoking both stillness and energetic contrast."
+            }
+        ]
+    },
+    "technical_metadata": {
+        "created_at": "2026-06-29T21:15:50+00:00",
+        "source_analysis_file": "base_artwork_gemini_job_1782767502_6062_v1.analysis.json",
+        "source_analysis_hash": "754359ef04e6da3618f88d45b518cc0f"
+    }
+}

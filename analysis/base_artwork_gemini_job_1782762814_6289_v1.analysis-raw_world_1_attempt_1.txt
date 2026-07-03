@@ -1,0 +1,28 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Cultivated Silence: Collector's Study",
+      "context_role": "To present the artwork as a central, contemplative piece in a discerning private collection, emphasizing its gravitas and visual power within a refined, personal space.",
+      "space_type": "Quiet collector's study or intimate living room corner.",
+      "atmosphere": "A serene, intellectually refined, and intimate atmosphere, with a sense of cultured quietude. Soft, warm domestic tones create a calm backdrop, allowing the artwork's vibrant colors to resonate deeply. The seasonal cue is one of thoughtful, year-round appreciation.",
+      "materials": [
+        "Walls in warm, muted limewash plaster with a subtle texture",
+        "Floor of polished dark walnut or oak",
+        "Low-slung, contemporary lounge chair upholstered in deep charcoal linen or fine-grained dark leather",
+        "Subtle bronze or patinated brass accents on a small side table or lamp base",
+        "Understated ceiling with concealed lighting"
+      ],
+      "lighting": "Soft, diffused natural daylight entering from a large window to the side, creating gentle shadows and highlighting the artwork's texture. The room is generally ambiently warm, with focused, subtle gallery-style spotlighting on the artwork to enhance its presence.",
+      "camera_view": "Contrapicado 7/8: Camera height is low, below normal knee height, with the viewpoint grounded close to the floor but still architectural. Use a 7/8 oblique rotation so the wall, artwork depth, and room volume are visible through one shared perspective. The artwork is seen with strong side depth and believable thickness; use clear asymmetry and negative space toward the vanishing side while keeping surrounding wall and floor aligned to the same camera.",
+      "camera_distance": "Controlled architectural distance, allowing both the artwork and relevant foreground/background elements to establish depth.",
+      "camera_angle_notes": "The low, oblique angle elevates the artwork, making it appear monumental and central to the space. It emphasizes the floor and the base of the wall, drawing the eye upward to the canvas. The 7/8 rotation reveals the physical thickness of the artwork and the architectural depth of the room, grounding the piece realistically within a refined environment.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's strong, abstract forms and vibrant colors against a deep green field create a focal point that demands contemplation. Placing it in a quiet, cultivated collector's study allows its visual impact to be fully appreciated without distraction, resonating with the sophisticated atmosphere and refined material palette. The interplay of the artwork's green with warm muted tones of the room enhances both.",
+      "commercial_reason": "This context targets a discerning buyer who views art as an essential cultural anchor in their home. It elevates the artwork beyond mere decoration, presenting it as a significant acquisition for a private collection. The sophisticated, intimate setting suggests premium value and timeless appeal, reinforcing the artwork's status as a serious investment.",
+      "mockup_prompt": "A quiet, cultivated collector's study. The artwork, a vibrant abstract composition dominated by a large red rectangular form against a deep green background, is prominently hung on a warm, muted limewash plaster wall. The scene is viewed from a low perspective, emphasizing a wide expanse of polished dark walnut flooring that leads up to the wall. Architectural verticals, including a minimalist wooden baseboard and a discrete door frame on the vanishing side, rise through the frame. In the foreground, partially cropped, sits a low-slung, contemporary lounge chair upholstered in deep charcoal linen, creating depth and a sense of intimate contemplation. Soft, diffused natural daylight enters from a large side window, casting gentle shadows and highlighting the texture of the limewash wall and the artwork's impasto. Subtle, focused gallery spotlighting further illuminates the artwork. The artwork is presented as a real stretched canvas with palpable thickness, elevated and dominant within the refined, serene, and culturally rich atmosphere. No decorative clutter. No people, no animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended."
+    }
+  ]
+}
+```

@@ -1,0 +1,29 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Nocturnal Ascent Curator's Nook",
+      "context_role": "Showcase the artwork as a contemplative focal point in a cultivated private space, emphasizing its texture and depth from a unique perspective.",
+      "space_type": "Private collector's living room / study",
+      "atmosphere": "Intimate, silent, highly curated, reflecting a discerning collector's taste for art that offers depth and contemplation. The overall feel is one of quiet sophistication and personal engagement with art, with a serene late afternoon or early evening ambiance.",
+      "materials": [
+        "Muted sage green limewash wall",
+        "Dark fumed oak floor with subtle grain",
+        "Low polished concrete plinth",
+        "Minimalist black steel console",
+        "Textured wool rug in deep charcoal or muted olive",
+        "Architect-designed low-slung armchair in dark leather or linen"
+      ],
+      "lighting": "Soft, filtered window light from the side, suggesting late afternoon or early evening, creating gentle shadows and highlighting the artwork's surface texture. Augmented by a subtle, directional gallery spotlight above the artwork for emphasis, creating a quiet glow on the canvas.",
+      "camera_view": "Contrapicado 7/8: Camera height is aggressively low, 5-20 cm from the floor, clearly far below knee height. The viewpoint must feel like the lens is near the floor and close to the wall, not standing height, not chest height, and not a normal eye-level gallery view. Use a very strong 7/8 oblique rotation so the wall, artwork side depth, floor plane, and room volume rush toward one shared vanishing direction. The side of the canvas can feel dramatically deep through perspective, while the artwork remains a rigid object. The artwork is seen with aggressive side depth and believable thickness from a near-floor 7/8 viewpoint. Include a large visible floor wedge or floor plane in the lower foreground, with wall/floor junctions and architectural verticals proving the camera is below knee height. Use strong asymmetry, a close foreground edge, and negative space toward the vanishing side while keeping surrounding wall and floor aligned to the same camera. This must feel almost perspective-deformed and must not collapse into a standard standing-height 3/4 gallery photograph.",
+      "camera_distance": "Controlled architectural distance, allowing the room's elements to define depth, but keeping the artwork dominant.",
+      "camera_angle_notes": "The aggressively low 7/8 angle dramatically exaggerates the artwork's physical depth and canvas thickness, making it feel monumentally present and tactile from a unique, intimate viewpoint. The strong perspective emphasizes the artwork's deliberate installation within a carefully designed space, enhancing its perceived value and physical reality.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The deep blue and vibrant red in the artwork find a sophisticated anchor in the muted sage limewash wall, allowing the colors to resonate without competition. The quiet, contemplative nature of the collector's room mirrors the artwork's serene yet symbolic atmosphere, encouraging deeper engagement. The choice of noble materials and refined furniture aligns with the artwork's artistic integrity and premium aesthetic.",
+      "commercial_reason": "This unique, dramatic perspective highlights the artwork's physical presence and craftsmanship (visible canvas thickness), elevating its perceived quality and artistic substance. The cultivated collector environment signals premium value and desirability to a discerning market. The distinct camera angle creates a memorable visual that stands out from typical flat presentations, drawing attention to the artwork as a substantial and significant piece.",
+      "mockup_prompt": "An abstract landscape painting with deep blue, vibrant red, orange, and ladders, on a muted sage limewash wall in a quiet, intimate private collector's living room. The artwork is hanging on the wall, dominant and centered from a low perspective. A dark fumed oak floor with subtle grain extends into the foreground, showing strong vanishing lines. A low, sleek polished concrete plinth or minimalist black steel console is partially visible in the near foreground, extending towards the vanishing point. A textured wool rug in deep charcoal or muted olive rests on the floor, adding a layer of depth. The camera is aggressively low, 5-20 cm from the floor, with a very strong 7/8 oblique rotation, exaggerating the artwork's side depth and canvas thickness. A large visible floor wedge and wall-floor junctions are prominent in the lower foreground. Soft, filtered window light from the side, suggesting late afternoon or early evening, casts gentle shadows and highlights texture. A subtle, directional gallery spotlight illuminates the artwork. No visible people, no animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no hotel catalog gloss, no generic furniture, no unrelated gallery."
+    }
+  ]
+}
+```

@@ -14,9 +14,15 @@ if (
     count($parts) !== 4
     || $parts[0] !== 'storage'
     || $parts[1] !== 'world_mothers'
-    || preg_match('/^[a-z0-9_]+$/', $parts[2]) !== 1
+    || $parts[2] === ''
+    || $parts[2] !== basename($parts[2])
+    || $parts[2] === '.'
+    || $parts[2] === '..'
+    || preg_match('/[\x00-\x1F\x7F]/', $parts[2]) === 1
     || !in_array($extension, WorldMotherLibrary::allowedExtensions(), true)
     || $parts[3] !== basename($file)
+    || $parts[3] === '.'
+    || $parts[3] === '..'
     || preg_match('/[\x00-\x1F\x7F]/', $parts[3]) === 1
 ) {
     http_response_code(404);

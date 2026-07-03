@@ -1,0 +1,45 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Verdant Echoes",
+      "subtitle": "An Abstract Landscape",
+      "description": "A compelling abstract piece featuring deep greens punctuated by vibrant red and blue geometric forms, suggesting a rich, contemplative landscape with a sense of depth and reflection."
+    },
+    {
+      "title": "Horizon Lines",
+      "subtitle": "Floating Fields Series",
+      "description": "Dynamic white lines traverse an expansive green field, framing abstract geometric elements that seem to float or reflect, inviting a serene yet intriguing visual experience."
+    },
+    {
+      "title": "Deep Green Respite",
+      "subtitle": "Abstract Contemplation",
+      "description": "A minimalist abstract work dominated by a lush green hue, accented by striking red and blue shapes and fluid white strokes, evoking quiet contemplation and visual stillness."
+    }
+  ],
+  "recommended_number_of_contexts": 1,
+  "contextual_proposals": [
+    {
+      "context_name": "Architectural Ascent Gallery",
+      "context_role": "To present the artwork with dramatic contemporary flair, emphasizing its physical presence and monumental scale within a clean, minimalist architectural space, suitable for a sophisticated collector or commercial gallery setting.",
+      "space_type": "Minimalist contemporary art gallery or refined home-gallery space.",
+      "atmosphere": "Clean, calm, and architecturally pristine, with a contemplative and slightly imposing mood due to the unique perspective. Neutral to cool, with the artwork as the vibrant focal point.",
+      "materials": [
+        "Matte off-white mineral wall with subtle texture",
+        "Polished concrete floor",
+        "Simple ceiling plane",
+        "Discreet gallery track lighting"
+      ],
+      "lighting": "Soft gallery daylight filtering from unseen high windows, complemented by focused, cool track lighting subtly illuminating the artwork's surface from above, creating gentle highlights and shadows.",
+      "camera_view": "Nadir Controlado: Camera is positioned extremely low, approximately 5-15 cm from the ground, with the lens nearly touching the floor. This is a mouse-level/nadir-inspired architectural viewpoint, not a gentle low 3/4. The floor plane must be large and close in the foreground while wall height, ceiling lines, columns, door frames or architectural verticals rise strongly. Use an assertive oblique angle across the room, not a straight-on product view, with one forceful vanishing direction for architecture and artwork. The wall, floor, ceiling, and artwork should feel pulled into the same steep perspective. Use the nadir effect strongly through the surrounding room geometry: a large foreground floor wedge, floor lines, vertical wall planes, ceiling height, architectural edges, columns, furniture legs or door frames. The artwork remains the visual subject, but the dramatic low viewpoint must be obvious at thumbnail size. Do not produce a polite standing-height gallery view.",
+      "camera_distance": "Controlled architectural distance, allowing the dramatic foreground floor to lead into the rising wall and artwork, showcasing depth while keeping the artwork dominant.",
+      "camera_angle_notes": "This extremely low, upward-looking camera angle dramatically enhances the artwork's physical presence, making it appear more monumental and imposing. It creates a dynamic visual journey from the floor up to the canvas, highlighting its installation in a real architectural space and emphasizing its canvas thickness.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's minimalist composition and deep, contemplative green are exceptionally highlighted by the stark, clean lines and neutral tones of a contemporary gallery. The unique 'Nadir Controlado' camera perspective lends an unexpected monumentality to the piece, inviting viewers to experience it from a fresh, powerful viewpoint, aligning with cutting-edge art display trends.",
+      "commercial_reason": "This presentation immediately positions the artwork as a premium piece suitable for high-end contemporary spaces. The dramatic camera angle and minimalist setting create a sophisticated, memorable visual that appeals to discerning collectors and interior designers seeking impactful statements. It underscores the artwork's value and visual strength.",
+      "mockup_prompt": "An abstract painting, featuring a deep green field with red and blue geometric shapes and subtle white wavy lines, is centrally displayed on a matte off-white gallery wall. The artwork is presented from an extremely low 'nadir controlado' camera perspective, approximately 5-15 cm from the polished concrete floor, with the lens almost touching the ground. The camera looks strongly upward and obliquely across the room, creating a dramatic, forceful vanishing perspective. A large wedge of the polished concrete floor fills the foreground, with the clean, neutral off-white wall and the artwork rising prominently in the midground. Discreet gallery track lighting is visible on the simple ceiling plane, providing soft, cool daylight illumination that highlights the artwork's texture and forms. The overall atmosphere is clean, calm, and architecturally refined, emphasizing the artwork's physical presence and scale from this unique viewpoint. No visible people or animals. Preserve artwork exactly. Ensure canvas thickness is visible from the low angle.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no monumental atrium, no heroic scale, no architectural spectacle, no busy gallery, no crowd, no art fair signage, no pet, no animal, no generic neutral interior, no showroom, no unrelated gallery, no eye-level view, no standing-height view, no normal 3/4 gallery photo, no gentle low angle, no soft controlled viewpoint, no flat wall view, no melted artwork, no torn canvas, no artwork substitution, no fashion-model posing, no pets, no crowds, no children."
+    }
+  ]
+}
+```

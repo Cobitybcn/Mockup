@@ -11,7 +11,12 @@ try {
     $artworkId = max(0, (int)($_POST['artwork_id'] ?? $_GET['artwork_id'] ?? 0));
     $combinationIndex = max(0, (int)($_POST['combination_index'] ?? $_GET['combination_index'] ?? 0));
     $cameraSlotId = trim((string)($_POST['camera_slot_id'] ?? $_GET['camera_slot_id'] ?? ''));
-    $worldMotherCategory = WorldMotherGenerator::safeSlug((string)($_POST['world_mother_category'] ?? $_GET['world_mother_category'] ?? ''));
+    $worldMotherCategory = trim(str_replace(['\\', '/'], '', (string)($_POST['world_mother_category'] ?? $_GET['world_mother_category'] ?? '')));
+    $worldMotherVariantOffset = max(0, (int)($_POST['world_mother_variant_offset'] ?? $_GET['world_mother_variant_offset'] ?? 0));
+    $worldMotherScale = trim((string)($_POST['world_mother_scale'] ?? $_GET['world_mother_scale'] ?? ''));
+    if ($worldMotherScale !== '' && (!is_numeric($worldMotherScale) || (float)$worldMotherScale < 1.0 || (float)$worldMotherScale > 3.0)) {
+        $worldMotherScale = '';
+    }
 
     if ($artworkId <= 0 || $combinationIndex <= 0) {
         http_response_code(400);
@@ -41,6 +46,9 @@ try {
 
     $review = (new MockupCombinationEngine($pdo))->buildForArtwork($artworkId, $selectedSlots, [
         'selected_world_mother_category' => $worldMotherCategory,
+        'world_mother_variant_offsets' => [
+            $combinationIndex => $worldMotherVariantOffset,
+        ],
     ]);
     $combination = null;
     foreach ((array)($review['combinations'] ?? []) as $candidate) {
@@ -121,19 +129,31 @@ try {
         'artworkTitle' => $artworkTitle,
         'mockupContext' => (string)($combination['context_title'] ?? 'mockup combination'),
         'cameraAngle' => (string)($combination['selected_camera_slot_id'] ?? ''),
+        'cameraSlotName' => (string)($combination['camera_slot_name'] ?? ''),
         'imageType' => 'mockup',
         'extension' => 'jpg',
     ];
 
     $contextId = 'combination_' . $combinationIndex;
     $worldMotherReferenceMode = (string)($combination['world_mother_reference_mode'] ?? 'literal_scene_view');
+    $slotFullPromptMode = AdminPromptComposerPreview::hasSlotFullPromptTemplate(
+        (string)($combination['selected_camera_slot_id'] ?? '')
+    );
     $result = ServiceFactory::mockupGenerator()->generate($rootPath, $contextId, (string)$combination['final_prompt_preview'], [
         'seo_params' => $seoParams,
         'root_reference_path' => $rootPath,
         'world_mother_reference_path' => $worldMotherPath,
         'world_mother_reference_mode' => $worldMotherReferenceMode,
         'world_mother_reference_path_original' => $worldMotherPath,
+        'world_mother_scale' => $worldMotherScale,
         'prompt_passthrough_mode' => (string)$combination['final_prompt_preview'],
+        // $contextId here is synthetic ("combination_N"), not a real mockup_contexts.id.
+        // Without this flag, GeminiMockupGenerator/OpenAIMockupGenerator would still call
+        // MockupWorldVisualPromptEnhancer with it; today that's a no-op only because the
+        // id never matches a real row (see docs/AUDITORIA_PROMPTS_MOCKUPS_20260701.md,
+        // Fase 4). This flag makes the bypass explicit and independent of that accident.
+        'skip_world_visual_enhancer' => true,
+        'slot_full_prompt_mode' => $slotFullPromptMode,
         'mockup_combination' => $combination,
     ]);
 

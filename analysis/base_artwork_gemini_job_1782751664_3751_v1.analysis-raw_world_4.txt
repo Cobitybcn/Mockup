@@ -1,0 +1,45 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Urban Stratigraphy",
+      "subtitle": "Layers of the Concrete Dream",
+      "description": "An abstract landscape exploring the vibrant chaos and underlying structures of modern urban environments through bold colors and rich textures."
+    },
+    {
+      "title": "Metropolis Cadence",
+      "subtitle": "Rhythms of Red, Black, and Gold",
+      "description": "A dynamic composition where the expressive interplay of vivid hues and textured surfaces evokes the pulsating energy and layered experience of city life."
+    },
+    {
+      "title": "Constructed Horizon",
+      "subtitle": "Where Yellow Meets the Sky",
+      "description": "A powerful abstract piece capturing the tension between natural horizons and human constructions, using a dramatic palette and gestural brushstrokes."
+    }
+  ],
+  "recommended_number_of_contexts": 6,
+  "contextual_proposals": [
+    {
+      "context_name": "Atelier Gallery Passage",
+      "context_role": "To present the artwork in a refined creative environment, highlighting its raw beauty and authentic origins in a space that respects artistic process.",
+      "space_type": "Artist's atelier corridor / transitional studio space",
+      "atmosphere": "Quiet, contemplative, authentic, and creatively refined, bathed in soft, neutral daylight, suggestive of an active but orderly working studio.",
+      "materials": [
+        "Clean painted plaster wall (off-white or very pale gray)",
+        "Polished concrete floor with subtle, dry paint marks",
+        "Minimalist wooden studio door or architectural recess in the receding background",
+        "Subtle metal track lighting fixtures on a clean studio ceiling"
+      ],
+      "lighting": "Soft, diffused north light entering from an unseen high window or skylight, providing even, natural illumination that highlights the artwork's textures without harsh shadows. The receding background shows a gentle, natural depth-of-field falloff.",
+      "camera_view": "Pasillo, Obra Descentrada y Próxima: Camera height is natural standing or slightly lowered human height, close enough to feel the corridor edge. Use an offset three-quarter corridor angle, with the artwork deliberately off-center and close rather than symmetrically framed. Place the artwork on a long wall plane rather than a short frontal display wall. The wall should extend laterally into the scene like a gallery passage, corridor, or elongated architectural plane, creating a clear vanishing direction. Use floor lines, ceiling lines, wall joints, lighting tracks, windows, columns, doorways, or distant wall planes to reinforce depth. The artwork may sit off-center and relatively close to the viewer, while the architecture recedes naturally to one side. Avoid product-style centered symmetry.",
+      "camera_distance": "Close to medium-close, allowing for clear appreciation of the artwork's details and physical presence while establishing a sense of the receding atelier space.",
+      "camera_angle_notes": "The oblique, off-center perspective emphasizes the artwork's dynamism and physical depth, making it feel like a substantial object in a real, lived-in creative space. The receding architectural elements draw the eye through the scene, enhancing the artwork's perceived volume and placement, rather than a flat presentation.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's raw, expressive quality and visible texture find a natural home in a refined atelier setting, connecting it to the act of creation. The clean wall and subtle studio traces emphasize its artistic integrity and premium presentation without distracting from its visual impact.",
+      "commercial_reason": "Placing the artwork in a premium studio context appeals to collectors who value artistic authenticity and the origin story of a piece. It elevates the artwork by associating it with a high-end creative process and space, suggesting it is a significant work worthy of a discerning environment.",
+      "mockup_prompt": "A vibrant abstract artwork, rich in red, black, yellow, and green layers with textural drips and small 3D cube elements, hangs off-center on a long, clean painted plaster wall in a quiet, refined artist's atelier. The camera is at natural standing height, capturing an offset three-quarter oblique view. The artwork is closer to the viewer, while the atelier's architecture, including a polished concrete floor with faint, dry paint marks and a minimalist wooden studio door in the blurred distance, recedes naturally to one side, creating a clear vanishing direction. Soft, diffused north light from an unseen high window gently illuminates the scene, highlighting the artwork's surface and canvas thickness. Focus is sharp on the artwork and its immediate surroundings, with a subtle depth-of-field falloff towards the receding elements.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no messy clutter, no wet paint chaos, no artwork substitution, messy workshop, paint chaos, pet, animal, crowd, generic neutral interior, generic lounge, showroom, unrelated gallery"
+    }
+  ]
+}
+```

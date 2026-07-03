@@ -1,0 +1,153 @@
+{
+    "schema": "world_mother_generation_audit.v1",
+    "generated_at": "2026-06-29T16:45:18+00:00",
+    "mode": "gemini",
+    "category_slug": "minimal_artist_studio",
+    "reference_path": "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260629_164217_9515.jpg",
+    "output_path": "C:\\laragon\\www\\mockups\\storage\\world_mothers\\minimal_artist_studio\\world_mother_20260629_164445_2695.png",
+    "relative_path": "storage/world_mothers/minimal_artist_studio/world_mother_20260629_164445_2695.png",
+    "analysis": {
+        "scene_type": "Attic art studio / atelier",
+        "architecture_language": "Utilitarian attic conversion with exposed timber framing and steeply sloped ceilings, creating a raw and functional workspace.",
+        "wall_language": "Exposed Oriented Strand Board (OSB) panels dominate the sloped walls, interspersed with raw, unfinished wooden beams that highlight the structural elements.",
+        "floor_language": "A patchwork-style area rug with abstract geometric patterns in muted reds, browns, and creams covers a base of simple wooden or OSB flooring.",
+        "ceiling_language": "The ceiling is an extension of the sloped walls, constructed from exposed OSB panels and prominent wooden beams, converging at a central ridge where a light fixture is mounted.",
+        "lighting": "The space is illuminated by an overhead rectangular LED panel light at the apex of the ceiling, supplemented by a long, narrow skylight or window integrated into the left sloped wall, providing a mix of artificial and indirect natural light.",
+        "materials": [
+            "Predominantly raw wood (OSB panels",
+            "exposed timber beams)",
+            "soft carpet on the floor",
+            "with minimal presence of plastic or metal from embedded fixtures."
+        ],
+        "palette": [
+            "Warm and earthy",
+            "dominated by the light to medium wood tones of the OSB and raw timber. The rug introduces accent colors of muted reds",
+            "various browns",
+            "and off-white/cream",
+            "providing a grounded and somewhat rustic feel."
+        ],
+        "mood": [
+            "Functional",
+            "creative",
+            "rustic",
+            "intimate",
+            "and raw. The space feels lived-in and dedicated to artistic endeavors",
+            "with an unpolished",
+            "authentic charm."
+        ],
+        "scale": "Relatively small to medium, the space feels intimate and cozy, constrained yet defined by the distinct angles and height limitations of the attic structure.",
+        "camera_potential": [
+            "Excellent for wide-angle shots to emphasize the unique architectural lines and sloped ceilings",
+            "mid-range shots to capture the overall studio setup",
+            "and dynamic low-angle shots looking up towards the apex."
+        ],
+        "negative_risks": [
+            "The image contains an easel",
+            "canvases",
+            "art supplies",
+            "a palette",
+            "plastic containers",
+            "and a green bag with text ('THANK YOU'). These items should be removed for a clean World Mother environment",
+            "leaving only the architectural shell. AI generation might struggle with the specific OSB texture",
+            "the detailed rug pattern",
+            "and ensuring realistic light fall-off from the skylight and artificial fixture."
+        ],
+        "style_details": "Key elements include the prominent exposed OSB and raw timber beams, the dramatic sloped ceiling, and the inherent functionality of an attic conversion. The aesthetic is unpolished and DIY-like.",
+        "category_keywords": [
+            "attic_studio"
+        ],
+        "reference_file": "world_mother_ref_20260629_164217_9515.jpg",
+        "user_notes": "attic atelier",
+        "category_candidates": [
+            {
+                "category_slug": "minimal_artist_studio",
+                "category_name": "Minimal Artist Studio",
+                "image_count": 0,
+                "score": 13,
+                "matched_terms": [
+                    "minimal",
+                    "artist",
+                    "studio"
+                ]
+            },
+            {
+                "category_slug": "factory_window_space",
+                "category_name": "Factory Window Space",
+                "image_count": 0,
+                "score": 9,
+                "matched_terms": [
+                    "window",
+                    "space"
+                ]
+            },
+            {
+                "category_slug": "mediterranean_artist_studio",
+                "category_name": "Mediterranean Artist Studio",
+                "image_count": 0,
+                "score": 9,
+                "matched_terms": [
+                    "artist",
+                    "studio"
+                ]
+            },
+            {
+                "category_slug": "minimal_contemplative_space",
+                "category_name": "Minimal Contemplative Space",
+                "image_count": 0,
+                "score": 9,
+                "matched_terms": [
+                    "minimal",
+                    "space"
+                ]
+            },
+            {
+                "category_slug": "minimal_rural_space",
+                "category_name": "Minimal Rural Space",
+                "image_count": 0,
+                "score": 9,
+                "matched_terms": [
+                    "minimal",
+                    "space"
+                ]
+            },
+            {
+                "category_slug": "minimal_white_gallery",
+                "category_name": "Minimal White Gallery",
+                "image_count": 0,
+                "score": 9,
+                "matched_terms": [
+                    "minimal",
+                    "white"
+                ]
+            },
+            {
+                "category_slug": "ritual_architectural_space",
+                "category_name": "Ritual Architectural Space",
+                "image_count": 0,
+                "score": 9,
+                "matched_terms": [
+                    "architectural",
+                    "space"
+                ]
+            },
+            {
+                "category_slug": "rural_artist_studio",
+                "category_name": "Rural Artist Studio",
+                "image_count": 0,
+                "score": 9,
+                "matched_terms": [
+                    "artist",
+                    "studio"
+                ]
+            }
+        ],
+        "new_category_suggestion": "attic_art_studio_atelier_utilitarian_attic_conversion_with_exposed_timber_framin",
+        "analysis_source": "gemini",
+        "reference_path": "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260629_164217_9515.jpg",
+        "created_by_user_id": 1
+    },
+    "prompt": "Create one original WORLD MOTHER reference image for future artwork mockups.\nCategory: minimal_artist_studio\nUse the uploaded reference image only as architectural/style guidance. Do not copy it exactly.\nGenerate a clean, realistic, artwork-ready environment with strong wall/floor/lighting geometry, suitable for inserting a separate artwork later.\nDo not include paintings, framed art, posters, logos, readable text, people, animals, or dominant decorative objects. Leave usable wall space.\nScene type: Attic art studio / atelier\nArchitecture: Utilitarian attic conversion with exposed timber framing and steeply sloped ceilings, creating a raw and functional workspace.\nWalls: Exposed Oriented Strand Board (OSB) panels dominate the sloped walls, interspersed with raw, unfinished wooden beams that highlight the structural elements.\nFloor: A patchwork-style area rug with abstract geometric patterns in muted reds, browns, and creams covers a base of simple wooden or OSB flooring.\nCeiling: The ceiling is an extension of the sloped walls, constructed from exposed OSB panels and prominent wooden beams, converging at a central ridge where a light fixture is mounted.\nLighting: The space is illuminated by an overhead rectangular LED panel light at the apex of the ceiling, supplemented by a long, narrow skylight or window integrated into the left sloped wall, providing a mix of artificial and indirect natural light.\nMaterials: Predominantly raw wood (OSB panels, exposed timber beams), soft carpet on the floor, with minimal presence of plastic or metal from embedded fixtures.\nPalette: Warm and earthy, dominated by the light to medium wood tones of the OSB and raw timber. The rug introduces accent colors of muted reds, various browns, and off-white/cream, providing a grounded and somewhat rustic feel.\nMood: Functional, creative, rustic, intimate, and raw. The space feels lived-in and dedicated to artistic endeavors, with an unpolished, authentic charm.\nCamera potential: Excellent for wide-angle shots to emphasize the unique architectural lines and sloped ceilings, mid-range shots to capture the overall studio setup, and dynamic low-angle shots looking up towards the apex.\nAvoid: The image contains an easel, canvases, art supplies, a palette, plastic containers, and a green bag with text ('THANK YOU'). These items should be removed for a clean World Mother environment, leaving only the architectural shell. AI generation might struggle with the specific OSB texture, the detailed rug pattern, and ensuring realistic light fall-off from the skylight and artificial fixture.\nUser generation notes: ",
+    "options": {
+        "notes": ""
+    }
+}

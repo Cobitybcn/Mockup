@@ -384,6 +384,57 @@ class Database
         ");
         $pdo->exec("CREATE INDEX IF NOT EXISTS idx_social_video_jobs_workflow ON social_video_jobs (workflow_id, status)");
         $pdo->exec("CREATE INDEX IF NOT EXISTS idx_mockup_generation_jobs_context ON mockup_generation_jobs (artwork_id, context_id)");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS artwork_sheets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                canonical_artwork_id INTEGER NOT NULL,
+                related_artwork_ids TEXT NOT NULL DEFAULT '',
+                source_image_file TEXT NOT NULL DEFAULT '',
+                user_notes TEXT NOT NULL DEFAULT '',
+                title TEXT NOT NULL DEFAULT '',
+                subtitle TEXT NOT NULL DEFAULT '',
+                description TEXT NOT NULL DEFAULT '',
+                short_description TEXT NOT NULL DEFAULT '',
+                keywords TEXT NOT NULL DEFAULT '',
+                tags TEXT NOT NULL DEFAULT '',
+                alt_text TEXT NOT NULL DEFAULT '',
+                caption TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL DEFAULT 'draft',
+                generated_json TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (canonical_artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
+            )
+        ");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_artwork_sheets_canonical ON artwork_sheets (canonical_artwork_id)");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS mockup_sheets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                artwork_sheet_id INTEGER,
+                artwork_id INTEGER NOT NULL,
+                mockup_id INTEGER,
+                mockup_file TEXT NOT NULL,
+                user_notes TEXT NOT NULL DEFAULT '',
+                title TEXT NOT NULL DEFAULT '',
+                description TEXT NOT NULL DEFAULT '',
+                keywords TEXT NOT NULL DEFAULT '',
+                tags TEXT NOT NULL DEFAULT '',
+                alt_text TEXT NOT NULL DEFAULT '',
+                caption TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL DEFAULT 'draft',
+                generated_json TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
+            )
+        ");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_mockup_sheets_artwork ON mockup_sheets (artwork_id, mockup_file)");
     }
 
     private static function migrateMysql(PDO $pdo): void
@@ -609,6 +660,61 @@ class Database
         self::expandMysqlVarcharIfNeeded($pdo, 'social_video_workflows', 'video_status', 255);
         self::expandMysqlVarcharIfNeeded($pdo, 'social_video_workflows', 'status', 100);
         self::expandMysqlVarcharIfNeeded($pdo, 'social_video_jobs', 'status', 100);
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS artwork_sheets (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                user_id INT UNSIGNED NOT NULL,
+                canonical_artwork_id INT UNSIGNED NOT NULL,
+                related_artwork_ids MEDIUMTEXT NOT NULL,
+                source_image_file VARCHAR(255) NOT NULL DEFAULT '',
+                user_notes MEDIUMTEXT NOT NULL,
+                title VARCHAR(255) NOT NULL DEFAULT '',
+                subtitle VARCHAR(255) NOT NULL DEFAULT '',
+                description MEDIUMTEXT NOT NULL,
+                short_description TEXT NOT NULL,
+                keywords MEDIUMTEXT NOT NULL,
+                tags MEDIUMTEXT NOT NULL,
+                alt_text TEXT NOT NULL,
+                caption TEXT NOT NULL,
+                status VARCHAR(40) NOT NULL DEFAULT 'draft',
+                generated_json MEDIUMTEXT NOT NULL,
+                created_at VARCHAR(40) NOT NULL,
+                updated_at VARCHAR(40) NOT NULL,
+                PRIMARY KEY (id),
+                KEY idx_artwork_sheets_canonical (canonical_artwork_id),
+                KEY idx_artwork_sheets_user (user_id),
+                CONSTRAINT artwork_sheets_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                CONSTRAINT artwork_sheets_artwork_fk FOREIGN KEY (canonical_artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS mockup_sheets (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                user_id INT UNSIGNED NOT NULL,
+                artwork_sheet_id INT UNSIGNED NULL,
+                artwork_id INT UNSIGNED NOT NULL,
+                mockup_id INT UNSIGNED NULL,
+                mockup_file VARCHAR(255) NOT NULL,
+                user_notes MEDIUMTEXT NOT NULL,
+                title VARCHAR(255) NOT NULL DEFAULT '',
+                description MEDIUMTEXT NOT NULL,
+                keywords MEDIUMTEXT NOT NULL,
+                tags MEDIUMTEXT NOT NULL,
+                alt_text TEXT NOT NULL,
+                caption TEXT NOT NULL,
+                status VARCHAR(40) NOT NULL DEFAULT 'draft',
+                generated_json MEDIUMTEXT NOT NULL,
+                created_at VARCHAR(40) NOT NULL,
+                updated_at VARCHAR(40) NOT NULL,
+                PRIMARY KEY (id),
+                KEY idx_mockup_sheets_artwork (artwork_id, mockup_file),
+                KEY idx_mockup_sheets_user (user_id),
+                CONSTRAINT mockup_sheets_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                CONSTRAINT mockup_sheets_artwork_fk FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
     }
 
     private static function addColumnIfMissing(PDO $pdo, string $table, string $column, string $definition): void

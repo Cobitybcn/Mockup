@@ -1,0 +1,29 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "The Serene Alcove of Reflected Light",
+      "context_role": "To present the artwork as a focal point within a sophisticated, quietly luxurious domestic environment, emphasizing its contemplative depth and rich colors under natural, warm light, suggesting it belongs to a discerning collector.",
+      "space_type": "A refined living area or quiet lounge within an aspirational private residence.",
+      "atmosphere": "Tranquil, contemplative, warm, and sophisticated, bathed in the soft, golden glow of late afternoon light filtering through a large window. An atmosphere of refined calm and understated luxury.",
+      "materials": [
+        "Limewash walls in a warm neutral tone (subtle cream or very pale taupe)",
+        "Wide-plank pale oak flooring",
+        "Clean, plaster ceiling",
+        "Premium, contemporary armchair in natural linen upholstery (muted olive tone)",
+        "Low-profile, dark wood (walnut or dark oak) console table",
+        "Subtle bronze or aged brass details (e.g., in a minimalist lamp base if applicable, but not required)"
+      ],
+      "lighting": "Polished daylight from a large window, diffused and warm, mimicking a late afternoon golden hour. The light gently illuminates the wall where the artwork hangs, creating soft shadows and highlighting the artwork's texture without glare. Indirect ambient lighting further enhances the refined mood.",
+      "camera_view": "Reflejo Dorado de Tarde / Palazzo: Camera height is elegant human standing height, approximately 150-170 cm, as if observed calmly from inside a palazzo room. Use a soft three-quarter rotation that catches reflected late light while keeping the artwork plane legible. The composition is stable, warm, and architectural, with golden afternoon reflection supporting the room rather than repainting the artwork; keep elegant balance but avoid perfect symmetry unless the room itself naturally demands it.",
+      "camera_distance": "Medium-close, allowing the artwork to dominate while revealing enough of the refined architectural context and the play of light.",
+      "camera_angle_notes": "The camera captures the artwork from an elegant human standing height, with a soft three-quarter left-oblique rotation (about 10-15 degrees) that reveals the physical thickness of the canvas and the depth of the room. The composition is stable and architectural, with vanishing lines leading subtly into the room's depth. The golden afternoon light is reflected gently, highlighting the artwork's materiality and integrating it seamlessly into the warm, premium domestic setting.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's deep greens and vibrant reds find a complementary yet refined home in a space characterized by warm neutrals and natural light. The strong, abstract forms resonate with the clean lines and noble materials of quiet luxury. The contemplative atmosphere of the room enhances the artwork's inherent silence and dramatic tension, allowing its colors and composition to breathe and become a focal point for reflection.",
+      "commercial_reason": "This context positions the artwork as a high-value piece for discerning collectors who appreciate understated elegance and meaningful art integration within their homes. The aspirational domestic setting, bathed in flattering natural light, makes the artwork feel inviting, accessible yet premium, and suitable for sophisticated living spaces. It shows the artwork's versatility to enrich a refined personal environment.",
+      "mockup_prompt": "A refined living room in an aspirational private residence, bathed in soft, golden late afternoon window light. The walls are warm neutral limewash, the floor is wide-plank pale oak. On one wall, centered on a spacious, well-lit section, hangs the full artwork, appearing as a physical, real stretched canvas with visible texture and thickness. The room features subtle architectural details and a quiet luxury aesthetic. A premium, contemporary armchair upholstered in natural linen, in a muted olive tone, is partially visible in the mid-ground, positioned slightly to the right, adding depth without distracting. A low-profile, dark wood console table with minimalist lines is beneath the artwork, partially visible to establish scale. The camera is at elegant human standing height, looking at the artwork with a soft three-quarter left-oblique rotation, capturing reflected late light and architectural depth. The composition is stable, warm, and architectural, showing coherent vanishing lines and a clear foreground, midground, and background. Minimal depth of field ensures artwork and immediate surroundings are crisp. No people, no animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default, no cold light, no harsh shadows, no excessive furniture, no bright influencer colors, no hotel catalog, no furniture showroom."
+    }
+  ]
+}
+```

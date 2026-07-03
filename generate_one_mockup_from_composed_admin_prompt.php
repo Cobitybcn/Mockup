@@ -8,6 +8,15 @@ require_once __DIR__ . '/app/bootstrap.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
+if (!defined('LEGACY_MOCKUP_FLOW_ENABLED') || !LEGACY_MOCKUP_FLOW_ENABLED) {
+    http_response_code(400);
+    echo json_encode([
+        'ok' => false,
+        'error' => 'Legacy mockup context analysis disabled. Use the direct world mother combination flow (mockup_combinations_review.php).'
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
 try {
     // 1. Require authentication
     $user = Auth::requireUser();
@@ -68,15 +77,26 @@ try {
     // 7. Compose prompt
     $composer = new AdminPromptComposerPreview();
     $composedPrompt = $composer->compose($contextRow);
+    $slotFullPromptMode = AdminPromptComposerPreview::hasSlotFullPromptTemplate(
+        (string)($contextJson['camera_slot_id'] ?? $contextRow['camera_slot_id'] ?? '')
+    );
 
-    // 8. Security/Invariant Check: Verify that we pass composed prompt exactly
-    // In passthrough mode, the final prompt sent to Vertex will be exactly $composedPrompt.
-    $finalPromptSentToVertex = $composedPrompt;
+    // 8. Security/Invariant Check: Verify that we pass composed prompt exactly.
+    // This used to compare $composedPrompt against itself (always true, never
+    // caught anything). The real downstream step for a real $contextId is
+    // GeminiMockupGenerator::finalPrompt() / OpenAIMockupGenerator::finalPrompt(),
+    // which run $composedPrompt through MockupWorldVisualPromptEnhancer with this
+    // context's real numeric id — unlike the direct-combination flow, that id DOES
+    // match a mockup_contexts row here, so the enhancer is genuinely active and can
+    // append a "WORLD VISUAL CONTRACT" block (see docs/AUDITORIA_PROMPTS_MOCKUPS_20260701.md,
+    // Fase 4). We replicate that exact call so this check reflects reality. This does
+    // NOT change what gets generated (the real generator call below is untouched);
+    // it only makes the audit trail honest. Not used with the Mock provider, which
+    // bypasses the enhancer entirely by design.
+    $finalPromptSentToVertex = $slotFullPromptMode
+        ? $composedPrompt
+        : (new MockupWorldVisualPromptEnhancer())->enhancePromptForContextId($composedPrompt, (string)$contextId);
     $promptExactMatch = ($composedPrompt === $finalPromptSentToVertex);
-
-    if (!$promptExactMatch) {
-        throw new RuntimeException('Mismatch between composed final prompt and final prompt to be sent to Vertex.');
-    }
 
     // 9. Prepare Pre-generation Audit JSON
     $timestamp = date('Ymd-His') . '-' . random_int(1000, 9999);
@@ -88,6 +108,13 @@ try {
     }
     
     $auditPath = $auditDir . '/' . $auditFilename;
+
+    $initialWarnings = [];
+    if (!$promptExactMatch) {
+        $initialWarnings[] = 'World visual contract enhancer modified the composed prompt before it reached the generator (added '
+            . (strlen($finalPromptSentToVertex) - strlen($composedPrompt)) . ' characters). '
+            . 'composed_final_admin_prompt is NOT what was actually sent; see final_prompt_sent_to_vertex.';
+    }
 
     $auditData = [
         'schema' => 'mockup_generation_audit.v1',
@@ -112,7 +139,7 @@ try {
         'queued_or_generated_mockup_file' => null,
         'queued_or_generated_at' => date('c'),
         'status' => 'prepared',
-        'warnings' => [],
+        'warnings' => $initialWarnings,
     ];
 
     // Write initial audit JSON file
@@ -164,6 +191,14 @@ try {
         'seo_params' => $seoParams,
         'root_reference_path' => $imagePath,
         'prompt_passthrough_mode' => $composedPrompt, // Strict passthrough mode
+        // This call sends a single reference image (no world_mother_reference_path), so
+        // vertex_bridge.py's precomposition/fill_ratio block is structurally reachable if
+        // MOCKUP_USE_PRECOMPOSITION were ever re-enabled globally (unlike the direct-combination
+        // flow, which always sends 2+ images and is immune by structure — see
+        // docs/AUDITORIA_PROMPTS_MOCKUPS_20260701.md, Fase 5). This flag forces it off for this
+        // call specifically, independent of the global flag.
+        'force_disable_precomposition' => true,
+        'slot_full_prompt_mode' => $slotFullPromptMode,
     ]);
 
     // 12. Save mockup to database

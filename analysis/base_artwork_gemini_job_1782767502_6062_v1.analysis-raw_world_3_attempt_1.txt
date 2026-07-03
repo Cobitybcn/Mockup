@@ -1,0 +1,27 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Palazzo Meridian Glow",
+      "context_role": "To present the artwork within a historically rich, yet visually refined European architectural setting, highlighting its contemporary abstract power against a backdrop of enduring elegance and warm, natural light.",
+      "space_type": "Grand European Palazzo Room",
+      "atmosphere": "Refined historical, serene, warm, contemplative, with a golden late afternoon ambiance.",
+      "materials": [
+        "Aged limewash plaster walls in a muted cream",
+        "Large-format pale honed Travertine stone floor",
+        "Tall arched windows with slender dark metal frames",
+        "Minimal dark wood console table"
+      ],
+      "lighting": "Golden late day light streaming through tall arched windows, casting long, soft shadows and illuminating the artwork with a warm glow, creating a gentle chiaroscuro effect.",
+      "camera_view": "Vista Aérea con Contexto de Ventanas: Camera height is elevated above normal eye level, high enough to read the room, windows, floor plane, and artwork together. Use a gentle diagonal rotation so window context and the artwork wall are both visible without splitting perspectives. The room is comprehensible from above, with window light and floor geometry giving context while the artwork remains identifiable; allow a moderate offset so floor, windows, and surrounding architecture carry part of the frame.",
+      "camera_distance": "Controlled architectural distance.",
+      "camera_angle_notes": "The elevated, slightly oblique view allows the artwork's scale to be understood in relation to the grand architectural proportions and the expansive floor plane, while emphasizing the room's depth and the quality of natural light. The slight rotation prevents a flat rendering and includes valuable contextual elements like windows and floor patterns, enhancing its physical presence.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's strong, minimalist abstract forms and bold color palette (deep green, vibrant red) are elegantly counterpointed by the historical warmth and restrained grandeur of a European palazzo. The aged materials and warm late light soften the artwork's starkness, allowing its forms to resonate with the architectural lines without being overwhelmed. The tension between contemporary abstraction and historical setting enriches both.",
+      "commercial_reason": "This context elevates the artwork to a premium, collectible status, suggesting it belongs in sophisticated, historically aware collections. The warm, inviting light and architectural context appeal to buyers seeking art that enhances established, refined spaces, demonstrating its versatility beyond modern minimalist settings. The aerial view offers a unique, aspirational perspective on how the art integrates into a significant interior.",
+      "mockup_prompt": "Elevated aerial view, Vista Aérea con Contexto de Ventanas, of a grand European palazzo room, bathed in golden late day light. The artwork, a deep olive green canvas with bold red and dark blue abstract forms, is hung on an aged limewash plaster wall, off-center to reveal architectural context. The room features tall arched windows with slender dark metal frames, allowing warm, soft light to flood the expansive honed Travertine stone floor. The floor has a subtle pattern visible from above. A minimal dark wood console table is positioned on the floor plane below the artwork, contributing to the room's geometry. The camera looks down and across the room, capturing the floor plane, the artwork wall, and the window context in a single coherent composition. Little to no depth of field, all architectural elements and the artwork are crisp. No people, no animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default, no period drama, no museum spectacle, no rustic farmhouse."
+    }
+  ]
+}
+```

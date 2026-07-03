@@ -1,0 +1,172 @@
+{
+    "schema": "world_mother_set_generation_audit.v1",
+    "generated_at": "2026-07-01T16:23:45+00:00",
+    "mode": "gemini",
+    "category_slug": "industrial_loft_high_ceilings",
+    "reference_paths": [
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_155940_5599.jpg",
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_155940_2207.jpg",
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_155940_6794.jpg",
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_155940_1908.jpg"
+    ],
+    "images": [
+        {
+            "file_name": "world_mother_20260701_162040_2472_01.png",
+            "relative_path": "storage/world_mothers/industrial_loft_high_ceilings/world_mother_20260701_162040_2472_01.png",
+            "absolute_path": "C:\\laragon\\www\\mockups\\storage\\world_mothers\\industrial_loft_high_ceilings\\world_mother_20260701_162040_2472_01.png",
+            "variant_index": 1,
+            "variant_role": "primary_wall"
+        },
+        {
+            "file_name": "world_mother_20260701_162040_2472_02.png",
+            "relative_path": "storage/world_mothers/industrial_loft_high_ceilings/world_mother_20260701_162040_2472_02.png",
+            "absolute_path": "C:\\laragon\\www\\mockups\\storage\\world_mothers\\industrial_loft_high_ceilings\\world_mother_20260701_162040_2472_02.png",
+            "variant_index": 2,
+            "variant_role": "oblique_depth"
+        },
+        {
+            "file_name": "world_mother_20260701_162040_2472_03.png",
+            "relative_path": "storage/world_mothers/industrial_loft_high_ceilings/world_mother_20260701_162040_2472_03.png",
+            "absolute_path": "C:\\laragon\\www\\mockups\\storage\\world_mothers\\industrial_loft_high_ceilings\\world_mother_20260701_162040_2472_03.png",
+            "variant_index": 3,
+            "variant_role": "light_drama"
+        },
+        {
+            "file_name": "world_mother_20260701_162040_2472_04.png",
+            "relative_path": "storage/world_mothers/industrial_loft_high_ceilings/world_mother_20260701_162040_2472_04.png",
+            "absolute_path": "C:\\laragon\\www\\mockups\\storage\\world_mothers\\industrial_loft_high_ceilings\\world_mother_20260701_162040_2472_04.png",
+            "variant_index": 4,
+            "variant_role": "architectural_context"
+        }
+    ],
+    "analysis": {
+        "scene_type": "Grand Loft / Atelier Living Space",
+        "architecture_language": "Industrial Modernist, characterised by expansive double-height ceilings, raw material honesty, and dominant, large-scale fenestration. Features open-plan layouts and often exposed structural elements.",
+        "wall_language": "Tall, unadorned vertical surfaces, primarily exposed, textured concrete or smooth, light-toned plaster/stucco. Minimalist and impactful, emphasizing height and natural light interaction.",
+        "floor_language": "Polished concrete or light, muted-toned hard flooring (e.g., polished stone), reflecting light and contributing to the spacious feel.",
+        "ceiling_language": "Very high or double-height, often exposed concrete, sometimes with visible structural beams or industrial-style lighting tracks, or smoothly plastered and unadorned.",
+        "lighting": "Predominantly natural, abundant, and dramatic light pouring in through oversized windows, creating strong contrasts, deep shadows, and dappled effects. Minimal and understated artificial ambient lighting.",
+        "materials": [
+            "Primary: Exposed and polished concrete",
+            "large panes of glass",
+            "black steel (for window frames and structural elements). Secondary: Natural wood (dark or light tones)",
+            "raw or textured fabrics (linen",
+            "wool",
+            "jute)",
+            "plaster/stucco."
+        ],
+        "palette": [
+            "Predominantly cool and warm neutrals: various shades of grey (concrete",
+            "charcoal)",
+            "crisp whites and off-whites (walls",
+            "some textiles)",
+            "black (window frames",
+            "steel)",
+            "natural wood browns",
+            "and occasional muted green accents from subtle foliage."
+        ],
+        "mood": [
+            "Spacious",
+            "minimalist",
+            "serene",
+            "sophisticated",
+            "grand",
+            "light-filled",
+            "industrial elegance",
+            "artistic",
+            "and contemporary."
+        ],
+        "scale": "Grand, imposing, and aspirational. Features include double-height or exceptionally high ceilings, monumental windows, and furniture proportioned to the large volume of space.",
+        "camera_potential": [
+            "Wide-angle and low-angle shots to emphasize verticality and expansive spatial volume. Opportunities for strong compositions leveraging natural light",
+            "deep shadows",
+            "and architectural lines. Shots through the large windows offer intriguing external views."
+        ],
+        "negative_risks": [
+            "Paintings",
+            "Framed artwork",
+            "Art prints",
+            "Frames (empty or with content)",
+            "People",
+            "Animals",
+            "Logos",
+            "Text",
+            "Clutter (e.g., specific small plants, books, vases, decorative objects, candles, blankets draped on furniture, barware, bottles, specific coffee table arrangements – the goal is a clean architectural shell with generic furniture)."
+        ],
+        "style_details": "Features massive multi-pane windows with industrial-style black frames, ranging from rectilinear grids to grand arched forms. The architecture seamlessly blends raw industrial elements (exposed concrete walls, steel beams, mezzanines) with a modernist or minimalist aesthetic. Furniture is typically modern, low-profile, and understated to maintain open sightlines and highlight the expansive space. Spaces can vary between a more pronounced raw concrete finish and a softer, plastered 'atelier' feel, while retaining the overall grand scale and abundant natural light.",
+        "category_keywords": [
+            "Industrial Loft",
+            "High Ceilings",
+            "Natural Light",
+            "Minimalist",
+            "Concrete Interior",
+            "Grand Windows",
+            "Modernist",
+            "Atelier Style",
+            "Raw Materials",
+            "Spacious Interior"
+        ],
+        "reference_file": "world_mother_ref_20260701_155940_5599.jpg",
+        "user_notes": "",
+        "reference_paths": [
+            "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_155940_5599.jpg",
+            "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_155940_2207.jpg",
+            "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_155940_6794.jpg",
+            "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_155940_1908.jpg"
+        ],
+        "reference_files": [
+            "world_mother_ref_20260701_155940_5599.jpg",
+            "world_mother_ref_20260701_155940_2207.jpg",
+            "world_mother_ref_20260701_155940_6794.jpg",
+            "world_mother_ref_20260701_155940_1908.jpg"
+        ],
+        "category_candidates": [
+            {
+                "category_slug": "Atelier",
+                "category_name": "Atelier",
+                "image_count": 7,
+                "score": 4,
+                "matched_terms": [
+                    "atelier"
+                ]
+            },
+            {
+                "category_slug": "en espera",
+                "category_name": "En Espera",
+                "image_count": 122,
+                "score": 0,
+                "matched_terms": []
+            },
+            {
+                "category_slug": "modernismo_catalan",
+                "category_name": "Modernismo Catalan",
+                "image_count": 8,
+                "score": 0,
+                "matched_terms": []
+            },
+            {
+                "category_slug": "modernismo_catalan_espa_referencia",
+                "category_name": "Modernismo Catalan Espa Referencia",
+                "image_count": 8,
+                "score": 0,
+                "matched_terms": []
+            },
+            {
+                "category_slug": "selected",
+                "category_name": "Selected",
+                "image_count": 4,
+                "score": 0,
+                "matched_terms": []
+            }
+        ],
+        "new_category_suggestion": "industrial_loft_high_ceilings",
+        "analysis_source": "gemini_multi_reference",
+        "reference_path": "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_155940_5599.jpg",
+        "created_by_user_id": 1
+    },
+    "base_prompt": "Create one original WORLD MOTHER reference image for future artwork mockups.\nCategory: industrial_loft_high_ceilings\nUse the uploaded reference image set as visual DNA, mood, material direction, architectural clues, lighting clues, and spatial inspiration. Do not copy it, trace it, lightly clean it, preserve its exact layout, or keep its exact camera angle and object placement.\nYour task is to invent a richer and more useful environment world from those inputs. The result must feel like a designed world mother, not an edited version of the reference image.\nIf the user provides a named style, place, architecture, era, mood, material, artist movement, or cultural reference, expand that world intelligently with coherent architectural vocabulary, surfaces, light behavior, furniture/object language, atmosphere, and spatial depth. Do not reduce the concept to one obvious repeated motif.\nIf the user prompt is weak, generic, or empty, still create a sophisticated, photorealistic, premium environment with strong world identity, layered materials, believable light, clear scale, and enough spatial variety for multiple future camera slots.\nGenerate an artwork-ready environment with memorable world identity, strong wall/floor/lighting geometry, depth layers, material contrast, atmosphere, and useful negative space.\nFavor environments with real perspective and spatial travel: diagonal room axes, receding floor or ceiling lines, side planes, corridors, mezzanines, openings, stairs, windows, columns, or furniture alignment that create depth. Avoid static flat-on symmetrical room records unless one variant explicitly needs a primary wall.\nAlways leave at least one credible usable artwork zone: wall, floor-leaning area, easel-adjacent area, or architectural plane where a separate artwork can later be inserted.\nDo not include paintings, framed art, posters, logos, readable text, people, animals, or dominant decorative objects. Avoid overfilled clutter, avoid empty showroom sterility unless requested, and avoid furniture or props becoming the subject.\nMake the result useful for later camera transformations: frontal, oblique, detail, low angle, aerial, and close-up views.\nScene type: Grand Loft / Atelier Living Space\nArchitecture: Industrial Modernist, characterised by expansive double-height ceilings, raw material honesty, and dominant, large-scale fenestration. Features open-plan layouts and often exposed structural elements.\nWalls: Tall, unadorned vertical surfaces, primarily exposed, textured concrete or smooth, light-toned plaster/stucco. Minimalist and impactful, emphasizing height and natural light interaction.\nFloor: Polished concrete or light, muted-toned hard flooring (e.g., polished stone), reflecting light and contributing to the spacious feel.\nCeiling: Very high or double-height, often exposed concrete, sometimes with visible structural beams or industrial-style lighting tracks, or smoothly plastered and unadorned.\nLighting: Predominantly natural, abundant, and dramatic light pouring in through oversized windows, creating strong contrasts, deep shadows, and dappled effects. Minimal and understated artificial ambient lighting.\nMaterials: Primary: Exposed and polished concrete, large panes of glass, black steel (for window frames and structural elements). Secondary: Natural wood (dark or light tones), raw or textured fabrics (linen, wool, jute), plaster/stucco.\nPalette: Predominantly cool and warm neutrals: various shades of grey (concrete, charcoal), crisp whites and off-whites (walls, some textiles), black (window frames, steel), natural wood browns, and occasional muted green accents from subtle foliage.\nMood: Spacious, minimalist, serene, sophisticated, grand, light-filled, industrial elegance, artistic, and contemporary.\nCamera potential: Wide-angle and low-angle shots to emphasize verticality and expansive spatial volume. Opportunities for strong compositions leveraging natural light, deep shadows, and architectural lines. Shots through the large windows offer intriguing external views.\nAvoid: Paintings, Framed artwork, Art prints, Frames (empty or with content), People, Animals, Logos, Text, Clutter (e.g., specific small plants, books, vases, decorative objects, candles, blankets draped on furniture, barware, bottles, specific coffee table arrangements – the goal is a clean architectural shell with generic furniture).\nUser generation notes: \nPreserve the world identity more than the exact uploaded composition.\nGenerate a coherent set of world mother references. Each output belongs to the same world identity but must solve a different mockup use case.\nThe references are ingredients, not the destination. Build a new environment world that could plausibly generate many different camera views later.\nDo not make small retouches of the uploaded references. Synthesize them into a richer original environment with stronger architectural, material, lighting, and spatial identity.\nAcross the set, avoid repeating the same camera, wall, ceiling, window, furniture, and object layout. The variants must feel related, not cloned.\nMost variants must be spatially enriched by perspective: diagonal views, oblique walls, receding floor lines, visible depth layers, architectural rhythm, foreground/midground/background separation, and clear vanishing direction. Avoid a set dominated by flat frontal rooms.",
+    "options": {
+        "notes": "",
+        "count": 4
+    }
+}

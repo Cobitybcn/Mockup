@@ -1,0 +1,46 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Crimson Terraces",
+      "subtitle": "An abstract landscape of deep red and light-traced contours.",
+      "description": "This piece explores the primal energy of a rich crimson field, punctuated by subtle white linear gestures that evoke geological strata or human-shaped terrains, creating a visual rhythm across the canvas."
+    },
+    {
+      "title": "Red Stratum",
+      "subtitle": "A study in texture and depth through an intense monochromatic palette.",
+      "description": "With its powerful red hue and delicate etched lines, 'Red Stratum' delves into the layered complexities of form and surface, inviting contemplation on structure and the passage of time."
+    },
+    {
+      "title": "Vermilion Horizon",
+      "subtitle": "An emotive abstract capturing vastness within a vibrant palette.",
+      "description": "The artwork presents a sweeping vision in vermilion, where faint, almost ethereal marks suggest horizons or distant elements, creating an expansive emotional landscape within a compact form."
+    }
+  ],
+  "recommended_number_of_contexts": 6,
+  "contextual_proposals": [
+    {
+      "context_name": "Palazzo Serenity: The Aerial Glimpse",
+      "context_role": "To present the artwork as a contemporary focal point within a grand historical European architectural setting, viewed from an unusual, artistic aerial perspective, highlighting both its modern impact and timeless appeal.",
+      "space_type": "Grand hall or gallery wing of a historical European palazzo with tall proportions and a high architectural void.",
+      "atmosphere": "Refined, historically rich, and quiet, infused with the warm, golden glow of late afternoon light filtering through tall windows. An atmosphere of calm contemplation and architectural majesty, seen from above.",
+      "materials": [
+        "Aged lime-washed plaster walls in muted stone or cream tones",
+        "Large format polished stone floor (e.g., Botticino marble or terrazzo) with geometric patterns",
+        "Restrained architectural moulding or arches (secondary focus, seen from above)",
+        "Dark, aged timber or bronze accents on a low-profile console or bench",
+        "Soft, heavy linen or velvet drapes on grand windows (partially visible from above)"
+      ],
+      "lighting": "Golden late-day sunlight, softly illuminating the room from tall, unseen windows and reflecting off the polished floor. The light is warm, creating long, soft shadows and highlighting the texture of the plaster walls, while gently supporting the artwork without direct glare. Ambient overhead light from a high ceiling/skylight area is diffused.",
+      "camera_view": "Nadir Aéreo con Contexto de Ventanas: Camera is positioned very high, near ceiling height, upper balcony height, skylight height, or the top edge of a tall architectural void. It is the aerial counterpart of an extreme nadir: instead of looking upward from the floor, the camera looks downward from above into the room. Use an oblique high-corner or upper-balcony diagonal, not a centered frontal wall view. The camera may look diagonally down along the room so window context, floor geometry, and artwork wall are visible together. Build the image from above: visible floor plane, furniture or bench tops, rug or floor layout, wall height, window/skylight context, and the artwork installed on a vertical wall. The artwork remains identifiable, but the room must read as seen from above, not as a normal wall presentation.",
+      "camera_distance": "Controlled architectural distance, allowing the artwork to be clearly visible while showcasing the expansive floor and contextual architectural elements from above.",
+      "camera_angle_notes": "The high, oblique downward angle provides a unique, sophisticated perspective, emphasizing the artwork's scale within the grand architectural space. It highlights the artwork's verticality as it rises from the floor plane, revealing its physical presence and thickness, and preventing a flat, poster-like appearance, all while preserving spatial geometry and depth required by the nadir view.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's strong red and abstract lines gain profound depth and gravitas against the aged elegance of a palazzo. The golden late light complements its warm tone, while the classical proportions provide a serene, contemplative backdrop that highlights the artwork's contemporary minimalism without overwhelming it.",
+      "commercial_reason": "This context positions the artwork as a high-value piece suitable for discerning collectors with grand historical homes, demonstrating its ability to bridge historical grandeur with modern aesthetics. The unique aerial camera view offers a premium, magazine-spread-worthy presentation, showcasing the artwork's physical installation and monumental presence in a prestigious setting.",
+      "mockup_prompt": "A tall, old European palazzo gallery, bathed in golden late-day sunlight streaming through grand, partially visible tall windows. The camera is positioned very high, looking diagonally downward from an upper corner or balcony towards the main wall. On this wall, the artwork, a vibrant deep red abstract painting with subtle white horizontal lines and rectangular shapes, is precisely installed as a central focal point. The wall is aged lime-washed plaster in a muted, warm stone tone. Below the artwork, a simple, low-profile antique bronze console or a long, upholstered bench with dark aged timber legs is visible from above. The floor is a large-format polished light stone, like Botticino marble or terrazzo, with subtle geometric patterns, extending prominently across the foreground from the high-angle view. The architectural space has restrained moulding or arches, visible high above, framing the scene from this unique aerial perspective. Visible floor plane, furniture tops, wall height, and window context are coherent. Artwork must be exactly preserved in its original colors, proportions, composition, and surface texture, showing its real physical thickness. No distortion. No visible people, no animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no period drama, no museum spectacle, no costumes, no crowds, no royal event, no costume drama, no pet, no artwork substitution, no generic neutral interior, no rustic Tuscan room, no generic lounge, no showroom, no unrelated gallery, no eye-level wall view, no standing-height view, no centered frontal presentation, no simple elevated 3/4, no drone distance, no surveillance view."
+    }
+  ]
+}
+```

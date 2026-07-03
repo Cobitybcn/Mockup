@@ -1,0 +1,47 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Urban Ascent",
+      "subtitle": "Geometric Abstraction with Ladders",
+      "description": "A dynamic composition of structured color blocks and implied vertical journeys."
+    },
+    {
+      "title": "Architectural Strata",
+      "subtitle": "Textured Blocks in Red, Teal, and Gold",
+      "description": "Layered forms evoking cityscapes and ambitious horizons with vibrant contrasts."
+    },
+    {
+      "title": "Chromatic Horizon",
+      "subtitle": "Bold Hues and Ascending Forms",
+      "description": "An interplay of cool and warm tones creating a sense of depth and upward movement."
+    }
+  ],
+  "recommended_number_of_contexts": 1,
+  "contextual_proposals": [
+    {
+      "context_name": "Palazzo Serenity with Golden Glow",
+      "context_role": "To present the artwork as a sophisticated focal point within a refined, aspirational private residence, highlighting its vibrant energy against a backdrop of quiet luxury.",
+      "space_type": "Elegant Living Room / Residential Suite",
+      "atmosphere": "Aspirational, serene, and sophisticated, imbued with the warm, polished glow of late afternoon sun. A calm, inviting atmosphere that balances contemporary art with timeless domestic elegance.",
+      "materials": [
+        "Textured limewash wall in warm neutral",
+        "Pale oak herringbone floor",
+        "Clean, high ceiling with subtle cove lighting",
+        "Sculptural dark wood or bronze side table",
+        "Linen or wool blend area rug in muted tone",
+        "Refined plaster architectural details"
+      ],
+      "lighting": "Polished golden afternoon light, originating from a large window slightly out of frame, creating a soft, luminous quality with gentle reflections on the artwork and subtle shadows defining architectural planes.",
+      "camera_view": "Reflejo Dorado de Tarde / Palazzo: Camera height is elegant human standing height, approximately 150-170 cm, as if observed calmly from inside a palazzo room. Use a soft three-quarter rotation that catches reflected late light while keeping the artwork plane legible. The composition is stable, warm, and architectural, with golden afternoon reflection supporting the room rather than repainting the artwork; keep elegant balance but avoid perfect symmetry unless the room itself naturally demands it.",
+      "camera_distance": "Controlled architectural distance, allowing for significant negative space around the artwork while clearly establishing the room's depth and scale.",
+      "camera_angle_notes": "The soft three-quarter rotation provides a dynamic perspective, revealing the artwork's physical depth and presence as a real object within the space. The elegant human-height view makes the artwork feel approachable yet grand, integrating it naturally into the room's lived experience while the architectural lines recede, enhancing spatial tension and demonstrating coherent scale.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's energetic color blocks and graphic ladders offer a vibrant contrast to the calm, neutral palette of a quiet luxury interior. Its structured yet dynamic visual language enriches the serene domestic setting by injecting a focal point of contemporary vitality, while the 'palazzo' camera angle and golden light resonate with the artwork's warmer tones, creating a harmonious and sophisticated visual dialogue.",
+      "commercial_reason": "This context elevates the artwork's perceived value by presenting it within an aspirational, high-end residential environment, targeting a discerning market that appreciates art as a central element of sophisticated living. The warm, inviting light and refined materials highlight the artwork's aesthetic appeal and its capacity to define a premium interior, making it highly desirable for collectors seeking statement pieces for their private spaces.",
+      "mockup_prompt": "A refined domestic living room with an elegant, aspirational atmosphere, bathed in warm golden afternoon light reflecting from a large window slightly out of frame to the right. The artwork, a vibrant abstract composition with blocks of teal, green, yellow, and red, featuring subtle ladder motifs, is mounted on a textured limewash wall in a soft, warm neutral tone. The wall recedes to the left, creating architectural depth. A pale oak herringbone floor extends into the background, partially covered by a fine woven area rug in muted linen. In the midground, a sculptural, minimalist side table in dark wenge wood or patinated bronze, with a single curated design book and a small ceramic object, subtly defines the foreground. The artwork is a physical, thick canvas, accurately scaled as a wall-hanging, with visible texture and original colors. The overall composition is stable, warm, and architectural.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default, no influencer lifestyle, no real estate ad, no hotel catalog look, no furniture showroom, no decor ad, no pets, no crowd, no generic neutral interior, no Mediterranean villa, no showroom, no unrelated gallery"
+    }
+  ]
+}
+```

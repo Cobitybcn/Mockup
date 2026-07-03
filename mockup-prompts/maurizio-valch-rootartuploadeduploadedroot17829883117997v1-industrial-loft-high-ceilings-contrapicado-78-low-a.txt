@@ -1,0 +1,35 @@
+Generate one premium photographic mockup using this exact camera slot only:
+Camera Slot ID: contrapicado_7_8
+Camera Slot Name: Contrapicado 7/8
+
+INPUT ROLES:
+IMAGE 1 is the only source of truth for the artwork. Preserve exact artwork identity, orientation, aspect ratio, colors, marks, sparse areas, and composition.
+IMAGE 2 may only inform compatible environmental DNA. Do not copy its camera, layout, furniture, window placement, artwork placement, or composition.
+
+ARTWORK PHYSICAL DATA:
+Artwork title: root_art_uploaded_uploaded_root_1782988311_7997_v1
+Artwork width: 80 cm
+Artwork height: 120 cm
+Artwork orientation: portrait
+Artwork size class: L
+
+TASK:
+Create an aggressive low 7/8 contrapicado mockup. The viewpoint is near the floor and strongly side-oblique, showing believable artwork side depth, floor plane, wall geometry, and rising architecture.
+
+CAMERA:
+Camera height is 5-20 cm from the floor, far below knee height. Use an aggressive wide architectural lens equivalent, about 20-28 mm. Use a strong upward low-angle tilt from below the artwork centerline and a very strong 7/8 oblique rotation.
+
+COMPOSITION:
+Include a large visible floor wedge or floor plane in the lower foreground. Wall/floor junctions and architectural verticals must prove the camera is below knee height. Use strong asymmetry, close foreground edge, and one shared vanishing direction.
+
+ARTWORK INTEGRITY:
+The canvas is a rigid physical rectangle under aggressive perspective. Strong foreshortening and side-depth exaggeration are allowed, but the front face must not melt, tear, curve, liquid-warp, stretch, compress, or become a different artwork.
+
+SCALE:
+Respect the supplied dimensions. Do not enlarge into a billboard, mural, oversized slab, wall-sized panel, or stage prop. Presence must come from camera position and 7/8 geometry.
+
+PAINTED EDGE:
+Visible side depth, bottom edge, corner, or thickness must be painted as a coherent continuation of IMAGE 1. No raw beige canvas edge, unpainted primer, bare wood, exposed stretcher bars, or blank side band unless IMAGE 1 explicitly shows it.
+
+NEGATIVE PROMPT:
+No eye-level view, no standing-height view, no normal 3/4 gallery photo, no gentle low angle, no soft controlled viewpoint, no flat wall view, no centered product view, no melted artwork, no torn canvas, no curved canvas, no warped canvas, no artwork substitution, no invented painting, no mural scaling, no billboard scaling, no oversized canvas, no raw beige canvas edge, no unpainted canvas edge, no bare wood edge, no random people, no pets, no crowds, no children, no visible text, no logos, no watermarks.

@@ -23,6 +23,11 @@ if (!$artwork) {
     die('Artwork not found or access denied.');
 }
 
+if (!defined('LEGACY_MOCKUP_FLOW_ENABLED') || !LEGACY_MOCKUP_FLOW_ENABLED) {
+    header('Location: mockup_combinations_review.php?id=' . $id);
+    exit;
+}
+
 // 1. Read mockup-prompt-drafts JSON (with auto-generation fallback)
 $draftsPath = __DIR__ . '/analysis/mockup-prompt-drafts/' . $id . '.prompt-drafts.json';
 $draftsJson = null;

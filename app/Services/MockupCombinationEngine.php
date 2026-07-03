@@ -51,7 +51,10 @@ final class MockupCombinationEngine
             $notes[] = 'No enabled camera slots found in app/Config/mockup_camera_slots.php.';
         }
 
-        $selectedWorldMotherCategory = WorldMotherGenerator::safeSlug((string)($options['selected_world_mother_category'] ?? ''));
+        $selectedWorldMotherCategory = $this->resolveWorldMotherCategory(
+            (string)($options['selected_world_mother_category'] ?? ''),
+            $worldImages
+        );
         if ($selectedWorldMotherCategory === '' && isset($worldImages['selected'])) {
             $selectedWorldMotherCategory = 'selected';
         }
@@ -65,6 +68,7 @@ final class MockupCombinationEngine
         $usedSlots = [];
         $combinations = [];
         $slotIds = array_keys($cameraSlots);
+        $worldMotherVariantOffsets = array_map('intval', (array)($options['world_mother_variant_offsets'] ?? []));
 
         $targetCount = max(1, count($slotIds));
         for ($i = 0; $i < $targetCount; $i++) {
@@ -83,7 +87,8 @@ final class MockupCombinationEngine
             }
 
             $cameraSlot = $cameraSlots[$selectedSlotId] ?? [];
-            $worldMother = $this->selectWorldMotherImageFromCategory($category, $worldImages, $selectedSlotId, $i + 1, $artworkId);
+            $variantOffset = max(0, (int)($worldMotherVariantOffsets[$i + 1] ?? 0));
+            $worldMother = $this->selectWorldMotherImageFromCategory($category, $worldImages, $selectedSlotId, $i + 1, $artworkId, $variantOffset);
             if ($category !== '' && empty($worldMother)) {
                 $worldMother = [
                     'category_slug' => $category,
@@ -195,6 +200,31 @@ final class MockupCombinationEngine
         }
 
         return $byCategory;
+    }
+
+    /**
+     * Preserve real folder names while still accepting legacy normalized URLs.
+     *
+     * @param array<string,array<int,array<string,mixed>>> $worldImages
+     */
+    private function resolveWorldMotherCategory(string $value, array $worldImages): string
+    {
+        $value = trim(str_replace(['\\', '/'], '', $value));
+        if ($value === '') {
+            return '';
+        }
+        if (isset($worldImages[$value])) {
+            return $value;
+        }
+
+        $normalized = WorldMotherGenerator::safeSlug($value);
+        foreach (array_keys($worldImages) as $category) {
+            if (WorldMotherGenerator::safeSlug((string)$category) === $normalized) {
+                return (string)$category;
+            }
+        }
+
+        return $normalized;
     }
 
     /**
@@ -324,7 +354,7 @@ final class MockupCombinationEngine
      * @param array<string,array<int,array<string,mixed>>> $worldImages
      * @return array<string,mixed>
      */
-    private function selectWorldMotherImageFromCategory(string $category, array $worldImages, string $cameraSlotId = '', int $combinationIndex = 0, int $artworkId = 0): array
+    private function selectWorldMotherImageFromCategory(string $category, array $worldImages, string $cameraSlotId = '', int $combinationIndex = 0, int $artworkId = 0, int $variantOffset = 0): array
     {
         $pool = $worldImages[$category] ?? [];
         if (!$pool) {
@@ -338,8 +368,9 @@ final class MockupCombinationEngine
 
         if ($this->usesStableRandomWorldMotherRotation($category, count($pool), $cameraSlotId)) {
             $rotatedPool = $this->stableRandomWorldMotherPool($pool, $category, $artworkId);
-            $selected = $rotatedPool[max(0, $combinationIndex - 1) % count($rotatedPool)];
+            $selected = $rotatedPool[max(0, $combinationIndex - 1 + $variantOffset) % count($rotatedPool)];
             $selected['world_mother_selection_strategy'] = 'stable_full_pool_rotation';
+            $selected['world_mother_variant_offset'] = $variantOffset;
             return $selected;
         }
 
@@ -568,6 +599,7 @@ final class MockupCombinationEngine
             'world_mother_category' => (string)($worldMother['category_slug'] ?? ''),
             'world_mother_variant_role' => (string)($worldMother['world_mother_variant_role'] ?? 'primary'),
             'world_mother_variant_index' => (int)($worldMother['world_mother_variant_index'] ?? 1),
+            'world_mother_variant_offset' => (int)($worldMother['world_mother_variant_offset'] ?? 0),
             'world_mother_selection_strategy' => (string)($worldMother['world_mother_selection_strategy'] ?? 'role_preference'),
             'world_mother_random_rotation_index' => (int)($worldMother['world_mother_random_rotation_index'] ?? 0),
             'world_mother_random_rotation_count' => (int)($worldMother['world_mother_random_rotation_count'] ?? 0),
@@ -661,9 +693,9 @@ final class MockupCombinationEngine
         $cameraReferenceMode = $this->cameraReferenceMode($slotId);
         $scene = $this->worldMotherSceneAnchor($category, $categoryTitle, $referencePath, $cameraReferenceMode);
         $variantDirective = match ($variantRole) {
-            'left' => 'Use this as the left-side scene mother variant, chosen when the useful artwork wall or camera attack should be biased to the left side of the room while preserving the same world.',
-            'right' => 'Use this as the right-side scene mother variant, chosen when the useful artwork wall or camera attack should be biased to the right side of the room while preserving the same world.',
-            'opposite' => 'Use this as the opposite/complementary scene mother variant, chosen to support reversed room dominance and alternate orbital camera readings while preserving the same world.',
+            'left' => 'Use this as the left-biased style variant: it suggests material, light, and spatial rhythm that may support a left-side camera attack in a newly built environment.',
+            'right' => 'Use this as the right-biased style variant: it suggests material, light, and spatial rhythm that may support a right-side camera attack in a newly built environment.',
+            'opposite' => 'Use this as the opposite/complementary style variant: it supports alternate orbital camera readings while preserving the same environmental family, not the same room layout.',
             default => 'Use this as the primary scene mother variant.',
         };
         $cameraRole = $this->worldMotherCameraRole(
@@ -674,7 +706,7 @@ final class MockupCombinationEngine
             $cameraReferenceMode
         );
 
-        $json['context_role'] = 'selected world mother visual DNA reconstructed through the camera slot';
+        $json['context_role'] = 'selected world mother visual DNA transformed by the camera slot into a new environment';
         $json['space_type'] = $scene['space_type'];
         $json['atmosphere'] = $scene['atmosphere'];
         $json['materials'] = $scene['materials'];
@@ -689,17 +721,17 @@ final class MockupCombinationEngine
         $json['camera_view'] = 'Selected camera slot viewpoint: ' . $slotName . '.';
         $json['camera_group'] = $slotId !== '' ? $slotId : $slotName;
         $json['camera_distance'] = $cameraReferenceMode === 'reconstructed_view'
-            ? 'Use the distance required by the selected camera slot. The world mother image provides visual DNA for the environment, but not the camera position, layout, crop, or perspective.'
-            : 'Use the distance required by the selected camera slot while keeping the world mother visual identity recognizable.';
+            ? 'Use the distance required by the selected camera slot. The world mother image provides material, light, atmosphere, and environmental-family evidence, but not the camera position, layout, crop, room geometry, wall choice, furniture placement, window placement, or perspective.'
+            : 'Use the distance required by the selected camera slot. The world mother image provides material, light, atmosphere, and environmental-family evidence, but not the final camera position, wall choice, object placement, layout, crop, room geometry, window placement, or perspective.';
         $json['camera_angle_notes'] = $cameraReferenceMode === 'reconstructed_view'
-            ? 'The camera slot is authoritative for viewpoint, lens, crop, height, and perspective. The world mother image supplies environment identity, object vocabulary, material language, palette, and lighting, but the room must be rebuilt from the selected camera viewpoint rather than preserving the source photo layout.'
-            : 'The camera slot geometry is authoritative for viewpoint; the scene keeps the supplied world mother visual identity without freezing the source photo composition.';
+            ? 'The camera slot is authoritative for viewpoint, lens, crop, height, perspective, and composition. The world mother image supplies material language, palette, lighting, atmospheric density, and architectural mood only. Build a new environment from that visual family through the selected camera viewpoint rather than preserving the source photo room.'
+            : 'The camera slot geometry is authoritative for viewpoint and composition. Build a new photograph inside the same environmental family: keep material language, palette, light quality, and architectural mood, but do not preserve the source photo layout, wall choice, window placement, object positions, crop, or camera angle.';
         $json['curatorial_reason'] = '';
         $json['commercial_reason'] = '';
         $json['mockup_prompt'] = trim($scene['mockup_prompt'] . "\n\n" . $cameraRole);
 
         $negative = trim((string)($json['negative_prompt'] ?? ''));
-        $sceneNegative = 'no unrelated gallery, no white cube gallery unless present in the world mother image, no generic showroom, no replacement room style, no different furniture family, no different wall color family, no invented minimalist museum, no frozen copy of the source photo composition';
+        $sceneNegative = 'no unrelated gallery, no white cube gallery unless required by the environmental family, no generic showroom, no replacement environment family, no different material palette, no different light temperature family, no invented minimalist museum, no frozen copy of the source photo composition, no copied world mother layout, no same sofa-window-wall composition, no same window placement as the reference image, no same furniture placement as the reference image, no treating the world mother as a room template, no subordinating the camera slot to the world mother photo';
         $json['negative_prompt'] = trim($negative !== '' ? $negative . '; ' . $sceneNegative : $sceneNegative);
 
         return $json;
@@ -717,6 +749,7 @@ final class MockupCombinationEngine
     private function cameraReferenceMode(string $slotId): string
     {
         return in_array($slotId, [
+            'camara_15_contrapicado_inpainting',
             'nadir_extremo_arquitectonico',
             'contrapicado_raton_puro',
             'contrapicado_7_8',
@@ -731,6 +764,7 @@ final class MockupCombinationEngine
     private function usesAggressivePerspectiveOverride(string $slotId): bool
     {
         return in_array($slotId, [
+            'camara_15_contrapicado_inpainting',
             'nadir_extremo_arquitectonico',
             'contrapicado_raton_puro',
             'contrapicado_7_8',
@@ -758,15 +792,19 @@ final class MockupCombinationEngine
 
     private function aggressivePerspectiveOverrideText(string $slotId): string
     {
+        if ($slotId === 'camara_15_contrapicado_inpainting') {
+            return 'CAMERA 15 INPAINTING CONTRAPICADO OVERRIDE: use a protected precomposed artwork plate with a user mask, then generate the room around it. The camera must be a forceful floor-level low-angle view, 2-8 cm from the floor, slightly right of the artwork, using a low 7/8 right oblique attack. Strong optical perspective distortion of the room is intentional and desired: stretched near-floor foreground, steep upward vanishing lines, rising verticals, high ceiling structure, and dramatic architectural depth. The artwork itself must remain the same protected physical object with real scale, original orientation, aspect ratio, visible layout, color fields, mark placement, empty areas, sparse composition, and proportions. Do not solve drama by enlarging, repainting, bending, stretching, rotating, or replacing the artwork.';
+        }
+
         if ($slotId === 'nadir_extremo_arquitectonico') {
-            return 'EXTREME NADIR CAMERA OVERRIDE: this must be the most radical low camera in the set. Use an off-axis floor-corner viewpoint, with the lens almost touching the floor beside one wall, not centered in front of the artwork. Strong optical perspective distortion of the room is intentional and desired: allow extreme wide-lens perspective, stretched near-floor foreground, steep upward/diagonal vanishing lines, and almost deformed architectural depth. Avoid symmetrical frontal monument composition. This override supersedes generic instructions that ask for a soft, controlled, undistorted, or normal gallery viewpoint. Protect only the artwork identity: the artwork must remain the same rigid physical canvas and must not melt, tear, liquify, become a different painting, or lose its core composition.';
+            return 'EXTREME NADIR CAMERA OVERRIDE: use an off-axis floor-corner viewpoint, with the lens almost touching the floor beside one wall, not centered in front of the artwork. Strong optical perspective distortion of the room is intentional and desired: allow extreme wide-lens perspective, stretched near-floor foreground, steep upward/diagonal vanishing lines, and almost deformed architectural depth in the architecture only. Avoid symmetrical frontal monument composition. This override supersedes generic instructions that ask for a soft, controlled, undistorted, or normal gallery viewpoint. The artwork itself must remain the same rigid physical canvas with its original orientation, aspect ratio, visible layout, color fields, mark placement, empty areas, sparse composition, and proportions. Do not melt, tear, liquify, reformat, repaint, rotate, stretch, become a different painting, or lose its core composition.';
         }
 
         $label = $slotId === 'contrapicado_raton_puro'
             ? 'AGGRESSIVE NADIR CAMERA OVERRIDE'
             : 'AGGRESSIVE CONTRAPICADO CAMERA OVERRIDE';
 
-        return $label . ': for this selected camera slot, strong optical perspective distortion of the room is intentional and desired. Allow dramatic wide-lens perspective, stretched near-floor foreground, steep upward vanishing lines, and almost deformed architectural depth. This override supersedes generic instructions that ask for a soft, controlled, undistorted, or normal gallery viewpoint. Protect only the artwork identity: the artwork must remain the same rigid physical canvas and must not melt, tear, liquify, become a different painting, or lose its core composition.';
+        return $label . ': for this selected camera slot, strong optical perspective distortion of the room is intentional and desired. Allow dramatic wide-lens perspective, stretched near-floor foreground, steep upward vanishing lines, and almost deformed architectural depth in the architecture only. This override supersedes generic instructions that ask for a soft, controlled, undistorted, or normal gallery viewpoint. The artwork itself must remain the same rigid physical canvas with its original orientation, aspect ratio, visible layout, color fields, mark placement, empty areas, sparse composition, and proportions. Do not melt, tear, liquify, reformat, repaint, rotate, stretch, become a different painting, or lose its core composition.';
     }
 
     private function relaxPerspectiveNegativePrompt(string $negativePrompt): string
@@ -822,7 +860,7 @@ final class MockupCombinationEngine
     ): string {
         if ($cameraReferenceMode === 'reconstructed_view') {
             return trim(sprintf(
-                'Scene mother variant: %s #%d. %s Camera role: build "%s" as a new camera construction using the same visual DNA. The mother reference supplies environment identity, object vocabulary, material language, palette, wall/floor language, lighting, and furnishing family; it does not supply the final camera angle, layout, crop, height, or perspective.',
+                'Scene mother variant: %s #%d. %s Camera role: build "%s" as a new environment photographed through the selected camera slot. The mother reference supplies visual evidence for materiality, palette, light quality, atmospheric density, architectural mood, and environmental family; it does not supply the final camera angle, layout, crop, height, perspective, room geometry, wall choice, window placement, furniture placement, or object positions. Reconstruct, relocate, or invent compatible architecture and objects as needed so the camera slot can fully govern the image.',
                 $variantRole,
                 $variantIndex,
                 $variantDirective,
@@ -831,7 +869,7 @@ final class MockupCombinationEngine
         }
 
         return trim(sprintf(
-            'Scene mother variant: %s #%d. %s Camera role: apply "%s" as the viewpoint over this selected visual world. Reframe, crop, elevate, lower, or rotate the camera while keeping the room identity, palette, furniture family, wall language, and lighting character recognizable.',
+            'Scene mother variant: %s #%d. %s Camera role: build "%s" as a new photograph inside this environmental family. The mother reference supplies visual evidence for materiality, palette, light quality, atmospheric density, architectural mood, and compatible object/material choices; it must not supply the final wall choice, window placement, furniture placement, object positions, camera angle, crop, or room layout. Rebuild the space around the root artwork and selected camera slot.',
             $variantRole,
             $variantIndex,
             $variantDirective,
@@ -846,12 +884,12 @@ final class MockupCombinationEngine
     {
         if ($category === 'dark_wood_study') {
             $mockupPrompt = $cameraReferenceMode === 'reconstructed_view'
-                ? 'Use the supplied world mother reference image as a room DNA source: ' . $referencePath . '. Preserve the dark wood library/study identity, bookcases, dark paneling, brown leather seating, heavy table, patterned rug, warm spotlights, amber shadows, and moody private collector atmosphere. Reconstruct the room as needed for the selected camera slot; do not inherit the reference photo camera angle, layout, or crop.'
-                : 'Use the supplied world mother reference image as a room DNA source: ' . $referencePath . '. Keep its recognizable dark wood study identity, palette, furniture family, wall language, and lighting character. Install the artwork as a real physical canvas in a compatible part of that visual world. The camera may change according to the selected camera slot; the generated room must still read as a dark wood study, not a white cube gallery, not a modern minimalist loft, and not a generic showroom.';
+                ? 'Use the supplied world mother reference image as visual evidence for a dark collector-study environmental family: ' . $referencePath . '. Build a new environment with dark wood materiality, warm spot lighting, deep amber shadows, bookish/private-study atmosphere, and cultivated collector mood. Do not reproduce the source room layout, camera angle, bookcase placement, seating placement, wall choice, crop, or object positions. Reconstruct architecture and objects as needed for the selected camera slot.'
+                : 'Use the supplied world mother reference image as visual evidence for a dark collector-study environmental family: ' . $referencePath . '. Build a new compatible environment with dark wood materiality, warm lighting, private-library atmosphere, and cultivated collector mood. The selected camera slot must choose the final wall, crop, object placement, camera angle, and perspective; do not preserve the source photo layout, seating placement, bookcase placement, or room geometry.';
             return [
-                'space_type' => 'Dark private collector library study from the supplied world mother reference image.',
-                'atmosphere' => 'Moody, intimate, old-world collector study with warm spot lighting, dark wood, leather, books, and a cultivated private-library feeling. The room must stay warm, dark, enclosed, and materially rich rather than becoming a white gallery or bright loft.',
-                'materials' => 'Dark carved wood paneling and trim, floor-to-ceiling bookcases, brown leather club or chesterfield seating, heavy dark wood table, patterned rug, warm brown wall prepared for the artwork, small warm lamps, focused ceiling spotlights, deep amber shadows.',
+                'space_type' => 'New dark private collector-study environment built from the supplied world mother visual family.',
+                'atmosphere' => 'Moody, intimate, old-world collector-study atmosphere with warm spot lighting, dark wood materiality, books/private-library cues, and cultivated collector feeling. Keep the family warm, dark, enclosed, and materially rich rather than becoming a white gallery or bright loft.',
+                'materials' => 'Dark carved or paneled wood materiality, warm brown surfaces, bookish collector cues, leather or textile warmth when useful, patterned rug or heavy table cues only if compatible with the selected camera, small warm lamps, focused ceiling spotlights, deep amber shadows. Layout and object positions must be newly composed.',
                 'lighting' => 'Warm low collector-room lighting from small lamps and focused spotlights, with controlled shadows and a subdued evening-study atmosphere.',
                 'mockup_prompt' => $mockupPrompt,
             ];
@@ -859,20 +897,20 @@ final class MockupCombinationEngine
 
         if ($cameraReferenceMode === 'reconstructed_view') {
             return [
-                'space_type' => $categoryTitle . ' visual world reconstructed from the supplied reference.',
-                'atmosphere' => 'Reference-led premium interior. Use the supplied world mother image as source DNA for room identity, object vocabulary, palette, materials, and lighting while rebuilding the scene for the selected camera.',
-                'materials' => 'Objects, materials, furniture family, wall language, floor language, and lighting should be inferred from the supplied world mother reference image without preserving its source photo layout.',
+                'space_type' => 'New ' . $categoryTitle . ' environment built from the supplied world mother visual family.',
+                'atmosphere' => 'Reference-led premium environment. Use the supplied world mother image as visual evidence for materiality, palette, light quality, atmospheric density, architectural mood, and environmental family while building a new scene for the selected camera.',
+                'materials' => 'Material palette, surface texture, light behavior, spatial density, and architectural mood should be inferred from the supplied world mother reference image. Windows, furniture, objects, wall choice, room geometry, and layout must be newly composed to obey the selected camera slot.',
                 'lighting' => 'Use the lighting character visible in the supplied world mother image; do not invent a conflicting time of day or unrelated gallery lighting.',
-                'mockup_prompt' => 'Use the supplied world mother reference image as visual DNA for the environment: ' . $referencePath . '. Keep its recognizable room identity, object vocabulary, color palette, materials, furniture family, wall language, floor language, and lighting character. Rebuild the environment through the viewpoint required by the selected camera slot; the reference photo camera angle, layout, crop, and perspective are not binding.',
+                'mockup_prompt' => 'Use the supplied world mother reference image as visual evidence for the environmental family: ' . $referencePath . '. Build a new environment with compatible materiality, color palette, surface texture, atmospheric density, architectural mood, and lighting character. The selected camera slot must determine the final camera angle, wall choice, window placement, furniture placement, object positions, layout, crop, and perspective; the reference photo camera angle, room geometry, layout, crop, and perspective are not binding.',
             ];
         }
 
         return [
-            'space_type' => $categoryTitle . ' scene mother from the supplied visual reference.',
-            'atmosphere' => 'Reference-led premium interior. Use the supplied world mother image as the dominant source for room identity, palette, furnishings, materials, and lighting.',
-            'materials' => 'Materials, furniture, wall language, floor language, and lighting must be inferred from the supplied world mother reference image.',
+            'space_type' => 'New ' . $categoryTitle . ' environment built from the supplied world mother visual family.',
+            'atmosphere' => 'Reference-led premium environment. Use the supplied world mother image as source evidence for materiality, palette, light quality, atmospheric density, architectural mood, and environmental family while building a new camera composition.',
+            'materials' => 'Material palette, surface texture, light behavior, spatial density, and architectural mood must be inferred from the supplied world mother reference image, but windows, furniture, objects, wall choice, room geometry, object placement, and layout must be newly composed.',
             'lighting' => 'Use the lighting character visible in the supplied world mother image; do not invent a conflicting time of day or unrelated gallery lighting.',
-            'mockup_prompt' => 'Use the supplied world mother reference image as visual DNA for the environment: ' . $referencePath . '. Keep its recognizable room identity, color palette, materials, furniture family, wall language, floor language, and lighting character. The selected camera slot may reframe, crop, rotate, or rebuild the scene viewpoint; it must not replace the room with a different interior style.',
+            'mockup_prompt' => 'Use the supplied world mother reference image as visual evidence for the environmental family: ' . $referencePath . '. Build a new compatible environment with similar color palette, materiality, surface texture, atmospheric density, architectural mood, and lighting character. The selected camera slot must choose the final wall, window placement, furniture placement, object placement, crop, camera angle, and perspective; do not preserve the source photo layout or room geometry.',
         ];
     }
 
@@ -935,10 +973,13 @@ final class MockupCombinationEngine
             if ($sentence === '') {
                 continue;
             }
-            if (preg_match('/\b(XL|scale|substantial|monumental|billboard|mural|door|person|adult|height|portion of the wall|global dominance)\b/i', $sentence)) {
+            $safeScaleSentence = preg_match('/\b(supplied physical|supplied dimensions|supplied artwork|technical data|physical artwork dimensions|real scale|true physical scale|do not enlarge|not a|never as|must remain consistent|according to the artwork|correctly scaled|plausible real scale)\b/i', $sentence) === 1;
+            $dangerousScaleSentence = preg_match('/\b(XL|substantial|monumental|billboard|mural|door|person|adult|height|portion of the wall|global dominance)\b/i', $sentence) === 1;
+
+            if ($dangerousScaleSentence && !$safeScaleSentence) {
                 continue;
             }
-            if (preg_match('/\b(canvas|artwork|identity|fidelity|preserve|rigid|rectangular|poster|print|screen|warp|bend|curve|wedge|substitution|replace|repaint|recolor|deform|melt|tear|orientation|aspect ratio|thickness|texture)\b/i', $sentence)) {
+            if (preg_match('/\b(canvas|artwork|identity|fidelity|preserve|rigid|rectangular|poster|print|screen|warp|bend|curve|wedge|substitution|replace|repaint|recolor|deform|melt|tear|orientation|aspect ratio|thickness|texture|scale|dimensions|enlarge|billboard|mural|physical size)\b/i', $sentence)) {
                 $keep[] = $sentence;
             }
         }

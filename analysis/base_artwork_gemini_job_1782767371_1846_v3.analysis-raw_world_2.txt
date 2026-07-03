@@ -1,0 +1,29 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Palazzo Sunstone Lounge",
+      "context_role": "To present the artwork in an aspirational, refined residential setting that emphasizes its contemplative depth and bold color contrast within a context of understated luxury and sophisticated domesticity, suitable for premium art collectors.",
+      "space_type": "A spacious, quiet luxury living room within a contemporary palazzo-style residence.",
+      "atmosphere": "A serene, elegant, and warm atmosphere, bathed in the soft, golden glow of late afternoon sun, reflecting off polished surfaces. Restrained luxury with a focus on natural light and noble materials. The feeling is calm, cultivated, and timelessly modern.",
+      "materials": [
+        "Creamy limewash plaster walls",
+        "Large format pale travertine tiles",
+        "Clean, high ceiling",
+        "Dark brushed oak architectural console",
+        "Muted cream linen upholstery on armchair",
+        "Matte ceramic vase"
+      ],
+      "lighting": "Soft, golden late afternoon daylight entering from large, tall windows on the left side, creating a warm glow and gentle, elongated shadows. Ambient fill from diffused ceiling light, subtly highlighting artwork textures.",
+      "camera_view": "Reflejo Dorado de Tarde / Palazzo: Camera height is elegant human standing height, approximately 150-170 cm, as if observed calmly from inside a palazzo room. Use a soft three-quarter rotation that catches reflected late light while keeping the artwork plane legible. The composition is stable, warm, and architectural, with golden afternoon reflection supporting the room rather than repainting the artwork; keep elegant balance but avoid perfect symmetry unless the room itself naturally demands it.",
+      "camera_distance": "Controlled architectural distance, showcasing the artwork as the focal point within the room's elegant proportions.",
+      "camera_angle_notes": "The subtle three-quarter angle reveals the physical depth and thickness of the canvas, preventing a flat appearance. The perspective creates a sense of spatial volume, drawing the viewer into the refined environment while maintaining the artwork's prominence. The viewpoint from a standing height offers a natural and accessible presentation, emphasizing stability and architectural grace.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's deep green and vibrant red resonate beautifully with the warm, earthy tones of limewash and travertine, while the golden afternoon light enhances its inherent warmth and drama. The minimalist composition of the artwork finds harmony with the clean lines and negative space of the quiet luxury interior. The setting amplifies the artwork's contemplative nature, allowing its bold forms to breathe and command attention without visual clutter. The 'palazzo' context suggested by the camera complements the artwork's quiet grandeur and sophisticated simplicity.",
+      "commercial_reason": "This context positions the artwork as a sophisticated, high-value piece for discerning collectors who appreciate refined domesticity and contemporary elegance. The aspirational setting showcases how the artwork elevates a premium living space, appealing to a market that values understated luxury and thoughtful design. The warm, inviting light makes the artwork feel approachable and desirable for a home environment, while the architectural depth adds prestige and commercial appeal.",
+      "mockup_prompt": "A spacious, quiet luxury living room within a contemporary palazzo-style residence. The walls are creamy limewash plaster with subtle texture. The floor is made of large format pale travertine tiles. A clean, high ceiling. The artwork, featuring a dominant red vertical form against a deep green background with blue and black accents, is hung on the left wall of the room, seen in a soft three-quarter perspective. Below the artwork, a low-slung, dark brushed oak architectural console is present in the midground. A single, minimalist contemporary armchair with muted cream linen upholstery is subtly placed in the foreground, creating architectural depth and a coherent vanishing line. The room is bathed in soft, golden late afternoon daylight entering from tall windows on the left, casting gentle, elongated shadows and highlighting textures. The artwork maintains its exact colors, proportions, and textures. No people, no animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no influencer lifestyle, no decor ad, no pets, no animal, no crowd, no generic neutral interior, no Mediterranean villa, no showroom, no unrelated gallery"
+    }
+  ]
+}
+```

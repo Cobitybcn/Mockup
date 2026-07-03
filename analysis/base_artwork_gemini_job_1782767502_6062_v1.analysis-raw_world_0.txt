@@ -1,0 +1,45 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Veridian Grounding: Abstract Forms",
+      "subtitle": "A study in elemental balance and striking contrast.",
+      "description": "An abstract composition featuring bold red forms anchored on a deep green field, with a dark, foundational element below."
+    },
+    {
+      "title": "Crimson Stratum: Abstract Composition",
+      "subtitle": "Textured layers of color creating spatial and emotional depth.",
+      "description": "Dynamic red and dark blue elements against a verdant background, suggesting a profound landscape or architectural abstraction."
+    },
+    {
+      "title": "Elemental Resonance: A Modern Study",
+      "subtitle": "Exploring color, tension, and form in a contemporary abstract expression.",
+      "description": "Vibrant and intense color blocks within a thoughtful arrangement, evoking both stillness and energetic contrast."
+    }
+  ],
+  "recommended_number_of_contexts": 1,
+  "contextual_proposals": [
+    {
+      "context_name": "Gallery Ascent: Minimalist Exhibition",
+      "context_role": "To present the artwork in a highly contemporary, refined, and undistracting setting, emphasizing its form and color in a museum-like yet accessible manner. It underscores the artwork's artistic value and adaptability to modern, sophisticated spaces.",
+      "space_type": "Contemporary art gallery space with restrained architecture.",
+      "atmosphere": "Sleek and contemplative, characterized by architectural clarity and a focus on the artwork. Cool, serene, and modern, with an art-first sensibility, enhanced by the dramatic low perspective.",
+      "materials": [
+        "Matte mineral white walls with subtle texture",
+        "Polished light grey concrete floor",
+        "Simple white ceiling",
+        "Discreet track lighting fixtures"
+      ],
+      "lighting": "Soft, diffused gallery daylight from a high, unseen source, complemented by subtle, directional track lighting creating gentle shadows that highlight the artwork's texture and volumetric presence.",
+      "camera_view": "Nadir Controlado: Camera is positioned very low, near the floor, approximately 20-35 cm from the ground, using a controlled nadir-inspired architectural viewpoint. The floor plane, wall height, ceiling lines, columns, door frames or architectural verticals may rise strongly in the composition. Use a controlled oblique angle across the room, not a straight-on product view, with one coherent vanishing direction for architecture and artwork. Use the nadir effect mainly through the surrounding room geometry: floor lines, vertical wall planes, ceiling height, architectural edges, columns, furniture legs or door frames. The artwork remains the visual subject, but the dramatic low viewpoint is carried by the architecture rather than by warping the canvas.",
+      "camera_distance": "Controlled architectural distance, allowing the low camera to establish deep vanishing lines and reveal foreground floor texture, placing the artwork as a commanding focal point within the receding space.",
+      "camera_angle_notes": "The extremely low camera angle and oblique view dramatically emphasize the height and presence of the artwork and the surrounding architectural lines, creating a dynamic, almost monumental perspective. It highlights the physical depth of the gallery and the artwork's commanding position, making the canvas feel significant and grounded while maintaining optical fidelity.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's bold abstract forms and intense color palette find a powerful stage in this minimalist gallery. The clean, neutral environment allows its visual tension and emotional depth to resonate without distraction. The 'Nadir Controlado' camera perspective aligns with the artwork's grounding elements (the lower black/blue block), giving it a commanding, almost sculptural presence within the architectural space.",
+      "commercial_reason": "This context positions the artwork as museum-worthy and highly collectible, appealing to contemporary art buyers and collectors. The minimalist setting demonstrates its versatility for modern interiors, while the dramatic camera angle enhances its premium, investment-grade appeal, making it feel substantial and architecturally integrated, conveying sophistication and artistic merit.",
+      "mockup_prompt": "A pristine contemporary art gallery space, clean and minimalist. The artwork (exact reference image) is centrally mounted on a matte mineral white wall with subtle texture, appearing elevated from a low vantage point. The floor is polished light grey concrete, extending prominently into the foreground, showing subtle texture and reflections, with distinct vanishing lines. The ceiling is simple white, receding upwards into the distance. Subtle, directional gallery track lighting illuminates the artwork from above, creating soft, defined shadows that emphasize its texture and physical depth. Architectural lines of the room, including the floor edge and wall planes, converge dynamically towards a single vanishing point, emphasizing deep spatial coherence. A very low, oblique camera view, positioned approximately 25cm from the floor, capturing the artwork from below and slightly to the side, showcasing its physical presence and the rising, clean architectural elements. No visible people, no animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no monumental atrium, no heroic scale, no architectural spectacle, no busy gallery, no crowd, no art fair signage, no pet, no animal, no generic neutral interior, no showroom, no unrelated gallery"
+    }
+  ]
+}
+```

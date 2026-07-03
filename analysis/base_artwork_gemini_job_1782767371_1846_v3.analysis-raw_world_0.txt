@@ -1,0 +1,45 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Crimson Forms on Verdant Field",
+      "subtitle": "An abstract interplay of color and structure",
+      "description": "A bold composition featuring stark red geometric forms against a deep, textured green ground, punctuated by contrasting blues and blacks."
+    },
+    {
+      "title": "Abstract Strata: Green and Red",
+      "subtitle": "Textural abstraction evoking landscape or architectural elements",
+      "description": "Dynamic impasto strokes create a sense of depth and tension through vibrant reds and blues set against a dominant, rich green."
+    },
+    {
+      "title": "Architectonic Green Red",
+      "subtitle": "A study in contrasting color and form",
+      "description": "Strong, block-like red figures emerge from a profound green background, anchored by a dark, grounded element and subtle horizontal lines."
+    }
+  ],
+  "recommended_number_of_contexts": 1,
+  "contextual_proposals": [
+    {
+      "context_name": "Ascending Canvas in Minimal Gallery",
+      "context_role": "Showcases the artwork's scale and physical presence within a pristine, contemporary exhibition space, emphasizing its sculptural quality and commanding stature from an art-focused, low perspective.",
+      "space_type": "Minimalist contemporary art gallery.",
+      "atmosphere": "Calm, clean, and architecturally precise, with an emphasis on verticality and depth conveyed through a dramatically low vantage point, allowing the artwork to assert its commanding presence.",
+      "materials": [
+        "Matte mineral white walls with subtle texture",
+        "Polished light gray concrete floor",
+        "Simple white ceiling with discreet recessed track lighting",
+        "Minimalist white architectural plinth or low bench (partially visible)"
+      ],
+      "lighting": "Soft, cool gallery daylight entering from an unseen overhead skylight, supplemented by discreet, focused track lighting highlighting the artwork's texture and color, creating subtle shadows that define depth and dimension.",
+      "camera_view": "Nadir Controlado: Camera is positioned very low, near the floor, approximately 20-35 cm from the ground, using a controlled nadir-inspired architectural viewpoint. The floor plane, wall height, ceiling lines, columns, door frames or architectural verticals may rise strongly in the composition. Use a controlled oblique angle across the room, not a straight-on product view, with one coherent vanishing direction for architecture and artwork. Use the nadir effect mainly through the surrounding room geometry: floor lines, vertical wall planes, ceiling height, architectural edges, columns, furniture legs or door frames. The artwork remains the visual subject, but the dramatic low viewpoint is carried by the architecture rather than by warping the canvas.",
+      "camera_distance": "Controlled architectural distance, allowing for a strong foreground floor presence and prominent rising architectural lines, while keeping the artwork visually dominant and physically imposing.",
+      "camera_angle_notes": "The extremely low camera position emphasizes the artwork's scale and physical presence, making it appear monumental and grounded yet aspirational. The controlled oblique angle introduces dynamic spatial tension, revealing the physical thickness of the canvas edge and the deep perspective of the gallery architecture. The rising vertical lines of the wall and a subtle architectural element (like a low plinth or bench) in the foreground guide the eye upwards to the artwork, asserting its central and powerful role.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's bold, almost architectural forms and strong color contrasts are perfectly complemented by the pristine, minimalist gallery setting. The clean lines and neutral palette of the environment allow the artwork's intense green and vibrant red elements to truly resonate, highlighting its abstract monumentality and expressive impasto. The low camera angle enhances the sense of the artwork as a grounded yet powerfully ascending structure.",
+      "commercial_reason": "This setup positions the artwork as a significant collector's piece suitable for high-end contemporary spaces and institutional collections. The pristine gallery environment communicates value, prestige, and serious artistic merit. The dynamic, low camera perspective adds visual interest and memorability, making the artwork stand out in a competitive market by emphasizing its physical presence and substantiality as a tangible art object.",
+      "mockup_prompt": "The artwork (from reference image) is a large, vertical, rectangular abstract painting dominated by a deep green field with bold red and blue geometric forms and impasto textures. It is installed centrally on a pristine, matte mineral white gallery wall, appearing elevated and dominant. The environment is a minimalist contemporary art gallery. The wall has a subtle texture and no signage. The floor is polished light gray concrete, extending prominently into the foreground. A simple, low white architectural plinth or bench is positioned partially cropped in the extreme foreground, its lines rising subtly into view. The ceiling is a simple white plane with discreet recessed track lighting. Controlled, soft, cool gallery daylight from an unseen overhead source gently illuminates the space, while focused track lights cast subtle, crisp highlights on the artwork's texture and colors. The scene is captured from a very low vantage point, near the floor. The polished concrete floor plane rises strongly from the foreground. The pristine matte white wall with the artwork creates strong vertical lines. Architectural edges and the low plinth define clear vanishing lines towards the artwork. The composition shows a controlled oblique view across the room, with coherent vanishing lines for all architectural elements, emphasizing depth and making the artwork appear dominant and elevated. Artwork scale is perfectly preserved, physically plausible, and dominant. No visible people, no animals, no generic vintage room, no warm rustic palette.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended."
+    }
+  ]
+}
+```

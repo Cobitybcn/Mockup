@@ -1,0 +1,28 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Palazzo Reverie: Sunset Spiral",
+      "context_role": "To showcase the artwork as a dynamic contemporary statement within a grand, historically preserved European interior, viewed from an elevated, architectural perspective.",
+      "space_type": "Palazzo Grand Salon",
+      "atmosphere": "A refined, quiet, and contemplative atmosphere pervaded by the warm, golden glow of late afternoon sun, lending a timeless elegance to the grand space. The historical architecture provides a dignified, stable backdrop for the artwork's vibrant energy.",
+      "materials": [
+        "Aged limewash plaster walls in warm stone-like hues",
+        "Polished dark herringbone parquet floor",
+        "Ornate but restrained architectural mouldings and archways visible from above",
+        "A long antique dark wood console table with a polished surface",
+        "Tall arched windows with slender frames"
+      ],
+      "lighting": "Golden late-day sunlight filtering through tall arched windows on a diagonal wall, creating long, soft shadows across the parquet floor and subtly highlighting the artwork's textured surface from an elevated perspective.",
+      "camera_view": "Nadir Aéreo con Contexto de Ventanas: Camera is positioned very high, near ceiling height, upper balcony height, or the top edge of a tall architectural void. It looks downward from above into the room, with an oblique high-corner diagonal. The image is built from above, showing a visible floor plane, the top surface of a console, window context, and the artwork installed on a vertical wall, all unified by a steep downward high-angle perspective.",
+      "camera_distance": "Controlled architectural distance.",
+      "camera_angle_notes": "The high aerial-nadir perspective dramatically emphasizes the grandeur and verticality of the palazzo space, allowing the artwork to appear as a powerful, grounded element within this vast environment. The oblique angle reveals spatial depth and material richness from a unique vantage point, enhancing the physical presence of the artwork by contrasting its vertical plane against the expansive horizontal floor.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's vibrant and textured nature creates a compelling dialogue with the restrained elegance and aged materiality of a historical European palazzo. The contrast between its raw energy and the quiet dignity of the old-world setting highlights its contemporary relevance and artistic force. The warm, late light complements the earthy tones in the artwork and accentuates its impasto textures.",
+      "commercial_reason": "This context elevates the artwork by placing it in a sophisticated, culturally rich environment, appealing to collectors who appreciate a blend of historical grandeur and modern artistic expression. The unique high-angle perspective offers a fresh, premium visual that stands out, emphasizing the artwork's scale and presence within a truly distinguished setting, rather than a generic flat presentation. It targets a high-end market interested in unique installations in significant architectural spaces.",
+      "mockup_prompt": "A vibrant contemporary abstract artwork, dominated by a dynamic turquoise and orange spiral with rich impasto textures against a dark brown background, presented in a light wooden frame, is installed on a vertical wall within a grand Historical European Palazzo Grand Salon. The room features aged limewash plaster walls in warm stone-like hues and a polished dark herringbone parquet floor. Architectural mouldings are visible from above. A long, antique dark wood console table with a polished surface is positioned on the floor plane. Tall arched windows on a diagonal wall let in golden late-day sunlight, creating soft, long shadows across the parquet. The camera is positioned very high, near ceiling height, looking diagonally down from an upper corner or balcony. The composition emphasizes the visible floor plane, the top surface of the console, and the artwork on the wall, all unified by a steep downward high-angle perspective. The artwork remains true to its original form, proportions, and colors, appearing as a real physical canvas. No visible people or animals.",
+      "negative_prompt": "No people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default, no museum spectacle, no period drama, no costumes, no royal event, no crowd, no pet, no generic neutral interior, no rustic Tuscan room, no generic lounge, no showroom, no unrelated gallery."
+    }
+  ]
+}
+```

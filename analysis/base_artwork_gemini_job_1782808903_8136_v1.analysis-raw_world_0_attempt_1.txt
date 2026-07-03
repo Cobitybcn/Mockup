@@ -1,0 +1,45 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Crimson Horizon",
+      "subtitle": "An abstract landscape of deep hues and vibrant markers",
+      "description": "Explores the tension between expansive dark fields and luminous, geometric accents."
+    },
+    {
+      "title": "Fields of Tension",
+      "subtitle": "Dynamic interplay of color blocks within a layered expanse",
+      "description": "A study in contrasting color temperatures and spatial depth, evoking a sense of vibrant discovery."
+    },
+    {
+      "title": "Azure Fragments",
+      "subtitle": "Geometric forms emerging from a rich, subdued ground",
+      "description": "Bold blue and red elements punctuate a deep, layered composition, creating a powerful visual rhythm."
+    }
+  ],
+  "recommended_number_of_contexts": 1,
+  "contextual_proposals": [
+    {
+      "context_name": "Minimalist Gallery Ascension",
+      "context_role": "To present the artwork in a rigorously clean, contemporary gallery setting, emphasizing its abstract forms and color tension through a dramatic, low architectural perspective.",
+      "space_type": "Minimalist architectural gallery space.",
+      "atmosphere": "Calm, clean, and architecturally pure, focusing intently on the artwork. The dramatic low perspective creates a sense of gravitas and monumental presence, despite the restrained environment. Neutral, focused, and quietly imposing.",
+      "materials": [
+        "Matte mineral white wall with subtle plaster texture",
+        "Polished light grey concrete floor with subtle aggregate",
+        "Seamless white plaster ceiling",
+        "Discreet dark metal track lighting"
+      ],
+      "lighting": "Soft, cool gallery daylight entering from an unseen architectural opening, combined with controlled, focused track lighting that highlights the artwork's texture and vibrant colors. The polished floor reflects ambient light, enhancing the sense of depth from the low camera angle.",
+      "camera_view": "Nadir Controlado: Camera is positioned extremely low, approximately 5-15 cm from the ground, with the lens nearly touching the floor. This is a mouse-level/nadir-inspired architectural viewpoint, not a gentle low 3/4. The floor plane must be large and close in the foreground while wall height, ceiling lines, columns, door frames or architectural verticals rise strongly. Use an assertive oblique angle across the room, not a straight-on product view, with one forceful vanishing direction for architecture and artwork. The wall, floor, ceiling, and artwork should feel pulled into the same steep perspective. Use the nadir effect strongly through the surrounding room geometry: a large foreground floor wedge, floor lines, vertical wall planes, ceiling height, architectural edges, columns, furniture legs or door frames. The artwork remains the visual subject, but the dramatic low viewpoint must be obvious at thumbnail size. Do not produce a polite standing-height gallery view.",
+      "camera_distance": "Controlled architectural distance, with a wide-angle emphasis on the expansive floor foreground and the artwork positioned in the vertical mid-ground, appearing monumental from below.",
+      "camera_angle_notes": "The extreme low angle and aggressive oblique view dramatically enhance the artwork's physical presence and depth. It transforms the gallery wall into a towering plane, making the artwork feel substantial and commanding. The wide architectural lens exaggerates perspective, drawing the viewer's eye up towards the artwork and emphasizing the clean, precise lines of the minimalist space, while clearly showcasing the canvas thickness due to foreshortening.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's strong abstract geometry and striking color contrasts (deep reds/burgundy against vibrant blues) find a perfect counterpoint in the clean, neutral lines of a minimalist gallery. The cool, pristine environment allows the artwork's unique palette to pop without competition, while the dramatic nadir perspective offers a fresh, commanding presentation that elevates its artistic weight and presence, aligning with the precision of the piece.",
+      "commercial_reason": "This presentation instantly signals premium, museum-grade quality for the artwork, appealing to high-end collectors and interior designers seeking a contemporary, impactful statement piece. The unique and sophisticated camera angle creates high visual impact and memorability, setting the artwork apart from generic flat displays and underscoring its collectible value within modern architectural contexts.",
+      "mockup_prompt": "A minimalist architectural gallery space. The abstract artwork, with its deep red and blue geometric forms, is precisely hung centrally on a seamless matte mineral white wall. The camera is positioned extremely low, approximately 5-15cm from the ground, with the lens nearly touching the polished light gray concrete floor. A large, dominant floor plane stretches dramatically into the foreground, leading up to the wall where the artwork is placed. Vertical architectural elements like the wall and the clean ceiling rise sharply and obliquely into the frame, creating a strong upward perspective and aggressive vanishing lines. The artwork, seen from below, appears monumental and physically substantial, its canvas edges visible due to foreshortening. Soft, cool gallery daylight illuminates the space from an unseen source, combined with focused, subtle track lighting highlighting the artwork's textured surface. The polished concrete floor reflects ambient light. The entire scene is clean, precise, and highly architectural. No visible people, no animals. The artwork must be preserved exactly as provided in the reference image.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no warm rustic palette, no busy gallery, no architectural spectacle, no unrelated gallery, no monumental atrium."
+    }
+  ]
+}
+```

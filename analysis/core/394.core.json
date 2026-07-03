@@ -1,0 +1,127 @@
+{
+    "core_schema_version": "1.1",
+    "artwork": {
+        "artwork_id": 394,
+        "job_id": "job_1782806717_3752",
+        "source_image": "main_artwork.jpg",
+        "selected_root_file": "base_artwork_gemini_job_1782806717_3752_v2.png",
+        "dimensions": {
+            "width_cm": 120,
+            "height_cm": 80,
+            "depth_cm": 2,
+            "orientation": "horizontal",
+            "aspect_ratio": 1.5
+        }
+    },
+    "root_artwork_views": {
+        "three_quarter_left": {
+            "file": "base_artwork_gemini_job_1782806717_3752_v2.png",
+            "role": "three-quarter left root view"
+        },
+        "frontal": {
+            "file": "base_artwork_gemini_job_1782806717_3752_v1.png",
+            "role": "frontal root view"
+        },
+        "three_quarter_right": {
+            "file": "base_artwork_gemini_job_1782806717_3752_v3.png",
+            "role": "three-quarter right root view"
+        },
+        "selected_view": "three_quarter_left"
+    },
+    "physical_artwork_reference": {
+        "object_type": "stretched_canvas",
+        "is_physical_object": true,
+        "depth_cm": 2,
+        "has_visible_edges": true,
+        "paint_continues_on_edges": null,
+        "edge_finish": null,
+        "view_observations": {
+            "frontal": {
+                "file": "base_artwork_gemini_job_1782806717_3752_v1.png",
+                "visible_edges": [],
+                "canvas_depth_visible": false,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "primary_composition_reference",
+                    "frontal_mockup_reference"
+                ]
+            },
+            "three_quarter_left": {
+                "file": "base_artwork_gemini_job_1782806717_3752_v2.png",
+                "visible_edges": [
+                    "left_edge"
+                ],
+                "canvas_depth_visible": true,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "left_oblique_reference",
+                    "canvas_depth_reference"
+                ]
+            },
+            "three_quarter_right": {
+                "file": "base_artwork_gemini_job_1782806717_3752_v3.png",
+                "visible_edges": [
+                    "right_edge"
+                ],
+                "canvas_depth_visible": true,
+                "paint_continuity_visible": null,
+                "best_for": [
+                    "right_oblique_reference",
+                    "canvas_depth_reference"
+                ]
+            }
+        }
+    },
+    "visual_analysis": {
+        "visual_language": null,
+        "composition": null,
+        "dominant_colors": [],
+        "secondary_colors": [],
+        "materials_or_surface": null,
+        "texture": null,
+        "spatial_depth": null,
+        "light_behavior": null,
+        "gesture_or_mark_making": null,
+        "emotional_energy": null,
+        "symbolic_elements": [],
+        "style_family": null
+    },
+    "artwork_identity": {
+        "short_identity": "An abstract journey of ladders, horizons, and luminous discovery.",
+        "expanded_identity": "Bold forms and vibrant colors evoke a surreal landscape, where ladders ascend towards a radiant sphere against a deep blue, expansive sky, suggesting aspiration and profound exploration.",
+        "keywords": [],
+        "do_not_alter_rules": [
+            "Do not repaint the artwork.",
+            "Do not redesign the artwork.",
+            "Do not crop the artwork.",
+            "Do not mirror the artwork.",
+            "Do not recolor the artwork.",
+            "Do not reinterpret the artwork.",
+            "Preserve composition, proportions, colors, marks, texture and visual identity."
+        ]
+    },
+    "publishing_texts": {
+        "suggested_titles": [
+            {
+                "title": "Ascension's Edge",
+                "subtitle": "An abstract journey of ladders, horizons, and luminous discovery.",
+                "description": "Bold forms and vibrant colors evoke a surreal landscape, where ladders ascend towards a radiant sphere against a deep blue, expansive sky, suggesting aspiration and profound exploration."
+            },
+            {
+                "title": "Crimson Horizon",
+                "subtitle": "Geometric abstraction capturing distant structures and the allure of light.",
+                "description": "A stark red architectural element anchors a layered, colorful terrain beneath a vast, dark blue expanse, highlighted by a solitary white orb and symbolic ladders, creating a sense of both distance and connection."
+            },
+            {
+                "title": "Moonlit Ascent",
+                "subtitle": "A contemporary vision of a silent, structured, and hopeful landscape.",
+                "description": "Through a palette of deep blues, fiery reds, and earthy ochres, this artwork presents a stylized landscape punctuated by ladders reaching towards a brilliant moon, offering a contemplative look at ambition and space."
+            }
+        ]
+    },
+    "technical_metadata": {
+        "created_at": "2026-06-30T08:09:48+00:00",
+        "source_analysis_file": "base_artwork_gemini_job_1782806717_3752_v2.analysis.json",
+        "source_analysis_hash": "c50d0a38cdd75e5f5e2b011bb2086271"
+    }
+}

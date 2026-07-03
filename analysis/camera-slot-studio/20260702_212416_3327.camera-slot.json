@@ -1,0 +1,68 @@
+{
+    "slot_id": "vista_aerea_obra_piso_cenital",
+    "slot_name": "Vista Aérea Cenital de Obra en Piso",
+    "enabled": true,
+    "fidelity_mode": "high_fidelity_artwork_integration",
+    "size_classes_supported": [
+        "small",
+        "medium",
+        "large",
+        "extra_large",
+        "custom"
+    ],
+    "orientation_supported": [
+        "landscape",
+        "portrait",
+        "square"
+    ],
+    "camera_height_block": "Overhead view, high angle, looking straight down onto the floor.",
+    "lens_block": "Standard to slightly wide-angle lens, capturing the artwork and a reasonable amount of surrounding context.",
+    "vertical_tilt_block": "Almost perpendicular to the ground plane, approximately 85-90 degrees downward.",
+    "lateral_rotation_block": "None to minimal (0-5 degrees), keeping the artwork primarily aligned with the frame's horizontal or vertical axis.",
+    "composition_block": "The artwork (IMAGE 1) is laid horizontally flat on the floor, positioned centrally or slightly off-center to maintain visual interest. The floor itself serves as the primary background plane. The composition should clearly show the full artwork or nearly the full artwork, with surrounding environmental elements such as rugs, low tables, sofas, or floor lines visible as contextual anchors. The artwork must be the unequivocal main subject.",
+    "human_subject_block": "No human subjects visible within the frame. Implied human presence through objects (e.g., a book on a table) is acceptable but not mandatory.",
+    "scale_block": "Accurate and realistic scaling of the {{ARTWORK_WIDTH_CM}}x{{ARTWORK_HEIGHT_CM}} artwork (IMAGE 1) relative to the floor and any surrounding furniture. The artwork's size should appear natural and to-scale within the depicted scene.",
+    "depth_of_field_block": "Medium depth of field, ensuring the artwork is sharply in focus, while allowing for a subtle, natural blur in more distant background elements to create realism and emphasize the main subject.",
+    "scene_affinity": [
+        "Modern or contemporary interior space such as a loft",
+        "minimalist apartment",
+        "or art studio. Elements may include polished concrete floors",
+        "hardwood",
+        "natural fiber rugs",
+        "low-profile sofas",
+        "stylish coffee tables",
+        "large windows",
+        "and natural lighting conditions. The overall environmental aesthetic should draw inspiration from the 'world mother' DNA of IMAGE 2."
+    ],
+    "negative_directives": [
+        "no wall-mounted artwork",
+        "no artwork hanging on a wall",
+        "no artwork leaning against a wall",
+        "no vertical artwork (unless it's a landscape artwork laid flat)",
+        "no traditional frontal wall view",
+        "no artwork standing upright",
+        "no sofa replacing artwork as the main subject",
+        "no table replacing artwork as the main subject",
+        "no rug replacing artwork as the main subject",
+        "no artwork substitution or alteration",
+        "no invented painting",
+        "no warped canvas",
+        "no bent canvas",
+        "no stretched artwork",
+        "no compressed artwork",
+        "no billboard scaling",
+        "no mural scaling",
+        "no visible text or logos on the artwork or in the scene",
+        "no watermarks",
+        "no visible human subjects",
+        "no artwork partially cut off unless minor for compositional balance"
+    ],
+    "full_prompt_template": "A photorealistic, high-fidelity render of a premium artwork mockup. Overhead view, camera looking straight down, almost perpendicular to the floor (85-90 degrees tilt). A {{ARTWORK_WIDTH_CM}}cm wide by {{ARTWORK_HEIGHT_CM}}cm tall {{ARTWORK_ORIENTATION}} artwork (IMAGE 1) titled \"{{ARTWORK_TITLE}}\" is laid flat horizontally on the floor. The artwork is the primary subject, fully visible or nearly fully visible within the composition. The setting is a {{scene_affinity}}, with aesthetic inspiration from IMAGE 2's environmental DNA, featuring contextual elements such as a stylish rug, a low coffee table, or a minimalist sofa around the artwork, adding context without overshadowing it. The lens is standard to slightly wide-angle. Depth of field is medium, making the artwork sharp while providing a sense of realistic space. No human subjects. Avoid: wall-mounted artwork, vertical artwork, artwork hanging, frontal wall views, warped/bent/stretched artwork, billboard/mural scaling, visible text/logos/watermarks, humans, artwork replacement by furniture.",
+    "_studio": {
+        "schema": "camera_slot_studio_draft.v1",
+        "created_at": "2026-07-02T21:24:16+00:00",
+        "source": "gemini",
+        "brief": "Crear una cámara de vista aérea cenital desde arriba. La obra no está colgada en la pared: está apoyada horizontalmente sobre el piso, como un canvas u obra física acostada. La cámara mira desde arriba, casi perpendicular al suelo, mostrando el piso como plano principal y la obra completa o casi completa dentro de la composición. La escena puede incluir contexto alrededor, como alfombra, mesa baja, sofá, cortinas, ventanas o líneas del piso, pero la obra debe ser el sujeto principal y debe leerse como una pieza real colocada sobre el suelo. Evitar vista de pared, evitar obra vertical, evitar mockup frontal tradicional.",
+        "reviewer_notes": "This slot is designed for overhead views of artwork placed flat on the floor. Critical aspects are ensuring IMAGE 1's integrity (no warps/distortions), strict adherence to horizontal placement (no wall-mounting or vertical orientation), and maintaining a clear hierarchy where the artwork is the main subject, even with surrounding context. IMAGE 2 provides environmental style guidance."
+    }
+}

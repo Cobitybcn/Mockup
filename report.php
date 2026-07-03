@@ -18,7 +18,7 @@ if (!defined('LEGACY_MOCKUP_FLOW_ENABLED') || !LEGACY_MOCKUP_FLOW_ENABLED) {
         } catch (Throwable $e) {}
     }
     if ($resolvedId > 0) {
-        header('Location: mockup_prompt_drafts_review.php?id=' . $resolvedId);
+        header('Location: mockup_combinations_review.php?id=' . $resolvedId);
         exit;
     }
 }

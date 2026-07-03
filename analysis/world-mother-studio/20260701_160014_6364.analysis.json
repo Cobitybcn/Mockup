@@ -1,0 +1,125 @@
+{
+    "scene_type": "Grand Loft / Atelier Living Space",
+    "architecture_language": "Industrial Modernist, characterised by expansive double-height ceilings, raw material honesty, and dominant, large-scale fenestration. Features open-plan layouts and often exposed structural elements.",
+    "wall_language": "Tall, unadorned vertical surfaces, primarily exposed, textured concrete or smooth, light-toned plaster/stucco. Minimalist and impactful, emphasizing height and natural light interaction.",
+    "floor_language": "Polished concrete or light, muted-toned hard flooring (e.g., polished stone), reflecting light and contributing to the spacious feel.",
+    "ceiling_language": "Very high or double-height, often exposed concrete, sometimes with visible structural beams or industrial-style lighting tracks, or smoothly plastered and unadorned.",
+    "lighting": "Predominantly natural, abundant, and dramatic light pouring in through oversized windows, creating strong contrasts, deep shadows, and dappled effects. Minimal and understated artificial ambient lighting.",
+    "materials": [
+        "Primary: Exposed and polished concrete",
+        "large panes of glass",
+        "black steel (for window frames and structural elements). Secondary: Natural wood (dark or light tones)",
+        "raw or textured fabrics (linen",
+        "wool",
+        "jute)",
+        "plaster/stucco."
+    ],
+    "palette": [
+        "Predominantly cool and warm neutrals: various shades of grey (concrete",
+        "charcoal)",
+        "crisp whites and off-whites (walls",
+        "some textiles)",
+        "black (window frames",
+        "steel)",
+        "natural wood browns",
+        "and occasional muted green accents from subtle foliage."
+    ],
+    "mood": [
+        "Spacious",
+        "minimalist",
+        "serene",
+        "sophisticated",
+        "grand",
+        "light-filled",
+        "industrial elegance",
+        "artistic",
+        "and contemporary."
+    ],
+    "scale": "Grand, imposing, and aspirational. Features include double-height or exceptionally high ceilings, monumental windows, and furniture proportioned to the large volume of space.",
+    "camera_potential": [
+        "Wide-angle and low-angle shots to emphasize verticality and expansive spatial volume. Opportunities for strong compositions leveraging natural light",
+        "deep shadows",
+        "and architectural lines. Shots through the large windows offer intriguing external views."
+    ],
+    "negative_risks": [
+        "Paintings",
+        "Framed artwork",
+        "Art prints",
+        "Frames (empty or with content)",
+        "People",
+        "Animals",
+        "Logos",
+        "Text",
+        "Clutter (e.g., specific small plants, books, vases, decorative objects, candles, blankets draped on furniture, barware, bottles, specific coffee table arrangements – the goal is a clean architectural shell with generic furniture)."
+    ],
+    "style_details": "Features massive multi-pane windows with industrial-style black frames, ranging from rectilinear grids to grand arched forms. The architecture seamlessly blends raw industrial elements (exposed concrete walls, steel beams, mezzanines) with a modernist or minimalist aesthetic. Furniture is typically modern, low-profile, and understated to maintain open sightlines and highlight the expansive space. Spaces can vary between a more pronounced raw concrete finish and a softer, plastered 'atelier' feel, while retaining the overall grand scale and abundant natural light.",
+    "category_keywords": [
+        "Industrial Loft",
+        "High Ceilings",
+        "Natural Light",
+        "Minimalist",
+        "Concrete Interior",
+        "Grand Windows",
+        "Modernist",
+        "Atelier Style",
+        "Raw Materials",
+        "Spacious Interior"
+    ],
+    "reference_file": "world_mother_ref_20260701_155940_5599.jpg",
+    "user_notes": "",
+    "reference_paths": [
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_155940_5599.jpg",
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_155940_2207.jpg",
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_155940_6794.jpg",
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_155940_1908.jpg"
+    ],
+    "reference_files": [
+        "world_mother_ref_20260701_155940_5599.jpg",
+        "world_mother_ref_20260701_155940_2207.jpg",
+        "world_mother_ref_20260701_155940_6794.jpg",
+        "world_mother_ref_20260701_155940_1908.jpg"
+    ],
+    "category_candidates": [
+        {
+            "category_slug": "Atelier",
+            "category_name": "Atelier",
+            "image_count": 7,
+            "score": 4,
+            "matched_terms": [
+                "atelier"
+            ]
+        },
+        {
+            "category_slug": "en espera",
+            "category_name": "En Espera",
+            "image_count": 122,
+            "score": 0,
+            "matched_terms": []
+        },
+        {
+            "category_slug": "modernismo_catalan",
+            "category_name": "Modernismo Catalan",
+            "image_count": 8,
+            "score": 0,
+            "matched_terms": []
+        },
+        {
+            "category_slug": "modernismo_catalan_espa_referencia",
+            "category_name": "Modernismo Catalan Espa Referencia",
+            "image_count": 8,
+            "score": 0,
+            "matched_terms": []
+        },
+        {
+            "category_slug": "selected",
+            "category_name": "Selected",
+            "image_count": 4,
+            "score": 0,
+            "matched_terms": []
+        }
+    ],
+    "new_category_suggestion": "industrial_loft_high_ceilings",
+    "analysis_source": "gemini_multi_reference",
+    "reference_path": "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_155940_5599.jpg",
+    "created_by_user_id": 1
+}

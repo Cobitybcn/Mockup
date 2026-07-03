@@ -75,8 +75,16 @@ class OpenAIMockupGenerator implements MockupGeneratorInterface
 
     private function finalPrompt(string $contextId, string $contextPrompt, array $metadata = []): string
     {
+        if (!empty($metadata['slot_full_prompt_mode'])) {
+            return $contextPrompt;
+        }
+
         if (isset($metadata['prompt_passthrough_mode']) && is_string($metadata['prompt_passthrough_mode'])) {
             $contextPrompt = $metadata['prompt_passthrough_mode'];
+        }
+
+        if (!empty($metadata['skip_world_visual_enhancer'])) {
+            return $contextPrompt;
         }
 
         return (new MockupWorldVisualPromptEnhancer())->enhancePromptForContextId($contextPrompt, $contextId);

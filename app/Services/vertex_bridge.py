@@ -18,6 +18,16 @@ from PIL import Image
 
 MOCKUP_USE_PRECOMPOSITION = os.environ.get("MOCKUP_USE_PRECOMPOSITION", "false").lower() == "true"
 MOCKUP_USE_BACKGROUND_EDIT = os.environ.get("MOCKUP_USE_BACKGROUND_EDIT", "false").lower() == "true"
+# Plate-driven nadir precomposition for Camera 15. Each artwork orientation selects a
+# dedicated silhouette plate so inpainting receives camera geometry before room synthesis.
+MOCKUP_USE_NADIR_POLYGON = os.environ.get("MOCKUP_USE_NADIR_POLYGON", "false").lower() == "true"
+MOCKUP_NADIR_PLATE_DIR = os.environ.get("MOCKUP_NADIR_PLATE_DIR", "")
+MOCKUP_GRAPHIC_PERSPECTIVE_PLATE = os.environ.get("MOCKUP_GRAPHIC_PERSPECTIVE_PLATE", "")
+MOCKUP_MASK_DILATION = os.environ.get("MOCKUP_MASK_DILATION", "")
+# Center-crop zoom factor applied to the world mother style reference before sending it to the
+# model. 1.0 = unchanged; >1.0 crops tighter toward the center (more material/texture, less room
+# layout). Values <= 1.0 are treated as a no-op (cropping cannot show more than the source photo).
+MOCKUP_WORLD_MOTHER_SCALE = os.environ.get("MOCKUP_WORLD_MOTHER_SCALE", "")
 MOCKUP_PROMPT_FIRST_MODE = os.environ.get("MOCKUP_PROMPT_FIRST_MODE", "false").lower() == "true"
 MOCKUP_PROMPT_FIRST_NO_MASK_MODE = os.environ.get("MOCKUP_PROMPT_FIRST_NO_MASK_MODE", "false").lower() == "true"
 if MOCKUP_PROMPT_FIRST_MODE:
@@ -239,6 +249,217 @@ def find_coeffs(pa, pb):
         
     return solve_linear_system(matrix, y)
 
+def detect_artwork_orientation(w, h):
+    if h > w * 1.12:
+        return "portrait"
+    if w > h * 1.12:
+        return "landscape"
+    return "square"
+
+def nadir_plate_path_for_orientation(orientation):
+    plate_dir = MOCKUP_NADIR_PLATE_DIR
+    if not plate_dir:
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        plate_dir = os.path.join(project_root, "results", "resized")
+
+    filenames = {
+        "portrait": "impainting-obra-vertical.jpg",
+        "square": "inmpainting-obra-cuadrada-1.jpg",
+        "landscape": "inmpainting-obra-horizontal.jpg",
+    }
+    return os.path.join(plate_dir, filenames[orientation])
+
+def green_silhouette_mask(plate_img):
+    rgb = plate_img.convert("RGB")
+    mask = Image.new("L", rgb.size, 0)
+    src = rgb.load()
+    dst = mask.load()
+    width, height = rgb.size
+
+    # JPG compression creates near-green fringes, so keep a tolerant chroma test.
+    for y in range(height):
+        for x in range(width):
+            r, g, b = src[x, y]
+            if g > 105 and g > r * 1.8 and g > b * 1.8:
+                dst[x, y] = 255
+
+    return mask
+
+def quad_from_mask(mask_img):
+    bbox = mask_img.getbbox()
+    if not bbox:
+        raise ValueError("Nadir silhouette plate has no detectable green artwork mask.")
+
+    pix = mask_img.load()
+    left, top, right, bottom = bbox
+    points = []
+    for y in range(top, bottom):
+        for x in range(left, right):
+            if pix[x, y] > 0:
+                points.append((x, y))
+
+    if not points:
+        raise ValueError("Nadir silhouette plate has no usable mask pixels.")
+
+    tl = min(points, key=lambda p: p[0] + p[1])
+    tr = min(points, key=lambda p: -p[0] + p[1])
+    bl = max(points, key=lambda p: -p[0] + p[1])
+    br = max(points, key=lambda p: p[0] + p[1])
+    return [tl, bl, br, tr]
+
+def horizontal_span_at(mask_img, y, left, right):
+    pix = mask_img.load()
+    xs = [x for x in range(left, right) if pix[x, y] > 0]
+    if not xs:
+        return None
+    return min(xs), max(xs)
+
+def span_near_fraction(mask_img, bbox, fraction, search_radius=42):
+    left, top, right, bottom = bbox
+    target_y = int(round(top + (bottom - top) * fraction))
+    start_y = max(top, target_y - search_radius)
+    end_y = min(bottom - 1, target_y + search_radius)
+
+    best = None
+    for y in range(start_y, end_y + 1):
+        span = horizontal_span_at(mask_img, y, left, right)
+        if not span:
+            continue
+        x1, x2 = span
+        width = x2 - x1
+        score = abs(y - target_y) * 3 - width
+        if best is None or score < best[0]:
+            best = (score, y, x1, x2)
+
+    if best is None:
+        return None
+    _, y, x1, x2 = best
+    return y, x1, x2
+
+def nadir_rigid_canvas_quad(orientation, canvas_w, canvas_h, silhouette=None):
+    """Camera 15 needs a strong low-angle canvas plane, not a vanishing spike.
+
+    The plate selects the camera family and canvas aspect, but the protected artwork
+    follows the perspective marked by the green plate.
+    """
+    if silhouette is not None:
+        bbox = silhouette.getbbox()
+        if bbox:
+            left, top, right, bottom = bbox
+            top_fraction = 0.12 if orientation == "portrait" else 0.16
+            bottom_fraction = 0.88 if orientation == "portrait" else 0.82
+            top_span = span_near_fraction(silhouette, bbox, top_fraction)
+            bottom_span = span_near_fraction(silhouette, bbox, bottom_fraction)
+
+            if top_span and bottom_span:
+                top_y, top_left, top_right = top_span
+                bottom_y, bottom_left, bottom_right = bottom_span
+
+                pad = max(8, int(round(canvas_w * 0.012)))
+                top_left = max(pad, min(canvas_w - pad, top_left))
+                top_right = max(pad, min(canvas_w - pad, top_right))
+                bottom_left = max(pad, min(canvas_w - pad, bottom_left))
+                bottom_right = max(pad, min(canvas_w - pad, bottom_right))
+
+                if top_left >= top_right:
+                    top_left, top_right = top_right - pad, top_left + pad
+                if bottom_left >= bottom_right:
+                    bottom_left, bottom_right = bottom_right - pad, bottom_left + pad
+
+                return [
+                    (top_left, top_y),
+                    (bottom_left, bottom_y),
+                    (bottom_right, bottom_y),
+                    (top_right, top_y),
+                ]
+
+    fallback_profiles = {
+        "portrait": [(0.38, 0.24), (0.23, 0.80), (0.82, 0.72), (0.66, 0.12)],
+        "square": [(0.16, 0.38), (0.09, 0.72), (0.88, 0.64), (0.62, 0.28)],
+        "landscape": [(0.22, 0.28), (0.16, 0.58), (0.84, 0.59), (0.68, 0.42)],
+    }
+    return [(int(round(x * canvas_w)), int(round(y * canvas_h))) for x, y in fallback_profiles.get(orientation, fallback_profiles["square"])]
+
+def build_nadir_polygon_precomposition(art_img, w, h):
+    """Warp artwork into an orientation-specific Camera 15 silhouette plate.
+
+    The plate selects the orientation/camera canvas, while a moderated rigid-canvas
+    quad becomes the protected artwork surface. The rest is editable context for
+    Imagen/Gemini inpainting. Returns
+    (composited_rgb_canvas, mask_png_bytes, orientation, plate_path).
+    """
+    import io
+
+    orientation = detect_artwork_orientation(w, h)
+    plate_path = nadir_plate_path_for_orientation(orientation)
+    if not os.path.isfile(plate_path):
+        raise FileNotFoundError(f"Nadir silhouette plate not found for {orientation}: {plate_path}")
+
+    plate_img = Image.open(plate_path).convert("RGB")
+    canvas_w, canvas_h = plate_img.size
+    silhouette = green_silhouette_mask(plate_img)
+    pa = nadir_rigid_canvas_quad(orientation, canvas_w, canvas_h, silhouette)
+    pb = [(0, 0), (0, h), (w, h), (w, 0)]
+    coeffs = find_coeffs(pa, pb)
+
+    art_transformed = art_img.convert("RGBA").transform(
+        (canvas_w, canvas_h), Image.Transform.PERSPECTIVE, coeffs,
+        Image.Resampling.BICUBIC, fillcolor=(0, 0, 0, 0)
+    ).convert("RGBA")
+    alpha = art_transformed.split()[3]
+
+    canvas = Image.new("RGBA", (canvas_w, canvas_h), color=(240, 240, 240, 255))
+    canvas.paste(art_transformed, (0, 0), art_transformed)
+    canvas = canvas.convert("RGB")
+
+    # 255 = editable context, 0 = protected artwork silhouette.
+    mask_img = Image.new("L", (canvas_w, canvas_h), color=255)
+    protected_layer = Image.new("L", (canvas_w, canvas_h), color=0)
+    mask_img.paste(protected_layer, (0, 0), mask=alpha)
+
+    mask_byte_arr = io.BytesIO()
+    mask_img.save(mask_byte_arr, format='PNG')
+    return canvas, mask_byte_arr.getvalue(), orientation, plate_path
+
+def build_graphic_perspective_precomposition(art_img, plate_path):
+    """Use a green silhouette plate as literal geometry for protected inpainting."""
+    import io
+
+    if not os.path.isfile(plate_path):
+        raise FileNotFoundError(f"Graphic perspective plate not found: {plate_path}")
+
+    plate_img = Image.open(plate_path).convert("RGB")
+    canvas_w, canvas_h = plate_img.size
+    silhouette = green_silhouette_mask(plate_img)
+    pa = quad_from_mask(silhouette)
+
+    src = art_img.convert("RGBA")
+    w, h = src.size
+    pb = [(0, 0), (0, h), (w, h), (w, 0)]
+    coeffs = find_coeffs(pa, pb)
+
+    art_transformed = src.transform(
+        (canvas_w, canvas_h), Image.Transform.PERSPECTIVE, coeffs,
+        Image.Resampling.BICUBIC, fillcolor=(0, 0, 0, 0)
+    ).convert("RGBA")
+
+    original_alpha = art_transformed.split()[3]
+    exact_alpha = Image.new("L", (canvas_w, canvas_h), 0)
+    exact_alpha.paste(original_alpha, (0, 0), mask=silhouette)
+    art_transformed.putalpha(exact_alpha)
+
+    canvas = Image.new("RGBA", (canvas_w, canvas_h), color=(240, 240, 240, 255))
+    canvas.paste(art_transformed, (0, 0), art_transformed)
+    canvas = canvas.convert("RGB")
+
+    mask_img = Image.new("L", (canvas_w, canvas_h), color=255)
+    protected_layer = Image.new("L", (canvas_w, canvas_h), color=0)
+    mask_img.paste(protected_layer, (0, 0), mask=exact_alpha)
+
+    mask_byte_arr = io.BytesIO()
+    mask_img.save(mask_byte_arr, format="PNG")
+    return canvas, mask_byte_arr.getvalue(), plate_path
+
 def handle_generate_image(args):
     client = get_client()
     
@@ -255,7 +476,10 @@ def handle_generate_image(args):
     pil_img = None
     gemini_reference_images = []
     mask_bytes = None
-    
+    # Second --image argument (when present) is the world mother / environment reference.
+    # Consumed by masked inpainting as a StyleReferenceImage.
+    style_reference_path = args.image[1] if args.image and len(args.image) > 1 and os.path.isfile(args.image[1]) else None
+
     if args.image:
         if is_gemini_image and len(args.image) > 1:
             for image_path in args.image:
@@ -281,8 +505,50 @@ def handle_generate_image(args):
             w, h = pil_img.size
         
         w, h = pil_img.size
-        
-        if not gemini_reference_images and is_mockup and MOCKUP_USE_PRECOMPOSITION:
+
+        use_nadir_polygon = (
+            MOCKUP_USE_NADIR_POLYGON
+            and not gemini_reference_images
+            and is_mockup
+            and MOCKUP_USE_PRECOMPOSITION
+        )
+        use_graphic_perspective_plate = (
+            MOCKUP_GRAPHIC_PERSPECTIVE_PLATE
+            and not gemini_reference_images
+            and is_mockup
+            and MOCKUP_USE_PRECOMPOSITION
+        )
+
+        if use_graphic_perspective_plate:
+            pil_img, mask_bytes, plate_path = build_graphic_perspective_precomposition(
+                pil_img,
+                MOCKUP_GRAPHIC_PERSPECTIVE_PLATE
+            )
+            print(
+                f"[DEBUG] Using graphic perspective plate precomposition: plate={os.path.basename(plate_path)}.",
+                file=sys.stderr
+            )
+            args.prompt += (
+                "\n\nTECHNICAL INPAINTING DIRECTIVES:\n"
+                "- The input image already contains the artwork pre-warped into the exact protected perspective shape.\n"
+                "- Keep the protected artwork unchanged.\n"
+                "- Generate only the surrounding room, wall, floor, shadows, and lighting so they support that protected perspective."
+            )
+        elif use_nadir_polygon:
+            pil_img, mask_bytes, plate_orientation, plate_path = build_nadir_polygon_precomposition(pil_img, w, h)
+            print(
+                f"[DEBUG] Using Camera 15 nadir plate precomposition: orientation={plate_orientation}, plate={os.path.basename(plate_path)}.",
+                file=sys.stderr
+            )
+            args.prompt += (
+                "\n\nHARMONIZATION AND INTEGRATION DIRECTIVES:\n"
+                "- The input image already shows the artwork pre-warped into an orientation-specific rigid canvas plane for an extreme low-angle nadir/contrapicado camera, positioned off-axis near a floor corner. This is intentional camera geometry, not a rendering error.\n"
+                "- Keep the artwork surface itself unchanged: do not repaint, reinterpret, alter, crop, mirror, rotate, recolor, simplify, extend, straighten, or replace the artwork, and do not correct or flatten its perspective.\n"
+                "- Build the surrounding floor, wall, and architecture so their vanishing lines and verticals match the same extreme upward camera angle already visible in the artwork's protected perspective plane. The room must look photographed from near floor level looking up and must respect the perspective marked by the protected artwork plate.\n"
+                "- The newly generated room must harmonize with the artwork's color palette, tone, and mood, with realistic lighting and soft contact shadows at the artwork edges.\n"
+                "- The artwork must look like a real physical painting installed in the room, not pasted or floating."
+            )
+        elif not gemini_reference_images and is_mockup and MOCKUP_USE_PRECOMPOSITION:
             # Check camera perspective direction
             warp_dir = detect_perspective_side(args.prompt)
                 
@@ -355,6 +621,14 @@ def handle_generate_image(args):
                     fill_ratio *= correction_factor
                 except Exception as e:
                     print(f"[WARN] Failed to apply scale correction: {e}", file=sys.stderr)
+            
+            # Apply Camera 15 scale multiplier if specified in the process environment
+            camera_15_multiplier = os.environ.get("MOCKUP_SCALE_CAMARA_15")
+            if camera_15_multiplier:
+                try:
+                    fill_ratio *= float(camera_15_multiplier)
+                except ValueError:
+                    pass
             
             # Keep human scale useful without turning the mockup into a distant room shot.
             prompt_lower = args.prompt.lower()
@@ -624,6 +898,10 @@ def handle_generate_image(args):
         else:
             reference_images_list = [raw_ref]
             if is_mockup and mask_bytes is not None:
+                try:
+                    mask_dilation = float(MOCKUP_MASK_DILATION) if MOCKUP_MASK_DILATION != "" else 0.015
+                except ValueError:
+                    mask_dilation = 0.015
                 mask_ref = types.MaskReferenceImage(
                     reference_id=2,
                     reference_image=types.Image(
@@ -632,11 +910,51 @@ def handle_generate_image(args):
                     ),
                     config=types.MaskReferenceConfig(
                         mask_mode="MASK_MODE_USER_PROVIDED",
-                        mask_dilation=0.015
+                        mask_dilation=mask_dilation
                     )
                 )
                 reference_images_list.append(mask_ref)
                 edit_mode = "EDIT_MODE_INPAINT_INSERTION"
+
+                if style_reference_path:
+                    style_img = Image.open(style_reference_path).convert("RGB")
+
+                    if MOCKUP_WORLD_MOTHER_SCALE:
+                        try:
+                            zoom = float(MOCKUP_WORLD_MOTHER_SCALE)
+                        except ValueError:
+                            zoom = 1.0
+                        zoom = max(1.0, min(3.0, zoom))
+                        if zoom > 1.0:
+                            sw, sh = style_img.size
+                            crop_w, crop_h = sw / zoom, sh / zoom
+                            left = (sw - crop_w) / 2
+                            top = (sh - crop_h) / 2
+                            style_img = style_img.crop((left, top, left + crop_w, top + crop_h)).resize((sw, sh), Image.Resampling.LANCZOS)
+                            print(f"[DEBUG] World mother style reference zoomed x{zoom:.2f} (center crop).", file=sys.stderr)
+
+                    style_byte_arr = io.BytesIO()
+                    style_img.save(style_byte_arr, format='PNG')
+                    style_ref = types.StyleReferenceImage(
+                        reference_id=3,
+                        reference_image=types.Image(
+                            image_bytes=style_byte_arr.getvalue(),
+                            mime_type="image/png"
+                        ),
+                        config=types.StyleReferenceConfig(
+                            style_description="world mother environment: wall material, floor material, architectural mass, and light color temperature"
+                        )
+                    )
+                    reference_images_list.append(style_ref)
+                    # Imagen's reference-image API only applies a reference when the prompt
+                    # text explicitly cites its bracket tag; without this the style image is
+                    # attached but silently unused.
+                    args.prompt += (
+                        "\n\nWORLD MOTHER STYLE REFERENCE [3]:\n"
+                        "- Reference [3] is the world mother environment photo. Reproduce its wall surface material, floor material, color palette, and light color temperature in the newly generated room around artwork [1].\n"
+                        "- Do not copy [3]'s camera angle, layout, furniture placement, window placement, or room geometry — only its material, palette, and light quality."
+                    )
+                    print("[DEBUG] Attached world mother image as StyleReferenceImage [3] for masked inpainting.", file=sys.stderr)
             elif is_mockup and MOCKUP_USE_BACKGROUND_EDIT:
                 mask_ref = types.MaskReferenceImage(
                     reference_id=2,

@@ -1,0 +1,173 @@
+{
+    "schema": "world_mother_set_generation_audit.v1",
+    "generated_at": "2026-07-01T14:53:18+00:00",
+    "mode": "gemini",
+    "category_slug": "modernismo_catalan_espa_referencia",
+    "reference_paths": [
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_144627_3843.png",
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_144627_6602.png",
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_144627_5275.png",
+        "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_144627_1290.png"
+    ],
+    "images": [
+        {
+            "file_name": "world_mother_20260701_144904_8115_01.png",
+            "relative_path": "storage/world_mothers/modernismo_catalan_espa_referencia/world_mother_20260701_144904_8115_01.png",
+            "absolute_path": "C:\\laragon\\www\\mockups\\storage\\world_mothers\\modernismo_catalan_espa_referencia\\world_mother_20260701_144904_8115_01.png",
+            "variant_index": 1
+        },
+        {
+            "file_name": "world_mother_20260701_144904_8115_02.png",
+            "relative_path": "storage/world_mothers/modernismo_catalan_espa_referencia/world_mother_20260701_144904_8115_02.png",
+            "absolute_path": "C:\\laragon\\www\\mockups\\storage\\world_mothers\\modernismo_catalan_espa_referencia\\world_mother_20260701_144904_8115_02.png",
+            "variant_index": 2
+        },
+        {
+            "file_name": "world_mother_20260701_144904_8115_03.png",
+            "relative_path": "storage/world_mothers/modernismo_catalan_espa_referencia/world_mother_20260701_144904_8115_03.png",
+            "absolute_path": "C:\\laragon\\www\\mockups\\storage\\world_mothers\\modernismo_catalan_espa_referencia\\world_mother_20260701_144904_8115_03.png",
+            "variant_index": 3
+        },
+        {
+            "file_name": "world_mother_20260701_144904_8115_04.png",
+            "relative_path": "storage/world_mothers/modernismo_catalan_espa_referencia/world_mother_20260701_144904_8115_04.png",
+            "absolute_path": "C:\\laragon\\www\\mockups\\storage\\world_mothers\\modernismo_catalan_espa_referencia\\world_mother_20260701_144904_8115_04.png",
+            "variant_index": 4
+        }
+    ],
+    "analysis": {
+        "scene_type": "Grand architectural interior hall or salon",
+        "architecture_language": "Modernismo Catalán, characterized by organic, curvilinear, and fluid forms with a strong biomorphic influence. Absence of straight lines, flowing walls and ceilings, structural elements integrated seamlessly into the design. References to Antoni Gaudí's work (Casa Batlló, La Pedrera) are highly apparent, with a focus on natural shapes, light, and texture.",
+        "wall_language": "Undulating, sculpted plaster surfaces in a light, neutral tone (off-white/cream). Walls curve inward and outward, often blending into structural columns or ceiling forms. A distinctive wavy wooden dado/baseboard follows the organic flow of the walls.",
+        "floor_language": "Polished hardwood parquet flooring, laid in a geometric (e.g., basket weave or herringbone) pattern. Features warm, rich reddish-brown and golden-brown tones, with significant light reflection.",
+        "ceiling_language": "Highly distinctive and dynamic, featuring a deeply sculpted plaster surface with a prominent spiraling or swirling pattern, emanating from the central light fixture. The texture is consistent with the walls, creating a continuous, cave-like, or fluid impression.",
+        "lighting": "Combination of natural light filtering through a large, multi-paned window with stained glass elements, and artificial light from a central, ornate, metallic (gold/bronze) chandelier. Recessed spotlights are present on one wall for accentuation. The overall lighting is warm and inviting, highlighting the textures and forms.",
+        "materials": [
+            "Sculpted plaster (walls, ceiling, columns)",
+            "Polished wood (floor, doors, window frames, baseboards, built-in shelving)",
+            "Stained glass (window panes)",
+            "Ornate metal (chandelier, door hardware)"
+        ],
+        "palette": [
+            "Warm neutral creams and off-whites (walls, ceiling)",
+            "Rich reddish-brown and golden-brown wood tones (floor, doors, frames)",
+            "Vibrant blues, greens, yellows, and reds from stained glass accents",
+            "Golden/bronze metallic tones (chandelier)"
+        ],
+        "mood": [
+            "Elegant",
+            "organic",
+            "unique",
+            "grand",
+            "artistic",
+            "wondrous",
+            "serene",
+            "luxurious",
+            "and inviting. Evokes a sense of natural beauty and architectural innovation."
+        ],
+        "scale": "Medium to large room with high ceilings, suggesting grandeur and spaciousness. The large windows imply a significant connection to the exterior.",
+        "camera_potential": [
+            "Excellent for wide-angle interior shots capturing the overall architectural flow",
+            "medium shots focusing on specific features like the window or ceiling",
+            "and close-ups of material textures (plaster",
+            "wood grain",
+            "stained glass). Ideal for showcasing architectural design",
+            "real estate",
+            "or high-end product placements."
+        ],
+        "negative_risks": [
+            "Loss of organic fluidity and introduction of straight lines or sharp angles.",
+            "Inaccurate or generic rendering of the unique ceiling spiral/texture.",
+            "Flat or unrealistic lighting that doesn't highlight the forms and textures.",
+            "Stained glass patterns becoming messy, dull, or overly simplistic.",
+            "Wooden elements losing their polished finish or rich color.",
+            "Textural inconsistencies between plaster elements.",
+            "Failure to capture the distinctive 'Modernismo Catalán' character."
+        ],
+        "style_details": [
+            "Modernismo Catalán / Spanish Art Nouveau",
+            "Gaudí-esque biomorphic and organic forms",
+            "Curvilinear lines dominate all surfaces",
+            "Sculpted plasterwork creating unique textures and reliefs",
+            "Integration of structural elements into aesthetic forms",
+            "Ornate, themed central lighting fixture",
+            "Stained-glass windows for colored light diffusion",
+            "High-gloss wooden finishes",
+            "Absence of traditional corners or flat planes"
+        ],
+        "category_keywords": [
+            "Modernismo",
+            "Art Nouveau",
+            "Catalan",
+            "Gaudí",
+            "Organic Architecture",
+            "Biomorphic",
+            "Curvilinear",
+            "Interior",
+            "Salon",
+            "Hall",
+            "Elegant",
+            "Luxurious",
+            "Historic",
+            "Plaster",
+            "Wood",
+            "Stained Glass",
+            "Barcelona",
+            "Unique",
+            "Artistic",
+            "Fluid",
+            "Ornate",
+            "Architectural"
+        ],
+        "elements_to_remove_for_clean_worlds": [
+            "Any small objects or 'clutter' on built-in shelves (as seen in Image 4)",
+            "Specific transient details of the outdoor view (trees, distant buildings, street signs, cars, people) visible through the window; the *presence* of an outdoor view is key, but its *specific contents* are variable and not part of the static 'World Mother'."
+        ],
+        "reference_file": "world_mother_ref_20260701_144627_3843.png",
+        "user_notes": "Modernismo catalan español. Referencia Arquitecto Gaudí, en la padrera, casa batlo, la sagrada familia",
+        "reference_paths": [
+            "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_144627_3843.png",
+            "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_144627_6602.png",
+            "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_144627_5275.png",
+            "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_144627_1290.png"
+        ],
+        "reference_files": [
+            "world_mother_ref_20260701_144627_3843.png",
+            "world_mother_ref_20260701_144627_6602.png",
+            "world_mother_ref_20260701_144627_5275.png",
+            "world_mother_ref_20260701_144627_1290.png"
+        ],
+        "category_candidates": [
+            {
+                "category_slug": "Atelier",
+                "category_name": "Atelier",
+                "image_count": 7,
+                "score": 0,
+                "matched_terms": []
+            },
+            {
+                "category_slug": "en espera",
+                "category_name": "En Espera",
+                "image_count": 122,
+                "score": 0,
+                "matched_terms": []
+            },
+            {
+                "category_slug": "selected",
+                "category_name": "Selected",
+                "image_count": 4,
+                "score": 0,
+                "matched_terms": []
+            }
+        ],
+        "new_category_suggestion": "modernismo_catalan_espa_referencia",
+        "analysis_source": "gemini_multi_reference",
+        "reference_path": "C:\\laragon\\www\\mockups/storage/world_mother_uploads\\world_mother_ref_20260701_144627_3843.png",
+        "created_by_user_id": 1
+    },
+    "base_prompt": "Create one original WORLD MOTHER reference image for future artwork mockups.\nCategory: modernismo_catalan_espa_referencia\nUse the uploaded reference image only as architectural/style guidance. Do not copy it exactly.\nGenerate a clean, realistic, artwork-ready environment with strong wall/floor/lighting geometry, suitable for inserting a separate artwork later.\nDo not include paintings, framed art, posters, logos, readable text, people, animals, or dominant decorative objects. Leave usable wall space.\nScene type: Grand architectural interior hall or salon\nArchitecture: Modernismo Catalán, characterized by organic, curvilinear, and fluid forms with a strong biomorphic influence. Absence of straight lines, flowing walls and ceilings, structural elements integrated seamlessly into the design. References to Antoni Gaudí's work (Casa Batlló, La Pedrera) are highly apparent, with a focus on natural shapes, light, and texture.\nWalls: Undulating, sculpted plaster surfaces in a light, neutral tone (off-white/cream). Walls curve inward and outward, often blending into structural columns or ceiling forms. A distinctive wavy wooden dado/baseboard follows the organic flow of the walls.\nFloor: Polished hardwood parquet flooring, laid in a geometric (e.g., basket weave or herringbone) pattern. Features warm, rich reddish-brown and golden-brown tones, with significant light reflection.\nCeiling: Highly distinctive and dynamic, featuring a deeply sculpted plaster surface with a prominent spiraling or swirling pattern, emanating from the central light fixture. The texture is consistent with the walls, creating a continuous, cave-like, or fluid impression.\nLighting: Combination of natural light filtering through a large, multi-paned window with stained glass elements, and artificial light from a central, ornate, metallic (gold/bronze) chandelier. Recessed spotlights are present on one wall for accentuation. The overall lighting is warm and inviting, highlighting the textures and forms.\nMaterials: Sculpted plaster (walls, ceiling, columns), Polished wood (floor, doors, window frames, baseboards, built-in shelving), Stained glass (window panes), Ornate metal (chandelier, door hardware)\nPalette: Warm neutral creams and off-whites (walls, ceiling), Rich reddish-brown and golden-brown wood tones (floor, doors, frames), Vibrant blues, greens, yellows, and reds from stained glass accents, Golden/bronze metallic tones (chandelier)\nMood: Elegant, organic, unique, grand, artistic, wondrous, serene, luxurious, and inviting. Evokes a sense of natural beauty and architectural innovation.\nCamera potential: Excellent for wide-angle interior shots capturing the overall architectural flow, medium shots focusing on specific features like the window or ceiling, and close-ups of material textures (plaster, wood grain, stained glass). Ideal for showcasing architectural design, real estate, or high-end product placements.\nAvoid: Loss of organic fluidity and introduction of straight lines or sharp angles., Inaccurate or generic rendering of the unique ceiling spiral/texture., Flat or unrealistic lighting that doesn't highlight the forms and textures., Stained glass patterns becoming messy, dull, or overly simplistic., Wooden elements losing their polished finish or rich color., Textural inconsistencies between plaster elements., Failure to capture the distinctive 'Modernismo Catalán' character.\nUser generation notes: \nGenerate a coherent set of world mother references. This output is variant %d of 4.\nKeep the same world identity across all variants, but vary camera position, useful wall/floor geometry, depth, light angle, and object arrangement.\nEach variant must be usable as a future mockup environment reference.",
+    "options": {
+        "notes": "",
+        "count": 4
+    }
+}

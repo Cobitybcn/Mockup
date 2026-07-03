@@ -1,0 +1,33 @@
+```json
+{
+  "suggested_titles": [],
+  "recommended_number_of_contexts": 1,
+  "contextual_proposals": [
+    {
+      "context_name": "Vibrant Pulse in a Disciplined Space",
+      "context_role": "To showcase the artwork's raw energy and rich texture within a sophisticated, thoughtfully curated mid-century design environment, emphasizing its collectible value and design compatibility.",
+      "space_type": "Refined mid-century collector's loft with architectural concrete elements.",
+      "atmosphere": "Cultivated, disciplined, warm yet architectural, autumnal daylight filtering into a space designed for art appreciation and refined living.",
+      "materials": [
+        "Warm neutral plaster walls (subtly textured, hinting at underlying concrete structure)",
+        "Dark walnut wood paneling on a receding accent wall, creating a visual warmth and depth",
+        "Refined exposed concrete structural columns and architectural recesses, providing a clean, disciplined framework",
+        "Polished concrete floor with a subtle, matte finish",
+        "Low-pile wool rug in an abstract pattern with muted burgundy and earthy brown tones, defining a seating area",
+        "Sculptural mid-century armchair (e.g., by Florence Knoll or Paulin) upholstered in deep charcoal fabric",
+        "Elegant rosewood side table with minimalist lines",
+        "Bronze-finished floor lamp with an adjustable shade"
+      ],
+      "lighting": "Controlled warm daylight from an unseen large window, creating soft, diffused illumination. A discreet, adjustable ceiling-mounted spotlight provides focused illumination on the artwork, enhancing its impasto texture and vibrant colors. The overall spatial mood carries a subtle, warm burgundy-like undertone from reflected light and material choices.",
+      "camera_view": "Borgoña Recovecos / Cámara 3/4 en Loft de Hormigón: Camera height is human but tucked into an architectural recess, approximately 120-160 cm depending on the loft edge. Use a 3/4 view from a recess, corner, or architectural edge, with a burgundy-toned spatial mood and one clean vanishing direction. The artwork is partially contextualized by loft recesses and concrete architecture, creating depth and intimacy without hiding the piece; allow strong off-center framing through recesses, corners, side planes, or architectural edges.",
+      "camera_distance": "Controlled architectural distance. The artwork is prominent and dominant within the frame, but the surrounding architectural depth, refined mid-century furniture, and textured materials are clearly visible and contribute to the composition's narrative.",
+      "camera_angle_notes": "The artistic 3/4 oblique view, positioned within an architectural recess, emphasizes the depth of the collector's loft and the physical presence of the artwork. This angle subtly reveals the canvas's thickness and texture, grounding it as a real, installed object. The off-center framing, guided by the camera's specific directive, creates a dynamic composition that integrates the artwork seamlessly into the sophisticated, disciplined environment, highlighting its role as a prized collection piece.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's raw, energetic impasto and vibrant color palette of turquoise, orange, and dark earthy tones find a powerful and compelling counterpoint within the clean lines and refined discipline of this mid-century collector's loft. The warm neutral plaster and dark walnut wood provide a sophisticated backdrop that allows the artwork's colors to intensely resonate, while the structural concrete elements, used with architectural precision, underscore the artwork's bold, almost brutalist, materiality. This context frames the artwork as a significant piece worthy of a discerning collection.",
+      "commercial_reason": "This context elevates the artwork by positioning it within a highly desirable and collectible interior aesthetic, appealing to buyers who appreciate both significant art and design. It effectively demonstrates how the artwork can be a powerful focal point in a sophisticated, curated home, enhancing its market value and desirability. The integration of modern mid-century design with subtle architectural concrete elements appeals to a contemporary premium market seeking unique, impactful pieces that complement a discerning, design-forward lifestyle.",
+      "mockup_prompt": "A large, square abstract painting with thick impasto texture, featuring a vibrant turquoise and fiery orange/red spiral against a dark, earthy brown and gold background, set in a light wood frame. The artwork is hung on a warm neutral plastered wall, slightly off-center. The scene is a refined mid-century collector's loft with architectural concrete elements. Include a receding dark walnut wood panel accent wall to one side. The room features exposed refined concrete structural columns and architectural recesses creating depth and clean vanishing lines. The floor is polished concrete. A low-pile wool rug with a muted abstract pattern in burgundy and earthy brown tones partially covers the floor. A sculptural mid-century armchair, upholstered in deep charcoal fabric, is positioned in the foreground/midground, keeping its visual weight lower than the artwork. An elegant rosewood side table with minimalist lines sits nearby. Controlled warm daylight filters into the space from an unseen window, creating soft, diffused shadows, and a discreet, adjustable ceiling-mounted spotlight provides focused illumination on the artwork. The overall spatial mood is warm with a subtle burgundy undertone. No visible people, no animals, no human figures, no pets.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no rustic Tuscan villa, no Mediterranean retreat, no generic beige room, no furniture showroom, no chair closeup, no furniture ad, no unrelated gallery, no artwork substitution"
+    }
+  ]
+}
+```

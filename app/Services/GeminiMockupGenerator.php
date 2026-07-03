@@ -29,31 +29,121 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
         $t0 = microtime(true);
         Logger::log("Iniciando generacion de mockup Gemini. Contexto: {$contextId}, Obra: " . basename($imagePath), 'gemini');
 
+        $slotFullPromptMode = !empty($metadata['slot_full_prompt_mode']);
         $finalPrompt = $this->finalPrompt($contextId, $prompt, $metadata);
+        $cameraSlotId = $this->cameraSlotId($finalPrompt, $metadata);
+        $usesGraphicPerspectiveSlot = $this->usesGraphicPerspectiveSlot($cameraSlotId);
+        $usesGraphicPerspectiveGeminiDirect = $usesGraphicPerspectiveSlot && $this->graphicPerspectiveMode($cameraSlotId) === 'gemini_direct';
         $roleContract = "IMAGE ROLE CONTRACT:\n"
-            . "- IMAGE 1 is the ROOT ARTWORK. It is the only source for the artwork content, colors, marks, composition, texture and proportions.\n"
-            . "- IMAGE 2, when present, is the WORLD MOTHER. Use it only for environment identity, materials, light and atmosphere.\n"
+            . "- AUTHORITY 1 - ROOT ARTWORK: IMAGE 1 is the product authority. Preserve its exact artwork content, colors, marks, composition, texture, proportions, format, and visual identity.\n"
+            . "- The final mockup must contain the same recognizable artwork from IMAGE 1, not a similar painting, not a newly painted abstract surface, not a style transfer, not a botanical/gestural reinterpretation, and not artwork invented from the room or world mother.\n"
+            . "- Treat IMAGE 1 as visual evidence, not as a text prompt. Do not reconstruct the artwork from descriptive memory. Copy the visible arrangement: exact color-field placement, empty areas, mark count, mark location, mark scale, edge relationships, texture density, and surface rhythm.\n"
+            . "- For uploaded root artwork, any mismatch in composition, texture density, mark placement, color balance, orientation, or physical scale is a failed mockup. If fidelity conflicts with a dramatic room or camera idea, simplify the room/camera and keep the artwork exact.\n"
+            . "- If IMAGE 1 is abstract, minimal, sparse, or contains simple marks, preserve that exact sparse composition. Do not fill empty areas with extra brushstrokes, leaves, decorative marks, figures, patterns, symbols, or painterly noise.\n"
+            . "- AUTHORITY 2 - CAMERA SLOT: the selected camera slot is the photographic authority for the final image. It controls viewpoint, lens behavior, camera height, distance, crop, angle, perspective, and composition.\n"
+            . "- AUTHORITY 3 - WORLD MOTHER: IMAGE 2, when present, is not the environment to reproduce and not a camera reference. It is visual evidence for building a new compatible environment in the same material, lighting, palette, architectural mood, and atmospheric family.\n"
+            . "- Transform the world mother visual language through the selected camera slot. You may move, replace, or reinvent windows, walls, furniture, objects, depth, and room geometry whenever needed to obey the camera slot and serve IMAGE 1.\n"
+            . "- Do not copy IMAGE 2's camera angle, crop, object positions, wall choice, window placement, room geometry, furniture placement, source-photo composition, or room layout.\n"
+            . "- Keep IMAGE 2 out of the artwork identity. The environment may provide atmosphere only; it must never donate new brushwork, canvas texture, colors, symbols, objects, or composition to the ROOT ARTWORK.\n"
             . "- Never replace the ROOT ARTWORK with a blank wall, empty canvas, decorative panel or object from the WORLD MOTHER.\n"
+            . "- All written dimensions and measurements are hidden instructions only. Never render visible text, captions, labels, measurement callouts, arrows, rulers, scale bars, unit labels, or numeric size annotations in the generated image.\n"
             . "- If the camera or environment conflicts with the artwork, preserve IMAGE 1 and adapt the environment around it.";
-        $submittedPrompt = $roleContract . "\n\n" . $finalPrompt;
-        $parts = [
-            $this->client->textPart($submittedPrompt),
-            $this->client->textPart("IMAGE 1 - ROOT ARTWORK: exact artwork to preserve inside the mockup."),
-            $this->client->imagePart($imagePath),
-        ];
+        $submittedPrompt = ($slotFullPromptMode || $usesGraphicPerspectiveGeminiDirect) ? $finalPrompt : $roleContract . "\n\n" . $finalPrompt;
+        $parts = [$this->client->textPart($submittedPrompt)];
+        if ($usesGraphicPerspectiveGeminiDirect) {
+            $platePath = $this->graphicPerspectivePlatePath($cameraSlotId);
+            if ($platePath === '' || !is_file($platePath)) {
+                throw new RuntimeException('No se encontro la placa grafica de perspectiva para el slot: ' . $cameraSlotId);
+            }
+            $parts[] = $this->client->textPart("IMAGE 1 - PERSPECTIVE MASK: green area is the exact artwork plane; black area is ignored.");
+            $parts[] = $this->client->imagePart($platePath);
+            $parts[] = $this->client->textPart("IMAGE 2 - ROOT ARTWORK: place this artwork into the green plane.");
+            $parts[] = $this->client->imagePart($imagePath);
+        } elseif ($usesGraphicPerspectiveSlot) {
+            $platePath = $this->graphicPerspectivePlatePath($cameraSlotId);
+            if ($platePath === '' || !is_file($platePath)) {
+                throw new RuntimeException('No se encontro la placa grafica de perspectiva para el slot: ' . $cameraSlotId);
+            }
+            $parts[] = $this->client->imagePart($imagePath);
+        } else {
+            $parts[] = $this->client->imagePart($imagePath);
+        }
+        if (!$slotFullPromptMode && !$usesGraphicPerspectiveSlot) {
+            array_splice($parts, 1, 0, [
+                $this->client->textPart("IMAGE 1 - ROOT ARTWORK: exact artwork to preserve inside the mockup."),
+            ]);
+        }
         $rootReferencePath = (string)($metadata['root_reference_path'] ?? '');
-        if ($rootReferencePath !== '' && is_file($rootReferencePath) && realpath($rootReferencePath) !== realpath($imagePath)) {
-            $parts[] = $this->client->textPart("ADDITIONAL ROOT ARTWORK REFERENCE: same artwork identity, still authoritative for the artwork only.");
+        if (!$usesGraphicPerspectiveSlot && $rootReferencePath !== '' && is_file($rootReferencePath) && realpath($rootReferencePath) !== realpath($imagePath)) {
+            if (!$slotFullPromptMode) {
+                $parts[] = $this->client->textPart("ADDITIONAL ROOT ARTWORK REFERENCE: same artwork identity, still authoritative for the artwork only.");
+            }
             $parts[] = $this->client->imagePart($rootReferencePath);
         }
         $worldMotherReferencePath = (string)($metadata['world_mother_reference_path'] ?? '');
         if ($worldMotherReferencePath !== '' && is_file($worldMotherReferencePath)) {
-            $parts[] = $this->client->textPart("IMAGE 2 - WORLD MOTHER: environment reference only. Do not use this image as the artwork content.");
+            if ($usesGraphicPerspectiveGeminiDirect) {
+                $parts[] = $this->client->textPart("IMAGE 3 - STYLE REFERENCE: atmosphere, materials, lighting, and color temperature only.");
+            } elseif ($usesGraphicPerspectiveSlot) {
+                $parts[] = $this->client->textPart("WORLD MOTHER: environment mood reference only.");
+            } elseif (!$slotFullPromptMode) {
+                $parts[] = $this->client->textPart("IMAGE 2 - WORLD MOTHER: visual evidence for material, light, palette, architectural mood, and atmosphere only. Build a new environment through the selected camera slot. Do not copy this image's layout, camera angle, crop, room geometry, wall choice, window placement, object positions, or furniture placement. Do not use this image as the artwork content.");
+            }
             $parts[] = $this->client->imagePart($worldMotherReferencePath);
         }
 
         try {
-            $b64 = $this->client->generateImage($parts);
+            // Forces MOCKUP_USE_PRECOMPOSITION=false for this specific call regardless of
+            // the global config, for callers that send a single reference image (where the
+            // precomposition/fill_ratio block in vertex_bridge.py would otherwise be reachable
+            // if that global flag were ever re-enabled — see docs/AUDITORIA_PROMPTS_MOCKUPS_20260701.md,
+            // Fase 5). Today MOCKUP_USE_PRECOMPOSITION is already false everywhere, so this is a
+            // no-op in practice; it removes the dependency on that flag staying off by accident.
+            $usesInpaintingCamera = $this->usesInpaintingCamera($cameraSlotId);
+            $envOverrides = [];
+            $modelOverride = null;
+
+            if ($usesInpaintingCamera) {
+                $envOverrides = [
+                    'MOCKUP_PROMPT_FIRST_MODE' => 'false',
+                    'MOCKUP_USE_PRECOMPOSITION' => 'true',
+                    'MOCKUP_USE_BACKGROUND_EDIT' => 'false',
+                    'MOCKUP_PROMPT_FIRST_NO_MASK_MODE' => 'false',
+                    // Camera 15 nadir precomposition uses orientation-specific inpainting
+                    // plates for portrait, square, and landscape artwork.
+                    'MOCKUP_USE_NADIR_POLYGON' => 'true',
+                ];
+                $cam15Scale = app_env('MOCKUP_SCALE_CAMARA_15', '');
+                if ($cam15Scale !== '') {
+                    $envOverrides['MOCKUP_SCALE_CAMARA_15'] = $cam15Scale;
+                }
+                $worldMotherScale = trim((string)($metadata['world_mother_scale'] ?? ''));
+                if ($worldMotherScale !== '') {
+                    $envOverrides['MOCKUP_WORLD_MOTHER_SCALE'] = $worldMotherScale;
+                }
+                $modelOverride = (string)($metadata['image_model'] ?? 'imagen-3.0-capability-001');
+            } elseif ($usesGraphicPerspectiveGeminiDirect) {
+                $envOverrides = [
+                    'MOCKUP_USE_PRECOMPOSITION' => 'false',
+                    'MOCKUP_USE_BACKGROUND_EDIT' => 'false',
+                    'MOCKUP_PROMPT_FIRST_NO_MASK_MODE' => 'false',
+                ];
+                $modelOverride = $this->graphicPerspectiveImageModel($cameraSlotId);
+            } elseif ($usesGraphicPerspectiveSlot) {
+                $envOverrides = [
+                    'MOCKUP_PROMPT_FIRST_MODE' => 'false',
+                    'MOCKUP_USE_PRECOMPOSITION' => 'true',
+                    'MOCKUP_USE_BACKGROUND_EDIT' => 'false',
+                    'MOCKUP_PROMPT_FIRST_NO_MASK_MODE' => 'false',
+                    'MOCKUP_GRAPHIC_PERSPECTIVE_PLATE' => $this->graphicPerspectivePlatePath($cameraSlotId),
+                    'MOCKUP_MASK_DILATION' => '0',
+                ];
+                $modelOverride = $this->graphicPerspectiveImageModel($cameraSlotId);
+            } elseif (!empty($metadata['force_disable_precomposition'])) {
+                $envOverrides = ['MOCKUP_USE_PRECOMPOSITION' => 'false'];
+            }
+
+            $b64 = $this->client->generateImage($parts, $modelOverride, $envOverrides);
             $imageData = base64_decode($b64);
 
             if ($imageData === false) {
@@ -98,6 +188,12 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
 
     private function finalPrompt(string $contextId, string $contextPrompt, array $metadata = []): string
     {
+        if (!empty($metadata['slot_full_prompt_mode'])) {
+            return $contextPrompt;
+        }
+        if (!empty($metadata['skip_world_visual_enhancer'])) {
+            return (string)($metadata['prompt_passthrough_mode'] ?? $contextPrompt);
+        }
         if (isset($metadata['prompt_passthrough_mode']) && is_string($metadata['prompt_passthrough_mode'])) {
             return (new MockupWorldVisualPromptEnhancer())->enhancePromptForContextId(
                 $metadata['prompt_passthrough_mode'],
@@ -110,5 +206,95 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
         }
 
         return (new MockupWorldVisualPromptEnhancer())->enhancePromptForContextId($contextPrompt, $contextId);
+    }
+
+    private function cameraSlotId(string $prompt, array $metadata): string
+    {
+        $combination = $metadata['mockup_combination'] ?? [];
+        if (is_array($combination)) {
+            $slotId = trim((string)($combination['selected_camera_slot_id'] ?? ''));
+            if ($slotId !== '') {
+                return $slotId;
+            }
+        }
+
+        $seoParams = $metadata['seo_params'] ?? [];
+        if (is_array($seoParams)) {
+            $slotId = trim((string)($seoParams['cameraAngle'] ?? ''));
+            if ($slotId !== '') {
+                return $slotId;
+            }
+        }
+
+        if (preg_match('/Camera Slot ID:\s*([a-z0-9_\\-]+)/i', $prompt, $matches)) {
+            return strtolower(trim((string)$matches[1]));
+        }
+
+        return '';
+    }
+
+    private function usesInpaintingCamera(string $cameraSlotId): bool
+    {
+        if ($cameraSlotId === 'camara_15_contrapicado_inpainting') {
+            return true;
+        }
+        $slot = $this->cameraSlotConfig($cameraSlotId);
+        return ($slot['generation_strategy'] ?? '') === 'inpainting_precomposition';
+    }
+
+    private function usesGraphicPerspectiveSlot(string $cameraSlotId): bool
+    {
+        $slot = $this->cameraSlotConfig($cameraSlotId);
+        return trim((string)($slot['graphic_perspective_plate_path'] ?? '')) !== '';
+    }
+
+    private function graphicPerspectivePlatePath(string $cameraSlotId): string
+    {
+        $slot = $this->cameraSlotConfig($cameraSlotId);
+        $path = trim((string)($slot['graphic_perspective_plate_path'] ?? ''));
+        if ($path === '') {
+            return '';
+        }
+        if (is_file($path)) {
+            return $path;
+        }
+        return dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
+    }
+
+    private function graphicPerspectiveImageModel(string $cameraSlotId): string
+    {
+        $slot = $this->cameraSlotConfig($cameraSlotId);
+        $model = trim((string)($slot['force_image_model'] ?? ''));
+        return $model !== '' ? $model : 'gemini-3.1-flash-image';
+    }
+
+    private function graphicPerspectiveMode(string $cameraSlotId): string
+    {
+        $slot = $this->cameraSlotConfig($cameraSlotId);
+        $mode = strtolower(trim((string)($slot['graphic_perspective_mode'] ?? 'precomposition')));
+        return $mode !== '' ? $mode : 'precomposition';
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function cameraSlotConfig(string $cameraSlotId): array
+    {
+        $cameraSlotId = trim($cameraSlotId);
+        if ($cameraSlotId === '') {
+            return [];
+        }
+
+        $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'Config' . DIRECTORY_SEPARATOR . 'mockup_camera_slots.php';
+        $config = is_file($path) ? require $path : [];
+        $slot = $config['slots'][$cameraSlotId] ?? [];
+        if (!is_array($slot) || $slot === []) {
+            foreach (($config['slots'] ?? []) as $id => $candidate) {
+                if (strtolower((string)$id) === strtolower($cameraSlotId) && is_array($candidate)) {
+                    return $candidate;
+                }
+            }
+        }
+        return is_array($slot) ? $slot : [];
     }
 }

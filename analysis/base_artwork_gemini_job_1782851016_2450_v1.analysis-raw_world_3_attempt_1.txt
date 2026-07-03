@@ -1,0 +1,28 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Palazzo Balcony Vista",
+      "context_role": "Presents the contemporary artwork as a focal point within a grand, historically rich, yet subtly lit architectural setting, emphasizing its timeless appeal and ability to converse with diverse aesthetics.",
+      "space_type": "A grand hall or salon within an old European palazzo, viewed from a high vantage point like an interior balcony or upper architectural void.",
+      "atmosphere": "Refined, expansive, and subtly dramatic. The warm, golden late-day light filters through high windows, illuminating architectural details and casting soft shadows. It's an atmosphere of quiet grandeur where modern art finds a distinguished home.",
+      "materials": [
+        "Aged limewash walls in warm, muted cream",
+        "Grand herringbone dark timber parquet floor",
+        "Restrained classical mouldings and cornices",
+        "High arched windows",
+        "Low, dark wood console table or stone bench"
+      ],
+      "lighting": "Golden late-day sunlight streaming diagonally from high arched windows, creating strong chiaroscuro effects and highlighting the artwork against a subtly lit background. The light is warm, directional, and emphasizes texture and depth.",
+      "camera_view": "Nadir Aéreo con Contexto de Ventanas: Camera is positioned very high, near ceiling height, upper balcony height, skylight height, or the top edge of a tall architectural void. It is the aerial counterpart of an extreme nadir: instead of looking upward from the floor, the camera looks downward from above into the room. Use an oblique high-corner or upper-balcony diagonal, not a centered frontal wall view. The camera may look diagonally down along the room so window context, floor geometry, and artwork wall are visible together. Build the image from above: visible floor plane, furniture or bench tops, rug or floor layout, wall height, window/skylight context, and the artwork installed on a vertical wall. The artwork remains identifiable, but the room must read as seen from above, not as a normal wall presentation.",
+      "camera_distance": "Controlled architectural distance, allowing the viewer to appreciate both the artwork and the grandeur of the space from above, with the artwork remaining a clear focal point.",
+      "camera_angle_notes": "The high, oblique angle reveals the grand scale of the palazzo room, the rich floor patterns, and the elegant interaction between historic architecture and the contemporary artwork. The artwork is positioned on a vertical wall, distinct against the aged plaster, and its vibrant colors are enhanced under the golden light, yet it is integrated into the larger spatial narrative of the high-angle view, with the floor plane strongly leading the eye towards it.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's vibrant, graphic abstraction and symbolic ladders create a compelling contrast with the quiet dignity and aged textures of a European palazzo, highlighting its contemporary relevance within a timeless setting. The architectural 'layers' and verticality of the palazzo, viewed from an elevated perspective, resonate with the artwork's own composition of stacked blocks and ladders. The warm late light enhances the richness of the artwork's colors, making it pop against the muted historical backdrop.",
+      "commercial_reason": "This context elevates the artwork by associating it with enduring elegance and refined taste, appealing to a discerning buyer who appreciates the thoughtful juxtaposition of modern art within historical grandeur. It suggests the artwork's versatility and lasting value. The unique aerial perspective offers an aspirational and memorable presentation, enhancing its premium market appeal.",
+      "mockup_prompt": "Highly elevated aerial view from an upper balcony or high architectural void, looking diagonally downwards into a grand European palazzo interior. The camera takes an oblique high-corner diagonal, revealing a vast herringbone dark timber parquet floor, leading towards a tall wall. On this wall, a large, vibrant abstract artwork, rich in orange, deep blue, emerald green, and red block shapes with black ladder motifs, is centrally installed. The wall is aged limewash in a muted cream hue, with restrained classical mouldings visible. High arched windows on an adjacent wall allow golden late-day sunlight to stream in, creating dramatic directional light and long shadows across the parquet floor, and illuminating the artwork with a warm glow. A low, dark wood console or stone bench is placed against the wall beneath the artwork, partially visible from the high angle, adding to the sense of scale. The scene is refined, expansive, with quiet architectural gravity, making the artwork a compelling focal point within the historical grandeur. Artwork must remain precisely as provided, with original colors and details, framed within a physical canvas structure. No visible people or animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no museum spectacle, no period drama, no costumes, no royal event, no costume drama, no crowd, no pet, no generic neutral interior, no rustic Tuscan room, no generic lounge, no showroom, no unrelated gallery"
+    }
+  ]
+}
+```

@@ -1,0 +1,47 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Urban Ascent",
+      "subtitle": "A geometric journey through color and form",
+      "description": "This abstract piece combines bold, contrasting colors with architectural elements and symbolic ladders, suggesting a vibrant journey or structured landscape."
+    },
+    {
+      "title": "Laddered Horizon",
+      "subtitle": "Where vibrant abstraction meets upward aspirations",
+      "description": "Dynamic blocks of color are intersected by delicate ladders, creating a powerful visual tension between grounded forms and the potential for ascent."
+    },
+    {
+      "title": "Constructed Dreams",
+      "subtitle": "A playful interplay of industrial geometry and vivid hues",
+      "description": "Rich blues, oranges, and greens build a fantastical, block-like world where tiny ladders invite contemplation of progress and imagination."
+    }
+  ],
+  "recommended_number_of_contexts": 6,
+  "contextual_proposals": [
+    {
+      "context_name": "Golden Hour Gallery Retreat",
+      "context_role": "Showcase the artwork as a focal point in a refined, aspirational domestic setting, emphasizing its visual dialogue with natural light and premium materials, aligning with current 'quiet luxury' trends.",
+      "space_type": "Elegant Living Alcove",
+      "atmosphere": "Serene, sophisticated, bathed in soft, warm afternoon light. Architectural elegance with a contemporary, lived-in feel, exuding restrained luxury.",
+      "materials": [
+        "Limewash walls in a warm neutral",
+        "Wide-plank pale oak flooring",
+        "Tailored ecru linen sofa",
+        "Matte black metal side table",
+        "Travertine tabletop",
+        "Refined plaster ceiling"
+      ],
+      "lighting": "Soft, directional golden afternoon light streaming from an implied large window, creating gentle highlights and elongated shadows across the room and artwork.",
+      "camera_view": "Reflejo Dorado de Tarde / Palazzo: Camera height is elegant human standing height, approximately 150-170 cm, as if observed calmly from inside a palazzo room. Use a soft three-quarter rotation that catches reflected late light while keeping the artwork plane legible. The composition is stable, warm, and architectural, with golden afternoon reflection supporting the room rather than repainting the artwork; keep elegant balance but avoid perfect symmetry unless the room itself naturally demands it.",
+      "camera_distance": "Medium-close, ensuring the artwork is dominant while providing sufficient context of the elegant room.",
+      "camera_angle_notes": "The subtle three-quarter rotation reveals the physical thickness of the canvas and adds depth to the room, preventing a flat presentation. The elegant standing height maintains a sophisticated and inviting perspective, emphasizing the artwork's presence within a curated, architectural space. The golden light enhances the warmth of the artwork's orange/red tones and the room's serene atmosphere, while the architectural recession provides strong lateral depth.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's vibrant yet balanced palette of deep navy, lively orange, teal, and red resonates beautifully with the quiet luxury aesthetic's emphasis on quality materials and thoughtful color accents. The abstract architectural forms within the painting find an echo in the clean lines and refined structure of the domestic space, creating a harmonious visual dialogue. The ladders, symbolizing ascent or connection, feel at home in an aspirational, curated environment, suggesting personal growth and discovery.",
+      "commercial_reason": "This context elevates the artwork by presenting it in an aspirational, high-end domestic setting that is both warm and minimalist. The 'Quiet Luxury' aesthetic is highly desirable in current markets (Europe, North America), demonstrating how the artwork can seamlessly integrate into and enhance a sophisticated lifestyle. The golden afternoon light imbues the scene with an inviting, premium warmth, appealing to buyers seeking both artistic merit and refined home integration.",
+      "mockup_prompt": "An aspirational quiet luxury living space, seen from an elegant human standing height (150-170 cm) with a soft three-quarter rotation, catching reflected golden afternoon light. The artwork, with its vibrant orange, deep navy, teal, and red abstract forms and ladders, is mounted on a clean, textured limewash wall in a warm neutral tone. The wall recedes gently into the background, creating architectural depth. In the foreground, a corner of a tailored ecru linen sofa is subtly visible, and a minimalist matte black metal side table with a cream travertine top provides a midground element. The floor is wide-plank pale oak. Soft, directional golden light from an implied large window creates gentle highlights and shadows, enhancing the room's serene and sophisticated atmosphere. The artwork's physical thickness and texture are subtly emphasized by the light and angle. No visible people, no animals, no distortion of the artwork. Preserve the artwork's exact colors, composition, and proportions. Artwork remains the central focus.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no extreme wide angle, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default, no influencer lifestyle, no decor ad, no pets, no crowd, no generic neutral interior, no Mediterranean villa, no showroom, no hotel catalog, no real estate ad"
+    }
+  ]
+}
+```

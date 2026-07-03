@@ -1,0 +1,29 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Palazzo Vista Aerea",
+      "context_role": "Showcases the artwork's contemporary impact within a historically rich, grand setting, emphasizing its architectural integration and collector appeal from an unconventional, elevated perspective.",
+      "space_type": "Grand hall or salon within an old European palazzo or stately townhouse.",
+      "atmosphere": "Serene, dignified, and architecturally imposing, imbued with the soft, golden glow of late afternoon light, highlighting refined historical details and offering a sense of quiet grandeur.",
+      "materials": [
+        "Aged limewash walls in muted cream",
+        "original herringbone parquet flooring",
+        "discreet marble console table",
+        "classical archway",
+        "tall windows with subtle leaded panes",
+        "dark bronze wall sconces"
+      ],
+      "lighting": "Soft, golden late-day light streaming through tall, arched windows, creating gentle shadows on the textured walls and floor, with subtle ambient warmth throughout the room.",
+      "camera_view": "Nadir Aéreo con Contexto de Ventanas: Camera is positioned very high, near ceiling height, upper balcony height, skylight height, or the top edge of a tall architectural void. It is the aerial counterpart of an extreme nadir: instead of looking upward from the floor, the camera looks downward from above into the room. Use an oblique high-corner or upper-balcony diagonal, not a centered frontal wall view. The camera may look diagonally down along the room so window context, floor geometry, and artwork wall are visible together. Build the image from above: visible floor plane, furniture or bench tops, rug or floor layout, wall height, window/skylight context, and the artwork installed on a vertical wall. The artwork remains identifiable, but the room must read as seen from above, not as a normal wall presentation.",
+      "camera_distance": "Controlled architectural distance.",
+      "camera_angle_notes": "The high, oblique perspective emphasizes the impressive scale and architectural details of the palazzo, framing the artwork as an integral part of a sophisticated collection. The downward angle reveals the rich floor textures and the grand volume of the room, positioning the artwork as a central focus from an unusual, artistic viewpoint, while ensuring its physical presence and thickness are clear against the wall.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's deep, rich colors and vibrant accents gain depth and gravitas against the aged, warm historical palette of a palazzo. The interplay between abstract modern art and classical European architecture creates a compelling visual dialogue, showcasing the artwork's versatility and timeless appeal.",
+      "commercial_reason": "This setting elevates the artwork's perceived value and sophistication, appealing to collectors who appreciate integrating contemporary pieces into historically significant environments. The unique camera angle provides a fresh, premium perspective, making the product stand out in a competitive market.",
+      "mockup_prompt": "A grand hall in an old European palazzo, viewed from a very high oblique aerial perspective, looking diagonally down from a high corner or upper balcony. The artwork, a deep red and burgundy abstract painting with vibrant red and electric blue geometric forms, is wall-mounted on an aged limewash wall in a muted cream tone. The high vantage point reveals extensive herringbone parquet flooring, a subtle marble console table positioned near the far wall, and tall arched windows with subtle leaded panes on the right, allowing soft, golden late-day light to stream in, creating gentle shadows. The room features restrained classical mouldings and a high ceiling. The artwork remains identifiable and physically real, its canvas thickness visible. The overall atmosphere is dignified and serene, reflecting historical refinement. No people, no animals, no posters.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default, no museum spectacle, no period drama, no costumes, no pets, no crowds, no royal event, no costume drama, no child, no generic neutral interior, no rustic room, no showroom, no unrelated gallery"
+    }
+  ]
+}
+```

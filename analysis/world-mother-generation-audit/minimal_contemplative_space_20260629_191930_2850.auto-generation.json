@@ -1,0 +1,70 @@
+{
+    "schema": "world_mother_auto_generation_audit.v1",
+    "generated_at": "2026-06-29T19:20:15+00:00",
+    "mode": "gemini",
+    "category_slug": "minimal_contemplative_space",
+    "reference_path": null,
+    "output_path": "C:\\laragon\\www\\mockups\\storage\\world_mothers\\minimal_contemplative_space\\world_mother_auto_20260629_191930_2850.png",
+    "relative_path": "storage/world_mothers/minimal_contemplative_space/world_mother_auto_20260629_191930_2850.png",
+    "analysis": {
+        "scene_type": "Atelier Corridor Reverie",
+        "architecture_language": "Clean Artist's Studio Hallway / Gallery Corridor",
+        "wall_language": "painted studio wall, plaster, pin marks allowed but subtle",
+        "floor_language": "wood, concrete, or painted studio floor",
+        "ceiling_language": "studio ceiling with soft practical light",
+        "lighting": "Soft, diffused north light entering from a side window, creating gentle, elongated shadows and highlighting wall textures. Overall soft studio daylight, avoiding harsh contrasts; north_light_or_soft_studio_daylight",
+        "materials": [
+            "Light greige painted plaster wall with subtle texture",
+            "Polished light concrete floor",
+            "Subtle exposed ceiling beams or light tracks",
+            "Minimalist dark wood or metal studio furniture (e.g., a stool or rolling cart) in the background",
+            "Large, narrow window with simple framing",
+            "working studio architecture, clean enough for premium presentation",
+            "painted studio wall, plaster, pin marks allowed but subtle",
+            "wood, concrete, or painted studio floor",
+            "studio ceiling with soft practical light",
+            "neutral_to_warm_material",
+            "material_authenticity_with_artwork_primary"
+        ],
+        "palette": [
+            "neutral",
+            "premium",
+            "artwork-first"
+        ],
+        "mood": [
+            "Quiet, refined, contemplative studio environment with natural light and a sense of depth. Neutral-to-warm material palette; Atelier Clean Wall: quiet working studio with premium restraint and material authenticity Placement mode: wall_hanging. Use subtle studio traces only. Keep process cues secondary. Preserve a clean artwork-first wall.",
+            "This context places the abstract artwork in a setting that implies its origin and craftsmanship. The 'atelier clean wall' variant within an artist's studio environment, coupled with the 'corridor' camera, creates a sophisticated dialogue between the artwork's layered composition and the architectural depth, enhancing its artistic integrity and physical presence. It suggests a space where contemplation and creation coexist."
+        ],
+        "scale": "suitable for believable artwork mockups",
+        "camera_potential": [
+            "controlled oblique low-angle / contrapicado, low camera looking upward through the room, artistic but believable scale",
+            "A controlled low-angle oblique room camera: the artwork plane, wall plane, floor lines, furniture perspective, and architectural vanishing direction must share one coherent upward contrapicado perspective."
+        ],
+        "negative_risks": [
+            "no existing artwork",
+            "no framed art",
+            "no readable text",
+            "no logos",
+            "no people",
+            "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no messy clutter, no wet paint chaos, no artwork substitution, no messy workshop, no paint chaos, no pet, no animal, no crowd; no messy workshop; no paint chaos; no pet; no animal; no crowd; no messy clutter; no pets; no wet paint chaos; no artwork substitution; artwork_must_remain_primary; no studio_objects_secondary; no_messy_clutter; no_pets; no_artwork_substitution; artwork remains the primary visual subject; context supports the artwork, never replaces it; no scale distortion; no decorative dominance"
+        ],
+        "style_details": {
+            "source": "auto-generated from category because the world mother folder had no usable image",
+            "context_description": "Clean Artist's Studio Hallway / Gallery Corridor | Quiet, refined, contemplative studio environment with natural light and a sense of depth. Neutral-to-warm material palette; Atelier Clean Wall: quiet working studio with premium restraint and material authenticity Placement mode: wall_hanging. Use subtle studio traces only. Keep process cues secondary. Preserve a clean artwork-first wall. | Light greige painted plaster wall with subtle texture, Polished light concrete floor, Subtle exposed ceiling beams or light tracks, Minimalist dark wood or metal studio furniture (e.g., a stool or rolling cart) in the background, Large, narrow window with simple framing, working studio architecture, clean enough for premium presentation, painted studio wall, plaster, pin marks allowed but subtle, wood, concrete, or painted studio floor, studio ceiling with soft practical light, neutral_to_warm_material, material_authenticity_with_artwork_primary | Soft, diffused north light entering from a side window, creating gentle, elongated shadows and highlighting wall textures. Overall soft studio daylight, avoiding harsh contrasts; north_light_or_soft_studio_daylight | hanging; wall_hanging",
+            "artwork_analysis_summary": "A dance of deep blues and earthy ochres, structured by geometric precision and organic flow. An abstract exploration of layered forms and chromatic depth, evoking landscapes of mind and matter. Stratified Horizon A dance of deep blues and earthy ochres, structured by geometric precision and organic flow. An abstract exploration of layered forms and chromatic depth, evoking landscapes of mind and matter. Urban Blueprint Dynamic lines and bold color fields map out a compelling internal architecture. This piece reinterprets the essence of a cityscape through a compelling interplay of shape and vibrant contrast. Chromatic Depths An intricate composition where rich blues and warm browns meet sharp accents of red and yellow. A visually dense and contemplative work, revealing hidden geometries and an atmospheric sense of place."
+        },
+        "category_keywords": [
+            "minimal",
+            "contemplative",
+            "space"
+        ]
+    },
+    "prompt": "Create one original WORLD MOTHER reference image for future artwork mockups.\nCategory: minimal_contemplative_space\nNo reference image is provided. Build the scene from the category, artwork analysis, and context metadata only.\nGenerate a clean, realistic, artwork-ready environment with strong wall/floor/lighting geometry, suitable for inserting a separate artwork later.\nDo not include paintings, framed art, posters, logos, readable text, people, animals, or dominant decorative objects. Leave usable wall space.\nScene type: Atelier Corridor Reverie\nArchitecture: Clean Artist's Studio Hallway / Gallery Corridor\nWalls: painted studio wall, plaster, pin marks allowed but subtle\nFloor: wood, concrete, or painted studio floor\nCeiling: studio ceiling with soft practical light\nLighting: Soft, diffused north light entering from a side window, creating gentle, elongated shadows and highlighting wall textures. Overall soft studio daylight, avoiding harsh contrasts; north_light_or_soft_studio_daylight\nMaterials: Light greige painted plaster wall with subtle texture, Polished light concrete floor, Subtle exposed ceiling beams or light tracks, Minimalist dark wood or metal studio furniture (e.g., a stool or rolling cart) in the background, Large, narrow window with simple framing, working studio architecture, clean enough for premium presentation, painted studio wall, plaster, pin marks allowed but subtle, wood, concrete, or painted studio floor, studio ceiling with soft practical light, neutral_to_warm_material, material_authenticity_with_artwork_primary\nPalette: neutral, premium, artwork-first\nMood: Quiet, refined, contemplative studio environment with natural light and a sense of depth. Neutral-to-warm material palette; Atelier Clean Wall: quiet working studio with premium restraint and material authenticity Placement mode: wall_hanging. Use subtle studio traces only. Keep process cues secondary. Preserve a clean artwork-first wall., This context places the abstract artwork in a setting that implies its origin and craftsmanship. The 'atelier clean wall' variant within an artist's studio environment, coupled with the 'corridor' camera, creates a sophisticated dialogue between the artwork's layered composition and the architectural depth, enhancing its artistic integrity and physical presence. It suggests a space where contemplation and creation coexist.\nCamera potential: controlled oblique low-angle / contrapicado, low camera looking upward through the room, artistic but believable scale, A controlled low-angle oblique room camera: the artwork plane, wall plane, floor lines, furniture perspective, and architectural vanishing direction must share one coherent upward contrapicado perspective.\nAvoid: no existing artwork, no framed art, no readable text, no logos, no people, no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no messy clutter, no wet paint chaos, no artwork substitution, no messy workshop, no paint chaos, no pet, no animal, no crowd; no messy workshop; no paint chaos; no pet; no animal; no crowd; no messy clutter; no pets; no wet paint chaos; no artwork substitution; artwork_must_remain_primary; no studio_objects_secondary; no_messy_clutter; no_pets; no_artwork_substitution; artwork remains the primary visual subject; context supports the artwork, never replaces it; no scale distortion; no decorative dominance\nUser generation notes: Automatic fallback from MockupCombinationEngine: create the missing scene mother using the selected category and context metadata.",
+    "options": {
+        "reference_free": true,
+        "context_title": "Atelier Corridor Reverie",
+        "context_description": "Clean Artist's Studio Hallway / Gallery Corridor | Quiet, refined, contemplative studio environment with natural light and a sense of depth. Neutral-to-warm material palette; Atelier Clean Wall: quiet working studio with premium restraint and material authenticity Placement mode: wall_hanging. Use subtle studio traces only. Keep process cues secondary. Preserve a clean artwork-first wall. | Light greige painted plaster wall with subtle texture, Polished light concrete floor, Subtle exposed ceiling beams or light tracks, Minimalist dark wood or metal studio furniture (e.g., a stool or rolling cart) in the background, Large, narrow window with simple framing, working studio architecture, clean enough for premium presentation, painted studio wall, plaster, pin marks allowed but subtle, wood, concrete, or painted studio floor, studio ceiling with soft practical light, neutral_to_warm_material, material_authenticity_with_artwork_primary | Soft, diffused north light entering from a side window, creating gentle, elongated shadows and highlighting wall textures. Overall soft studio daylight, avoiding harsh contrasts; north_light_or_soft_studio_daylight | hanging; wall_hanging",
+        "artwork_analysis_text": "A dance of deep blues and earthy ochres, structured by geometric precision and organic flow. An abstract exploration of layered forms and chromatic depth, evoking landscapes of mind and matter. Stratified Horizon A dance of deep blues and earthy ochres, structured by geometric precision and organic flow. An abstract exploration of layered forms and chromatic depth, evoking landscapes of mind and matter. Urban Blueprint Dynamic lines and bold color fields map out a compelling internal architecture. This piece reinterprets the essence of a cityscape through a compelling interplay of shape and vibrant contrast. Chromatic Depths An intricate composition where rich blues and warm browns meet sharp accents of red and yellow. A visually dense and contemplative work, revealing hidden geometries and an atmospheric sense of place.",
+        "notes": "Automatic fallback from MockupCombinationEngine: create the missing scene mother using the selected category and context metadata."
+    }
+}

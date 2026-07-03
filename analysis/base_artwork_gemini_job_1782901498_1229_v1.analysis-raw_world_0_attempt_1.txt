@@ -1,0 +1,45 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Urban Ascent",
+      "subtitle": "A structured abstract exploration of color and form.",
+      "description": "Vibrant blocks of red, yellow, green, and teal converge with subtle ladder motifs, suggesting growth and reaching new heights within a dynamic composition."
+    },
+    {
+      "title": "Constructed Horizons",
+      "subtitle": "Bold geometry and rich textures evoke an evolving landscape.",
+      "description": "An interplay of contrasting colors and architectural segments creates a vivid tableau, hinting at urban structures and distant aspirations."
+    },
+    {
+      "title": "Ladders to the Sun",
+      "subtitle": "Symbolic elements within a powerful abstract narrative.",
+      "description": "Energetic hues and deliberate lines frame small, iconic ladders, inviting contemplation on progress, effort, and future perspectives."
+    }
+  ],
+  "recommended_number_of_contexts": 1,
+  "contextual_proposals": [
+    {
+      "context_name": "Ascension in the White Cube",
+      "context_role": "To present the artwork as a monumental, high-value piece in a refined, minimalist gallery setting, emphasizing its structural and chromatic power.",
+      "space_type": "Minimalist Contemporary Art Gallery",
+      "atmosphere": "Calm, focused, and architecturally precise, with an underlying sense of upward momentum. The space is uncluttered, directing all attention to the artwork, creating an atmosphere of quiet contemplation and visual intensity.",
+      "materials": [
+        "matte off-white limewash wall with subtle texture",
+        "polished cool-grey concrete floor",
+        "simple white ceiling plane",
+        "discreet cool-toned gallery track lighting fixtures"
+      ],
+      "lighting": "Soft gallery daylight filtered from an unseen high window or skylight, complemented by controlled, cool-toned track lighting that subtly highlights the artwork's texture and forms, casting long, clean shadows across the floor from the low camera angle.",
+      "camera_view": "Nadir Controlado: Camera is positioned extremely low, approximately 5-15 cm from the ground, with the lens nearly touching the floor. This is a mouse-level/nadir-inspired architectural viewpoint, not a gentle low 3/4. The floor plane must be large and close in the foreground while wall height, ceiling lines, columns, door frames or architectural verticals rise strongly. Use an assertive oblique angle across the room, not a straight-on product view, with one forceful vanishing direction for architecture and artwork. The wall, floor, ceiling, and artwork should feel pulled into the same steep perspective. Use the nadir effect strongly through the surrounding room geometry: a large foreground floor wedge, floor lines, vertical wall planes, ceiling height, architectural edges, columns, furniture legs or door frames. The artwork remains the visual subject, but the dramatic low viewpoint must be obvious at thumbnail size. Do not produce a polite standing-height gallery view.",
+      "camera_distance": "Controlled architectural distance, allowing the artwork to dominate the upward-gazing frame while showcasing the spatial depth.",
+      "camera_angle_notes": "The extremely low, upward-looking camera angle dramatically enhances the artwork's physical presence, making it tower imposingly from below. The strong oblique perspective, combined with an aggressive wide lens, emphasizes the soaring height of the gallery wall and the deep vanishing lines of the polished concrete floor. This perspective transforms the artwork into a monumental focal point, while the visible thickness of the canvas asserts its objecthood within the architecturally dynamic space.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "Placing this vibrant, structured abstract artwork in a minimalist contemporary gallery environment maximizes its visual impact. The clean, off-white walls and polished concrete floor provide a stark, neutral canvas that allows the artwork's intense colors and compositional energy to resonate powerfully. The architectural precision of the gallery space mirrors the artwork's block-like structure, creating a harmonious dialogue. The 'Nadir Controlado' camera perspective is a deliberate choice to elevate the artwork, transforming it into an awe-inspiring, almost monumental presence, aligning with the aspirational theme suggested by the ladders.",
+      "commercial_reason": "This context positions the artwork within a prestigious, high-end gallery aesthetic, immediately signaling its commercial value and artistic significance to a discerning buyer. The dramatic and unconventional camera angle generates a highly engaging and memorable visual, making the artwork stand out in a competitive market. It emphasizes the artwork's physical presence and its potential to be a commanding focal point in a contemporary collection, appealing to collectors seeking statement pieces for architecturally significant spaces.",
+      "mockup_prompt": "A minimalist contemporary art gallery interior with a matte off-white limewash wall displaying an abstract painting. The artwork features vibrant red, yellow, green, and teal blocks, with subtle ladder motifs. The floor is polished cool-grey concrete, with a simple white ceiling plane above. The camera is positioned extremely low, 5-15cm from the floor, looking strongly upwards with an assertive oblique angle across the room, creating one forceful vanishing direction. A large polished concrete floor wedge dominates the foreground, with floor lines vanishing sharply into the distance. The tall gallery wall rises dramatically, making the artwork appear elevated and dominant. Ceiling lines are visible high above. Soft gallery daylight filters from an unseen high window, complemented by subtle, cool-toned track lighting that casts long, clean shadows. The artwork is physically plausible, its canvas thickness clearly visible from below, appearing grand and imposing from this low perspective.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no warm tones, no rustic elements, no clutter, no distracting elements, no art labels, no busy gallery"
+    }
+  ]
+}
+```

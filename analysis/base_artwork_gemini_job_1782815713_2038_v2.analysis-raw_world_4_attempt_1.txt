@@ -1,0 +1,46 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Crimson Horizons",
+      "subtitle": "Layers of Resonance",
+      "description": "An abstract landscape in deep red, with subtle white lines suggesting distant horizons or geological strata, inviting contemplation."
+    },
+    {
+      "title": "Red Stratum",
+      "subtitle": "Markings of Memory",
+      "description": "A powerful red composition featuring minimalist linear elements and geometric markers, evoking a sense of ancient territories or inner landscapes."
+    },
+    {
+      "title": "Ember Lines",
+      "subtitle": "Spatial Abstraction",
+      "description": "A rich, textured red field traversed by delicate white pathways and forms, creating an illusion of depth and a meditative visual rhythm."
+    }
+  ],
+  "recommended_number_of_contexts": 1,
+  "contextual_proposals": [
+    {
+      "context_name": "Atelier Passage Glimpse",
+      "context_role": "To present the artwork within a refined yet authentic creative environment, emphasizing its origins and the artist's dedicated space.",
+      "space_type": "Artist's working studio corridor or architectural passage.",
+      "atmosphere": "Quiet, contemplative, and authentic working studio atmosphere, clean yet functional, bathed in soft, natural daylight.",
+      "materials": [
+        "Painted plaster walls (warm off-white/light neutral)",
+        "Light polished concrete floor",
+        "Subtle exposed studio ceiling structure",
+        "Minimalist, unobtrusive studio furniture (background)",
+        "Metal lighting track (subtle, receding)"
+      ],
+      "lighting": "Soft, even north light filtering from a large window or skylight, providing gentle ambient fill and highlighting the artwork's texture without harsh glare. Natural depth-of-field falloff in the distant background.",
+      "camera_view": "Pasillo, Obra Descentrada y Próxima: Camera height is natural standing or slightly lowered human height, close enough to feel the corridor edge. Use an offset three-quarter corridor angle, with the artwork deliberately off-center and close rather than symmetrically framed. Place the artwork on a long wall plane rather than a short frontal display wall. The wall should extend laterally into the scene like a gallery passage, corridor, or elongated architectural plane, creating a clear vanishing direction. Use floor lines, ceiling lines, wall joints, lighting tracks, windows, columns, doorways, or distant wall planes to reinforce depth. The artwork may sit off-center and relatively close to the viewer, while the architecture recedes naturally to one side. Avoid product-style centered symmetry.",
+      "camera_distance": "Close enough to appreciate the artwork's physical presence and subtle texture, while allowing the architectural elements of the studio passage to recede meaningfully.",
+      "camera_angle_notes": "The three-quarter, off-center perspective of the Pasillo camera dynamically engages the viewer, pulling them into the studio space. The receding architecture creates a strong sense of depth and scale, ensuring the artwork feels like a substantial physical object discovered within its creative environment, rather than a flat image. The subtle angle reveals the canvas thickness, enriching its materiality.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's bold red and abstract yet structured composition resonates powerfully against the neutral, clean backdrop of a premium artist's studio. This context highlights the artwork's artistic integrity and allows its visual language to speak without distraction, placing it within a space that honors its creative origin and craft.",
+      "commercial_reason": "This setting elevates the artwork's commercial appeal by associating it with an authentic, aspirational artistic lineage. It speaks to collectors who value provenance and the refined environment of creation, suggesting a work of serious artistic merit. The clean, well-lit studio provides a premium backdrop that enhances perceived value and collectibility.",
+      "mockup_prompt": "A large, vibrant red abstract painting with subtle white horizontal lines and small rectangular shapes, perfectly installed and hanging on a clean, subtly textured warm off-white painted plaster wall within a quiet, well-lit artist's studio corridor. Shot from a natural standing height, an offset three-quarter corridor angle with the artwork deliberately off-center and relatively close to the viewer. The long wall plane extends laterally into the scene, creating a clear vanishing direction, with visible floor lines of light polished concrete and a simple studio ceiling receding into the background. Architectural details like a distant doorway or a subtle metal lighting track on the ceiling reinforce depth, receding naturally to one side. Soft, even north light from a large window or skylight illuminates the space and highlights the painting's canvas texture. Subtle, minimalist studio elements like a neatly stacked canvas or an elegant, unobtrusive material cart are visible in the background, out of focus. No people, no animals, artwork is the protagonist.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no messy clutter, no pets, no wet paint chaos, no artwork substitution, no messy workshop, no paint chaos, no animal, no crowd, no generic neutral interior, no generic lounge, no showroom, no unrelated gallery"
+    }
+  ]
+}
+```

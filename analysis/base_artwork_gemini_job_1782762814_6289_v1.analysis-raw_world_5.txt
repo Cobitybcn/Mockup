@@ -1,0 +1,31 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Midcentury Loft Collector's Alcove",
+      "context_role": "Showcases the artwork within a highly curated, design-forward living environment, appealing to collectors who value both abstract art and iconic mid-century design.",
+      "space_type": "Refined Midcentury Collector's Loft Living Space",
+      "atmosphere": "Cultured, contemplative, and design-driven, with a sophisticated blend of industrial honesty and warm mid-century refinement. The atmosphere is upscale, demonstrating discerning taste.",
+      "materials": [
+        "Warm neutral plaster walls",
+        "Dark walnut wood paneling",
+        "Exposed architectural concrete elements (recesses, ceiling details)",
+        "Polished concrete floor",
+        "Textured wool rug (muted olive/cream)",
+        "Deep burgundy leather upholstery",
+        "Brass or dark metal accents",
+        "Teak or rosewood furniture"
+      ],
+      "lighting": "Warm, diffused daylight filtering from an unseen large window, complemented by the soft, ambient glow of a sculptural mid-century floor lamp, creating a balanced and inviting illumination with subtle shadows enhancing depth.",
+      "camera_view": "Borgoña Recovecos / Cámara 3/4 en Loft de Hormigón: Camera height is human but tucked into an architectural recess, approximately 120-160 cm depending on the loft edge. Use a 3/4 view from a recess, corner, or architectural edge, with a burgundy-toned spatial mood and one clean vanishing direction. The artwork is partially contextualized by loft recesses and concrete architecture, creating depth and intimacy without hiding the piece; allow strong off-center framing through recesses, corners, side planes, or architectural edges.",
+      "camera_distance": "Controlled architectural distance, ensuring the artwork is dominant while showing enough of the architectural context.",
+      "camera_angle_notes": "The camera, positioned within an architectural recess or corner, creates a sophisticated, deep perspective, emphasizing the physical presence of the artwork and its seamless integration into a layered, design-conscious environment. The subtle 3/4 angle prevents flatness, revealing canvas thickness and the space's depth.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's clean, geometric forms and bold red-on-green color contrast find a sophisticated home within the structured yet warm aesthetic of a mid-century collector's loft. The interplay of materials (concrete, wood, plaster) and limited, iconic furniture creates a dialogue of texture and form that elevates the artwork as the undeniable focal point. The subtle burgundy tones in the room provide a nuanced echo to the artwork's dominant red, fulfilling the camera's spatial mood directive.",
+      "commercial_reason": "This context positions the artwork as a valuable acquisition for high-end design collectors and art enthusiasts. It communicates a lifestyle of refined taste and discerning curation, showcasing how the artwork enhances a culturally significant and aesthetically rich living space. The visual depth and curated environment increase perceived value and desirability in the premium art market.",
+      "mockup_prompt": "A large canvas artwork with a vibrant red abstract shape on a deep olive green background, featuring expressive impasto texture, is hung slightly off-center on a warm neutral plaster wall within a mid-century inspired collector's loft living space. The plaster wall is set against a backdrop of exposed architectural concrete elements and features a section of vertical dark walnut wood paneling to one side. The camera takes a 3/4 view, positioned within an architectural recess or corner at human height (120-160 cm), looking into the room with clear vanishing lines and emphasizing spatial depth. A polished concrete floor is partially covered by a muted olive green textured wool rug. One low-slung, sculptural mid-century lounge chair with deep burgundy leather upholstery is subtly placed in the foreground/midground, supporting the scene but not competing with the artwork. A simple, elegant dark wood side table with a brass accent sits nearby. Warm, diffused daylight from an unseen large window mixes with the soft, ambient glow of a mid-century brass floor lamp, casting subtle shadows and enhancing spatial depth. The artwork is dominant, its physical presence and thickness clearly visible, while the surrounding environment is refined and coherent with the mid-century aesthetic.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no rustic Tuscan villa, no Mediterranean retreat, no generic beige room, no furniture showroom, no chair closeup, no furniture ad, no pet, no animal, no crowd, no generic neutral interior, no Mediterranean villa, no rustic Tuscan room, no generic lounge, no showroom, no unrelated gallery"
+    }
+  ]
+}
+```

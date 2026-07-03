@@ -45,11 +45,11 @@ WORLD MOTHER AUTHORITY POLICY - DETAIL CAMERA
 
 The selected camera slot remains the highest authority for composition, crop, lens behavior, camera height, tilt, distance, and perspective.
 
-This is a detail/material camera. The world mother image is still a visual reference, but only for peripheral environment identity: light quality, wall or floor color, material atmosphere, studio palette, distant blurred hints, and believable surrounding context.
+This is a detail/material camera. The world mother image is not a room, layout, or camera reference. It is visual evidence for peripheral material and atmospheric cues only: light quality, color temperature, surface texture, wall/floor material feeling, studio palette, and distant contextual softness.
 
 Do not let windows, furniture, easels, tables, shelves, props, architecture, or a full-room layout compete with the detail camera. The artwork surface, edge, pigment relief, canvas weave, painted side continuation, and shallow optical depth must remain dominant.
 
-The world mother reference must not make the generator show the whole artwork, pull the camera backward, widen the composition into a room scene, or replace the selected detail camera with a general atelier mockup.{$rasanteRule}
+The world mother reference must not make the generator show the whole artwork, pull the camera backward, widen the composition into a room scene, or replace the selected detail camera with a general atelier mockup. If the detail camera needs context, create a new peripheral context from the material/light family of the world mother instead of reproducing the source room.{$rasanteRule}
 TEXT);
     }
 
@@ -60,9 +60,9 @@ WORLD MOTHER AUTHORITY POLICY - ENVIRONMENT CAMERA
 
 The selected camera slot remains the highest authority for viewpoint, crop, lens behavior, camera height, tilt, distance, and perspective.
 
-This is an environment/architectural camera. The world mother image is the visual authority for environment identity: room type, object density, architecture, materials, wall and floor language, palette, light direction, windows, furniture family, studio tools, and overall atelier atmosphere.
+This is an environment/architectural camera. The world mother image is not the environment to reproduce and not the camera reference. It is visual evidence for building a new environment in the same environmental family: materiality, surface texture, palette, light temperature, light direction, atmospheric density, architectural mood, and premium spatial character.
 
-Reconstruct the world mother environment from the selected camera slot viewpoint. Do not copy the mother image camera angle if it conflicts with the selected slot, but do preserve the mother image as the source of the room's visual language and environmental richness.
+Build a new environment through the selected camera slot. You may relocate or reinvent windows, openings, walls, furniture, supports, objects, depth, and architectural structure whenever needed to obey the camera slot and serve the root artwork. Preserve the visual family, material character, light quality, and atmosphere; do not preserve the source photo layout, camera angle, crop, room geometry, wall choice, window placement, furniture placement, or object positions.
 TEXT);
     }
 
@@ -73,7 +73,9 @@ WORLD MOTHER AUTHORITY POLICY - BALANCED CAMERA
 
 The selected camera slot remains the highest authority for viewpoint, crop, lens behavior, camera height, tilt, distance, and perspective.
 
-The world mother image remains the visual authority for environment identity, materials, palette, light quality, and believable surrounding context, but it must not override the selected camera slot composition.
+The world mother image is not the environment to reproduce and not the camera reference. It is visual evidence for building a new compatible environment in the same material, lighting, architectural, and atmospheric family. It is not the authority for final composition.
+
+Build a new photograph from the selected camera slot. You may move, replace, or reinvent windows, walls, furniture, objects, depth, and spatial layout so the camera slot can fully govern the final image. Keep the material palette, light quality, surface language, atmospheric tone, and environmental family; do not copy the source photo layout, camera angle, crop, wall choice, window placement, furniture placement, object positions, or room geometry.
 TEXT);
     }
 }

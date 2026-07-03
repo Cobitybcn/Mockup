@@ -1,0 +1,28 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Palazzo Sereno in Golden Hour",
+      "context_role": "To position the contemporary artwork within a grand, historically rich environment, highlighting its timeless appeal and ability to enhance premium architectural spaces.",
+      "space_type": "Grand European Palazzo Gallery Room",
+      "atmosphere": "Serene, sophisticated, and contemplative, bathed in the soft, golden light of late afternoon, where historical architectural elegance meets a bold contemporary statement.",
+      "materials": [
+        "Aged limewash walls in warm off-white",
+        "Original large-format antique parquet flooring with rich patina",
+        "Subtle plaster moldings near the tall ceiling",
+        "Arched window frames of dark wood",
+        "Low, long travertine bench"
+      ],
+      "lighting": "Controlled, warm golden late-day sunbeams filtering through tall arched windows, casting soft shadows across the antique parquet floor and highlighting the texture of the limewash walls, with the artwork gently illuminated by the ambient glow.",
+      "camera_view": "Nadir Aéreo con Contexto de Ventanas: Camera is positioned very high, near ceiling height, upper balcony height, skylight height, or the top edge of a tall architectural void. It is the aerial counterpart of an extreme nadir: instead of looking upward from the floor, the camera looks downward from above into the room. Use an oblique high-corner or upper-balcony diagonal, not a centered frontal wall view. The camera may look diagonally down along the room so window context, floor geometry, and artwork wall are visible together. Build the image from above: visible floor plane, furniture or bench tops, rug or floor layout, wall height, window/skylight context, and the artwork installed on a vertical wall. The artwork remains identifiable, but the room must read as seen from above, not as a normal wall presentation.",
+      "camera_distance": "Controlled architectural distance, capturing the interplay between the artwork, the floor, and the surrounding architectural elements from above.",
+      "camera_angle_notes": "The high-angle, oblique perspective highlights the grandeur of the palazzo's tall proportions and the exquisite flooring. It anchors the artwork within a vast, elegant space, presenting its physical presence against the receding planes of the historic architecture. The downward gaze reveals the thickness of the canvas and its installation within the room's geometry.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's intense red and clean lines provide a striking contemporary counterpoint to the quiet gravitas and aged materials of a European palazzo, creating a dynamic dialogue between past and present. The historical setting elevates the artwork's perceived value and artistic significance.",
+      "commercial_reason": "This premium, historically-grounded context positions the artwork as a valuable acquisition for sophisticated collectors, demonstrating its ability to enrich grand, established interiors. The golden-hour lighting adds a luxurious, aspirational quality, making the artwork appear both bold and harmoniously integrated.",
+      "mockup_prompt": "A vibrant deep red abstract painting, with horizontal white lines and small red rectangular impasto elements, hangs prominently on an aged limewash wall in a grand European palazzo gallery room. The camera is positioned very high, looking diagonally down from an upper corner, capturing the artwork installed on the vertical wall, with a large-format antique parquet floor visible below it. A low, long, elegant travertine bench sits on the parquet floor, positioned in the midground leading towards the artwork. Tall arched windows with dark wood frames are partially visible in the upper part of the frame, allowing warm, golden late-day sunbeams to filter into the space. Subtle plaster moldings adorn the tall ceiling. The lighting is soft and golden, illuminating the artwork and the architectural details. No visible people or animals. Artwork must be exactly as provided, preserving its proportions, composition, colors, marks, surface texture, and physical presence as a stretched canvas. The floor plane, wall planes, windows, and bench must cohere into one high-angle vanishing perspective.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter, no museum spectacle, no period drama, no costumes, no crowds, no royal event, no costume drama, no pet, no rustic Tuscan room, no generic lounge, no showroom"
+    }
+  ]
+}
+```

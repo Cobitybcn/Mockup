@@ -1,0 +1,16 @@
+Use the three reference images.
+
+Image 1 is a perspective mask only.
+The green area is the exact projected plane for the artwork.
+The black area is not part of the final image.
+
+Image 2 is the artwork.
+Place Image 2 inside the green plane from Image 1, matching its perspective exactly.
+
+Image 3 is style reference only.
+Use its atmosphere, materials, lighting, and color temperature.
+Do not copy its layout.
+
+Create a realistic interior mockup viewed from below looking upward.
+Do not show the green mask or black background.
+Do not turn the artwork into a sculpture.

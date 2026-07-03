@@ -1,0 +1,31 @@
+```json
+{
+  "recommended_number_of_contexts": 1,
+  "contextual_proposals": [
+    {
+      "context_name": "Mid-Century Ascent Alcove",
+      "context_role": "Presents the artwork as a cherished piece in a sophisticated, art-first mid-century collection, highlighting its vibrant colors and geometric forms against a backdrop of refined design.",
+      "space_type": "Mid-century collector's study or gallery alcove within a residence.",
+      "atmosphere": "Refined, thoughtful, warm, and subtly academic, with an emphasis on design integrity and art appreciation. A quiet, contemplative mood for viewing.",
+      "materials": [
+        "Warm neutral plaster walls",
+        "Walnut wood panel accent",
+        "Polished travertine floor",
+        "Subtle geometric pattern rug in muted tones",
+        "Simple white ceiling",
+        "Olive green upholstered lounge chair",
+        "Brass-finish side table"
+      ],
+      "lighting": "Soft, directional warm daylight filtering in from a hidden source, augmented by a refined period-appropriate standing lamp with a diffused glow, creating a gentle chiaroscuro effect in the architectural recess and enhancing the artwork's vibrancy without glare.",
+      "camera_view": "Borgoña Recovecos / Cámara 3/4 en Loft de Hormigón: Camera height is human but tucked into an architectural recess, approximately 120-160 cm depending on the loft edge. Use a 3/4 view from a recess, corner, or architectural edge, with a burgundy-toned spatial mood and one clean vanishing direction. The artwork is partially contextualized by loft recesses and concrete architecture, creating depth and intimacy without hiding the piece; allow strong off-center framing through recesses, corners, side planes, or architectural edges.",
+      "camera_distance": "Controlled architectural distance, showcasing the artwork prominently within its carefully curated environment.",
+      "camera_angle_notes": "The 3/4 view from a recess allows for a dynamic composition, revealing the artwork's physical thickness and integrating it into the structured architectural space. The vanishing direction emphasizes the depth of the mid-century room, ensuring the artwork is seen as a tangible object within a designed volume, not a flat image. This artistic perspective enhances its physical presence and elegance.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's bold geometric forms and vibrant colors resonate with the clean lines and material honesty of mid-century design. The ladders suggest upward movement and aspiration, which aligns with the progressive spirit of the mid-century era. Placing it in an art-first collector's environment elevates its status and appreciation.",
+      "commercial_reason": "This context positions the artwork as a valuable acquisition for collectors with an appreciation for modern design and art. The sophisticated, yet understated, mid-century setting appeals to a premium market segment, showcasing the artwork's versatility and timeless appeal beyond current trends. It communicates taste and discerning curation.",
+      "mockup_prompt": "An abstract painting, with bold indigo, orange, and teal geometric forms and small ladder motifs, hanging prominently on a warm neutral plaster wall within a mid-century collector's study. The artwork is wall_hanging. A subtle walnut wood panel accent is visible on an adjacent wall, creating an architectural recess. A polished travertine floor extends from the foreground, leading to the artwork. The scene is captured with a human-height 3/4 view from a corner architectural recess, looking towards one clean vanishing direction. A low-slung, olive green upholstered lounge chair and a small side table with a brass finish are subtly placed in the midground, supporting the artwork's visual weight without competing. Soft, warm daylight illuminates the scene, enhancing the artwork's colors and creating gentle shadows in the architectural depth. No visible people or animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended."
+    }
+  ]
+}
+```

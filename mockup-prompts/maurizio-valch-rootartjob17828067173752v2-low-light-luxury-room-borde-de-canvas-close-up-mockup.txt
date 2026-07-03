@@ -1,0 +1,327 @@
+Create a photorealistic premium art mockup using the provided artwork image as the exact authoritative visual reference.
+
+The artwork image is the product. The room is only the premium human, cultural, architectural, seasonal, and material context that enriches the artwork’s presentation.
+
+ARTWORK TECHNICAL DATA
+
+Artwork root reference file: base_artwork_gemini_job_1782806717_3752_v2.png
+Artwork physical width: 120 cm
+Artwork physical height: 80 cm
+Artwork physical depth: 2 cm
+Artwork orientation: landscape
+
+Use these physical dimensions as factual scale data. Do not reinterpret them as decorative suggestions.
+
+ABSOLUTE ARTWORK FIDELITY
+
+Recreate the provided artwork faithfully inside the mockup scene.
+
+Preserve exactly:
+
+* composition
+* colors
+* marks
+* surface texture
+* proportions
+* orientation
+* format
+* visual identity
+* physical presence
+
+Do not repaint, redesign, crop, mirror, recolor, simplify, reinterpret, stylize, beautify, extend, repair, or modify the artwork.
+
+The artwork must appear as a real physical canvas or real physical artwork installed in the space, not as a flat digital poster pasted onto a wall.
+
+If canvas depth is visible, show believable physical thickness and side depth. The artwork must keep its real proportions and must not be warped.
+
+SELECTED MOCKUP CONTEXT PROPOSAL
+
+Use the following selected mockup context proposal as the authoritative scene, context, atmosphere, lighting, materials, scale, installation, and camera direction for this mockup:
+
+MOCKUP CONTEXT PROPOSAL:
+* Scene Name: Low Light Luxury Room / Borde de Canvas Close-up
+* World Mother Category: low_light_luxury_room
+* World Mother Reference Image: storage/world_mothers/low_light_luxury_room/low_light_luxury_room (1).jpg
+* Purpose: single fixed scene mother with camera variation
+* Space Type: Low Light Luxury Room scene mother reconstructed from the supplied visual reference.
+* Atmosphere: Reference-led premium interior. Preserve the supplied world mother image as the source for room identity, palette, materials, and lighting, while allowing a new camera construction.
+* Materials: Materials, furniture family, wall language, floor language, and lighting must be inferred from and remain consistent with the supplied world mother reference image.
+* Lighting: Use the lighting character visible in the supplied world mother image; do not invent a conflicting time of day or unrelated gallery lighting.
+* Placement: hanging; wall_hanging
+* Camera View: Selected camera slot viewpoint: Borde de Canvas Close-up.
+* Camera Group: borde_canvas_closeup
+* Camera Distance: Use the distance required by the selected camera slot; the world mother supplies room identity, not camera position.
+* Camera Notes: The camera slot is authoritative for viewpoint. The world mother reference supplies materials, architecture, palette, and lighting, but not its original camera angle. DETAIL CAMERA CROP OVERRIDE: for this canvas-edge close-up, camera-frame cropping is allowed and expected. The final image may show only a physical slice of the artwork face plus the side edge, thickness, wall contact, and cast shadow. This is not permission to alter the artwork itself: preserve the real canvas orientation, real aspect ratio, real colors, and visible local composition. If the source artwork is portrait, the visible fragment must still feel like part of a taller-than-wide canvas, not a complete square painting.
+* Camera Slot ID: borde_canvas_closeup
+* Camera Slot: Borde de Canvas Close-up
+* Camera Slot Geometry:
+Camera is close to the wall-mounted canvas edge, positioned at artwork height or slightly oblique to read the front face, lateral side, thickness, and shadow against the nearby wall.
+Use a close-focus 50-70 mm lens equivalent or similar natural close-up lens that preserves plausible canvas thickness and avoids wide-angle exaggeration.
+Keep vertical tilt controlled and material-oriented, enough to reveal edge depth and wall contact without making the canvas float or bend.
+Use a close side-oblique angle across the canvas edge so the transition between painted front, lateral canvas depth, stretcher thickness, and wall shadow is visible.
+Partial artwork view is allowed and expected. This is a camera crop, not an artwork alteration. The full artwork does not need to be visible, and one or more artwork edges may fall outside the final image frame. Close-up optical distortion and mild foreshortening are allowed if they come from the physical lens and edge perspective. The canvas edge and thickness are the subject. The artwork may be cropped by the camera frame, with wall texture, lateral side, subtle cast shadow, and the physical transition from front surface to side edge carrying the composition. Preserve the original artwork format even when only a fragment is visible: a portrait artwork must still read as a fragment of a taller-than-wide canvas, a landscape artwork as a fragment of a wider-than-tall canvas, and a square artwork as square. Do not complete, widen, compress, or redesign the visible fragment into a different full-format painting.
+Physical canvas protection: edge thickness must remain moderate and plausible for the real artwork depth; it must look like stretched canvas, not poster, paper, screen, floating panel, or exaggerated block. Artwork proportion protection: the physical canvas keeps the source artwork aspect ratio and orientation even if only a partial close-up is shown. Artwork identity protection: preserve exact artwork identity on the visible portion. Anti-substitution protection: do not replace the artwork with another image.
+Use close-up photographic depth of field. Canvas edge, visible artwork portion, side depth, and immediate wall contact should remain sharp; distant wall texture may soften gently.
+Camera negatives: no poster, no flat print, no digital screen, no floating panel, no exaggerated thickness, no artwork substitution, no pets, no crowds, no children.
+* Mockup Combination Notes: Combination preview uses the root artwork image plus the selected real world mother reference image and the selected camera slot.
+* Human Presence: No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.
+* Curatorial Reason: The selected world mother defines the architectural and material language. The selected camera slot defines the actual camera position, so extreme viewpoints are rebuilt from the same room DNA instead of copied from the reference photo.
+* Commercial Reason: Maintains a coherent collector-room series: one recognizable premium interior, multiple camera readings, stable material identity, and consistent perceived value.
+* Mockup Prompt: Use the supplied world mother reference image as a room DNA source: storage/world_mothers/low_light_luxury_room/low_light_luxury_room (1).jpg. Preserve its recognizable color palette, materials, furniture family, wall language, floor language, and lighting character. Reconstruct the viewpoint required by the selected camera slot; the reference photo camera angle, crop, and perspective are not binding. Scene mother variant: primary #1. Use this as the primary scene mother variant. Camera role: build "Borde de Canvas Close-up" as a new camera construction using the same room DNA. The mother reference supplies architecture, materials, palette, wall/floor language, lighting, and furnishing family; it does not supply the final camera angle, crop, height, or perspective. DETAIL CAMERA CROP OVERRIDE: for this canvas-edge close-up, camera-frame cropping is allowed and expected. The final image may show only a physical slice of the artwork face plus the side edge, thickness, wall contact, and cast shadow. This is not permission to alter the artwork itself: preserve the real canvas orientation, real aspect ratio, real colors, and visible local composition. If the source artwork is portrait, the visible fragment must still feel like part of a taller-than-wide canvas, not a complete square painting.
+* Negative Prompt: no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no hotel catalog gloss, no generic furniture, no unrelated gallery; no family lifestyle ad; no real estate ad; no decor ad; no hotel catalog; no pet; no animal; no crowd; no family scene; no pets; no lifestyle ad; no artwork substitution; artwork_must_remain_cultural_center; no_lifestyle_ad; no_real_estate_ad; no_pets; no_family_scene; no_decor_ad; no_artwork_substitution; artwork remains the primary visual subject; context supports the artwork, never replaces it; no scale distortion; no decorative dominance; do not change the scene mother, no unrelated gallery, no white cube gallery unless present in the world mother image, no generic showroom, no replacement room, no different furniture style, no different wall color family, no invented minimalist museum; camera-frame crop allowed for selected detail slot; no changed artwork format; no squared portrait artwork; no stretched artwork; no compressed artwork; no artwork substitution; no invented composition
+
+The selected context proposal may contain deterministic camera fields assigned by the system. When present, these camera fields override looser or conflicting camera wording from the contextual scene description.
+
+Do not ignore this context block. It defines the specific mockup direction to generate.
+
+PRIMARY IMAGE PRIORITIES
+
+1. Artistic camera handling is the first priority.
+   The camera must actively build the image. It must create depth, elegance, product presence, spatial credibility, and commercial strength.
+
+2. Premium human-cultural context is the second priority.
+   The environment must feel like a specific human world: cultural, architectural, historical, seasonal, studio-based, or collector-oriented. Avoid generic interiors.
+
+3. The context must fit the artwork.
+   The space, materials, atmosphere, light, and camera must respond to the artwork’s colors, rhythm, density, silence, contrast, symbolic tension, or emotional tone.
+
+4. The final mockup must enrich the artwork.
+   The result must feel more valuable, more specific, more visually rich, and more commercially powerful than a simple artwork-on-wall mockup.
+
+SCENE AND CONTEXT RULES
+
+Use the selected mockup proposal as the main scene direction.
+
+The context must be visually specific. Avoid vague vintage luxury, generic beige rooms, hotel-like decoration, real-estate render interiors, or repeated warm stock interiors.
+
+If the scene is antique, make it authentically old-world.
+If the scene is modern, make it clearly contemporary.
+If the scene is Mediterranean, use refined southern European architecture, mineral walls, limewash, stone, travertine, terracotta, linen, filtered sunlight, shutters, or summer air.
+If the scene is Eastern or Oriental-inspired, make it premium, restrained, respectful, and architecturally refined. Avoid exotic clichés.
+If the scene is historical, express the period through architecture, furniture, materials, light, and atmosphere, not theatrical props.
+If the scene is Renaissance, Belle Époque, or 1940s Paris, keep it believable, elegant, and premium.
+If the scene is a collector interior, make it specific, lived, cultivated, and visually controlled, not generic.
+
+Do not default to the same beige room, brown furniture, vague vintage armchair, soft natural light, or winter atmosphere.
+
+SEASONAL CONTEXT RULES
+
+Use seasonal awareness only when compatible with the selected context proposal.
+
+Europe and North America are the main buying markets. If the current season is spring or summer, avoid making the scene feel completely wintery, dim, closed, heavy, or brown unless the selected proposal explicitly requires a moody interior.
+
+Seasonal cues may include:
+
+* clearer daylight
+* refined summer light
+* Mediterranean sun filtered through curtains or shutters
+* breathable interior atmosphere
+* lighter mineral materials
+* soft seasonal freshness
+* controlled brightness with premium contrast
+
+Do not turn the scene into a vacation postcard. Keep it collector-grade, elegant, architectural, and commercially refined.
+
+LIGHTING RULES
+
+Lighting must be intentional and must create visual contrast.
+
+Use one clear lighting strategy:
+
+* Mediterranean directional sunlight
+* soft summer daylight
+* premium gallery spotlight
+* moody evening collector light
+* chiaroscuro historical light
+* cool architectural daylight
+* dark wall with focused artwork illumination
+* warm interior light contrasted with deeper shadows
+
+Avoid flat ambient lighting. Avoid generic evenly lit rooms. Avoid six similar warm beige interiors.
+
+CAMERA RULES
+
+The selected camera direction is mandatory.
+
+The camera must not make the artwork look like a poster. Even when the selected proposal is frontal, the artwork must still feel like a physical object with real material presence, believable wall contact, subtle depth, and natural perspective.
+
+Allowed camera directions:
+
+* frontal physical editorial view
+* near-frontal subtle depth view
+* soft left-oblique view
+* soft right-oblique view
+* controlled low 3/4 view
+* artistic stronger 3/4 or 7/8 view
+* elevated 3/4 architectural view
+* controlled high-angle architectural view
+* controlled low-angle or contrapicado view
+* low floor wide low-angle view only when explicitly selected
+
+Avoid:
+
+* flat pasted poster effect
+* fisheye
+* extreme wide angle
+* distorted architecture
+* surveillance-like top-down view
+* uncontrolled aerial view
+* uncontrolled floor-level distortion
+* product scale distortion
+
+If using high-angle, aerial, low-angle, contrapicado, or low floor wide low-angle views, preserve believable architecture, furniture scale, wall geometry, and artwork proportions. Do not flatten these views into a generic frontal close-up.
+
+If using a low-angle or contrapicado view, keep it controlled. The camera may sit slightly below the artwork centerline, but not so low that furniture scale becomes unbelievable.
+
+SCALE AND COMPOSITION RULES
+
+The artwork must be the primary subject, but its scale must remain physically believable.
+
+Respect the artwork’s real physical dimensions:
+
+* width: 120 cm
+* height: 80 cm
+* depth: 2 cm
+* orientation: landscape
+
+The artwork must be coherent in relation to:
+
+* sofas
+* chairs
+* consoles
+* easels
+* doors
+* paneling
+* ceiling height
+* floor level
+* architectural features
+
+Do not enlarge the artwork unrealistically just to dominate the frame.
+Do not shrink the artwork until it loses commercial impact.
+
+The mockup should feel like a premium product photograph, not a decorative background image.
+
+The artwork should occupy a strong visual position in the composition, usually close or medium-close, with enough surrounding architecture to create context and atmosphere.
+
+PHYSICAL INSTALLATION RULES
+
+The artwork may be:
+
+* mounted on a wall
+* leaning against a wall
+* displayed on an easel
+* installed in a collector room
+* placed in a refined studio context
+* integrated into a premium architectural interior
+
+The installation must be physically plausible.
+
+If mounted, it should cast subtle realistic shadows.
+If leaning, it must have correct contact with floor and wall.
+If on an easel, the easel must support the artwork believably.
+If shown at an angle, the canvas side depth must be visible and coherent.
+
+HUMAN CONTEXT WITHOUT VISIBLE HUMANS
+
+Do not include visible people, human figures, silhouettes, faces, hands, bodies, mannequins, animals, pets, birds, or insects.
+
+Human context must be expressed through:
+
+* architecture
+* furniture
+* books
+* collector objects
+* studio tools
+* historical period
+* cultural design language
+* seasonal light
+* materials
+* lived refinement
+* traces of human taste
+
+Do not add theatrical props, costumes, or narrative figures.
+
+STYLE AND MATERIAL QUALITY
+
+The mockup must look photorealistic, premium, editorial, and commercially usable.
+
+Use high-quality materials when appropriate to the selected context:
+
+* limewash
+* mineral plaster
+* stone
+* travertine
+* marble
+* terracotta
+* dark wood
+* pale oak
+* walnut
+* bronze
+* black metal
+* linen
+* paper screens
+* lacquer
+* aged European walls
+* refined paneling
+* architectural concrete
+* polished or matte floors
+
+Avoid cheap furniture, generic stock interiors, fake luxury, oversaturated decoration, clutter, unrealistic reflections, and AI-looking objects.
+
+CONTEXT NEGATIVE PROMPT
+
+Apply the following negative prompt from the selected mockup context when present:
+
+no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no hotel catalog gloss, no generic furniture, no unrelated gallery; no family lifestyle ad; no real estate ad; no decor ad; no hotel catalog; no pet; no animal; no crowd; no family scene; no pets; no lifestyle ad; no artwork substitution; artwork_must_remain_cultural_center; no_lifestyle_ad; no_real_estate_ad; no_pets; no_family_scene; no_decor_ad; no_artwork_substitution; artwork remains the primary visual subject; context supports the artwork, never replaces it; no scale distortion; no decorative dominance; do not change the scene mother, no unrelated gallery, no white cube gallery unless present in the world mother image, no generic showroom, no replacement room, no different furniture style, no different wall color family, no invented minimalist museum; camera-frame crop allowed for selected detail slot; no changed artwork format; no squared portrait artwork; no stretched artwork; no compressed artwork; no artwork substitution; no invented composition
+
+GLOBAL NEGATIVE RULES
+
+No visible people.
+No animals.
+No pets.
+No birds.
+No insects.
+No human silhouettes.
+No mannequins.
+No poster effect.
+No flat pasted artwork.
+No altered artwork.
+No cropped artwork.
+No mirrored artwork.
+No changed colors.
+No redesigned composition.
+No fake frame unless explicitly requested.
+No incorrect canvas proportions.
+No distorted perspective.
+No fisheye.
+No warped architecture.
+No unrealistic artwork scale.
+No excessive wide-angle view.
+No generic beige vintage room.
+No repeated vague warm luxury interior.
+No winter default unless explicitly intended.
+No decorative clichés.
+No theatrical historical scene.
+No exotic clichés.
+No real-estate render look.
+No hotel lobby look.
+No Pinterest-style decoration.
+No cheap furniture.
+No clutter.
+No text, watermark, signature overlay, logo, UI elements, or labels.
+
+FINAL RESULT
+
+Generate a premium photorealistic art mockup where the artwork remains exact, physical, believable, and commercially powerful.
+
+The image must be visually enriched by artistic camera handling, specific human-cultural context, seasonal awareness, strong material quality, and a meaningful relationship between the artwork and the environment.
+
+SELECTED DETAIL CAMERA OVERRIDE
+
+This selected camera slot intentionally allows camera-frame cropping of the artwork. This overrides generic "do not crop", "no cropped artwork", and "show the whole artwork" instructions only for photographic framing.
+
+Do not crop, resize, repaint, extend, redesign, or alter the artwork itself. Instead, place the real artwork in the scene with its true physical dimensions (120 cm wide x 80 cm high), true orientation (landscape), and true aspect ratio, then let the close camera frame show only the necessary fragment.
+
+Because the artwork is landscape, any visible canvas fragment must still feel like part of a wider-than-tall physical artwork. Do not make it portrait, square it, compress its width, or complete the visible fragment into a different format.
+
+For Borde de Canvas Close-up, prioritize the physical side edge, canvas thickness, wall contact, cast shadow, and a faithful partial slice of the painted face. The whole artwork should usually not be visible.

@@ -6,7 +6,7 @@ require_once __DIR__ . '/app/bootstrap.php';
 $user = Auth::requireUser();
 $pdo = Database::connection();
 $id = max(0, (int)($_GET['id'] ?? 0));
-$selectedWorldMotherCategory = WorldMotherGenerator::safeSlug((string)($_GET['world_mother_category'] ?? ''));
+$selectedWorldMotherCategory = trim(str_replace(['\\', '/'], '', (string)($_GET['world_mother_category'] ?? '')));
 if ($id <= 0) {
     http_response_code(404);
     die('Artwork ID is missing.');

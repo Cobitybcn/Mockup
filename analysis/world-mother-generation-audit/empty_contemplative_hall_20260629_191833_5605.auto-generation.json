@@ -1,0 +1,70 @@
+{
+    "schema": "world_mother_auto_generation_audit.v1",
+    "generated_at": "2026-06-29T19:19:30+00:00",
+    "mode": "gemini",
+    "category_slug": "empty_contemplative_hall",
+    "reference_path": null,
+    "output_path": "C:\\laragon\\www\\mockups\\storage\\world_mothers\\empty_contemplative_hall\\world_mother_auto_20260629_191833_5605.png",
+    "relative_path": "storage/world_mothers/empty_contemplative_hall/world_mother_auto_20260629_191833_5605.png",
+    "analysis": {
+        "scene_type": "Palazzo's Gilded Dusk",
+        "architecture_language": "Refined gallery hall within a historic European palazzo.",
+        "wall_language": "aged plaster, limewash, warm stone, or muted historic color",
+        "floor_language": "stone, terrazzo, parquet, or old timber floor",
+        "ceiling_language": "tall ceiling, beams or moulding allowed if secondary",
+        "lighting": "Golden late-day light, soft and directional, filtering through tall arched windows, casting long, elegant shadows and bathing the room in a warm, diffused glow, with subtle illumination on the artwork; golden_late_day_or_soft_window_light",
+        "materials": [
+            "Aged limewash walls in a warm, muted cream",
+            "Subtle classical plaster mouldings",
+            "Polished terrazzo floor with an intricate pattern in warm, pale tones",
+            "Tall arched windows with light, flowing linen drapes",
+            "Minimalist dark bronze console table",
+            "old European room with tall proportions, arches, moulding, or stone details kept restrained",
+            "aged plaster, limewash, warm stone, or muted historic color",
+            "stone, terrazzo, parquet, or old timber floor",
+            "tall ceiling, beams or moulding allowed if secondary",
+            "warm_historical",
+            "artwork_primary_with_architectural_gravity"
+        ],
+        "palette": [
+            "neutral",
+            "premium",
+            "artwork-first"
+        ],
+        "mood": [
+            "Serene, sophisticated, rich, and contemplative. The late afternoon golden light filtering into a spacious, high-ceilinged room creates a quiet grandeur, where history meets contemporary art; Palazzo Late Light: historic European room with warm late light and refined restraint Placement mode: wall_hanging. Use old plaster or stone architecture. Let warm light support the artwork. Do not turn the room into a period drama.",
+            "The artwork's deep, rich colors and strong, abstract forms find a sophisticated counterpoint in the warm, historical palette and restrained grandeur of a European palazzo. The interplay of contemporary abstraction against classical architecture highlights the artwork's timeless appeal and versatility. The golden late light brings out the subtle textures and tonal shifts in the painting."
+        ],
+        "scale": "suitable for believable artwork mockups",
+        "camera_potential": [
+            "elevated high-angle architectural view, controlled view from above, not top-down, not surveillance-like",
+            "An elevated high-angle room camera: the artwork plane, wall plane, floor lines, furniture perspective, and architectural vanishing direction must belong to the same controlled elevated perspective."
+        ],
+        "negative_risks": [
+            "no existing artwork",
+            "no framed art",
+            "no readable text",
+            "no logos",
+            "no people",
+            "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no drone distance, no surveillance view, no decorative random people, no pets, no crowds, no children, no museum spectacle, no period drama, no costumes, no rustic farmhouse, no museum spectacle, no artwork substitution, no royal event, no costume drama, no crowd, no pet, no animal, no generic neutral interior, no rustic Tuscan room, no generic lounge, no showroom, no unrelated gallery; no royal event; no costume drama; no crowd; no pet; no animal; no costumes; no pets; no crowds; no museum spectacle; no artwork substitution; artwork_must_remain_primary; no_pets; no_period_costume_scene; no_museum_crowds; no_artwork_substitution; artwork remains the primary visual subject; context supports the artwork, never replaces it; no scale distortion; no decorative dominance"
+        ],
+        "style_details": {
+            "source": "auto-generated from category because the world mother folder had no usable image",
+            "context_description": "Refined gallery hall within a historic European palazzo. | Serene, sophisticated, rich, and contemplative. The late afternoon golden light filtering into a spacious, high-ceilinged room creates a quiet grandeur, where history meets contemporary art; Palazzo Late Light: historic European room with warm late light and refined restraint Placement mode: wall_hanging. Use old plaster or stone architecture. Let warm light support the artwork. Do not turn the room into a period drama. | Aged limewash walls in a warm, muted cream, Subtle classical plaster mouldings, Polished terrazzo floor with an intricate pattern in warm, pale tones, Tall arched windows with light, flowing linen drapes, Minimalist dark bronze console table, old European room with tall proportions, arches, moulding, or stone details kept restrained, aged plaster, limewash, warm stone, or muted historic color, stone, terrazzo, parquet, or old timber floor, tall ceiling, beams or moulding allowed if secondary, warm_historical, artwork_primary_with_architectural_gravity | Golden late-day light, soft and directional, filtering through tall arched windows, casting long, elegant shadows and bathing the room in a warm, diffused glow, with subtle illumination on the artwork; golden_late_day_or_soft_window_light | hanging; wall_hanging",
+            "artwork_analysis_summary": "A dance of deep blues and earthy ochres, structured by geometric precision and organic flow. An abstract exploration of layered forms and chromatic depth, evoking landscapes of mind and matter. Stratified Horizon A dance of deep blues and earthy ochres, structured by geometric precision and organic flow. An abstract exploration of layered forms and chromatic depth, evoking landscapes of mind and matter. Urban Blueprint Dynamic lines and bold color fields map out a compelling internal architecture. This piece reinterprets the essence of a cityscape through a compelling interplay of shape and vibrant contrast. Chromatic Depths An intricate composition where rich blues and warm browns meet sharp accents of red and yellow. A visually dense and contemplative work, revealing hidden geometries and an atmospheric sense of place."
+        },
+        "category_keywords": [
+            "empty",
+            "contemplative",
+            "hall"
+        ]
+    },
+    "prompt": "Create one original WORLD MOTHER reference image for future artwork mockups.\nCategory: empty_contemplative_hall\nNo reference image is provided. Build the scene from the category, artwork analysis, and context metadata only.\nGenerate a clean, realistic, artwork-ready environment with strong wall/floor/lighting geometry, suitable for inserting a separate artwork later.\nDo not include paintings, framed art, posters, logos, readable text, people, animals, or dominant decorative objects. Leave usable wall space.\nScene type: Palazzo's Gilded Dusk\nArchitecture: Refined gallery hall within a historic European palazzo.\nWalls: aged plaster, limewash, warm stone, or muted historic color\nFloor: stone, terrazzo, parquet, or old timber floor\nCeiling: tall ceiling, beams or moulding allowed if secondary\nLighting: Golden late-day light, soft and directional, filtering through tall arched windows, casting long, elegant shadows and bathing the room in a warm, diffused glow, with subtle illumination on the artwork; golden_late_day_or_soft_window_light\nMaterials: Aged limewash walls in a warm, muted cream, Subtle classical plaster mouldings, Polished terrazzo floor with an intricate pattern in warm, pale tones, Tall arched windows with light, flowing linen drapes, Minimalist dark bronze console table, old European room with tall proportions, arches, moulding, or stone details kept restrained, aged plaster, limewash, warm stone, or muted historic color, stone, terrazzo, parquet, or old timber floor, tall ceiling, beams or moulding allowed if secondary, warm_historical, artwork_primary_with_architectural_gravity\nPalette: neutral, premium, artwork-first\nMood: Serene, sophisticated, rich, and contemplative. The late afternoon golden light filtering into a spacious, high-ceilinged room creates a quiet grandeur, where history meets contemporary art; Palazzo Late Light: historic European room with warm late light and refined restraint Placement mode: wall_hanging. Use old plaster or stone architecture. Let warm light support the artwork. Do not turn the room into a period drama., The artwork's deep, rich colors and strong, abstract forms find a sophisticated counterpoint in the warm, historical palette and restrained grandeur of a European palazzo. The interplay of contemporary abstraction against classical architecture highlights the artwork's timeless appeal and versatility. The golden late light brings out the subtle textures and tonal shifts in the painting.\nCamera potential: elevated high-angle architectural view, controlled view from above, not top-down, not surveillance-like, An elevated high-angle room camera: the artwork plane, wall plane, floor lines, furniture perspective, and architectural vanishing direction must belong to the same controlled elevated perspective.\nAvoid: no existing artwork, no framed art, no readable text, no logos, no people, no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no drone distance, no surveillance view, no decorative random people, no pets, no crowds, no children, no museum spectacle, no period drama, no costumes, no rustic farmhouse, no museum spectacle, no artwork substitution, no royal event, no costume drama, no crowd, no pet, no animal, no generic neutral interior, no rustic Tuscan room, no generic lounge, no showroom, no unrelated gallery; no royal event; no costume drama; no crowd; no pet; no animal; no costumes; no pets; no crowds; no museum spectacle; no artwork substitution; artwork_must_remain_primary; no_pets; no_period_costume_scene; no_museum_crowds; no_artwork_substitution; artwork remains the primary visual subject; context supports the artwork, never replaces it; no scale distortion; no decorative dominance\nUser generation notes: Automatic fallback from MockupCombinationEngine: create the missing scene mother using the selected category and context metadata.",
+    "options": {
+        "reference_free": true,
+        "context_title": "Palazzo's Gilded Dusk",
+        "context_description": "Refined gallery hall within a historic European palazzo. | Serene, sophisticated, rich, and contemplative. The late afternoon golden light filtering into a spacious, high-ceilinged room creates a quiet grandeur, where history meets contemporary art; Palazzo Late Light: historic European room with warm late light and refined restraint Placement mode: wall_hanging. Use old plaster or stone architecture. Let warm light support the artwork. Do not turn the room into a period drama. | Aged limewash walls in a warm, muted cream, Subtle classical plaster mouldings, Polished terrazzo floor with an intricate pattern in warm, pale tones, Tall arched windows with light, flowing linen drapes, Minimalist dark bronze console table, old European room with tall proportions, arches, moulding, or stone details kept restrained, aged plaster, limewash, warm stone, or muted historic color, stone, terrazzo, parquet, or old timber floor, tall ceiling, beams or moulding allowed if secondary, warm_historical, artwork_primary_with_architectural_gravity | Golden late-day light, soft and directional, filtering through tall arched windows, casting long, elegant shadows and bathing the room in a warm, diffused glow, with subtle illumination on the artwork; golden_late_day_or_soft_window_light | hanging; wall_hanging",
+        "artwork_analysis_text": "A dance of deep blues and earthy ochres, structured by geometric precision and organic flow. An abstract exploration of layered forms and chromatic depth, evoking landscapes of mind and matter. Stratified Horizon A dance of deep blues and earthy ochres, structured by geometric precision and organic flow. An abstract exploration of layered forms and chromatic depth, evoking landscapes of mind and matter. Urban Blueprint Dynamic lines and bold color fields map out a compelling internal architecture. This piece reinterprets the essence of a cityscape through a compelling interplay of shape and vibrant contrast. Chromatic Depths An intricate composition where rich blues and warm browns meet sharp accents of red and yellow. A visually dense and contemplative work, revealing hidden geometries and an atmospheric sense of place.",
+        "notes": "Automatic fallback from MockupCombinationEngine: create the missing scene mother using the selected category and context metadata."
+    }
+}

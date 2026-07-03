@@ -13,10 +13,10 @@ function h($v): string
 }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Step 1 · Create Root Image - The Artwork Curator</title>
+  <title>Step 1 · Create Base Image - The Artwork Curator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,9 +27,39 @@ function h($v): string
           max-width: 860px;
           margin: 30px auto;
       }
-      .root-mode-grid {
-          display: grid;
-          gap: 22px;
+      .tabs-container {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 24px;
+          border-bottom: 1.5px solid var(--line);
+          padding-bottom: 2px;
+      }
+      .tab-button {
+          background: transparent;
+          border: none;
+          border-bottom: 2px solid transparent;
+          padding: 10px 20px;
+          font-family: var(--font-sans);
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--muted);
+          cursor: pointer;
+          transition: all 0.2s ease;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+      }
+      .tab-button:hover {
+          color: var(--ink);
+      }
+      .tab-button.active {
+          color: var(--accent);
+          border-bottom-color: var(--accent);
+      }
+      .tab-content {
+          display: none;
+      }
+      .tab-content.active {
+          display: block;
       }
       .root-mode-label {
           display: flex;
@@ -45,20 +75,52 @@ function h($v): string
           font-family: var(--font-serif);
           font-size: 26px;
           font-weight: 500;
+          display: flex;
+          align-items: center;
+          gap: 8px;
       }
-      .root-mode-label span {
-          max-width: 360px;
+      .tooltip-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: var(--surface-soft);
           color: var(--muted);
-          font-size: 12px;
-          line-height: 1.45;
-          text-align: right;
+          font-size: 11px;
+          font-weight: bold;
+          cursor: help;
+          margin-left: 6px;
+          border: 1px solid var(--line);
+          position: relative;
+      }
+      .tooltip-icon:hover::after {
+          content: attr(title);
+          position: absolute;
+          bottom: 125%;
+          left: 50%;
+          transform: translateX(-50%);
+          background: var(--ink);
+          color: var(--surface);
+          padding: 8px 12px;
+          border-radius: var(--radius);
+          font-size: 11px;
+          line-height: 1.4;
+          white-space: normal;
+          width: 240px;
+          z-index: 100;
+          box-shadow: var(--shadow-hover);
+          font-family: var(--font-sans);
+          font-weight: normal;
+          text-transform: none;
       }
       .dropzone-container {
           position: relative;
           border: 1.5px dashed var(--line);
           border-radius: var(--radius);
           background: var(--surface-soft);
-          min-height: 360px;
+          min-height: 320px;
           padding: 32px 24px;
           text-align: center;
           cursor: pointer;
@@ -66,6 +128,7 @@ function h($v): string
           display: flex;
           flex-direction: column;
           align-items: center;
+          justify-content: center;
           gap: 12px;
           margin-bottom: 24px;
       }
@@ -109,7 +172,7 @@ function h($v): string
           width: auto;
           max-width: min(100%, 720px);
           height: auto;
-          max-height: 520px;
+          max-height: 420px;
           object-fit: contain;
           border: 1px solid var(--line);
           border-radius: 2px;
@@ -118,7 +181,7 @@ function h($v): string
           background: var(--surface);
       }
       .dropzone-container.has-preview {
-          min-height: 540px;
+          min-height: 460px;
           background: #f8f6f1;
       }
       .dropzone-container.has-preview .dropzone-icon {
@@ -160,20 +223,22 @@ function h($v): string
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 16px;
       }
-      .step-actions button {
+      .step-actions button,
+      .step-actions .button-link {
           width: auto;
           margin: 0;
-          padding: 14px 28px;
+          padding: 12px 24px;
+      }
+      .actions-group {
+          display: flex;
+          gap: 12px;
       }
       @media (max-width: 720px) {
           .root-mode-label {
               align-items: flex-start;
               flex-direction: column;
-          }
-          .root-mode-label span {
-              max-width: none;
-              text-align: left;
           }
       }
   </style>
@@ -189,7 +254,7 @@ function h($v): string
     </header>
 
     <div class="alert-strip">
-      Step 1 · Create Root Image: Upload the original artwork to isolate the canvas, remove background noise and shadow interference.
+      Step 1 · Create Base Image: Upload the original artwork to isolate the canvas, remove background noise and shadow interference.
     </div>
 
     <div class="workspace">
@@ -204,127 +269,165 @@ function h($v): string
       </div>
 
       <p class="page-kicker">
-        The system uses creative models to generate <?= h($rootArtworkCount) ?> candidates of your artwork isolated from its environment. 
         It is critical to specify the exact canvas sizes to maintain realistic scaling in future mockups.
       </p>
 
-      <div class="form-container root-mode-grid">
-        <form action="start_generate.php" method="post" enctype="multipart/form-data" class="panel">
-          <div class="root-mode-label">
-            <h2>Generate Root Artwork</h2>
-            <span>Use this when the source photo still needs cleanup, isolation, frontal correction or candidate generation.</span>
-          </div>
-          
-          <div class="form-group" style="margin-bottom: 24px;">
-            <label style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Primary Image of the Artwork</label>
+      <div class="form-container">
+        <!-- Tabs Selector -->
+        <div class="tabs-container" role="tablist" aria-label="Upload modes">
+          <button type="button" class="tab-button active" role="tab" aria-selected="true" aria-controls="ai-cleanup-tab" id="tab-ai" onclick="switchTab('ai-cleanup-tab', 'tab-ai')">
+              AI Cleanup & Candidates
+          </button>
+          <button type="button" class="tab-button" role="tab" aria-selected="false" aria-controls="direct-upload-tab" id="tab-direct" onclick="switchTab('direct-upload-tab', 'tab-direct')">
+              Direct Upload (Bypass)
+          </button>
+        </div>
+
+        <!-- TAB 1: AI CLEANUP -->
+        <div id="ai-cleanup-tab" class="tab-content active" role="tabpanel" aria-labelledby="tab-ai">
+          <form action="start_generate.php" method="post" enctype="multipart/form-data" class="panel">
+            <div class="root-mode-label">
+              <h2>
+                  <svg class="icon-inline" style="width:20px;height:20px;color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                  </svg>
+                  Generate Root Artwork
+                  <span class="tooltip-icon" title="Recommended when the photo has background shadows, frames, wall perspective, or needs canvas separation. Generates several isolated candidates.">ⓘ</span>
+              </h2>
+            </div>
             
-            <div class="dropzone-container" id="dropzone">
-                <svg class="dropzone-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <div class="dropzone-text" id="dropzoneText">Drag and drop your image here, or <span>browse files</span></div>
-                <div class="dropzone-info">Supports PNG, JPG, JPEG or WEBP (Max 15MB)</div>
-                <img id="previewImage" class="dropzone-preview" alt="Preview" />
-                <input type="file" name="main_artwork" id="fileInput" accept="image/*" required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label style="margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Physical Dimensions</label>
-            <small style="margin: 4px 0 14px 0; color: var(--muted); font-size: 11.5px; line-height: 1.4;">
-              Provide the artwork dimensions without accounting for frames, supports, shadows or photo borders.
-            </small>
-            
-            <div class="dim-input-group">
-              <div class="dim-input-field">
-                <label>Width</label>
-                <input type="number" name="width" step="0.1" placeholder="e.g. 80" required min="0.1">
-              </div>
-              <div class="dim-input-field">
-                <label>Height</label>
-                <input type="number" name="height" step="0.1" placeholder="e.g. 100" required min="0.1">
-              </div>
-              <div class="dim-input-field">
-                <label>Depth (optional)</label>
-                <input type="number" name="depth" step="0.1" placeholder="e.g. 4">
-              </div>
-              <div class="dim-input-field">
-                <label>Unit</label>
-                <select name="unit">
-                  <option value="cm" selected>cm</option>
-                  <option value="in">inches</option>
-                </select>
+            <div class="form-group" style="margin-bottom: 24px;">
+              <label style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Primary Image of the Artwork</label>
+              
+              <div class="dropzone-container" id="dropzone">
+                  <svg class="dropzone-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <div class="dropzone-text" id="dropzoneText">Drag and drop your image here, or <span>browse files</span></div>
+                  <div class="dropzone-info">Supports PNG, JPG, JPEG or WEBP (Max 15MB)</div>
+                  <img id="previewImage" class="dropzone-preview" alt="Preview" />
+                  <input type="file" name="main_artwork" id="fileInput" accept="image/*" required>
               </div>
             </div>
-          </div>
 
-          <div class="step-actions">
-            <span style="font-size: 11px; color: var(--muted);">Beta Mode: Uses Imagen 3 generation pipeline.</span>
-            <button type="submit" class="button">Upload & Create Root Candidates</button>
-          </div>
-
-        </form>
-
-        <form action="upload_existing_root.php" method="post" enctype="multipart/form-data" class="panel">
-          <div class="root-mode-label">
-            <h2>Use Existing Root Artwork</h2>
-            <span>Use this when your artwork image is already frontal, clean and ready for camera slots. Gemini root generation is skipped.</span>
-          </div>
-
-          <div class="form-group" style="margin-bottom: 24px;">
-            <label style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Ready Root Artwork Image</label>
-
-            <div class="dropzone-container" id="existingRootDropzone">
-                <svg class="dropzone-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <div class="dropzone-text" id="existingRootDropzoneText">Drag and drop your finished root image here, or <span>browse files</span></div>
-                <div class="dropzone-info">Supports PNG, JPG, JPEG or WEBP. No root generation or artwork analysis will run.</div>
-                <img id="existingRootPreviewImage" class="dropzone-preview" alt="Existing root preview" />
-                <input type="file" name="existing_root_artwork" id="existingRootFileInput" accept="image/*" required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label style="margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Physical Dimensions</label>
-            <small style="margin: 4px 0 14px 0; color: var(--muted); font-size: 11.5px; line-height: 1.4;">
-              Provide the artwork dimensions for realistic scale in future mockups.
-            </small>
-
-            <div class="dim-input-group">
-              <div class="dim-input-field">
-                <label>Width</label>
-                <input type="number" name="width" step="0.1" placeholder="e.g. 80" required min="0.1">
-              </div>
-              <div class="dim-input-field">
-                <label>Height</label>
-                <input type="number" name="height" step="0.1" placeholder="e.g. 100" required min="0.1">
-              </div>
-              <div class="dim-input-field">
-                <label>Depth (optional)</label>
-                <input type="number" name="depth" step="0.1" placeholder="e.g. 4">
-              </div>
-              <div class="dim-input-field">
-                <label>Unit</label>
-                <select name="unit">
-                  <option value="cm" selected>cm</option>
-                  <option value="in">inches</option>
-                </select>
+            <div class="form-group">
+              <label style="margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Physical Dimensions</label>
+              <small style="margin: 4px 0 14px 0; color: var(--muted); font-size: 11.5px; line-height: 1.4;">
+                Provide the artwork dimensions without accounting for frames, supports, shadows or photo borders.
+              </small>
+              
+              <div class="dim-input-group">
+                <div class="dim-input-field">
+                  <label>Width</label>
+                  <input type="number" name="width" step="0.1" placeholder="e.g. 80" required min="0.1">
+                </div>
+                <div class="dim-input-field">
+                  <label>Height</label>
+                  <input type="number" name="height" step="0.1" placeholder="e.g. 100" required min="0.1">
+                </div>
+                <div class="dim-input-field">
+                  <label>Depth (optional)</label>
+                  <input type="number" name="depth" step="0.1" placeholder="e.g. 4">
+                </div>
+                <div class="dim-input-field">
+                  <label>Unit</label>
+                  <select name="unit">
+                    <option value="cm" selected>cm</option>
+                    <option value="in">inches</option>
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="step-actions">
-            <span style="font-size: 11px; color: var(--muted);">Bypass Mode: stores this file as the final root artwork.</span>
-            <button type="submit" class="button secondary">Use This Root Artwork</button>
-          </div>
-        </form>
+            <div class="step-actions">
+              <span style="font-size: 11px; color: var(--muted);">Beta Mode: Uses Imagen 3 generation pipeline.</span>
+              <div class="actions-group">
+                  <a href="dashboard.php" class="button secondary">Cancel</a>
+                  <button type="submit" class="button">Upload & Create Candidates</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- TAB 2: DIRECT UPLOAD (BYPASS) -->
+        <div id="direct-upload-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-direct">
+          <form action="upload_existing_root.php" method="post" enctype="multipart/form-data" class="panel">
+            <div class="root-mode-label">
+              <h2>
+                  <svg class="icon-inline" style="width:20px;height:20px;color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  Use Existing Root Artwork
+                  <span class="tooltip-icon" title="Recommended when the photo is already clean, frontal, isolated, and cropped. Gemini root candidate select step is skipped.">ⓘ</span>
+              </h2>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+              <label style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Ready Root Artwork Image</label>
+
+              <div class="dropzone-container" id="existingRootDropzone">
+                  <svg class="dropzone-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <div class="dropzone-text" id="existingRootDropzoneText">Drag and drop your finished root image here, or <span>browse files</span></div>
+                  <div class="dropzone-info">Supports PNG, JPG, JPEG or WEBP. Direct catalog upload.</div>
+                  <img id="existingRootPreviewImage" class="dropzone-preview" alt="Existing root preview" />
+                  <input type="file" name="existing_root_artwork" id="existingRootFileInput" accept="image/*" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label style="margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Physical Dimensions</label>
+              <small style="margin: 4px 0 14px 0; color: var(--muted); font-size: 11.5px; line-height: 1.4;">
+                Provide the artwork dimensions for realistic scale in future mockups.
+              </small>
+
+              <div class="dim-input-group">
+                <div class="dim-input-field">
+                  <label>Width</label>
+                  <input type="number" name="width" step="0.1" placeholder="e.g. 80" required min="0.1">
+                </div>
+                <div class="dim-input-field">
+                  <label>Height</label>
+                  <input type="number" name="height" step="0.1" placeholder="e.g. 100" required min="0.1">
+                </div>
+                <div class="dim-input-field">
+                  <label>Depth (optional)</label>
+                  <input type="number" name="depth" step="0.1" placeholder="e.g. 4">
+                </div>
+                <div class="dim-input-field">
+                  <label>Unit</label>
+                  <select name="unit">
+                    <option value="cm" selected>cm</option>
+                    <option value="in">inches</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-actions">
+              <span style="font-size: 11px; color: var(--muted);">Bypass Mode: stores this file as the final root artwork.</span>
+              <div class="actions-group">
+                  <a href="dashboard.php" class="button secondary">Cancel</a>
+                  <button type="submit" class="button secondary">Use This Root Artwork</button>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </main>
 </div>
 
 <script>
+    function switchTab(tabId, buttonId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        document.getElementById(buttonId).classList.add('active');
+    }
+
     bindDropzone('fileInput', 'dropzone', 'dropzoneText', 'previewImage');
     bindDropzone('existingRootFileInput', 'existingRootDropzone', 'existingRootDropzoneText', 'existingRootPreviewImage');
 

@@ -1,0 +1,31 @@
+```json
+{
+  "recommended_number_of_contexts": 1,
+  "contextual_proposals": [
+    {
+      "context_name": "Midcentury Urban Collector's Atelier",
+      "context_role": "To present the artwork in a sophisticated, design-conscious, and architecturally rich environment that emphasizes its bold modernity and textural depth within a curated personal collection.",
+      "space_type": "Refined urban loft living area with architectural recesses.",
+      "atmosphere": "A warm, contemplative, and design-focused atmosphere, blending the raw architectural elements of a loft with the refined comfort of midcentury design. The air is clear, reflecting a sense of curated precision and understated luxury, with a subtle burgundy undertone from specific design pieces.",
+      "materials": [
+        "Warm neutral plaster walls",
+        "Polished concrete floor",
+        "Dark walnut wood panel accent (in a recess or feature wall)",
+        "Charcoal grey linen upholstery on a low-slung midcentury sofa",
+        "A single, low-profile lounge chair in deep burgundy velvet or leather",
+        "Bronze or brass accents in a minimalist floor lamp",
+        "Quiet, textured area rug in muted tones (grey/beige) with a subtle geometric pattern"
+      ],
+      "lighting": "Warm, controlled daylight filtering in from a large loft window, casting soft, directional light across the artwork and highlighting its texture. Subtly enhanced by a refined, period-appropriate floor lamp in the foreground, providing focused illumination on the artwork's lower section without overpowering the natural light.",
+      "camera_view": "Borgoña Recovecos / Cámara 3/4 en Loft de Hormigón: Camera height is human but tucked into an architectural recess, approximately 120-160 cm depending on the loft edge. Use a 3/4 view from a recess, corner, or architectural edge, with a burgundy-toned spatial mood and one clean vanishing direction. The artwork is partially contextualized by loft recesses and concrete architecture, creating depth and intimacy without hiding the piece; allow strong off-center framing through recesses, corners, side planes, or architectural edges.",
+      "camera_distance": "Controlled architectural distance, allowing both the artwork and the surrounding midcentury elements and architectural depth to be appreciated. The artwork remains the clear focal point.",
+      "camera_angle_notes": "The 3/4 view from within an architectural recess creates a sense of discovery and integrates the artwork into the spatial flow. The slight angle reveals the physical thickness of the canvas, emphasizing its object quality. The strong off-center framing, guided by the recess or corner, adds visual dynamism and compositional tension, drawing the viewer's eye into the scene and towards the artwork.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's bold, layered abstraction with its strong red, black, and yellow palette finds a compelling dialogue with the clean lines and rich, yet controlled material palette of a midcentury collector's loft. The raw textures and industrial hints in the artwork (e.g., dripping paint, layered forms) are echoed by the polished concrete and architectural recesses, while the warm wood and refined furniture provide a sophisticated counterpoint. The burgundy tones in the camera mood and select furniture pieces create a cohesive, complementary color environment without clashing with the artwork's vibrant reds.",
+      "commercial_reason": "This context elevates the artwork's market appeal by placing it in a premium, design-forward environment that speaks to a discerning collector. It demonstrates how the artwork can seamlessly integrate into a sophisticated, art-first interior, appealing to buyers who appreciate both contemporary art and classic design. The architectural depth and controlled camera perspective enhance the artwork's physical presence and commercial value, suggesting it as a central piece in a refined urban dwelling.",
+      "mockup_prompt": "A midcentury urban loft living area. The artwork, a large vertical abstract painting with bold horizontal bands of red, black, yellow, and earthy green, featuring dripping textures and small dimensional red/brown squares at the top and stacked rectangles at the bottom, is prominently displayed on a warm neutral plaster wall. A dark walnut wood panel accent is visible within an architectural recess to one side, adding depth. The floor is polished concrete. The camera is positioned within a corner or recess at human height (120-160 cm), providing a 3/4 view, subtly off-center, with one clean vanishing direction leading into the room. A low-slung midcentury sofa in charcoal grey linen is partially visible in the mid-ground. A refined, low-profile midcentury lounge chair in deep burgundy velvet is placed to the side, contributing to a subtle burgundy-toned spatial mood. A minimalist bronze floor lamp provides refined illumination. Controlled warm daylight filters into the loft. The artwork is the primary focus, its physical thickness and texture visible. No people, no animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no rustic Tuscan, no Mediterranean villa, no furniture ad"
+    }
+  ]
+}
+```

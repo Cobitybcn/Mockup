@@ -13,6 +13,15 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/app/bootstrap.php';
 
+if (!defined('LEGACY_MOCKUP_FLOW_ENABLED') || !LEGACY_MOCKUP_FLOW_ENABLED) {
+    http_response_code(400);
+    echo json_encode([
+        'ok' => false,
+        'error' => 'Legacy mockup context analysis disabled. Use the direct world mother combination flow (mockup_combinations_review.php).'
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
 $currentUser = Auth::requireUser();
 
 // Liberar bloqueo de sesión para evitar encolamiento de peticiones concurrentes

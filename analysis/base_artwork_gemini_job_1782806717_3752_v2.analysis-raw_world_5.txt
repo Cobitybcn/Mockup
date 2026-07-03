@@ -1,0 +1,31 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Mid-Century Loft Atelier with Burgundy Echoes",
+      "context_role": "Showcases the artwork in a sophisticated collector's environment, highlighting its architectural forms and vibrant colors within a refined mid-century aesthetic.",
+      "space_type": "Refined Mid-Century Loft Atelier",
+      "atmosphere": "Sophisticated, contemplative, design-led, with an elegant blend of warmth and raw architectural honesty. The deep hues of the artwork are accentuated by a subtly burgundy-toned spatial mood.",
+      "materials": [
+        "Warm, textured plaster wall for artwork display",
+        "Polished dark wood parquet floor with subtle grain",
+        "Exposed architectural concrete elements in recesses or structural beams, subtly visible in the background",
+        "Mid-century modern lounge chair in a deep plum or rust-colored velvet",
+        "Small, dark bronze side table",
+        "Simple white ceiling"
+      ],
+      "lighting": "Controlled warm daylight filtering through a large window, creating soft, directional illumination that emphasizes the artwork's texture and casts gentle shadows, enhancing the burgundy-toned spatial mood.",
+      "camera_view": "Borgoña Recovecos / Cámara 3/4 en Loft de Hormigón: Camera height is human but tucked into an architectural recess, approximately 120-160 cm depending on the loft edge. Use a 3/4 view from a recess, corner, or architectural edge, with a burgundy-toned spatial mood and one clean vanishing direction. The artwork is partially contextualized by loft recesses and concrete architecture, creating depth and intimacy without hiding the piece; allow strong off-center framing through recesses, corners, side planes, or architectural edges.",
+      "camera_distance": "Controlled architectural distance, allowing the artwork to be the clear focal point while showing enough of the surrounding space to establish context and depth.",
+      "camera_angle_notes": "The 3/4 view from an architectural recess reveals the physical thickness of the canvas and places the artwork within a dynamic, three-dimensional space. The off-center framing, guided by the concrete architectural elements, adds visual tension and highlights the artwork's presence as a curated object, not just a flat image.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's abstract architectural elements and bold color blocks find a harmonious dialogue with the clean lines and material richness of a mid-century design interior. The ladders in the piece, suggesting ascent or connection, resonate with the idea of a collector's pursuit of significant art. The warm plaster backdrop and dark wood floor allow the artwork's vibrant blues, reds, and oranges to pop, while the subtle concrete and burgundy tones echo its raw and refined qualities.",
+      "commercial_reason": "This context appeals to a discerning market segment that appreciates collectible design and sophisticated artistic expression. It elevates the artwork by presenting it within a curated, design-forward space that is both aspirational and authentic. The integration of the camera's 'concrete loft' directive with 'midcentury design' expands the market appeal, showing the artwork in a premium, art-first setting without being overly sterile or unapproachable. The specific color and material choices reinforce a sense of luxury and thoughtful acquisition.",
+      "mockup_prompt": "A mid-century modern loft atelier. An abstract painting, exactly as provided, is hung on a warm, textured plaster wall. The wall is part of an architectural recess within the loft's structure, subtly revealing exposed concrete elements in the deeper background and structural beams. The camera is positioned from a 3/4 view within an architectural corner or recess, at human eye-level (140cm), looking towards the artwork, creating a single clean vanishing direction for the receding architecture. The composition is off-center, allowing the concrete planes and refined plaster wall to frame the artwork elegantly. The floor is polished dark wood parquet. To the side, a single iconic mid-century modern lounge chair, upholstered in a deep plum or rust-colored velvet, sits low and subtly, providing a 'burgundy-toned spatial mood' accent. A small, elegant dark bronze side table is near the chair. Controlled warm daylight filters from a large window, casting soft shadows and highlighting textures. The artwork is dominant but integrated into the sophisticated space. The canvas thickness is visible and realistic. No people, no animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no rustic Tuscan villa, no furniture ad, no chair closeup, no unrelated gallery."
+    }
+  ]
+}
+```
+`
+`

@@ -1,0 +1,45 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Urban Ascent",
+      "subtitle": "A vibrant study of structured ambition and chromatic harmony.",
+      "description": "Bold blocks of color—teal, red, yellow, and green—intersect with a sense of architectural rhythm, evoking modern cityscapes and pathways of progress, highlighted by subtle ladder motifs."
+    },
+    {
+      "title": "Chromatic Frameworks",
+      "subtitle": "An abstract composition exploring depth, texture, and the geometry of color.",
+      "description": "Dynamic forms and rich textures are brought to life through a compelling interplay of primary and secondary hues, suggesting internal structures and vibrant energies within a defined space."
+    },
+    {
+      "title": "Ladder to the Sky",
+      "subtitle": "An energetic abstract vision of potential and upward momentum.",
+      "description": "With its striking color contrasts and hints of constructive elements like ladders, this piece speaks to aspirations, growth, and the colorful journey of building new realities."
+    }
+  ],
+  "recommended_number_of_contexts": 1,
+  "contextual_proposals": [
+    {
+      "context_name": "Atelier Passage of Creative Energy",
+      "context_role": "To showcase the artwork's vibrant energy and professional presence within an authentic, yet refined, creative environment.",
+      "space_type": "Refined artist's atelier passage or transitional studio corridor.",
+      "atmosphere": "Quietly dynamic, authentic, focused, with premium restraint and an underlying creative energy. Illuminated by soft, clear daylight.",
+      "materials": [
+        "Smooth painted plaster wall (off-white/light grey) with subtle studio traces",
+        "Polished light concrete floor",
+        "Simple studio ceiling with minimal track lighting",
+        "Matte black baseboards or wall trim"
+      ],
+      "lighting": "Soft, consistent north light, gently diffused from an unseen large studio window, creating subtle modeling on the artwork and receding architecture, emphasizing color purity.",
+      "camera_view": "Pasillo, Obra Descentrada y Próxima: Camera height is natural standing or slightly lowered human height, close enough to feel the corridor edge. Use an offset three-quarter corridor angle, with the artwork deliberately off-center and close rather than symmetrically framed. Place the artwork on a long wall plane rather than a short frontal display wall. The wall should extend laterally into the scene like a gallery passage, corridor, or elongated architectural plane, creating a clear vanishing direction. Use floor lines, ceiling lines, wall joints, lighting tracks, windows, columns, doorways, or distant wall planes to reinforce depth. The artwork may sit off-center and relatively close to the viewer, while the architecture recedes naturally to one side. Avoid product-style centered symmetry.",
+      "camera_distance": "Medium-close, allowing perception of the artwork's texture while revealing the depth of the studio passage.",
+      "camera_angle_notes": "The subtle oblique angle and off-center placement enhance the artwork's physical presence and depth, making the canvas feel substantial. The receding wall and floor lines create a dynamic tension, drawing the viewer's eye into the space without diminishing the artwork's prominence. It showcases the artwork as a real object within a tangible, artistic environment.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The clean yet authentic studio environment provides a perfect backdrop for the artwork's raw energy and bold color blocks. The subtle suggestion of creative work via the studio setting, combined with the artwork's own 'ladder' motifs and segmented forms, creates a harmonious dialogue between the art and its conceptual origin. The neutral palette of the studio allows the artwork's vibrant hues to truly pop.",
+      "commercial_reason": "This context elevates the artwork by associating it with a premium, authentic creative process. It appeals to collectors who value art's origin and materiality, presenting the piece not just as decor but as a significant creative statement. The dynamic camera angle and depth create an engaging visual, enhancing market appeal and making the artwork feel accessible yet refined.",
+      "mockup_prompt": "A vibrant abstract artwork, with bold red, yellow, green, and teal blocks, and subtle ladder motifs, hanging slightly off-center to the left on a long, clean painted plaster wall in a refined artist studio passage. The camera is at natural human height, capturing a subtle three-quarter oblique angle. The wall extends laterally, forming a clear vanishing direction for the studio corridor, with visible floor lines, ceiling lines, and minimal track lighting reinforcing depth. The light polished concrete floor complements the warm off-white painted plaster walls, which show very subtle, clean studio traces and restrained pin marks. Soft, consistent north light filters from an unseen large studio window, creating gentle, diffused illumination, emphasizing the artwork's texture and colors. The focus is sharp on the artwork, with a natural depth-of-field falloff into the receding passage. Artwork is physically present, not flat.",
+      "negative_prompt": "No people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no messy clutter, no wet paint chaos, no generic vintage room, no winter default unless seasonally intended."
+    }
+  ]
+}
+```

@@ -54,44 +54,26 @@ class Display
 
     public static function generateSeoImageFilename(array $params, ?string $directory = null): string
     {
-        $artistName = trim((string)($params['artistName'] ?? ''));
         $artworkTitle = trim((string)($params['artworkTitle'] ?? ''));
         $mockupContext = trim((string)($params['mockupContext'] ?? ''));
         $cameraAngle = trim((string)($params['cameraAngle'] ?? ''));
+        $cameraSlotName = trim((string)($params['cameraSlotName'] ?? ''));
         $imageType = trim((string)($params['imageType'] ?? 'mockup'));
         $extension = trim((string)($params['extension'] ?? 'jpg'), '.');
 
         $parts = [];
-        if ($artistName !== '') {
-            $parts[] = self::slugify($artistName);
+
+        $cameraLabel = self::filenameCameraLabel($cameraSlotName, $cameraAngle);
+        if ($cameraLabel !== '') {
+            $parts[] = self::slugify($cameraLabel);
         }
-        if ($artworkTitle !== '') {
-            $parts[] = self::slugify($artworkTitle);
-        }
+
+        $mockupContext = self::mockupContextWithoutCamera($mockupContext, $cameraLabel);
         if ($mockupContext !== '') {
             $parts[] = self::slugify($mockupContext);
         }
-
-        // Normalize camera angle/group for SEO filenames.
-        $angle = strtolower(trim($cameraAngle));
-        if (stripos($angle, 'front') !== false) {
-            $angle = 'frontal';
-        } elseif (stripos($angle, 'left') !== false) {
-            $angle = '3-4-left';
-        } elseif (stripos($angle, 'right') !== false) {
-            $angle = '3-4-right';
-        } elseif (stripos($angle, 'high') !== false || stripos($angle, 'elevated') !== false || stripos($angle, 'aerial') !== false) {
-            $angle = 'high-angle-aerial';
-        } elseif (stripos($angle, 'low floor') !== false || stripos($angle, 'floor level') !== false || stripos($angle, '7/8') !== false) {
-            $angle = 'low-floor-wide-low-angle';
-        } elseif (stripos($angle, 'low-angle') !== false || stripos($angle, 'contrapicado') !== false || stripos($angle, 'low angle') !== false) {
-            $angle = 'low-angle-contrapicado';
-        } else {
-            $angle = '';
-        }
-
-        if ($angle !== '') {
-            $parts[] = $angle;
+        if ($artworkTitle !== '') {
+            $parts[] = self::slugify($artworkTitle);
         }
 
         if ($imageType !== '') {
@@ -124,6 +106,38 @@ class Display
         }
 
         return $filename . '.' . $extension;
+    }
+
+    private static function filenameCameraLabel(string $cameraSlotName, string $cameraAngle): string
+    {
+        $label = trim($cameraSlotName);
+        if ($label === '') {
+            $label = str_replace('_', ' ', trim($cameraAngle));
+        }
+
+        return trim(preg_replace('/\s+/', ' ', $label) ?: '');
+    }
+
+    private static function mockupContextWithoutCamera(string $mockupContext, string $cameraLabel): string
+    {
+        $mockupContext = trim($mockupContext);
+        $cameraLabel = trim($cameraLabel);
+        if ($mockupContext === '' || $cameraLabel === '') {
+            return $mockupContext;
+        }
+
+        $cameraSlug = self::slugify($cameraLabel);
+        $segments = preg_split('/\s*[\/|]\s*/', $mockupContext) ?: [$mockupContext];
+        $kept = [];
+        foreach ($segments as $segment) {
+            $segment = trim((string)$segment);
+            if ($segment === '' || self::slugify($segment) === $cameraSlug) {
+                continue;
+            }
+            $kept[] = $segment;
+        }
+
+        return trim(implode(' ', $kept));
     }
 
     public static function convertPngToJpg(string $pngData): string

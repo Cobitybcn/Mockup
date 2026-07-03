@@ -64,14 +64,16 @@ class AdminPromptComposerPreview
 
         // 1.2 Load root_file from database and fallback to Artwork Details dimensions if not found in CORE JSON
         $rootFile = '';
+        $artworkTitle = '';
         if ($artworkId > 0) {
             try {
                 $pdo = Database::connection();
-                $stmt = $pdo->prepare("SELECT root_file, width, height, depth FROM artworks WHERE id = :id LIMIT 1");
+                $stmt = $pdo->prepare("SELECT root_file, final_title, width, height, depth FROM artworks WHERE id = :id LIMIT 1");
                 $stmt->execute(['id' => $artworkId]);
                 $dbArtwork = $stmt->fetch();
                 if ($dbArtwork) {
                     $rootFile = basename((string)($dbArtwork['root_file'] ?? ''));
+                    $artworkTitle = trim((string)($dbArtwork['final_title'] ?? ''));
                     if ($width === null && isset($dbArtwork['width']) && (float)$dbArtwork['width'] > 0) {
                         $width = (float)$dbArtwork['width'];
                         $fallbackUsed = true;
@@ -91,6 +93,9 @@ class AdminPromptComposerPreview
             } catch (Throwable $dbEx) {
                 // Ignore DB access issues but fallback values will apply
             }
+        }
+        if ($artworkTitle === '' && $rootFile !== '') {
+            $artworkTitle = Display::artworkTitle($rootFile);
         }
 
         // 1.3 Fallback only if missing
@@ -127,6 +132,7 @@ class AdminPromptComposerPreview
         } else {
             $orientation = 'square';
         }
+        $sizeClass = $this->artworkSizeClass($width, $height);
 
         // Parse context fields
         $fields = $this->parseContextFields($contextProposal);
@@ -138,50 +144,48 @@ class AdminPromptComposerPreview
         $replacements = [
             '{{MOCKUP_CONTEXT_PROPOSAL}}' => $contextBlock,
             '{{MOCKUP_CONTEXT_NEGATIVE_PROMPT}}' => $fields['negative_prompt'],
+            '{{ARTWORK_TITLE}}' => $artworkTitle,
             '{{ARTWORK_WIDTH_CM}}' => (string)$width,
             '{{ARTWORK_HEIGHT_CM}}' => (string)$height,
             '{{ARTWORK_DEPTH_CM}}' => (string)$depth,
             '{{ARTWORK_ORIENTATION}}' => $orientation,
+            '{{ARTWORK_SIZE_CLASS}}' => $sizeClass,
             '{{ARTWORK_ROOT_FILE}}' => $rootFile,
+            '{{CAMERA_SLOT_ID}}' => $fields['camera_slot_id'],
+            '{{CAMERA_SLOT_NAME}}' => $fields['camera_slot_name'],
+            '{{WORLD_MOTHER_REFERENCE_IMAGE}}' => $fields['world_mother_reference_image'],
+            '{{NEGATIVE_PROMPT}}' => $fields['negative_prompt'],
         ];
+
+        $slotFullPrompt = self::slotFullPromptTemplate($fields['camera_slot_id']);
+        if ($slotFullPrompt !== '') {
+            $slotFullPrompt = rtrim($slotFullPrompt)
+                . "\n\n" . ArtworkPhysicalIntegrityPolicy::environmentalScaleReasoningBlock()
+                . "\n\n" . self::slotFullPromptWorldMotherArtworkQuarantine();
+            return $this->sanitizeRenderableMeasurementLabels(str_replace(
+                array_keys($replacements),
+                array_values($replacements),
+                str_replace("\r\n", "\n", $slotFullPrompt)
+            ));
+        }
 
         $composed = str_replace(
             array_keys($replacements),
             array_values($replacements),
             $normalizedAdmin
         );
+        $composed = $this->sanitizeRenderableMeasurementLabels($composed);
 
-        $composed = rtrim($composed) . "\n\n" . ArtworkScalePolicy::promptBlock($width, $height, $depth, $orientation);
-        $dominancePolicy = ArtworkDominancePolicy::promptBlock($fields['camera_slot_id']);
-        if ($dominancePolicy !== '') {
-            $composed = rtrim($composed) . "\n\n" . $dominancePolicy;
-        }
-        $edgePolicy = ArtworkEdgePolicy::promptBlock($fields['camera_slot_id']);
-        if ($edgePolicy !== '') {
-            $composed = rtrim($composed) . "\n\n" . $edgePolicy;
-        }
-        $detailCropPolicy = ArtworkDetailCropPolicy::promptBlock($fields['camera_slot_id'], $orientation);
-        if ($detailCropPolicy !== '') {
-            $composed = rtrim($composed) . "\n\n" . $detailCropPolicy;
-        }
+        $composed = rtrim($composed) . "\n\n" . ArtworkPhysicalIntegrityPolicy::promptBlock(
+            $width,
+            $height,
+            $depth,
+            $orientation,
+            $fields['camera_slot_id']
+        );
         $worldMotherAuthorityPolicy = WorldMotherCameraAuthorityPolicy::promptBlock($fields['camera_slot_id']);
         if ($worldMotherAuthorityPolicy !== '') {
             $composed = rtrim($composed) . "\n\n" . $worldMotherAuthorityPolicy;
-        }
-
-        $detailOverride = $this->detailSlotCompositionOverride(
-            $fields['camera_slot_id'],
-            $orientation
-        );
-        if ($detailOverride !== '') {
-            $composed = rtrim($composed) . "\n\n" . $detailOverride;
-        }
-        $floorLeaningOverride = $this->floorLeaningSlotOverride(
-            $fields['camera_slot_id'],
-            $orientation
-        );
-        if ($floorLeaningOverride !== '') {
-            $composed = rtrim($composed) . "\n\n" . $floorLeaningOverride;
         }
         
         return $composed;
@@ -269,6 +273,71 @@ class AdminPromptComposerPreview
         return trim((string)preg_replace('/\s{2,}/', ' ', (string)$text));
     }
 
+    private function sanitizeRenderableMeasurementLabels(string $text): string
+    {
+        $text = preg_replace(
+            '/(\*\s*depth\s*:\s*)[0-9]+(?:\.[0-9]+)?\s*cm/i',
+            '$1supplied physical canvas/object depth metadata only; do not render as visible text',
+            $text
+        );
+        $text = preg_replace(
+            '/(Artwork\s+physical\s+depth\s*:\s*)[0-9]+(?:\.[0-9]+)?\s*cm/i',
+            '$1supplied physical canvas/object depth metadata only; do not render as visible text',
+            (string)$text
+        );
+
+        return (string)$text;
+    }
+
+    private function artworkSizeClass(float $width, float $height): string
+    {
+        $longestSide = max($width, $height);
+        if ($longestSide <= 70.0) {
+            return 'M';
+        }
+        if ($longestSide <= 130.0) {
+            return 'L';
+        }
+        if ($longestSide <= 180.0) {
+            return 'XL';
+        }
+
+        return 'Monumental/XXL';
+    }
+
+    public static function hasSlotFullPromptTemplate(string $slotId): bool
+    {
+        return self::slotFullPromptTemplate($slotId) !== '';
+    }
+
+    private static function slotFullPromptTemplate(string $slotId): string
+    {
+        if ($slotId === '') {
+            return '';
+        }
+
+        $requestedSlotId = $slotId;
+        $configPath = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'Config' . DIRECTORY_SEPARATOR . 'mockup_camera_slots.php';
+        $config = is_file($configPath) ? require $configPath : [];
+        $template = $config['slots'][$requestedSlotId]['full_prompt_template'] ?? '';
+
+        return is_string($template) ? trim($template) : '';
+    }
+
+    private static function slotFullPromptWorldMotherArtworkQuarantine(): string
+    {
+        return trim(<<<'TEXT'
+WORLD MOTHER ARTWORK QUARANTINE:
+IMAGE 2 may contain paintings, murals, wall drawings, posters, framed images, easel canvases, sketches, portraits, figures, decorative marks, or unfinished studio artwork. Treat all of those as unsafe environmental artifacts, not as content sources.
+
+Never copy, preserve, enlarge, translate, restyle, echo, or remix any artwork, mural, face, figure, brushwork, color composition, easel canvas, poster, frame content, or wall drawing from IMAGE 2 into IMAGE 1 or into the installed artwork. IMAGE 1 is the only artwork content allowed.
+
+If IMAGE 2 contains a large mural, figurative wall painting, colorful wall drawing, poster cluster, or competing artwork, neutralize that area into compatible blank wall, aged plaster, shelving, stacked blank canvases, furniture, shadow, or ordinary studio clutter. Do not keep it as a second prominent artwork in the final image.
+
+The final mockup must contain one primary artwork only: the supplied IMAGE 1 canvas/object. Any secondary canvas-like object may appear only as a blank support, turned-away canvas, neutral stretcher, or indistinct studio prop with no readable image, no face, no figure, and no decorative composition.
+TEXT);
+    }
+
     /**
      * Builds the exact subordinated context block.
      */
@@ -321,57 +390,4 @@ class AdminPromptComposerPreview
             . "* Negative Prompt: {$fields['negative_prompt']}";
     }
 
-    private function detailSlotCompositionOverride(string $cameraSlotId, string $orientation): string
-    {
-        $detailSlots = [
-            'detalle_textura_lienzo',
-            'borde_canvas_closeup',
-            'esquina_obra_perspectiva_extrema',
-            'rasante_superficie_pintura',
-        ];
-        if (!in_array($cameraSlotId, $detailSlots, true)) {
-            return '';
-        }
-
-        $formatRule = match ($orientation) {
-            'portrait' => 'Because the artwork is portrait, any visible canvas fragment must still feel like part of a taller-than-wide physical artwork. Do not square it, widen it, compress its height, or complete the visible fragment into a square painting.',
-            'landscape' => 'Because the artwork is landscape, any visible canvas fragment must still feel like part of a wider-than-tall physical artwork. Do not make it portrait, square it, compress its width, or complete the visible fragment into a different format.',
-            default => 'Because the artwork is square, any visible canvas fragment must still feel like part of a square physical artwork. Do not stretch it into portrait or landscape.',
-        };
-
-        $slotRule = $cameraSlotId === 'borde_canvas_closeup'
-            ? 'For Borde de Canvas Close-up, prioritize the physical side edge, canvas thickness, wall contact, cast shadow, and a faithful partial slice of the painted face. The whole artwork should usually not be visible.'
-            : 'For this material-detail camera slot, prioritize a faithful physical fragment of the artwork surface over showing the whole artwork.';
-
-        return trim(<<<TEXT
-SELECTED DETAIL CAMERA OVERRIDE
-
-This selected camera slot intentionally allows camera-frame cropping of the artwork. This overrides generic "do not crop", "no cropped artwork", and "show the whole artwork" instructions only for photographic framing.
-
-Do not crop, resize, repaint, extend, redesign, or alter the artwork itself. The central ARTWORK SCALE POLICY owns the true physical size and orientation; this detail camera only controls photographic framing of a faithful fragment.
-
-{$formatRule}
-
-{$slotRule}
-TEXT);
-    }
-
-    private function floorLeaningSlotOverride(string $cameraSlotId, string $orientation): string
-    {
-        if ($cameraSlotId !== 'obra_apoyada_suelo_7_8') {
-            return '';
-        }
-
-        return trim(<<<TEXT
-SELECTED FLOOR-LEANING ARTWORK OVERRIDE
-
-This selected camera slot requires a real leaning artwork installation. The artwork is not hanging and not wall-mounted. It may lean against a real wall or against a real stable support object when that object could plausibly hold a canvas in an atelier, studio, storage room, or collector preview.
-
-Place the real physical artwork with believable gravity: its bottom edge must rest on the real floor or on a clearly stable low support surface, and its back upper edge must lean gently against a wall or load-bearing object at about 5-12 degrees. The floor/support/wall relationship must be physically legible through contact shadows, grounded bottom contact, and coherent perspective.
-
-The central ARTWORK SCALE POLICY owns physical size, orientation ({$orientation}), aspect ratio, and scale. This floor-leaning override only controls installation physics, contact, support, and gravity. It must not reinterpret the artwork as a monumental billboard, room divider, oversized slab, stage prop, or architectural panel.
-
-Do not invent a giant plinth, oversized display block, impossible platform, or arbitrary support just to hold the artwork. If the artwork leans on an object, the object must be real, stable, correctly scaled, visually connected to the floor, and coherent with the room; the artwork contact point must be visible or strongly implied.
-TEXT);
-    }
 }

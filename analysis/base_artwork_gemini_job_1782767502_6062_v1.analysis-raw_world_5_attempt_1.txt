@@ -1,0 +1,28 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Concrete Horizon Collector's Loft",
+      "context_role": "Presents the artwork as a centerpiece in a sophisticated, architecturally aware collector's space, highlighting its bold simplicity and material depth within a midcentury-modern context.",
+      "space_type": "Open-plan loft residence / collector's salon",
+      "atmosphere": "Refined, architectural, contemplative, with a subtle midcentury warmth. A sense of spaciousness and curated living with an understated 'burgundy-toned' spatial mood.",
+      "materials": [
+        "Polished concrete walls and floor",
+        "Warm off-white plaster wall",
+        "Dark walnut wood panel accent",
+        "Aged dark brown leather (on a collector chair)",
+        "Dark bronze details"
+      ],
+      "lighting": "Soft, filtered warm daylight entering from large, industrial-style windows, casting gentle shadows and highlighting the texture of the concrete. Subtle ambient warmth, with a refined period floor lamp providing additional soft glow, contributing to the 'burgundy-toned' spatial mood.",
+      "camera_view": "Borgoña Recovecos / Cámara 3/4 en Loft de Hormigón: Camera height is human but tucked into an architectural recess, approximately 120-160 cm depending on the loft edge. Use a 3/4 view from a recess, corner, or architectural edge, with a burgundy-toned spatial mood and one clean vanishing direction. The artwork is partially contextualized by loft recesses and concrete architecture, creating depth and intimacy without hiding the piece; allow strong off-center framing through recesses, corners, side planes, or architectural edges.",
+      "camera_distance": "Medium-close",
+      "camera_angle_notes": "The 3/4 view from a concrete architectural recess captures the artwork at a dynamic angle, revealing its physical depth and integrating it into the sophisticated loft architecture. The strong vanishing lines of the concrete structure will draw the eye towards the artwork while establishing the room's elegant proportions. The off-center framing emphasizes the artwork's bold composition and allows the textural interplay with the concrete surroundings to be appreciated. The camera's perspective enhances the artwork's presence as a three-dimensional object within a curated space.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's strong, minimalist forms and bold color palette resonate with the clean lines and material honesty of midcentury design. The green and red contrast beautifully with the neutral, textural backdrop of concrete and warm wood, allowing the artwork to command attention. The abstract 'horizon' line in the artwork finds an echo in the architectural planes and spatial depth of the loft, creating a harmonious dialogue between art and environment.",
+      "commercial_reason": "This context elevates the artwork by placing it in a premium, architecturally significant environment that appeals to collectors of modern and midcentury design. It showcases the artwork's versatility for sophisticated, contemporary spaces, suggesting it is a statement piece for discerning buyers. The subtle integration of a 'burgundy-toned' mood, hinted at by the camera, adds a layer of curated elegance and visual interest, making the presentation highly aspirational.",
+      "mockup_prompt": "An abstract painting with a large red rectangle on a green background, small red squares, and a dark blue line, is mounted on a warm neutral plaster wall with a subtle dark walnut wood panel accent, in a midcentury-influenced collector's loft. The room features exposed polished concrete structural elements and floor, with clean architectural lines and spatial depth. The camera is positioned at human height (140 cm) within a concrete architectural recess, capturing a 3/4 oblique view with strong linear perspective leading towards a far wall, creating a single clean vanishing direction. The artwork is slightly off-center, framed by the recess and side concrete planes, creating depth and intimacy. A low-slung, iconic midcentury design chair (e.g., a Børge Mogensen Spanish Chair in aged, dark brown leather) is subtly placed in the foreground or midground, partially visible, supporting the artwork's dominance without competing. The space is bathed in soft, filtered warm daylight from large industrial-style windows, creating gentle shadows and a subtle burgundy-toned spatial mood, highlighting the concrete texture. The artwork must remain the protagonist, presented as a physical canvas with visible thickness, and its exact colors and proportions preserved.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no rustic Tuscan villa, no Mediterranean retreat, no generic beige room, no furniture showroom, no chair closeup, no furniture ad, no pet, no animal, no crowd, no generic neutral interior, no Mediterranean villa, no rustic Tuscan room, no generic lounge, no showroom, no unrelated gallery"
+    }
+  ]
+}
+```

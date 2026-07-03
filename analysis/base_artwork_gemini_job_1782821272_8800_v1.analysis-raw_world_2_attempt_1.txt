@@ -1,0 +1,28 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Crimson Vista in Palazzo Sun",
+      "context_role": "Showcases the artwork's intense color and texture within a serene, high-end domestic setting, emphasizing its aspirational value and seamless integration into sophisticated living.",
+      "space_type": "Elegant Residential Study",
+      "atmosphere": "Refined, contemplative, and warm, imbued with the soft, golden light of a late afternoon sun. It conveys quiet luxury and a sense of timeless domesticity.",
+      "materials": [
+        "Warm neutral limewash walls",
+        "Pale polished travertine floor",
+        "Clean, unadorned ceiling",
+        "Minimalist dark wood console table",
+        "Refined natural fiber area rug (optional, for subtle texture)"
+      ],
+      "lighting": "Soft, polished golden afternoon sunlight streaming from a large, off-camera window, creating gentle, warm reflections and subtle, elongated shadows across the floor and walls, highlighting the artwork's materiality.",
+      "camera_view": "Reflejo Dorado de Tarde / Palazzo: Camera height is elegant human standing height, approximately 150-170 cm, as if observed calmly from inside a palazzo room. Use a soft three-quarter rotation that catches reflected late light while keeping the artwork plane legible. The composition is stable, warm, and architectural, with golden afternoon reflection supporting the room rather than repainting the artwork; keep elegant balance but avoid perfect symmetry unless the room itself naturally demands it.",
+      "camera_distance": "Controlled architectural distance, allowing the artwork to dominate while revealing the elegant proportions of the room.",
+      "camera_angle_notes": "The soft three-quarter angle reveals the physical thickness of the canvas and adds depth to the abstract forms, preventing a flat appearance. The perspective emphasizes the artwork's presence within a beautifully proportioned, aspirational interior.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's deep, dynamic reds and energetic lines find a compelling counterpoint in the restrained elegance of a quiet luxury study. The golden afternoon light enhances the warmth and subtle textures of the painting, allowing its emotional depth to resonate within a sophisticated, yet understated, environment. This placement highlights the artwork's ability to be a powerful artistic statement in a lived space.",
+      "commercial_reason": "This context elevates the artwork into a high-value, aspirational domestic setting, appealing to discerning buyers who seek art that profoundly enhances their refined homes. The 'palazzo' aesthetic, combined with quiet luxury elements, communicates timeless quality and exclusivity, positioning the artwork as a centerpiece in an exquisitely curated interior. The soft lighting emphasizes premium appeal and comfort.",
+      "mockup_prompt": "A spacious, quiet luxury residential study. The walls are finished in a warm neutral limewash, and the floor is pale polished travertine. A large, vertically oriented abstract artwork, predominantly deep reds with dynamic white linear elements and raised red square forms, is centrally installed on a prominent wall. In the foreground, positioned to the side and slightly off-center to enhance depth, stands a minimalist dark wood console table with clean, architectural lines. Soft golden afternoon sunlight streams from a large window (off-camera, to the side), casting warm reflections and subtle, elongated shadows across the room and gently illuminating the artwork's texture. The perspective is at elegant human standing height (150-170 cm), offering a stable, architectural composition with clear vanishing lines and natural spatial compression. The artwork remains the undisputed focal point.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no influencer lifestyle, no hotel catalog look, no furniture showroom"
+    }
+  ]
+}
+```

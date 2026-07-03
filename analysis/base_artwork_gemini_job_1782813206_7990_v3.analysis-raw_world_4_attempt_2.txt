@@ -1,0 +1,27 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Atelier Passage with North Light",
+      "context_role": "To present the artwork in a refined studio environment, emphasizing its material authenticity and the contemplative space of its creation, while showcasing its substantial presence in an architectural passage.",
+      "space_type": "Artist's working studio passage",
+      "atmosphere": "Serene, contemplative, dedicated to artistic practice, infused with quiet daylight. Reflects creative refinement and a working, yet impeccably maintained, aesthetic.",
+      "materials": [
+        "Plastered studio walls with subtle, matte white finish",
+        "Light-toned polished concrete floor",
+        "White-painted ceiling with visible, neat studio lighting tracks",
+        "Subtle, neatly stored wooden canvases or simple wood easel (blurred in background)"
+      ],
+      "lighting": "Soft, even north light filtering from large windows or skylights, illuminating the space with a cool, natural glow. The artwork is well-lit but without harsh shadows or direct sunbeams, enhancing its depth and color.",
+      "camera_view": "Pasillo, Obra Descentrada y Próxima: Camera height is natural standing or slightly lowered human height, close enough to feel the corridor edge. Use an offset three-quarter corridor angle, with the artwork deliberately off-center and close rather than symmetrically framed. Place the artwork on a long wall plane rather than a short frontal display wall. The wall should extend laterally into the scene like a gallery passage, corridor, or elongated architectural plane, creating a clear vanishing direction. Use floor lines, ceiling lines, wall joints, lighting tracks, windows, columns, doorways, or distant wall planes to reinforce depth. The artwork may sit off-center and relatively close to the viewer, while the architecture recedes naturally to one side. Avoid product-style centered symmetry.",
+      "camera_distance": "Controlled architectural distance, allowing the architectural depth to be seen while keeping the artwork dominant.",
+      "camera_angle_notes": "The subtle three-quarter angle reveals the physical thickness of the canvas, making it feel like a substantial object. The off-center placement and receding architectural lines create dynamic depth, drawing the eye along the wall plane and emphasizing the artwork's commanding presence within a purposeful space. The focus remains sharply on the artwork, with a natural photographic blur on distant elements.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "This studio environment, with its quiet and spacious feel, aligns with the artwork's contemplative nature and expansive green field. It suggests the artwork is part of a serious creative practice, enhancing its perceived value and authenticity. The neutral, clean backdrop allows the artwork's colors and composition to stand out without competition.",
+      "commercial_reason": "Presenting the artwork in a refined artist studio passage adds a layer of intellectual and creative gravitas, appealing to collectors who appreciate the origin and context of art. The dynamic camera angle and architectural depth offer a premium visual experience, differentiating it from flat, generic presentations and showcasing its potential in sophisticated residential or office settings that value art within a designed environment.",
+      "mockup_prompt": "A large abstract painting, 'Untitled' (as provided image) with a deep green field and red/blue square elements, is hung slightly off-center on a long, subtly textured plaster wall in a clean, quiet artist's working studio passage. The wall extends laterally into the scene, creating a clear vanishing direction towards the right, revealing architectural depth. The floor is light-toned polished concrete. A neat, white-painted ceiling with subtle lighting tracks is visible. Soft, even north light illuminates the space from large, unseen windows or skylights, casting no harsh shadows. The camera is at natural standing height, angled in a three-quarter view, close enough to feel the architectural edge. The artwork is dominant, in sharp focus, showcasing its physical canvas and texture. Distant studio elements, such as a blurred stack of neatly stored canvases or a simple wooden stool, subtly recede out of focus in the background, hinting at creative activity without clutter. No people, no animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no messy clutter, no wet paint chaos, no chaotic studio, no excessive visible artist tools, no unrefined interior, no blurred artwork, no symmetrical framing"
+    }
+  ]
+}
+```

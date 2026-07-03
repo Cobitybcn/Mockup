@@ -1,0 +1,368 @@
+IMAGE ROLE CONTRACT:
+- AUTHORITY 1 - ROOT ARTWORK: IMAGE 1 is the product authority. Preserve its exact artwork content, colors, marks, composition, texture, proportions, format, and visual identity.
+- The final mockup must contain the same recognizable artwork from IMAGE 1, not a similar painting, not a newly painted abstract surface, not a style transfer, not a botanical/gestural reinterpretation, and not artwork invented from the room or world mother.
+- If IMAGE 1 is abstract, minimal, sparse, or contains simple marks, preserve that exact sparse composition. Do not fill empty areas with extra brushstrokes, leaves, decorative marks, figures, patterns, symbols, or painterly noise.
+- AUTHORITY 2 - CAMERA SLOT: the selected camera slot is the photographic authority for the final image. It controls viewpoint, lens behavior, camera height, distance, crop, angle, perspective, and composition.
+- AUTHORITY 3 - WORLD MOTHER: IMAGE 2, when present, is not the environment to reproduce and not a camera reference. It is visual evidence for building a new compatible environment in the same material, lighting, palette, architectural mood, and atmospheric family.
+- Transform the world mother visual language through the selected camera slot. You may move, replace, or reinvent windows, walls, furniture, objects, depth, and room geometry whenever needed to obey the camera slot and serve IMAGE 1.
+- Do not copy IMAGE 2's camera angle, crop, object positions, wall choice, window placement, room geometry, furniture placement, source-photo composition, or room layout.
+- Never replace the ROOT ARTWORK with a blank wall, empty canvas, decorative panel or object from the WORLD MOTHER.
+- All written dimensions and measurements are hidden instructions only. Never render visible text, captions, labels, measurement callouts, arrows, rulers, scale bars, unit labels, or numeric size annotations in the generated image.
+- If the camera or environment conflicts with the artwork, preserve IMAGE 1 and adapt the environment around it.
+
+Create a photorealistic premium art mockup using the provided artwork image as the exact authoritative visual reference.
+
+The artwork image is the product. The room is only the premium human, cultural, architectural, seasonal, and material context that enriches the artwork’s presentation.
+
+ARTWORK TECHNICAL DATA
+
+Artwork root reference file: base_artwork_uploaded_uploaded_root_1782950720_6417_v1.jpg
+Artwork physical width: 80 cm
+Artwork physical height: 120 cm
+Artwork physical depth: supplied physical canvas/object depth metadata only; do not render as visible text
+Artwork orientation: portrait
+
+Use these physical dimensions as factual scale data. Do not reinterpret them as decorative suggestions.
+
+ABSOLUTE ARTWORK FIDELITY
+
+Recreate the provided artwork faithfully inside the mockup scene.
+
+Preserve exactly:
+
+* composition
+* colors
+* marks
+* surface texture
+* proportions
+* orientation
+* format
+* visual identity
+* physical presence
+
+Do not repaint, redesign, crop, mirror, recolor, simplify, reinterpret, stylize, beautify, extend, repair, or modify the artwork.
+
+The artwork must appear as a real physical canvas or real physical artwork installed in the space, not as a flat digital poster pasted onto a wall.
+
+If canvas depth is visible, show believable physical thickness and side depth. The artwork must keep its real proportions and must not be warped.
+
+SELECTED MOCKUP CONTEXT PROPOSAL
+
+Use the following selected mockup context proposal as the authoritative scene, context, atmosphere, lighting, materials, scale, installation, and camera direction for this mockup:
+
+MOCKUP CONTEXT PROPOSAL:
+* World Mother Category: industrial_loft_high_ceilings
+* World Mother Reference Image: storage/world_mothers/industrial_loft_high_ceilings/world_mother_20260701_162040_2472_02.png
+* Mode: direct world mother plus selected camera slot; no artwork analysis, title, description, curatorial reading, or context ranking was used.
+* Space Type: New Industrial Loft High Ceilings environment built from the supplied world mother visual family.
+* Materials: Material palette, surface texture, light behavior, spatial density, and architectural mood should be inferred from the supplied world mother reference image. Windows, furniture, objects, wall choice, room geometry, and layout must be newly composed to obey the selected camera slot.
+* Lighting: Use the lighting character visible in the supplied world mother image; do not invent a conflicting time of day or unrelated gallery lighting.
+* Placement: wall_hanging
+* Camera View: Selected camera slot viewpoint: Contrapicado 7/8.
+* Camera Group: contrapicado_7_8
+* Camera Distance: Use the distance required by the selected camera slot. The world mother image provides material, light, atmosphere, and environmental-family evidence, but not the camera position, layout, crop, room geometry, wall choice, furniture placement, window placement, or perspective.
+* Camera Notes: The camera slot is authoritative for viewpoint, lens, crop, height, perspective, and composition. The world mother image supplies material language, palette, lighting, atmospheric density, and architectural mood only. Build a new environment from that visual family through the selected camera viewpoint rather than preserving the source photo room. AGGRESSIVE CONTRAPICADO CAMERA OVERRIDE: for this selected camera slot, strong optical perspective distortion of the room is intentional and desired. Allow dramatic wide-lens perspective, stretched near-floor foreground, steep upward vanishing lines, and almost deformed architectural depth. This override supersedes generic instructions that ask for a soft, controlled, undistorted, or normal gallery viewpoint. Protect only the artwork identity: the artwork must remain the same rigid physical canvas and must not melt, tear, liquify, become a different painting, or lose its core composition.
+* Camera Slot ID: contrapicado_7_8
+* Camera Slot: Contrapicado 7/8
+* Camera Slot Geometry:
+Camera height is aggressively low, 5-20 cm from the floor, clearly far below knee height. The viewpoint must feel like the lens is near the floor and close to the wall, not standing height, not chest height, and not a normal eye-level gallery view.
+Use an aggressive wide architectural lens equivalent, about 20-28 mm. Strong side-depth exaggeration, stretched near foreground, and intense perspective convergence are allowed and desired. Avoid cartoon circular fisheye, but do not normalize the view into a polite 35-50 mm product photo.
+Use a strong visible upward low-angle tilt from below the artwork centerline. The viewer should read the underside/lower edge relationship of the canvas, with wall verticals, ceiling lines, track lights, or architecture rising sharply upward. If the result could be mistaken for a normal eye-level 3/4 wall view, the camera is wrong.
+Use a very strong 7/8 oblique rotation so the wall, artwork side depth, floor plane, and room volume rush toward one shared vanishing direction. The side of the canvas can feel dramatically deep through perspective, while the artwork remains a rigid object.
+The artwork is seen with aggressive side depth and believable thickness from a near-floor 7/8 viewpoint. Include a large visible floor wedge or floor plane in the lower foreground, with wall/floor junctions and architectural verticals proving the camera is below knee height. Use strong asymmetry, a close foreground edge, and negative space toward the vanishing side while keeping surrounding wall and floor aligned to the same camera. This must feel almost perspective-deformed and must not collapse into a standard standing-height 3/4 gallery photograph.
+Use controlled photographic depth of field to separate foreground, artwork, and vanishing-side architecture: the artwork face, canvas edges, and visible texture remain completely sharp; only secondary foreground or distant background planes may soften subtly.
+Camera object integrity: The artwork may occupy a strong visual position, but its apparent size must remain consistent with the supplied physical artwork dimensions. Canvas integrity: the canvas is a rigid physical rectangle under aggressive perspective; strong foreshortening and exaggerated side-depth are allowed, but the front face must not melt, tear, curve, liquid-warp, or become a different artwork. Preserve the exact root artwork identity, colors, marks, sparse areas, composition, and proportions from IMAGE 1. Canvas plane, wall plane, floor lines, furniture, and architecture share one coherent vanishing logic.
+Camera negatives: no eye-level view, no standing-height view, no normal 3/4 gallery photo, no gentle low angle, no soft controlled viewpoint, no flat wall view, no melted artwork, no torn canvas, no artwork substitution, no random people, no pets, no crowds, no children.
+* Mockup Combination Notes: Combination preview uses the root artwork image plus the selected real world mother reference image and the selected camera slot.
+* Human Presence: none unless required by the selected camera slot.
+* Mockup Prompt: Use the supplied world mother reference image as visual evidence for the environmental family: storage/world_mothers/industrial_loft_high_ceilings/world_mother_20260701_162040_2472_02.png. Build a new environment with compatible materiality, color palette, surface texture, atmospheric density, architectural mood, and lighting character. The selected camera slot must determine the final camera angle, wall choice, window placement, furniture placement, object positions, layout, crop, and perspective; the reference photo camera angle, room geometry, layout, crop, and perspective are not binding. Scene mother variant: opposite #2. Use this as the opposite/complementary style variant: it supports alternate orbital camera readings while preserving the same environmental family, not the same room layout. Camera role: build "Contrapicado 7/8" as a new environment photographed through the selected camera slot. The mother reference supplies visual evidence for materiality, palette, light quality, atmospheric density, architectural mood, and environmental family; it does not supply the final camera angle, layout, crop, height, perspective, room geometry, wall choice, window placement, furniture placement, or object positions. Reconstruct, relocate, or invent compatible architecture and objects as needed so the camera slot can fully govern the image. AGGRESSIVE CONTRAPICADO CAMERA OVERRIDE: for this selected camera slot, strong optical perspective distortion of the room is intentional and desired. Allow dramatic wide-lens perspective, stretched near-floor foreground, steep upward vanishing lines, and almost deformed architectural depth. This override supersedes generic instructions that ask for a soft, controlled, undistorted, or normal gallery viewpoint. Protect only the artwork identity: the artwork must remain the same rigid physical canvas and must not melt, tear, liquify, become a different painting, or lose its core composition.
+* Negative Prompt: no unrelated gallery, no white cube gallery unless required by the environmental family, no generic showroom, no replacement environment family, no different material palette, no different light temperature family, no invented minimalist museum, no frozen copy of the source photo composition, no copied world mother layout, no same sofa-window-wall composition, no same window placement as the reference image, no same furniture placement as the reference image, no treating the world mother as a room template, no subordinating the camera slot to the world mother photo; controlled aggressive perspective distortion is allowed for the room; no centered frontal composition; no symmetrical monument view; no straight-on product wall view; no melted artwork; no torn canvas; no artwork substitution; no changed artwork identity; no eye-level view; no standing-height view; no normal 3/4 gallery photo; no gentle low angle
+
+The selected context proposal may contain deterministic camera fields assigned by the system. When present, these camera fields override looser or conflicting camera wording from the contextual scene description.
+
+Do not ignore this context block. It defines the specific mockup direction to generate.
+
+PRIMARY IMAGE PRIORITIES
+
+1. Artistic camera handling is the first priority.
+   The camera must actively build the image. It must create depth, elegance, product presence, spatial credibility, and commercial strength.
+
+2. Premium human-cultural context is the second priority.
+   The environment must feel like a specific human world: cultural, architectural, historical, seasonal, studio-based, or collector-oriented. Avoid generic interiors.
+
+3. The context must fit the artwork.
+   The space, materials, atmosphere, light, and camera must respond to the artwork’s colors, rhythm, density, silence, contrast, symbolic tension, or emotional tone.
+
+4. The final mockup must enrich the artwork.
+   The result must feel more valuable, more specific, more visually rich, and more commercially powerful than a simple artwork-on-wall mockup.
+
+SCENE AND CONTEXT RULES
+
+Use the selected mockup proposal as the main scene direction.
+
+The context must be visually specific. Avoid vague vintage luxury, generic beige rooms, hotel-like decoration, real-estate render interiors, or repeated warm stock interiors.
+
+If the scene is antique, make it authentically old-world.
+If the scene is modern, make it clearly contemporary.
+If the scene is Mediterranean, use refined southern European architecture, mineral walls, limewash, stone, travertine, terracotta, linen, filtered sunlight, shutters, or summer air.
+If the scene is Eastern or Oriental-inspired, make it premium, restrained, respectful, and architecturally refined. Avoid exotic clichés.
+If the scene is historical, express the period through architecture, furniture, materials, light, and atmosphere, not theatrical props.
+If the scene is Renaissance, Belle Époque, or 1940s Paris, keep it believable, elegant, and premium.
+If the scene is a collector interior, make it specific, lived, cultivated, and visually controlled, not generic.
+
+Do not default to the same beige room, brown furniture, vague vintage armchair, soft natural light, or winter atmosphere.
+
+SEASONAL CONTEXT RULES
+
+Use seasonal awareness only when compatible with the selected context proposal.
+
+Europe and North America are the main buying markets. If the current season is spring or summer, avoid making the scene feel completely wintery, dim, closed, heavy, or brown unless the selected proposal explicitly requires a moody interior.
+
+Seasonal cues may include:
+
+* clearer daylight
+* refined summer light
+* Mediterranean sun filtered through curtains or shutters
+* breathable interior atmosphere
+* lighter mineral materials
+* soft seasonal freshness
+* controlled brightness with premium contrast
+
+Do not turn the scene into a vacation postcard. Keep it collector-grade, elegant, architectural, and commercially refined.
+
+LIGHTING RULES
+
+Lighting must be intentional and must create visual contrast.
+
+Use one clear lighting strategy:
+
+* Mediterranean directional sunlight
+* soft summer daylight
+* premium gallery spotlight
+* moody evening collector light
+* chiaroscuro historical light
+* cool architectural daylight
+* dark wall with focused artwork illumination
+* warm interior light contrasted with deeper shadows
+
+Avoid flat ambient lighting. Avoid generic evenly lit rooms. Avoid six similar warm beige interiors.
+
+CAMERA RULES
+
+The selected camera direction is mandatory.
+
+The camera must not make the artwork look like a poster. Even when the selected proposal is frontal, the artwork must still feel like a physical object with real material presence, believable wall contact, subtle depth, and natural perspective.
+
+Allowed camera directions:
+
+* frontal physical editorial view
+* near-frontal subtle depth view
+* soft left-oblique view
+* soft right-oblique view
+* controlled low 3/4 view
+* artistic stronger 3/4 or 7/8 view
+* elevated 3/4 architectural view
+* controlled high-angle architectural view
+* controlled low-angle or contrapicado view
+* low floor wide low-angle view only when explicitly selected
+
+Avoid:
+
+* flat pasted poster effect
+* fisheye
+* extreme wide angle
+* distorted architecture
+* surveillance-like top-down view
+* uncontrolled aerial view
+* uncontrolled floor-level distortion
+* product scale distortion
+
+If using high-angle, aerial, low-angle, contrapicado, or low floor wide low-angle views, preserve believable architecture, furniture scale, wall geometry, and artwork proportions. Do not flatten these views into a generic frontal close-up.
+
+If using a low-angle or contrapicado view, keep it controlled. The camera may sit slightly below the artwork centerline, but not so low that furniture scale becomes unbelievable.
+
+SCALE AND COMPOSITION RULES
+
+The artwork must keep its true physical size inside the room.
+
+Respect the artwork’s real physical dimensions:
+
+* width: 80 cm
+* height: 120 cm
+* depth: supplied physical canvas/object depth metadata only; do not render as visible text
+* orientation: portrait
+
+The artwork must remain coherent in relation to:
+
+* sofas
+* chairs
+* consoles
+* easels
+* doors
+* paneling
+* ceiling height
+* floor level
+* windows
+* architectural features
+
+Do not enlarge the artwork physically to make it more dominant.
+Do not shrink, stretch, distort, reformat, or change the artwork’s real proportions.
+
+If the artwork needs stronger visual presence, solve it photographically:
+move the camera closer, crop tighter, choose a nearer viewpoint, reduce empty room area, or use natural lens compression.
+
+The mockup may feel like a premium product photograph, but product presence must come from camera framing, not from changing the artwork’s real-world scale.
+
+The artwork may be visually prominent only because of camera position, crop, focal length, and composition.
+
+PHYSICAL INSTALLATION RULES
+
+The artwork may be:
+
+* mounted on a wall
+* leaning against a wall
+* displayed on an easel
+* installed in a collector room
+* placed in a refined studio context
+* integrated into a premium architectural interior
+
+The installation must be physically plausible.
+
+If mounted, it should cast subtle realistic shadows.
+If leaning, it must have correct contact with floor and wall.
+If on an easel, the easel must support the artwork believably.
+If shown at an angle, the canvas side depth must be visible and coherent.
+
+HUMAN CONTEXT WITHOUT VISIBLE HUMANS
+
+Do not include visible people, human figures, silhouettes, faces, hands, bodies, mannequins, animals, pets, birds, or insects.
+
+Human context must be expressed through:
+
+* architecture
+* furniture
+* books
+* collector objects
+* studio tools
+* historical period
+* cultural design language
+* seasonal light
+* materials
+* lived refinement
+* traces of human taste
+
+Do not add theatrical props, costumes, or narrative figures.
+
+STYLE AND MATERIAL QUALITY
+
+The mockup must look photorealistic, premium, editorial, and commercially usable.
+
+Use high-quality materials when appropriate to the selected context:
+
+* limewash
+* mineral plaster
+* stone
+* travertine
+* marble
+* terracotta
+* dark wood
+* pale oak
+* walnut
+* bronze
+* black metal
+* linen
+* paper screens
+* lacquer
+* aged European walls
+* refined paneling
+* architectural concrete
+* polished or matte floors
+
+Avoid cheap furniture, generic stock interiors, fake luxury, oversaturated decoration, clutter, unrealistic reflections, and AI-looking objects.
+
+CONTEXT NEGATIVE PROMPT
+
+Apply the following negative prompt from the selected mockup context when present:
+
+no unrelated gallery, no white cube gallery unless required by the environmental family, no generic showroom, no replacement environment family, no different material palette, no different light temperature family, no invented minimalist museum, no frozen copy of the source photo composition, no copied world mother layout, no same sofa-window-wall composition, no same window placement as the reference image, no same furniture placement as the reference image, no treating the world mother as a room template, no subordinating the camera slot to the world mother photo; controlled aggressive perspective distortion is allowed for the room; no centered frontal composition; no symmetrical monument view; no straight-on product wall view; no melted artwork; no torn canvas; no artwork substitution; no changed artwork identity; no eye-level view; no standing-height view; no normal 3/4 gallery photo; no gentle low angle
+
+GLOBAL NEGATIVE RULES
+
+No visible people.
+No animals.
+No pets.
+No birds.
+No insects.
+No human silhouettes.
+No mannequins.
+No poster effect.
+No flat pasted artwork.
+No altered artwork.
+No cropped artwork.
+No mirrored artwork.
+No changed colors.
+No redesigned composition.
+No fake frame unless explicitly requested.
+No incorrect canvas proportions.
+No distorted perspective.
+No fisheye.
+No warped architecture.
+No unrealistic artwork scale.
+No excessive wide-angle view.
+No generic beige vintage room.
+No repeated vague warm luxury interior.
+No winter default unless explicitly intended.
+No decorative clichés.
+No theatrical historical scene.
+No exotic clichés.
+No real-estate render look.
+No hotel lobby look.
+No Pinterest-style decoration.
+No cheap furniture.
+No clutter.
+No text, watermark, signature overlay, logo, UI elements, or labels.
+
+FINAL RESULT
+
+Generate a premium photorealistic art mockup where the artwork remains exact, physical, believable, and commercially powerful.
+
+The image must be visually enriched by artistic camera handling, specific human-cultural context, seasonal awareness, strong material quality, and a meaningful relationship between the artwork and the environment.
+
+ARTWORK SCALE POLICY
+
+This block is the only authority for artwork size. Camera slots may control viewpoint, lens, tilt, rotation, crop, and composition, but they must not redefine artwork scale.
+
+Physical artwork size metadata: 80 cm wide x 120 cm high, with supplied physical canvas/object depth.
+Resolved size class: medium.
+Resolved orientation: portrait.
+
+Keep the artwork at its real physical size inside the room. Do not reinterpret it as XL, monumental, billboard-sized, wall-filling, architectural panel-sized, stage-prop-sized, or mural-scale unless these supplied dimensions truly support that reading.
+
+All measurements in this block are hidden generation metadata only. Never render measurement text, number labels, dimension callouts, captions, arrows, rulers, scale bars, or visible unit labels in the image. Do not write labels such as units, width, height, depth, or numeric size annotations on or near the artwork.
+
+The artwork height must read below a typical 205 cm interior door when a door or comparable architectural height is visible.
+If an extreme camera angle or a very large room makes the artwork less dominant at true scale, keep the true scale and allow the room/camera composition to carry more of the image. Do not enlarge the artwork just to keep it visually dominant.
+Use these exact supplied dimensions for all visual comparisons: 80 cm wide x 120 cm high.
+This is a medium movable domestic/gallery artwork, not a mural, billboard, room divider, or architectural panel. It may be visually important through camera proximity and crop, but its physical size must remain modest against large loft architecture. It should read smaller than major seating groups, tall windows, concrete wall bays, stairs, mezzanines, and double-height wall sections. Keep at least one nearby scale anchor close to the artwork, such as a baseboard, outlet, chair, low table, plant pot, door edge, floor seam, concrete panel joint, or furniture edge.
+
+Scale must be inferred from nearby architecture, furniture, floor/wall junctions, baseboards, outlets, door edges, floor planks or seams, windows, ceiling height, and installation contact. These references must adapt to the artwork's real size; the artwork must not be enlarged to satisfy camera drama.
+
+ARTWORK VISUAL DOMINANCE POLICY - MEDIUM
+
+The artwork must remain intentionally placed and readable, but it does not need to be one of the largest objects in the room. Keep the selected camera slot geometry and preserve true physical scale even when the artwork occupies a modest portion of a large loft, studio, or collector interior.
+
+Resolve presence through photographic proximity, crop, framing, light, wall choice, and focal length, not through physical enlargement. Strong perspective, low viewpoint, and room depth are allowed. If true scale makes the artwork smaller than the sofa, windows, concrete panels, stairs, or ceiling structure, that is correct.
+
+Use nearby relational scale anchors when the setting contains oversized architecture, especially baseboards, outlets, door edges, furniture edges, floor seams, wall panel joints, or installation contact shadows close to the artwork.
+
+The world mother environment may carry atmosphere and depth. Props, windows, floor, furniture, and architectural drama may be visually important as long as the artwork remains clearly installed and intentionally photographed.
+
+Do not enlarge the artwork physically or break scale. The artwork can become more visually important only because the camera is closer, the crop is tighter, or the view is composed around the real object.
+
+WORLD MOTHER AUTHORITY POLICY - BALANCED CAMERA
+
+The selected camera slot remains the highest authority for viewpoint, crop, lens behavior, camera height, tilt, distance, and perspective.
+
+The world mother image is not the environment to reproduce and not the camera reference. It is visual evidence for building a new compatible environment in the same material, lighting, architectural, and atmospheric family. It is not the authority for final composition.
+
+Build a new photograph from the selected camera slot. You may move, replace, or reinvent windows, walls, furniture, objects, depth, and spatial layout so the camera slot can fully govern the final image. Keep the material palette, light quality, surface language, atmospheric tone, and environmental family; do not copy the source photo layout, camera angle, crop, wall choice, window placement, furniture placement, object positions, or room geometry.

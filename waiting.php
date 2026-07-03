@@ -10,25 +10,54 @@ $job = $_GET['job'] ?? '';
 $job = basename($job);
 
 if (!$job) {
-    die('Falta job.');
+    die('Missing job.');
+}
+
+// 1. Cancel Action (safe abort)
+if (isset($_GET['action']) && $_GET['action'] === 'cancel') {
+    try {
+        $pdo = Database::connection();
+        // Verify ownership before deleting
+        $stmtCheck = $pdo->prepare('SELECT user_id FROM artworks WHERE job_id = :job_id LIMIT 1');
+        $stmtCheck->execute(['job_id' => $job]);
+        $ownerId = $stmtCheck->fetchColumn();
+        
+        if ($ownerId !== false && (int)$ownerId === (int)$currentUser['id']) {
+            $pdo->prepare('DELETE FROM artworks WHERE job_id = :job_id')->execute(['job_id' => $job]);
+            
+            // Delete folder
+            $jobDir = __DIR__ . '/jobs/' . $job;
+            if (is_dir($jobDir)) {
+                $files = glob($jobDir . '/*') ?: [];
+                foreach ($files as $file) {
+                    if (is_file($file)) @unlink($file);
+                }
+                @rmdir($jobDir);
+            }
+        }
+    } catch (Throwable $e) {
+        // Fallback silently
+    }
+    header('Location: artwork_new.php');
+    exit;
 }
 
 $jobDir = __DIR__ . '/jobs/' . $job;
 $statusFile = $jobDir . '/status.json';
 
 if (!is_file($statusFile)) {
-    die('No se encontro el trabajo.');
+    die('Job not found.');
 }
 
 $status = json_decode((string)file_get_contents($statusFile), true);
 
 if (!$status) {
-    die('No se pudo leer el estado.');
+    die('Could not read job state.');
 }
 
 if ((int)($status['user_id'] ?? 0) !== (int)$currentUser['id']) {
     http_response_code(403);
-    die('No tienes acceso a este trabajo.');
+    die('You do not have access to this job.');
 }
 
 $currentStatus = $status['status'] ?? 'unknown';
@@ -183,11 +212,6 @@ function h($v): string {
     <link rel="stylesheet" href="style.css">
 
     <style>
-        html,
-        body {
-            zoom: 1;
-        }
-
         body {
             background: #080807;
         }
@@ -197,7 +221,7 @@ function h($v): string {
         }
 
         .album-wait {
-            height: calc(100vh - 86px);
+            min-height: calc(100vh - 86px);
             box-sizing: border-box;
             position: relative;
             overflow: hidden;
@@ -205,155 +229,59 @@ function h($v): string {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 18px 24px;
-        }
-
-        .album-wait::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(circle at 18% 22%, rgba(25, 82, 91, 0.45), transparent 32%),
-                radial-gradient(circle at 78% 18%, rgba(121, 42, 48, 0.26), transparent 31%),
-                radial-gradient(circle at 58% 76%, rgba(154, 123, 86, 0.30), transparent 34%),
-                linear-gradient(126deg, rgba(4, 7, 8, 0.96), rgba(8, 8, 7, 0.92) 38%, rgba(19, 31, 31, 0.82) 100%),
-                linear-gradient(118deg, transparent 0 18%, rgba(255, 255, 255, 0.045) 18% 18.2%, transparent 18.2% 46%, rgba(214, 178, 122, 0.055) 46% 46.25%, transparent 46.25%),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 100%),
-                linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 100%);
-            background-size: 100% 100%, 112px 112px, 112px 112px;
-            opacity: 0.72;
-            animation: waitGradientDrift 18s ease-in-out infinite alternate;
-            pointer-events: none;
-        }
-
-        .album-stage {
-            position: relative;
-            z-index: 2;
-            flex: 1 1 auto;
-            width: 100%;
-            min-height: 0;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            padding: clamp(8px, 2.4vw, 24px) 0 clamp(10px, 2vw, 18px);
-            box-sizing: border-box;
-        }
-
-        .album-stage::before,
-        .album-stage::after {
-            content: "";
-            position: absolute;
-            pointer-events: none;
-            border: 1px solid rgba(255, 255, 255, 0.10);
-            background: rgba(255, 255, 255, 0.018);
-            mix-blend-mode: screen;
-        }
-
-        .album-stage::before {
-            width: min(72vw, 980px);
-            height: min(42vh, 420px);
-            transform: translateX(-8vw) rotate(-5deg);
-        }
-
-        .album-stage::after {
-            width: min(44vw, 620px);
-            height: min(34vh, 340px);
-            transform: translateX(24vw) rotate(7deg);
-            border-color: rgba(214, 178, 122, 0.13);
-        }
-
-        .album-track {
-            display: flex;
-            align-items: center;
-            gap: clamp(22px, 3vw, 44px);
-            width: max-content;
-            height: 100%;
-            animation: albumScrollLeft 58s linear infinite;
-            position: relative;
-            z-index: 1;
-        }
-
-        .album-slide {
-            flex: 0 0 auto;
-            max-width: min(34vw, 540px);
-            max-height: 86%;
-            width: auto;
-            height: auto;
-            object-fit: contain;
-            filter: drop-shadow(0 24px 72px rgba(0, 0, 0, 0.62));
-            opacity: 0.94;
-        }
-
-        @keyframes albumScrollLeft {
-            from { transform: translateX(0); }
-            to { transform: translateX(-50%); }
-        }
-
-        .album-empty {
-            width: min(76vw, 980px);
-            max-height: calc(100% - 24px);
-            aspect-ratio: 16 / 10;
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            background: linear-gradient(135deg, #151311, #28231d);
-            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
-        }
-
-        .album-wait::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(circle at center, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.58)),
-                linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.70));
-            pointer-events: none;
+            padding: 40px 24px;
         }
 
         .process-card {
-            width: min(560px, calc(100vw - 48px));
-            background: linear-gradient(135deg, rgba(18, 16, 14, 0.82), rgba(10, 9, 8, 0.68));
+            width: min(460px, calc(100vw - 48px));
+            background: linear-gradient(135deg, rgba(18, 16, 14, 0.95), rgba(10, 9, 8, 0.90));
             border: 1px solid rgba(214, 178, 122, 0.20);
-            padding: 14px 16px 13px;
-            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            padding: 30px 28px;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.06);
             border-radius: 8px;
             color: #f7f2ea;
             backdrop-filter: blur(14px);
             position: relative;
             z-index: 3;
             margin: 0;
+            text-align: center;
         }
 
         .process-card h2 {
-            margin: 0 0 2px;
-            font-size: clamp(18px, 1.8vw, 23px);
+            margin: 0 0 8px;
+            font-size: 24px;
             letter-spacing: -0.01em;
             font-family: var(--font-serif);
             font-weight: 500;
             color: #f7f2ea;
         }
 
-        .process-card .page-kicker,
-        .process-card p {
+        .process-card .page-kicker {
             color: rgba(247, 242, 234, 0.74);
             margin-top: 0;
+            font-size: 13px;
+            margin-bottom: 20px;
         }
 
         .status-box {
             font-size: 13px;
-            background: rgba(255, 255, 255, 0.08);
-            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 12px 14px;
             border-left: 3px solid #d6b27a;
-            margin: 9px 0;
+            margin: 18px 0;
             border-radius: 0 var(--radius) var(--radius) 0;
+            text-align: left;
         }
 
         .artist-wait-tip {
-            min-height: 38px;
-            margin-top: 10px;
-            padding-top: 10px;
+            min-height: 48px;
+            margin-top: 14px;
+            padding-top: 14px;
             border-top: 1px solid rgba(247, 242, 234, 0.13);
             color: rgba(247, 242, 234, 0.72);
             font-size: 12px;
             line-height: 1.45;
+            text-align: left;
         }
 
         .artist-wait-tip strong {
@@ -363,10 +291,10 @@ function h($v): string {
 
         .progress {
             width: 100%;
-            height: 6px;
+            height: 4px;
             overflow: hidden;
             background: rgba(255, 255, 255, 0.18);
-            margin: 10px 0;
+            margin: 16px 0;
             position: relative;
             border-radius: 99px;
         }
@@ -382,408 +310,15 @@ function h($v): string {
             animation: progressMove 1.6s ease-in-out infinite;
         }
 
-        @keyframes progressMove {
-            0% { left: -42%; }
-            55% { left: 100%; }
-            100% { left: 100%; }
-        }
-
-        @keyframes waitGradientDrift {
-            from { filter: saturate(0.95) brightness(0.88); transform: scale(1); }
-            to { filter: saturate(1.16) brightness(1.02); transform: scale(1.035); }
-        }
-
-        .root-preview {
-            width: 100%;
-            max-height: 78vh;
-            object-fit: contain;
-            display: block;
-            margin: 24px 0;
-            background: var(--surface-soft);
-            border: 12px solid var(--surface);
-            box-shadow: var(--shadow);
-            border-radius: var(--radius);
-        }
-
-        .error {
-            color: var(--danger);
-            background: #FFF5F5;
-            border-left-color: var(--danger);
-        }
-
-        code {
-            background: rgba(255, 255, 255, 0.12);
-            padding: 2px 5px;
-            font-family: monospace;
-            font-size: 12px;
-            border-radius: 2px;
-        }
-
-        @media (max-width: 640px) {
-            .album-slide {
-                max-width: 86vw;
-            }
-
-            .process-card {
-                padding: 16px;
-            }
-        }
-
-        iframe {
-            display: none;
-            width: 0;
-            height: 0;
-            border: 0;
-        }
-
-        .album-wait {
-            background: #020202;
-            padding: 0;
-        }
-
-        .album-wait::before {
-            background:
-                radial-gradient(ellipse at 24% 22%, rgba(161, 124, 73, 0.22), transparent 38%),
-                radial-gradient(ellipse at 76% 28%, rgba(74, 48, 33, 0.24), transparent 42%),
-                radial-gradient(ellipse at 48% 78%, rgba(187, 159, 108, 0.13), transparent 46%),
-                linear-gradient(120deg, #010101 0%, #090704 42%, #030303 100%);
-            background-size: 150% 150%;
-            opacity: 1;
-            animation: sepiaBreath 28s ease-in-out infinite alternate;
-        }
-
-        .album-stage {
-            position: absolute;
-            inset: 0;
-            z-index: 1;
-            display: block;
-            width: auto;
-            padding: 0;
-            overflow: hidden;
-        }
-
-        .album-stage::before,
-        .album-stage::after {
-            border: 0;
-            background:
-                radial-gradient(ellipse at center, rgba(222, 193, 138, 0.13), transparent 58%);
-            filter: blur(24px);
-            opacity: 0.36;
-        }
-
-        .album-stage::before {
-            width: 70vw;
-            height: 60vh;
-            left: -12vw;
-            top: 2vh;
-            transform: rotate(-18deg);
-        }
-
-        .album-stage::after {
-            width: 58vw;
-            height: 54vh;
-            right: -16vw;
-            bottom: -8vh;
-            transform: rotate(14deg);
-        }
-
-        .album-track {
-            position: absolute;
-            display: flex;
-            align-items: center;
-            gap: clamp(70px, 12vw, 180px);
-            width: max-content;
-            height: auto;
-            animation: none;
-            will-change: transform;
-        }
-
-        .album-track.dream-a {
-            top: 12vh;
-            left: -34vw;
-            animation: dreamDriftA 112s ease-in-out infinite alternate;
-        }
-
-        .album-track.dream-b {
-            top: 43vh;
-            right: -42vw;
-            animation: dreamDriftB 146s ease-in-out infinite alternate;
-        }
-
-        .album-track.dream-c {
-            bottom: 6vh;
-            left: -18vw;
-            animation: dreamDriftC 128s ease-in-out infinite alternate;
-        }
-
-        .album-track.dream-d {
-            top: -24vh;
-            left: 10vw;
-            flex-direction: column;
-            animation: dreamColumnDown 168s ease-in-out infinite alternate;
-        }
-
-        .album-track.dream-e {
-            bottom: -34vh;
-            right: 14vw;
-            flex-direction: column;
-            animation: dreamColumnUp 188s ease-in-out infinite alternate;
-        }
-
-        .album-track.dream-f {
-            top: 4vh;
-            left: -86vw;
-            transform-origin: center;
-            animation: dreamWideRiver 206s ease-in-out infinite alternate;
-        }
-
-        .album-track.dream-g {
-            top: 64vh;
-            right: -62vw;
-            animation: dreamSmallCounter 156s ease-in-out infinite alternate;
-        }
-
-        .album-track.dream-h {
-            top: 28vh;
-            left: -124vw;
-            animation: dreamMonumentalMist 236s ease-in-out infinite alternate;
-        }
-
-        .album-slide {
-            max-width: min(28vw, 430px);
-            max-height: 46vh;
-            filter: sepia(0.92) saturate(0.55) contrast(0.9) brightness(0.78) blur(0.15px) drop-shadow(0 30px 72px rgba(0, 0, 0, 0.72));
-            opacity: 0.34;
-            mix-blend-mode: screen;
-            border-radius: 1px;
-        }
-
-        .album-track.dream-b .album-slide {
-            max-width: min(24vw, 360px);
-            opacity: 0.24;
-            filter: sepia(1) saturate(0.45) contrast(0.86) brightness(0.72) blur(0.45px) drop-shadow(0 30px 70px rgba(0, 0, 0, 0.78));
-        }
-
-        .album-track.dream-c .album-slide {
-            max-width: min(20vw, 320px);
-            opacity: 0.18;
-            filter: sepia(0.98) saturate(0.4) contrast(0.82) brightness(0.68) blur(0.7px) drop-shadow(0 24px 64px rgba(0, 0, 0, 0.78));
-        }
-
-        .album-track.dream-d .album-slide {
-            max-width: min(18vw, 280px);
-            max-height: 36vh;
-            opacity: 0.20;
-            filter: sepia(1) saturate(0.35) contrast(0.8) brightness(0.66) blur(0.8px);
-        }
-
-        .album-track.dream-e .album-slide {
-            max-width: min(16vw, 240px);
-            max-height: 34vh;
-            opacity: 0.16;
-            filter: invert(1) sepia(0.8) saturate(0.28) contrast(0.88) brightness(0.58) blur(0.6px);
-            mix-blend-mode: lighten;
-        }
-
-        .album-track.dream-f .album-slide {
-            max-width: min(56vw, 860px);
-            max-height: 58vh;
-            opacity: 0.11;
-            filter: sepia(0.9) saturate(0.3) contrast(0.78) brightness(0.62) blur(1px);
-        }
-
-        .album-track.dream-g .album-slide {
-            max-width: min(14vw, 210px);
-            max-height: 28vh;
-            opacity: 0.28;
-            filter: sepia(1) saturate(0.5) contrast(0.9) brightness(0.76) blur(0.25px);
-        }
-
-        .album-track.dream-h .album-slide {
-            max-width: min(82vw, 1240px);
-            max-height: 76vh;
-            opacity: 0.075;
-            filter: invert(1) sepia(0.65) saturate(0.2) contrast(0.74) brightness(0.52) blur(1.4px);
-            mix-blend-mode: screen;
-        }
-
-        .album-slide:nth-child(3n + 1) {
-            transform: rotate(-5deg) scale(0.86);
-        }
-
-        .album-slide:nth-child(3n + 2) {
-            transform: rotate(4deg) scale(1.06);
-        }
-
-        .album-slide:nth-child(3n) {
-            transform: rotate(-1deg) scale(0.96);
-        }
-
-        .album-wait::after {
-            background:
-                radial-gradient(ellipse at center, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.72) 72%),
-                linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.86));
-        }
-
-        .process-card {
-            position: absolute;
-            right: 22px;
-            bottom: 18px;
-            width: min(330px, calc(100vw - 44px));
-            padding: 8px 10px;
-            opacity: 0.24;
-            transition: opacity 0.35s ease;
-            background: rgba(8, 6, 4, 0.22);
-            border-color: rgba(226, 193, 131, 0.13);
-            box-shadow: none;
-        }
-
-        .process-card:hover,
-        .process-card:focus-within {
-            opacity: 0.88;
-        }
-
-        .process-card h2 {
-            font-size: 14px;
-            margin: 0;
-        }
-
-        .process-card .page-kicker,
-        .status-box,
-        .artist-wait-tip,
-        .process-card p {
-            display: none;
-        }
-
-        .progress {
-            height: 3px;
-            margin: 6px 0 0;
-        }
-
-        @keyframes dreamDriftA {
-            0% { transform: translate3d(-4vw, 0, 0); }
-            38% { transform: translate3d(24vw, 7vh, 0); }
-            72% { transform: translate3d(52vw, -3vh, 0); }
-            100% { transform: translate3d(78vw, 5vh, 0); }
-        }
-
-        @keyframes dreamDriftB {
-            0% { transform: translate3d(18vw, 0, 0); }
-            45% { transform: translate3d(-18vw, -8vh, 0); }
-            100% { transform: translate3d(-64vw, 4vh, 0); }
-        }
-
-        @keyframes dreamDriftC {
-            0% { transform: translate3d(0, 5vh, 0); }
-            35% { transform: translate3d(32vw, -6vh, 0); }
-            68% { transform: translate3d(58vw, 2vh, 0); }
-            100% { transform: translate3d(84vw, -9vh, 0); }
-        }
-
-        @keyframes dreamColumnDown {
-            0% { transform: translate3d(0, -42vh, 0) rotate(-3deg); }
-            40% { transform: translate3d(6vw, 8vh, 0) rotate(2deg); }
-            100% { transform: translate3d(-4vw, 78vh, 0) rotate(-1deg); }
-        }
-
-        @keyframes dreamColumnUp {
-            0% { transform: translate3d(0, 46vh, 0) rotate(4deg); }
-            52% { transform: translate3d(-7vw, -10vh, 0) rotate(-2deg); }
-            100% { transform: translate3d(5vw, -82vh, 0) rotate(1deg); }
-        }
-
-        @keyframes dreamWideRiver {
-            0% { transform: translate3d(-18vw, -4vh, 0) scale(2); }
-            48% { transform: translate3d(28vw, 9vh, 0) scale(2); }
-            100% { transform: translate3d(72vw, -2vh, 0) scale(2); }
-        }
-
-        @keyframes dreamSmallCounter {
-            0% { transform: translate3d(34vw, 2vh, 0) scale(0.5); }
-            45% { transform: translate3d(-4vw, -7vh, 0) scale(0.5); }
-            100% { transform: translate3d(-52vw, 5vh, 0) scale(0.5); }
-        }
-
-        @keyframes dreamMonumentalMist {
-            0% { transform: translate3d(-26vw, -12vh, 0) scale(3); }
-            54% { transform: translate3d(18vw, 4vh, 0) scale(3); }
-            100% { transform: translate3d(62vw, -6vh, 0) scale(3); }
-        }
-
-        @keyframes sepiaBreath {
-            from { background-position: 0% 50%; filter: brightness(0.78) saturate(0.82); }
-            to { background-position: 100% 48%; filter: brightness(0.98) saturate(1.08); }
-        }
-
-        @media (max-width: 640px) {
-            .album-slide,
-            .album-track.dream-b .album-slide,
-            .album-track.dream-c .album-slide {
-                max-width: 68vw;
-            }
-
-            .process-card {
-                right: 12px;
-                bottom: 12px;
-            }
-        }
-
-        .album-wait {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-            background: var(--bg);
-        }
-
-        .album-wait::before,
-        .album-wait::after,
-        .album-stage {
-            display: none;
-        }
-
-        .process-card {
-            position: relative;
-            inset: auto;
-            width: min(360px, calc(100vw - 48px));
-            padding: 26px 24px;
-            opacity: 1;
-            text-align: center;
-            background: transparent;
-            border: 0;
-            box-shadow: none;
-        }
-
-        .process-card h2 {
-            margin: 0 0 8px;
-            color: var(--ink);
-            font-size: 22px;
-        }
-
-        .process-card .page-kicker {
-            display: block;
-            margin: 0;
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .status-box,
-        .artist-wait-tip,
-        .process-card p,
-        .progress,
-        code {
-            display: none;
-        }
-
         .process-card::before {
             content: "";
             display: block;
-            width: 34px;
-            height: 34px;
+            width: 38px;
+            height: 38px;
             margin: 0 auto 18px;
             border-radius: 50%;
-            border: 2px solid var(--line);
-            border-top-color: var(--accent);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-top-color: #d6b27a;
             animation: simpleSpin 0.9s linear infinite;
         }
 
@@ -791,102 +326,133 @@ function h($v): string {
             to { transform: rotate(360deg); }
         }
 
+        @keyframes progressMove {
+            0% { left: -42%; }
+            55% { left: 100%; }
+            100% { left: 100%; }
+        }
+
+        .error {
+            color: var(--danger);
+            background: rgba(166, 60, 60, 0.1);
+            border-left-color: var(--danger);
+        }
+
+        code {
+            background: rgba(255, 255, 255, 0.12);
+            padding: 2px 5px;
+            font-family: monospace;
+            font-size: 11px;
+            border-radius: 2px;
+        }
+
+        /* Collapsible admin panel layout below card */
+        .admin-prompts-details {
+            margin-top: 24px;
+            width: min(460px, calc(100vw - 48px));
+            z-index: 3;
+        }
+
+        .admin-prompts-summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: rgba(247, 242, 234, 0.6);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            text-align: center;
+            list-style: none;
+            transition: all 0.2s ease;
+        }
+
+        .admin-prompts-summary:hover {
+            color: rgba(247, 242, 234, 0.9);
+            background: rgba(255, 255, 255, 0.07);
+        }
+
         .admin-root-prompts {
-            position: fixed;
-            top: 104px;
-            right: 24px;
-            bottom: 24px;
-            z-index: 20;
-            width: min(560px, calc(100vw - 48px));
-            overflow: auto;
+            margin-top: 12px;
             padding: 16px;
-            background: rgba(255, 255, 255, 0.96);
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            box-shadow: 0 20px 70px rgba(20, 20, 18, 0.16);
+            background: rgba(25, 24, 22, 0.95);
+            border: 1px solid rgba(214, 178, 122, 0.2);
+            border-radius: 6px;
             text-align: left;
+            max-height: 400px;
+            overflow-y: auto;
         }
 
         .admin-root-prompts h3 {
             margin: 0 0 4px;
             font-family: var(--font-serif);
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 500;
-            color: var(--ink);
+            color: #f7f2ea;
         }
 
         .admin-root-prompts > p {
             margin: 0 0 14px;
-            color: var(--muted);
-            font-size: 12px;
+            color: rgba(247, 242, 234, 0.6);
+            font-size: 11px;
             line-height: 1.45;
         }
 
         .admin-prompt-job {
-            border: 1px solid var(--line);
-            border-radius: 6px;
-            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.2);
             margin-top: 10px;
             overflow: hidden;
         }
 
         .admin-prompt-job summary {
             cursor: pointer;
-            padding: 10px 12px;
-            color: var(--ink);
-            font-size: 12px;
+            padding: 8px 10px;
+            color: #f7f2ea;
+            font-size: 11px;
             font-weight: 600;
-            list-style-position: inside;
         }
 
         .admin-prompt-meta {
             display: grid;
             gap: 3px;
-            padding: 0 12px 10px;
-            color: var(--muted);
-            font-size: 11px;
+            padding: 0 10px 10px;
+            color: rgba(247, 242, 234, 0.6);
+            font-size: 10px;
             line-height: 1.35;
         }
 
         .admin-prompt-actions {
             display: flex;
             justify-content: flex-end;
-            padding: 0 12px 10px;
+            padding: 0 10px 10px;
         }
 
         .admin-prompt-actions button {
             width: auto;
             margin: 0;
-            padding: 7px 10px;
-            font-size: 11px;
+            padding: 4px 8px;
+            font-size: 10px;
         }
 
         .admin-prompt-text {
             display: block;
-            width: calc(100% - 24px);
-            min-height: 260px;
-            margin: 0 12px 12px;
-            padding: 10px;
+            width: calc(100% - 20px);
+            min-height: 180px;
+            margin: 0 10px 10px;
+            padding: 8px;
             resize: vertical;
-            border: 1px solid var(--line);
+            border: 1px solid rgba(255,255,255,0.1);
             border-radius: 4px;
-            background: #fbfaf7;
-            color: var(--ink);
+            background: rgba(0, 0, 0, 0.3);
+            color: #f7f2ea;
             font-family: Consolas, Monaco, monospace;
-            font-size: 11px;
-            line-height: 1.45;
+            font-size: 10px;
+            line-height: 1.4;
             box-sizing: border-box;
-        }
-
-        @media (max-width: 1300px) {
-            .admin-root-prompts {
-                left: 16px;
-                right: 16px;
-                top: auto;
-                bottom: 16px;
-                width: auto;
-                max-height: 58vh;
-            }
         }
     </style>
 </head>
@@ -901,56 +467,10 @@ function h($v): string {
         </header>
 
         <div class="alert-strip">
-            Step 1 · Create Root Image: preparing a faithful, clean and proportional base image for future mockups.
+            Step 1 · Create Base Image: preparing a faithful, clean and proportional base image for future mockups.
         </div>
 
         <div class="workspace album-wait">
-            <div class="album-stage" aria-hidden="true">
-                <?php if (!empty($albumSlides)): ?>
-                    <div class="album-track dream-a">
-                        <?php foreach (array_merge($albumSlides, $albumSlides) as $slideUrl): ?>
-                            <img class="album-slide" src="<?= h($slideUrl) ?>" alt="">
-                        <?php endforeach; ?>
-                    </div>
-                    <div class="album-track dream-b">
-                        <?php foreach (array_merge(array_reverse($albumSlides), array_reverse($albumSlides)) as $slideUrl): ?>
-                            <img class="album-slide" src="<?= h($slideUrl) ?>" alt="">
-                        <?php endforeach; ?>
-                    </div>
-                    <div class="album-track dream-c">
-                        <?php foreach (array_merge($albumSlides, array_reverse($albumSlides)) as $slideUrl): ?>
-                            <img class="album-slide" src="<?= h($slideUrl) ?>" alt="">
-                        <?php endforeach; ?>
-                    </div>
-                    <div class="album-track dream-d">
-                        <?php foreach (array_merge($albumSlides, $albumSlides) as $slideUrl): ?>
-                            <img class="album-slide" src="<?= h($slideUrl) ?>" alt="">
-                        <?php endforeach; ?>
-                    </div>
-                    <div class="album-track dream-e">
-                        <?php foreach (array_merge(array_reverse($albumSlides), $albumSlides) as $slideUrl): ?>
-                            <img class="album-slide" src="<?= h($slideUrl) ?>" alt="">
-                        <?php endforeach; ?>
-                    </div>
-                    <div class="album-track dream-f">
-                        <?php foreach (array_merge($albumSlides, $albumSlides) as $slideUrl): ?>
-                            <img class="album-slide" src="<?= h($slideUrl) ?>" alt="">
-                        <?php endforeach; ?>
-                    </div>
-                    <div class="album-track dream-g">
-                        <?php foreach (array_merge(array_reverse($albumSlides), array_reverse($albumSlides)) as $slideUrl): ?>
-                            <img class="album-slide" src="<?= h($slideUrl) ?>" alt="">
-                        <?php endforeach; ?>
-                    </div>
-                    <div class="album-track dream-h">
-                        <?php foreach (array_merge($albumSlides, array_reverse($albumSlides)) as $slideUrl): ?>
-                            <img class="album-slide" src="<?= h($slideUrl) ?>" alt="">
-                        <?php endforeach; ?>
-                    </div>
-                <?php else: ?>
-                    <div class="album-empty"></div>
-                <?php endif; ?>
-            </div>
             <section class="process-card">
                 <?php if ($currentStatus === 'done' && $resultUrl): ?>
 
@@ -999,14 +519,20 @@ function h($v): string {
                         <div class="progress-bar"></div>
                     </div>
 
-                    <p>Job ID: <code><?= h($job) ?></code></p>
+                    <p style="font-size: 11px; margin-bottom: 20px;">Job ID: <code><?= h($job) ?></code></p>
+                    
                     <div class="artist-wait-tip" id="artistWaitTip"></div>
+
+                    <!-- Cancel upload option to avoid trapped users -->
+                    <div style="margin-top: 24px;">
+                        <a href="waiting.php?action=cancel&job=<?= urlencode($job) ?>" class="button secondary" style="font-size: 11px; padding: 10px 18px; text-decoration: none;">Cancel Upload</a>
+                    </div>
 
                     <script>
                         const job = <?= json_encode($job) ?>;
                         const statusUrl = 'job_status.php?job=' + encodeURIComponent(job);
                         const waitTips = [
-                            ['Artist profile', 'A complete profile helps the system choose better spaces, atmosphere and market positioning.'],
+                            ['Artist Profile', 'A complete profile helps the system choose better spaces, atmosphere and market positioning.'],
                             ['If a result feels wrong', 'Try another root image or regenerate from a cleaner, more frontal base.'],
                             ['Best mockup signal', 'Look for faithful color, believable scale, wall contact and a context that does not compete with the artwork.'],
                             ['Publishing', 'Title, dimensions, technique and a short statement make the final artwork page stronger.']
@@ -1067,36 +593,40 @@ function h($v): string {
                 <?php endif; ?>
             </section>
 
+            <!-- Collapsible Admin Console Section below the card -->
             <?php if ($isAdmin && !empty($adminWaitingPrompts)): ?>
-                <aside class="admin-root-prompts" aria-label="Admin root prompts">
-                    <h3>Admin - Root Prompts</h3>
-                    <p>Prompts completos usados para los root images actualmente en espera. Solo visible para administradores.</p>
+                <details class="admin-prompts-details">
+                    <summary class="admin-prompts-summary">Admin console - View Root Prompts</summary>
+                    <aside class="admin-root-prompts" aria-label="Admin root prompts">
+                        <h3>Admin - Root Prompts</h3>
+                        <p>Complete prompts used for root images currently waiting. Only visible to administrators.</p>
 
-                    <?php foreach ($adminWaitingPrompts as $index => $promptJob): ?>
-                        <?php
-                            $promptJobId = basename((string)($promptJob['job_id'] ?? ''));
-                            $promptTextId = 'adminRootPrompt' . $index;
-                            $dims = trim(
-                                (string)($promptJob['width'] ?? '') . ' x ' .
-                                (string)($promptJob['height'] ?? '') .
-                                (((string)($promptJob['depth'] ?? '') !== '') ? ' x ' . (string)$promptJob['depth'] : '') . ' ' .
-                                (string)($promptJob['unit'] ?? '')
-                            );
-                        ?>
-                        <details class="admin-prompt-job" <?= $promptJobId === $job ? 'open' : '' ?>>
-                            <summary><?= h($promptJobId) ?> - <?= h((string)($promptJob['status'] ?? 'unknown')) ?></summary>
-                            <div class="admin-prompt-meta">
-                                <span>File: <?= h((string)($promptJob['main_file'] ?? '')) ?></span>
-                                <span>Medidas: <?= h($dims) ?></span>
-                                <span>Fuente: <?= h((string)($promptJob['prompt_source'] ?? '')) ?></span>
-                            </div>
-                            <div class="admin-prompt-actions">
-                                <button type="button" class="button secondary admin-copy-prompt" data-target="<?= h($promptTextId) ?>">Copy prompt</button>
-                            </div>
-                            <textarea id="<?= h($promptTextId) ?>" class="admin-prompt-text" readonly><?= h((string)($promptJob['prompt'] ?? '')) ?></textarea>
-                        </details>
-                    <?php endforeach; ?>
-                </aside>
+                        <?php foreach ($adminWaitingPrompts as $index => $promptJob): ?>
+                            <?php
+                                $promptJobId = basename((string)($promptJob['job_id'] ?? ''));
+                                $promptTextId = 'adminRootPrompt' . $index;
+                                $dims = trim(
+                                    (string)($promptJob['width'] ?? '') . ' x ' .
+                                    (string)($promptJob['height'] ?? '') .
+                                    (((string)($promptJob['depth'] ?? '') !== '') ? ' x ' . (string)$promptJob['depth'] : '') . ' ' .
+                                    (string)($promptJob['unit'] ?? '')
+                                );
+                            ?>
+                            <details class="admin-prompt-job" <?= $promptJobId === $job ? 'open' : '' ?>>
+                                <summary><?= h($promptJobId) ?> - <?= h((string)($promptJob['status'] ?? 'unknown')) ?></summary>
+                                <div class="admin-prompt-meta">
+                                    <span>File: <?= h((string)($promptJob['main_file'] ?? '')) ?></span>
+                                    <span>Measurements: <?= h($dims) ?></span>
+                                    <span>Source: <?= h((string)($promptJob['prompt_source'] ?? '')) ?></span>
+                                </div>
+                                <div class="admin-prompt-actions">
+                                    <button type="button" class="button secondary admin-copy-prompt" data-target="<?= h($promptTextId) ?>">Copy prompt</button>
+                                </div>
+                                <textarea id="<?= h($promptTextId) ?>" class="admin-prompt-text" readonly><?= h((string)($promptJob['prompt'] ?? '')) ?></textarea>
+                            </details>
+                        <?php endforeach; ?>
+                    </aside>
+                </details>
 
                 <script>
                     document.querySelectorAll('.admin-copy-prompt').forEach((button) => {

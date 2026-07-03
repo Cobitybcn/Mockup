@@ -26,7 +26,14 @@ class GeminiImageClient
         return $this->runCommand($cmd, $prompt, 180); // aumentado de 90s a 180s para permitir reintentos
     }
 
-    public function generateImage(array $parts, ?string $model = null): string
+    /**
+     * @param array<string,string> $envOverrides Per-call overrides applied on top of the
+     *        process-wide env (pythonProcessEnv()). Used to force a stricter setting than
+     *        the global PHP constants for one specific caller without changing the default
+     *        for every other caller of vertex_bridge.py (see docs/AUDITORIA_PROMPTS_MOCKUPS_20260701.md,
+     *        Fase 5).
+     */
+    public function generateImage(array $parts, ?string $model = null, array $envOverrides = []): string
     {
         $prompt = '';
         $imagePaths = [];
@@ -40,12 +47,12 @@ class GeminiImageClient
 
         $python = $this->getPythonExecutable();
         $bridgeScript = __DIR__ . '/vertex_bridge.py';
-        
+
         // Generate a temporary file path for the output image
         $tempOutput = $this->getTempDir() . DIRECTORY_SEPARATOR . 'vertex_gen_' . uniqid() . '.png';
 
         $model = $model ?: ProviderSettings::geminiImageModel();
-        
+
         $cmd = '"' . $python . '" ' . escapeshellarg($bridgeScript) . ' generate-image --output ' . escapeshellarg($tempOutput);
         foreach ($imagePaths as $imagePath) {
             $cmd .= ' --image ' . escapeshellarg($imagePath);
@@ -54,7 +61,7 @@ class GeminiImageClient
             $cmd .= ' --model ' . escapeshellarg($model);
         }
 
-        $this->runCommand($cmd, $prompt, 200); // aumentado de 150s a 200s para permitir reintentos
+        $this->runCommand($cmd, $prompt, 200, $envOverrides); // aumentado de 150s a 200s para permitir reintentos
 
         if (!is_file($tempOutput)) {
             throw new RuntimeException("Vertex bridge did not create output image file at: " . $tempOutput);
@@ -70,7 +77,7 @@ class GeminiImageClient
         return base64_encode($bytes);
     }
 
-    private function runCommand(string $cmd, string $promptText, int $timeout = 90): string
+    private function runCommand(string $cmd, string $promptText, int $timeout = 90, array $envOverrides = []): string
     {
         $tempDir = $this->getTempDir();
         $tempPromptFile = tempnam($tempDir, 'gemini_prompt_');
@@ -94,7 +101,8 @@ class GeminiImageClient
             2 => ["file", $tempErrFile, "w"]  // stderr
         ];
 
-        $process = proc_open($cmd, $descriptorspec, $pipes, null, $this->pythonProcessEnv());
+        $processEnv = $envOverrides ? array_merge($this->pythonProcessEnv(), $envOverrides) : $this->pythonProcessEnv();
+        $process = proc_open($cmd, $descriptorspec, $pipes, null, $processEnv);
         if (!is_resource($process)) {
             @unlink($tempPromptFile);
             @unlink($tempOutFile);

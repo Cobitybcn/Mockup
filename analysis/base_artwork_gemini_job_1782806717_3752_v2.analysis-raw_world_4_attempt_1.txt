@@ -1,0 +1,46 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Ascension Landscape",
+      "subtitle": "A Journey of Color and Form",
+      "description": "An abstract landscape where vibrant forms meet symbolic ladders, inviting contemplation on progress and connection."
+    },
+    {
+      "title": "Crimson Horizon",
+      "subtitle": "Steps Towards the Luminous Sky",
+      "description": "Bold abstract elements depict a surreal landscape, characterized by a striking red structure against a deep blue, with ladders reaching for a distant light."
+    },
+    {
+      "title": "Echoes of Ascent",
+      "subtitle": "Abstract Forms in a Contemplative Space",
+      "description": "A powerful interplay of color blocks and linear elements, evoking a sense of architectural journey within an expansive, dreamlike environment."
+    }
+  ],
+  "recommended_number_of_contexts": 6,
+  "contextual_proposals": [
+    {
+      "context_name": "Atelier Passage with Luminous Reverie",
+      "context_role": "To present the artwork in an authentic, yet refined creative environment, highlighting its contemplative nature and robust presence within a working space. It emphasizes the journey of creation and thought.",
+      "space_type": "Refined Artist's Atelier / Studio Corridor",
+      "atmosphere": "Quiet, contemplative, subtly inspiring, with a sense of creative work in progress, illuminated by soft, even light. Premium restraint.",
+      "materials": [
+        "Off-white painted plaster walls with subtle, faint traces of former pinned sketches or very light scuffs",
+        "Light-colored concrete floor with a subtle, worn matte finish, showing natural textural variations",
+        "High ceiling with exposed, light-colored wooden beams or a simple, functional painted ceiling",
+        "Minimalist studio lighting track subtly integrated into the ceiling",
+        "Simple, functional, light-colored wooden bench or plinth"
+      ],
+      "lighting": "Soft, even north light from a large unseen window to the side, supplemented by gentle, practical studio ceiling light. The artwork is evenly illuminated, allowing its vibrant colors to pop without harsh shadows. The corridor recedes into a slightly softer, naturally lit distance.",
+      "camera_view": "Pasillo, Obra Descentrada y Próxima: Camera height is natural standing or slightly lowered human height, close enough to feel the corridor edge. Use an offset three-quarter corridor angle, with the artwork deliberately off-center and close rather than symmetrically framed. Place the artwork on a long wall plane rather than a short frontal display wall. The wall should extend laterally into the scene like a gallery passage, corridor, or elongated architectural plane, creating a clear vanishing direction. Use floor lines, ceiling lines, wall joints, lighting tracks, windows, columns, doorways, or distant wall planes to reinforce depth. The artwork may sit off-center and relatively close to the viewer, while the architecture recedes naturally to one side. Avoid product-style centered symmetry.",
+      "camera_distance": "Medium-close, allowing the artwork to dominate while revealing the depth and character of the studio corridor.",
+      "camera_angle_notes": "The subtle three-quarter oblique angle enhances the physical depth of the canvas, making it a tangible object rather than a flat image. The off-center placement and receding architectural lines draw the viewer's eye along the wall, emphasizing the artwork's dynamic presence within a larger, purposeful space, avoiding static, symmetrical presentation. The natural standing height feels approachable and engaging.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The abstract and symbolic nature of the artwork, with its ladders suggesting a journey or aspiration, finds a natural home in a clean, contemplative artist's atelier. The muted, neutral studio palette provides a sophisticated backdrop that allows the artwork's bold colors (red, blue, peach) to stand out vividly. The 'clean wall' variant emphasizes the artwork itself, while subtle traces acknowledge the creative process. It positions the artwork as a finished thought from a place of conceptual incubation.",
+      "commercial_reason": "This context presents the artwork as a significant, museum-quality piece originating from a dedicated creative space, lending it authenticity and intellectual weight. The refined studio environment appeals to collectors who appreciate art with a backstory and a sense of artistic process. The spacious, receding corridor composition highlights the artwork's size and impact, suggesting it can hold its own in a premium architectural setting, enhancing its perceived value and desirability. The neutral background ensures the artwork's colors are the primary focus.",
+      "mockup_prompt": "A refined artist's atelier corridor, clean and spacious. The artwork, a vibrant abstract landscape with red structure, deep blue sky, and ladders (exact colors, dimensions, and physical canvas texture as provided), hangs prominently, off-center, on a long, off-white painted plaster wall that extends laterally into the scene, creating a clear vanishing direction. Subtle, faint pin marks or light scuffs are barely visible on the wall, hinting at past creative activity. The floor is light-colored, matte concrete with natural subtle variations, extending from the foreground into the receding distance. The camera is at natural standing height, capturing an offset three-quarter corridor angle. Along the receding wall, a simple, light-colored wooden bench or narrow console table, minimalist and functional, recedes naturally into the background. Soft, even north light illuminates the entire scene, supplemented by gentle, practical studio ceiling light from an integrated track, with the artwork evenly lit. Ensure coherent vanishing lines for the floor, walls, and ceiling. Focus is sharp on the artwork and the immediate wall around it, with a natural photographic depth-of-field falloff in the distant corridor. No people, no animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no messy clutter, no pets, no wet paint chaos, no artwork substitution, no messy workshop, no paint chaos, no generic neutral interior, no generic lounge, no showroom, no unrelated gallery."
+    }
+  ]
+}
+```

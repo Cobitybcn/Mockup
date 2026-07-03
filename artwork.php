@@ -1330,7 +1330,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                             </div>
                         </details>
                      <details class="details-panel" style="margin-top: 12px; padding: 14px 16px;" open>
-                         <summary style="font-weight: 600; cursor: pointer; color: var(--ink);">Lectura Curatorial</summary>
+                         <summary style="font-weight: 600; cursor: pointer; color: var(--ink);">Curatorial Analysis</summary>
                          <div style="margin-top: 10px; line-height: 1.6; font-size: 13px; color: var(--ink);">
                              <p class="copy-block" style="margin: 0; font-style: italic;"><?= h($package['curatorial_reading']) ?></p>
                              <div style="margin-top: 8px; text-align: right;">
@@ -1550,7 +1550,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
                                         <span class="selected-label" style="font-size: 8px; background: var(--surface); color: var(--accent);"><?= h($label) ?></span>
                                         <?php if ($t === $selectedTitle): ?>
-                                            <span class="selected-label" style="font-size: 8px; background: var(--accent-light); color: var(--accent);">Seleccionado</span>
+                                            <span class="selected-label" style="font-size: 8px; background: var(--accent-light); color: var(--accent);">Selected</span>
                                         <?php endif; ?>
                                     </div>
                                     <h3 style="font-size: 18px; font-weight: 600; margin: 4px 0 0;"><?= h($t) ?></h3>
@@ -1567,7 +1567,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                                             <input type="hidden" name="medium" value="<?= h($artwork['medium'] ?? '') ?>">
                                             <input type="hidden" name="artwork_year" value="<?= h($artwork['artwork_year'] ?? '') ?>">
                                             <input type="hidden" name="series" value="<?= h($artwork['series'] ?? '') ?>">
-                                            <button type="submit" class="button" style="font-size: 10px; padding: 6px 10px; width: 100%;"><?= $t === $selectedTitle ? 'Seleccionado' : 'Seleccionar' ?></button>
+                                            <button type="submit" class="button" style="font-size: 10px; padding: 6px 10px; width: 100%;"><?= $t === $selectedTitle ? 'Selected' : 'Select' ?></button>
                                         </form>
                                     </div>
                                 </article>
@@ -1593,11 +1593,11 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                                 }
                                 $desc = $package['premium_descriptions'][$selectedTitle] ?? '';
                                 $label = 'Description Option ' . ($idx + 1);
-                                $descCopy = "[" . $label . " para: " . $selectedTitle . "]\n" . $desc;
+                                $descCopy = "[" . $label . " for: " . $selectedTitle . "]\n" . $desc;
                             ?>
                             <article class="premium-desc-block" style="background: var(--surface-soft); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 8px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <strong style="font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em;"><?= h($label) ?> — para "<?= h($selectedTitle) ?>"</strong>
+                                    <strong style="font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em;"><?= h($label) ?> — for "<?= h($selectedTitle) ?>"</strong>
                                     <button class="copy-button secondary" type="button" data-copy="<?= h($descCopy) ?>" aria-label="Copy" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--accent); margin: 0; min-height: unset; line-height: 1;"><?= $copyIconSvg ?></button>
                                 </div>
                                 <p class="copy-block" style="font-size: 14px; line-height: 1.6; margin: 0; color: var(--ink);"><?= h($desc) ?></p>
@@ -1832,7 +1832,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             }
 
             if (!response.ok || !data.ok) {
-                throw new Error(data.error || 'No se pudo generar el mockup.');
+                throw new Error(data.error || 'Could not generate mockup.');
             }
 
             // Successfully generated!
@@ -1922,15 +1922,15 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                     const formSubmitBtn = card.querySelector('.inline-mockup-form button[type="submit"]');
                     if (formSubmitBtn) {
                         formSubmitBtn.disabled = false;
-                        formSubmitBtn.innerHTML = 'Generar Mockup';
+                        formSubmitBtn.innerHTML = 'Generate Mockup';
                     }
                 }
             } else {
-                alert('Error: ' + (data.error || 'No se pudo eliminar el mockup.'));
+                alert('Error: ' + (data.error || 'Could not delete mockup.'));
                 deleteBtn.disabled = false;
             }
         } catch (err) {
-            alert('Error de red al intentar eliminar.');
+            alert('Network error trying to delete.');
             deleteBtn.disabled = false;
         }
     });

@@ -1,0 +1,28 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Collector's Pensive Sanctuary",
+      "context_role": "To present the artwork as a focal point in a refined, contemplative domestic collection, highlighting its artistic presence and material quality within an intimately scaled, culturally literate environment.",
+      "space_type": "Quiet Collector's Living Room",
+      "atmosphere": "Intimate, serene, and contemplative. A cultivated domestic atmosphere with quiet sophistication, allowing the artwork to command attention as the primary cultural element. Soft, filtered morning light enhances the pensive mood, evoking a sense of calm and focused introspection.",
+      "materials": [
+        "Walls in warm, subtly textured limewash in a muted ivory or soft taupe",
+        "Polished dark wood floor",
+        "Thick, hand-knotted wool rug in a muted, earthy tone",
+        "Bespoke, low-slung, dark wood console table with a minimalist design (partially visible)",
+        "Understated bronze floor lamp with a linen shade"
+      ],
+      "lighting": "Soft, diffused natural light from a large, unseen window, creating gentle shadows and highlights. The illumination emphasizes the artwork's texture and color depth without glare, evoking a calm spring morning or late afternoon.",
+      "camera_view": "Contrapicado 7/8: Camera height is low, below normal knee height, with the viewpoint grounded close to the floor but still architectural. Use a 7/8 oblique rotation so the wall, artwork depth, and room volume are visible through one shared perspective. The artwork is seen with strong side depth and believable thickness; use clear asymmetry and negative space toward the vanishing side while keeping surrounding wall and floor aligned to the same camera.",
+      "camera_distance": "Controlled architectural distance, allowing the artwork to be central and imposing from the low vantage point, while revealing the refined spatial context.",
+      "camera_angle_notes": "The low camera angle elevates the artwork, making it feel monumental and central to the space. The 7/8 oblique view provides strong depth perception of the canvas's physical presence and the room's elegant proportions, grounding the artwork within a sophisticated architectural narrative. Prominent floor and rising architectural lines enhance the perspective.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's bold, minimalist forms and contemplative color palette (deep green with vibrant red and subtle blue/black accents) resonate with the quiet sophistication of a private collector's space. Its singular presence becomes the meditative anchor of the room, inviting focused engagement. The muted, warm backdrop of the limewash wall allows the artwork's colors and textures to stand out prominently, reinforcing its abstract landscape or architectural suggestion.",
+      "commercial_reason": "This context elevates the artwork's perceived value by associating it with a discerning, cultivated lifestyle and an intimate, curated collection. It demonstrates the artwork's ability to function as a significant cultural statement piece in a premium domestic setting, appealing to collectors seeking art with depth, quiet authority, and a modern sensibility. The intentional camera angle enhances its visual gravitas and physical presence, suggesting a carefully considered acquisition.",
+      "mockup_prompt": "A quiet collector's living room, intimate and culturally literate. The artwork, a vibrant abstract canvas dominated by green with bold red and black geometric forms, is wall-hung and centered on a warm, subtly textured limewash wall in a muted ivory or soft taupe. The room features a polished dark wood floor, visible in the foreground and midground, partially covered by a thick, hand-knotted wool rug in an earthy taupe. A bespoke, low-slung, dark wood console table with a minimalist design is positioned in the foreground, partially cropped by the camera's low vantage point. A single, understated bronze floor lamp with a cylindrical linen shade stands to one side, adding a subtle vertical architectural element that rises with the camera's view. Soft, diffused natural light from a large unseen window illuminates the scene, creating gentle shadows and enhancing the artwork's texture and volumetric presence. Artwork in its original proportions, colors, and textures, perfectly installed and prominent. No visible people, no animals, no branding.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no hotel catalog, no furniture showroom, no unrelated gallery, no cluttered space."
+    }
+  ]
+}
+```

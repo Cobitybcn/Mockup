@@ -1,0 +1,28 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Atelier Passage with Verdant Canvas",
+      "context_role": "To present the artwork in a refined, working artist's environment, emphasizing its creation context and material authenticity, while showcasing its potential in a spacious, architecturally considered setting.",
+      "space_type": "Clean, premium artist's atelier or studio passage.",
+      "atmosphere": "Serene, productive, contemplative, with a focus on material integrity and the creative process, but with a clean, uncluttered presentation. Subtle northern light.",
+      "materials": [
+        "Painted plaster wall (off-white or very light warm gray)",
+        "Polished concrete floor",
+        "Subtle exposed wooden ceiling beams",
+        "Large metal-framed window",
+        "Simple wooden studio easel (discreetly placed or folded)"
+      ],
+      "lighting": "Soft, consistent north light streaming from a large window, creating gentle shadows and illuminating the artwork without harsh reflections. Ambient studio daylight.",
+      "camera_view": "Pasillo, Obra Descentrada y Próxima: Camera height is natural standing or slightly lowered human height, close enough to feel the corridor edge. Use an offset three-quarter corridor angle, with the artwork deliberately off-center and close rather than symmetrically framed. Place the artwork on a long wall plane rather than a short frontal display wall. The wall should extend laterally into the scene like a gallery passage, corridor, or elongated architectural plane, creating a clear vanishing direction. Use floor lines, ceiling lines, wall joints, lighting tracks, windows, columns, doorways, or distant wall planes to reinforce depth. The artwork may sit off-center and relatively close to the viewer, while the architecture recedes naturally to one side. Avoid product-style centered symmetry.",
+      "camera_distance": "Medium-close. The artwork is prominent, but the architectural depth of the studio passage is clearly visible, receding into the background.",
+      "camera_angle_notes": "The offset three-quarter view highlights the canvas's physical presence and thickness, making it feel like a tangible object within the working studio. The receding wall and floor lines emphasize spatial depth and integrate the artwork into a coherent architectural passage, avoiding a flat, poster-like look. The natural standing height camera feels grounded.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork, with its bold abstract forms and clear lines, resonates with the clean yet authentic aesthetic of a quiet atelier. Placing it in an artist's studio context, especially one that is refined and well-lit, pays homage to its origin and the creative process, adding a layer of authenticity and intellectual value. The artwork's deep green finds a subtle harmony with the natural, diffused light of a studio environment.",
+      "commercial_reason": "This context offers a sophisticated and authentic narrative for the artwork. It positions the piece not just as a decorative item but as a product of thoughtful creation, appealing to collectors who value artistic integrity and the story behind the art. The clean studio environment elevates the artwork's professional presentation, making it suitable for high-end art markets. The 'pasillo' view offers a dynamic and commercially engaging visual.",
+      "mockup_prompt": "A large abstract painting, predominantly green with bold red and subtle blue/black geometric forms, is hung slightly off-center on a clean painted plaster wall in a quiet artist's atelier. The artwork is viewed from a natural standing height, through an offset three-quarter corridor angle. The long wall plane recedes naturally into the distance on the right, creating a clear vanishing direction for the architectural passage. The floor is polished concrete. Subtle studio traces like faint pin marks or minimal paint splatters are visible on the wall, kept secondary to the artwork. Soft, consistent north light streams from a large metal-framed window on the left, illuminating the space and casting gentle shadows. The artwork is relatively close to the viewer, but the architectural elements (floor lines, wall joints) clearly recede, giving depth. No visible people, no animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no messy clutter, no pets, no wet paint chaos, no artwork substitution, no messy workshop, no paint chaos, no mineral gallery, no generic showroom, no luxury corridor, no rustic room, no unrelated gallery."
+    }
+  ]
+}
+```

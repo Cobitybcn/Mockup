@@ -1,0 +1,27 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Atelier Passage: Ascent in Color",
+      "context_role": "Highlights the artwork's vibrant abstraction in a refined, working environment, emphasizing its origins and artistic process in a sophisticated, commercial manner.",
+      "space_type": "Refined artist's atelier corridor or long working wall.",
+      "atmosphere": "Quietly contemplative working studio, bathed in soft north light, with an air of creative calm and authentic materiality. The space feels intentionally designed for focused work, showcasing a clean, uncluttered aesthetic with subtle traces of artistic activity.",
+      "materials": [
+        "Smooth painted studio wall (off-white or very pale grey plaster)",
+        "subtly distressed concrete floor",
+        "exposed raw timber beam or simple architectural molding defining the wall edge",
+        "a simple wooden console or low bench along the receding wall"
+      ],
+      "lighting": "Soft, diffused north daylight entering from a high window or skylight, casting gentle, even illumination on the artwork and creating subtle shadows that enhance depth along the corridor. No direct harsh glare.",
+      "camera_view": "Pasillo, Obra Descentrada y Próxima: Camera height is natural standing or slightly lowered human height, close enough to feel the corridor edge. Use an offset three-quarter corridor angle, with the artwork deliberately off-center and close rather than symmetrically framed. Place the artwork on a long wall plane rather than a short frontal display wall. The wall should extend laterally into the scene like a gallery passage, corridor, or elongated architectural plane, creating a clear vanishing direction. Use floor lines, ceiling lines, wall joints, lighting tracks, windows, columns, doorways, or distant wall planes to reinforce depth. The artwork may sit off-center and relatively close to the viewer, while the architecture recedes naturally to one side. Avoid product-style centered symmetry.",
+      "camera_distance": "Close enough to appreciate the artwork's texture and detail, yet allowing the architectural depth of the atelier corridor to establish context.",
+      "camera_angle_notes": "The offset three-quarter view reveals the artwork's physical depth and canvas thickness, positioning it as a tangible object within a dynamic architectural composition. The receding wall and floor lines draw the eye into the space, enhancing the artwork's presence without flattening it.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The clean, understated aesthetic of the atelier wall allows the artwork's bold colors and graphic composition to stand out as the primary focal point. The subtle studio context hints at its creation process, adding authenticity and resonance, while the sense of architectural depth elevates its presentation beyond a mere display.",
+      "commercial_reason": "This setting offers a premium, approachable context that appeals to collectors seeking art with an authentic backstory. The clean, contemporary studio feel enhances the artwork's modern appeal, suggesting it belongs in sophisticated living or working spaces, while the dynamic camera angle creates an engaging and memorable visual.",
+      "mockup_prompt": "A refined artist's atelier corridor, bathed in soft, diffused north daylight. The artwork, an abstract painting with bold orange, navy blue, and emerald green blocks, and small black ladders, is hung slightly off-center on a long, smooth, pale grey painted studio wall, extending laterally into the scene, creating a clear vanishing direction. The camera is at natural standing height, looking into the corridor from an offset three-quarter angle. Subtle traces of artistic activity are visible on the wall or floor, such as a faint paint smudge or a barely visible pencil mark. A subtly distressed concrete floor recedes into the background. A low, simple, dark wood bench or console runs along the receding wall plane in the midground, with a single, minimalist ceramic object on it. The focus is sharp on the artwork and its immediate surroundings, with a natural depth-of-field falloff into the distant corridor. No people, no animals.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default, no messy clutter, no pets, no wet paint chaos, no artwork substitution, no messy workshop, no paint chaos, no crowd, no generic neutral interior, no generic lounge, no showroom, no unrelated gallery, no mineral gallery, no generic showroom, no luxury corridor, no Mediterranean villa, no rustic Tuscan room."
+    }
+  ]
+}
+```

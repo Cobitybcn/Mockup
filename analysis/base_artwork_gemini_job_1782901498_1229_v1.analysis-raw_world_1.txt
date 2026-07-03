@@ -1,0 +1,28 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Collector's Ascent: Veridian & Crimson Reverie",
+      "context_role": "Presents the artwork as a focal point of intellectual and aesthetic contemplation within a cultivated private residence, emphasizing its material presence and symbolic depth.",
+      "space_type": "Quiet Collector's Living Room",
+      "atmosphere": "Intimate, reflective, and culturally literate. The mood is one of sophisticated tranquility, where the artwork acts as a vibrant cultural center, bathed in the soft glow of refined domestic light.",
+      "materials": [
+        "Warm, hand-troweled limewash walls in a muted taupe-grey",
+        "Wide-plank, dark smoked oak flooring with a subtle sheen",
+        "A low, long antique Chinese console table in dark lacquered elm, partially visible in the foreground",
+        "Textured linen drapes in a soft, natural hue, framing a large window (unseen in full)",
+        "Understated ceiling with plaster molding"
+      ],
+      "lighting": "Soft, diffused window light filtering gently from a large, unseen window, creating subtle shadows and highlights that emphasize the artwork's texture and the room's depth. The light lends a warm, welcoming glow without harsh contrasts.",
+      "camera_view": "Contrapicado 7/8: Camera height is aggressively low, 5-20 cm from the floor, clearly far below knee height. The viewpoint must feel like the lens is near the floor and close to the wall, not standing height, not chest height, and not a normal eye-level gallery view. Use a very strong 7/8 oblique rotation so the wall, artwork side depth, floor plane, and room volume rush toward one shared vanishing direction. The side of the canvas can feel dramatically deep through perspective, while the artwork remains a rigid object. The artwork is seen with aggressive side depth and believable thickness from a near-floor 7/8 viewpoint. Include a large visible floor wedge or floor plane in the lower foreground, with wall/floor junctions and architectural verticals proving the camera is below knee height. Use strong asymmetry, a close foreground edge, and negative space toward the vanishing side while keeping surrounding wall and floor aligned to the same camera. This must feel almost perspective-deformed and must not collapse into a standard standing-height 3/4 gallery photograph.",
+      "camera_distance": "Medium-close, allowing the aggressive perspective of the low-angle 7/8 view to dominate while keeping the artwork clearly legible as the primary subject.",
+      "camera_angle_notes": "The low, dynamic 7/8 view dramatically exaggerates the physical thickness and presence of the canvas, making it feel like a weighty, sculptural object embedded within the architectural space. The prominent floor wedge and the rising vertical lines of the wall and a subtle foreground furniture piece (e.g., the console) ground the artwork, emphasizing its scale and material reality from a unique, intimate perspective. This angle prevents a flat presentation and enhances the artwork's commanding presence as the cultural anchor of the room.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's bold, geometric abstractions and vibrant colors, punctuated by the symbolic ladders, resonate powerfully within the muted elegance of a quiet collector's living room. The warm, limewash walls provide a sophisticated, non-distracting backdrop that allows the artwork's rich palette to truly sing. The 'cultural center' ethos of this space amplifies the artwork's intellectual and aesthetic appeal, inviting prolonged contemplation. The chosen materials and subtle light complement the artwork's texture and depth.",
+      "commercial_reason": "This context elevates the artwork from a mere decorative item to a significant cultural artifact within a curated personal collection. The sophisticated, intimate setting appeals to a discerning buyer who values art as a central element of their cultivated home, rather than a lifestyle accessory. The dramatic camera angle highlights the artwork's physical quality and premium material presence, reinforcing its value and uniqueness in a visually compelling way.",
+      "mockup_prompt": "A modern abstract artwork with bold geometric blocks in teal, vibrant green, bright yellow, and intense red, featuring subtle texture and small red ladder motifs, is the central focus, wall-hung on a warm, hand-troweled limewash wall in a muted taupe-grey. The camera is aggressively low, 5-20 cm from the floor, capturing a very strong 7/8 oblique rotation. A large wedge of dark smoked oak flooring fills the lower foreground, with visible floor-wall junctions. The artwork's side depth is dramatically exaggerated by the perspective, revealing its physical thickness. A low, sleek antique Chinese console table in dark lacquered elm is partially cropped in the extreme foreground, enhancing depth without distracting. Soft, diffused window light filters gently, creating subtle highlights and shadows. The room maintains a cultivated, quiet collector's aesthetic with refined, understated plaster molding on the ceiling.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no bright harsh light, no cluttered space, no overly modern furniture, no unrefined textures"
+    }
+  ]
+}
+```

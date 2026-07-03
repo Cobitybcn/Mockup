@@ -1,0 +1,27 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Atelier Corridor Ascent",
+      "context_role": "To present the artwork in an authentic yet refined creative environment, emphasizing its physical presence and origin story within a premium working space.",
+      "space_type": "Refined artist's studio corridor or connecting passage.",
+      "atmosphere": "Quietly focused, authentically creative, and meticulously maintained. A sense of disciplined artistic endeavor with subtle, natural light.",
+      "materials": [
+        "Smooth, off-white painted plaster walls",
+        "Warm, light-toned wide plank wood floor",
+        "Minimalist dark metal track lighting (recessed or ceiling-mounted)",
+        "Subtle architectural elements (e.g., natural wood trim for distant doorway)"
+      ],
+      "lighting": "Soft, diffused north light entering from an unseen tall window or skylight, creating gentle, even illumination on the artwork and a gradual depth falloff in the receding corridor.",
+      "camera_view": "Pasillo, Obra Descentrada y Próxima: Camera height is natural standing or slightly lowered human height, close enough to feel the corridor edge. Use an offset three-quarter corridor angle, with the artwork deliberately off-center and close rather than symmetrically framed. Place the artwork on a long wall plane rather than a short frontal display wall. The wall should extend laterally into the scene like a gallery passage, corridor, or elongated architectural plane, creating a clear vanishing direction. Use floor lines, ceiling lines, wall joints, lighting tracks, windows, columns, doorways, or distant wall planes to reinforce depth. The artwork may sit off-center and relatively close to the viewer, while the architecture recedes naturally to one side. Avoid product-style centered symmetry.",
+      "camera_distance": "Medium-close.",
+      "camera_angle_notes": "The camera is positioned at a natural standing height, slightly to the side of the artwork, looking down a long, straight studio corridor. The artwork is hung off-center on the visible wall plane, appearing prominent but integrated into the receding architectural lines. The wall extends significantly into the background, creating a strong sense of depth. Floor lines, ceiling lines, and subtle architectural elements (like a doorway or a subtle shadow line further down the corridor) reinforce the vanishing perspective, while the artwork itself remains sharply in focus, showcasing its physical thickness and texture.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "This studio setting anchors the artwork in its creative context, allowing its raw, textural energy to resonate with the environment of its making. The clean, refined atelier wall avoids clutter, ensuring the artwork's powerful visual identity remains central, while subtly hinting at the process through authentic studio aesthetics.",
+      "commercial_reason": "By placing the artwork in a sophisticated artist's studio, this proposal elevates its perceived value, appealing to collectors who appreciate authenticity and the narrative of creation. The dynamic, architectural camera view highlights the artwork's physicality and scale in a commercially engaging, non-generic manner.",
+      "mockup_prompt": "A refined artist's studio corridor with clean, off-white painted plaster walls and a warm, light-toned wide plank wood floor. The artwork (your image here) is hung off-center at eye-level on the left wall plane, which extends significantly into the background. A long, straight architectural passage recedes to the right. The scene includes subtle floor lines, ceiling lines, and the suggestion of a distant doorway or architectural break to reinforce depth. Soft, diffused north light enters from an unseen source, gently illuminating the artwork and creating subtle shadows that define the receding corridor. The overall atmosphere is quiet, authentic, and meticulously maintained. No specific art tools are visible on the wall around the artwork, keeping the wall clean and artwork-focused.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no messy clutter, no wet paint chaos, no generic studio, no dirty walls, no harsh shadows, no unrefined atelier"
+    }
+  ]
+}
+```

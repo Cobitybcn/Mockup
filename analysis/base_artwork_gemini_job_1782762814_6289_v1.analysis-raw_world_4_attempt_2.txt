@@ -1,0 +1,45 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Veridian Foundation",
+      "subtitle": "An abstract interplay of architectural forms and elemental hues.",
+      "description": "This piece explores the tension between defined structure and expansive fields, using bold red and deep green to evoke a sense of grounded monumentality."
+    },
+    {
+      "title": "Crimson Citadel",
+      "subtitle": "A study in color density and spatial rhythm.",
+      "description": "With its stark red focal point against a serene green, the artwork presents a modern landscape where geometry meets organic depth."
+    },
+    {
+      "title": "Green Horizon, Red Ascent",
+      "subtitle": "Dynamic abstraction with architectural undertones.",
+      "description": "The painting features a powerful ascent of red from a rich green base, anchored by subtle dark elements, creating a quiet yet profound visual narrative."
+    }
+  ],
+  "recommended_number_of_contexts": 1,
+  "contextual_proposals": [
+    {
+      "context_name": "Atelier Corridor of Contemplation",
+      "context_role": "To present the artwork in a refined, authentic artistic environment, emphasizing its physical presence and the contemplative atmosphere of a creator's space.",
+      "space_type": "Working artist's atelier or studio passage",
+      "atmosphere": "Quiet, contemplative, and focused, with a subtle sense of artistic process and an open, clean aesthetic under soft daylight.",
+      "materials": [
+        "Painted studio wall (muted, neutral tone like warm off-white or light grey plaster)",
+        "Light-toned polished concrete floor or wide-plank light wood floor",
+        "Subtle, barely visible pin marks or faint paint traces on the wall (secondary to artwork)",
+        "Minimalist architectural elements like a clean doorframe or a simple light fixture in the distance"
+      ],
+      "lighting": "Soft, consistent north light or diffused studio daylight entering from an unseen window, creating gentle shadows and an even illumination on the artwork and wall. No harsh spotlights, but a natural, expansive brightness.",
+      "camera_view": "Pasillo, Obra Descentrada y Próxima: Camera height is natural standing or slightly lowered human height, close enough to feel the corridor edge. Use an offset three-quarter corridor angle, with the artwork deliberately off-center and close rather than symmetrically framed. Place the artwork on a long wall plane rather than a short frontal display wall. The wall should extend laterally into the scene like a gallery passage, corridor, or elongated architectural plane, creating a clear vanishing direction. Use floor lines, ceiling lines, wall joints, lighting tracks, windows, columns, doorways, or distant wall planes to reinforce depth. The artwork may sit off-center and relatively close to the viewer, while the architecture recedes naturally to one side. Avoid product-style centered symmetry.",
+      "camera_distance": "Controlled architectural distance, allowing both the artwork's detail and the receding studio space to be appreciated.",
+      "camera_angle_notes": "The subtle three-quarter oblique angle and off-center placement highlight the artwork's physical depth and its grounded presence within the architectural flow of the studio. This view avoids a flat, poster-like appearance, showing the canvas thickness and its interaction with the wall plane, while drawing the eye along the receding studio corridor.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's strong, almost architectural forms and contemplative atmosphere find a natural home in a clean, working studio environment. The quiet, unpretentious setting of an atelier emphasizes the artwork's material quality and the artist's creative intent, offering a glimpse into the space where such a piece might be conceived or appreciated by its creator.",
+      "commercial_reason": "Presenting the artwork in a refined studio context elevates its perceived value by associating it with authenticity, creation, and serious artistic practice. This context appeals to collectors who appreciate art in its raw, unadorned state and value the integrity of the creative process. The spacious yet focused camera view allows the artwork to command attention while showcasing its scale within a sophisticated architectural setting, making it highly desirable for discerning buyers.",
+      "mockup_prompt": "A bold abstract painting, featuring a dominant red rectangular form against a deep olive-green background with smaller, darker forms, is authentically installed and wall-hung in a quiet working artist's atelier. The artwork is positioned off-center on a long, clean, painted studio wall of muted, warm off-white plaster, which extends laterally into the scene like an elongated architectural passage, creating a clear vanishing direction. The floor is light-toned polished concrete, reflecting soft, diffused studio daylight. Subtle, almost imperceptible traces of artistic process, such as faint pin marks or light paint smudges, are present on the wall, secondary to the artwork. The scene is bathed in soft, even north light or diffused studio daylight, entering from an unseen window, creating gentle, natural shadows and an expansive brightness. Architectural depth is visible with clean floor lines and wall joints receding naturally to one side. The artwork's canvas thickness is clearly visible, making it appear as a physical object. The focus is sharp on the artwork and its immediate surroundings, with a subtle natural depth-of-field falloff in the distant studio architecture.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no messy clutter, no pets, no wet paint chaos, no artwork substitution, no messy workshop, no paint chaos, no generic neutral interior."
+    }
+  ]
+}
+```

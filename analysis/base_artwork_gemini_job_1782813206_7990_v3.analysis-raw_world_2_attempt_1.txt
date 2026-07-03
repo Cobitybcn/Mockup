@@ -1,0 +1,46 @@
+```json
+{
+  "suggested_titles": [
+    {
+      "title": "Floating Horizons",
+      "subtitle": "An abstract exploration of distant landscapes and reflections.",
+      "description": "A serene, abstract landscape featuring deep emerald greens, vibrant reds, and soft blues, with undulating lines suggesting water or land, and rectangular forms that appear to float or reflect."
+    },
+    {
+      "title": "Verdant Depths",
+      "subtitle": "Contemplative abstraction with dynamic color accents.",
+      "description": "An artwork dominated by rich, deep green, punctuated by vivid red and turquoise shapes and their mirror-like reflections, connected by ethereal white lines, creating a sense of serene depth and quiet energy."
+    },
+    {
+      "title": "Echoes on the Current",
+      "subtitle": "Harmonious balance of geometry and organic flow.",
+      "description": "A visual poem in deep green, where structured geometric forms interact with fluid, white-lined currents, evoking a sense of tranquil movement and mirrored imagery in an expansive, abstracted space."
+    }
+  ],
+  "recommended_number_of_contexts": 1,
+  "contextual_proposals": [
+    {
+      "context_name": "Palazzo Afternoon Glow",
+      "context_role": "To present the artwork as a sophisticated focal point in a quiet luxury living space, enhancing its contemplative nature with warm, natural light and refined architectural depth.",
+      "space_type": "Aspirational living room within a premium domestic residence or a large private study.",
+      "atmosphere": "Serene, refined, quiet luxury. A warm, contemplative atmosphere infused with the soft, golden light of late afternoon, evoking polished calm and understated elegance.",
+      "materials": [
+        "Limewash wall in a warm, neutral tone (e.g., pale taupe or ivory)",
+        "Wide-plank pale oak flooring",
+        "Subtle plaster ceiling with discreet coving",
+        "A low, linear console in natural light wood or a pale stone finish (e.g., travertine) positioned beneath the artwork",
+        "A refined, low-pile wool rug in a complementary neutral shade"
+      ],
+      "lighting": "Soft, golden afternoon light streaming in from a large window on the left, casting gentle, elongated shadows and highlighting the texture of the limewash wall and the artwork's surface. Low ambient light in the deeper parts of the room.",
+      "camera_view": "Reflejo Dorado de Tarde / Palazzo: Camera height is elegant human standing height, approximately 150-170 cm, as if observed calmly from inside a palazzo room. Use a soft three-quarter rotation that catches reflected late light while keeping the artwork plane legible. The composition is stable, warm, and architectural, with golden afternoon reflection supporting the room rather than repainting the artwork; keep elegant balance but avoid perfect symmetry unless the room itself naturally demands it.",
+      "camera_distance": "Controlled architectural distance, allowing the artwork to be central while showcasing the elegant proportions and materials of the room.",
+      "camera_angle_notes": "The soft three-quarter rotation reveals the physical thickness of the canvas and creates architectural depth, leading the eye past the artwork into the subtle sophistication of the room. The elegant human-height perspective provides a natural, inviting view.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's deep green and vibrant red/blue elements gain a jewel-like quality under the golden afternoon light, resonating with the warm premium neutrals of the quiet luxury setting. The contemplative, expansive nature of the painting is mirrored by the serene, uncluttered domestic space, creating a harmonious and aspirational aesthetic.",
+      "commercial_reason": "This context positions the artwork as a high-value, statement piece within a desirable, aspirational domestic setting, appealing to discerning collectors who appreciate understated elegance and refined living. The warm, natural light enhances the artwork's visual appeal and suggests an integrated, sophisticated lifestyle.",
+      "mockup_prompt": "An XL horizontal artwork, deep emerald green with red and blue abstract shapes and white lines, is wall-mounted in a refined quiet luxury living room. The room features warm neutral limewash walls, wide-plank pale oak flooring, and a low travertine console beneath the artwork. Soft, golden afternoon light streams from a large window to the left, casting a gentle glow across the wall and artwork. The camera is at elegant human standing height (150-170 cm), looking with a soft three-quarter rotation, revealing architectural depth and warm, stable composition. The artwork is the focal point, balanced within the room. No people, no animals, wall-hanging artwork.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no influencer lifestyle, no real estate ad, no hotel catalog look, no furniture showroom"
+    }
+  ]
+}
+```

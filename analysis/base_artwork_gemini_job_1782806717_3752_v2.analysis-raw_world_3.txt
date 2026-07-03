@@ -1,0 +1,27 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Palazzo Luminoso Serale",
+      "context_role": "Showcase the artwork's modern vibrancy against a backdrop of timeless European elegance, emphasizing its gravitas and collectibility.",
+      "space_type": "Grand room in an old European palazzo or townhouse",
+      "atmosphere": "Refined, contemplative, serene, with the warmth of golden late afternoon light. A sense of history and quiet grandeur.",
+      "materials": [
+        "Aged limewash plaster walls in warm cream",
+        "Large cut stone tile floor in soft beige",
+        "Tall ceilings with subtle cornice moulding",
+        "Dark patinated bronze architectural console"
+      ],
+      "lighting": "Golden late-day sunlight streaming diagonally through tall, unadorned arched windows, raking across the aged plaster walls and casting long shadows on the stone floor, softly illuminating the artwork.",
+      "camera_view": "Nadir Aéreo con Contexto de Ventanas: Camera is positioned very high, near ceiling height, upper balcony height, skylight height, or the top edge of a tall architectural void. It is the aerial counterpart of an extreme nadir: instead of looking upward from the floor, the camera looks downward from above into the room. Use an oblique high-corner or upper-balcony diagonal, not a centered frontal wall view. The camera may look diagonally down along the room so window context, floor geometry, and artwork wall are visible together. Build the image from above: visible floor plane, furniture or bench tops, rug or floor layout, wall height, window/skylight context, and the artwork installed on a vertical wall. The artwork remains identifiable, but the room must read as seen from above, not as a normal wall presentation.",
+      "camera_distance": "Controlled architectural distance",
+      "camera_angle_notes": "The high, oblique downward view from an upper corner or balcony reveals the grand scale of the palazzo room. The artwork, placed on a tall plaster wall, is seen from above, showcasing its physical presence and thickness. The visible stone floor plane, along with the vertical rise of the walls and the tall arched windows in the background, creates a compelling spatial dialogue, emphasizing the artwork's commanding presence within the historical volume.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The artwork's abstract yet structured composition, with its bold primary colors and symbolic ladders, finds a harmonious counterpoint in the classical proportions and restrained materiality of the palazzo. The vibrant hues are amplified by the warm, natural late light and the muted historical palette of the room, suggesting a dialogue between contemporary expression and enduring heritage.",
+      "commercial_reason": "This setting positions the artwork as a significant acquisition for a discerning collector with an appreciation for both historical spaces and modern art. The premium, serene environment elevates its perceived value and broadens its appeal to a sophisticated European and North American market segment, highlighting its capacity to enrich culturally significant interiors.",
+      "mockup_prompt": "Interior, grand room in an old European palazzo. Aged limewash plaster walls in warm cream, large cut stone tile floor in soft beige, tall ceiling with subtle cornice moulding. Artwork, a vibrant abstract painting with strong blue, red, and orange shapes and ladders, is securely mounted on a prominent vertical plaster wall. Golden late-day sunlight streams diagonally through tall, unadorned arched windows on an adjacent wall, raking across the aged plaster and casting long, soft shadows on the stone floor. A single, dark patinated bronze architectural console is positioned low on the floor, slightly in the foreground and to the side. Camera positioned very high, looking obliquely downward from an upper corner, capturing the room's expansive floor, the artwork on the wall, and the window context. The artwork is seen from above, showcasing its canvas thickness and physical presence. The room feels expansive and quiet. Artwork is dominant and physically coherent. No visible people, no visible animals, art print on real stretched canvas, photographic quality.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default, no museum spectacle, no period drama, no costumes, no royal event, no crowd, no pet, no animal, no generic neutral interior, no rustic Tuscan room, no generic lounge, no showroom, no unrelated gallery"
+    }
+  ]
+}
+```

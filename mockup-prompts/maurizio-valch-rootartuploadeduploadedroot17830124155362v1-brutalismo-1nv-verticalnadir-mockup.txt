@@ -1,0 +1,21 @@
+Use the three reference images.
+
+Image 1 is a perspective mask only.
+The green area is the exact projected plane for the artwork.
+The black area is not part of the final image.
+The final artwork must occupy the same position, size, tilt, and four-corner silhouette as the green area.
+
+Image 2 is the artwork.
+Place Image 2 inside the green plane from Image 1, matching its perspective exactly.
+
+Image 3 is the environment mother.
+Preserve its architectural family, room type, wall and floor material family, light temperature, spatial scale, furniture density, openings, and atmosphere.
+Do not copy its exact camera angle, crop, or object placement, but the final room must be recognizably derived from Image 3.
+
+Create a realistic interior mockup viewed from below looking upward.
+If camera drama conflicts with the green mask, obey the green mask.
+If the room reference conflicts with the green mask, adapt only the camera geometry and artwork placement; do not replace the environment mother with a generic invented room.
+Do not show the green mask or black background.
+Do not turn the artwork into a sculpture.
+Do not place the artwork on another wall or in another perspective.
+Do not create an unrelated arched room, empty showroom, generic gallery, or alternate architecture unless Image 3 itself supports it.

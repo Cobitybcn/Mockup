@@ -1,0 +1,48 @@
+Generate one premium photographic mockup using this exact camera slot only:
+Camera Slot ID: borgona_recovecos_3_4_loft_hormigon
+Camera Slot Name: Borgoña Recovecos / Cámara 3/4 en Loft de Hormigón
+
+INPUT ROLES:
+IMAGE 1 is the only source of truth for the artwork. The first attached reference image is IMAGE 1. Preserve exact identity, orientation, aspect ratio, colors, marks, sparse areas, and composition.
+IMAGE 2 is the world mother for the environment. The second attached reference image is IMAGE 2. Keep its room type, material family, light logic, surface character, and spatial identity. Do not replace it with a generic concrete loft, brutalist niche, burgundy room, or alternate invented environment. Adapt only the camera and artwork placement needed for this slot.
+If IMAGE 2 contains paintings, canvases, easels, frames, drawings, posters, portraits, faces, figures, or other artworks, treat them only as environmental objects. Never copy their content, style, figures, faces, marks, colors, format, easel placement, or canvas layout into the final artwork. IMAGE 1 remains the only artwork content.
+
+ARTWORK PHYSICAL DATA:
+Artwork title: root_art_uploaded_uploaded_root_1783014314_8857_v1
+Artwork width: 120 cm
+Artwork height: 80 cm
+Artwork orientation: landscape
+Artwork size class: L
+
+TASK:
+Create a three-quarter composition inside the environment provided by IMAGE 2. Use a recess, corner, side plane, or architectural edge only if IMAGE 2 contains it or naturally supports it. If the world mother does not support a recess, keep a simpler 3/4 wall composition rather than inventing a concrete niche.
+
+CAMERA:
+Use human camera height tucked into an architectural recess, approximately 120-160 cm depending on the loft edge. Use a 35-50 mm lens with tactile concrete depth and no aggressive wide-angle distortion. Keep tilt controlled and mostly level.
+
+COMPOSITION:
+Use a 3/4 view with one clean vanishing direction. Allow strong off-center framing through side planes, recesses, corners, or architectural edges only when they are present or naturally inferable from IMAGE 2. Any burgundy-toned mood must come from the world mother; do not impose it as a new room identity.
+
+ARTWORK INTEGRITY:
+The artwork face, canvas edges, and texture remain sharp and faithful to IMAGE 1. Do not deform, repaint, recolor, replace, or import loft marks, studio marks, easel paintings, portraits, faces, figures, or any artwork visible in IMAGE 2 into the artwork.
+
+SCALE:
+Respect supplied dimensions. The artwork is 120 x 80 cm, size class L, and remains physically plausible within the world mother space. It must be balanced by camera angle and wall/recess depth rather than global dominance. Use nearby room objects such as easels, windows, radiator, stool, table, cabinet, door, wall joints, floor boards, or existing canvases in IMAGE 2 only as scale anchors. No billboard, mural, oversized wall panel, room divider, stage prop, or canvas scaled to match the largest easel in IMAGE 2.
+
+PAINTED EDGE:
+Visible edge, corner, or thickness must be painted as a coherent continuation of IMAGE 1. No raw beige canvas edge, unpainted primer, bare wood, exposed stretcher bars, or blank side band unless IMAGE 1 explicitly shows it.
+
+DEPTH:
+Recess edges, side planes, or distant loft surfaces may soften subtly. The artwork and immediate wall/contact area stay crisp and legible.
+
+NEGATIVE PROMPT:
+No artwork deformation, no artwork substitution, no invented painting, no copied painting from IMAGE 2, no copied easel artwork from IMAGE 2, no portrait from IMAGE 2, no face from IMAGE 2, no figure from IMAGE 2, no recolored artwork, no invented concrete loft, no invented brutalist niche, no invented burgundy room, no invented recess, no alternate room type, no replacing IMAGE 2 environment, no world-mother substitution, no room-inspired marks, no decorative gestures, no warped canvas, no bent canvas, no stretched artwork, no compressed artwork, no billboard scaling, no mural scaling, no oversized panel, no canvas scaled to match easel paintings in IMAGE 2, no raw beige canvas edge, no unpainted canvas edge, no bare wood edge, no random decorative people, no animals, no crowds, no children, no pets, no visible text, no logos, no watermarks.
+
+WORLD MOTHER ARTWORK QUARANTINE:
+IMAGE 2 may contain paintings, murals, wall drawings, posters, framed images, easel canvases, sketches, portraits, figures, decorative marks, or unfinished studio artwork. Treat all of those as unsafe environmental artifacts, not as content sources.
+
+Never copy, preserve, enlarge, translate, restyle, echo, or remix any artwork, mural, face, figure, brushwork, color composition, easel canvas, poster, frame content, or wall drawing from IMAGE 2 into IMAGE 1 or into the installed artwork. IMAGE 1 is the only artwork content allowed.
+
+If IMAGE 2 contains a large mural, figurative wall painting, colorful wall drawing, poster cluster, or competing artwork, neutralize that area into compatible blank wall, aged plaster, shelving, stacked blank canvases, furniture, shadow, or ordinary studio clutter. Do not keep it as a second prominent artwork in the final image.
+
+The final mockup must contain one primary artwork only: the supplied IMAGE 1 canvas/object. Any secondary canvas-like object may appear only as a blank support, turned-away canvas, neutral stretcher, or indistinct studio prop with no readable image, no face, no figure, and no decorative composition.

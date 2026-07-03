@@ -1,0 +1,34 @@
+Generate one premium photographic mockup using this exact camera slot only:
+Camera Slot ID: borde_canvas_closeup
+Camera Slot Name: Borde de Canvas Close-up
+
+INPUT ROLES:
+- IMAGE 1 is the root artwork. Treat it as visual evidence that must be preserved.
+- IMAGE 2, if provided, may only inform a very neutral immediate wall tone or peripheral surface color. Do not import its atmosphere, room layout, furniture, windows, dramatic light, props, architectural mood, or storytelling.
+
+ARTWORK PHYSICAL DATA:
+- Width: 80 cm
+- Height: 120 cm
+- Depth: supplied physical canvas/object depth metadata only; use it only to keep canvas thickness plausible and never render it as visible text
+- Orientation: portrait
+
+TASK:
+Create a close-up photographic view of the physical canvas edge of IMAGE 1. The subject is the transition between the painted front face, the lateral side depth, the canvas thickness, the nearby wall contact, and the subtle cast shadow. A partial crop is expected. This is not a full-room mockup.
+
+CAMERA:
+Use a close-focus 50-70 mm lens equivalent, or a natural close-up lens with controlled perspective. The camera is near artwork height and slightly side-oblique, close enough to read the physical edge and wall contact. Keep the canvas edge, front-face fragment, lateral side, thickness, and immediate wall contact sharp. Distant background may soften gently, but it must not become the subject.
+
+STRICT ARTWORK FIDELITY:
+Preserve the visible portion of IMAGE 1 exactly: colors, marks, sparse areas, local composition, edge relationships, and format logic. Do not redraw, reinterpret, beautify, simplify, complete, recompose, recolor, mirror, rotate, stretch, compress, or replace the artwork. Do not invent symbols, figures, faces, landscapes, decorative motifs, new lines, new color blocks, or another painting.
+
+CANVAS EDGE AND SCALE LIMITS:
+The visible canvas remains a rigid physical object at the supplied dimensions. The edge thickness must be moderate and plausible for a stretched canvas or physical artwork object; do not turn it into a thick block, slab, plinth, box, wedge, floating panel, poster, paper sheet, digital screen, or framed object. Preserve the original artwork orientation and aspect ratio even when only a fragment is visible: a portrait artwork must still read as part of a taller-than-wide canvas, a landscape artwork as part of a wider-than-tall canvas, and a square artwork as part of a square canvas.
+
+CROP LIMITS:
+Cropping is camera framing only, not artwork alteration. The full artwork does not need to be visible. One or more artwork edges may fall outside the image frame. Do not complete, widen, shorten, square, compress, extend, redesign, or reformat the visible fragment into a different full-format painting.
+
+ATMOSPHERE LIMITS:
+No atmospheric scene-building. No dramatic atelier mood. No cinematic haze. No golden-room storytelling. No full-room context. No visible furniture, easels, shelves, table setups, large windows, decorative props, people, pets, or architectural narrative. The background, if visible, must stay minimal, peripheral, soft, and secondary to the canvas edge.
+
+NEGATIVE PROMPT:
+No poster, no flat print, no paper sheet, no digital screen, no floating panel, no exaggerated thickness, no block canvas, no slab, no plinth, no box, no wedge, no invented frame, no ornate frame, no raw wood stretcher bars unless visible in IMAGE 1, no staples unless visible in IMAGE 1, no redesigned side edge, no changed artwork format, no squared portrait artwork, no stretched artwork, no compressed artwork, no artwork substitution, no invented imagery, no invented marks, no artificial impasto, no new tactile marks, no full room, no room atmosphere, no furniture, no easel, no table setup, no shelves, no large windows, no window-dominant composition, no dramatic atelier mood, no cinematic haze, no golden-room storytelling, no people, no pets, no crowds, no children, no visible text, no logos, no watermarks.

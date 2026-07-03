@@ -66,23 +66,6 @@ class ServiceFactory
         return new MockArtworkProcessor();
     }
 
-    public static function artworkAnalyzer(): ArtworkAnalyzerInterface
-    {
-        if (ProviderSettings::isRealMode()) {
-            if (self::imageProvider() === 'gemini') {
-                self::assertGeminiProvider();
-                return new GeminiArtworkAnalyzer(new MockContextSelector(new MockPromptBuilder()));
-            } else {
-                self::assertOpenAIMode();
-            }
-
-            return new OpenAIArtworkAnalyzer(new MockContextSelector(new MockPromptBuilder()));
-        }
-
-        self::assertMockMode();
-        return new MockArtworkAnalyzer(new MockContextSelector(new MockPromptBuilder()));
-    }
-
     public static function mockupGenerator(): MockupGeneratorInterface
     {
         if (ProviderSettings::isRealMode()) {

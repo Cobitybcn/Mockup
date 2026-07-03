@@ -1,0 +1,29 @@
+```json
+{
+  "contextual_proposals": [
+    {
+      "context_name": "Palazzo Study: Golden Hour Refrain",
+      "context_role": "This context positions the artwork within an elevated, cultivated domestic environment, showcasing its contemplative depth and material richness as a focal point in a space designed for intellectual pursuits and refined living. It emphasizes the artwork's quiet power.",
+      "space_type": "Expansive, minimalist study or library within a premium residence, characterized by architectural clarity and abundant natural light.",
+      "atmosphere": "Serene, contemplative, and warm, bathed in the soft, golden light of late afternoon. An atmosphere of restrained luxury and timeless elegance, conducive to reflection and appreciation of art.",
+      "materials": [
+        "Limewash walls in a warm, off-white tone",
+        "Polished pale oak parquet flooring with subtle grain",
+        "Clean, high ceiling with invisible coving for diffused light",
+        "Dark, richly textured wood (e.g., wenge or ebonized oak) minimalist console table",
+        "Heavy linen or raw silk drapes pulled back from a tall window",
+        "Fine, sculptural ceramic object (e.g., an ancient vase or modern abstract form) on the console"
+      ],
+      "lighting": "Soft, diffused late afternoon sunlight streaming from a large window positioned laterally, creating long, golden reflections on the floor and subtly illuminating the artwork's texture. Minimal additional ambient light, allowing the natural light to define the mood.",
+      "camera_view": "Reflejo Dorado de Tarde / Palazzo: Camera height is elegant human standing height, approximately 150-170 cm, as if observed calmly from inside a palazzo room. Use a soft three-quarter rotation that catches reflected late light while keeping the artwork plane legible. The composition is stable, warm, and architectural, with golden afternoon reflection supporting the room rather than repainting the artwork; keep elegant balance but avoid perfect symmetry unless the room itself naturally demands it.",
+      "camera_distance": "Controlled architectural distance, allowing the room's elegant proportions and material quality to be appreciated while keeping the artwork as the dominant visual element.",
+      "camera_angle_notes": "The soft three-quarter angle reveals the artwork's physical depth and canvas thickness, preventing a flat appearance. The lateral perspective creates architectural depth, leading the eye along receding walls and towards the light source, enhancing the artwork's presence within a sophisticated spatial context.",
+      "human_presence": "No visible people or animals. Human context expressed through architecture, culture, objects, season, and refined interior atmosphere.",
+      "curatorial_reason": "The deep red of the artwork finds a sophisticated counterpoint in the warm, neutral limewash walls and the golden natural light, preventing visual clash and enhancing its rich hue. The quiet, architectural context amplifies the artwork's contemplative nature and abstract landscape forms, suggesting a dialogue between human creation and the vastness of nature, perfectly suited for a refined study. The subtle, elegant furniture reinforces the artwork's premium placement without distracting from it.",
+      "commercial_reason": "This context caters to a premium market seeking art for aspirational domestic spaces. The 'quiet luxury' aesthetic, combined with sophisticated natural lighting and architectural depth, elevates the artwork's perceived value and desirability. It demonstrates how the artwork can seamlessly integrate into and enhance a highly curated, art-conscious living environment, appealing to collectors who value understated elegance and meaningful visual statements in their homes.",
+      "mockup_prompt": "A premium, minimalist study within an elegant residence, featuring limewash walls in a warm off-white tone and polished pale oak parquet flooring. The large, rectangular, deep red abstract artwork with subtle white etched lines and faint rectangular forms is wall-mounted slightly off-center on the main limewash wall, positioned to create an elegant architectural composition. A sleek, dark wenge wood console table with a single sculptural ceramic object sits against an adjacent receding wall in the foreground, creating lateral depth. Soft, golden late afternoon sunlight streams from a tall, unseen window to the left, casting subtle reflections on the floor and gently illuminating the artwork's texture. The room maintains an atmosphere of refined tranquility and understated luxury, with clean lines and premium materials. Camera at elegant human standing height, approximately 160 cm, looking through a soft three-quarter oblique view, catching reflected golden light. The artwork's physical canvas thickness is subtly visible, not flat against the wall. Minimal depth of field.",
+      "negative_prompt": "no people, no animals, no poster, no flat print, no distortion, no fisheye, no incorrect scale, no cropped artwork, no altered artwork, no mirrored artwork, no generic vintage room, no winter default unless seasonally intended, no influencer lifestyle, no decor ad, no hotel catalog look, no furniture showroom."
+    }
+  ]
+}
+```
