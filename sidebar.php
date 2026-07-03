@@ -64,7 +64,7 @@ $step5Active = ($currentPage === 'report.php' || $currentPage === 'curated_mocku
 // Menu active states
 $dashboardActive = ($currentPage === 'dashboard.php');
 $mockupsActive = ($currentPage === 'mockups.php' || $currentPage === 'viewer.php');
-$artworkSheetsActive = ($currentPage === 'work_board.php' || $currentPage === 'work_manager.php' || $currentPage === 'artwork_sheets.php' || $currentPage === 'artwork_sheet.php');
+$artworkSheetsActive = ($currentPage === 'fichas.php' || $currentPage === 'ficha.php' || $currentPage === 'fichas_reconcile.php');
 $worldMotherActive = ($currentPage === 'world_mother_studio.php');
 $cameraStudioActive = ($currentPage === 'camera_studio.php');
 $profileActive = ($currentPage === 'artist_profile.php');
@@ -74,7 +74,6 @@ $accountActive = ($currentPage === 'account.php');
 // Admin active states
 $promptsActive = ($currentPage === 'admin_prompts.php');
 $apiActive = ($currentPage === 'admin_api_keys.php');
-$orphanMockupsActive = ($currentPage === 'admin_orphan_mockups.php');
 
 // Step 2 link determination (Select Root Artwork)
 $step2Url = '#';
@@ -285,7 +284,7 @@ if ($step5Disabled && $sidebarUser) {
             <?php endif; ?>
             <li><a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Library</a></li>
             <li><a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Studio</a></li>
-            <li><a class="<?= $artworkSheetsActive ? 'active' : '' ?>" href="work_board.php">Work Board</a></li>
+            <li><a class="<?= $artworkSheetsActive ? 'active' : '' ?>" href="fichas.php">Fichas</a></li>
             <li><a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a></li>
             <li><a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a></li>
             <li><a href="logout.php">Logout</a></li>
@@ -300,7 +299,6 @@ if ($step5Disabled && $sidebarUser) {
                 <li><a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a></li>
                 <li><a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">System Prompts</a></li>
                 <li><a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a></li>
-                <li><a class="<?= $orphanMockupsActive ? 'active' : '' ?>" href="admin_orphan_mockups.php">Anexar mockups</a></li>
             </ul>
         </details>
     <?php endif; ?>
