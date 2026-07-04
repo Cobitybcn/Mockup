@@ -11,10 +11,15 @@ $currentImageParam = basename((string)($_GET['image'] ?? $_POST['image'] ?? ''))
 $currentArtworkIdParam = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
 $sidebarContextArtworkId = 0;
 $sidebarContextRootFile = '';
+$sidebarArtistPhoto = '';
 
 if ($sidebarUser) {
     try {
         $db = Database::connection();
+        $profileStmt = $db->prepare('SELECT photo_file FROM artist_profiles WHERE user_id = :user_id LIMIT 1');
+        $profileStmt->execute(['user_id' => (int)$sidebarUser['id']]);
+        $sidebarArtistPhoto = basename((string)($profileStmt->fetchColumn() ?: ''));
+
         if ($currentImageParam !== '') {
             $stmt = $db->prepare("
                 SELECT id, root_file
@@ -59,14 +64,15 @@ $step1Active = ($currentPage === 'artwork_new.php' || $currentPage === 'root_sel
 $step2Active = ($currentPage === 'root_select.php' || $currentPage === 'waiting.php');
 $step3Active = ($currentPage === 'core_review.php');
 $step4Active = ($currentPage === 'artwork.php' || $currentPage === 'publish.php' || $currentPage === 'artwork_details.php');
-$step5Active = ($currentPage === 'report.php' || $currentPage === 'curated_mockups.php' || $currentPage === 'mockup_batch_wait.php' || $currentPage === 'mockup_branches_review.php' || $currentPage === 'mockup_prompt_drafts_review.php' || $currentPage === 'mockup_combinations_review.php' || $currentPage === 'mockup_combination_results.php' || $currentPage === 'generate_mockup_combination.php' || $currentPage === 'save_mockup_combination_evaluation.php' || $currentPage === 'prompt_inspector.php' || $currentPage === 'approve_mockup_prompt_draft.php' || $currentPage === 'generate_mockup_from_approved_prompt.php');
+$step5Active = ($currentPage === 'report.php' || $currentPage === 'curated_mockups.php' || $currentPage === 'mockup_batch_wait.php' || $currentPage === 'mockup_branches_review.php' || $currentPage === 'mockup_prompt_drafts_review.php' || $currentPage === 'mockup_combinations_review.php' || $currentPage === 'mockup_combination_results.php' || $currentPage === 'mockup_variation_lab.php' || $currentPage === 'generate_mockup_combination.php' || $currentPage === 'save_mockup_combination_evaluation.php' || $currentPage === 'prompt_inspector.php' || $currentPage === 'approve_mockup_prompt_draft.php' || $currentPage === 'generate_mockup_from_approved_prompt.php');
 
 // Menu active states
 $dashboardActive = ($currentPage === 'dashboard.php');
 $mockupsActive = ($currentPage === 'mockups.php' || $currentPage === 'viewer.php');
-$artworkSheetsActive = ($currentPage === 'fichas.php' || $currentPage === 'ficha.php' || $currentPage === 'fichas_reconcile.php');
 $worldMotherActive = ($currentPage === 'world_mother_studio.php');
 $cameraStudioActive = ($currentPage === 'camera_studio.php');
+$variationLabActive = ($currentPage === 'mockup_variation_lab.php');
+$generatedResultsActive = ($currentPage === 'mockup_combination_results.php');
 $profileActive = ($currentPage === 'artist_profile.php');
 $usersActive = ($currentPage === 'admin_users.php');
 $accountActive = ($currentPage === 'account.php');
@@ -96,42 +102,6 @@ if ($step2Disabled && $sidebarUser) {
         if ($latestPending) {
             $step2Url = 'root_select.php?job=' . urlencode((string)$latestPending['job_id']);
             $step2Disabled = false;
-        }
-    } catch (Throwable $e) {
-        // Fallback silently if DB is not ready
-    }
-}
-
-// Step 3 link determination (Review Artwork Core)
-$step3Url = '#';
-$step3Disabled = true;
-
-if ($sidebarContextArtworkId > 0) {
-    $step3Url = 'core_review.php?id=' . urlencode((string)$sidebarContextArtworkId);
-    $step3Disabled = false;
-} elseif ($currentPage === 'core_review.php' && $currentArtworkIdParam > 0) {
-    $step3Url = 'core_review.php?id=' . urlencode((string)$currentArtworkIdParam);
-    $step3Disabled = false;
-}
-
-if ($step3Disabled && $sidebarUser) {
-    try {
-        $db = Database::connection();
-        $stmt = $db->prepare("
-            SELECT id
-            FROM artworks
-            WHERE user_id = :user_id
-            AND status = 'done'
-            AND root_file IS NOT NULL
-            AND root_file != ''
-            ORDER BY updated_at DESC, created_at DESC
-            LIMIT 1
-        ");
-        $stmt->execute(['user_id' => $sidebarUser['id']]);
-        $latestArtworkId = $stmt->fetchColumn();
-        if ($latestArtworkId) {
-            $step3Url = 'core_review.php?id=' . urlencode((string)$latestArtworkId);
-            $step3Disabled = false;
         }
     } catch (Throwable $e) {
         // Fallback silently if DB is not ready
@@ -203,6 +173,10 @@ if ($step5Disabled && $sidebarUser) {
         $stmt->execute(['user_id' => $sidebarUser['id']]);
         $latestArtwork = $stmt->fetch();
         if ($latestArtwork && !empty($latestArtwork['root_file'])) {
+            if ($sidebarContextArtworkId <= 0) {
+                $sidebarContextArtworkId = (int)$latestArtwork['id'];
+                $sidebarContextRootFile = basename((string)$latestArtwork['root_file']);
+            }
             $step5Url = 'mockup_combinations_review.php?id=' . urlencode((string)$latestArtwork['id']);
             $step5Disabled = false;
         }
@@ -211,92 +185,63 @@ if ($step5Disabled && $sidebarUser) {
     }
 }
 
+$generatedResultsUrl = $sidebarContextArtworkId > 0
+    ? 'mockup_combination_results.php?id=' . urlencode((string)$sidebarContextArtworkId)
+    : 'mockups.php';
+
 ?>
 <aside class="sidebar">
     <div class="sidebar-head">
-        <a class="brand" href="dashboard.php">
+        <a class="brand" href="artwork_new.php">
             <span class="brand-kicker">BETA WORKFLOW</span>
             <span class="brand-title">MOCKUP LAB <span class="brand-mark"></span></span>
         </a>
     </div>
 
-    <!-- SECTION 1: STEPS -->
-    <div class="sidebar-section-title">BETA FLOW</div>
-    <div class="sidebar-steps">
-        <!-- Step 1: Upload Artwork -->
-        <a href="artwork_new.php" class="step-item <?= $step1Active ? 'active' : '' ?>">
-            <div class="step-num-container">
-                <span class="step-number">1</span>
-                <?php if ($step1Active): ?><span class="step-indicator"></span><?php endif; ?>
+    <nav class="sidebar-tabs" aria-label="Primary navigation">
+        <section class="sidebar-tab-group">
+            <div class="sidebar-section-title">Create</div>
+            <div class="sidebar-tab-row">
+                <a class="sidebar-tab <?= $step1Active ? 'active' : '' ?>" href="artwork_new.php">Upload Artwork</a>
+                <?php if (!$step5Disabled || $step5Active): ?>
+                    <a class="sidebar-tab <?= $step5Active && !$variationLabActive && !$generatedResultsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($step5Url, ENT_QUOTES, 'UTF-8') ?>">Scenes</a>
+                <?php endif; ?>
+                <a class="sidebar-tab <?= $generatedResultsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($generatedResultsUrl, ENT_QUOTES, 'UTF-8') ?>">Generated Results</a>
+                <a class="sidebar-tab <?= $variationLabActive ? 'active' : '' ?>" href="mockup_variation_lab.php">Variation Lab</a>
             </div>
-            <div class="step-details">
-                <span class="step-label">Upload</span>
-                <span class="step-subtitle">Add the artwork.</span>
+        </section>
+
+        <section class="sidebar-context">
+            <div class="sidebar-tab-row">
+                <?php if (!$step4Disabled): ?>
+                    <a class="sidebar-tab compact <?= $step4Active ? 'active' : '' ?>" href="<?= htmlspecialchars($step4Url, ENT_QUOTES, 'UTF-8') ?>">Artwork Details</a>
+                <?php endif; ?>
+                <a class="sidebar-tab <?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
+                <a class="sidebar-tab <?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
             </div>
-        </a>
+        </section>
 
-        <!-- Step 2: Scene + Camera Slots -->
-        <?php if ($step5Disabled && !$step5Active): ?>
-            <div class="step-item disabled" title="No root artwork selected yet. Please upload and select one first.">
-                <div class="step-num-container">
-                    <span class="step-number">2</span>
-                </div>
-                <div class="step-details">
-                    <span class="step-label">Scene + Cameras</span>
-                    <span class="step-subtitle">Pick scene, run views.</span>
-                </div>
+        <section class="sidebar-tab-group sidebar-account">
+            <div class="sidebar-tab-row">
+                <?php if ($sidebarArtistPhoto !== ''): ?>
+                    <a class="sidebar-artist-photo" href="artist_profile.php" title="Artist Profile" aria-label="Artist Profile">
+                        <img src="uploads/artist_profiles/<?= rawurlencode($sidebarArtistPhoto) ?>" alt="">
+                    </a>
+                <?php endif; ?>
+                <a class="sidebar-tab compact <?= $dashboardActive ? 'active' : '' ?>" href="dashboard.php">Dashboard</a>
+                <a class="sidebar-tab compact <?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
+                <a class="sidebar-tab compact" href="logout.php">Logout</a>
             </div>
-        <?php else: ?>
-            <a href="<?= htmlspecialchars($step5Url, ENT_QUOTES, 'UTF-8') ?>" class="step-item <?= $step5Active ? 'active' : '' ?>">
-                <div class="step-num-container">
-                    <span class="step-number">2</span>
-                    <?php if ($step5Active): ?><span class="step-indicator"></span><?php endif; ?>
-                </div>
-                <div class="step-details">
-                    <span class="step-label">Scene + Cameras</span>
-                    <span class="step-subtitle">Pick scene, run views.</span>
-                </div>
-            </a>
-        <?php endif; ?>
+        </section>
+    </nav>
 
-    </div>
-
-    <!-- SECTION 2: MENU -->
-    <div class="sidebar-section-title">QUICK</div>
-    <ul class="nav">
-        <li>
-            <a class="<?= $dashboardActive ? 'active' : '' ?>" href="dashboard.php">
-                Dashboard
-            </a>
-        </li>
-        <li>
-            <a class="<?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">
-                Mockups
-            </a>
-        </li>
-    </ul>
-
-    <details class="sidebar-more">
-        <summary>More</summary>
-        <ul class="nav">
-            <?php if (!$step3Disabled): ?>
-                <li><a class="<?= $step3Active ? 'active' : '' ?>" href="<?= htmlspecialchars($step3Url, ENT_QUOTES, 'UTF-8') ?>">Artwork Core</a></li>
-            <?php endif; ?>
-            <li><a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Library</a></li>
-            <li><a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Studio</a></li>
-            <li><a class="<?= $artworkSheetsActive ? 'active' : '' ?>" href="fichas.php">Fichas</a></li>
-            <li><a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a></li>
-            <li><a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a></li>
-            <li><a href="logout.php">Logout</a></li>
-        </ul>
-    </details>
-
-    <!-- SECTION 3: ADMIN -->
     <?php if ($sidebarIsAdmin): ?>
         <details class="sidebar-more">
             <summary>Admin</summary>
             <ul class="nav">
                 <li><a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a></li>
+                <li><a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scenes Studio</a></li>
+                <li><a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Studio</a></li>
                 <li><a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">System Prompts</a></li>
                 <li><a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a></li>
             </ul>

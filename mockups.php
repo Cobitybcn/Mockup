@@ -9,7 +9,7 @@ $pdo = Database::connection();
 
 $query = trim((string)($_GET['q'] ?? ''));
 $page = max(1, (int)($_GET['page'] ?? 1));
-$perPage = 24;
+$perPage = 60;
 $offset = ($page - 1) * $perPage;
 
 $where = 'WHERE user_id = :user_id';
@@ -67,12 +67,26 @@ function page_url(int $page, string $query): string
 
     return 'mockups.php?' . http_build_query($params);
 }
+
+function pagination_pages(int $current, int $total): array
+{
+    $pages = [1, $total];
+    for ($i = $current - 2; $i <= $current + 2; $i++) {
+        if ($i >= 1 && $i <= $total) {
+            $pages[] = $i;
+        }
+    }
+    $pages = array_values(array_unique($pages));
+    sort($pages);
+
+    return $pages;
+}
 ?>
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Mockups - The Artwork Curator</title>
+    <title>Mockup Album - The Artwork Curator</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -91,12 +105,11 @@ function page_url(int $page, string $query): string
         <div class="workspace">
             <div class="workspace-header">
                 <div>
-                    <h1>Generated Mockups</h1>
+                    <h1>Mockup Album</h1>
                     <p><?= h($total) ?> images saved in your private archive.</p>
                 </div>
                 <div class="topbar-actions">
                     <a class="button-link" href="artwork_new.php">Upload Artwork</a>
-                    <a class="button-link secondary" href="dashboard.php">Dashboard</a>
                 </div>
             </div>
 
@@ -110,7 +123,7 @@ function page_url(int $page, string $query): string
 
             <section class="panel">
                 <div class="section-heading">
-                    <h2>Mockup Archive</h2>
+                    <h2>Mockup Album Archive</h2>
                     <p>Page <?= h($page) ?> of <?= h($totalPages) ?></p>
                 </div>
 
@@ -138,14 +151,39 @@ function page_url(int $page, string $query): string
                 <?php if ($totalPages > 1): ?>
                     <nav class="pagination" aria-label="Pagination">
                         <?php if ($page > 1): ?>
+                            <a class="button-link secondary" href="<?= h(page_url(1, $query)) ?>">First</a>
                             <a class="button-link secondary" href="<?= h(page_url($page - 1, $query)) ?>">Previous</a>
                         <?php endif; ?>
 
-                        <span>Page <?= h($page) ?> / <?= h($totalPages) ?></span>
+                        <?php $visiblePages = pagination_pages($page, $totalPages); ?>
+                        <?php $previousVisible = 0; ?>
+                        <?php foreach ($visiblePages as $visiblePage): ?>
+                            <?php if ($previousVisible > 0 && $visiblePage > $previousVisible + 1): ?>
+                                <span>...</span>
+                            <?php endif; ?>
+                            <?php if ($visiblePage === $page): ?>
+                                <span class="button-link" aria-current="page"><?= h($visiblePage) ?></span>
+                            <?php else: ?>
+                                <a class="button-link secondary" href="<?= h(page_url($visiblePage, $query)) ?>"><?= h($visiblePage) ?></a>
+                            <?php endif; ?>
+                            <?php $previousVisible = $visiblePage; ?>
+                        <?php endforeach; ?>
 
                         <?php if ($page < $totalPages): ?>
                             <a class="button-link secondary" href="<?= h(page_url($page + 1, $query)) ?>">Next</a>
+                            <a class="button-link secondary" href="<?= h(page_url($totalPages, $query)) ?>">Last</a>
                         <?php endif; ?>
+                        <form method="get" style="display:inline-flex; gap:6px; align-items:center; margin:0;">
+                            <?php if ($query !== ''): ?>
+                                <input type="hidden" name="q" value="<?= h($query) ?>">
+                            <?php endif; ?>
+                            <label style="margin:0; font-size:11px; color:var(--muted);">Go to</label>
+                            <select name="page" onchange="this.form.submit()" style="width:auto; min-width:72px; padding:8px 10px;">
+                                <?php for ($jumpPage = 1; $jumpPage <= $totalPages; $jumpPage++): ?>
+                                    <option value="<?= $jumpPage ?>" <?= $jumpPage === $page ? 'selected' : '' ?>><?= $jumpPage ?></option>
+                                <?php endfor; ?>
+                            </select>
+                        </form>
                     </nav>
                 <?php endif; ?>
             </section>

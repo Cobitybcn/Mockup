@@ -176,13 +176,8 @@ final class ArtworkSheetService
 
         $generated = $fallback;
         if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && ProviderSettings::imageProvider() === 'gemini' && $imagePath !== '') {
-            $prompt = "Analyze this artwork and create public-facing SEO metadata in English.\n"
-                . "All generated fields must be written in natural, polished English for an international art/design audience.\n"
-                . "Do not describe a mockup or a room: describe the artwork itself.\n"
-                . "Use the user's curatorial notes as direction only; if the notes are in Spanish, translate their intent into English.\n"
-                . "Devuelve JSON estricto con claves: title, subtitle, description, short_description, keywords, tags, alt_text, caption.\n"
-                . "keywords y tags deben ser arrays de strings in English.\n"
-                . "Notas curatoriales del usuario:\n{$notes}";
+            $artistProfile = ArtistProfile::findForUser($userId);
+            $prompt = $this->buildAdminArtworkAnalysisPrompt($artwork, $artistProfile, $notes);
             try {
                 $text = $this->client->generateText([
                     $this->client->textPart($prompt),
@@ -190,7 +185,8 @@ final class ArtworkSheetService
                 ], 'gemini-2.5-flash');
                 $decoded = json_decode($this->extractJson($text), true);
                 if (is_array($decoded)) {
-                    $generated = array_merge($fallback, $decoded);
+                    $this->saveArtworkAnalysisArtifacts((int)$artwork['id'], $imagePath, $decoded, $prompt, $text);
+                    $generated = $this->metadataFromAdminAnalysis($decoded, $fallback);
                 }
             } catch (Throwable $e) {
                 $generated = $fallback;
@@ -200,6 +196,155 @@ final class ArtworkSheetService
 
         $this->applyGeneratedArtworkSheet($sheetId, $userId, $generated);
         return $generated;
+    }
+
+    private function buildAdminArtworkAnalysisPrompt(array $artwork, array $artistProfile, string $notes): string
+    {
+        $width = trim((string)($artwork['width'] ?? ''));
+        $height = trim((string)($artwork['height'] ?? ''));
+        $orientation = 'Not specified';
+        if ((float)$width > 0 && (float)$height > 0) {
+            $orientation = (float)$width > (float)$height ? 'horizontal' : (((float)$height > (float)$width) ? 'vertical' : 'square');
+        }
+
+        $prompt = PromptSettings::artworkAnalysisPrompt();
+        return strtr($prompt, [
+            '{artist_profile_prompt}' => ArtistProfile::hasContent($artistProfile) ? ArtistProfile::forPrompt($artistProfile) : '',
+            '{artist_statement}' => (string)($artistProfile['statement'] ?? ''),
+            '{visual_language}' => (string)($artistProfile['visual_language'] ?? ''),
+            '{recurring_symbols}' => (string)($artistProfile['recurring_themes'] ?? ''),
+            '{preferred_atmospheres}' => (string)($artistProfile['preferred_contexts'] ?? ''),
+            '{title}' => trim((string)($artwork['final_title'] ?? '')) ?: 'Untitled artwork',
+            '{width_cm}' => $width,
+            '{height_cm}' => $height,
+            '{depth_cm}' => trim((string)($artwork['depth'] ?? '')),
+            '{notes}' => $notes,
+            '{preferred_style}' => '',
+            '{target_market}' => trim((string)($artistProfile['target_audience'] ?? 'collectors')),
+            '{orientation}' => $orientation,
+            '{region}' => trim((string)($artistProfile['preferred_regions'] ?? '')),
+            '{scale_text}' => trim($width . ' x ' . $height . ' ' . (string)($artwork['unit'] ?? 'cm')),
+            '{context_count}' => (string)PromptSettings::mockupContextCount(),
+        ]);
+    }
+
+    /**
+     * @param array<string,mixed> $analysis
+     * @param array<string,mixed> $fallback
+     * @return array<string,mixed>
+     */
+    private function metadataFromAdminAnalysis(array $analysis, array $fallback): array
+    {
+        $profile = is_array($analysis['artwork_analysis'] ?? null) ? $analysis['artwork_analysis'] : $analysis;
+        $publishing = is_array($profile['publishing_metadata'] ?? null) ? $profile['publishing_metadata'] : [];
+        $titles = is_array($analysis['suggested_titles'] ?? null)
+            ? $analysis['suggested_titles']
+            : (is_array($publishing['suggested_titles'] ?? null) ? $publishing['suggested_titles'] : []);
+        $firstTitle = is_array($titles[0] ?? null) ? $titles[0] : [];
+        $rootMeta = is_array($publishing['root_image_metadata'] ?? null) ? $publishing['root_image_metadata'] : [];
+
+        $keywords = $publishing['keywords'] ?? $this->keywordsFromAdminAnalysis($analysis);
+        $longTail = $publishing['long_tail_keywords'] ?? $this->longTailFromAdminAnalysis($analysis, $firstTitle);
+        $title = trim((string)($firstTitle['title'] ?? $fallback['title'] ?? ''));
+        $subtitle = trim((string)($firstTitle['subtitle'] ?? $fallback['subtitle'] ?? ''));
+        $description = trim((string)($firstTitle['description'] ?? $profile['one_line_curatorial_read'] ?? $fallback['description'] ?? ''));
+        $generated = [
+            'title' => $title,
+            'subtitle' => $subtitle,
+            'description' => $description,
+            'short_description' => trim((string)($profile['one_line_curatorial_read'] ?? $fallback['short_description'] ?? '')),
+            'keywords' => is_array($keywords) ? $keywords : $fallback['keywords'],
+            'tags' => is_array($keywords) ? $keywords : $fallback['tags'],
+            'alt_text' => trim((string)($rootMeta['alt_text'] ?? ($title !== '' ? 'Abstract artwork titled ' . $title . ', showing bold color fields, symbolic ladders, geometric forms, and a luminous circular motif.' : ($fallback['alt_text'] ?? '')))),
+            'caption' => trim((string)($rootMeta['caption'] ?? ($title . ($subtitle !== '' ? ' - ' . $subtitle : '')))),
+            'long_tail_terms' => is_array($longTail) ? $longTail : [],
+            '_admin_analysis' => $analysis,
+        ];
+
+        return array_merge($fallback, $generated);
+    }
+
+    /**
+     * @param array<string,mixed> $analysis
+     * @return array<int,string>
+     */
+    private function keywordsFromAdminAnalysis(array $analysis): array
+    {
+        $terms = [];
+        foreach ((array)($analysis['contextual_proposals'] ?? []) as $proposal) {
+            if (!is_array($proposal)) {
+                continue;
+            }
+            foreach (['space_type', 'atmosphere', 'lighting', 'camera_view'] as $key) {
+                $value = trim((string)($proposal[$key] ?? ''));
+                if ($value !== '') {
+                    $terms[] = $value;
+                }
+            }
+            foreach ((array)($proposal['materials'] ?? []) as $material) {
+                $terms[] = (string)$material;
+            }
+        }
+        $terms[] = 'contemporary abstract art';
+        $terms[] = 'original canvas artwork';
+        return array_slice(array_values(array_unique(array_filter(array_map('trim', $terms)))), 0, 15);
+    }
+
+    /**
+     * @param array<string,mixed> $analysis
+     * @param array<string,mixed> $firstTitle
+     * @return array<int,string>
+     */
+    private function longTailFromAdminAnalysis(array $analysis, array $firstTitle): array
+    {
+        $title = trim((string)($firstTitle['title'] ?? 'abstract artwork'));
+        $terms = [
+            $title . ' original contemporary artwork',
+            $title . ' abstract canvas painting',
+            'large contemporary abstract artwork for collectors',
+            'blue red and ochre abstract canvas painting',
+            'symbolic ladder abstract artwork',
+            'premium contemporary art for interiors',
+        ];
+        foreach ((array)($analysis['contextual_proposals'] ?? []) as $proposal) {
+            if (!is_array($proposal)) {
+                continue;
+            }
+            $contextName = trim((string)($proposal['context_name'] ?? ''));
+            if ($contextName !== '') {
+                $terms[] = $title . ' in ' . $contextName . ' context';
+            }
+        }
+        return array_slice(array_values(array_unique(array_filter($terms))), 0, 15);
+    }
+
+    /**
+     * @param array<string,mixed> $analysis
+     */
+    private function saveArtworkAnalysisArtifacts(int $artworkId, string $imagePath, array $analysis, string $prompt, string $rawText): void
+    {
+        $json = json_encode($analysis, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($json === false) {
+            return;
+        }
+
+        if (!is_dir(ANALYSIS_DIR)) {
+            @mkdir(ANALYSIS_DIR, 0775, true);
+        }
+        $base = pathinfo(basename($imagePath), PATHINFO_FILENAME);
+        @file_put_contents(ANALYSIS_DIR . DIRECTORY_SEPARATOR . $base . '.analysis.json', $json);
+        @file_put_contents(ANALYSIS_DIR . DIRECTORY_SEPARATOR . $base . '.analysis-prompt.txt', $prompt);
+        @file_put_contents(ANALYSIS_DIR . DIRECTORY_SEPARATOR . $base . '.analysis-raw.txt', $rawText);
+
+        $this->pdo->prepare('
+            INSERT INTO artwork_analysis (artwork_id, provider, analysis_json, created_at)
+            VALUES (:artwork_id, :provider, :analysis_json, :created_at)
+        ')->execute([
+            'artwork_id' => $artworkId,
+            'provider' => 'gemini-admin-analysis',
+            'analysis_json' => $json,
+            'created_at' => date('c'),
+        ]);
     }
 
     /**

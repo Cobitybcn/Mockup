@@ -213,11 +213,11 @@ function h($v): string {
 
     <style>
         body {
-            background: #080807;
+            background: var(--bg);
         }
 
         .main-area {
-            background: #080807;
+            background: var(--bg);
         }
 
         .album-wait {
@@ -234,13 +234,12 @@ function h($v): string {
 
         .process-card {
             width: min(460px, calc(100vw - 48px));
-            background: linear-gradient(135deg, rgba(18, 16, 14, 0.95), rgba(10, 9, 8, 0.90));
-            border: 1px solid rgba(214, 178, 122, 0.20);
+            background: var(--surface);
+            border: 1px solid var(--line);
             padding: 30px 28px;
-            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            box-shadow: var(--shadow);
             border-radius: 8px;
-            color: #f7f2ea;
-            backdrop-filter: blur(14px);
+            color: var(--ink);
             position: relative;
             z-index: 3;
             margin: 0;
@@ -253,11 +252,11 @@ function h($v): string {
             letter-spacing: -0.01em;
             font-family: var(--font-serif);
             font-weight: 500;
-            color: #f7f2ea;
+            color: var(--ink);
         }
 
         .process-card .page-kicker {
-            color: rgba(247, 242, 234, 0.74);
+            color: var(--muted);
             margin-top: 0;
             font-size: 13px;
             margin-bottom: 20px;
@@ -265,9 +264,9 @@ function h($v): string {
 
         .status-box {
             font-size: 13px;
-            background: rgba(255, 255, 255, 0.06);
+            background: var(--surface-soft);
             padding: 12px 14px;
-            border-left: 3px solid #d6b27a;
+            border-left: 3px solid var(--accent);
             margin: 18px 0;
             border-radius: 0 var(--radius) var(--radius) 0;
             text-align: left;
@@ -277,15 +276,15 @@ function h($v): string {
             min-height: 48px;
             margin-top: 14px;
             padding-top: 14px;
-            border-top: 1px solid rgba(247, 242, 234, 0.13);
-            color: rgba(247, 242, 234, 0.72);
+            border-top: 1px solid var(--line);
+            color: var(--muted);
             font-size: 12px;
             line-height: 1.45;
             text-align: left;
         }
 
         .artist-wait-tip strong {
-            color: #e2c183;
+            color: var(--accent);
             font-weight: 600;
         }
 
@@ -293,7 +292,7 @@ function h($v): string {
             width: 100%;
             height: 4px;
             overflow: hidden;
-            background: rgba(255, 255, 255, 0.18);
+            background: var(--line);
             margin: 16px 0;
             position: relative;
             border-radius: 99px;
@@ -302,7 +301,7 @@ function h($v): string {
         .progress-bar {
             width: 42%;
             height: 100%;
-            background: linear-gradient(90deg, #b99055, #e2c183);
+            background: linear-gradient(90deg, var(--accent), #e2c183);
             box-shadow: 0 0 18px rgba(214, 178, 122, 0.30);
             position: absolute;
             left: -42%;
@@ -317,8 +316,8 @@ function h($v): string {
             height: 38px;
             margin: 0 auto 18px;
             border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.1);
-            border-top-color: #d6b27a;
+            border: 2px solid var(--line);
+            border-top-color: var(--accent);
             animation: simpleSpin 0.9s linear infinite;
         }
 

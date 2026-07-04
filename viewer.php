@@ -36,29 +36,78 @@ if ($id > 0) {
 }
 
 $mockup = $stmt->fetch();
+$isStandaloneFile = false;
+$standaloneFiles = [];
 
 if (!$mockup) {
-    http_response_code(404);
-    exit('Mockup not found.');
+    $standaloneFile = $file;
+    $standalonePath = $standaloneFile !== '' ? RESULTS_DIR . DIRECTORY_SEPARATOR . $standaloneFile : '';
+    $artwork = null;
+    if ($standaloneFile !== '' && is_file($standalonePath)) {
+        $stmt = $pdo->prepare('
+            SELECT *
+            FROM artworks
+            WHERE user_id = :user_id
+            AND (root_file = :file OR main_file = :file)
+            LIMIT 1
+        ');
+        $stmt->execute([
+            'user_id' => (int)$user['id'],
+            'file' => $standaloneFile,
+        ]);
+        $artwork = $stmt->fetch();
+
+        if (!$artwork && preg_match('/^base_artwork_gemini_job_(\d+_\d+)_v\d+\.(png|jpe?g|webp)$/i', $standaloneFile, $matches)) {
+            $jobId = 'job_' . $matches[1];
+            $stmt = $pdo->prepare('
+                SELECT *
+                FROM artworks
+                WHERE user_id = :user_id
+                AND job_id = :job_id
+                LIMIT 1
+            ');
+            $stmt->execute([
+                'user_id' => (int)$user['id'],
+                'job_id' => $jobId,
+            ]);
+            $artwork = $stmt->fetch();
+        }
+    }
+
+    if (!is_array($artwork)) {
+        http_response_code(404);
+        exit('Image not found.');
+    }
+
+    $isStandaloneFile = true;
+    $mockup = [
+        'id' => 0,
+        'artwork_file' => (string)($artwork['root_file'] ?: $artwork['main_file'] ?: $standaloneFile),
+        'mockup_file' => $standaloneFile,
+        'context_id' => 'Root artwork',
+        'created_at' => (string)($artwork['updated_at'] ?? $artwork['created_at'] ?? date('c')),
+    ];
 }
 
 $backUrl = 'mockups.php';
 $requestedBack = trim((string)($_GET['back'] ?? ''));
-if ($requestedBack !== '' && preg_match('/^(form2\.php|artwork\.php|mockups\.php|dashboard\.php)(\?|#|$)/', $requestedBack)) {
+if ($requestedBack !== '' && preg_match('/^(form2\.php|artwork\.php|artwork_details\.php|mockups\.php|mockup_combination_results\.php|dashboard\.php)(\?|#|$)/', $requestedBack)) {
     $backUrl = $requestedBack;
 }
-$artworkStmt = $pdo->prepare('
-    SELECT *
-    FROM artworks
-    WHERE user_id = :user_id
-    AND (root_file = :artwork_file OR main_file = :artwork_file)
-    LIMIT 1
-');
-$artworkStmt->execute([
-    'user_id' => (int)$user['id'],
-    'artwork_file' => (string)$mockup['artwork_file'],
-]);
-$artwork = $artworkStmt->fetch();
+if (!isset($artwork) || !is_array($artwork)) {
+    $artworkStmt = $pdo->prepare('
+        SELECT *
+        FROM artworks
+        WHERE user_id = :user_id
+        AND (root_file = :artwork_file OR main_file = :artwork_file)
+        LIMIT 1
+    ');
+    $artworkStmt->execute([
+        'user_id' => (int)$user['id'],
+        'artwork_file' => (string)$mockup['artwork_file'],
+    ]);
+    $artwork = $artworkStmt->fetch();
+}
 $artworkId = is_array($artwork) ? (int)$artwork['id'] : 0;
 
 if ($artworkId && $requestedBack === '') {
@@ -66,41 +115,73 @@ if ($artworkId && $requestedBack === '') {
 }
 $viewerBackParam = $backUrl !== '' ? '&back=' . rawurlencode($backUrl) : '';
 
-$prevStmt = $pdo->prepare('
-    SELECT id
-    FROM mockups
-    WHERE user_id = :user_id
-    AND (
-        created_at > :created_at
-        OR (created_at = :created_at AND id > :id)
-    )
-    ORDER BY created_at ASC, id ASC
-    LIMIT 1
-');
-$prevStmt->execute([
-    'user_id' => (int)$user['id'],
-    'created_at' => (string)$mockup['created_at'],
-    'id' => (int)$mockup['id'],
-]);
-$prevId = $prevStmt->fetchColumn();
+$prevHref = '';
+$nextHref = '';
+if ($isStandaloneFile) {
+    $currentFile = basename((string)$mockup['mockup_file']);
+    $prefix = '';
+    if (preg_match('/^(.*)_v\d+\.(png|jpe?g|webp)$/i', $currentFile, $matches)) {
+        $prefix = (string)$matches[1];
+    }
+    if ($prefix !== '') {
+        foreach ([1, 2, 3] as $version) {
+            foreach (['png', 'jpg', 'jpeg', 'webp'] as $ext) {
+                $candidate = $prefix . '_v' . $version . '.' . $ext;
+                if (is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $candidate)) {
+                    $standaloneFiles[] = $candidate;
+                    break;
+                }
+            }
+        }
+        $index = array_search($currentFile, $standaloneFiles, true);
+        if ($index !== false) {
+            if (isset($standaloneFiles[$index - 1])) {
+                $prevHref = 'viewer.php?file=' . rawurlencode($standaloneFiles[$index - 1]) . $viewerBackParam;
+            }
+            if (isset($standaloneFiles[$index + 1])) {
+                $nextHref = 'viewer.php?file=' . rawurlencode($standaloneFiles[$index + 1]) . $viewerBackParam;
+            }
+        }
+    }
+} else {
+    $prevStmt = $pdo->prepare('
+        SELECT id
+        FROM mockups
+        WHERE user_id = :user_id
+        AND (
+            created_at > :created_at
+            OR (created_at = :created_at AND id > :id)
+        )
+        ORDER BY created_at ASC, id ASC
+        LIMIT 1
+    ');
+    $prevStmt->execute([
+        'user_id' => (int)$user['id'],
+        'created_at' => (string)$mockup['created_at'],
+        'id' => (int)$mockup['id'],
+    ]);
+    $prevId = $prevStmt->fetchColumn();
+    $prevHref = $prevId ? 'viewer.php?id=' . rawurlencode((string)$prevId) . $viewerBackParam : '';
 
-$nextStmt = $pdo->prepare('
-    SELECT id
-    FROM mockups
-    WHERE user_id = :user_id
-    AND (
-        created_at < :created_at
-        OR (created_at = :created_at AND id < :id)
-    )
-    ORDER BY created_at DESC, id DESC
-    LIMIT 1
-');
-$nextStmt->execute([
-    'user_id' => (int)$user['id'],
-    'created_at' => (string)$mockup['created_at'],
-    'id' => (int)$mockup['id'],
-]);
-$nextId = $nextStmt->fetchColumn();
+    $nextStmt = $pdo->prepare('
+        SELECT id
+        FROM mockups
+        WHERE user_id = :user_id
+        AND (
+            created_at < :created_at
+            OR (created_at = :created_at AND id < :id)
+        )
+        ORDER BY created_at DESC, id DESC
+        LIMIT 1
+    ');
+    $nextStmt->execute([
+        'user_id' => (int)$user['id'],
+        'created_at' => (string)$mockup['created_at'],
+        'id' => (int)$mockup['id'],
+    ]);
+    $nextId = $nextStmt->fetchColumn();
+    $nextHref = $nextId ? 'viewer.php?id=' . rawurlencode((string)$nextId) . $viewerBackParam : '';
+}
 
 function h($v): string
 {
@@ -688,16 +769,16 @@ $otherSocial = [
         </nav>
     </header>
 
-    <?php if ($prevId): ?>
-        <a class="nav-arrow prev" href="viewer.php?id=<?= h($prevId) ?><?= h($viewerBackParam) ?>" aria-label="Previous image">&lsaquo;</a>
+    <?php if ($prevHref !== ''): ?>
+        <a class="nav-arrow prev" href="<?= h($prevHref) ?>" aria-label="Previous image">&lsaquo;</a>
     <?php endif; ?>
 
     <main class="stage">
         <img src="<?= h(media_url($mockup['mockup_file'])) ?>" alt="Mockup">
     </main>
 
-    <?php if ($nextId): ?>
-        <a class="nav-arrow next" href="viewer.php?id=<?= h($nextId) ?><?= h($viewerBackParam) ?>" aria-label="Next image">&rsaquo;</a>
+    <?php if ($nextHref !== ''): ?>
+        <a class="nav-arrow next" href="<?= h($nextHref) ?>" aria-label="Next image">&rsaquo;</a>
     <?php endif; ?>
 
     <footer class="viewer-caption">

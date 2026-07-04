@@ -98,6 +98,51 @@ try {
     // Ignore fallback errors
 }
 
+if (!function_exists('root_view_version_fallbacks')) {
+    function root_view_version_fallbacks(array $artwork): array
+    {
+        $rootFile = basename((string)($artwork['root_file'] ?? ''));
+        $prefix = '';
+        if ($rootFile !== '' && preg_match('/^(.*)_v\d+\.(png|jpe?g|webp)$/i', $rootFile, $matches)) {
+            $prefix = (string)$matches[1];
+        }
+        if ($prefix === '') {
+            $jobId = trim((string)($artwork['job_id'] ?? ''));
+            if ($jobId !== '') {
+                $prefix = 'base_artwork_gemini_' . preg_replace('/^job_/', 'job_', $jobId);
+            }
+        }
+        if ($prefix === '') {
+            return [];
+        }
+
+        $map = [
+            1 => 'frontal',
+            2 => 'three_quarter_left',
+            3 => 'three_quarter_right',
+        ];
+        $found = [];
+        foreach ($map as $version => $viewType) {
+            foreach (['png', 'jpg', 'jpeg', 'webp'] as $ext) {
+                $candidate = $prefix . '_v' . $version . '.' . $ext;
+                if (is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $candidate)) {
+                    $found[$viewType] = $candidate;
+                    break;
+                }
+            }
+        }
+
+        return $found;
+    }
+}
+
+$versionFallbackCandidates = root_view_version_fallbacks($artwork);
+foreach ($versionFallbackCandidates as $viewType => $fileName) {
+    if (empty($dbCandidates[$viewType])) {
+        $dbCandidates[$viewType] = $fileName;
+    }
+}
+
 // 3. Resolve Views
 $views = [
     'frontal' => [

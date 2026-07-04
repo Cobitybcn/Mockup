@@ -125,6 +125,31 @@ function world_mother_search_aliases(string $slug): string
     return implode(' ', $aliases);
 }
 
+function stable_world_mother_pool_for_artwork(array $pool, string $category, int $artworkId): array
+{
+    usort($pool, static function (array $a, array $b): int {
+        return strcmp((string)($a['relative_path'] ?? ''), (string)($b['relative_path'] ?? ''));
+    });
+
+    usort($pool, static function (array $a, array $b) use ($category, $artworkId): int {
+        $aKey = sprintf('%u', crc32($category . '|' . $artworkId . '|' . (string)($a['relative_path'] ?? '')));
+        $bKey = sprintf('%u', crc32($category . '|' . $artworkId . '|' . (string)($b['relative_path'] ?? '')));
+        return $aKey <=> $bKey;
+    });
+
+    return array_values($pool);
+}
+
+function variant_offset_for_world_image(int $comboIndex, int $targetPosition, int $poolCount): int
+{
+    if ($poolCount <= 0) {
+        return 0;
+    }
+
+    $base = max(0, $comboIndex - 1);
+    return ($targetPosition - ($base % $poolCount) + $poolCount) % $poolCount;
+}
+
 $selectedSlots = [];
 foreach (($_GET['slot'] ?? []) as $index => $slotId) {
     $selectedSlots[(int)$index] = trim((string)$slotId);
@@ -144,6 +169,11 @@ $combinations = $review['combinations'] ?? [];
 $cameraSlots = $review['available_camera_slots'] ?? [];
 $suggestedWorldMotherCategories = (array)($review['suggested_world_mother_categories'] ?? []);
 $selectedWorldMotherCategory = (string)($review['selected_world_mother_category'] ?? $selectedWorldMotherCategory);
+$selectedWorldMotherImages = stable_world_mother_pool_for_artwork(
+    (new WorldMotherLibrary())->imagesForCategory($selectedWorldMotherCategory),
+    $selectedWorldMotherCategory,
+    $id
+);
 $favoriteWorldMotherCategories = world_mother_favorites((int)$user['id']);
 $favoriteWorldMotherLookup = array_fill_keys($favoriteWorldMotherCategories, true);
 $favoriteWorldMotherNormalizedLookup = [];
@@ -161,15 +191,15 @@ if ($rootPath !== '') {
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Mockup Combinations Review - The Artwork Curator</title>
+    <title>Scenes - The Artwork Curator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
         .review-grid {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 22px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
         }
         .workspace-header {
             align-items: center;
@@ -178,7 +208,7 @@ if ($rootPath !== '') {
             margin-bottom: 16px;
         }
         .workspace-header h1 {
-            font-size: 30px;
+            font-size: 36px;
             line-height: 1.05;
             margin-bottom: 6px;
         }
@@ -238,18 +268,25 @@ if ($rootPath !== '') {
             color: var(--muted);
         }
         .combination-card {
-            background: var(--surface);
+            background: #fbfaf7;
             border: 1px solid var(--line);
             border-radius: var(--radius);
             box-shadow: var(--shadow);
-            overflow: hidden;
+            overflow: visible;
+            position: relative;
+            z-index: 1;
+        }
+        .combination-card:hover,
+        .combination-card:focus-within {
+            z-index: 30;
         }
         .combination-head {
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 8px;
-            padding: 9px 12px;
+            padding: 7px 10px;
+            background: #f4f0e9;
             cursor: pointer;
             list-style: none;
         }
@@ -274,6 +311,9 @@ if ($rootPath !== '') {
         }
         .combination-title {
             min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 7px;
         }
         .combination-status {
             display: flex;
@@ -285,8 +325,8 @@ if ($rootPath !== '') {
         .combination-body {
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            padding: 18px;
+            gap: 8px;
+            padding: 8px 10px 10px;
         }
         .combination-head h3 {
             margin: 0;
@@ -332,45 +372,116 @@ if ($rootPath !== '') {
         .thumb-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 8px;
         }
         .card-icon-actions {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: -8px;
+            display: none;
         }
         .refresh-world-btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 30px;
-            height: 30px;
+            width: 28px;
+            height: 28px;
             border: 1px solid var(--line);
             border-radius: 4px;
-            background: var(--surface-soft);
+            background: rgba(251, 250, 247, .68);
             color: var(--accent);
             text-decoration: none;
-            font-size: 18px;
+            font-size: 16px;
             line-height: 1;
             font-weight: 700;
+            box-shadow: 0 2px 8px rgba(20, 20, 18, .08);
         }
         .refresh-world-btn:hover {
-            background: var(--accent-light);
+            background: rgba(251, 250, 247, .92);
             border-color: rgba(154, 123, 86, .35);
         }
         .thumb-box {
             background: var(--surface-soft);
             border: 1px solid var(--line);
             border-radius: var(--radius);
-            overflow: hidden;
+            overflow: visible;
             min-height: 0;
+            position: relative;
+        }
+        .scene-thumb-picker {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            z-index: 80;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 4px;
+            padding: 5px;
+            width: min(520px, 86vw);
+            max-height: 360px;
+            overflow: auto;
+            background: rgba(251, 250, 247, .94);
+            border: 1px solid rgba(228, 222, 211, .8);
+            border-radius: 7px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(8px, 8px);
+            transition: opacity .16s ease, transform .16s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 26px rgba(20, 20, 18, .12);
+            scrollbar-width: none;
+        }
+        .scene-thumb-picker::-webkit-scrollbar {
+            display: none;
+        }
+        .thumb-box:hover .scene-thumb-picker,
+        .scene-thumb-picker:focus-within {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(0, 0);
+        }
+        .scene-thumb-option {
+            width: 100%;
+            height: 112px;
+            border: 2px solid transparent;
+            border-radius: 4px;
+            overflow: hidden;
+            background: var(--surface);
+            opacity: .86;
+            transition: opacity .16s ease, transform .16s ease, border-color .16s ease;
+        }
+        .scene-thumb-option:hover {
+            opacity: 1;
+            transform: translateY(-2px);
+        }
+        .scene-thumb-option.active {
+            border-color: var(--accent);
+            opacity: 1;
+        }
+        .scene-thumb-option img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        @media (min-width: 1500px) {
+            .scene-thumb-picker {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                width: 640px;
+            }
+        }
+        .combination-card.edge-left .scene-thumb-picker {
+            left: 0;
+            right: auto;
+        }
+        .combination-card.edge-right .scene-thumb-picker {
+            right: 0;
+            left: auto;
         }
         .thumb-box img {
             display: block;
             width: 100%;
-            height: 180px;
-            object-fit: contain;
+            height: 175px;
+            object-fit: cover;
             background: var(--surface-soft);
+            border-radius: var(--radius);
         }
         .thumb-label {
             display: block;
@@ -475,8 +586,11 @@ if ($rootPath !== '') {
         }
         .prepare-result {
             font-size: 12px;
-            min-height: 18px;
+            min-height: 0;
             color: var(--muted);
+        }
+        .prepare-result:empty {
+            display: none;
         }
         .scene-browser-panel {
             background: var(--surface);
@@ -505,6 +619,9 @@ if ($rootPath !== '') {
         }
         .scene-list-toggle {
             margin-top: 8px;
+        }
+        .scene-list-toggle:not([open]) .scene-choice-grid {
+            display: none;
         }
         .scene-list-toggle summary {
             display: flex;
@@ -654,6 +771,21 @@ if ($rootPath !== '') {
             color: var(--muted);
             font-size: 12px;
         }
+        .combination-card .button-link {
+            background: #f1eee8;
+            border-color: var(--line);
+            color: var(--muted);
+            box-shadow: none;
+            padding: 10px 14px;
+            min-height: 0;
+            margin-top: 0;
+        }
+        .combination-card .button-link:hover {
+            background: var(--accent-light);
+            border-color: rgba(154, 123, 86, .35);
+            color: var(--accent);
+            box-shadow: none;
+        }
         @media (max-width: 980px) {
             .review-grid,
             .thumb-row,
@@ -689,6 +821,9 @@ if ($rootPath !== '') {
         @media (min-width: 981px) and (max-width: 1280px) {
             .review-grid {
                 grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+            .thumb-box img {
+                height: 180px;
             }
         }
         .breadcrumb-steps {
@@ -731,17 +866,16 @@ if ($rootPath !== '') {
                 <span class="step-arrow">&rarr;</span>
                 <span>Step 2: Select View</span>
                 <span class="step-arrow">&rarr;</span>
-                <span class="active">Step 3: Mockup Lab</span>
+                <span class="active">Step 3: Scenes</span>
             </div>
             <div class="workspace-header">
                 <div>
-                    <h1>Mockup Combinations Review</h1>
-                    <p>Choose one scene mother, then generate every enabled camera-slot view from that same reference.</p>
+                    <h1>Scenes</h1>
+                    <p>Choose the scene reference for this artwork, then generate the selected views.</p>
                 </div>
                 <div class="topbar-actions">
-                    <button class="button-link" type="button" id="generate-all-btn" onclick="generateAllCombinations(this)">Generate All Combinations</button>
-                    <a class="button-link secondary" href="mockup_combination_results.php?id=<?= (int)$id ?>">Generated Results</a>
-                    <a class="button-link secondary" href="artwork_details.php?id=<?= (int)$id ?>">Artwork Details</a>
+                    <button class="button-link" type="button" id="generate-all-btn" onclick="generateAllCombinations(this)">Generate All Scenes</button>
+                    <a class="button-link secondary" href="mockup_combination_results.php?id=<?= (int)$id ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Generated Results</a>
                 </div>
             </div>
 
@@ -768,7 +902,7 @@ if ($rootPath !== '') {
             <div class="scene-browser-panel">
                 <div class="scene-browser-head">
                     <div>
-                        <strong>Scene Environments</strong>
+                        <strong>Scenes</strong>
                     </div>
                 </div>
                 <div class="scene-browser-controls">
@@ -841,7 +975,13 @@ if ($rootPath !== '') {
                     $isGeneratedWorldMother = !empty($generatedWorldMother);
                     $isMissingWorldMother = !empty($missingWorldMother);
                     $currentVariantOffset = max(0, (int)($combo['world_mother_variant_offset'] ?? ($selectedWorldMotherVariants[$idx] ?? 0)));
-                    $refreshVariantOffsets = $selectedWorldMotherVariants;
+                    $refreshVariantOffsets = [];
+                    foreach ($combinations as $otherComboForVariantUrl) {
+                        $otherIndexForVariantUrl = (int)($otherComboForVariantUrl['combination_index'] ?? 0);
+                        if ($otherIndexForVariantUrl > 0) {
+                            $refreshVariantOffsets[$otherIndexForVariantUrl] = max(0, (int)($otherComboForVariantUrl['world_mother_variant_offset'] ?? ($selectedWorldMotherVariants[$otherIndexForVariantUrl] ?? 0)));
+                        }
+                    }
                     $refreshVariantOffsets[$idx] = $currentVariantOffset + 1;
                     $refreshParams = [
                         'id' => (int)$id,
@@ -861,20 +1001,20 @@ if ($rootPath !== '') {
                         }
                     }
                     $refreshUrl = 'mockup_combinations_review.php?' . http_build_query($refreshParams);
+                    $variantBaseParams = $refreshParams;
+                    unset($variantBaseParams['world_variant'][$idx]);
+                    $selectedWorldImagePath = (string)$combo['world_mother_image_path'];
                     ?>
-                    <details class="combination-card">
+                    <?php $columnClass = (($idx - 1) % 4) === 0 ? 'edge-left' : (((($idx - 1) % 4) === 3) ? 'edge-right' : ''); ?>
+                    <details class="combination-card <?= h($columnClass) ?>" data-combination-card data-combination-row="<?= (int)floor(($idx - 1) / 4) ?>" <?= $idx <= 4 ? 'open' : '' ?>>
                         <summary class="combination-head">
                             <div class="combination-title">
-                                <span class="badge">Combo <?= $idx ?></span>
+                                <span class="badge">Set <?= $idx ?></span>
                                 <h3><?= h(get_friendly_camera_name($combo['selected_camera_slot_id'] ?? '')) ?></h3>
-                                <code class="slot-id"><?= h($combo['selected_camera_slot_id'] ?? '') ?></code>
                             </div>
                         </summary>
 
                         <div class="combination-body">
-                            <div class="card-icon-actions">
-                                <a class="refresh-world-btn" href="<?= h($refreshUrl) ?>" title="Refresh world mother" aria-label="Refresh world mother">&#8635;</a>
-                            </div>
                             <div class="thumb-row">
                                 <div class="thumb-box">
                                     <?php if ($rootUrl !== ''): ?>
@@ -884,6 +1024,33 @@ if ($rootPath !== '') {
                                 <div class="thumb-box">
                                     <?php if ($worldImageUrl !== ''): ?>
                                         <img src="<?= h($worldImageUrl) ?>" alt="">
+                                    <?php endif; ?>
+                                    <?php if (count($selectedWorldMotherImages) > 1): ?>
+                                        <div class="scene-thumb-picker" aria-label="Choose scene reference">
+                                            <?php foreach ($selectedWorldMotherImages as $imagePosition => $sceneImage): ?>
+                                                <?php
+                                                $sceneImagePath = (string)($sceneImage['relative_path'] ?? '');
+                                                $sceneImageUrl = world_mother_image_url($sceneImagePath);
+                                                if ($sceneImageUrl === '') {
+                                                    continue;
+                                                }
+                                                $variantUrlParams = $variantBaseParams;
+                                                $variantOffset = variant_offset_for_world_image($idx, (int)$imagePosition, count($selectedWorldMotherImages));
+                                                if ($variantOffset > 0) {
+                                                    $variantUrlParams['world_variant'][$idx] = $variantOffset;
+                                                }
+                                                $variantUrl = 'mockup_combinations_review.php?' . http_build_query($variantUrlParams);
+                                                ?>
+                                                <a
+                                                    class="scene-thumb-option <?= $sceneImagePath === $selectedWorldImagePath ? 'active' : '' ?>"
+                                                    href="<?= h($variantUrl) ?>"
+                                                    title="<?= h((string)($sceneImage['title'] ?? 'Scene reference')) ?>"
+                                                    aria-label="Choose <?= h((string)($sceneImage['title'] ?? 'scene reference')) ?>"
+                                                >
+                                                    <img src="<?= h($sceneImageUrl) ?>" alt="">
+                                                </a>
+                                            <?php endforeach; ?>
+                                        </div>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -943,15 +1110,11 @@ if ($rootPath !== '') {
                             <?php endif; ?>
 
                             <div>
-                                <label style="display:block; font-size:10px; text-transform:uppercase; color:var(--muted); margin-bottom:4px;">
-                                    World Mother Scale (1.0 = original, up to 3.0 = tighter zoom on materials)
-                                </label>
                                 <input
-                                    type="number"
+                                    type="hidden"
                                     class="world-mother-scale-input"
                                     id="world-mother-scale-<?= $idx ?>"
-                                    min="1.0" max="3.0" step="0.1" value="1.0"
-                                    style="width:80px; margin-bottom:8px;"
+                                    value="1.0"
                                 >
                                 <div id="prepare-result-<?= $idx ?>" class="prepare-result"></div>
                                 <button
@@ -965,7 +1128,7 @@ if ($rootPath !== '') {
                                     data-world-mother-variant="<?= $currentVariantOffset ?>"
                                     onclick="prepareCombination(this)"
                                     <?= empty($combo['generation_ready']) ? 'disabled' : '' ?>
-                                >Generate This Combination</button>
+                                >Generate This Set</button>
                             </div>
                         </div>
                     </details>
@@ -1153,6 +1316,23 @@ document.querySelectorAll('[data-favorite-scene]').forEach(button => {
             });
     });
 });
+
+document.querySelectorAll('[data-combination-card]').forEach(card => {
+    card.addEventListener('toggle', () => {
+        if (card.dataset.syncingRow === '1') return;
+        const row = card.getAttribute('data-combination-row');
+        if (row === null) return;
+        document.querySelectorAll('[data-combination-card][data-combination-row="' + row + '"]').forEach(rowCard => {
+            if (rowCard === card) return;
+            rowCard.dataset.syncingRow = '1';
+            rowCard.open = card.open;
+            window.setTimeout(() => {
+                delete rowCard.dataset.syncingRow;
+            }, 0);
+        });
+    });
+});
+
 updateSceneBrowser();
 </script>
 </body>

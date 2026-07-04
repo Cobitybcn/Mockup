@@ -276,6 +276,7 @@ class Database
         self::addColumnIfMissing($pdo, 'artist_profiles', 'marketplace_strategy', "TEXT NOT NULL DEFAULT ''");
         self::addColumnIfMissing($pdo, 'artist_profiles', 'social_strategy', "TEXT NOT NULL DEFAULT ''");
         self::addColumnIfMissing($pdo, 'artist_profiles', 'pinterest_strategy', "TEXT NOT NULL DEFAULT ''");
+        self::addColumnIfMissing($pdo, 'artist_profiles', 'photo_file', "TEXT NOT NULL DEFAULT ''");
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS credit_transactions (
@@ -549,6 +550,7 @@ class Database
         self::addColumnIfMissing($pdo, 'artist_profiles', 'marketplace_strategy', "TEXT NOT NULL");
         self::addColumnIfMissing($pdo, 'artist_profiles', 'social_strategy', "TEXT NOT NULL");
         self::addColumnIfMissing($pdo, 'artist_profiles', 'pinterest_strategy', "TEXT NOT NULL");
+        self::addColumnIfMissing($pdo, 'artist_profiles', 'photo_file', "VARCHAR(255) NOT NULL DEFAULT ''");
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS credit_transactions (

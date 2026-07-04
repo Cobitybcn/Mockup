@@ -14,6 +14,7 @@ require_once __DIR__ . '/Support/ImageResizer.php';
 require_once __DIR__ . '/Support/JsonStringNormalizer.php';
 require_once __DIR__ . '/Support/ArtworkPhysicalIntegrityPolicy.php';
 require_once __DIR__ . '/Support/WorldMotherCameraAuthorityPolicy.php';
+require_once __DIR__ . '/Support/MockupVariationEligibility.php';
 require_once __DIR__ . '/Contracts/ArtworkProcessorInterface.php';
 require_once __DIR__ . '/Contracts/MockupGeneratorInterface.php';
 require_once __DIR__ . '/Services/MockupContextWorldRegistry.php';

@@ -7,9 +7,73 @@ $user = Auth::requireUser();
 $saved = false;
 $error = '';
 
+function artist_profile_photo_dir(): string
+{
+    return __DIR__ . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'artist_profiles';
+}
+
+function artist_profile_photo_url(string $file): string
+{
+    $file = basename($file);
+    return $file !== '' ? 'uploads/artist_profiles/' . rawurlencode($file) : '';
+}
+
+function handle_artist_photo_upload(int $userId, string $existingFile): string
+{
+    if (!isset($_FILES['artist_photo']) || !is_array($_FILES['artist_photo'])) {
+        return $existingFile;
+    }
+
+    $file = $_FILES['artist_photo'];
+    $errorCode = (int)($file['error'] ?? UPLOAD_ERR_NO_FILE);
+    if ($errorCode === UPLOAD_ERR_NO_FILE) {
+        return $existingFile;
+    }
+    if ($errorCode !== UPLOAD_ERR_OK) {
+        throw new RuntimeException('Artist photo upload failed.');
+    }
+
+    $tmp = (string)($file['tmp_name'] ?? '');
+    if ($tmp === '' || !is_uploaded_file($tmp)) {
+        throw new RuntimeException('Artist photo upload is invalid.');
+    }
+
+    $info = @getimagesize($tmp);
+    if (!is_array($info) || empty($info['mime'])) {
+        throw new RuntimeException('Artist photo must be a valid image.');
+    }
+
+    $extensions = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+    ];
+    $mime = (string)$info['mime'];
+    if (!isset($extensions[$mime])) {
+        throw new RuntimeException('Artist photo must be JPG, PNG, or WEBP.');
+    }
+
+    $dir = artist_profile_photo_dir();
+    if (!is_dir($dir) && !mkdir($dir, 0775, true)) {
+        throw new RuntimeException('Could not create artist photo directory.');
+    }
+
+    $name = 'artist-' . $userId . '-' . date('Ymd-His') . '-' . bin2hex(random_bytes(4)) . '.' . $extensions[$mime];
+    $target = $dir . DIRECTORY_SEPARATOR . $name;
+
+    if (!move_uploaded_file($tmp, $target)) {
+        throw new RuntimeException('Could not save artist photo.');
+    }
+
+    return $name;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        ArtistProfile::saveForUser((int)$user['id'], $_POST);
+        $currentProfile = ArtistProfile::findForUser((int)$user['id']);
+        $input = $_POST;
+        $input['photo_file'] = handle_artist_photo_upload((int)$user['id'], basename((string)($currentProfile['photo_file'] ?? '')));
+        ArtistProfile::saveForUser((int)$user['id'], $input);
         $saved = true;
     } catch (Throwable $e) {
         $error = $e->getMessage();
@@ -148,6 +212,38 @@ function admin_vars_hint(bool $isAdmin, string $field): void
             font-size: 12px;
             padding: 14px 28px;
         }
+        .artist-photo-box {
+            display: grid;
+            grid-template-columns: 86px minmax(0, 1fr);
+            gap: 14px;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid var(--line);
+            background: var(--surface-soft);
+            border-radius: var(--radius);
+        }
+        .artist-photo-preview {
+            width: 86px;
+            height: 86px;
+            border-radius: 999px;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            text-align: center;
+        }
+        .artist-photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -182,11 +278,28 @@ function admin_vars_hint(bool $isAdmin, string $field): void
                 <div class="notice error"><?= h($error) ?></div>
             <?php endif; ?>
 
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
                 <div class="profile-grid">
                     <!-- Column 1: Artistic Identity -->
                     <div class="profile-card">
                         <h3>Artistic Identity</h3>
+
+                        <div class="artist-photo-box">
+                            <div class="artist-photo-preview">
+                                <?php $artistPhotoUrl = artist_profile_photo_url((string)($profile['photo_file'] ?? '')); ?>
+                                <?php if ($artistPhotoUrl !== ''): ?>
+                                    <img src="<?= h($artistPhotoUrl) ?>" alt="Artist photo">
+                                <?php else: ?>
+                                    No photo
+                                <?php endif; ?>
+                            </div>
+                            <div class="form-group">
+                                <label>Artist Photo</label>
+                                <input type="file" name="artist_photo" accept="image/jpeg,image/png,image/webp">
+                                <input type="hidden" name="photo_file" value="<?= field_value($profile, 'photo_file') ?>">
+                                <small>JPG, PNG, or WEBP portrait image.</small>
+                            </div>
+                        </div>
 
                         <div class="form-group">
                             <label>Artistic Name</label>

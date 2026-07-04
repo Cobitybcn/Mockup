@@ -73,9 +73,57 @@ if (is_file($evalPath)) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
-        .results-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+        .results-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
         .result-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; }
-        .result-card img { width: 100%; max-height: 520px; object-fit: contain; background: var(--surface-soft); border: 1px solid var(--line); }
+        .result-image-wrap { position: relative; }
+        .result-image-link { display: block; text-decoration: none; }
+        .result-card > img { width: 100%; aspect-ratio: 4 / 3; height: auto; object-fit: cover; background: var(--surface-soft); border: 1px solid var(--line); display: block; }
+        .result-image-link img { width: 100%; aspect-ratio: 4 / 3; height: auto; object-fit: cover; background: var(--surface-soft); border: 1px solid var(--line); display: block; }
+        .result-image-actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            z-index: 3;
+            display: flex;
+            gap: 6px;
+            opacity: 0;
+            transform: translateY(-2px);
+            transition: opacity .16s ease, transform .16s ease;
+        }
+        .result-image-wrap:hover .result-image-actions,
+        .result-image-wrap:focus-within .result-image-actions {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .result-icon-action {
+            width: 34px;
+            height: 34px;
+            border: 1px solid rgba(255, 255, 255, .58);
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(18, 17, 15, .42);
+            color: #fff;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 8px 22px rgba(0, 0, 0, .18);
+        }
+        .result-icon-action:hover,
+        .result-icon-action:focus-visible {
+            background: rgba(18, 17, 15, .68);
+            outline: none;
+        }
+        .result-icon-action.danger:hover,
+        .result-icon-action.danger:focus-visible {
+            background: rgba(124, 43, 35, .72);
+        }
+        .result-icon-action[disabled] {
+            opacity: .55;
+            cursor: wait;
+        }
         .result-card h3 { margin: 12px 0 6px; font-family: var(--font-serif); font-size: 18px; }
         .meta { color: var(--muted); font-size: 12px; line-height: 1.5; word-break: break-word; }
         .result-mini-meta {
@@ -117,6 +165,7 @@ if (is_file($evalPath)) {
             font-weight: 700;
         }
         .eval-form { display: grid; gap: 10px; margin-top: 14px; }
+        .eval-form[hidden] { display: none !important; }
         .eval-form textarea,
         .eval-form label:nth-of-type(2) {
             display: none;
@@ -163,8 +212,34 @@ if (is_file($evalPath)) {
                     $cameraTitle = (string)($combo['camera_slot_name'] ?? $combo['selected_camera_slot_id'] ?? 'Camera');
                     $sceneTitle = (string)($combo['world_mother_category'] ?? 'Scene');
                     ?>
-                    <section class="result-card">
-                        <img src="media.php?file=<?= rawurlencode(basename((string)$row['mockup_file'])) ?>" alt="">
+                    <section class="result-card" id="result-card-<?= $mockupId ?>">
+                        <div class="result-image-wrap">
+                            <a class="result-image-link" href="viewer.php?id=<?= $mockupId ?>&back=<?= rawurlencode('mockup_combination_results.php?id=' . (int)$id . ($selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '')) ?>" aria-label="Open in Mockup Album">
+                                <img src="media.php?file=<?= rawurlencode(basename((string)$row['mockup_file'])) ?>" alt="">
+                            </a>
+                            <div class="result-image-actions" aria-label="Mockup actions">
+                                <button
+                                    class="result-icon-action"
+                                    type="button"
+                                    title="Redo mockup"
+                                    aria-label="Redo mockup"
+                                    data-redo-result
+                                    data-artwork-id="<?= (int)$id ?>"
+                                    data-combination-index="<?= (int)($combo['combination_index'] ?? 0) ?>"
+                                    data-camera-slot="<?= h((string)($combo['selected_camera_slot_id'] ?? '')) ?>"
+                                    data-world-mother-category="<?= h((string)($combo['world_mother_category'] ?? $selectedWorldMotherCategory)) ?>"
+                                    data-world-mother-variant="<?= (int)($combo['world_mother_variant_offset'] ?? 0) ?>"
+                                >↻</button>
+                                <button
+                                    class="result-icon-action danger"
+                                    type="button"
+                                    title="Delete mockup"
+                                    aria-label="Delete mockup"
+                                    data-delete-result
+                                    data-mockup-id="<?= $mockupId ?>"
+                                >×</button>
+                            </div>
+                        </div>
                         <h3><?= h($cameraTitle) ?></h3>
                         <div class="result-mini-meta">
                             <span>Scene: <?= h($sceneTitle) ?></span>
@@ -188,7 +263,7 @@ if (is_file($evalPath)) {
                                 </div>
                             </div>
                         <?php endif; ?>
-                        <form class="eval-form" onsubmit="saveEvaluation(event, this)">
+                        <form class="eval-form" hidden onsubmit="saveEvaluation(event, this)">
                             <input type="hidden" name="artwork_id" value="<?= (int)$id ?>">
                             <input type="hidden" name="mockup_id" value="<?= $mockupId ?>">
                             <label>
@@ -238,6 +313,82 @@ function saveEvaluation(event, form) {
             button.disabled = false;
         });
 }
+
+function parseJsonResponse(response) {
+    return response.text().then(text => {
+        let parsed;
+        try { parsed = JSON.parse(text); } catch (err) { throw new Error(text.substring(0, 220)); }
+        return { status: response.status, body: parsed };
+    });
+}
+
+function deleteResult(button) {
+    if (!confirm('Delete this mockup?')) {
+        return;
+    }
+    const card = button.closest('.result-card');
+    const formData = new FormData();
+    formData.append('mockup_id', button.getAttribute('data-mockup-id') || '');
+    button.disabled = true;
+
+    fetch('delete_mockup_result.php', { method: 'POST', body: formData })
+        .then(parseJsonResponse)
+        .then(result => {
+            if (!result.body.ok) {
+                throw new Error(result.body.error || 'Delete failed.');
+            }
+            if (card) {
+                card.remove();
+            }
+        })
+        .catch(err => {
+            alert(err.message);
+            button.disabled = false;
+        });
+}
+
+function redoResult(button) {
+    if (!confirm('Regenerate this mockup from the same set?')) {
+        return;
+    }
+    const formData = new FormData();
+    formData.append('artwork_id', button.getAttribute('data-artwork-id') || '');
+    formData.append('combination_index', button.getAttribute('data-combination-index') || '');
+    formData.append('camera_slot_id', button.getAttribute('data-camera-slot') || '');
+    formData.append('world_mother_category', button.getAttribute('data-world-mother-category') || '');
+    formData.append('world_mother_variant_offset', button.getAttribute('data-world-mother-variant') || '0');
+    formData.append('world_mother_scale', '1.0');
+    button.disabled = true;
+
+    fetch('generate_mockup_combination.php', { method: 'POST', body: formData })
+        .then(parseJsonResponse)
+        .then(result => {
+            if (!result.body.ok) {
+                throw new Error(result.body.error || 'Regeneration failed.');
+            }
+            window.location.href = result.body.results_url || window.location.href;
+        })
+        .catch(err => {
+            alert(err.message);
+            button.disabled = false;
+        });
+}
+
+document.querySelectorAll('[data-delete-result]').forEach(button => {
+    button.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        deleteResult(button);
+    });
+});
+
+document.querySelectorAll('[data-redo-result]').forEach(button => {
+    button.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        redoResult(button);
+    });
+});
 </script>
 </body>
 </html>

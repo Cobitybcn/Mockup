@@ -1,0 +1,54 @@
+Generate one premium photographic mockup using this exact camera slot only:
+Camera Slot ID: diagonal_estudio_moderno
+Camera Slot Name: Diagonal Moderna de Estudio
+
+INPUT ROLES:
+IMAGE 1 is the only source of truth for the artwork. Preserve exact artwork identity, orientation, aspect ratio, colors, marks, sparse areas, and composition.
+IMAGE 2 is the world mother for the environment. Keep its room type, material family, light logic, surface character, and spatial identity. Do not replace it with a generic studio, generic gallery, different room type, or invented architecture. Adapt only the camera and artwork placement needed for this slot.
+
+ARTWORK PHYSICAL DATA:
+Artwork title: root_art_job_1783174312_2963_v2
+Artwork width: 120 cm
+Artwork height: 80 cm
+Artwork orientation: landscape
+Artwork size class: L
+
+TASK:
+Create a diagonal editorial composition inside the environment provided by IMAGE 2. Strong diagonal movement should come from architectural lines, light/shadow, floor/wall geometry, furniture edges, or spatial features already present or naturally inferable from IMAGE 2. The artwork is a real rigid physical canvas/object at its supplied dimensions.
+
+CAMERA:
+Use medium or moderately low camera height, approximately 70-140 cm. Use a clean 35-50 mm editorial architectural lens. Keep vertical tilt controlled and mostly natural. Build diagonal movement only from existing or naturally compatible features of IMAGE 2, not by inventing a new studio, new gallery furniture, new windows, new benches, new lighting systems, or by deforming the artwork.
+
+DIAGONAL COMPOSITION:
+Use an off-center three-quarter or diagonal composition. The world mother remains recognizable in material, room type, and spatial character even after camera adaptation. Architecture may recede strongly in one direction if IMAGE 2 supports it, but the artwork must remain optically faithful, sharp, and aligned to the same wall/floor/ceiling perspective logic. Avoid centered product symmetry.
+
+SCALE:
+Respect the supplied artwork dimensions. The artwork must not become a billboard, mural, wall-sized panel, oversized slab, or stage prop. If stronger presence is needed, use camera proximity, crop, and diagonal leading lines rather than changing scale.
+
+PAINTED EDGE:
+If side depth, corner, or thickness is visible, the edge must be painted as a coherent continuation of IMAGE 1. No raw beige canvas edge, unpainted primer, bare wood, exposed stretcher bars, or generic blank side band unless IMAGE 1 explicitly shows it.
+
+ARTWORK FIDELITY:
+Do not repaint, replace, reinterpret, recolor, add marks, add figures, add decorative gestures, or import room-inspired shapes into the artwork.
+
+NEGATIVE PROMPT:
+No centered product symmetry, no flat frontal product wall, no invented studio, no invented gallery, no alternate room type, no replacing IMAGE 2 environment, no world-mother substitution, no invented benches, no invented track lights, no invented windows, no copied IMAGE 2 camera, no artwork deformation, no warped canvas, no melted artwork, no stretched artwork, no compressed artwork, no billboard scaling, no mural scaling, no oversized canvas, no artwork substitution, no invented painting, no decorative brushwork, no room-inspired marks, no raw beige canvas edge, no unpainted canvas edge, no bare wood edge, no poster effect, no digital screen, no pets, no crowds, no children, no visible people, no visible text, no logos, no watermarks.
+
+ENVIRONMENTAL SCALE REASONING POLICY
+
+Before placing the artwork, infer the physical scale of IMAGE 2 from the visible environment. Use whatever scale evidence is naturally available in the scene: architectural modules, openings, repeated surface units, furniture, fixtures, objects, floor/wall junctions, shadows, spatial depth, human-scale traces, and material patterns.
+
+Do not rely on a single clue. Cross-check the artwork size against at least two or three independent visual anchors whenever the scene provides them. The installed artwork must harmonize with both the supplied artwork dimensions and the inferred scale of the world mother environment.
+
+Treat IMAGE 2 as scale evidence, not only as style evidence. Its objects, room proportions, openings, material units, and spatial distances must constrain the artwork's physical footprint. Empty wall area is not permission to enlarge the artwork.
+
+The artwork may become visually prominent through camera position, crop, lens choice, perspective, lighting, and composition, but its physical size must remain consistent with the surrounding environmental anchors.
+
+WORLD MOTHER ARTWORK QUARANTINE:
+IMAGE 2 may contain paintings, murals, wall drawings, posters, framed images, easel canvases, sketches, portraits, figures, decorative marks, or unfinished studio artwork. Treat all of those as unsafe environmental artifacts, not as content sources.
+
+Never copy, preserve, enlarge, translate, restyle, echo, or remix any artwork, mural, face, figure, brushwork, color composition, easel canvas, poster, frame content, or wall drawing from IMAGE 2 into IMAGE 1 or into the installed artwork. IMAGE 1 is the only artwork content allowed.
+
+If IMAGE 2 contains a large mural, figurative wall painting, colorful wall drawing, poster cluster, or competing artwork, neutralize that area into compatible blank wall, aged plaster, shelving, stacked blank canvases, furniture, shadow, or ordinary studio clutter. Do not keep it as a second prominent artwork in the final image.
+
+The final mockup must contain one primary artwork only: the supplied IMAGE 1 canvas/object. Any secondary canvas-like object may appear only as a blank support, turned-away canvas, neutral stretcher, or indistinct studio prop with no readable image, no face, no figure, and no decorative composition.
