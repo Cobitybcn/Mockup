@@ -192,6 +192,7 @@ class GeminiImageClient
             'C:\laragon\bin\python\python-3.13\python.exe',
             'C:\laragon\bin\python\python-3.12\python.exe',
             'C:\laragon\bin\python\python-3.11\python.exe',
+            'python3',
             'python',
         ]);
 
@@ -199,10 +200,11 @@ class GeminiImageClient
         foreach ($candidates as $cand) {
             $output = [];
             $exitCode = -1;
-            if ($cand !== 'python' && !is_file($cand)) {
+            $isGlobalCmd = ($cand === 'python' || $cand === 'python3');
+            if (!$isGlobalCmd && !is_file($cand)) {
                 continue;
             }
-            $cmd = ($cand === 'python') ? 'python' : '"' . $cand . '"';
+            $cmd = $isGlobalCmd ? $cand : '"' . $cand . '"';
             @exec($cmd . ' -c "import google.genai" 2>&1', $output, $exitCode);
             if ($exitCode === 0) {
                 return $cand;
@@ -211,7 +213,8 @@ class GeminiImageClient
 
         // Si ninguno tiene google.genai, devolver el primero que exista
         foreach ($candidates as $cand) {
-            if ($cand !== 'python' && is_file($cand)) {
+            $isGlobalCmd = ($cand === 'python' || $cand === 'python3');
+            if (!$isGlobalCmd && is_file($cand)) {
                 return $cand;
             }
         }

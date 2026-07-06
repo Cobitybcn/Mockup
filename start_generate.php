@@ -43,6 +43,16 @@ if (empty($_FILES['main_artwork']) || $_FILES['main_artwork']['error'] !== UPLOA
     fail('Did not receive the main artwork correctly.');
 }
 
+$tmpPath = (string)($_FILES['main_artwork']['tmp_name'] ?? '');
+if ($tmpPath === '' || !is_uploaded_file($tmpPath)) {
+    fail('Uploaded file is not valid.');
+}
+
+$imageInfo = @getimagesize($tmpPath);
+if ($imageInfo === false) {
+    fail('The uploaded file is not a valid image.');
+}
+
 $jobsDir = __DIR__ . '/jobs';
 $resultsDir = RESULTS_DIR;
 

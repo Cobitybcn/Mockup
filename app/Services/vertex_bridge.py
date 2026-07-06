@@ -3,7 +3,8 @@ import sys
 
 # Set fallback Google Application Default Credentials when running under Apache / SYSTEM
 if 'GOOGLE_APPLICATION_CREDENTIALS' not in os.environ:
-    fallback_adc = r"C:\laragon\www\mockups\storage\credentials.json"
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    fallback_adc = os.path.abspath(os.path.join(script_dir, '..', '..', 'storage', 'credentials.json'))
     if os.path.exists(fallback_adc):
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = fallback_adc
 
