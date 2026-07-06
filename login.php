@@ -68,11 +68,15 @@ function auth_mockup_images(): array
     ) + $fallback;
 }
 
-$authImages = auth_mockup_images();
+$authImages = [
+    'assets/showcase/latest_mockup_1.jpg',
+    'assets/showcase/latest_mockup_2.jpg',
+    'assets/showcase/latest_mockup_3.jpg',
+];
 $authOpacities = [
-    'main' => random_int(52, 72) / 100,
-    'secondary' => random_int(38, 58) / 100,
-    'tertiary' => random_int(34, 54) / 100,
+    'main' => 0.65,
+    'secondary' => 0.48,
+    'tertiary' => 0.44,
 ];
 ?>
 <!doctype html>

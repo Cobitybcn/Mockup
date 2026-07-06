@@ -151,12 +151,17 @@ function h($v): string
         }
         .hero-content h1 {
             font-family: var(--font-serif);
-            font-size: clamp(42px, 4.8vw, 64px);
-            line-height: 1.15;
-            font-weight: 500;
+            font-weight: 400;
+            font-size: clamp(48px, 5.8vw, 72px);
+            line-height: 1.08;
             margin: 0 0 24px 0;
             color: var(--ink) !important;
-            letter-spacing: -0.01em;
+            letter-spacing: -0.02em;
+        }
+        .hero-content h1 em {
+            font-style: italic;
+            font-family: var(--font-serif);
+            font-weight: 400;
         }
         .hero-content p {
             font-size: 15px;
@@ -275,74 +280,49 @@ function h($v): string
             color: var(--accent);
         }
         
-        /* High-Impact Hero Showcase Visuals: Overlapping Collage Stack */
-        .collage-container {
+        /* High-Impact Hero Showcase Visuals: Fading Video Loop */
+        .showcase-video-frame {
             position: relative;
             width: 100%;
-            height: 480px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .collage-card {
-            position: absolute;
+            max-width: 580px;
+            aspect-ratio: 4/3;
+            border-radius: 16px;
             border: 1px solid var(--line);
-            border-radius: 12px;
-            box-shadow: 0 20px 50px rgba(20,20,18,0.12);
-            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-            cursor: pointer;
+            box-shadow: 0 30px 80px rgba(20,20,18,0.12), 0 10px 30px rgba(20,20,18,0.06);
             overflow: hidden;
-            background: none;
+            background: var(--surface-soft);
         }
-        .collage-card img {
+        .showcase-video-frame img {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 11px;
+            opacity: 0;
+            transform: scale(1.02);
+            transition: transform 0.8s ease, opacity 0.8s ease;
+            animation: heroCrossfade 16s infinite ease-in-out;
             display: block;
         }
-        /* Card 1: Back/Left Card (Ibiza Room) */
-        .collage-card.card-back {
-            width: 280px;
-            aspect-ratio: 4/3;
-            transform: translate(-90px, -60px) rotate(-8deg);
-            z-index: 1;
-            opacity: 0.85;
-            filter: blur(0.5px);
-        }
-        /* Card 2: Center/Front Card (Brutalist Loft) */
-        .collage-card.card-front {
-            width: 360px;
-            aspect-ratio: 4/3;
-            z-index: 3;
-            box-shadow: 0 30px 80px rgba(20,20,18,0.15), 0 10px 30px rgba(20,20,18,0.05);
-            transform: translate(0, 0) rotate(0deg);
-        }
-        /* Card 3: Overlapping/Right Card (Nadir Blue Hour) */
-        .collage-card.card-right {
-            width: 260px;
-            aspect-ratio: 3/4;
-            transform: translate(110px, 70px) rotate(6deg);
-            z-index: 2;
-            opacity: 0.95;
-        }
-        /* Interactive Hover: Cards dynamically expand */
-        .collage-container:hover .collage-card.card-back {
-            transform: translate(-150px, -90px) rotate(-14deg) scale(1.05);
-            opacity: 1;
-            filter: blur(0);
-            box-shadow: 0 30px 70px rgba(20,20,18,0.12);
-        }
-        .collage-container:hover .collage-card.card-front {
-            transform: translate(0, -10px) rotate(1deg) scale(1.03);
-            box-shadow: 0 45px 100px rgba(20,20,18,0.2);
-            z-index: 5;
-        }
-        .collage-container:hover .collage-card.card-right {
-            transform: translate(160px, 90px) rotate(12deg) scale(1.05);
-            opacity: 1;
-            box-shadow: 0 30px 70px rgba(20,20,18,0.12);
-            z-index: 4;
+        
+        .showcase-video-frame img:nth-child(1) { animation-delay: 0s; }
+        .showcase-video-frame img:nth-child(2) { animation-delay: 4s; }
+        .showcase-video-frame img:nth-child(3) { animation-delay: 8s; }
+        .showcase-video-frame img:nth-child(4) { animation-delay: 12s; }
+        
+        @keyframes heroCrossfade {
+            0%, 5% {
+                opacity: 0;
+                transform: scale(1.04);
+            }
+            10%, 25% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            30%, 100% {
+                opacity: 0;
+                transform: scale(1.02);
+            }
         }
         .metadata-badge-grid {
             display: flex;
@@ -500,7 +480,7 @@ function h($v): string
     <section class="hero-section">
         <div class="hero-content">
             <span class="hero-kicker">AI for Fine Artists & Galleries</span>
-            <h1>Create Architecturally Precise Art Mockups in Seconds</h1>
+            <h1>Create <em>Architecturally Precise</em> Art Mockups in Seconds</h1>
             <p>Transform a flat photo of your painting into hyper-realistic mockup exhibitions. Display your art in high-end galleries, collector salons, and industrial lofts with natural lighting and true-to-scale integration.</p>
             <div class="hero-actions">
                 <a href="#login" class="btn-cta" style="padding: 14px 32px; font-size: 13px;">Get Started</a>
@@ -508,16 +488,11 @@ function h($v): string
             </div>
         </div>
         <div class="hero-visual">
-            <div class="collage-container">
-                <div class="collage-card card-back">
-                    <img src="assets/showcase/ibiza.jpg" alt="Mediterranean Lounge Mockup">
-                </div>
-                <div class="collage-card card-right">
-                    <img src="assets/showcase/nadir.jpg" alt="Industrial Nadir Mockup">
-                </div>
-                <div class="collage-card card-front">
-                    <img src="assets/showcase/brutalism.jpg" alt="Brutalist Loft Mockup">
-                </div>
+            <div class="showcase-video-frame">
+                <img src="assets/showcase/latest_artwork.png" alt="Original Fine Art Painting">
+                <img src="assets/showcase/latest_mockup_1.jpg" alt="Generated Curation Mockup 1">
+                <img src="assets/showcase/latest_mockup_2.jpg" alt="Generated Curation Mockup 2">
+                <img src="assets/showcase/latest_mockup_3.jpg" alt="Generated Curation Mockup 3">
             </div>
         </div>
     </section>
