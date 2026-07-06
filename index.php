@@ -259,17 +259,85 @@ function h($v): string
             box-shadow: var(--shadow-hover);
         }
         .feature-icon {
-            width: 40px;
-            height: 40px;
-            border: 1px solid var(--accent);
-            border-radius: 4px;
+            width: 48px;
+            height: 48px;
+            border: 1px solid rgba(154, 123, 86, 0.25);
+            background: rgba(154, 123, 86, 0.04);
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: var(--accent);
-            font-size: 18px;
-            font-weight: bold;
             margin-bottom: 24px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 4px rgba(20,20,18,0.02);
+        }
+        .feature-icon svg {
+            color: var(--accent);
+        }
+        
+        /* High-Impact Hero Showcase Visuals */
+        .showcase-visual-wrapper {
+            position: relative;
+            max-width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .hero-main-image {
+            width: 100%;
+            height: auto;
+            max-height: 520px;
+            object-fit: cover;
+            border-radius: 20px;
+            border: 1px solid var(--line);
+            box-shadow: 0 40px 100px rgba(20,20,18,0.16), 0 16px 40px rgba(20,20,18,0.08);
+            display: block;
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .hero-main-image:hover {
+            transform: translateY(-5px) scale(1.01);
+        }
+        .floating-metadata-card {
+            position: absolute;
+            bottom: -24px;
+            left: -24px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 18px 24px;
+            box-shadow: 0 20px 40px rgba(20,20,18,0.08);
+            z-index: 10;
+            width: 240px;
+            text-align: left;
+        }
+        .metadata-badge-kicker {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+        .metadata-badge-title {
+            font-family: var(--font-serif);
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--ink);
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 8px;
+        }
+        .metadata-badge-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--ink);
+        }
+        .metadata-badge-grid span {
+            color: var(--muted);
+            font-weight: 500;
         }
         .feature-card h3 {
             font-family: var(--font-serif);
@@ -424,9 +492,17 @@ function h($v): string
             </div>
         </div>
         <div class="hero-visual">
-            <div class="frame-container">
-                <img src="assets/showcase/brutalism.jpg" alt="Loft Brutalista" class="frame-image">
-                <div class="frame-caption">Loft Brutalista de Hormigón — Perspectiva Oblicua 3/4</div>
+            <div class="showcase-visual-wrapper">
+                <img src="assets/showcase/brutalism.jpg" alt="Loft Brutalista" class="hero-main-image">
+                <div class="floating-metadata-card">
+                    <div class="metadata-badge-kicker">Mockup Generado</div>
+                    <div class="metadata-badge-title">Loft Brutalista</div>
+                    <div class="metadata-badge-grid">
+                        <div><span>Espacio:</span> Loft de Hormigón</div>
+                        <div><span>Perspectiva:</span> Oblicua 3/4</div>
+                        <div><span>Luz:</span> Hora Azul</div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -439,22 +515,54 @@ function h($v): string
         </div>
         <div class="features-grid">
             <div class="feature-card">
-                <div class="feature-icon">📐</div>
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="6" y="6" width="12" height="12" rx="1" />
+                        <line x1="6" y1="3" x2="18" y2="3" />
+                        <path d="M9 1l-3 2 3 2M15 1l3 2-3 2" />
+                        <line x1="3" y1="6" x2="3" y2="18" />
+                        <path d="M1 9l2-3 2 3M1 15l2 3 2-3" />
+                    </svg>
+                </div>
                 <h3>Invarianza de Escala Real</h3>
                 <p>El motor calcula el tamaño físico real de tu lienzo (ej. 120 x 90 cm) y lo escala proporcionalmente respecto a techos, sillones y ventanas. Olvídate de obras que se ven gigantes o diminutas.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">🕯️</div>
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 2h8M12 2v3" />
+                        <path d="M9 8c0-2 6-2 6 0H9z" />
+                        <path d="M7 12h10L15 8H9z" />
+                        <line x1="9" y1="12" x2="4" y2="22" stroke-opacity="0.4" />
+                        <line x1="15" y1="12" x2="20" y2="22" stroke-opacity="0.4" />
+                        <line x1="12" y1="13" x2="12" y2="17" />
+                        <line x1="10" y1="14" x2="9" y2="18" />
+                        <line x1="14" y1="14" x2="15" y2="18" />
+                    </svg>
+                </div>
                 <h3>Luz de Galería Natural</h3>
                 <p>Nuestra IA proyecta sombras de caída suave y focos de riel sobre el lienzo, simulando de manera precisa la textura física, brillos y empastes de la pintura original sobre la pared.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">📸</div>
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                    </svg>
+                </div>
                 <h3>Cámaras Editoriales</h3>
                 <p>Elige entre planos directos para previsualización corporativa, perspectivas oblicuas a 3/4 que dan profundidad o espectaculares vistas desde ángulo Nadir (suelo-techo).</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">🎞️</div>
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="7" y="2" width="10" height="20" rx="2" />
+                        <polygon points="10,9 15,12 10,15" fill="currentColor" opacity="0.15" />
+                        <polygon points="10,9 15,12 10,15" />
+                        <line x1="11" y1="4" x2="13" y2="4" />
+                        <circle cx="12" cy="20" r="0.5" fill="currentColor" />
+                    </svg>
+                </div>
                 <h3>Video Social Integrado</h3>
                 <p>Exporta compilaciones en formato vertical 9:16 con transiciones y paneos suaves estilo Ken Burns, listos para publicar como Reels o TikToks sin necesidad de edición externa.</p>
             </div>
