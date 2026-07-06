@@ -104,7 +104,7 @@ function h($v): string
             gap: 32px;
         }
         .landing-nav a {
-            color: var(--muted) !important;
+            color: var(--ink) !important;
             text-decoration: none;
             font-weight: 600;
             font-size: 11px;
@@ -116,7 +116,7 @@ function h($v): string
         }
         .btn-cta {
             background: var(--accent) !important;
-            color: var(--bg) !important;
+            color: #FFFFFF !important;
             padding: 10px 20px;
             border-radius: 4px;
             font-weight: 600 !important;
@@ -275,58 +275,75 @@ function h($v): string
             color: var(--accent);
         }
         
-        /* High-Impact Hero Showcase Visuals */
-        .showcase-visual-wrapper {
+        /* High-Impact Hero Showcase Visuals: Overlapping Collage Stack */
+        .collage-container {
             position: relative;
-            max-width: 100%;
+            width: 100%;
+            height: 480px;
             display: flex;
             justify-content: center;
             align-items: center;
         }
-        .hero-main-image {
-            width: 100%;
-            height: auto;
-            max-height: 520px;
-            object-fit: cover;
-            border-radius: 20px;
-            border: 1px solid var(--line);
-            box-shadow: 0 40px 100px rgba(20,20,18,0.16), 0 16px 40px rgba(20,20,18,0.08);
-            display: block;
-            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-        .hero-main-image:hover {
-            transform: translateY(-5px) scale(1.01);
-        }
-        .floating-metadata-card {
+        .collage-card {
             position: absolute;
-            bottom: -24px;
-            left: -24px;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
+            background: var(--surface);
             border: 1px solid var(--line);
+            padding: 8px;
             border-radius: 12px;
-            padding: 18px 24px;
-            box-shadow: 0 20px 40px rgba(20,20,18,0.08);
-            z-index: 10;
-            width: 240px;
-            text-align: left;
+            box-shadow: 0 20px 50px rgba(20,20,18,0.08);
+            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            cursor: pointer;
+            overflow: hidden;
         }
-        .metadata-badge-kicker {
-            font-size: 9px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--accent);
-            margin-bottom: 4px;
+        .collage-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            display: block;
         }
-        .metadata-badge-title {
-            font-family: var(--font-serif);
-            font-size: 18px;
-            font-weight: 500;
-            color: var(--ink);
-            margin-bottom: 12px;
-            border-bottom: 1px solid var(--line);
-            padding-bottom: 8px;
+        /* Card 1: Back/Left Card (Ibiza Room) */
+        .collage-card.card-back {
+            width: 280px;
+            aspect-ratio: 4/3;
+            transform: translate(-90px, -60px) rotate(-8deg);
+            z-index: 1;
+            opacity: 0.85;
+            filter: blur(0.5px);
+        }
+        /* Card 2: Center/Front Card (Brutalist Loft) */
+        .collage-card.card-front {
+            width: 360px;
+            aspect-ratio: 4/3;
+            z-index: 3;
+            box-shadow: 0 30px 80px rgba(20,20,18,0.15), 0 10px 30px rgba(20,20,18,0.05);
+            transform: translate(0, 0) rotate(0deg);
+        }
+        /* Card 3: Overlapping/Right Card (Nadir Blue Hour) */
+        .collage-card.card-right {
+            width: 260px;
+            aspect-ratio: 3/4;
+            transform: translate(110px, 70px) rotate(6deg);
+            z-index: 2;
+            opacity: 0.95;
+        }
+        /* Interactive Hover: Cards dynamically expand */
+        .collage-container:hover .collage-card.card-back {
+            transform: translate(-150px, -90px) rotate(-14deg) scale(1.05);
+            opacity: 1;
+            filter: blur(0);
+            box-shadow: 0 30px 70px rgba(20,20,18,0.12);
+        }
+        .collage-container:hover .collage-card.card-front {
+            transform: translate(0, -10px) rotate(1deg) scale(1.03);
+            box-shadow: 0 45px 100px rgba(20,20,18,0.2);
+            z-index: 5;
+        }
+        .collage-container:hover .collage-card.card-right {
+            transform: translate(160px, 90px) rotate(12deg) scale(1.05);
+            opacity: 1;
+            box-shadow: 0 30px 70px rgba(20,20,18,0.12);
+            z-index: 4;
         }
         .metadata-badge-grid {
             display: flex;
@@ -474,34 +491,33 @@ function h($v): string
             </div>
         </div>
         <nav class="landing-nav">
-            <a href="#features">Tecnología</a>
-            <a href="#showcase">Galería</a>
-            <a href="#login" class="btn-cta">Acceder</a>
+            <a href="#features">Technology</a>
+            <a href="#showcase">Showcase</a>
+            <a href="#login" class="btn-cta">Login</a>
         </nav>
     </header>
 
     <!-- Hero Section -->
     <section class="hero-section">
         <div class="hero-content">
-            <span class="hero-kicker">Inteligencia Artificial para Artistas</span>
-            <h1>Crea Montajes de Arte Fotorrealistas en Segundos</h1>
-            <p>Transforma una foto plana de tu pintura o dibujo en maquetas de exhibición perfectamente calibradas. Ubica tus obras en galerías de alta gama, residencias contemporáneas y lofts con luz natural e integración de escala real.</p>
+            <span class="hero-kicker">AI for Fine Artists & Galleries</span>
+            <h1>Create Architecturally Precise Art Mockups in Seconds</h1>
+            <p>Transform a flat photo of your painting into hyper-realistic mockup exhibitions. Display your art in high-end galleries, collector salons, and industrial lofts with natural lighting and true-to-scale integration.</p>
             <div class="hero-actions">
-                <a href="#login" class="btn-cta" style="padding: 14px 32px; font-size: 13px;">Comenzar Ahora</a>
-                <a href="#features" class="btn-secondary" style="padding: 14px 32px; font-size: 13px;">Ver Características</a>
+                <a href="#login" class="btn-cta" style="padding: 14px 32px; font-size: 13px;">Get Started</a>
+                <a href="#features" class="btn-secondary" style="padding: 14px 32px; font-size: 13px;">Explore Features</a>
             </div>
         </div>
         <div class="hero-visual">
-            <div class="showcase-visual-wrapper">
-                <img src="assets/showcase/brutalism.jpg" alt="Loft Brutalista" class="hero-main-image">
-                <div class="floating-metadata-card">
-                    <div class="metadata-badge-kicker">Mockup Generado</div>
-                    <div class="metadata-badge-title">Loft Brutalista</div>
-                    <div class="metadata-badge-grid">
-                        <div><span>Espacio:</span> Loft de Hormigón</div>
-                        <div><span>Perspectiva:</span> Oblicua 3/4</div>
-                        <div><span>Luz:</span> Hora Azul</div>
-                    </div>
+            <div class="collage-container">
+                <div class="collage-card card-back">
+                    <img src="assets/showcase/ibiza.jpg" alt="Mediterranean Lounge Mockup">
+                </div>
+                <div class="collage-card card-right">
+                    <img src="assets/showcase/nadir.jpg" alt="Industrial Nadir Mockup">
+                </div>
+                <div class="collage-card card-front">
+                    <img src="assets/showcase/brutalism.jpg" alt="Brutalist Loft Mockup">
                 </div>
             </div>
         </div>
@@ -510,8 +526,8 @@ function h($v): string
     <!-- Features Section -->
     <section id="features" class="section-padding">
         <div class="section-title-wrapper">
-            <span class="section-kicker">La Diferencia Técnica</span>
-            <h2 class="section-title">Diseñado con Precisión para Pintores e Interiores de Arte</h2>
+            <span class="section-kicker">The Technical Advantage</span>
+            <h2 class="section-title">Calibrated Specifically for Fine Art Curation</h2>
         </div>
         <div class="features-grid">
             <div class="feature-card">
@@ -524,8 +540,8 @@ function h($v): string
                         <path d="M1 9l2-3 2 3M1 15l2 3 2-3" />
                     </svg>
                 </div>
-                <h3>Invarianza de Escala Real</h3>
-                <p>El motor calcula el tamaño físico real de tu lienzo (ej. 120 x 90 cm) y lo escala proporcionalmente respecto a techos, sillones y ventanas. Olvídate de obras que se ven gigantes o diminutas.</p>
+                <h3>True-to-Scale Invariance</h3>
+                <p>The engine calculates the physical dimensions of your canvas and scales it relative to furniture, windows, and ceiling heights. No more oversized or tiny art errors.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">
@@ -540,8 +556,8 @@ function h($v): string
                         <line x1="14" y1="14" x2="15" y2="18" />
                     </svg>
                 </div>
-                <h3>Luz de Galería Natural</h3>
-                <p>Nuestra IA proyecta sombras de caída suave y focos de riel sobre el lienzo, simulando de manera precisa la textura física, brillos y empastes de la pintura original sobre la pared.</p>
+                <h3>Natural Gallery Lighting</h3>
+                <p>Our AI projects soft-drop shadows and directional gallery spotlights on your canvas, accurately rendering the paint relief, varnish sheen, and linen texture.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">
@@ -550,8 +566,8 @@ function h($v): string
                         <circle cx="12" cy="13" r="4" />
                     </svg>
                 </div>
-                <h3>Cámaras Editoriales</h3>
-                <p>Elige entre planos directos para previsualización corporativa, perspectivas oblicuas a 3/4 que dan profundidad o espectaculares vistas desde ángulo Nadir (suelo-techo).</p>
+                <h3>Editorial Perspectives</h3>
+                <p>Choose from direct frontal displays for corporate proposals, 3/4 oblique camera angles for depth, or low-angle floor-to-ceiling Nadir views.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">
@@ -563,8 +579,8 @@ function h($v): string
                         <circle cx="12" cy="20" r="0.5" fill="currentColor" />
                     </svg>
                 </div>
-                <h3>Video Social Integrado</h3>
-                <p>Exporta compilaciones en formato vertical 9:16 con transiciones y paneos suaves estilo Ken Burns, listos para publicar como Reels o TikToks sin necesidad de edición externa.</p>
+                <h3>Integrated Social Video</h3>
+                <p>Compile vertical 9:16 video reels with slow, elegant Ken Burns panning transitions, ready to share on Instagram and TikTok directly.</p>
             </div>
         </div>
     </section>
@@ -572,32 +588,32 @@ function h($v): string
     <!-- Showcase Section -->
     <section id="showcase" class="section-padding" style="background: #0D0D0A;">
         <div class="section-title-wrapper">
-            <span class="section-kicker">Showcase de Formatos</span>
-            <h2 class="section-title">Explora los Tipos de Vistas Disponibles</h2>
+            <span class="section-kicker">Showcase Gallery</span>
+            <h2 class="section-title">Explore Editorial Perspectives & Rooms</h2>
         </div>
         <div class="showcase-grid">
             <div class="showcase-item">
-                <img src="assets/showcase/ibiza.jpg" alt="Salón en Ibiza">
+                <img src="assets/showcase/ibiza.jpg" alt="Ibiza Mediterranean Lounge">
                 <div class="showcase-overlay">
-                    <span class="showcase-tag">Sala Contemporánea</span>
-                    <h3 class="showcase-title">Salón Mediterráneo en Ibiza</h3>
-                    <p class="showcase-desc">Iluminación natural cálida y proporciones de escala real.</p>
+                    <span class="showcase-tag">Contemporary Space</span>
+                    <h3 class="showcase-title">Ibiza Mediterranean Lounge</h3>
+                    <p class="showcase-desc">Warm daylight casting soft shadows in an organic living space.</p>
                 </div>
             </div>
             <div class="showcase-item">
-                <img src="assets/showcase/floor-leaning.jpg" alt="Estudio Hora Azul">
+                <img src="assets/showcase/floor-leaning.jpg" alt="Blue Hour Studio Loft">
                 <div class="showcase-overlay">
-                    <span class="showcase-tag">Obra Apoyada</span>
-                    <h3 class="showcase-title">Estudio en Hora Azul</h3>
-                    <p class="showcase-desc">Perspectiva lateral oblicua con luz natural tenue.</p>
+                    <span class="showcase-tag">Floor Leaning Display</span>
+                    <h3 class="showcase-title">Blue Hour Studio Loft</h3>
+                    <p class="showcase-desc">Oblique side view showcasing canvas texture in soft ambient light.</p>
                 </div>
             </div>
             <div class="showcase-item">
-                <img src="assets/showcase/nadir.jpg" alt="Perspectiva Nadir">
+                <img src="assets/showcase/nadir.jpg" alt="Industrial Nadir Lounge">
                 <div class="showcase-overlay">
-                    <span class="showcase-tag">Contrapicado Suelo-Techo</span>
-                    <h3 class="showcase-title">Perspectiva Nadir Industrial</h3>
-                    <p class="showcase-desc">Plano dramático desde el suelo ideal para techos altos.</p>
+                    <span class="showcase-tag">Low-Angle Vertical View</span>
+                    <h3 class="showcase-title">Industrial Nadir Lounge</h3>
+                    <p class="showcase-desc">High-ceiling dramatic perspective highlighting architectural scale.</p>
                 </div>
             </div>
         </div>
@@ -606,12 +622,12 @@ function h($v): string
     <!-- Login Area -->
     <section id="login" class="section-padding login-section">
         <div class="section-title-wrapper" style="text-align: center; margin-bottom: 24px;">
-            <span class="section-kicker">Tu Archivo Privado</span>
-            <h2 class="section-title">Acceder al Curador</h2>
-            <p style="color: rgba(247, 242, 234, 0.5); font-size: 14px; margin-top: 10px;">Gestiona tus obras y genera conjuntos completos de maquetas.</p>
+            <span class="section-kicker">Artist Workspace</span>
+            <h2 class="section-title">Enter the Curator</h2>
+            <p style="color: var(--muted); font-size: 14px; margin-top: 10px;">Manage your artwork catalog and generate coordinated mockup sets.</p>
         </div>
 
-        <div class="auth-panel" style="background: transparent; min-height: auto; padding: 0;">
+        <div class="auth-panel" style="background: transparent; min-height: auto; padding: 0; border: none;">
             <?php if ($error): ?>
                 <p class="notice error" style="margin-bottom: 16px; width: min(100%, 380px);"><?= h($error) ?></p>
             <?php endif; ?>
@@ -622,21 +638,21 @@ function h($v): string
                     <input type="email" name="email" required autocomplete="email" style="width: 100%; border-radius: 4px; padding: 10px; font-family: var(--font-sans);">
                 </div>
                 <div style="margin-bottom: 24px;">
-                    <label style="display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">Contraseña</label>
+                    <label style="display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">Password</label>
                     <input type="password" name="password" required style="width: 100%; border-radius: 4px; padding: 10px; font-family: var(--font-sans);">
                 </div>
-                <button type="submit" class="btn-cta" style="width: 100%; padding: 12px; cursor: pointer; border-radius: 4px; font-size: 13px;">Iniciar Sesión</button>
+                <button type="submit" class="btn-cta" style="width: 100%; padding: 12px; cursor: pointer; border-radius: 4px; font-size: 13px;">Sign In</button>
             </form>
 
             <p style="margin-top: 20px; font-size: 13px; color: var(--muted);">
-                ¿No tienes una cuenta? <a href="register.php" style="color: var(--accent); text-decoration: underline;">Regístrate aquí</a>
+                Don't have an account? <a href="register.php" style="color: var(--accent); text-decoration: underline;">Register here</a>
             </p>
         </div>
     </section>
 
     <!-- Footer -->
     <footer style="padding: 40px 4%; border-top: 1px solid var(--line); text-align: center; font-size: 12px; color: var(--muted);">
-        <p>&copy; 2026 The Artwork Curator. Todos los derechos reservados. Tecnología impulsada por Vertex AI & Gemini.</p>
+        <p>&copy; 2026 The Artwork Curator. All rights reserved. Powered by Vertex AI & Gemini.</p>
     </footer>
 
 </body>
