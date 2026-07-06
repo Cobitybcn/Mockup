@@ -187,7 +187,7 @@ $totalAdmins = count(array_filter($users, fn($u) => !empty($u['is_admin'])));
                 </div>
                 <div class="topbar-actions">
                     <a class="button-link secondary" href="admin_api_keys.php">API Settings</a>
-                    <a class="button-link secondary" href="dashboard.php">Dashboard</a>
+                    <a class="button-link secondary" href="root_album.php">Root Artworks</a>
                 </div>
             </div>
 

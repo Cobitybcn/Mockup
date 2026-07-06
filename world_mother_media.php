@@ -7,23 +7,22 @@ Auth::requireUser();
 
 $file = str_replace('\\', '/', trim((string)($_GET['file'] ?? '')));
 $file = ltrim($file, '/');
-$parts = explode('/', $file);
+$prefix = 'storage/world_mothers/';
+$prefixPos = strpos($file, $prefix);
+if ($prefixPos !== false) {
+    $file = substr($file, $prefixPos);
+}
+
 $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
 if (
-    count($parts) !== 4
-    || $parts[0] !== 'storage'
-    || $parts[1] !== 'world_mothers'
-    || $parts[2] === ''
-    || $parts[2] !== basename($parts[2])
-    || $parts[2] === '.'
-    || $parts[2] === '..'
-    || preg_match('/[\x00-\x1F\x7F]/', $parts[2]) === 1
+    !str_starts_with($file, $prefix)
+    || preg_match('/[\x00-\x1F\x7F]/', $file) === 1
+    || str_contains($file, '/../')
+    || str_contains($file, '/./')
+    || str_ends_with($file, '/..')
+    || str_ends_with($file, '/.')
     || !in_array($extension, WorldMotherLibrary::allowedExtensions(), true)
-    || $parts[3] !== basename($file)
-    || $parts[3] === '.'
-    || $parts[3] === '..'
-    || preg_match('/[\x00-\x1F\x7F]/', $parts[3]) === 1
 ) {
     http_response_code(404);
     exit('File not found.');
@@ -32,7 +31,10 @@ if (
 $basePath = realpath(__DIR__ . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'world_mothers');
 $path = realpath(__DIR__ . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $file));
 
-if ($basePath === false || $path === false || !str_starts_with($path, $basePath . DIRECTORY_SEPARATOR) || !is_file($path)) {
+$basePathNormalized = $basePath !== false ? rtrim(str_replace('\\', '/', $basePath), '/') . '/' : '';
+$pathNormalized = $path !== false ? str_replace('\\', '/', $path) : '';
+
+if ($basePath === false || $path === false || !str_starts_with($pathNormalized, $basePathNormalized) || !is_file($path)) {
     http_response_code(404);
     exit('File not found.');
 }

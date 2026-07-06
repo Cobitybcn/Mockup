@@ -3,13 +3,10 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
-$user = Auth::requireUser();
-$isAdmin = Auth::isAdmin($user);
-$pdo = Database::connection();
-$query = trim((string)($_GET['q'] ?? ''));
-$page = max(1, (int)($_GET['page'] ?? 1));
-$perPage = 24;
-$offset = ($page - 1) * $perPage;
+Auth::requireUser();
+
+header('Location: root_album.php');
+exit;
 
 function delete_artwork_job_assets(string $jobId): void
 {

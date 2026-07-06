@@ -1,3 +1,3 @@
 <?php
-header('Location: dashboard.php');
+header('Location: root_album.php');
 exit;

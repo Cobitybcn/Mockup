@@ -7,7 +7,7 @@ $currentUser = Auth::requireUser();
 $image = basename(trim((string)($_GET['image'] ?? '')));
 
 if ($image === '') {
-    header('Location: dashboard.php');
+    header('Location: root_album.php');
     exit;
 }
 
@@ -27,7 +27,6 @@ function h($v): string
         html,
         body {
             height: 100%;
-            zoom: 1;
         }
 
         .analysis-wait {

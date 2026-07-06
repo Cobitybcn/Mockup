@@ -8,7 +8,7 @@ $user = Auth::requireUser();
 $id = max(0, (int)($_GET['id'] ?? $_POST['id'] ?? 0));
 
 if ($id <= 0) {
-    header('Location: dashboard.php');
+    header('Location: root_album.php');
     exit;
 }
 
@@ -19,7 +19,7 @@ $stmt->execute(['id' => $id, 'user_id' => $user['id']]);
 $artworkExists = $stmt->fetchColumn();
 
 if (!$artworkExists && !Auth::isAdmin($user)) {
-    header('Location: dashboard.php');
+    header('Location: root_album.php');
     exit;
 }
 

@@ -448,6 +448,19 @@ class Database
                 FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
             )
         ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS root_artwork_candidates (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                artwork_id INTEGER NOT NULL,
+                file_name TEXT NOT NULL,
+                view_type TEXT NOT NULL DEFAULT 'frontal',
+                is_selected INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
+            )
+        ");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_root_artwork_candidates_artwork ON root_artwork_candidates (artwork_id, view_type)");
     }
 
     private static function migrateMysql(PDO $pdo): void
@@ -741,6 +754,20 @@ class Database
                 PRIMARY KEY (id),
                 UNIQUE KEY artwork_embeddings_artwork_unique (artwork_id),
                 CONSTRAINT artwork_embeddings_artwork_fk FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS root_artwork_candidates (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                artwork_id INT UNSIGNED NOT NULL,
+                file_name VARCHAR(255) NOT NULL,
+                view_type VARCHAR(80) NOT NULL DEFAULT 'frontal',
+                is_selected TINYINT(1) NOT NULL DEFAULT 0,
+                created_at VARCHAR(40) NOT NULL,
+                PRIMARY KEY (id),
+                KEY idx_root_artwork_candidates_artwork (artwork_id, view_type),
+                CONSTRAINT root_artwork_candidates_artwork_fk FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
     }

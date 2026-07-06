@@ -53,15 +53,17 @@ final class CameraSlotStudio
     {
         $customPath = $this->customConfigPath();
         if (!is_file($customPath)) {
-            return ['sets' => [], 'slots' => []];
+            return ['sets' => [], 'slots' => [], 'scene_board' => [], 'scene_boards' => []];
         }
         $loaded = require $customPath;
         if (!is_array($loaded)) {
-            return ['sets' => [], 'slots' => []];
+            return ['sets' => [], 'slots' => [], 'scene_board' => [], 'scene_boards' => []];
         }
         return [
             'sets' => is_array($loaded['sets'] ?? null) ? $loaded['sets'] : [],
             'slots' => is_array($loaded['slots'] ?? null) ? $loaded['slots'] : [],
+            'scene_board' => is_array($loaded['scene_board'] ?? null) ? $loaded['scene_board'] : [],
+            'scene_boards' => is_array($loaded['scene_boards'] ?? null) ? $loaded['scene_boards'] : [],
         ];
     }
 
@@ -90,6 +92,185 @@ final class CameraSlotStudio
     {
         $config = $this->customCameraConfig();
         return is_array($config['slots'] ?? null) ? $config['slots'] : [];
+    }
+
+    /**
+     * @return array<string,array<string,mixed>>
+     */
+    public function sceneBoardGroups(array $overrides = []): array
+    {
+        $groups = [
+            'real_wall' => [
+                'group_id' => 'real_wall',
+                'group_name' => 'En una pared real',
+                'group_order' => 1,
+                'variants' => [
+                    1 => 'Frontal',
+                    2 => '3/4 derecha',
+                    3 => '3/4 izquierda',
+                ],
+            ],
+            'architectural_context' => [
+                'group_id' => 'architectural_context',
+                'group_name' => 'Contexto arquitectónico',
+                'group_order' => 2,
+                'variants' => [
+                    1 => '3/4 perspectiva',
+                    2 => '7/8 derecha',
+                    3 => '7/8 izquierda',
+                ],
+            ],
+            'artistic_cameras' => [
+                'group_id' => 'artistic_cameras',
+                'group_name' => 'Cámaras artísticas',
+                'group_order' => 3,
+                'variants' => [
+                    1 => 'Nadir extremo / monumental',
+                    2 => 'Aérea entrepiso',
+                    3 => 'Aérea extrema cenital',
+                ],
+            ],
+            'texture_canvas' => [
+                'group_id' => 'texture_canvas',
+                'group_name' => 'Textura y canvas',
+                'group_order' => 4,
+                'variants' => [
+                    1 => 'Detalle de lienzo',
+                    2 => 'Detalle lateral',
+                    3 => 'Detalle de esquina',
+                ],
+            ],
+        ];
+
+        $custom = $this->customCameraConfig();
+        $stored = is_array($custom['scene_board']['groups'] ?? null) ? $custom['scene_board']['groups'] : [];
+        foreach ([$stored, $overrides] as $source) {
+            foreach ((array)$source as $groupId => $patch) {
+                if (!is_string($groupId) || !isset($groups[$groupId]) || !is_array($patch)) {
+                    continue;
+                }
+                $groupName = trim((string)($patch['group_name'] ?? ''));
+                if ($groupName !== '') {
+                    $groups[$groupId]['group_name'] = $groupName;
+                }
+                if (isset($patch['group_order'])) {
+                    $groups[$groupId]['group_order'] = max(1, (int)$patch['group_order']);
+                }
+                foreach ((array)($patch['variants'] ?? []) as $variantOrder => $label) {
+                    $variantOrder = (int)$variantOrder;
+                    $label = trim((string)$label);
+                    if ($variantOrder >= 1 && $variantOrder <= 3 && $label !== '') {
+                        $groups[$groupId]['variants'][$variantOrder] = $label;
+                    }
+                }
+            }
+        }
+
+        uasort($groups, static function (array $a, array $b): int {
+            return ((int)($a['group_order'] ?? 999)) <=> ((int)($b['group_order'] ?? 999));
+        });
+
+        return $groups;
+    }
+
+    /**
+     * @param array<string,mixed> $boardSlots
+     * @return array<string,mixed>
+     */
+    public function saveSceneBoard(array $boardSlots, array $boardRows = [], int $boardIndex = 1): array
+    {
+        $custom = $this->customCameraConfig();
+        $boards = [];
+        for ($index = 1; $index <= 3; $index++) {
+            $boards[(string)$index] = (array)($custom['scene_boards'][(string)$index]['slots'] ?? ($index === 1 ? ($custom['scene_board']['slots'] ?? []) : []));
+        }
+        $boards[(string)max(1, min(3, $boardIndex))] = $boardSlots;
+        return $this->saveSceneBoards($boards);
+    }
+
+    /**
+     * @param array<string,mixed> $boards
+     * @return array<string,mixed>
+     */
+    public function saveSceneBoards(array $boards): array
+    {
+        $slots = $this->existingSlots();
+        $custom = $this->customCameraConfig();
+
+        $custom['scene_boards'] = is_array($custom['scene_boards'] ?? null) ? $custom['scene_boards'] : [];
+        $allAssigned = [];
+        $boardOneSlots = [];
+        $totalAssigned = 0;
+
+        for ($boardIndex = 1; $boardIndex <= 3; $boardIndex++) {
+            $boardSlots = (array)($boards[(string)$boardIndex] ?? $boards[$boardIndex] ?? []);
+            $orderedSlotIds = [];
+            array_walk_recursive($boardSlots, static function ($value) use (&$orderedSlotIds): void {
+                $slotId = trim((string)$value);
+                if ($slotId !== '') {
+                    $orderedSlotIds[] = $slotId;
+                }
+            });
+            $orderedSlotIds = array_values(array_unique(array_filter($orderedSlotIds, static function (string $slotId) use ($slots): bool {
+                return isset($slots[$slotId]);
+            })));
+
+            $custom['scene_boards'][(string)$boardIndex] = [
+                'label' => 'Tablero ' . $boardIndex,
+                'slots' => $orderedSlotIds,
+                'updated_at' => date(DATE_ATOM),
+            ];
+
+            if ($boardIndex === 1) {
+                $boardOneSlots = $orderedSlotIds;
+            }
+            foreach ($orderedSlotIds as $slotId) {
+                $allAssigned[$slotId] = true;
+                $totalAssigned++;
+            }
+        }
+
+        $custom['scene_board']['slots'] = $boardOneSlots;
+        $custom['scene_board']['updated_at'] = date(DATE_ATOM);
+
+        foreach ($slots as $slotId => $slot) {
+            $slot = $this->publishedSlotPayload($slot);
+            $slot['slot_id'] = (string)($slot['slot_id'] ?? $slotId);
+            unset(
+                $slot['group_id'],
+                $slot['group_name'],
+                $slot['group_order'],
+                $slot['variant_label'],
+                $slot['variant_order']
+            );
+            if (isset($allAssigned[$slotId])) {
+                $slot['enabled'] = true;
+                $slot['primary_scene_set'] = in_array($slotId, $boardOneSlots, true);
+                if ($slot['primary_scene_set']) {
+                    $slot['board_order'] = array_search($slotId, $boardOneSlots, true) + 1;
+                } else {
+                    unset($slot['board_order']);
+                }
+            } else {
+                $slot['enabled'] = false;
+                $slot['primary_scene_set'] = false;
+                unset($slot['board_order']);
+            }
+            $custom['slots'][$slotId] = $this->publishedSlotPayload($slot);
+        }
+
+        $this->writeCustomConfig($custom);
+
+        return [
+            'assigned_count' => $totalAssigned,
+            'path' => $this->customConfigPath(),
+        ];
+    }
+
+    public function scenePromptForEdit(array $slot): string
+    {
+        $prompt = trim((string)($slot['full_prompt_template'] ?? ''));
+        return $prompt !== '' ? $prompt : $this->buildPromptTemplate($slot);
     }
 
     /**
@@ -136,6 +317,20 @@ final class CameraSlotStudio
             'negative_directives' => $this->stringList($input['negative_directives'] ?? ''),
             'full_prompt_template' => trim((string)($input['full_prompt_template'] ?? '')),
         ];
+        $existingSlot = $this->existingSlots()[$slotId] ?? [];
+        foreach (['primary_scene_set', 'board_order', 'group_id', 'group_name', 'group_order', 'variant_label', 'variant_order'] as $boardKey) {
+            if (array_key_exists($boardKey, $input)) {
+                if ($boardKey === 'primary_scene_set') {
+                    $slot[$boardKey] = !empty($input[$boardKey]);
+                } elseif (in_array($boardKey, ['board_order', 'group_order', 'variant_order'], true)) {
+                    $slot[$boardKey] = (int)$input[$boardKey];
+                } else {
+                    $slot[$boardKey] = trim((string)$input[$boardKey]);
+                }
+            } elseif (array_key_exists($boardKey, $existingSlot)) {
+                $slot[$boardKey] = $existingSlot[$boardKey];
+            }
+        }
         if ($slot['slot_name'] === '') {
             $slot['slot_name'] = ucwords(str_replace('_', ' ', $slotId));
         }
@@ -175,14 +370,63 @@ final class CameraSlotStudio
     /**
      * @return array<string,mixed>
      */
+    public function saveSceneQuick(array $input): array
+    {
+        $slotId = $this->safeSlug((string)($input['slot_id'] ?? ''));
+        if ($slotId === '') {
+            throw new RuntimeException('La Scene seleccionada no existe.');
+        }
+
+        $slot = $this->slotForEdit($slotId);
+        $slotName = trim((string)($input['slot_name'] ?? ''));
+        $slot['slot_name'] = $slotName !== '' ? $slotName : (string)($slot['slot_name'] ?? ucwords(str_replace('_', ' ', $slotId)));
+        if (array_key_exists('enabled', $input)) {
+            $slot['enabled'] = !empty($input['enabled']);
+        }
+
+        $prompt = trim((string)($input['full_prompt_template'] ?? ''));
+        $slot['full_prompt_template'] = $prompt !== '' ? $prompt : $this->buildPromptTemplate($slot);
+
+        $custom = $this->customCameraConfig();
+        $custom['slots'][$slotId] = $this->publishedSlotPayload($slot);
+        $this->writeCustomConfig($custom);
+
+        return [
+            'slot_id' => $slotId,
+            'path' => $this->customConfigPath(),
+        ];
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
     public function disableSlot(string $slotId): array
     {
         $slot = $this->slotForEdit($slotId);
         $slot['enabled'] = false;
+        $slot['primary_scene_set'] = false;
+        unset($slot['board_order']);
+        $custom = $this->customCameraConfig();
+        $custom['slots'][(string)$slot['slot_id']] = $this->publishedSlotPayload($slot);
+        $custom['scene_board']['slots'] = array_values(array_filter(
+            array_map('strval', (array)($custom['scene_board']['slots'] ?? [])),
+            static fn (string $item): bool => $item !== (string)$slot['slot_id']
+        ));
+        $this->writeCustomConfig($custom);
+        return ['slot_id' => (string)$slot['slot_id'], 'mode' => 'disabled'];
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    public function setSlotEnabled(string $slotId, bool $enabled): array
+    {
+        $slot = $this->slotForEdit($slotId);
+        $slot['enabled'] = $enabled;
         $custom = $this->customCameraConfig();
         $custom['slots'][(string)$slot['slot_id']] = $this->publishedSlotPayload($slot);
         $this->writeCustomConfig($custom);
-        return ['slot_id' => (string)$slot['slot_id'], 'mode' => 'disabled'];
+        return ['slot_id' => (string)$slot['slot_id'], 'enabled' => $enabled];
     }
 
     /**
@@ -197,6 +441,10 @@ final class CameraSlotStudio
             return $this->disableSlot($slotId);
         }
         unset($custom['slots'][$slotId]);
+        $custom['scene_board']['slots'] = array_values(array_filter(
+            array_map('strval', (array)($custom['scene_board']['slots'] ?? [])),
+            static fn (string $item): bool => $item !== $slotId
+        ));
         foreach ((array)($custom['sets'] ?? []) as $setId => $set) {
             if (!is_string($setId) || !is_array($set)) {
                 continue;
@@ -208,6 +456,58 @@ final class CameraSlotStudio
         }
         $this->writeCustomConfig($custom);
         return ['slot_id' => $slotId, 'mode' => 'deleted'];
+    }
+
+    /**
+     * @return array<string,int>
+     */
+    public function purgeInactiveSlots(): array
+    {
+        $custom = $this->customCameraConfig();
+        $baseSlots = $this->baseSlots();
+        $slots = $this->existingSlots();
+        $removedCustom = 0;
+        $hiddenBase = 0;
+
+        foreach ($slots as $slotId => $slot) {
+            if (!is_array($slot) || !empty($slot['enabled'])) {
+                continue;
+            }
+
+            $custom['scene_board']['slots'] = array_values(array_filter(
+                array_map('strval', (array)($custom['scene_board']['slots'] ?? [])),
+                static fn (string $item): bool => $item !== (string)$slotId
+            ));
+
+            if (isset($baseSlots[$slotId])) {
+                $slot = $this->publishedSlotPayload($slot);
+                $slot['enabled'] = false;
+                $slot['deleted_from_studio'] = true;
+                $custom['slots'][$slotId] = $slot;
+                $hiddenBase++;
+            } else {
+                unset($custom['slots'][$slotId]);
+                $removedCustom++;
+            }
+
+            foreach ((array)($custom['sets'] ?? []) as $setId => $set) {
+                if (!is_string($setId) || !is_array($set)) {
+                    continue;
+                }
+                $custom['sets'][$setId]['slots'] = array_values(array_filter(
+                    array_map('strval', (array)($set['slots'] ?? [])),
+                    static fn (string $item): bool => $item !== $slotId
+                ));
+            }
+        }
+
+        $this->writeCustomConfig($custom);
+
+        return [
+            'removed_custom' => $removedCustom,
+            'hidden_base' => $hiddenBase,
+            'total' => $removedCustom + $hiddenBase,
+        ];
     }
 
     public function quickTestPrompt(string $slotId, int $artworkId = 0): string
@@ -545,9 +845,12 @@ final class CameraSlotStudio
     {
         $custom['sets'] = is_array($custom['sets'] ?? null) ? $custom['sets'] : [];
         $custom['slots'] = is_array($custom['slots'] ?? null) ? $custom['slots'] : [];
+        $custom['scene_board'] = is_array($custom['scene_board'] ?? null) ? $custom['scene_board'] : [];
+        $custom['scene_boards'] = is_array($custom['scene_boards'] ?? null) ? $custom['scene_boards'] : [];
         $contents = "<?php\n"
             . "declare(strict_types=1);\n\n"
             . "return " . var_export($custom, true) . ";\n";
+        $contents = preg_replace('/[ \t]+$/m', '', $contents) ?? $contents;
 
         if (file_put_contents($this->customConfigPath(), $contents) === false) {
             throw new RuntimeException('No se pudo guardar la configuración custom de cámaras.');

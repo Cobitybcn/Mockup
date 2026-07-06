@@ -266,7 +266,7 @@ function admin_vars_hint(bool $isAdmin, string $field): void
                     <p>Configure the artist context that shapes analysis, descriptions, and mockup guidance.</p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link secondary" href="dashboard.php">Dashboard</a>
+                    <a class="button-link secondary" href="root_album.php">Root Artworks</a>
                 </div>
             </div>
 

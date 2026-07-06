@@ -75,6 +75,11 @@ try {
     if (!is_file($mockupPath)) {
         throw new RuntimeException('The mockup file was not found in results/.');
     }
+    $selectorState = json_decode((string)($mockup['selector_state_json'] ?? ''), true);
+    $selectorState = is_array($selectorState) ? $selectorState : [];
+    $sourceCombination = (array)($selectorState['combination'] ?? []);
+    $worldMotherRelativePath = trim(str_replace(['\\'], '/', (string)($sourceCombination['world_mother_image_path'] ?? '')));
+    $worldMotherPath = mockup_variation_lab_world_mother_path($worldMotherRelativePath);
 
     $stmt = $pdo->prepare('SELECT * FROM artworks WHERE user_id = :user_id AND root_file = :root_file LIMIT 1');
     $stmt->execute([
@@ -133,7 +138,8 @@ try {
         (string)($artwork['final_title'] ?? ''),
         (string)($artwork['width'] ?? ''),
         (string)($artwork['height'] ?? ''),
-        (string)($artwork['unit'] ?? 'cm')
+        (string)($artwork['unit'] ?? 'cm'),
+        $worldMotherPath !== ''
     );
 
     $audit = [
@@ -153,6 +159,8 @@ try {
         'custom_instruction' => $customInstruction,
         'input_mockup_file' => $mockupFile,
         'input_root_file' => $rootFile,
+        'input_world_mother_file' => $worldMotherRelativePath,
+        'input_world_mother_found' => $worldMotherPath !== '',
         'output_file' => $outputFile,
         'prompt_file' => $promptFile,
         'status' => 'prepared',
@@ -163,9 +171,15 @@ try {
 
     $client = new GeminiImageClient();
     $parts = [$client->textPart($prompt)];
+    $parts[] = $client->textPart("IMAGEN 1 - MOCKUP EXISTENTE: conservar su escena, encuadre base, materiales y relacion fisica entre obra y ambiente salvo cambios explicitamente solicitados.");
     $parts[] = $client->imagePart($mockupPath);
     if ($referenceMode !== 'mockup_only') {
+        $parts[] = $client->textPart("IMAGEN 2 - OBRA RAIZ: referencia autoritativa para preservar la identidad visual exacta de la obra.");
         $parts[] = $client->imagePart($rootPath);
+    }
+    if ($worldMotherPath !== '') {
+        $parts[] = $client->textPart("IMAGEN " . ($referenceMode !== 'mockup_only' ? '3' : '2') . " - SCENE MOTHER: referencia ambiental original. Usar su familia de espacio, materiales, luz, paleta y atmosfera para no inventar otro tipo de lugar.");
+        $parts[] = $client->imagePart($worldMotherPath);
     }
 
     $imageB64 = $client->generateImage($parts, ProviderSettings::geminiImageModel(), [
@@ -179,8 +193,59 @@ try {
     }
     file_put_contents($labDir . DIRECTORY_SEPARATOR . $outputFile, $bytes);
 
+    $registeredMockupFile = $baseName . '-mockup.png';
+    $registeredPromptFile = $baseName . '-prompt.txt';
+    $registeredSelectorState = [
+        'generation_source' => 'mockup_variation_lab',
+        'source_mockup_id' => $mockupId,
+        'variation_type' => $variationType,
+        'reference_mode' => $referenceMode,
+        'human_presence' => $humanPresence,
+        'artwork_scale' => $artworkScale,
+        'lighting_modifier' => $lightingModifier,
+        'camera_modifier' => $cameraModifier,
+        'camera_strength' => $cameraStrength,
+        'custom_instruction' => $customInstruction,
+        'input_mockup_file' => $mockupFile,
+        'input_root_file' => $rootFile,
+        'input_world_mother_file' => $worldMotherRelativePath,
+        'lab_output_file' => 'storage/experiments/mockup-variation-lab/' . $outputFile,
+        'lab_prompt_file' => 'storage/experiments/mockup-variation-lab/' . $promptFile,
+        'lab_audit_file' => 'storage/experiments/mockup-variation-lab/' . $auditFile,
+    ];
+    file_put_contents(RESULTS_DIR . DIRECTORY_SEPARATOR . $registeredMockupFile, $bytes);
+    file_put_contents(PROMPTS_DIR . DIRECTORY_SEPARATOR . $registeredPromptFile, $prompt);
+    ImageResizer::resize(RESULTS_DIR . DIRECTORY_SEPARATOR . $registeredMockupFile);
+
+    $registeredMockupId = (int)Database::withBusyRetry(function () use (
+        $ownerId,
+        $rootFile,
+        $registeredMockupFile,
+        $registeredPromptFile,
+        $registeredSelectorState
+    ): int {
+        $insert = Database::connection()->prepare("
+            INSERT INTO mockups (user_id, artwork_file, mockup_file, context_id, prompt_file, selector_state_json, created_at)
+            VALUES (:user_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :selector_state_json, :created_at)
+        ");
+        $insert->execute([
+            'user_id' => $ownerId,
+            'artwork_file' => $rootFile,
+            'mockup_file' => $registeredMockupFile,
+            'context_id' => 'variation_lab',
+            'prompt_file' => $registeredPromptFile,
+            'selector_state_json' => json_encode($registeredSelectorState, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+            'created_at' => date('c'),
+        ]);
+
+        return (int)Database::connection()->lastInsertId();
+    }, 12);
+
     $audit['status'] = 'generated';
     $audit['completed_at'] = date(DATE_ATOM);
+    $audit['registered_mockup_id'] = $registeredMockupId;
+    $audit['registered_mockup_file'] = $registeredMockupFile;
+    $audit['registered_prompt_file'] = $registeredPromptFile;
     file_put_contents($labDir . DIRECTORY_SEPARATOR . $auditFile, json_encode($audit, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
     echo json_encode([
@@ -191,6 +256,8 @@ try {
         'viewer_url' => 'mockup_variation_lab_viewer.php?mockup_id=' . $mockupId . '&file=' . rawurlencode($outputFile),
         'prompt_url' => 'mockup_variation_lab_file.php?file=' . rawurlencode($promptFile),
         'audit_url' => 'mockup_variation_lab_file.php?file=' . rawurlencode($auditFile),
+        'registered_mockup_id' => $registeredMockupId,
+        'registered_mockup_url' => 'media.php?file=' . rawurlencode($registeredMockupFile),
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     if (!empty($creditDeducted) && isset($user)) {
@@ -215,6 +282,17 @@ function mockup_variation_lab_reference_mode(string $value): string
     return in_array($value, ['mockup_only', 'mockup_root', 'mockup_root_strict'], true)
         ? $value
         : 'mockup_only';
+}
+
+function mockup_variation_lab_world_mother_path(string $relativePath): string
+{
+    $relativePath = trim(str_replace('\\', '/', $relativePath));
+    if ($relativePath === '' || !str_starts_with($relativePath, 'storage/world_mothers/')) {
+        return '';
+    }
+
+    $absolutePath = __DIR__ . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
+    return is_file($absolutePath) ? $absolutePath : '';
 }
 
 function mockup_variation_lab_variation_type(string $value): string
@@ -325,7 +403,8 @@ function mockup_variation_lab_prompt(
     string $title,
     string $width,
     string $height,
-    string $unit
+    string $unit,
+    bool $hasWorldMotherReference = false
 ): string {
     $usesRoot = $referenceMode !== 'mockup_only';
     $strict = $referenceMode === 'mockup_root_strict';
@@ -334,10 +413,17 @@ function mockup_variation_lab_prompt(
         ? trim($height) . ' ' . (trim($unit) !== '' ? trim($unit) : 'cm')
         : 'altura cargada en el sistema';
 
-    $referenceBlock = $usesRoot
-        ? "REFERENCIAS ADJUNTAS:\n- IMAGEN 1 es el mockup existente que debe editarse.\n- IMAGEN 2 es la obra raiz autoritativa. La obra visible en el resultado debe conservar la identidad de IMAGEN 2.\n"
-        : "REFERENCIAS ADJUNTAS:\n- IMAGEN 1 es el mockup existente que debe editarse.\n";
+    $referenceLines = ["- IMAGEN 1 es el mockup existente que debe editarse. Su tipo de espacio y su logica ambiental son el punto de partida."];
+    if ($usesRoot) {
+        $referenceLines[] = "- IMAGEN 2 es la obra raiz autoritativa. La obra visible en el resultado debe conservar la identidad de IMAGEN 2.";
+        if ($hasWorldMotherReference) {
+            $referenceLines[] = "- IMAGEN 3 es la Scene Mother original. Usarla para conservar familia de ambiente, materiales, luz, paleta, atmosfera y coherencia espacial. No inventar un tipo de lugar alternativo.";
+        }
+    } elseif ($hasWorldMotherReference) {
+        $referenceLines[] = "- IMAGEN 2 es la Scene Mother original. Usarla para conservar familia de ambiente, materiales, luz, paleta, atmosfera y coherencia espacial. No inventar un tipo de lugar alternativo.";
+    }
 
+    $referenceBlock = "REFERENCIAS ADJUNTAS:\n" . implode("\n", $referenceLines) . "\n";
     $base = "Edita la imagen proporcionada como una prueba de laboratorio. No generes una explicacion; devuelve solo una imagen final.\n\n"
         . $referenceBlock
         . "\nOBRA:\n- Titulo: {$title}\n- Altura de referencia de la obra: {$dimensions}\n";
@@ -421,8 +507,8 @@ function mockup_variation_lab_camera_text(string $camera, string $strength): str
 function mockup_variation_lab_nadir_text(string $strength): string
 {
     return match ($strength) {
-        'intermediate' => "VARIACION SOLICITADA:\nModifica la vista de la fotografia, casi a ras de suelo, a muy baja altura, apuntando claramente hacia arriba en un contrapicado pronunciado pero no vertical. El angulo debe sentirse mas intenso que un contrapicado natural, sin llegar a una vista extrema de 90 grados. Utilizar un lente gran angular de 16-20 mm para generar una perspectiva inmersiva, con lineas verticales acentuadas y distorsion controlada.",
-        'extreme' => "VARIACION SOLICITADA NADIR EXTREMO:\nFotografía realizada con la cámara situada directamente sobre el suelo, apuntando verticalmente hacia arriba (90°). Utilizar un lente ultra gran angular de 10–14 mm o un ojo de pez para capturar el espacio superior completo. La composición debe transmitir una perspectiva extrema y dramática, con fuerte sensación de altura, monumentalidad o surrealismo. Coordinar la iluminación para evitar sobreexposiciones y aprovechar el espacio arquitectónico.",
-        default => "VARIACION SOLICITADA:\nGenera una reinterpretacion controlada del mockup con vista nadir.\n\nNADIR NORMAL:\nFotografia tomada a ras de suelo con un contrapicado natural. Camara muy baja y cercana al sujeto, apuntando suavemente hacia arriba. Utilizar un lente de 24-35 mm para lograr una perspectiva creible, con una ligera acentuacion de las lineas verticales y sin distorsiones extremas.",
+        'intermediate' => "VARIACION SOLICITADA - NADIR FUERTE:\nRecompone el mockup como una fotografia tomada casi a ras de suelo. La lente debe estar muy baja, aproximadamente 5 a 10 cm sobre el piso, mirando hacia arriba hacia la obra y la arquitectura. El piso debe ocupar un primer plano visible y las lineas verticales del espacio deben converger hacia arriba. Mantener la escena premium y plausible, con un lente gran angular de 16-20 mm y distorsion arquitectonica controlada.\n\nREGLAS NEGATIVAS:\nNo usar vista a altura de ojos, no usar camara elevada, no usar una toma frontal normal, no hacer solo un leve contrapicado.",
+        'extreme' => "VARIACION SOLICITADA - NADIR EXTREMO OBLIGATORIO:\nRecompone el mockup desde una camara realmente pegada al suelo. La lente debe estar a 1-3 cm del piso, cerca de una esquina del ambiente, del zocalo, de una pata de mueble o de una zona de primer plano, apuntando con fuerza hacia arriba hacia la obra. El resultado debe leerse inmediatamente como una toma extrema desde el piso, no como una vista amplia normal del interior.\n\nREQUISITOS VISUALES:\n- El piso debe dominar el primer plano inferior y sentirse muy cercano a la lente.\n- La obra debe verse desde abajo, con presencia vertical fuerte y escala arquitectonica.\n- Ventanas, paredes, columnas, techo y lineas del espacio deben converger de forma marcada hacia arriba.\n- Usar lente ultra gran angular arquitectonico de 12-16 mm; permitir distorsion agresiva pero creible en la arquitectura.\n- Conservar la identidad de la obra y mantenerla plana, rectangular, fisicamente posible y sin deformarla como objeto.\n\nREGLAS NEGATIVAS:\nNo altura de ojos. No camara de pie. No vista elevada. No encuadre frontal centrado normal. No vista amplia de catalogo. No contrapicado suave. Si la imagen podria confundirse con una foto normal del living o galeria, la variacion es incorrecta.",
+        default => "VARIACION SOLICITADA - NADIR CONTROLADO:\nRecompone el mockup como una fotografia a ras de suelo con contrapicado natural. La camara debe estar baja y cercana al piso, apuntando suavemente hacia arriba hacia la obra. El piso debe aparecer como primer plano y las lineas verticales deben sentirse ligeramente acentuadas. Utilizar un lente de 24-35 mm para lograr una perspectiva creible, sin distorsiones extremas.\n\nREGLAS NEGATIVAS:\nNo usar vista a altura de ojos, no usar camara elevada, no hacer una toma frontal normal.",
     };
 }

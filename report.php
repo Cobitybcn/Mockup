@@ -560,7 +560,6 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
             background: var(--gal-bg);
             color: var(--gal-ink);
             line-height: 1.6;
-            zoom: 0.7;
         }
 
         .app-shell {
@@ -2646,7 +2645,7 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                 <?php endif; ?>
                 <a href="artwork_new.php">Back to step 1</a>
                 &nbsp;·&nbsp;
-                <a href="dashboard.php">Dashboard</a>
+                <a href="root_album.php">Root Artworks</a>
             </div>
         </div>
     </div>

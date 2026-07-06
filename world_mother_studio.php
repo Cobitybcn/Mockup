@@ -12,6 +12,31 @@ if (!function_exists('h')) {
     }
 }
 
+function wms_media_url(string $path): string
+{
+    $path = trim(str_replace('\\', '/', $path));
+    if ($path === '') {
+        return '';
+    }
+
+    $root = rtrim(str_replace('\\', '/', __DIR__), '/') . '/';
+    if (str_starts_with($path, $root)) {
+        $path = substr($path, strlen($root));
+    }
+
+    $prefix = 'storage/world_mothers/';
+    $prefixPos = strpos($path, $prefix);
+    if ($prefixPos !== false) {
+        $path = substr($path, $prefixPos);
+    }
+
+    if (!str_starts_with($path, $prefix)) {
+        return $path;
+    }
+
+    return 'world_mother_media.php?file=' . rawurlencode($path);
+}
+
 function wms_upload_file(array $file): string
 {
     if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file((string)($file['tmp_name'] ?? ''))) {
@@ -91,16 +116,16 @@ try {
             mkdir($dir, 0775, true);
         }
         file_put_contents($dir . '/' . $jobId . '.analysis.json', json_encode($analysis, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-        $notice = 'Referencia analizada. Confirma la categoria antes de generar.';
+        $notice = 'Scene analyzed. Confirm the category before generating.';
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'generate') {
         $jobId = trim((string)($_POST['job_id'] ?? ''));
         $analysisPath = __DIR__ . '/analysis/world-mother-studio/' . basename($jobId) . '.analysis.json';
         if (!is_file($analysisPath)) {
-            throw new RuntimeException('No se encontro el analisis previo.');
+            throw new RuntimeException('Previous scene analysis was not found.');
         }
         $analysis = json_decode((string)file_get_contents($analysisPath), true);
         if (!is_array($analysis)) {
-            throw new RuntimeException('El analisis previo no es valido.');
+            throw new RuntimeException('Previous scene analysis is not valid.');
         }
         $referencePaths = array_values(array_filter(array_map('strval', (array)($analysis['reference_paths'] ?? []))));
         $referencePath = (string)($analysis['reference_path'] ?? ($referencePaths[0] ?? ''));
@@ -112,13 +137,13 @@ try {
         $category = $newCategory !== '' ? $newCategory : $choice;
         $category = WorldMotherGenerator::safeSlug($category);
         if ($category === '') {
-            throw new RuntimeException('Escribe un nombre de carpeta o selecciona una categoria existente.');
+            throw new RuntimeException('Write a folder name or select an existing scene category.');
         }
         $generated = $generator->generateOriginalWorldMotherSet($referencePaths, $category, $analysis, [
             'notes' => trim((string)($_POST['generation_notes'] ?? '')),
             'count' => 4,
         ]);
-        $notice = 'Set de 4 mundos madre generado y guardado.';
+        $notice = 'Set of 4 scene references generated and saved.';
     } elseif ($jobId !== '') {
         $analysisPath = __DIR__ . '/analysis/world-mother-studio/' . basename($jobId) . '.analysis.json';
         if (is_file($analysisPath)) {
@@ -135,12 +160,24 @@ try {
 }
 
 $categories = $library->categories();
+$sceneCards = [];
+foreach ($categories as $category) {
+    $slug = (string)($category['category_slug'] ?? '');
+    if ($slug === '') {
+        continue;
+    }
+    $images = $library->imagesForCategory($slug);
+    $sceneCards[] = [
+        'category' => $category,
+        'images' => $images,
+    ];
+}
 ?>
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>World Mother Studio - The Artwork Curator</title>
+    <title>Scene Studio - The Artwork Curator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -154,7 +191,21 @@ $categories = $library->categories();
         .candidate code { font-size: 12px; }
         .analysis-list { font-size: 13px; line-height: 1.55; color: var(--ink); }
         .analysis-list strong { color: var(--muted); font-size: 10px; text-transform: uppercase; display: block; margin-top: 10px; }
+        .scene-library { margin-top: 24px; }
+        .scene-library-head { display:flex; justify-content:space-between; gap:16px; align-items:end; margin-bottom:14px; }
+        .scene-library-head p { margin:4px 0 0; color:var(--muted); font-size:13px; }
+        .scene-card-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; }
+        .scene-card { border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow); padding:12px; display:grid; gap:10px; }
+        .scene-card h3 { margin:0; font-family:var(--font-sans); font-size:14px; line-height:1.25; }
+        .scene-card code { color:var(--muted); font-size:11px; word-break:break-word; }
+        .scene-card-thumbs { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:5px; min-height:72px; }
+        .scene-card-thumbs img { width:100%; aspect-ratio: 4 / 3; object-fit:cover; border:1px solid var(--line); border-radius:4px; background:var(--surface-soft); }
+        .scene-card-empty { display:grid; place-items:center; min-height:72px; border:1px dashed var(--line); border-radius:4px; color:var(--muted); font-size:12px; }
+        .scene-card-meta { display:flex; flex-wrap:wrap; gap:6px; color:var(--muted); font-size:11px; }
+        .scene-pill { border:1px solid var(--line); border-radius:999px; padding:4px 8px; background:var(--surface-soft); }
+        @media (max-width: 1280px) { .scene-card-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
         @media (max-width: 980px) { .studio-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 720px) { .scene-card-grid { grid-template-columns:1fr; } .scene-library-head { display:block; } }
     </style>
 </head>
 <body>
@@ -164,15 +215,15 @@ $categories = $library->categories();
         <header class="app-header">
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
-        <div class="alert-strip">World Mother Studio: upload a reference, analyze it, confirm category, generate an original environment reference.</div>
+        <div class="alert-strip">Scene Studio: upload references, analyze scene DNA, confirm category, and generate clean environment references.</div>
         <div class="workspace">
             <div class="workspace-header">
                 <div>
-                    <h1>World Mother Studio</h1>
-                    <p>Create clean environment references for future mockup combinations.</p>
+                    <h1>Scene Studio</h1>
+                    <p>Create and manage scene references for future mockup combinations.</p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link secondary" href="dashboard.php">Dashboard</a>
+                    <a class="button-link secondary" href="root_album.php">Root Artworks</a>
                 </div>
             </div>
 
@@ -181,18 +232,18 @@ $categories = $library->categories();
 
             <div class="studio-grid">
                 <section class="panel-box">
-                    <h2>1. Upload Reference</h2>
+                    <h2>1. Upload Scene References</h2>
                     <form method="post" enctype="multipart/form-data">
                         <input type="hidden" name="action" value="analyze">
                         <div class="field">
-                            <label>Reference Images (1-4)</label>
+                            <label>Scene Images (1-4)</label>
                             <input type="file" name="reference_images[]" accept="image/jpeg,image/png,image/webp" multiple required>
                         </div>
                         <div class="field">
-                            <label>World Mother Guidelines</label>
+                            <label>Scene Guidelines</label>
                             <textarea name="notes" rows="4" placeholder="Example: blue-hour coastal room, low bed, soft paper screens, calm luxury, no visible artwork, no people..."></textarea>
                         </div>
-                        <button class="button-link" type="submit">Analyze Reference</button>
+                        <button class="button-link" type="submit">Analyze Scene</button>
                     </form>
 
                     <?php if (is_array($analysis)): ?>
@@ -202,7 +253,7 @@ $categories = $library->categories();
                             <input type="hidden" name="action" value="generate">
                             <input type="hidden" name="job_id" value="<?= h($jobId) ?>">
                             <div class="field">
-                                <label>Final World Mother Folder Name</label>
+                                <label>Final Scene Folder Name</label>
                                 <input type="text" name="new_category" value="<?= h($analysis['new_category_suggestion'] ?? '') ?>" placeholder="Example: blue_hour_atelier">
                                 <span style="display:block; color:var(--muted); font-size:12px; margin-top:6px;">This name is editable and takes priority over the suggested category list below.</span>
                             </div>
@@ -221,7 +272,7 @@ $categories = $library->categories();
                                 <label>Generation Notes</label>
                                 <textarea name="generation_notes" rows="3" placeholder="Optional refinements before generation"></textarea>
                             </div>
-                            <button class="button-link" type="submit">Generate World Mother</button>
+                            <button class="button-link" type="submit">Generate Scene References</button>
                         </form>
                     <?php endif; ?>
                 </section>
@@ -245,24 +296,65 @@ $categories = $library->categories();
                             <strong>Risks To Remove</strong><?= h(implode(', ', (array)($analysis['negative_risks'] ?? []))) ?>
                         </div>
                     <?php else: ?>
-                        <p style="color:var(--muted);">Upload a reference to see its World Mother core analysis.</p>
+                        <p style="color:var(--muted);">Upload a reference to see its scene core analysis.</p>
                     <?php endif; ?>
 
                     <?php if (is_array($generated)): ?>
                         <hr style="border:0; border-top:1px dashed var(--line); margin:24px 0;">
                         <h2>Generated</h2>
                         <?php foreach ((array)($generated['images'] ?? []) as $image): ?>
-                            <img class="ref-img" style="margin-bottom:10px;" src="<?= h($image['relative_path'] ?? '') ?>" alt="">
+                            <img class="ref-img" style="margin-bottom:10px;" src="<?= h(wms_media_url((string)($image['relative_path'] ?? ''))) ?>" alt="">
                             <p><code><?= h($image['relative_path'] ?? '') ?></code></p>
                         <?php endforeach; ?>
                         <?php if (empty($generated['images']) && !empty($generated['relative_path'])): ?>
-                            <img class="ref-img" src="<?= h($generated['relative_path'] ?? '') ?>" alt="">
+                            <img class="ref-img" src="<?= h(wms_media_url((string)($generated['relative_path'] ?? ''))) ?>" alt="">
                             <p><code><?= h($generated['relative_path'] ?? '') ?></code></p>
                         <?php endif; ?>
                         <p><code><?= h($generated['audit_file'] ?? '') ?></code></p>
                     <?php endif; ?>
                 </aside>
             </div>
+
+            <section class="scene-library">
+                <div class="scene-library-head">
+                    <div>
+                        <h2>Scene Library</h2>
+                        <p>Existing scene folders, reference images, and operational data.</p>
+                    </div>
+                    <span class="scene-pill"><?= count($sceneCards) ?> scenes</span>
+                </div>
+                <div class="scene-card-grid">
+                    <?php foreach ($sceneCards as $sceneCard): ?>
+                        <?php
+                        $category = (array)$sceneCard['category'];
+                        $images = (array)$sceneCard['images'];
+                        $slug = (string)($category['category_slug'] ?? '');
+                        $modifiedAt = (string)($category['modified_at'] ?? '');
+                        $modifiedLabel = $modifiedAt !== '' ? date('Y-m-d H:i', strtotime($modifiedAt) ?: time()) : 'No date';
+                        ?>
+                        <article class="scene-card">
+                            <div>
+                                <h3><?= h((string)($category['category_name'] ?? $slug)) ?></h3>
+                                <code><?= h($slug) ?></code>
+                            </div>
+                            <?php if ($images): ?>
+                                <div class="scene-card-thumbs">
+                                    <?php foreach (array_slice($images, 0, 3) as $image): ?>
+                                        <img src="<?= h(wms_media_url((string)($image['relative_path'] ?? ''))) ?>" alt="<?= h((string)($image['title'] ?? 'Scene reference')) ?>">
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <div class="scene-card-empty">No images yet</div>
+                            <?php endif; ?>
+                            <div class="scene-card-meta">
+                                <span class="scene-pill"><?= (int)($category['image_count'] ?? count($images)) ?> images</span>
+                                <span class="scene-pill"><?= h($modifiedLabel) ?></span>
+                                <span class="scene-pill"><?= h((string)($category['relative_path'] ?? '')) ?></span>
+                            </div>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
+            </section>
         </div>
     </main>
 </div>

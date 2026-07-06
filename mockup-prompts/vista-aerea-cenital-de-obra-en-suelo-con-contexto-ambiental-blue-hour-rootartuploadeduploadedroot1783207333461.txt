@@ -1,0 +1,25 @@
+Una vista aérea cenital, de alta calidad y resolución, de una obra de arte con un título 'root_art_uploaded_uploaded_root_1783207333_4612_v1' (`IMAGE 1`) que mide 80cm de ancho por 120cm de alto con orientación portrait y de la clase de tamaño L. La obra de arte está colocada horizontalmente y plana sobre un [material_piso, ej. suelo de madera clara con grano sutil, alfombra de lana bouclé gris, hormigón pulido con juntas minimalistas] en un [tipo_habitación, ej. loft moderno con luz natural, sala de estar minimalista y acogedora, estudio de diseño con muebles de líneas limpias]. La cámara está directamente encima, mirando hacia abajo con una perspectiva cenital. La composición muestra la obra de arte completa y parte del entorno inmediato. Alrededor de la obra, hay elementos de contexto ambiental que la integran al espacio, como [descripción_contexto, ej. una alfombra de tonos neutros que enmarca la obra, una mesa baja de diseño escandinavo con una única planta en maceta, el borde de un sofá de lino natural, sutiles líneas de baldosas que convergen o el reflejo suave de una ventana grande en el suelo pulido]. El estilo y la atmósfera de la escena están fuertemente influenciados por el ADN ambiental de `IMAGE 2`, fusionando sus características atmosféricas y detalles contextuales con la composición principal. La iluminación es [tipo_luz, ej. natural y difusa proveniente de una ventana lateral, suave y uniforme desde el techo] creando sombras sutiles que anclan la obra al espacio. La obra debe verse como una pieza física real, cuidadosamente ubicada en el espacio, no como una imagen flotante o digitalmente pegada. Los detalles finos del suelo y del entorno son visibles. La profundidad de campo es moderada, manteniendo la obra y su contexto principal nítidos y realistas. Esta es una representación de alta fidelidad, de calidad premium, centrada en la obra 'root_art_uploaded_uploaded_root_1783207333_4612_v1' en un entorno doméstico o de galería no tradicional.
+
+ENVIRONMENTAL SCALE REASONING POLICY
+
+Before placing the artwork, infer the physical scale of IMAGE 2 from the visible environment. Use whatever scale evidence is naturally available in the scene: architectural modules, openings, repeated surface units, furniture, fixtures, objects, floor/wall junctions, shadows, spatial depth, human-scale traces, and material patterns.
+
+Do not rely on a single clue. Cross-check the artwork size against at least two or three independent visual anchors whenever the scene provides them. The installed artwork must harmonize with both the supplied artwork dimensions and the inferred scale of the world mother environment.
+
+Treat IMAGE 2 as scale evidence, not only as style evidence. Its objects, room proportions, openings, material units, and spatial distances must constrain the artwork's physical footprint. Empty wall area is not permission to enlarge the artwork.
+
+The artwork may become visually prominent through camera position, crop, lens choice, perspective, lighting, and composition, but its physical size must remain consistent with the surrounding environmental anchors.
+
+WORLD MOTHER ARTWORK QUARANTINE:
+IMAGE 2 may contain paintings, murals, wall drawings, posters, framed images, easel canvases, sketches, portraits, figures, decorative marks, or unfinished studio artwork. Treat all of those as unsafe environmental artifacts, not as content sources.
+
+Never copy, preserve, enlarge, translate, restyle, echo, or remix any artwork, mural, face, figure, brushwork, color composition, easel canvas, poster, frame content, or wall drawing from IMAGE 2 into IMAGE 1 or into the installed artwork. IMAGE 1 is the only artwork content allowed.
+
+If IMAGE 2 contains a large mural, figurative wall painting, colorful wall drawing, poster cluster, or competing artwork, neutralize that area into compatible blank wall, aged plaster, shelving, stacked blank canvases, furniture, shadow, or ordinary studio clutter. Do not keep it as a second prominent artwork in the final image.
+
+The final mockup must contain one primary artwork only: the supplied IMAGE 1 canvas/object. Any secondary canvas-like object may appear only as a blank support, turned-away canvas, neutral stretcher, or indistinct studio prop with no readable image, no face, no figure, and no decorative composition.
+
+MOCKUP IMPROVEMENT CONTROLS
+
+Reference mode adjustment: prioritize improving the existing generated mockup direction. Preserve the current scene family, artwork identity, and commercial intent while correcting only the requested aspects.
+Human presence adjustment: do not include visible people, silhouettes, hands, faces, bodies, or mannequins.

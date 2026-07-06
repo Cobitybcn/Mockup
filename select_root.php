@@ -113,6 +113,8 @@ try {
         'id' => $artworkId
     ]);
 
+    persist_root_artwork_candidates($db, $artworkId, (array)$candidates, $filename);
+
     $redirect = 'mockup_combinations_review.php?id=' . $artworkId . '&world_mother_category=selected';
 
     echo json_encode([
@@ -191,6 +193,72 @@ function find_or_recover_artwork_record(PDO $db, string $jobId, array $status): 
         $artworkId = $stmtArtwork->fetchColumn();
         return $artworkId ? (int)$artworkId : null;
     }
+}
+
+function persist_root_artwork_candidates(PDO $db, int $artworkId, array $candidates, string $selectedFile): void
+{
+    $viewTypes = [
+        0 => 'frontal',
+        1 => 'three-quarter-left',
+        2 => 'three-quarter-right',
+    ];
+
+    Database::withBusyRetry(function () use ($db, $artworkId, $candidates, $selectedFile, $viewTypes): void {
+        $artworkStmt = $db->prepare('SELECT user_id, job_id FROM artworks WHERE id = :id LIMIT 1');
+        $artworkStmt->execute(['id' => $artworkId]);
+        $artwork = $artworkStmt->fetch() ?: [];
+
+        $columnRows = Database::isMysql()
+            ? $db->query('SHOW COLUMNS FROM root_artwork_candidates')->fetchAll()
+            : $db->query('PRAGMA table_info(root_artwork_candidates)')->fetchAll();
+        $columnsAvailable = array_map(
+            static fn(array $row): string => (string)($row['Field'] ?? $row['name'] ?? ''),
+            $columnRows
+        );
+
+        $db->prepare('DELETE FROM root_artwork_candidates WHERE artwork_id = :artwork_id')
+            ->execute(['artwork_id' => $artworkId]);
+
+        $insertColumns = ['artwork_id', 'file_name', 'view_type', 'is_selected', 'created_at'];
+        if (in_array('user_id', $columnsAvailable, true)) {
+            array_unshift($insertColumns, 'user_id');
+        }
+        if (in_array('job_id', $columnsAvailable, true)) {
+            $insertColumns[] = 'job_id';
+        }
+        if (in_array('updated_at', $columnsAvailable, true)) {
+            $insertColumns[] = 'updated_at';
+        }
+        $stmt = $db->prepare(sprintf(
+            'INSERT INTO root_artwork_candidates (%s) VALUES (%s)',
+            implode(', ', $insertColumns),
+            implode(', ', array_map(static fn(string $column): string => ':' . $column, $insertColumns))
+        ));
+        $now = date('c');
+        foreach (array_values($candidates) as $index => $candidate) {
+            $file = basename((string)$candidate);
+            if ($file === '') {
+                continue;
+            }
+            $payload = [
+                'artwork_id' => $artworkId,
+                'file_name' => $file,
+                'view_type' => $viewTypes[$index] ?? 'frontal',
+                'is_selected' => $file === $selectedFile ? 1 : 0,
+                'created_at' => $now,
+            ];
+            if (in_array('user_id', $insertColumns, true)) {
+                $payload['user_id'] = (int)($artwork['user_id'] ?? 0);
+            }
+            if (in_array('job_id', $insertColumns, true)) {
+                $payload['job_id'] = (string)($artwork['job_id'] ?? '');
+            }
+            if (in_array('updated_at', $insertColumns, true)) {
+                $payload['updated_at'] = $now;
+            }
+            $stmt->execute($payload);
+        }
+    }, 12);
 }
 
 function start_mockup_queue_workers(int $artworkId, int $limit, int $workerCount): void

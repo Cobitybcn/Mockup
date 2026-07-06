@@ -18,8 +18,8 @@ if ($job === '') {
         header('Location: root_select.php?job=' . urlencode((string)$latestPending['job_id']));
         exit;
     } else {
-        // No pending selection, redirect to dashboard.php's pending section
-        header('Location: dashboard.php#pendientes');
+        // No pending selection, redirect to root_album.php's pending section
+        header('Location: root_album.php#pendientes');
         exit;
     }
 }
@@ -136,7 +136,6 @@ function h($v): string {
             background: var(--gal-bg);
             color: var(--gal-ink);
             line-height: 1.6;
-            zoom: 1;
         }
 
         .workspace {
@@ -1006,7 +1005,7 @@ function h($v): string {
                 </div>
                 <div class="topbar-actions" style="display: flex; gap: 12px; margin-bottom: 4px;">
                     <a class="button-link secondary" href="waiting.php?action=cancel&job=<?= urlencode($job) ?>">Cancel Upload</a>
-                    <a class="button-link secondary" href="dashboard.php">Dashboard</a>
+                    <a class="button-link secondary" href="root_album.php">Root Artworks</a>
                 </div>
             </div>
 

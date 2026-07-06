@@ -21,12 +21,171 @@ require_once __DIR__ . '/app/bootstrap.php';
 })();
 
 $user = Auth::requireUser();
+$isAdmin = Auth::isAdmin($user);
 $pdo = Database::connection();
+AdminSceneEditor::handlePost($user);
 
+if (!function_exists('h')) {
+    function h($value): string
+    {
+        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+    }
+}
+
+function scenes_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile): array
+{
+    $rootFile = basename($rootFile);
+    $jobId = 'adopted_root_' . $userId . '_' . substr(sha1($rootFile), 0, 16);
+
+    $stmt = $pdo->prepare('SELECT id, final_title, subtitle, root_file, updated_at FROM artworks WHERE user_id = :user_id AND job_id = :job_id LIMIT 1');
+    $stmt->execute([
+        'user_id' => $userId,
+        'job_id' => $jobId,
+    ]);
+    $existing = $stmt->fetch();
+    if (is_array($existing)) {
+        return $existing;
+    }
+
+    $now = date('c');
+    Database::withBusyRetry(function () use ($pdo, $userId, $jobId, $rootFile, $now): void {
+        $stmt = $pdo->prepare('
+            INSERT INTO artworks (user_id, job_id, main_file, root_file, status, width, height, depth, unit, created_at, updated_at)
+            VALUES (:user_id, :job_id, :main_file, :root_file, :status, :width, :height, :depth, :unit, :created_at, :updated_at)
+        ');
+        $stmt->execute([
+            'user_id' => $userId,
+            'job_id' => $jobId,
+            'main_file' => $rootFile,
+            'root_file' => $rootFile,
+            'status' => 'done',
+            'width' => '',
+            'height' => '',
+            'depth' => '',
+            'unit' => 'cm',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+    }, 12);
+
+    $stmt->execute([
+        'user_id' => $userId,
+        'job_id' => $jobId,
+    ]);
+    $created = $stmt->fetch();
+
+    return is_array($created) ? $created : [
+        'id' => 0,
+        'final_title' => '',
+        'subtitle' => '',
+        'root_file' => $rootFile,
+        'updated_at' => $now,
+    ];
+}
+
+function scenes_root_group_key(string $rootFile): string
+{
+    $rootFile = basename($rootFile);
+    if (preg_match('/^(.*)_v\d+(\.[A-Za-z0-9]+)$/', $rootFile, $matches)) {
+        return $matches[1] . $matches[2];
+    }
+
+    return $rootFile;
+}
+
+function scenes_dedupe_root_artwork_options(array $options): array
+{
+    $deduped = [];
+    $seen = [];
+    foreach ($options as $option) {
+        $rootFile = basename((string)($option['root_file'] ?? ''));
+        if ($rootFile === '') {
+            continue;
+        }
+        $groupKey = scenes_root_group_key($rootFile);
+        if (isset($seen[$groupKey])) {
+            continue;
+        }
+        $seen[$groupKey] = true;
+        $deduped[] = $option;
+    }
+
+    return $deduped;
+}
+
+function scenes_root_artwork_options(PDO $pdo, array $user): array
+{
+    $userId = (int)$user['id'];
+    $isAdmin = Auth::isAdmin($user);
+    $options = [];
+    $knownRootFiles = [];
+
+    $sql = "
+        SELECT id, root_file, final_title, subtitle, updated_at, created_at
+        FROM artworks
+        WHERE status = 'done'
+        AND root_file IS NOT NULL
+        AND root_file != ''
+    ";
+    $params = [];
+    if (!$isAdmin) {
+        $sql .= " AND user_id = :user_id";
+        $params['user_id'] = $userId;
+    }
+    $sql .= " ORDER BY updated_at DESC, created_at DESC";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    foreach ($stmt->fetchAll() as $row) {
+        $file = basename((string)($row['root_file'] ?? ''));
+        if ($file === '' || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $file)) {
+            continue;
+        }
+        $row['root_file'] = $file;
+        $options[] = $row;
+        $knownRootFiles[$file] = true;
+    }
+
+    if (!$isAdmin) {
+        $mockupStmt = $pdo->prepare("
+            SELECT artwork_file, MAX(created_at) AS updated_at
+            FROM mockups
+            WHERE user_id = :user_id
+            AND artwork_file IS NOT NULL
+            AND artwork_file != ''
+            GROUP BY artwork_file
+            ORDER BY MAX(created_at) DESC
+        ");
+        $mockupStmt->execute(['user_id' => $userId]);
+
+        foreach ($mockupStmt->fetchAll() as $row) {
+            $file = basename((string)($row['artwork_file'] ?? ''));
+            if ($file === '' || isset($knownRootFiles[$file]) || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $file)) {
+                continue;
+            }
+            $adopted = scenes_adopt_root_artwork($pdo, $userId, $file);
+            if ((int)($adopted['id'] ?? 0) > 0) {
+                $adopted['root_file'] = $file;
+                $adopted['updated_at'] = (string)($row['updated_at'] ?? ($adopted['updated_at'] ?? ''));
+                $options[] = $adopted;
+                $knownRootFiles[$file] = true;
+            }
+        }
+    }
+
+    return scenes_dedupe_root_artwork_options($options);
+}
+
+$artworkOptions = scenes_root_artwork_options($pdo, $user);
 $id = max(0, (int)($_GET['id'] ?? 0));
 if ($id <= 0) {
+    $firstOption = $artworkOptions[0] ?? null;
+    if (is_array($firstOption) && (int)($firstOption['id'] ?? 0) > 0) {
+        header('Location: mockup_combinations_review.php?id=' . (int)$firstOption['id']);
+        exit;
+    }
     http_response_code(404);
-    die('Artwork ID is missing.');
+    die('Artwork ID is missing and no root artwork is available.');
 }
 
 $stmt = $pdo->prepare('SELECT * FROM artworks WHERE id = :id LIMIT 1');
@@ -41,11 +200,31 @@ if ((int)$artwork['user_id'] !== (int)$user['id'] && !Auth::isAdmin($user)) {
     die('Access denied.');
 }
 
-if (!function_exists('h')) {
-    function h($value): string
-    {
-        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'choose_scene_root_view') {
+    $candidateFile = basename((string)($_POST['root_file'] ?? ''));
+    $redirectCategory = trim(str_replace(['\\', '/'], '', (string)($_POST['world_mother_category'] ?? '')));
+    $redirectBoard = max(1, min(3, (int)($_POST['board'] ?? $_GET['board'] ?? 1)));
+    if ($candidateFile !== '' && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $candidateFile)) {
+        Database::withBusyRetry(function () use ($pdo, $id, $candidateFile): void {
+            $pdo->prepare('UPDATE root_artwork_candidates SET is_selected = 0 WHERE artwork_id = :artwork_id')
+                ->execute(['artwork_id' => $id]);
+            $pdo->prepare('UPDATE root_artwork_candidates SET is_selected = 1 WHERE artwork_id = :artwork_id AND file_name = :file_name')
+                ->execute([
+                    'artwork_id' => $id,
+                    'file_name' => $candidateFile,
+                ]);
+            $pdo->prepare('UPDATE artworks SET root_file = :root_file, status = :status, updated_at = :updated_at WHERE id = :id')
+                ->execute([
+                    'root_file' => $candidateFile,
+                    'status' => 'done',
+                    'updated_at' => date('c'),
+                    'id' => $id,
+                ]);
+        }, 12);
     }
+
+    header('Location: mockup_combinations_review.php?id=' . (int)$id . '&board=' . $redirectBoard . ($redirectCategory !== '' ? '&world_mother_category=' . rawurlencode($redirectCategory) : ''));
+    exit;
 }
 
 function get_friendly_camera_name(string $slug): string
@@ -61,11 +240,11 @@ function get_friendly_camera_name(string $slug): string
         'contrapicado-78-loft' => 'Loft - Low Angle 7/8',
         'frontal-lejos-loft' => 'Loft - Frontal Wide View'
     ];
-    
+
     if (isset($mapping[$slug])) {
         return $mapping[$slug];
     }
-    
+
     // Clean up slug
     $clean = str_replace(['-', '_'], ' ', $slug);
     $clean = str_replace(['de obra', 'de', 'para'], '', $clean);
@@ -81,6 +260,42 @@ function world_mother_image_url(string $file): string
     }
 
     return 'world_mother_media.php?file=' . rawurlencode($file);
+}
+
+function scene_root_view_label(string $viewType): string
+{
+    return [
+        'frontal' => 'Frontal',
+        'three-quarter-left' => '3/4 Left',
+        'three-quarter-right' => '3/4 Right',
+    ][$viewType] ?? ucwords(str_replace(['-', '_'], ' ', $viewType));
+}
+
+function scene_root_sibling_candidates(string $rootFile): array
+{
+    $rootFile = basename($rootFile);
+    if (!preg_match('/^(.*)_v(\d+)(\.[A-Za-z0-9]+)$/', $rootFile, $matches)) {
+        return [];
+    }
+
+    $viewTypes = [
+        1 => 'frontal',
+        2 => 'three-quarter-left',
+        3 => 'three-quarter-right',
+    ];
+    $candidates = [];
+    for ($version = 1; $version <= 3; $version++) {
+        $file = $matches[1] . '_v' . $version . $matches[3];
+        if (!is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $file)) {
+            continue;
+        }
+        $candidates[] = [
+            'file_name' => $file,
+            'view_type' => $viewTypes[$version] ?? 'frontal',
+        ];
+    }
+
+    return $candidates;
 }
 
 function world_mother_favorites_path(int $userId): string
@@ -159,16 +374,28 @@ foreach (($_GET['world_variant'] ?? []) as $index => $offset) {
     $selectedWorldMotherVariants[(int)$index] = max(0, (int)$offset);
 }
 $selectedWorldMotherCategory = trim(str_replace(['\\', '/'], '', (string)($_GET['world_mother_category'] ?? '')));
+$sceneBoardIndex = max(1, min(3, (int)($_GET['board'] ?? 1)));
 
 $engine = new MockupCombinationEngine();
 $review = $engine->buildForArtwork($id, $selectedSlots, [
     'selected_world_mother_category' => $selectedWorldMotherCategory,
     'world_mother_variant_offsets' => $selectedWorldMotherVariants,
+    'scene_board_index' => $sceneBoardIndex,
 ]);
 $combinations = $review['combinations'] ?? [];
 $cameraSlots = $review['available_camera_slots'] ?? [];
+$sceneStudio = $isAdmin ? new CameraSlotStudio() : null;
+$cameraSlotsById = [];
+foreach ($cameraSlots as $cameraSlot) {
+    $cameraSlotId = (string)($cameraSlot['slot_id'] ?? '');
+    if ($cameraSlotId !== '') {
+        $cameraSlotsById[$cameraSlotId] = $cameraSlot;
+    }
+}
 $suggestedWorldMotherCategories = (array)($review['suggested_world_mother_categories'] ?? []);
 $selectedWorldMotherCategory = (string)($review['selected_world_mother_category'] ?? $selectedWorldMotherCategory);
+$sceneBoardIndex = max(1, min(3, (int)($review['scene_board_index'] ?? $sceneBoardIndex)));
+$scenePageTitle = $sceneBoardIndex > 1 ? 'Scenes Batch ' . $sceneBoardIndex : 'Scenes';
 $selectedWorldMotherImages = stable_world_mother_pool_for_artwork(
     (new WorldMotherLibrary())->imagesForCategory($selectedWorldMotherCategory),
     $selectedWorldMotherCategory,
@@ -186,14 +413,70 @@ $rootPath = (string)($review['root_artwork_path'] ?? '');
 if ($rootPath !== '') {
     $rootUrl = 'media.php?file=' . rawurlencode(basename($rootPath));
 }
+
+$currentOptionKnown = false;
+$currentRootGroupKey = scenes_root_group_key((string)($artwork['root_file'] ?? ''));
+foreach ($artworkOptions as $option) {
+    if ((int)($option['id'] ?? 0) === $id || scenes_root_group_key((string)($option['root_file'] ?? '')) === $currentRootGroupKey) {
+        $currentOptionKnown = true;
+        break;
+    }
+}
+if (!$currentOptionKnown) {
+    array_unshift($artworkOptions, [
+        'id' => $id,
+        'root_file' => basename((string)($artwork['root_file'] ?? '')),
+        'final_title' => (string)($artwork['final_title'] ?? ''),
+        'subtitle' => (string)($artwork['subtitle'] ?? ''),
+        'updated_at' => (string)($artwork['updated_at'] ?? ''),
+    ]);
+}
+
+$rootViewOptions = [];
+$rootViewKnownFiles = [];
+$candidateStmt = $pdo->prepare('
+    SELECT file_name, view_type
+    FROM root_artwork_candidates
+    WHERE artwork_id = :artwork_id
+    ORDER BY id ASC
+');
+$candidateStmt->execute(['artwork_id' => $id]);
+foreach ($candidateStmt->fetchAll() as $candidate) {
+    $file = basename((string)($candidate['file_name'] ?? ''));
+    if ($file === '' || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $file)) {
+        continue;
+    }
+    $rootViewOptions[] = [
+        'file_name' => $file,
+        'view_type' => (string)($candidate['view_type'] ?? 'frontal'),
+    ];
+    $rootViewKnownFiles[$file] = true;
+}
+$currentRootFile = basename((string)($artwork['root_file'] ?? ''));
+if ($currentRootFile !== '' && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $currentRootFile) && !isset($rootViewKnownFiles[$currentRootFile])) {
+    $rootViewOptions[] = [
+        'file_name' => $currentRootFile,
+        'view_type' => 'frontal',
+    ];
+    $rootViewKnownFiles[$currentRootFile] = true;
+}
+foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
+    $file = (string)$siblingCandidate['file_name'];
+    if (isset($rootViewKnownFiles[$file])) {
+        continue;
+    }
+    $rootViewOptions[] = $siblingCandidate;
+    $rootViewKnownFiles[$file] = true;
+}
 ?>
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Scenes - The Artwork Curator</title>
+    <title><?= h($scenePageTitle) ?> - The Artwork Curator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
+    <?= AdminSceneEditor::styles() ?>
     <style>
         .review-grid {
             display: grid;
@@ -219,7 +502,7 @@ if ($rootPath !== '') {
         .workspace-header .topbar-actions {
             display: flex;
             flex-wrap: wrap;
-            align-items: center;
+            align-items: flex-end;
             justify-content: flex-end;
             gap: 6px;
             max-width: none;
@@ -266,6 +549,30 @@ if ($rootPath !== '') {
         .compact-specs code {
             font-size: 9px;
             color: var(--muted);
+        }
+        .review-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            align-items: start;
+        }
+        .review-group-title {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0 -2px;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+        .review-group-title::after {
+            content: "";
+            height: 1px;
+            flex: 1 1 auto;
+            background: var(--line);
         }
         .combination-card {
             background: #fbfaf7;
@@ -361,6 +668,99 @@ if ($rootPath !== '') {
             border-color: rgba(140, 109, 31, .25);
             color: #8c6d1f;
         }
+        .scene-admin-inline {
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            background: rgba(255,255,255,.52);
+            padding: 6px 8px;
+        }
+        .scene-admin-inline summary {
+            cursor: pointer;
+            list-style: none;
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+        }
+        .scene-admin-inline summary::-webkit-details-marker {
+            display: none;
+        }
+        .scene-admin-inline summary::after {
+            content: "+";
+            float: right;
+            color: var(--accent);
+        }
+        .scene-admin-inline[open] summary {
+            margin-bottom: 8px;
+        }
+        .scene-admin-inline[open] summary::after {
+            content: "-";
+        }
+        .scene-admin-form {
+            display: grid;
+            gap: 8px;
+        }
+        .scene-admin-fields {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 8px;
+            align-items: end;
+        }
+        .scene-admin-form label {
+            display: grid;
+            gap: 4px;
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+        }
+        .scene-admin-form input[type="text"],
+        .scene-admin-form textarea {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            background: var(--surface);
+            color: var(--ink);
+            padding: 7px 8px;
+            font-size: 11px;
+        }
+        .scene-admin-form textarea {
+            min-height: 180px;
+            font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+            line-height: 1.42;
+            resize: vertical;
+        }
+        .scene-admin-toggle {
+            min-width: 96px;
+            height: 32px;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            background: var(--surface);
+            color: var(--ink) !important;
+            font-size: 10px !important;
+        }
+        .scene-admin-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .scene-admin-actions .button-link {
+            width: auto !important;
+            min-width: 0 !important;
+            height: 30px !important;
+            min-height: 0 !important;
+            padding: 0 10px !important;
+            margin: 0 !important;
+            font-size: 9px !important;
+            box-shadow: none !important;
+        }
         .slot-id {
             display: block;
             margin-top: 4px;
@@ -371,8 +771,9 @@ if ($rootPath !== '') {
         }
         .thumb-row {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: minmax(118px, .48fr) minmax(0, 1fr);
             gap: 8px;
+            align-items: start;
         }
         .card-icon-actions {
             display: none;
@@ -437,6 +838,68 @@ if ($rootPath !== '') {
             pointer-events: auto;
             transform: translate(0, 0);
         }
+        .root-thumb-picker {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            z-index: 85;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 4px;
+            padding: 5px;
+            width: min(360px, 86vw);
+            background: rgba(251, 250, 247, .94);
+            border: 1px solid rgba(228, 222, 211, .8);
+            border-radius: 7px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-8px, 8px);
+            transition: opacity .16s ease, transform .16s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 26px rgba(20, 20, 18, .12);
+        }
+        .thumb-box:hover .root-thumb-picker,
+        .root-thumb-picker:focus-within {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(0, 0);
+        }
+        .root-thumb-option {
+            position: relative;
+            height: 112px;
+            border: 2px solid transparent;
+            border-radius: 4px;
+            overflow: hidden;
+            background: var(--surface);
+            opacity: .88;
+            padding: 0;
+            cursor: pointer;
+        }
+        .root-thumb-option.active {
+            border-color: var(--accent);
+            opacity: 1;
+            cursor: default;
+        }
+        .root-thumb-option img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: var(--surface-soft);
+        }
+        .root-thumb-option span {
+            position: absolute;
+            left: 5px;
+            bottom: 5px;
+            border-radius: 3px;
+            background: rgba(18, 17, 15, .64);
+            color: #fff;
+            padding: 3px 5px;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+        }
         .scene-thumb-option {
             width: 100%;
             height: 112px;
@@ -478,10 +941,31 @@ if ($rootPath !== '') {
         .thumb-box img {
             display: block;
             width: 100%;
-            height: 175px;
+            height: 100%;
             object-fit: cover;
             background: var(--surface-soft);
             border-radius: var(--radius);
+        }
+        .thumb-box.root-reference-thumb {
+            aspect-ratio: 3 / 4;
+        }
+        .thumb-box.scene-reference-thumb {
+            aspect-ratio: 4 / 3;
+        }
+        .thumb-box.root-reference-thumb img {
+            object-fit: contain;
+            object-position: center;
+            background: #f4f1ea;
+        }
+        .thumb-box.scene-reference-thumb img {
+            object-fit: cover;
+        }
+        .thumb-box .root-thumb-picker .root-thumb-option img {
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+            background: var(--surface-soft);
+            border-radius: 0;
         }
         .thumb-label {
             display: block;
@@ -592,12 +1076,157 @@ if ($rootPath !== '') {
         .prepare-result:empty {
             display: none;
         }
+        .generation-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(250, 248, 244, .68);
+            backdrop-filter: blur(3px);
+            transition: all 0.3s ease;
+        }
+        .generation-overlay.active {
+            display: flex;
+        }
+        .generation-overlay.minimized {
+            inset: auto;
+            right: 24px;
+            bottom: 24px;
+            background: transparent;
+            backdrop-filter: none;
+            pointer-events: auto;
+            z-index: 1200;
+        }
+        .generation-overlay.minimized .generation-overlay-card {
+            width: auto;
+            max-width: 480px;
+            box-shadow: 0 10px 30px rgba(20, 20, 18, 0.16);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            text-align: left;
+        }
+        .generation-overlay.minimized .generation-spinner {
+            width: 20px;
+            height: 20px;
+            border-width: 2.5px;
+            margin: 0;
+            flex: 0 0 auto;
+        }
+        .generation-overlay.minimized .generation-overlay-card strong {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 0;
+            font-family: var(--font-sans);
+            white-space: nowrap;
+        }
+        .generation-overlay.minimized .generation-overlay-card p {
+            font-size: 11px;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+        .overlay-actions {
+            margin-top: 14px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            font-size: 11px;
+        }
+        .overlay-actions button {
+            padding: 4px 10px;
+            height: auto !important;
+            min-height: 0 !important;
+            font-size: 10px !important;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+        }
+        .generation-overlay-card {
+            width: min(360px, calc(100vw - 32px));
+            padding: 30px 28px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: var(--surface);
+            box-shadow: 0 18px 48px rgba(20, 20, 18, .16);
+            text-align: center;
+        }
+        .generation-spinner {
+            width: 58px;
+            height: 58px;
+            margin: 0 auto 18px;
+            border: 4px solid rgba(154, 123, 86, .18);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: generation-spin .8s linear infinite;
+        }
+        .generation-overlay-card strong {
+            display: block;
+            margin-bottom: 8px;
+            font-family: var(--font-serif);
+            font-size: 24px;
+            font-weight: 400;
+            color: var(--ink);
+        }
+        .generation-overlay-card p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.45;
+        }
+        @keyframes generation-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
         .scene-browser-panel {
             background: var(--surface);
             border: 1px solid var(--line);
             border-radius: 4px;
             padding: 12px;
             margin-bottom: 16px;
+        }
+        .scene-mother-select {
+            display: grid;
+            gap: 5px;
+            min-width: 320px;
+            margin: 0;
+        }
+        .scene-mother-select span {
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+        .scene-mother-select select {
+            width: 100%;
+            height: 38px;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            padding: 8px 32px 8px 10px;
+            background-color: var(--surface-soft);
+            color: var(--ink);
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239A7B56' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 14px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .scene-mother-select select:hover,
+        .scene-mother-select select:focus {
+            border-color: var(--accent);
         }
         .scene-browser-head {
             display: flex;
@@ -714,8 +1343,7 @@ if ($rootPath !== '') {
             gap: 8px;
             align-items: center;
         }
-        .scene-browser-controls input,
-        .scene-browser-controls select {
+        .scene-browser-controls input {
             width: 100%;
             border: 1px solid var(--line);
             border-radius: 4px;
@@ -724,6 +1352,36 @@ if ($rootPath !== '') {
             color: var(--ink);
             font-size: 13px;
             height: 38px;
+        }
+        .scene-browser-controls select {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            padding: 8px 32px 8px 10px;
+            background-color: var(--surface-soft);
+            color: var(--ink);
+            font-size: 13px;
+            height: 38px;
+            cursor: pointer;
+            outline: none;
+
+            /* Custom clean dropdown arrow */
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239A7B56' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 14px;
+
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .scene-browser-controls select:hover {
+            border-color: var(--accent);
+        }
+        .scene-browser-controls select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(154, 123, 86, 0.15);
         }
         .scene-browser-controls .scene-filter-tabs {
             display: inline-flex;
@@ -822,8 +1480,8 @@ if ($rootPath !== '') {
             .review-grid {
                 grid-template-columns: repeat(3, minmax(0, 1fr));
             }
-            .thumb-box img {
-                height: 180px;
+            .thumb-row {
+                grid-template-columns: minmax(112px, .46fr) minmax(0, 1fr);
             }
         }
         .breadcrumb-steps {
@@ -837,8 +1495,13 @@ if ($rootPath !== '') {
             letter-spacing: 0.1em;
             font-weight: 600;
         }
-        .breadcrumb-steps span {
+        .breadcrumb-steps span,
+        .breadcrumb-steps a {
             color: var(--muted);
+            text-decoration: none;
+        }
+        .breadcrumb-steps a:hover {
+            color: var(--accent);
         }
         .breadcrumb-steps span.active {
             color: var(--accent);
@@ -861,21 +1524,28 @@ if ($rootPath !== '') {
         </header>
 
         <div class="workspace">
-            <div class="breadcrumb-steps">
-                <span>Step 1: Upload</span>
-                <span class="step-arrow">&rarr;</span>
-                <span>Step 2: Select View</span>
-                <span class="step-arrow">&rarr;</span>
-                <span class="active">Step 3: Scenes</span>
-            </div>
             <div class="workspace-header">
                 <div>
-                    <h1>Scenes</h1>
+                    <h1><?= h($scenePageTitle) ?></h1>
                     <p>Choose the scene reference for this artwork, then generate the selected views.</p>
                 </div>
                 <div class="topbar-actions">
+                    <label class="scene-mother-select">
+                        <span>Scene mother</span>
+                        <select id="scene-select" aria-label="Select scene mother">
+                            <?php foreach ($suggestedWorldMotherCategories as $scene): ?>
+                                <?php
+                                $slug = (string)($scene['category_slug'] ?? '');
+                                $imageCount = (int)($scene['image_count'] ?? 0);
+                                ?>
+                                <option value="<?= h($slug) ?>" <?= $slug === $selectedWorldMotherCategory ? 'selected' : '' ?>>
+                                    <?= h((string)($scene['category_name'] ?? $slug)) ?> · <?= $imageCount ?> img
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </label>
                     <button class="button-link" type="button" id="generate-all-btn" onclick="generateAllCombinations(this)">Generate All Scenes</button>
-                    <a class="button-link secondary" href="mockup_combination_results.php?id=<?= (int)$id ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Generated Results</a>
+                    <a class="button-link secondary" href="mockup_combination_results.php?id=<?= (int)$id ?>&board=<?= (int)$sceneBoardIndex ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Generated Results</a>
                 </div>
             </div>
 
@@ -890,81 +1560,8 @@ if ($rootPath !== '') {
                 </div>
             <?php endif; ?>
 
-            <div class="compact-specs">
-                <div class="specs-grid">
-                    <span><strong>ID</strong><code><?= (int)$id ?></code></span>
-                    <span><strong>Cameras</strong><code><?= count($combinations) ?></code></span>
-                    <span><strong>Worlds</strong><code><?= (int)($review['world_mother_categories_available'] ?? $review['world_mother_categories_with_images'] ?? 0) ?></code></span>
-                    <span><strong>Mode</strong><code><?= h($review['generation_mode'] ?? '') ?></code></span>
-                </div>
-            </div>
-
-            <div class="scene-browser-panel">
-                <div class="scene-browser-head">
-                    <div>
-                        <strong>Scenes</strong>
-                    </div>
-                </div>
-                <div class="scene-browser-controls">
-                    <input type="search" id="scene-search" placeholder="Search scene environment..." autocomplete="off">
-                    <select id="scene-select" aria-label="Select scene environment">
-                        <?php foreach ($suggestedWorldMotherCategories as $scene): ?>
-                            <?php
-                            $slug = (string)($scene['category_slug'] ?? '');
-                            $imageCount = (int)($scene['image_count'] ?? 0);
-                            ?>
-                            <option value="<?= h($slug) ?>" <?= $slug === $selectedWorldMotherCategory ? 'selected' : '' ?>>
-                                <?= h((string)($scene['category_name'] ?? $slug)) ?> · <?= $imageCount ?> img
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <div class="scene-filter-tabs" role="group" aria-label="Scene mother filters">
-                        <button type="button" class="active" data-scene-filter="all">All</button>
-                        <button type="button" data-scene-filter="with-images">With Image</button>
-                        <button type="button" data-scene-filter="favorites">Favorites</button>
-                    </div>
-                </div>
-                <details class="scene-list-toggle" id="scene-list-toggle">
-                    <summary><span class="scene-browser-count" id="scene-browser-count"></span></summary>
-                    <div class="scene-choice-grid">
-                        <?php foreach ($suggestedWorldMotherCategories as $scene): ?>
-                            <?php
-                            $slug = (string)($scene['category_slug'] ?? '');
-                            $url = 'mockup_combinations_review.php?id=' . (int)$id . '&world_mother_category=' . rawurlencode($slug);
-                            $matchedTerms = implode(' ', array_map('strval', (array)($scene['matched_terms'] ?? [])));
-                            $searchText = strtolower(trim($slug . ' ' . str_replace('_', ' ', $slug) . ' ' . (string)($scene['category_name'] ?? '') . ' ' . $matchedTerms . ' ' . world_mother_search_aliases($slug)));
-                            $isFavorite = isset($favoriteWorldMotherLookup[$slug]) || isset($favoriteWorldMotherNormalizedLookup[WorldMotherGenerator::safeSlug($slug)]);
-                            $imageCount = (int)($scene['image_count'] ?? 0);
-                            ?>
-                            <a
-                                class="scene-choice <?= $slug === $selectedWorldMotherCategory ? 'active' : '' ?>"
-                                href="<?= h($url) ?>"
-                                data-scene-choice
-                                data-slug="<?= h($slug) ?>"
-                                data-name="<?= h($scene['category_name'] ?? $slug) ?>"
-                                data-image-count="<?= $imageCount ?>"
-                                data-favorite="<?= $isFavorite ? '1' : '0' ?>"
-                                data-search="<?= h($searchText) ?>"
-                            >
-                                <div>
-                                    <strong><?= h($scene['category_name'] ?? $slug) ?></strong>
-                                    <span><code><?= h($slug) ?></code></span>
-                                </div>
-                                <span class="scene-choice-meta"><?= $imageCount ?> img</span>
-                                <button
-                                    class="favorite-scene-btn <?= $isFavorite ? 'active' : '' ?>"
-                                    type="button"
-                                    title="<?= $isFavorite ? 'Remove favorite' : 'Add favorite' ?>"
-                                    aria-label="<?= $isFavorite ? 'Remove favorite' : 'Add favorite' ?>"
-                                    data-favorite-scene="<?= h($slug) ?>"
-                                >★</button>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
-                </details>
-            </div>
-
             <div class="review-grid">
+                <?php $lastCameraGroupKey = null; ?>
                 <?php foreach ($combinations as $combo): ?>
                     <?php
                     $idx = (int)$combo['combination_index'];
@@ -985,6 +1582,7 @@ if ($rootPath !== '') {
                     $refreshVariantOffsets[$idx] = $currentVariantOffset + 1;
                     $refreshParams = [
                         'id' => (int)$id,
+                        'board' => (int)$sceneBoardIndex,
                         'world_mother_category' => $selectedWorldMotherCategory,
                         'slot' => [],
                         'world_variant' => [],
@@ -1004,24 +1602,70 @@ if ($rootPath !== '') {
                     $variantBaseParams = $refreshParams;
                     unset($variantBaseParams['world_variant'][$idx]);
                     $selectedWorldImagePath = (string)$combo['world_mother_image_path'];
+                    $displayCameraName = trim((string)($combo['camera_slot_name'] ?? ''));
+                    if ($displayCameraName === '') {
+                        $displayCameraName = get_friendly_camera_name((string)($combo['selected_camera_slot_id'] ?? ''));
+                    }
+                    $cameraGroupKey = trim((string)($combo['camera_slot_group_id'] ?? ''));
+                    if ($cameraGroupKey === '') {
+                        $cameraGroupKey = 'group_' . (string)floor(($idx - 1) / 3);
+                    }
+                    $cameraGroupName = trim((string)($combo['camera_slot_group_name'] ?? ''));
+                    if ($cameraGroupName === '') {
+                        $cameraGroupName = 'Camera group ' . ((int)floor(($idx - 1) / 3) + 1);
+                    }
+                    $cameraVariantLabel = trim((string)($combo['camera_slot_variant_label'] ?? ''));
+                    if ($cameraVariantLabel === '') {
+                        $cameraVariantLabel = 'Set ' . $idx;
+                    }
                     ?>
-                    <?php $columnClass = (($idx - 1) % 4) === 0 ? 'edge-left' : (((($idx - 1) % 4) === 3) ? 'edge-right' : ''); ?>
-                    <details class="combination-card <?= h($columnClass) ?>" data-combination-card data-combination-row="<?= (int)floor(($idx - 1) / 4) ?>" <?= $idx <= 4 ? 'open' : '' ?>>
+                    <?php if ($cameraGroupKey !== $lastCameraGroupKey): ?>
+                        <div class="review-group-title"><?= h($cameraGroupName) ?></div>
+                        <?php $lastCameraGroupKey = $cameraGroupKey; ?>
+                    <?php endif; ?>
+                    <?php $columnClass = (($idx - 1) % 3) === 0 ? 'edge-left' : (((($idx - 1) % 3) === 2) ? 'edge-right' : ''); ?>
+                    <details class="combination-card <?= h($columnClass) ?>" data-combination-card data-combination-row="<?= h($cameraGroupKey) ?>" <?= $idx <= 3 ? 'open' : '' ?>>
                         <summary class="combination-head">
                             <div class="combination-title">
-                                <span class="badge">Set <?= $idx ?></span>
-                                <h3><?= h(get_friendly_camera_name($combo['selected_camera_slot_id'] ?? '')) ?></h3>
+                                <span class="badge"><?= h($cameraVariantLabel) ?></span>
+                                <h3><?= h($displayCameraName) ?></h3>
                             </div>
                         </summary>
 
                         <div class="combination-body">
                             <div class="thumb-row">
-                                <div class="thumb-box">
+                                <div class="thumb-box root-reference-thumb">
                                     <?php if ($rootUrl !== ''): ?>
                                         <img src="<?= h($rootUrl) ?>" alt="">
                                     <?php endif; ?>
+                                    <?php if (count($rootViewOptions) > 1): ?>
+                                        <div class="root-thumb-picker" aria-label="Choose root view">
+                                            <?php foreach ($rootViewOptions as $rootViewOption): ?>
+                                                <?php
+                                                $rootViewFile = (string)$rootViewOption['file_name'];
+                                                $isActiveRootView = $rootViewFile === $currentRootFile;
+                                                ?>
+                                                <form method="post" action="mockup_combinations_review.php?id=<?= (int)$id ?>">
+                                                    <input type="hidden" name="action" value="choose_scene_root_view">
+                                                    <input type="hidden" name="board" value="<?= (int)$sceneBoardIndex ?>">
+                                                    <input type="hidden" name="world_mother_category" value="<?= h($selectedWorldMotherCategory) ?>">
+                                                    <input type="hidden" name="root_file" value="<?= h($rootViewFile) ?>">
+                                                    <button
+                                                        class="root-thumb-option <?= $isActiveRootView ? 'active' : '' ?>"
+                                                        type="submit"
+                                                        title="<?= h(scene_root_view_label((string)$rootViewOption['view_type'])) ?>"
+                                                        aria-label="Use <?= h(scene_root_view_label((string)$rootViewOption['view_type'])) ?>"
+                                                        <?= $isActiveRootView ? 'disabled' : '' ?>
+                                                    >
+                                                        <img src="<?= h('media.php?file=' . rawurlencode($rootViewFile)) ?>" alt="">
+                                                        <span><?= h(scene_root_view_label((string)$rootViewOption['view_type'])) ?></span>
+                                                    </button>
+                                                </form>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
-                                <div class="thumb-box">
+                                <div class="thumb-box scene-reference-thumb">
                                     <?php if ($worldImageUrl !== ''): ?>
                                         <img src="<?= h($worldImageUrl) ?>" alt="">
                                     <?php endif; ?>
@@ -1074,8 +1718,11 @@ if ($rootPath !== '') {
                                 </div>
                             <?php endif; ?>
 
+                            <?= AdminSceneEditor::render($user, (string)($combo['selected_camera_slot_id'] ?? ''), 'mockup_combinations_review.php?' . (string)($_SERVER['QUERY_STRING'] ?? ('id=' . (int)$id))) ?>
+
                             <form class="camera-form beta-hidden-stage" method="get" action="mockup_combinations_review.php">
                                 <input type="hidden" name="id" value="<?= (int)$id ?>">
+                                <input type="hidden" name="board" value="<?= (int)$sceneBoardIndex ?>">
                                 <input type="hidden" name="world_mother_category" value="<?= h($selectedWorldMotherCategory) ?>">
                                 <?php foreach ($combinations as $other): ?>
                                     <?php if ((int)$other['combination_index'] !== $idx): ?>
@@ -1123,9 +1770,10 @@ if ($rootPath !== '') {
                                     data-index="<?= $idx ?>"
                                     data-artwork-id="<?= (int)$id ?>"
                                     data-camera-slot="<?= h($combo['selected_camera_slot_id']) ?>"
-                                    data-camera-name="<?= h(get_friendly_camera_name($combo['selected_camera_slot_id'] ?? '')) ?>"
+                                    data-camera-name="<?= h($displayCameraName) ?>"
                                     data-world-mother-category="<?= h($selectedWorldMotherCategory) ?>"
                                     data-world-mother-variant="<?= $currentVariantOffset ?>"
+                                    data-scene-board="<?= (int)$sceneBoardIndex ?>"
                                     onclick="prepareCombination(this)"
                                     <?= empty($combo['generation_ready']) ? 'disabled' : '' ?>
                                 >Generate This Set</button>
@@ -1138,13 +1786,82 @@ if ($rootPath !== '') {
     </main>
 </div>
 
+<div class="generation-overlay" id="generation-overlay" role="status" aria-live="polite" aria-hidden="true">
+    <div class="generation-overlay-card">
+        <div class="generation-spinner" aria-hidden="true"></div>
+        <strong id="generation-overlay-title">Generating scenes</strong>
+        <p id="generation-overlay-message">Preparing the selected artwork and scene reference.</p>
+        <div class="overlay-actions">
+            <button type="button" id="overlay-minimize-btn" class="button-link secondary" onclick="toggleOverlayMinimize(event)">Trabajar en segundo plano</button>
+            <button type="button" id="overlay-maximize-btn" class="button-link secondary" style="display: none;" onclick="toggleOverlayMaximize(event)">Ver Detalles</button>
+        </div>
+    </div>
+</div>
+
 <script>
+const generationOverlay = document.getElementById('generation-overlay');
+const generationOverlayTitle = document.getElementById('generation-overlay-title');
+const generationOverlayMessage = document.getElementById('generation-overlay-message');
+
+let isGenerationRunning = false;
+
+window.addEventListener('beforeunload', function (e) {
+    if (isGenerationRunning) {
+        e.preventDefault();
+        e.returnValue = 'A batch mockup generation is running in the background. If you leave or reload, it will stop. Open links in a new tab to multitask.';
+        return e.returnValue;
+    }
+});
+
+function toggleOverlayMinimize(e) {
+    if (e) e.stopPropagation();
+    const overlay = document.getElementById('generation-overlay');
+    const minBtn = document.getElementById('overlay-minimize-btn');
+    const maxBtn = document.getElementById('overlay-maximize-btn');
+    if (!overlay) return;
+
+    overlay.classList.add('minimized');
+    if (minBtn) minBtn.style.display = 'none';
+    if (maxBtn) maxBtn.style.display = 'inline-flex';
+}
+
+function toggleOverlayMaximize(e) {
+    if (e) e.stopPropagation();
+    const overlay = document.getElementById('generation-overlay');
+    const minBtn = document.getElementById('overlay-minimize-btn');
+    const maxBtn = document.getElementById('overlay-maximize-btn');
+    if (!overlay) return;
+
+    overlay.classList.remove('minimized');
+    if (minBtn) minBtn.style.display = 'inline-flex';
+    if (maxBtn) maxBtn.style.display = 'none';
+}
+
+function showGenerationOverlay(title, message) {
+    if (!generationOverlay) return;
+    generationOverlayTitle.textContent = title || 'Generating scenes';
+    generationOverlayMessage.textContent = message || 'Preparing the selected artwork and scene reference.';
+    generationOverlay.classList.add('active');
+    generationOverlay.setAttribute('aria-hidden', 'false');
+}
+
+function hideGenerationOverlay() {
+    if (!generationOverlay) return;
+    generationOverlay.classList.remove('active');
+    generationOverlay.setAttribute('aria-hidden', 'true');
+    toggleOverlayMaximize();
+}
+
 function prepareCombination(btn, skipConfirm = false) {
     const cameraName = btn.getAttribute('data-camera-name') || 'selected camera';
     const cameraSlot = btn.getAttribute('data-camera-slot') || '';
     const label = cameraName + (cameraSlot ? ' [' + cameraSlot + ']' : '');
     if (!skipConfirm && !confirm('Generate this camera now?\n\n' + label + '\n\nThis may consume a real API credit when real API mode is enabled.')) {
         return;
+    }
+    if (!skipConfirm) {
+        showGenerationOverlay('Generating scene', 'Working on ' + cameraName + '. This can take a moment.');
+        isGenerationRunning = true;
     }
     return runCombinationGeneration(btn);
 }
@@ -1158,6 +1875,7 @@ function runCombinationGeneration(btn) {
     formData.append('camera_slot_id', btn.getAttribute('data-camera-slot'));
     formData.append('world_mother_category', btn.getAttribute('data-world-mother-category'));
     formData.append('world_mother_variant_offset', btn.getAttribute('data-world-mother-variant') || '0');
+    formData.append('board', btn.getAttribute('data-scene-board') || '1');
     const scaleInput = document.getElementById('world-mother-scale-' + index);
     if (scaleInput && scaleInput.value) {
         formData.append('world_mother_scale', scaleInput.value);
@@ -1191,6 +1909,12 @@ function runCombinationGeneration(btn) {
             btn.disabled = false;
             btn.textContent = originalText;
             throw err;
+        })
+        .finally(() => {
+            if (!btn.dataset.batchGeneration) {
+                isGenerationRunning = false;
+                hideGenerationOverlay();
+            }
         });
 }
 
@@ -1209,113 +1933,50 @@ async function generateAllCombinations(btn) {
     let successCount = 0;
     let failCount = 0;
 
+    isGenerationRunning = true;
+
     for (let i = 0; i < buttons.length; i++) {
         const comboBtn = buttons[i];
+        comboBtn.dataset.batchGeneration = '1';
         btn.textContent = 'Generating ' + (i + 1) + ' / ' + buttons.length + '...';
+        showGenerationOverlay(
+            'Generating scenes',
+            'Generating ' + (i + 1) + ' of ' + buttons.length + ': ' + (comboBtn.getAttribute('data-camera-name') || 'selected camera') + '.'
+        );
         try {
             await prepareCombination(comboBtn, true);
             successCount++;
         } catch (err) {
             failCount++;
+        } finally {
+            delete comboBtn.dataset.batchGeneration;
         }
     }
 
     btn.disabled = false;
     btn.textContent = originalText;
+    isGenerationRunning = false;
+    hideGenerationOverlay();
 
     if (successCount > 0) {
         const go = confirm('Generation complete. Success: ' + successCount + ', failed: ' + failCount + '. Open results now?');
         if (go) {
-            window.location.href = 'mockup_combination_results.php?id=<?= (int)$id ?>';
+            window.location.href = 'mockup_combination_results.php?id=<?= (int)$id ?>&board=<?= (int)$sceneBoardIndex ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>';
         }
     } else {
         alert('No combinations were generated. Check the messages on each card.');
     }
 }
 
-const sceneSearchInput = document.getElementById('scene-search');
 const sceneSelect = document.getElementById('scene-select');
-const sceneCount = document.getElementById('scene-browser-count');
-const sceneListToggle = document.getElementById('scene-list-toggle');
-let activeSceneFilter = 'all';
-
-function updateSceneBrowser() {
-    const query = (sceneSearchInput ? sceneSearchInput.value : '').trim().toLowerCase();
-    const cards = Array.from(document.querySelectorAll('[data-scene-choice]'));
-    let visible = 0;
-    for (const card of cards) {
-        const hasImages = parseInt(card.getAttribute('data-image-count') || '0', 10) > 0;
-        const isFavorite = card.getAttribute('data-favorite') === '1';
-        const haystack = card.getAttribute('data-search') || '';
-        const matchesQuery = query === '' || haystack.includes(query);
-        const matchesFilter =
-            activeSceneFilter === 'all'
-            || (activeSceneFilter === 'with-images' && hasImages)
-            || (activeSceneFilter === 'favorites' && isFavorite);
-        const show = matchesQuery && matchesFilter;
-        card.classList.toggle('hidden', !show);
-        if (show) visible++;
-    }
-    if (sceneCount) {
-        sceneCount.textContent = visible + ' of ' + cards.length + ' scene environments visible';
-    }
-}
-
-if (sceneSearchInput) {
-    sceneSearchInput.addEventListener('input', () => {
-        if (sceneListToggle && sceneSearchInput.value.trim() !== '') {
-            sceneListToggle.open = true;
-        }
-        updateSceneBrowser();
-    });
-}
 if (sceneSelect) {
     sceneSelect.addEventListener('change', () => {
         const slug = sceneSelect.value || '';
         if (slug !== '') {
-            window.location.href = 'mockup_combinations_review.php?id=<?= (int)$id ?>&world_mother_category=' + encodeURIComponent(slug);
+            window.location.href = 'mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$sceneBoardIndex ?>&world_mother_category=' + encodeURIComponent(slug);
         }
     });
 }
-document.querySelectorAll('[data-scene-filter]').forEach(button => {
-    button.addEventListener('click', () => {
-        activeSceneFilter = button.getAttribute('data-scene-filter') || 'all';
-        document.querySelectorAll('[data-scene-filter]').forEach(btn => btn.classList.toggle('active', btn === button));
-        if (sceneListToggle && activeSceneFilter !== 'all') {
-            sceneListToggle.open = true;
-        }
-        updateSceneBrowser();
-    });
-});
-document.querySelectorAll('[data-favorite-scene]').forEach(button => {
-    button.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        const slug = button.getAttribute('data-favorite-scene') || '';
-        if (slug === '') return;
-        const formData = new FormData();
-        formData.append('category', slug);
-        fetch('toggle_world_mother_favorite.php', { method: 'POST', body: formData })
-            .then(response => response.json())
-            .then(result => {
-                if (!result.ok) {
-                    throw new Error(result.error || 'Favorite update failed.');
-                }
-                const favorite = result.favorite ? '1' : '0';
-                button.classList.toggle('active', result.favorite);
-                button.title = result.favorite ? 'Remove favorite' : 'Add favorite';
-                button.setAttribute('aria-label', button.title);
-                const card = button.closest('[data-scene-choice]');
-                if (card) {
-                    card.setAttribute('data-favorite', favorite);
-                }
-                updateSceneBrowser();
-            })
-            .catch(err => {
-                alert(err.message);
-            });
-    });
-});
 
 document.querySelectorAll('[data-combination-card]').forEach(card => {
     card.addEventListener('toggle', () => {
@@ -1333,7 +1994,6 @@ document.querySelectorAll('[data-combination-card]').forEach(card => {
     });
 });
 
-updateSceneBrowser();
 </script>
 </body>
 </html>

@@ -13,6 +13,94 @@ if (!function_exists('h')) {
     }
 }
 
+function mockup_variation_lab_register_run(PDO $pdo, array $run, array $selectedMockup, string $labDir): array
+{
+    if ((int)($run['registered_mockup_id'] ?? 0) > 0 || ($run['status'] ?? '') !== 'generated') {
+        return $run;
+    }
+
+    $outputFile = basename((string)($run['output_file'] ?? ''));
+    if ($outputFile === '') {
+        return $run;
+    }
+
+    $sourcePath = $labDir . DIRECTORY_SEPARATOR . $outputFile;
+    if (!is_file($sourcePath)) {
+        return $run;
+    }
+
+    $baseName = pathinfo($outputFile, PATHINFO_FILENAME);
+    $registeredMockupFile = $baseName . '-mockup.png';
+    $registeredPromptFile = $baseName . '-prompt.txt';
+    $promptFile = basename((string)($run['prompt_file'] ?? ''));
+    $promptSourcePath = $promptFile !== '' ? $labDir . DIRECTORY_SEPARATOR . $promptFile : '';
+    $promptText = is_file($promptSourcePath) ? (string)file_get_contents($promptSourcePath) : '';
+    $rootFile = basename((string)($selectedMockup['artwork_file'] ?? ''));
+
+    copy($sourcePath, RESULTS_DIR . DIRECTORY_SEPARATOR . $registeredMockupFile);
+    if ($promptText !== '') {
+        file_put_contents(PROMPTS_DIR . DIRECTORY_SEPARATOR . $registeredPromptFile, $promptText);
+    }
+    ImageResizer::resize(RESULTS_DIR . DIRECTORY_SEPARATOR . $registeredMockupFile);
+
+    $selectorState = [
+        'generation_source' => 'mockup_variation_lab',
+        'source_mockup_id' => (int)($run['mockup_id'] ?? $selectedMockup['id'] ?? 0),
+        'variation_type' => (string)($run['variation_type'] ?? ''),
+        'reference_mode' => (string)($run['reference_mode'] ?? ''),
+        'human_presence' => (string)($run['human_presence'] ?? ''),
+        'artwork_scale' => (string)($run['artwork_scale'] ?? ''),
+        'lighting_modifier' => (string)($run['lighting_modifier'] ?? ''),
+        'camera_modifier' => (string)($run['camera_modifier'] ?? ''),
+        'camera_strength' => (string)($run['camera_strength'] ?? ''),
+        'custom_instruction' => (string)($run['custom_instruction'] ?? ''),
+        'input_mockup_file' => (string)($run['input_mockup_file'] ?? ''),
+        'input_root_file' => (string)($run['input_root_file'] ?? $rootFile),
+        'input_world_mother_file' => (string)($run['input_world_mother_file'] ?? ''),
+        'lab_output_file' => 'storage/experiments/mockup-variation-lab/' . $outputFile,
+        'lab_prompt_file' => $promptFile !== '' ? 'storage/experiments/mockup-variation-lab/' . $promptFile : '',
+        'lab_audit_file' => !empty($run['audit_file']) ? 'storage/experiments/mockup-variation-lab/' . basename((string)$run['audit_file']) : '',
+    ];
+
+    $registeredMockupId = (int)Database::withBusyRetry(function () use (
+        $selectedMockup,
+        $rootFile,
+        $registeredMockupFile,
+        $registeredPromptFile,
+        $promptText,
+        $selectorState
+    ): int {
+        $insert = Database::connection()->prepare("
+            INSERT INTO mockups (user_id, artwork_file, mockup_file, context_id, prompt_file, selector_state_json, created_at)
+            VALUES (:user_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :selector_state_json, :created_at)
+        ");
+        $insert->execute([
+            'user_id' => (int)$selectedMockup['user_id'],
+            'artwork_file' => $rootFile,
+            'mockup_file' => $registeredMockupFile,
+            'context_id' => 'variation_lab',
+            'prompt_file' => $promptText !== '' ? $registeredPromptFile : null,
+            'selector_state_json' => json_encode($selectorState, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+            'created_at' => date('c'),
+        ]);
+
+        return (int)Database::connection()->lastInsertId();
+    }, 12);
+
+    $run['registered_mockup_id'] = $registeredMockupId;
+    $run['registered_mockup_file'] = $registeredMockupFile;
+    $run['registered_prompt_file'] = $promptText !== '' ? $registeredPromptFile : '';
+
+    if (!empty($run['audit_file'])) {
+        $auditPath = $labDir . DIRECTORY_SEPARATOR . basename((string)$run['audit_file']);
+        if (is_file($auditPath)) {
+            file_put_contents($auditPath, json_encode($run, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        }
+    }
+
+    return $run;
+}
+
 $selectedMockupId = max(0, (int)($_GET['mockup_id'] ?? 0));
 
 $artworksByRoot = [];
@@ -60,6 +148,12 @@ foreach (glob($labDir . DIRECTORY_SEPARATOR . '*.audit.json') ?: [] as $auditPat
 }
 usort($labRuns, static fn(array $a, array $b): int => strcmp((string)($b['started_at'] ?? ''), (string)($a['started_at'] ?? '')));
 $labRuns = array_slice($labRuns, 0, 16);
+if ($selectedMockup) {
+    foreach ($labRuns as $index => $run) {
+        $labRuns[$index] = mockup_variation_lab_register_run($pdo, $run, $selectedMockup, $labDir);
+    }
+}
+$favoriteLookup = MockupFavorites::lookupForUser((int)$user['id']);
 
 $referenceModes = [
     'mockup_only' => 'A - Existing mockup only',
@@ -349,10 +443,57 @@ $cameraStrengthOptions = [
         .runs-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
         .result-card { border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius); padding: 12px; }
         .result-card .meta { color: var(--muted); font-size: 11px; line-height: 1.5; margin-top: 8px; word-break: break-word; }
-        .runs-grid .result-card img {
-            height: 180px;
+        .lab-result-media {
+            position: relative;
+            display: block;
+        }
+        .runs-grid .lab-result-media {
+            height: clamp(220px, 16vw, 280px);
             border: 1px solid var(--line);
-            object-fit: cover;
+            background: #f4f0e9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .runs-grid .result-card img {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            object-fit: contain;
+            object-position: center;
+            background: #f4f0e9;
+        }
+        .lab-result-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: inline-flex;
+            gap: 7px;
+            opacity: .32;
+            transition: opacity .16s ease;
+        }
+        .lab-result-media:hover .lab-result-actions,
+        .lab-result-actions:focus-within {
+            opacity: 1;
+        }
+        .lab-result-action {
+            width: 30px;
+            height: 30px;
+            border: 1px solid rgba(255, 255, 255, .74);
+            border-radius: 999px;
+            background: rgba(24, 24, 24, .38);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            line-height: 1;
+            cursor: pointer;
+            backdrop-filter: blur(7px);
+        }
+        .lab-result-action.is-favorite {
+            background: rgba(166, 128, 86, .72);
         }
         .result-placeholder {
             min-height: clamp(320px, 36vw, 470px);
@@ -415,7 +556,7 @@ $cameraStrengthOptions = [
             display: inline-flex;
         }
         #new-result .result-card { padding: 0; border: 0; background: transparent; }
-        #new-result .result-card > a {
+        #new-result .result-card .lab-result-media {
             height: clamp(320px, 36vw, 470px);
             border: 1px solid var(--line);
             background: var(--surface);
@@ -588,11 +729,23 @@ $cameraStrengthOptions = [
                                 <h2 class="lab-equation-title">Result</h2>
                                 <div id="new-result">
                                     <?php if ($labRuns && ($labRuns[0]['status'] ?? '') === 'generated' && !empty($labRuns[0]['output_file'])): ?>
-                                        <?php $latestOutputFile = basename((string)$labRuns[0]['output_file']); ?>
+                                        <?php
+                                        $latestOutputFile = basename((string)$labRuns[0]['output_file']);
+                                        $latestRegisteredId = (int)($labRuns[0]['registered_mockup_id'] ?? 0);
+                                        $latestIsFavorite = $latestRegisteredId > 0 && isset($favoriteLookup[$latestRegisteredId]);
+                                        ?>
                                         <div class="result-card">
-                                            <a href="mockup_variation_lab_viewer.php?mockup_id=<?= (int)$selectedMockupId ?>&file=<?= rawurlencode($latestOutputFile) ?>">
-                                                <img src="mockup_variation_lab_file.php?file=<?= rawurlencode($latestOutputFile) ?>" alt="">
-                                            </a>
+                                            <div class="lab-result-media" data-registered-mockup-id="<?= $latestRegisteredId ?>">
+                                                <a href="mockup_variation_lab_viewer.php?mockup_id=<?= (int)$selectedMockupId ?>&file=<?= rawurlencode($latestOutputFile) ?>">
+                                                    <img src="mockup_variation_lab_file.php?file=<?= rawurlencode($latestOutputFile) ?>" alt="">
+                                                </a>
+                                                <?php if ($latestRegisteredId > 0): ?>
+                                                    <div class="lab-result-actions" aria-label="Mockup actions">
+                                                        <button class="lab-result-action js-lab-favorite <?= $latestIsFavorite ? 'is-favorite' : '' ?>" type="button" title="Favorite" aria-label="Favorite">★</button>
+                                                        <button class="lab-result-action js-lab-delete" type="button" title="Delete" aria-label="Delete">×</button>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
                                             <div class="meta">Latest generated test</div>
                                         </div>
                                     <?php else: ?>
@@ -606,12 +759,24 @@ $cameraStrengthOptions = [
                             <h2 style="margin-top:18px;">Latest tests for this mockup</h2>
                             <div class="runs-grid" id="lab-runs-grid">
                                 <?php foreach ($labRuns as $run): ?>
-                                    <?php $outputFile = basename((string)($run['output_file'] ?? '')); ?>
+                                    <?php
+                                    $outputFile = basename((string)($run['output_file'] ?? ''));
+                                    $registeredId = (int)($run['registered_mockup_id'] ?? 0);
+                                    $isFavorite = $registeredId > 0 && isset($favoriteLookup[$registeredId]);
+                                    ?>
                                     <div class="result-card">
                                         <?php if ($outputFile !== '' && ($run['status'] ?? '') === 'generated'): ?>
-                                            <a href="mockup_variation_lab_viewer.php?mockup_id=<?= (int)$selectedMockupId ?>&file=<?= rawurlencode($outputFile) ?>">
-                                                <img src="mockup_variation_lab_file.php?file=<?= rawurlencode($outputFile) ?>" alt="">
-                                            </a>
+                                            <div class="lab-result-media" data-registered-mockup-id="<?= $registeredId ?>">
+                                                <a href="mockup_variation_lab_viewer.php?mockup_id=<?= (int)$selectedMockupId ?>&file=<?= rawurlencode($outputFile) ?>">
+                                                    <img src="mockup_variation_lab_file.php?file=<?= rawurlencode($outputFile) ?>" alt="">
+                                                </a>
+                                                <?php if ($registeredId > 0): ?>
+                                                    <div class="lab-result-actions" aria-label="Mockup actions">
+                                                        <button class="lab-result-action js-lab-favorite <?= $isFavorite ? 'is-favorite' : '' ?>" type="button" title="Favorite" aria-label="Favorite">★</button>
+                                                        <button class="lab-result-action js-lab-delete" type="button" title="Delete" aria-label="Delete">×</button>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
                                         <?php else: ?>
                                             <div class="notice">No generated image.</div>
                                         <?php endif; ?>
@@ -699,6 +864,13 @@ function currentVariationSummary() {
         return lighting ? cameraLabel + ' / ' + lighting : cameraLabel;
     }
     return parts.length ? parts.join(' / ') : 'No modifiers';
+}
+function labActionMarkup(mockupId) {
+    if (!mockupId) return '';
+    return '<div class="lab-result-actions" aria-label="Mockup actions">' +
+        '<button class="lab-result-action js-lab-favorite" type="button" title="Favorite" aria-label="Favorite">★</button>' +
+        '<button class="lab-result-action js-lab-delete" type="button" title="Delete" aria-label="Delete">×</button>' +
+        '</div>';
 }
 function clearTransientResult() {
     const resultBox = document.getElementById('new-result');
@@ -789,11 +961,15 @@ if (form) {
                 status.textContent = result.body.message || 'Test generated.';
                 status.classList.remove('is-loading');
                 const summary = currentVariationSummary();
+                const registeredMockupId = parseInt(result.body.registered_mockup_id || '0', 10);
                 resultBox.innerHTML =
                     '<div class="result-card">' +
+                    '<div class="lab-result-media" data-registered-mockup-id="' + registeredMockupId + '">' +
                     '<a href="' + (result.body.viewer_url || result.body.output_url) + '">' +
                     '<img src="' + result.body.output_url + '" alt="">' +
                     '</a>' +
+                    labActionMarkup(registeredMockupId) +
+                    '</div>' +
                     '<div class="meta"><strong>' + summary + '</strong><br><a href="' + result.body.prompt_url + '" target="_blank" rel="noopener">View prompt</a> · ' +
                     '<a href="' + result.body.audit_url + '" target="_blank" rel="noopener">View audit</a></div>' +
                     '</div>';
@@ -804,9 +980,12 @@ if (form) {
                     const card = document.createElement('div');
                     card.className = 'result-card';
                     card.innerHTML =
+                        '<div class="lab-result-media" data-registered-mockup-id="' + registeredMockupId + '">' +
                         '<a href="' + (result.body.viewer_url || result.body.output_url) + '">' +
                         '<img src="' + result.body.output_url + '" alt="">' +
                         '</a>' +
+                        labActionMarkup(registeredMockupId) +
+                        '</div>' +
                         '<div class="meta"><div><strong>' + summary + '</strong></div>' +
                         '<div>Now</div>' +
                         '<div><a href="' + result.body.prompt_url + '" target="_blank" rel="noopener">View prompt</a></div>' +
@@ -826,6 +1005,41 @@ if (form) {
             });
     });
 }
+document.addEventListener('click', event => {
+    const favoriteButton = event.target.closest('.js-lab-favorite');
+    const deleteButton = event.target.closest('.js-lab-delete');
+    if (!favoriteButton && !deleteButton) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    const media = event.target.closest('.lab-result-media');
+    const mockupId = media ? parseInt(media.dataset.registeredMockupId || '0', 10) : 0;
+    if (!mockupId) return;
+
+    const body = new FormData();
+    body.append('mockup_id', String(mockupId));
+
+    if (favoriteButton) {
+        fetch('toggle_mockup_favorite.php', { method: 'POST', body })
+            .then(response => response.json())
+            .then(result => {
+                if (!result.ok) throw new Error(result.error || 'Favorite failed.');
+                favoriteButton.classList.toggle('is-favorite', !!result.favorite);
+            })
+            .catch(err => alert(err.message));
+        return;
+    }
+
+    if (!confirm('Delete this mockup from the album?')) return;
+    fetch('delete_mockup_result.php', { method: 'POST', body })
+        .then(response => response.json())
+        .then(result => {
+            if (!result.ok) throw new Error(result.error || 'Delete failed.');
+            const card = media.closest('.result-card');
+            if (card) card.remove();
+        })
+        .catch(err => alert(err.message));
+});
 </script>
 </body>
 </html>

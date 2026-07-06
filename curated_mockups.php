@@ -29,7 +29,7 @@ if ($id > 0 && $image === '') {
 
 // If both id and image cannot be resolved, fail gracefully and redirect to dashboard.
 if ($id <= 0 && $image === '') {
-    header('Location: dashboard.php');
+    header('Location: root_album.php');
     exit;
 }
 
@@ -41,12 +41,12 @@ if ($id > 0) {
         $artwork = $stmt->fetch();
 
         if (!$artwork) {
-            header('Location: dashboard.php');
+            header('Location: root_album.php');
             exit;
         }
 
         if ((int)$artwork['user_id'] !== (int)$user['id'] && !Auth::isAdmin($user)) {
-            header('Location: dashboard.php');
+            header('Location: root_album.php');
             exit;
         }
 
@@ -57,7 +57,7 @@ if ($id > 0) {
 }
 
 if ($image === '') {
-    header('Location: dashboard.php');
+    header('Location: root_album.php');
     exit;
 }
 

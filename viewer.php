@@ -5,34 +5,29 @@ require_once __DIR__ . '/app/bootstrap.php';
 
 $user = Auth::requireUser();
 $pdo = Database::connection();
+$isAdmin = Auth::isAdmin($user);
 
 $id = (int)($_GET['id'] ?? 0);
 $file = basename((string)($_GET['file'] ?? ''));
 
 if ($id > 0) {
-    $stmt = $pdo->prepare('
-        SELECT *
-        FROM mockups
-        WHERE user_id = :user_id
-        AND id = :id
-        LIMIT 1
-    ');
-    $stmt->execute([
-        'user_id' => (int)$user['id'],
-        'id' => $id,
-    ]);
+    $sql = 'SELECT * FROM mockups WHERE id = :id';
+    $params = ['id' => $id];
+    if (!$isAdmin) {
+        $sql .= ' AND user_id = :user_id';
+        $params['user_id'] = (int)$user['id'];
+    }
+    $stmt = $pdo->prepare($sql . ' LIMIT 1');
+    $stmt->execute($params);
 } else {
-    $stmt = $pdo->prepare('
-        SELECT *
-        FROM mockups
-        WHERE user_id = :user_id
-        AND mockup_file = :file
-        LIMIT 1
-    ');
-    $stmt->execute([
-        'user_id' => (int)$user['id'],
-        'file' => $file,
-    ]);
+    $sql = 'SELECT * FROM mockups WHERE mockup_file = :file';
+    $params = ['file' => $file];
+    if (!$isAdmin) {
+        $sql .= ' AND user_id = :user_id';
+        $params['user_id'] = (int)$user['id'];
+    }
+    $stmt = $pdo->prepare($sql . ' LIMIT 1');
+    $stmt->execute($params);
 }
 
 $mockup = $stmt->fetch();
@@ -44,32 +39,51 @@ if (!$mockup) {
     $standalonePath = $standaloneFile !== '' ? RESULTS_DIR . DIRECTORY_SEPARATOR . $standaloneFile : '';
     $artwork = null;
     if ($standaloneFile !== '' && is_file($standalonePath)) {
-        $stmt = $pdo->prepare('
-            SELECT *
-            FROM artworks
-            WHERE user_id = :user_id
-            AND (root_file = :file OR main_file = :file)
-            LIMIT 1
-        ');
-        $stmt->execute([
-            'user_id' => (int)$user['id'],
-            'file' => $standaloneFile,
-        ]);
+        $sql = 'SELECT * FROM artworks WHERE (root_file = :file OR main_file = :file)';
+        $params = ['file' => $standaloneFile];
+        if (!$isAdmin) {
+            $sql .= ' AND user_id = :user_id';
+            $params['user_id'] = (int)$user['id'];
+        }
+        $stmt = $pdo->prepare($sql . ' LIMIT 1');
+        $stmt->execute($params);
         $artwork = $stmt->fetch();
+
+        if (!$artwork && preg_match('/^(.*)_v\d+\.(png|jpe?g|webp)$/i', $standaloneFile, $matches)) {
+            $prefixPattern = $matches[1] . '_v%';
+            $sql = 'SELECT * FROM artworks WHERE (root_file LIKE :pattern OR main_file LIKE :pattern)';
+            $params = ['pattern' => $prefixPattern];
+            if (!$isAdmin) {
+                $sql .= ' AND user_id = :user_id';
+                $params['user_id'] = (int)$user['id'];
+            }
+            $stmt = $pdo->prepare($sql . ' LIMIT 1');
+            $stmt->execute($params);
+            $artwork = $stmt->fetch();
+        }
 
         if (!$artwork && preg_match('/^base_artwork_gemini_job_(\d+_\d+)_v\d+\.(png|jpe?g|webp)$/i', $standaloneFile, $matches)) {
             $jobId = 'job_' . $matches[1];
-            $stmt = $pdo->prepare('
-                SELECT *
-                FROM artworks
-                WHERE user_id = :user_id
-                AND job_id = :job_id
-                LIMIT 1
-            ');
-            $stmt->execute([
-                'user_id' => (int)$user['id'],
-                'job_id' => $jobId,
-            ]);
+            $sql = 'SELECT * FROM artworks WHERE job_id = :job_id';
+            $params = ['job_id' => $jobId];
+            if (!$isAdmin) {
+                $sql .= ' AND user_id = :user_id';
+                $params['user_id'] = (int)$user['id'];
+            }
+            $stmt = $pdo->prepare($sql . ' LIMIT 1');
+            $stmt->execute($params);
+            $artwork = $stmt->fetch();
+        }
+
+        if (!$artwork) {
+            $sql = 'SELECT a.* FROM root_artwork_candidates rac INNER JOIN artworks a ON a.id = rac.artwork_id WHERE rac.file_name = :file';
+            $params = ['file' => $standaloneFile];
+            if (!$isAdmin) {
+                $sql .= ' AND a.user_id = :user_id';
+                $params['user_id'] = (int)$user['id'];
+            }
+            $stmt = $pdo->prepare($sql . ' LIMIT 1');
+            $stmt->execute($params);
             $artwork = $stmt->fetch();
         }
     }
@@ -89,10 +103,76 @@ if (!$mockup) {
     ];
 }
 
+function viewer_safe_back_url(string $candidate): string
+{
+    $candidate = trim(str_replace(["\r", "\n"], '', $candidate));
+    if ($candidate === '' || str_starts_with($candidate, '//')) {
+        return '';
+    }
+
+    $parts = parse_url($candidate);
+    if ($parts === false) {
+        return '';
+    }
+
+    if (isset($parts['scheme']) || isset($parts['host'])) {
+        $host = (string)($_SERVER['HTTP_HOST'] ?? '');
+        if (!isset($parts['host']) || strcasecmp((string)$parts['host'], $host) !== 0) {
+            return '';
+        }
+
+        $path = str_replace('\\', '/', (string)($parts['path'] ?? ''));
+        $scriptDir = rtrim(str_replace('\\', '/', dirname((string)($_SERVER['SCRIPT_NAME'] ?? ''))), '/');
+        if ($scriptDir !== '' && $scriptDir !== '.' && str_starts_with($path, $scriptDir . '/')) {
+            $path = substr($path, strlen($scriptDir) + 1);
+        } else {
+            $path = ltrim($path, '/');
+        }
+
+        $candidate = $path
+            . (isset($parts['query']) ? '?' . (string)$parts['query'] : '')
+            . (isset($parts['fragment']) ? '#' . (string)$parts['fragment'] : '');
+    } elseif (preg_match('/^[a-z][a-z0-9+.-]*:/i', $candidate)) {
+        return '';
+    } else {
+        $candidate = ltrim(str_replace('\\', '/', $candidate), '/');
+        $scriptDir = trim(str_replace('\\', '/', dirname((string)($_SERVER['SCRIPT_NAME'] ?? ''))), '/');
+        if ($scriptDir !== '' && $scriptDir !== '.' && str_starts_with($candidate, $scriptDir . '/')) {
+            $candidate = substr($candidate, strlen($scriptDir) + 1);
+        }
+    }
+
+    $path = (string)(parse_url($candidate, PHP_URL_PATH) ?: '');
+    $page = basename($path);
+    $allowedPages = [
+        'artwork.php' => true,
+        'artwork_details.php' => true,
+        'dashboard.php' => true,
+        'root_album.php' => true,
+        'form2.php' => true,
+        'mockups.php' => true,
+        'mockup_combination_results.php' => true,
+        'mockup_combinations_review.php' => true,
+        'mockup_variation_lab.php' => true,
+        'root_album.php' => true,
+    ];
+
+    return isset($allowedPages[$page]) ? $candidate : '';
+}
+
 $backUrl = 'mockups.php';
 $requestedBack = trim((string)($_GET['back'] ?? ''));
-if ($requestedBack !== '' && preg_match('/^(form2\.php|artwork\.php|artwork_details\.php|mockups\.php|mockup_combination_results\.php|dashboard\.php)(\?|#|$)/', $requestedBack)) {
-    $backUrl = $requestedBack;
+$safeBackUrl = viewer_safe_back_url($requestedBack);
+$hasSafeOriginBack = false;
+if ($safeBackUrl !== '') {
+    $backUrl = $safeBackUrl;
+    $hasSafeOriginBack = true;
+} elseif ($requestedBack === '') {
+    $safeRefererUrl = viewer_safe_back_url((string)($_SERVER['HTTP_REFERER'] ?? ''));
+    if ($safeRefererUrl !== '') {
+        $backUrl = $safeRefererUrl;
+        $hasSafeOriginBack = true;
+    }
 }
 if (!isset($artwork) || !is_array($artwork)) {
     $artworkStmt = $pdo->prepare('
@@ -110,13 +190,14 @@ if (!isset($artwork) || !is_array($artwork)) {
 }
 $artworkId = is_array($artwork) ? (int)$artwork['id'] : 0;
 
-if ($artworkId && $requestedBack === '') {
+if ($artworkId && !$hasSafeOriginBack) {
     $backUrl = 'artwork.php?id=' . rawurlencode((string)$artworkId);
 }
 $viewerBackParam = $backUrl !== '' ? '&back=' . rawurlencode($backUrl) : '';
 
 $prevHref = '';
 $nextHref = '';
+$hasScopedNavigation = false;
 if ($isStandaloneFile) {
     $currentFile = basename((string)$mockup['mockup_file']);
     $prefix = '';
@@ -144,6 +225,67 @@ if ($isStandaloneFile) {
         }
     }
 } else {
+    $scopedCombinationArtworkId = 0;
+    $backPath = (string)(parse_url($backUrl, PHP_URL_PATH) ?: '');
+    if (basename($backPath) === 'mockup_combination_results.php') {
+        parse_str((string)(parse_url($backUrl, PHP_URL_QUERY) ?: ''), $backQuery);
+        $scopedCombinationArtworkId = max(0, (int)($backQuery['id'] ?? 0));
+    }
+
+    if ($scopedCombinationArtworkId > 0) {
+        $hasScopedNavigation = true;
+        $scopeStmt = $pdo->prepare('
+            SELECT id, selector_state_json
+            FROM mockups
+            WHERE user_id = :user_id
+            AND (
+                artwork_file = :artwork_file
+                OR selector_state_json LIKE :audit_path
+            )
+            ORDER BY id DESC
+        ');
+        $scopeStmt->execute([
+            'user_id' => (int)$mockup['user_id'],
+            'artwork_file' => basename((string)($artwork['root_file'] ?? $mockup['artwork_file'] ?? '')),
+            'audit_path' => '%analysis/mockup-combination-audit/' . $scopedCombinationArtworkId . '/%',
+        ]);
+
+        $scopedRows = [];
+        foreach ($scopeStmt->fetchAll() ?: [] as $scopeRow) {
+            $state = json_decode((string)($scopeRow['selector_state_json'] ?? ''), true);
+            if (!is_array($state) || ($state['generation_source'] ?? '') !== 'mockup_combination_review') {
+                continue;
+            }
+            $combo = (array)($state['combination'] ?? []);
+            $order = (int)($combo['camera_slot_board_order'] ?? 0);
+            if ($order <= 0) {
+                $order = (int)($combo['combination_index'] ?? 999);
+            }
+            $scopedRows[] = [
+                'id' => (int)$scopeRow['id'],
+                'order' => $order > 0 ? $order : 999,
+            ];
+        }
+
+        usort($scopedRows, static function (array $a, array $b): int {
+            return ((int)$a['order'] <=> (int)$b['order'])
+                ?: ((int)$b['id'] <=> (int)$a['id']);
+        });
+
+        $scopedIds = array_column($scopedRows, 'id');
+        $currentIndex = array_search((int)$mockup['id'], $scopedIds, true);
+        if ($currentIndex !== false) {
+            if (isset($scopedIds[$currentIndex - 1])) {
+                $prevHref = 'viewer.php?id=' . rawurlencode((string)$scopedIds[$currentIndex - 1]) . $viewerBackParam;
+            }
+            if (isset($scopedIds[$currentIndex + 1])) {
+                $nextHref = 'viewer.php?id=' . rawurlencode((string)$scopedIds[$currentIndex + 1]) . $viewerBackParam;
+            }
+        }
+    }
+}
+
+if (!$isStandaloneFile && !$hasScopedNavigation && $prevHref === '' && $nextHref === '') {
     $prevStmt = $pdo->prepare('
         SELECT id
         FROM mockups
@@ -393,7 +535,6 @@ $otherSocial = [
             background: var(--bg);
             color: var(--ink);
             font-family: var(--font-sans);
-            zoom: 1;
         }
 
         .viewer-top {
@@ -760,7 +901,7 @@ $otherSocial = [
 <body>
     <header class="viewer-top">
         <div class="viewer-left">
-            <a class="brand" href="dashboard.php">The Artwork Curator <span class="brand-mark"></span></a>
+            <a class="brand" href="root_album.php">The Artwork Curator <span class="brand-mark"></span></a>
         </div>
         <nav class="viewer-actions">
             <a class="icon-link back" href="<?= h($backUrl) ?>" aria-label="Back to details" title="Back to details"></a>

@@ -48,7 +48,12 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
             . "- Never replace the ROOT ARTWORK with a blank wall, empty canvas, decorative panel or object from the WORLD MOTHER.\n"
             . "- All written dimensions and measurements are hidden instructions only. Never render visible text, captions, labels, measurement callouts, arrows, rulers, scale bars, unit labels, or numeric size annotations in the generated image.\n"
             . "- If the camera or environment conflicts with the artwork, preserve IMAGE 1 and adapt the environment around it.";
+        $squareFrameContract = "GLOBAL OUTPUT FRAME RULE:\n"
+            . "- The final generated image must be square, 1:1 aspect ratio.\n"
+            . "- Compose the full photographic scene inside a square frame. Do not output portrait, vertical, landscape, panoramic, or cropped non-square images.\n"
+            . "- Keep the artwork fully inside the square composition unless the selected close-up camera explicitly requires a detail crop.";
         $submittedPrompt = ($slotFullPromptMode || $usesGraphicPerspectiveGeminiDirect) ? $finalPrompt : $roleContract . "\n\n" . $finalPrompt;
+        $submittedPrompt = $squareFrameContract . "\n\n" . $submittedPrompt;
         $parts = [$this->client->textPart($submittedPrompt)];
         if ($usesGraphicPerspectiveGeminiDirect) {
             $platePath = $this->graphicPerspectivePlatePath($cameraSlotId);

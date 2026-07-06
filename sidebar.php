@@ -73,6 +73,7 @@ $worldMotherActive = ($currentPage === 'world_mother_studio.php');
 $cameraStudioActive = ($currentPage === 'camera_studio.php');
 $variationLabActive = ($currentPage === 'mockup_variation_lab.php');
 $generatedResultsActive = ($currentPage === 'mockup_combination_results.php');
+$rootAlbumActive = ($currentPage === 'root_album.php');
 $profileActive = ($currentPage === 'artist_profile.php');
 $usersActive = ($currentPage === 'admin_users.php');
 $accountActive = ($currentPage === 'account.php');
@@ -185,6 +186,8 @@ if ($step5Disabled && $sidebarUser) {
     }
 }
 
+$rootAlbumUrl = 'root_album.php';
+
 $generatedResultsUrl = $sidebarContextArtworkId > 0
     ? 'mockup_combination_results.php?id=' . urlencode((string)$sidebarContextArtworkId)
     : 'mockups.php';
@@ -200,7 +203,6 @@ $generatedResultsUrl = $sidebarContextArtworkId > 0
 
     <nav class="sidebar-tabs" aria-label="Primary navigation">
         <section class="sidebar-tab-group">
-            <div class="sidebar-section-title">Create</div>
             <div class="sidebar-tab-row">
                 <a class="sidebar-tab <?= $step1Active ? 'active' : '' ?>" href="artwork_new.php">Upload Artwork</a>
                 <?php if (!$step5Disabled || $step5Active): ?>
@@ -213,9 +215,7 @@ $generatedResultsUrl = $sidebarContextArtworkId > 0
 
         <section class="sidebar-context">
             <div class="sidebar-tab-row">
-                <?php if (!$step4Disabled): ?>
-                    <a class="sidebar-tab compact <?= $step4Active ? 'active' : '' ?>" href="<?= htmlspecialchars($step4Url, ENT_QUOTES, 'UTF-8') ?>">Artwork Details</a>
-                <?php endif; ?>
+                <a class="sidebar-tab <?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">Root Artworks</a>
                 <a class="sidebar-tab <?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
                 <a class="sidebar-tab <?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
             </div>
@@ -228,7 +228,6 @@ $generatedResultsUrl = $sidebarContextArtworkId > 0
                         <img src="uploads/artist_profiles/<?= rawurlencode($sidebarArtistPhoto) ?>" alt="">
                     </a>
                 <?php endif; ?>
-                <a class="sidebar-tab compact <?= $dashboardActive ? 'active' : '' ?>" href="dashboard.php">Dashboard</a>
                 <a class="sidebar-tab compact <?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
                 <a class="sidebar-tab compact" href="logout.php">Logout</a>
             </div>
@@ -240,7 +239,7 @@ $generatedResultsUrl = $sidebarContextArtworkId > 0
             <summary>Admin</summary>
             <ul class="nav">
                 <li><a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a></li>
-                <li><a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scenes Studio</a></li>
+                <li><a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Studio</a></li>
                 <li><a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Studio</a></li>
                 <li><a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">System Prompts</a></li>
                 <li><a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a></li>

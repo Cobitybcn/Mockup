@@ -881,8 +881,8 @@ if (wants_json_response()) {
             Upload another artwork
         </a>
 
-        <a class="button secondary" href="dashboard.php">
-            Dashboard
+        <a class="button secondary" href="root_album.php">
+            Root Artworks
         </a>
     </div>
 </div>

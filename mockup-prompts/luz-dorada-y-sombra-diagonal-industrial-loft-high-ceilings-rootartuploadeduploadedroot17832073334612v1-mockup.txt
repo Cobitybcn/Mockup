@@ -7,11 +7,11 @@ IMAGE 1 is the only source of truth for the artwork. Preserve its exact identity
 IMAGE 2 is the world mother for the environment. Keep its room type, material family, light logic, wall/floor character, and spatial identity. Do not replace it with a generic warm room, palazzo, atelier, townhouse, Mediterranean interior, or any alternate invented environment. Adapt only camera, artwork placement, and light/shadow emphasis needed for this slot.
 
 ARTWORK PHYSICAL DATA:
-Artwork title: root_art_uploaded_uploaded_root_1783111910_1495_v1
-Artwork width: 120 cm
-Artwork height: 160 cm
+Artwork title: root_art_uploaded_uploaded_root_1783207333_4612_v1
+Artwork width: 80 cm
+Artwork height: 120 cm
 Artwork orientation: portrait
-Artwork size class: XL
+Artwork size class: L
 
 TASK:
 Create a refined wall-mounted artwork mockup inside the environment provided by IMAGE 2, using diagonal light/shadow only if it is present in IMAGE 2 or naturally compatible with its light source. The light is part of the world mother, not a replacement world and not a repainting of the artwork.

@@ -914,6 +914,12 @@ if (!$skipCustomCameraSlots && is_file($customCameraSlotsPath)) {
             $extraCameraSetSlots = (array)($customCameraSetPatch['slots'] ?? []);
             $cameraSlotsConfig['sets'][$customCameraSetId]['slots'] = array_values(array_unique(array_merge($currentCameraSetSlots, array_map('strval', $extraCameraSetSlots))));
         }
+        if (isset($customCameraSlots['scene_board']) && is_array($customCameraSlots['scene_board'])) {
+            $cameraSlotsConfig['scene_board'] = $customCameraSlots['scene_board'];
+        }
+        if (isset($customCameraSlots['scene_boards']) && is_array($customCameraSlots['scene_boards'])) {
+            $cameraSlotsConfig['scene_boards'] = $customCameraSlots['scene_boards'];
+        }
     }
 }
 

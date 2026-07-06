@@ -401,7 +401,7 @@ $rootViews = [
                     <p>Prompt directives sent to Vertex AI. Each field is the exact text sent — no mixing, no hidden additions.</p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link secondary" href="dashboard.php">Dashboard</a>
+                    <a class="button-link secondary" href="root_album.php">Root Artworks</a>
                 </div>
             </div>
 

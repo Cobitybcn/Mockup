@@ -25,12 +25,12 @@ function h($v): string
   <style>
       .form-container {
           max-width: 860px;
-          margin: 30px auto;
+          margin: 12px auto;
       }
       .tabs-container {
           display: flex;
           gap: 8px;
-          margin-bottom: 24px;
+          margin-bottom: 12px;
           border-bottom: 1.5px solid var(--line);
           padding-bottom: 2px;
       }
@@ -66,8 +66,8 @@ function h($v): string
           align-items: center;
           justify-content: space-between;
           gap: 16px;
-          margin-bottom: 18px;
-          padding-bottom: 14px;
+          margin-bottom: 10px;
+          padding-bottom: 8px;
           border-bottom: 1px dashed var(--line);
       }
       .root-mode-label h2 {
@@ -120,8 +120,8 @@ function h($v): string
           border: 1.5px dashed var(--line);
           border-radius: var(--radius);
           background: var(--surface-soft);
-          min-height: 320px;
-          padding: 32px 24px;
+          min-height: 200px;
+          padding: 16px 24px;
           text-align: center;
           cursor: pointer;
           transition: all 0.3s ease;
@@ -130,7 +130,7 @@ function h($v): string
           align-items: center;
           justify-content: center;
           gap: 12px;
-          margin-bottom: 24px;
+          margin-bottom: 14px;
       }
       .dropzone-container:hover,
       .dropzone-container.dragover {
@@ -148,8 +148,8 @@ function h($v): string
           cursor: pointer;
       }
       .dropzone-icon {
-          width: 48px;
-          height: 48px;
+          width: 32px;
+          height: 32px;
           color: var(--accent);
           opacity: 0.8;
       }
@@ -172,7 +172,7 @@ function h($v): string
           width: auto;
           max-width: min(100%, 720px);
           height: auto;
-          max-height: 420px;
+          max-height: 280px;
           object-fit: contain;
           border: 1px solid var(--line);
           border-radius: 2px;
@@ -181,12 +181,12 @@ function h($v): string
           background: var(--surface);
       }
       .dropzone-container.has-preview {
-          min-height: 460px;
+          min-height: 320px;
           background: #f8f6f1;
       }
       .dropzone-container.has-preview .dropzone-icon {
-          width: 34px;
-          height: 34px;
+          width: 24px;
+          height: 24px;
       }
       .dropzone-container.has-preview .dropzone-info {
           margin-bottom: 4px;
@@ -264,7 +264,7 @@ function h($v): string
           <p>Upload the original art piece and enter its actual physical dimensions.</p>
         </div>
         <div class="topbar-actions">
-          <a class="button-link secondary" href="dashboard.php">Dashboard</a>
+          <a class="button-link secondary" href="root_album.php">Root Artworks</a>
         </div>
       </div>
 
@@ -296,7 +296,7 @@ function h($v): string
               </h2>
             </div>
             
-            <div class="form-group" style="margin-bottom: 24px;">
+            <div class="form-group" style="margin-bottom: 16px;">
               <label style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Primary Image of the Artwork</label>
               
               <div class="dropzone-container" id="dropzone">
@@ -342,7 +342,7 @@ function h($v): string
             <div class="step-actions">
               <span style="font-size: 11px; color: var(--muted);">Beta Mode: Uses Imagen 3 generation pipeline.</span>
               <div class="actions-group">
-                  <a href="dashboard.php" class="button secondary">Cancel</a>
+                  <a href="root_album.php" class="button secondary">Cancel</a>
                   <button type="submit" class="button">Upload & Create Candidates</button>
               </div>
             </div>
@@ -362,7 +362,7 @@ function h($v): string
               </h2>
             </div>
 
-            <div class="form-group" style="margin-bottom: 24px;">
+            <div class="form-group" style="margin-bottom: 16px;">
               <label style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Ready Root Artwork Image</label>
 
               <div class="dropzone-container" id="existingRootDropzone">
@@ -408,7 +408,7 @@ function h($v): string
             <div class="step-actions">
               <span style="font-size: 11px; color: var(--muted);">Bypass Mode: stores this file as the final root artwork.</span>
               <div class="actions-group">
-                  <a href="dashboard.php" class="button secondary">Cancel</a>
+                  <a href="root_album.php" class="button secondary">Cancel</a>
                   <button type="submit" class="button secondary">Use This Root Artwork</button>
               </div>
             </div>

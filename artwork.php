@@ -401,33 +401,50 @@ function normalize_artwork_contexts(array $contexts): array
 }
 
 if ($id <= 0) {
-    http_response_code(404);
-    die('Missing artwork.');
+    header('Location: root_album.php?artwork_error=' . rawurlencode('missing_artwork_id'));
+    exit;
 }
 
-$stmt = $pdo->prepare('
-    SELECT *
-    FROM artworks
-    WHERE id = :id
-    AND user_id = :user_id
-    LIMIT 1
-');
-$stmt->execute([
-    'id' => $id,
-    'user_id' => (int)$user['id'],
-]);
+if ($isAdmin) {
+    $stmt = $pdo->prepare('
+        SELECT *
+        FROM artworks
+        WHERE id = :id
+        LIMIT 1
+    ');
+    $stmt->execute([
+        'id' => $id,
+    ]);
+} else {
+    $stmt = $pdo->prepare('
+        SELECT *
+        FROM artworks
+        WHERE id = :id
+        AND user_id = :user_id
+        LIMIT 1
+    ');
+    $stmt->execute([
+        'id' => $id,
+        'user_id' => (int)$user['id'],
+    ]);
+}
 $artwork = $stmt->fetch();
 
 if (!is_array($artwork)) {
-    http_response_code(404);
-    die('Artwork not found.');
+    header('Location: root_album.php?artwork_error=' . rawurlencode('artwork_not_found'));
+    exit;
+}
+
+$artworkOwnerId = (int)($artwork['user_id'] ?? 0);
+if ($artworkOwnerId <= 0) {
+    $artworkOwnerId = (int)$user['id'];
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'select_root_candidate') {
     $candidateId = max(0, (int)($_POST['candidate_id'] ?? 0));
     $candidateFile = basename((string)($_POST['candidate_file'] ?? ''));
     if ($candidateFile !== '' && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $candidateFile)) {
-        Database::withBusyRetry(function () use ($pdo, $id, $user, $candidateId, $candidateFile): void {
+        Database::withBusyRetry(function () use ($pdo, $id, $artworkOwnerId, $candidateId, $candidateFile): void {
             $pdo->prepare('UPDATE root_artwork_candidates SET is_selected = 0 WHERE artwork_id = :artwork_id')
                 ->execute(['artwork_id' => $id]);
             if ($candidateId > 0) {
@@ -439,7 +456,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'selec
                     'root_file' => $candidateFile,
                     'updated_at' => date('c'),
                     'id' => $id,
-                    'user_id' => (int)$user['id'],
+                    'user_id' => $artworkOwnerId,
                 ]);
         }, 12);
     }
@@ -468,7 +485,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
         'series' => trim((string)($_POST['series'] ?? '')),
         'updated_at' => date('c'),
         'id' => $id,
-        'user_id' => (int)$user['id'],
+        'user_id' => $artworkOwnerId,
     ]);
 
     header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&saved=1');
@@ -478,8 +495,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'generate_artwork_metadata') {
     try {
         $sheetService = new ArtworkSheetService($pdo);
-        $sheet = $sheetService->sheetForArtwork($id, (int)$user['id']);
-        $sheetService->generateArtworkSheet((int)$sheet['id'], (int)$user['id']);
+        $sheet = $sheetService->sheetForArtwork($id, $artworkOwnerId);
+        $sheetService->generateArtworkSheet((int)$sheet['id'], $artworkOwnerId);
         header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&metadata_generated=1');
         exit;
     } catch (Throwable $e) {
@@ -490,7 +507,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_artwork_metadata') {
     $sheetService = new ArtworkSheetService($pdo);
-    $sheet = $sheetService->sheetForArtwork($id, (int)$user['id']);
+    $sheet = $sheetService->sheetForArtwork($id, $artworkOwnerId);
     $longTail = array_values(array_filter(array_map(
         static fn($item): string => trim((string)$item),
         preg_split('/[\n,;]+/', (string)($_POST['long_tail_terms'] ?? '')) ?: []
@@ -525,7 +542,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
         'generated_json' => json_encode($generatedJson, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         'updated_at' => date('c'),
         'id' => (int)$sheet['id'],
-        'user_id' => (int)$user['id'],
+        'user_id' => $artworkOwnerId,
     ]);
 
     $pdo->prepare('
@@ -546,7 +563,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
         'series' => trim((string)($_POST['series'] ?? '')),
         'updated_at' => date('c'),
         'id' => $id,
-        'user_id' => (int)$user['id'],
+        'user_id' => $artworkOwnerId,
     ]);
 
     header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&metadata_saved=1');
@@ -623,6 +640,136 @@ $hasValidNewSchema = is_array($analysis['suggested_titles'] ?? null)
             && trim((string)($titleOption['description'] ?? '')) !== '';
     })) === count((array)$analysis['suggested_titles']);
 $analysisNeedsRefresh = !$hasValidNewSchema && !empty($contexts);
+
+if (!function_exists('artwork_latest_root_view_job_candidates')) {
+    /**
+     * @return array<int,array{file_name:string,view_type:string,job_id:string}>
+     */
+    function artwork_latest_root_view_job_candidates(int $artworkId): array
+    {
+        $jobDirs = glob(__DIR__ . DIRECTORY_SEPARATOR . 'jobs' . DIRECTORY_SEPARATOR . 'complete_root_views_' . $artworkId . '_*', GLOB_ONLYDIR) ?: [];
+        if (!$jobDirs) {
+            return [];
+        }
+
+        usort($jobDirs, static function (string $a, string $b): int {
+            $aStatus = $a . DIRECTORY_SEPARATOR . 'status.json';
+            $bStatus = $b . DIRECTORY_SEPARATOR . 'status.json';
+            return (filemtime($bStatus) ?: filemtime($b) ?: 0) <=> (filemtime($aStatus) ?: filemtime($a) ?: 0);
+        });
+
+        $viewMap = [
+            1 => 'frontal',
+            2 => 'three-quarter-left',
+            3 => 'three-quarter-right',
+        ];
+
+        foreach ($jobDirs as $jobDir) {
+            $statusPath = $jobDir . DIRECTORY_SEPARATOR . 'status.json';
+            if (!is_file($statusPath)) {
+                continue;
+            }
+            $status = json_decode((string)file_get_contents($statusPath), true);
+            if (!is_array($status) || (int)($status['artwork_id'] ?? 0) !== $artworkId || (string)($status['status'] ?? '') !== 'done') {
+                continue;
+            }
+
+            $candidates = [];
+            foreach (array_values((array)($status['candidates'] ?? [])) as $index => $candidate) {
+                $file = basename((string)$candidate);
+                $version = $index + 1;
+                if (preg_match('/_v(\d+)\.(?:png|jpe?g|webp)$/i', $file, $matches) === 1) {
+                    $version = (int)$matches[1];
+                }
+                if ($file !== '' && isset($viewMap[$version]) && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $file)) {
+                    $candidates[] = [
+                        'file_name' => $file,
+                        'view_type' => $viewMap[$version],
+                        'job_id' => basename($jobDir),
+                    ];
+                }
+            }
+
+            if ($candidates) {
+                return $candidates;
+            }
+        }
+
+        return [];
+    }
+}
+
+if (!function_exists('artwork_adopt_root_view_candidates')) {
+    /**
+     * @param array<int,array{file_name:string,view_type:string,job_id?:string}> $candidates
+     */
+    function artwork_adopt_root_view_candidates(PDO $pdo, int $artworkId, int $userId, array $candidates, string $rootFile): void
+    {
+        if (!$candidates) {
+            return;
+        }
+
+        Database::withBusyRetry(function () use ($pdo, $artworkId, $userId, $candidates, $rootFile): void {
+            if (Database::isMysql()) {
+                $columnRows = $pdo->query('SHOW COLUMNS FROM root_artwork_candidates')->fetchAll(PDO::FETCH_ASSOC);
+                $columns = array_map(static fn(array $row): string => (string)$row['Field'], $columnRows);
+            } else {
+                $columnRows = $pdo->query('PRAGMA table_info(root_artwork_candidates)')->fetchAll(PDO::FETCH_ASSOC);
+                $columns = array_map(static fn(array $row): string => (string)$row['name'], $columnRows);
+            }
+            $hasColumn = static fn(string $name): bool => in_array($name, $columns, true);
+            $existsStmt = $pdo->prepare('
+                SELECT COUNT(*)
+                FROM root_artwork_candidates
+                WHERE artwork_id = :artwork_id
+                AND file_name = :file_name
+            ');
+
+            foreach ($candidates as $candidate) {
+                $file = basename((string)($candidate['file_name'] ?? ''));
+                $viewType = (string)($candidate['view_type'] ?? '');
+                $jobId = basename((string)($candidate['job_id'] ?? ''));
+                if ($file === '' || $viewType === '' || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $file)) {
+                    continue;
+                }
+
+                $existsStmt->execute([
+                    'artwork_id' => $artworkId,
+                    'file_name' => $file,
+                ]);
+                if ((int)$existsStmt->fetchColumn() > 0) {
+                    continue;
+                }
+
+                $insertColumns = ['artwork_id', 'file_name', 'view_type', 'is_selected', 'created_at'];
+                $params = [
+                    'artwork_id' => $artworkId,
+                    'file_name' => $file,
+                    'view_type' => $viewType,
+                    'is_selected' => $file === $rootFile ? 1 : 0,
+                    'created_at' => date('c'),
+                ];
+                if ($hasColumn('user_id')) {
+                    $insertColumns[] = 'user_id';
+                    $params['user_id'] = $userId;
+                }
+                if ($hasColumn('job_id')) {
+                    $insertColumns[] = 'job_id';
+                    $params['job_id'] = $jobId;
+                }
+                if ($hasColumn('updated_at')) {
+                    $insertColumns[] = 'updated_at';
+                    $params['updated_at'] = date('c');
+                }
+                $placeholders = array_map(static fn(string $column): string => ':' . $column, $insertColumns);
+                $sql = 'INSERT INTO root_artwork_candidates (' . implode(', ', $insertColumns) . ') VALUES (' . implode(', ', $placeholders) . ')';
+                $pdo->prepare($sql)->execute($params);
+            }
+        }, 12);
+    }
+}
+
+artwork_adopt_root_view_candidates($pdo, $id, $artworkOwnerId, artwork_latest_root_view_job_candidates($id), $rootFile);
 
 // Load root artwork candidates (frontal, 3/4 left, 3/4 right)
 $rootCandidates = [];
@@ -718,10 +865,11 @@ $mockupStmt = $pdo->prepare('
     ORDER BY created_at DESC
 ');
 $mockupStmt->execute([
-    'user_id'      => (int)$user['id'],
+    'user_id'      => $artworkOwnerId,
     'artwork_file' => $rootFile,
 ]);
 $mockups = $mockupStmt->fetchAll();
+$favoriteMockupLookup = MockupFavorites::lookupForUser($artworkOwnerId);
 $relatedMockups = [];
 foreach ($mockups ?: [] as $relatedMockup) {
     $relatedFile = basename((string)($relatedMockup['mockup_file'] ?? ''));
@@ -732,8 +880,10 @@ foreach ($mockups ?: [] as $relatedMockup) {
     $relatedMockup['selector_state'] = is_array($relatedState) ? $relatedState : [];
     $relatedMockup['variation_lab_available'] = MockupVariationEligibility::canUseVariationLab($relatedMockup);
     $relatedMockup['mockup_file_basename'] = $relatedFile;
+    $relatedMockup['is_favorite'] = isset($favoriteMockupLookup[(int)$relatedMockup['id']]);
     $relatedMockups[] = $relatedMockup;
 }
+$favoriteMockups = array_values(array_filter($relatedMockups, static fn (array $mockup): bool => !empty($mockup['is_favorite'])));
 $firstVariationMockup = null;
 foreach ($relatedMockups as $candidateVariationMockup) {
     if (!empty($candidateVariationMockup['variation_lab_available'])) {
@@ -751,7 +901,7 @@ $sizeText = trim((string)$width) !== '' && trim((string)$height) !== ''
     ? trim((string)$width . ' x ' . (string)$height . ($depth !== '' && $depth !== null ? ' x ' . (string)$depth : '') . ' ' . $unit)
     : 'No dimensions specified';
 
-$artistProfile = is_array($profile['_artist_profile'] ?? null) ? $profile['_artist_profile'] : ArtistProfile::findForUser((int)$user['id']);
+$artistProfile = is_array($profile['_artist_profile'] ?? null) ? $profile['_artist_profile'] : ArtistProfile::findForUser($artworkOwnerId);
 $artistName = trim((string)($artistProfile['artist_name'] ?? ''));
 $orientation = $analysis['image']['orientation'] ?? '';
 if ($orientation === '' && (float)$width > 0 && (float)$height > 0) {
@@ -760,7 +910,7 @@ if ($orientation === '' && (float)$width > 0 && (float)$height > 0) {
 $orientation = $orientation ?: 'Not specified';
 $package = build_artwork_package_v2($artwork, $analysis, $artistProfile);
 $sheetService = new ArtworkSheetService($pdo);
-$artworkSheet = $sheetService->sheetForArtwork($id, (int)$user['id']);
+$artworkSheet = $sheetService->sheetForArtwork($id, $artworkOwnerId);
 $artworkSheetGenerated = json_decode((string)($artworkSheet['generated_json'] ?? ''), true);
 $artworkSheetGenerated = is_array($artworkSheetGenerated) ? $artworkSheetGenerated : [];
 $artworkSheetLongTail = is_array($artworkSheetGenerated['long_tail_terms'] ?? null)
@@ -1283,9 +1433,9 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
 
         .artwork-overview-grid {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 380px;
-            gap: 18px;
-            align-items: start;
+            grid-template-columns: minmax(620px, 1.45fr) minmax(240px, .55fr) minmax(300px, .78fr);
+            gap: 14px;
+            align-items: stretch;
         }
 
         .artwork-root-views-card {
@@ -1293,6 +1443,11 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             border: 1px solid var(--line);
             border-radius: var(--radius);
             padding: 14px;
+        }
+
+        .artwork-overview-grid > .artwork-root-views-card {
+            grid-column: 1;
+            grid-row: 1;
         }
 
         .artwork-root-views-card h3 {
@@ -1304,14 +1459,136 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             background: var(--surface);
             border: 1px solid var(--line);
             border-radius: var(--radius);
-            padding: 18px;
+            padding: 14px;
             box-shadow: var(--shadow);
+        }
+
+        .artwork-primary-metadata-card {
+            grid-column: 3;
+            grid-row: 1;
         }
 
         .artwork-sheet-card h3 {
             margin: 0;
-            font-size: 28px;
-            line-height: 1.1;
+            font-size: 18px;
+            line-height: 1.15;
+        }
+
+        .artwork-sheet-card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .artwork-sheet-card-head p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .artwork-metadata-action-form {
+            flex: 0 0 auto;
+            margin: 0;
+        }
+
+        .artwork-metadata-layout-form {
+            display: contents;
+        }
+
+        .artwork-metadata-action-form button {
+            width: auto;
+            min-height: 38px;
+            margin: 0;
+            padding: 0 18px;
+            white-space: nowrap;
+        }
+
+        .artwork-metadata-editor {
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: var(--surface-soft);
+            padding: 0;
+        }
+
+        .artwork-metadata-secondary-row {
+            grid-column: 1 / -1;
+            grid-row: 2;
+        }
+
+        .artwork-metadata-editor > summary {
+            cursor: pointer;
+            padding: 11px 12px;
+            color: var(--ink);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            list-style-position: inside;
+            text-transform: uppercase;
+        }
+
+        .artwork-metadata-form {
+            padding: 0 12px 12px;
+        }
+
+        .artwork-primary-metadata-card .artwork-metadata-form {
+            padding: 12px 0 0;
+        }
+
+        .artwork-metadata-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px 14px;
+        }
+
+        .artwork-primary-metadata-card .artwork-metadata-form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .artwork-metadata-field {
+            display: grid;
+            gap: 6px;
+            align-content: start;
+        }
+
+        .artwork-metadata-field.full {
+            grid-column: 1 / -1;
+        }
+
+        .artwork-metadata-field label {
+            margin: 0;
+        }
+
+        .artwork-metadata-field input,
+        .artwork-metadata-field textarea {
+            background: var(--surface);
+        }
+
+        .artwork-metadata-sections {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .artwork-metadata-sections .details-panel {
+            margin: 0 !important;
+            padding: 10px !important;
+            background: var(--surface);
+        }
+
+        .artwork-metadata-save {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 12px;
+        }
+
+        .artwork-metadata-save button {
+            width: auto;
+            margin: 0;
+            min-height: 38px;
+            padding: 0 18px;
         }
 
         .artwork-sheet-subtitle {
@@ -1374,25 +1651,223 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
         .root-version-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 10px;
+            gap: 12px;
+            align-items: start;
+            justify-content: start;
+            max-width: 100%;
+        }
+
+        .root-overview-media-grid {
+            min-width: 0;
+        }
+
+        .favorite-mockups-panel {
+            grid-column: 2;
+            grid-row: 1;
+            min-width: 0;
+            height: 100%;
+            box-sizing: border-box;
+            background: var(--surface-soft);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            align-self: stretch;
+        }
+
+        .favorite-mockups-panel h3 {
+            margin: 0 0 10px;
+            color: var(--muted);
+            font-family: var(--font-sans);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .favorite-mockups-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 7px;
+            align-content: start;
+        }
+
+        .favorite-mockups-grid.count-2,
+        .favorite-mockups-grid.count-3,
+        .favorite-mockups-grid.count-4 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .favorite-mockups-grid.count-5,
+        .favorite-mockups-grid.count-6 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 6px;
+        }
+
+        .favorite-mockups-grid.count-5 .favorite-mockup-tile span,
+        .favorite-mockups-grid.count-6 .favorite-mockup-tile span {
+            font-size: 8px;
+        }
+
+        .favorite-mockup-tile {
+            display: block;
+            min-width: 0;
+            color: var(--muted);
+            text-decoration: none;
+        }
+
+        .favorite-mockup-tile-wrap {
+            position: relative;
+            min-width: 0;
+        }
+
+        .favorite-mockup-tile img {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            display: block;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 3px;
+        }
+
+        .favorite-mockup-tile span {
+            display: block;
+            margin-top: 4px;
+            overflow: hidden;
+            color: var(--muted);
+            font-size: 9px;
+            letter-spacing: .04em;
+            text-overflow: ellipsis;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .favorite-empty {
+            flex: 1;
+            min-height: 100%;
+            border: 1px dashed var(--line);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 18px 12px;
+            color: var(--muted);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .favorite-overlay-btn {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            z-index: 4;
+            width: 28px;
+            height: 28px;
+            min-height: 28px;
+            margin: 0;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, .34);
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(18, 17, 15, .16);
+            color: rgba(255, 255, 255, .68);
+            font-size: 14px;
+            line-height: 1;
+            cursor: pointer;
+            opacity: .36;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, .12);
+            backdrop-filter: blur(8px);
+            transition: opacity .16s ease, background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+        }
+
+        .related-mockup-image:hover .favorite-overlay-btn,
+        .related-mockup-image:focus-within .favorite-overlay-btn,
+        .favorite-overlay-btn:hover,
+        .favorite-overlay-btn:focus-visible,
+        .favorite-overlay-btn.active {
+            background: rgba(154, 123, 86, .72);
+            border-color: rgba(255, 255, 255, .62);
+            color: #fff;
+            opacity: .94;
+            outline: none;
+        }
+
+        .favorite-overlay-btn[disabled] {
+            opacity: .55;
+            cursor: wait;
+        }
+
+        .mockup-delete-overlay-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            z-index: 4;
+            width: 28px;
+            height: 28px;
+            min-height: 28px;
+            margin: 0;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, .34);
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(18, 17, 15, .16);
+            color: rgba(255, 255, 255, .68);
+            font-size: 15px;
+            line-height: 1;
+            cursor: pointer;
+            opacity: .36;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, .12);
+            backdrop-filter: blur(8px);
+            transition: opacity .16s ease, background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+        }
+
+        .favorite-mockup-tile-wrap:hover .mockup-delete-overlay-btn,
+        .favorite-mockup-tile-wrap:focus-within .mockup-delete-overlay-btn,
+        .related-mockup-image:hover .mockup-delete-overlay-btn,
+        .related-mockup-image:focus-within .mockup-delete-overlay-btn,
+        .mockup-delete-overlay-btn:hover,
+        .mockup-delete-overlay-btn:focus-visible {
+            background: rgba(124, 43, 35, .72);
+            border-color: rgba(255, 255, 255, .62);
+            color: #fff;
+            opacity: .94;
+            outline: none;
+        }
+
+        .mockup-delete-overlay-btn[disabled] {
+            opacity: .55;
+            cursor: wait;
         }
 
         .root-version-card {
             position: relative;
             display: grid;
             min-width: 0;
+            width: 100%;
+            max-width: none;
+            align-content: start;
+            justify-self: start;
         }
 
         .root-version-card a {
-            display: block;
             position: relative;
+            display: block;
+            width: 100%;
+            max-width: none;
         }
 
         .root-version-card img {
             width: 100%;
-            aspect-ratio: 4 / 3;
-            object-fit: cover;
-            background: var(--surface);
+            height: auto;
+            max-width: 100%;
+            object-fit: contain;
+            background: transparent;
             border: 1px solid var(--line);
             border-radius: 3px;
             display: block;
@@ -1542,6 +2017,11 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             border-radius: 3px;
         }
 
+        .related-mockup-image {
+            position: relative;
+            display: block;
+        }
+
         .related-mockup-meta {
             display: flex;
             align-items: baseline;
@@ -1622,6 +2102,23 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             .artwork-info-grid {
                 grid-template-columns: 1fr;
             }
+
+            .artwork-overview-grid > .artwork-root-views-card,
+            .artwork-primary-metadata-card,
+            .favorite-mockups-panel,
+            .artwork-metadata-secondary-row {
+                grid-column: 1;
+                grid-row: auto;
+            }
+
+            .favorite-mockups-panel {
+                border: 1px solid var(--line);
+                padding: 14px;
+            }
+
+            .artwork-metadata-sections {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 700px) {
@@ -1632,6 +2129,23 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             .compact-title-main {
                 align-items: flex-start;
                 flex-direction: column;
+            }
+
+            .artwork-sheet-card-head {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .artwork-metadata-action-form,
+            .artwork-metadata-action-form button,
+            .artwork-metadata-form-grid,
+            .artwork-metadata-save,
+            .artwork-metadata-save button {
+                width: 100%;
+            }
+
+            .artwork-metadata-form-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -1691,117 +2205,193 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                     <p>Root views, basic information, and direct access to the mockup workflow.</p>
                 </div>
                 <?php if ($rootFile && is_file($rootPath)): ?>
+                    <form id="artwork-generate-metadata-form" class="artwork-metadata-action-form" method="post">
+                        <input type="hidden" name="action" value="generate_artwork_metadata">
+                    </form>
                     <div class="artwork-overview-grid">
                         <section class="artwork-root-views-card">
                             <h3>Root Views</h3>
-                            <?php if (!empty($rootCandidatesList)): ?>
-                                <div class="root-version-grid">
-                                    <?php
-                                    $viewLabels = [
-                                        'frontal'             => 'Frontal',
-                                        'three-quarter-left'  => '3/4 Left',
-                                        'three-quarter-right' => '3/4 Right',
-                                    ];
-                                    foreach (array_slice($rootCandidatesList, 0, 3) as $rca):
-                                        $rcaFile = basename((string)($rca['file_name'] ?? ''));
-                                        if ($rcaFile === '' || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $rcaFile)) {
-                                            continue;
-                                        }
-                                        $rcaLabel = $viewLabels[$rca['view_type']] ?? $rca['view_type'];
-                                        $rcaIsSelected = !empty($rca['is_selected']) || $rcaFile === $rootFile;
-                                    ?>
-                                        <article class="root-version-card <?= $rcaIsSelected ? 'is-selected' : '' ?>">
-                                            <a href="<?= h('viewer.php?file=' . rawurlencode($rcaFile) . '&back=' . rawurlencode('artwork.php?id=' . (int)$id)) ?>">
-                                                <img src="<?= h(media_url($rcaFile)) ?>" alt="<?= h($rcaLabel) ?>">
-                                            </a>
-                                            <div class="root-version-overlay">
-                                                <?php if ($rcaIsSelected): ?>
-                                                    <span class="root-version-selected-pill">Selected</span>
-                                                <?php else: ?>
-                                                    <form method="post">
-                                                        <input type="hidden" name="action" value="select_root_candidate">
-                                                        <input type="hidden" name="candidate_id" value="<?= (int)$rca['id'] ?>">
-                                                        <input type="hidden" name="candidate_file" value="<?= h($rcaFile) ?>">
-                                                        <button class="root-version-select" type="submit" title="Select root view" aria-label="Select root view">✓</button>
-                                                    </form>
-                                                <?php endif; ?>
-                                            </div>
-                                            <div class="root-version-label">
-                                                <span><?= h($rcaLabel) ?></span>
-                                            </div>
-                                        </article>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php else: ?>
-                                <div class="notice">Only the selected root image is available.</div>
-                            <?php endif; ?>
+                            <div class="root-overview-media-grid">
+                                <?php if (!empty($rootCandidatesList)): ?>
+                                    <div class="root-version-grid">
+                                        <?php
+                                        $viewLabels = [
+                                            'frontal'             => 'Frontal',
+                                            'three-quarter-left'  => '3/4 Left',
+                                            'three-quarter-right' => '3/4 Right',
+                                        ];
+                                        foreach (array_slice($rootCandidatesList, 0, 3) as $rca):
+                                            $rcaFile = basename((string)($rca['file_name'] ?? ''));
+                                            if ($rcaFile === '' || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $rcaFile)) {
+                                                continue;
+                                            }
+                                            $rcaLabel = $viewLabels[$rca['view_type']] ?? $rca['view_type'];
+                                            $rcaIsSelected = !empty($rca['is_selected']) || $rcaFile === $rootFile;
+                                        ?>
+                                            <article class="root-version-card <?= $rcaIsSelected ? 'is-selected' : '' ?>">
+                                                <a href="<?= h('viewer.php?file=' . rawurlencode($rcaFile) . '&back=' . rawurlencode('artwork.php?id=' . (int)$id)) ?>">
+                                                    <img src="<?= h(media_url($rcaFile)) ?>" alt="<?= h($rcaLabel) ?>">
+                                                </a>
+                                                <div class="root-version-overlay">
+                                                    <?php if ($rcaIsSelected): ?>
+                                                        <span class="root-version-selected-pill">Selected</span>
+                                                    <?php else: ?>
+                                                        <form method="post">
+                                                            <input type="hidden" name="action" value="select_root_candidate">
+                                                            <input type="hidden" name="candidate_id" value="<?= (int)$rca['id'] ?>">
+                                                            <input type="hidden" name="candidate_file" value="<?= h($rcaFile) ?>">
+                                                            <button class="root-version-select" type="submit" title="Select root view" aria-label="Select root view">✓</button>
+                                                        </form>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="root-version-label">
+                                                    <span><?= h($rcaLabel) ?></span>
+                                                </div>
+                                            </article>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="notice">Only the selected root image is available.</div>
+                                <?php endif; ?>
+                            </div>
                         </section>
 
-                        <aside class="artwork-sheet-card">
-                            <?php if (!$artworkSheetHasMetadata): ?>
-                                <form method="post" style="margin-bottom: 14px;">
-                                    <input type="hidden" name="action" value="generate_artwork_metadata">
-                                    <button type="submit" style="width: 100%;">Generate Artwork Metadata</button>
-                                </form>
-                            <?php endif; ?>
+                        <form class="artwork-metadata-layout-form" method="post">
+                            <input type="hidden" name="action" value="save_artwork_metadata">
+                            <section class="artwork-sheet-card artwork-primary-metadata-card">
+                                <div class="artwork-sheet-card-head">
+                                    <div>
+                                        <h3>Artwork Metadata</h3>
+                                        <p>Title, subtitle, and description.</p>
+                                    </div>
+                                    <div class="topbar-actions">
+                                        <button type="submit" form="artwork-generate-metadata-form" class="<?= $artworkSheetHasMetadata ? 'secondary' : '' ?>"><?= $artworkSheetHasMetadata ? 'Regenerate' : 'Generate' ?></button>
+                                    </div>
+                                </div>
 
-                            <form method="post">
-                                <input type="hidden" name="action" value="save_artwork_metadata">
-                                <label>Title</label>
-                                <input type="text" name="title" value="<?= h($displayTitle) ?>">
+                                <div class="artwork-metadata-form">
+                                    <div class="artwork-metadata-form-grid">
+                                        <div class="artwork-metadata-field">
+                                            <label>Title</label>
+                                            <input type="text" name="title" value="<?= h($displayTitle) ?>">
+                                        </div>
 
-                                <label>Subtitle</label>
-                                <input type="text" name="subtitle" value="<?= h($displaySubtitle) ?>">
+                                        <div class="artwork-metadata-field">
+                                            <label>Subtitle</label>
+                                            <input type="text" name="subtitle" value="<?= h($displaySubtitle) ?>">
+                                        </div>
 
-                                <label>Description</label>
-                                <textarea name="description" rows="7"><?= h($displayDescription) ?></textarea>
-
-                                <details class="details-panel" style="margin-top: 12px; padding: 12px;" open>
-                                    <summary style="font-size: 12px;">Metadata</summary>
-                                    <label>Short Description</label>
-                                    <textarea name="short_description" rows="3"><?= h((string)($artworkSheet['short_description'] ?? '')) ?></textarea>
-
-                                    <label>Tags</label>
-                                    <textarea name="tags" rows="3"><?= h((string)($artworkSheet['tags'] ?? '')) ?></textarea>
-
-                                    <label>Long Tail Terms</label>
-                                    <textarea name="long_tail_terms" rows="4"><?= h(implode("\n", array_map('strval', $artworkSheetLongTail))) ?></textarea>
-
-                                    <label>Keywords</label>
-                                    <textarea name="keywords" rows="3"><?= h((string)($artworkSheet['keywords'] ?? '')) ?></textarea>
-
-                                    <label>Alt Text</label>
-                                    <textarea name="alt_text" rows="3"><?= h((string)($artworkSheet['alt_text'] ?? '')) ?></textarea>
-
-                                    <label>Caption</label>
-                                    <textarea name="caption" rows="3"><?= h((string)($artworkSheet['caption'] ?? '')) ?></textarea>
-                                </details>
-
-                                <details class="details-panel" style="margin-top: 12px; padding: 12px;">
-                                    <summary style="font-size: 12px;">Basic Information</summary>
-                                    <div class="artwork-sheet-meta">
-                                        <div class="artwork-sheet-meta-row">
-                                            <strong>Measurements</strong>
-                                            <span><?= h($sizeText) ?></span>
+                                        <div class="artwork-metadata-field full">
+                                            <label>Description</label>
+                                            <textarea name="description" rows="4"><?= h($displayDescription) ?></textarea>
                                         </div>
                                     </div>
-                                    <label>Technique / Support</label>
-                                    <input type="text" name="medium" value="<?= h((string)($artwork['medium'] ?? '')) ?>">
-                                    <label>Year</label>
-                                    <input type="text" name="artwork_year" value="<?= h((string)($artwork['artwork_year'] ?? '')) ?>">
-                                    <label>Series</label>
-                                    <input type="text" name="series" value="<?= h((string)($artwork['series'] ?? '')) ?>">
-                                </details>
 
-                                <button type="submit" style="width: 100%; margin-top: 14px;">Save Metadata</button>
-                            </form>
-                            <?php if ($artworkSheetHasMetadata): ?>
-                                <form method="post" style="margin-top: 10px;">
-                                    <input type="hidden" name="action" value="generate_artwork_metadata">
-                                    <button type="submit" class="secondary" style="width: 100%;">Regenerate With Admin Prompt</button>
-                                </form>
-                            <?php endif; ?>
-                        </aside>
+                                    <div class="artwork-metadata-save">
+                                        <button type="submit">Save Metadata</button>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <details class="artwork-metadata-editor artwork-metadata-secondary-row">
+                                <summary>More metadata</summary>
+                                <div class="artwork-metadata-form">
+                                    <div class="artwork-metadata-sections">
+                                        <details class="details-panel">
+                                            <summary style="font-size: 12px;">SEO Metadata</summary>
+                                            <div class="artwork-metadata-field">
+                                                <label>Short Description</label>
+                                                <textarea name="short_description" rows="2"><?= h((string)($artworkSheet['short_description'] ?? '')) ?></textarea>
+                                            </div>
+
+                                            <div class="artwork-metadata-field">
+                                                <label>Tags</label>
+                                                <textarea name="tags" rows="2"><?= h((string)($artworkSheet['tags'] ?? '')) ?></textarea>
+                                            </div>
+
+                                            <div class="artwork-metadata-field">
+                                                <label>Long Tail Terms</label>
+                                                <textarea name="long_tail_terms" rows="2"><?= h(implode("\n", array_map('strval', $artworkSheetLongTail))) ?></textarea>
+                                            </div>
+
+                                            <div class="artwork-metadata-field">
+                                                <label>Keywords</label>
+                                                <textarea name="keywords" rows="2"><?= h((string)($artworkSheet['keywords'] ?? '')) ?></textarea>
+                                            </div>
+
+                                            <div class="artwork-metadata-field">
+                                                <label>Alt Text</label>
+                                                <textarea name="alt_text" rows="2"><?= h((string)($artworkSheet['alt_text'] ?? '')) ?></textarea>
+                                            </div>
+
+                                            <div class="artwork-metadata-field">
+                                                <label>Caption</label>
+                                                <textarea name="caption" rows="2"><?= h((string)($artworkSheet['caption'] ?? '')) ?></textarea>
+                                            </div>
+                                        </details>
+
+                                        <details class="details-panel">
+                                            <summary style="font-size: 12px;">Basic Information</summary>
+                                            <div class="artwork-sheet-meta">
+                                                <div class="artwork-sheet-meta-row">
+                                                    <strong>Measurements</strong>
+                                                    <span><?= h($sizeText) ?></span>
+                                                </div>
+                                            </div>
+                                            <div class="artwork-metadata-field">
+                                                <label>Technique / Support</label>
+                                                <input type="text" name="medium" value="<?= h((string)($artwork['medium'] ?? '')) ?>">
+                                            </div>
+                                            <div class="artwork-metadata-field">
+                                                <label>Year</label>
+                                                <input type="text" name="artwork_year" value="<?= h((string)($artwork['artwork_year'] ?? '')) ?>">
+                                            </div>
+                                            <div class="artwork-metadata-field">
+                                                <label>Series</label>
+                                                <input type="text" name="series" value="<?= h((string)($artwork['series'] ?? '')) ?>">
+                                            </div>
+                                        </details>
+                                    </div>
+
+                                    <div class="artwork-metadata-save">
+                                        <button type="submit">Save Metadata</button>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <aside class="favorite-mockups-panel">
+                                <h3>Favorites</h3>
+                                <?php if ($favoriteMockups): ?>
+                                    <?php $visibleFavoriteMockups = array_slice($favoriteMockups, 0, 6); ?>
+                                    <div class="favorite-mockups-grid count-<?= count($visibleFavoriteMockups) ?>">
+                                        <?php foreach ($visibleFavoriteMockups as $favoriteMockup): ?>
+                                            <?php
+                                            $favoriteFile = (string)$favoriteMockup['mockup_file_basename'];
+                                            $favoriteState = (array)($favoriteMockup['selector_state'] ?? []);
+                                            $favoriteCombo = (array)($favoriteState['combination'] ?? []);
+                                            $favoriteLabel = trim((string)($favoriteCombo['camera_slot_name'] ?? $favoriteMockup['context_id'] ?? 'Favorite'));
+                                            ?>
+                                            <div class="favorite-mockup-tile-wrap" data-mockup-card data-mockup-id="<?= (int)$favoriteMockup['id'] ?>">
+                                                <a class="favorite-mockup-tile" href="<?= h('viewer.php?id=' . (int)$favoriteMockup['id'] . '&back=' . rawurlencode('artwork.php?id=' . (int)$id)) ?>">
+                                                    <img src="<?= h('media.php?file=' . rawurlencode($favoriteFile)) ?>" alt="<?= h($favoriteLabel) ?>">
+                                                    <span><?= h($favoriteLabel !== '' ? $favoriteLabel : 'Favorite') ?></span>
+                                                </a>
+                                                <button
+                                                    class="mockup-delete-overlay-btn"
+                                                    type="button"
+                                                    title="Delete mockup"
+                                                    aria-label="Delete mockup"
+                                                    data-delete-mockup
+                                                    data-mockup-id="<?= (int)$favoriteMockup['id'] ?>"
+                                                >×</button>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="favorite-empty">Mark mockups as favorites to curate this column.</div>
+                                <?php endif; ?>
+                            </aside>
+                        </form>
                     </div>
                 <?php else: ?>
                     <div class="notice">No root artwork image is available yet.</div>
@@ -1834,10 +2424,28 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                             $relatedCombo = (array)($relatedState['combination'] ?? []);
                             $relatedLabel = trim((string)($relatedCombo['camera_slot_name'] ?? $relatedMockup['context_id'] ?? 'Mockup'));
                             ?>
-                            <article class="related-mockup-card">
-                                <a href="<?= h($relatedViewerUrl) ?>">
-                                    <img src="<?= h($relatedUrl) ?>" alt="<?= h($relatedLabel) ?>">
-                                </a>
+                            <article class="related-mockup-card" data-mockup-card data-mockup-id="<?= (int)$relatedMockup['id'] ?>">
+                                <div class="related-mockup-image">
+                                    <a href="<?= h($relatedViewerUrl) ?>">
+                                        <img src="<?= h($relatedUrl) ?>" alt="<?= h($relatedLabel) ?>">
+                                    </a>
+                                    <button
+                                        class="favorite-overlay-btn <?= !empty($relatedMockup['is_favorite']) ? 'active' : '' ?>"
+                                        type="button"
+                                        title="<?= !empty($relatedMockup['is_favorite']) ? 'Remove favorite' : 'Add favorite' ?>"
+                                        aria-label="<?= !empty($relatedMockup['is_favorite']) ? 'Remove favorite' : 'Add favorite' ?>"
+                                        data-favorite-mockup
+                                        data-mockup-id="<?= (int)$relatedMockup['id'] ?>"
+                                    >★</button>
+                                    <button
+                                        class="mockup-delete-overlay-btn"
+                                        type="button"
+                                        title="Delete mockup"
+                                        aria-label="Delete mockup"
+                                        data-delete-mockup
+                                        data-mockup-id="<?= (int)$relatedMockup['id'] ?>"
+                                    >×</button>
+                                </div>
                                 <div class="related-mockup-meta">
                                     <strong title="<?= h($relatedLabel !== '' ? $relatedLabel : 'Mockup') ?>"><?= h($relatedLabel !== '' ? $relatedLabel : 'Mockup') ?></strong>
                                     <span>#<?= (int)$relatedMockup['id'] ?></span>
@@ -2390,6 +2998,59 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
     });
     document.getElementById('copy_section_2')?.addEventListener('click', function() {
         copySection(this, getSection2Text);
+    });
+
+    document.querySelectorAll('[data-favorite-mockup]').forEach((button) => {
+        button.addEventListener('click', async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const formData = new FormData();
+            formData.append('mockup_id', button.getAttribute('data-mockup-id') || '');
+            button.disabled = true;
+            try {
+                const response = await fetch('toggle_mockup_favorite.php', { method: 'POST', body: formData });
+                const result = await response.json();
+                if (!result.ok) {
+                    throw new Error(result.error || 'Could not update favorite.');
+                }
+                button.classList.toggle('active', !!result.favorite);
+                button.title = result.favorite ? 'Remove favorite' : 'Add favorite';
+                button.setAttribute('aria-label', button.title);
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                button.disabled = false;
+            }
+        });
+    });
+
+    document.querySelectorAll('[data-delete-mockup]').forEach((button) => {
+        button.addEventListener('click', async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (!confirm('Delete this mockup?')) {
+                return;
+            }
+            const mockupId = button.getAttribute('data-mockup-id') || '';
+            const formData = new FormData();
+            formData.append('mockup_id', mockupId);
+            button.disabled = true;
+            try {
+                const response = await fetch('delete_mockup_result.php', { method: 'POST', body: formData });
+                const result = await response.json();
+                if (!result.ok) {
+                    throw new Error(result.error || 'Could not delete mockup.');
+                }
+                document.querySelectorAll('[data-mockup-card]').forEach((card) => {
+                    if (card.getAttribute('data-mockup-id') === mockupId) {
+                        card.remove();
+                    }
+                });
+            } catch (error) {
+                alert(error.message);
+                button.disabled = false;
+            }
+        });
     });
 
     // AJAX mockup generation listener

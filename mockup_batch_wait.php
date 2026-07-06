@@ -33,7 +33,7 @@ if (!defined('LEGACY_MOCKUP_FLOW_ENABLED') || !LEGACY_MOCKUP_FLOW_ENABLED) {
     }
 }
 if ($image === '') {
-    header('Location: dashboard.php');
+    header('Location: root_album.php');
     exit;
 }
 
@@ -126,7 +126,6 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
     <style>
         html,
         body {
-            zoom: 1;
             margin: 0;
             padding: 0;
             background: #080807;

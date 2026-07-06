@@ -31,7 +31,7 @@ if (!is_file($path)) {
     exit('File not found.');
 }
 
-if (!user_can_access_result_file((int)$user['id'], $file)) {
+if (!Auth::isAdmin($user) && !user_can_access_result_file((int)$user['id'], $file)) {
     http_response_code(403);
     exit('No tienes acceso a este archivo.');
 }
@@ -143,6 +143,72 @@ function user_can_access_exact_result_file(PDO $pdo, int $userId, string $file):
         return true;
     }
 
+    $rootVersionPrefix = root_version_prefix($file);
+    if ($rootVersionPrefix !== '') {
+        $stmt = $pdo->prepare("
+            SELECT 1
+            FROM artworks
+            WHERE user_id = :user_id
+            AND root_file LIKE :root_pattern
+            LIMIT 1
+        ");
+        $stmt->execute([
+            'user_id' => $userId,
+            'root_pattern' => $rootVersionPrefix . '_v%',
+        ]);
+        if ($stmt->fetchColumn()) {
+            return true;
+        }
+
+        $stmt = $pdo->prepare("
+            SELECT 1
+            FROM mockups
+            WHERE user_id = :user_id
+            AND artwork_file LIKE :root_pattern
+            LIMIT 1
+        ");
+        $stmt->execute([
+            'user_id' => $userId,
+            'root_pattern' => $rootVersionPrefix . '_v%',
+        ]);
+        if ($stmt->fetchColumn()) {
+            return true;
+        }
+    }
+
+    $stmt = $pdo->prepare('
+        SELECT 1
+        FROM mockups
+        WHERE user_id = :user_id
+        AND artwork_file = :file
+        LIMIT 1
+    ');
+    $stmt->execute([
+        'user_id' => $userId,
+        'file' => $file,
+    ]);
+
+    if ($stmt->fetchColumn()) {
+        return true;
+    }
+
+    $stmt = $pdo->prepare('
+        SELECT 1
+        FROM root_artwork_candidates rac
+        INNER JOIN artworks a ON a.id = rac.artwork_id
+        WHERE a.user_id = :user_id
+        AND rac.file_name = :file
+        LIMIT 1
+    ');
+    $stmt->execute([
+        'user_id' => $userId,
+        'file' => $file,
+    ]);
+
+    if ($stmt->fetchColumn()) {
+        return true;
+    }
+
     $fileColumn = str_ends_with($file, '.txt') ? 'prompt_file' : 'mockup_file';
 
     $stmt = $pdo->prepare("
@@ -196,4 +262,13 @@ function user_can_access_exact_result_file(PDO $pdo, int $userId, string $file):
 function canonical_generated_file(string $file): string
 {
     return (string)preg_replace('/\.original(?=\.[^.]+$)/', '', $file, 1);
+}
+
+function root_version_prefix(string $file): string
+{
+    if (preg_match('/^(.*)_v\d+\.[A-Za-z0-9]+$/', basename($file), $matches)) {
+        return (string)$matches[1];
+    }
+
+    return '';
 }

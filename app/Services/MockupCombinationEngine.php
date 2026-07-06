@@ -27,7 +27,8 @@ final class MockupCombinationEngine
             throw new RuntimeException('Artwork not found.');
         }
 
-        $cameraSlots = $this->activeCameraSlots();
+        $sceneBoardIndex = max(1, min(3, (int)($options['scene_board_index'] ?? 1)));
+        $cameraSlots = $this->activeCameraSlots($sceneBoardIndex);
         $worldImages = $this->worldMotherImagesByCategory();
         $flatWorldImages = [];
         foreach ($worldImages as $images) {
@@ -135,6 +136,7 @@ final class MockupCombinationEngine
         return [
             'schema' => 'mockup_combinations_review.v1',
             'artwork_id' => $artworkId,
+            'scene_board_index' => $sceneBoardIndex,
             'generated_at' => date(DATE_ATOM),
             'root_artwork_path' => $rootPath,
             'direct_world_mother_profile' => $directProfile,
@@ -153,7 +155,7 @@ final class MockupCombinationEngine
     /**
      * @return array<string,array<string,mixed>>
      */
-    public function activeCameraSlots(): array
+    public function activeCameraSlots(int $sceneBoardIndex = 1): array
     {
         $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'Config' . DIRECTORY_SEPARATOR . 'mockup_camera_slots.php';
         $config = is_file($path) ? require $path : [];
@@ -169,6 +171,53 @@ final class MockupCombinationEngine
             $slot['slot_name'] = (string)($slot['slot_name'] ?? $slot['slot_id']);
             $slot['camera_slot_geometry'] = $this->cameraGeometry($slot);
             $active[$slot['slot_id']] = $slot;
+        }
+
+        $sceneBoardIndex = max(1, min(3, $sceneBoardIndex));
+        $boardSlots = (array)($config['scene_boards'][$sceneBoardIndex]['slots'] ?? []);
+        if (!$boardSlots && $sceneBoardIndex === 1) {
+            $boardSlots = (array)($config['scene_board']['slots'] ?? []);
+        }
+        $boardSlotIds = array_values(array_filter(array_map('strval', $boardSlots), static fn (string $slotId): bool => $slotId !== ''));
+        if ($boardSlotIds) {
+            $sceneBoardSlots = [];
+            foreach ($boardSlotIds as $boardOrder => $slotId) {
+                if (!isset($active[$slotId])) {
+                    continue;
+                }
+                $slot = $active[$slotId];
+                $slot['board_order'] = $boardOrder + 1;
+                $slot['scene_board_index'] = $sceneBoardIndex;
+                $sceneBoardSlots[$slotId] = $slot;
+            }
+
+            return $sceneBoardSlots;
+        }
+
+        if ($sceneBoardIndex > 1) {
+            return [];
+        }
+
+        $sceneBoardSlots = array_filter($active, static function (array $slot): bool {
+            return (int)($slot['board_order'] ?? 0) > 0
+                || !empty($slot['primary_scene_set'])
+                || (trim((string)($slot['group_id'] ?? '')) !== '' && (int)($slot['variant_order'] ?? 0) > 0);
+        });
+        if ($sceneBoardSlots) {
+            uasort($sceneBoardSlots, static function (array $a, array $b): int {
+                $aBoardOrder = (int)($a['board_order'] ?? 0);
+                $bBoardOrder = (int)($b['board_order'] ?? 0);
+                if ($aBoardOrder > 0 || $bBoardOrder > 0) {
+                    return (($aBoardOrder > 0 ? $aBoardOrder : 9999) <=> ($bBoardOrder > 0 ? $bBoardOrder : 9999))
+                        ?: strcmp((string)($a['slot_name'] ?? ''), (string)($b['slot_name'] ?? ''));
+                }
+
+                return ((int)($a['group_order'] ?? 999) <=> (int)($b['group_order'] ?? 999))
+                    ?: ((int)($a['variant_order'] ?? 999) <=> (int)($b['variant_order'] ?? 999))
+                    ?: strcmp((string)($a['slot_name'] ?? ''), (string)($b['slot_name'] ?? ''));
+            });
+
+            return $sceneBoardSlots;
         }
 
         return $active;
@@ -612,6 +661,13 @@ final class MockupCombinationEngine
             'suggested_camera_slot_id' => $suggestedSlotId,
             'selected_camera_slot_id' => $selectedSlotId,
             'camera_slot_name' => (string)($cameraSlot['slot_name'] ?? ''),
+            'camera_slot_group_id' => (string)($cameraSlot['group_id'] ?? ''),
+            'camera_slot_group_name' => (string)($cameraSlot['group_name'] ?? ''),
+            'camera_slot_group_order' => (int)($cameraSlot['group_order'] ?? 0),
+            'camera_slot_variant_label' => (string)($cameraSlot['variant_label'] ?? ''),
+            'camera_slot_variant_order' => (int)($cameraSlot['variant_order'] ?? 0),
+            'camera_slot_scene_board_index' => (int)($cameraSlot['scene_board_index'] ?? 1),
+            'camera_slot_board_order' => (int)($cameraSlot['board_order'] ?? 0),
             'camera_slot_description' => $cameraGeometry,
             'final_prompt_preview' => $finalPromptPreview,
             'generation_ready' => $generationReady,

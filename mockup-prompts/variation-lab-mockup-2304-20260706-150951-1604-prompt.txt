@@ -1,0 +1,13 @@
+Edita la imagen proporcionada como una prueba de laboratorio. No generes una explicacion; devuelve solo una imagen final.
+
+REFERENCIAS ADJUNTAS:
+- IMAGEN 1 es el mockup existente que debe editarse. Su tipo de espacio y su logica ambiental son el punto de partida.
+- IMAGEN 2 es la obra raiz autoritativa. La obra visible en el resultado debe conservar la identidad de IMAGEN 2.
+- IMAGEN 3 es la Scene Mother original. Usarla para conservar familia de ambiente, materiales, luz, paleta, atmosfera y coherencia espacial. No inventar un tipo de lugar alternativo.
+
+OBRA:
+- Titulo: obra sin titulo
+- Altura de referencia de la obra: 120 cm
+
+VARIACION SOLICITADA:
+Genera una reinterpretacion controlada del mockup con vista perfilada hacia la izquierda.

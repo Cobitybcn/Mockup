@@ -1,0 +1,56 @@
+Generate one premium photographic mockup using this exact camera slot only:
+Camera Slot ID: contrapicado_raton_puro
+Camera Slot Name: Nadir Controlado
+
+INPUT ROLES:
+IMAGE 1 is the only source of truth for the artwork. Preserve exact identity, orientation, aspect ratio, colors, marks, sparse areas, and composition.
+IMAGE 2 may only inform environmental DNA: materials, light quality, wall/floor character, and premium spatial mood. Do not copy camera, layout, furniture, windows, artwork placement, or composition.
+
+ARTWORK PHYSICAL DATA:
+Artwork title: root_art_complete_root_views_10009_1783278683_1594_v1
+Artwork width: 80 cm
+Artwork height: 120 cm
+Artwork orientation: portrait
+Artwork size class: L
+
+TASK:
+Create a controlled nadir-inspired wall artwork mockup from near floor level. The camera must visibly look upward from approximately 5-15 cm above the floor, with a large near floor plane and rising room geometry.
+
+CAMERA:
+Use an aggressive wide architectural lens equivalent, about 20-26 mm. Use a strong upward tilt and assertive oblique angle across the room. Floor lines, wall planes, ceiling height, columns, furniture legs, door frames, and architectural verticals must carry the low viewpoint.
+
+ARTWORK INTEGRITY:
+The artwork is a rigid rectangular physical canvas under aggressive perspective. Controlled foreshortening is allowed, but do not melt, tear, curve, liquid-warp, rotate, stretch, compress, repaint, or replace the artwork. Keep canvas plane, wall plane, floor lines, furniture, and architecture in one coherent vanishing logic.
+
+SCALE:
+Respect the supplied dimensions. Do not solve drama by enlarging the artwork. No billboard, mural, wall-sized panel, oversized slab, or stage prop. Presence must come from low camera geometry and proximity.
+
+PAINTED EDGE:
+If a visible edge, corner, bottom, or side thickness appears, it must be painted as a coherent continuation of IMAGE 1. No raw beige canvas edge, unpainted primer, bare wood, exposed stretcher bars, or blank side band unless IMAGE 1 explicitly shows it.
+
+NEGATIVE PROMPT:
+No eye-level view, no standing-height view, no normal 3/4 gallery photo, no gentle low angle, no soft controlled viewpoint, no flat wall view, no centered product view, no melted artwork, no torn canvas, no curved canvas, no warped canvas, no artwork substitution, no invented painting, no mural scaling, no billboard scaling, no oversized canvas, no raw beige canvas edge, no unpainted canvas edge, no bare wood edge, no fashion-model posing, no pets, no crowds, no children, no visible people, no visible text, no logos, no watermarks.
+
+ENVIRONMENTAL SCALE REASONING POLICY
+
+Before placing the artwork, infer the physical scale of IMAGE 2 from the visible environment. Use whatever scale evidence is naturally available in the scene: architectural modules, openings, repeated surface units, furniture, fixtures, objects, floor/wall junctions, shadows, spatial depth, human-scale traces, and material patterns.
+
+Do not rely on a single clue. Cross-check the artwork size against at least two or three independent visual anchors whenever the scene provides them. The installed artwork must harmonize with both the supplied artwork dimensions and the inferred scale of the world mother environment.
+
+Treat IMAGE 2 as scale evidence, not only as style evidence. Its objects, room proportions, openings, material units, and spatial distances must constrain the artwork's physical footprint. Empty wall area is not permission to enlarge the artwork.
+
+The artwork may become visually prominent through camera position, crop, lens choice, perspective, lighting, and composition, but its physical size must remain consistent with the surrounding environmental anchors.
+
+WORLD MOTHER ARTWORK QUARANTINE:
+IMAGE 2 may contain paintings, murals, wall drawings, posters, framed images, easel canvases, sketches, portraits, figures, decorative marks, or unfinished studio artwork. Treat all of those as unsafe environmental artifacts, not as content sources.
+
+Never copy, preserve, enlarge, translate, restyle, echo, or remix any artwork, mural, face, figure, brushwork, color composition, easel canvas, poster, frame content, or wall drawing from IMAGE 2 into IMAGE 1 or into the installed artwork. IMAGE 1 is the only artwork content allowed.
+
+If IMAGE 2 contains a large mural, figurative wall painting, colorful wall drawing, poster cluster, or competing artwork, neutralize that area into compatible blank wall, aged plaster, shelving, stacked blank canvases, furniture, shadow, or ordinary studio clutter. Do not keep it as a second prominent artwork in the final image.
+
+The final mockup must contain one primary artwork only: the supplied IMAGE 1 canvas/object. Any secondary canvas-like object may appear only as a blank support, turned-away canvas, neutral stretcher, or indistinct studio prop with no readable image, no face, no figure, and no decorative composition.
+
+MOCKUP IMPROVEMENT CONTROLS
+
+Reference mode adjustment: prioritize improving the existing generated mockup direction. Preserve the current scene family, artwork identity, and commercial intent while correcting only the requested aspects.
+Human presence adjustment: do not include visible people, silhouettes, hands, faces, bodies, or mannequins.

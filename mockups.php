@@ -133,7 +133,7 @@ function pagination_pages(int $current, int $total): array
                     <div class="grid">
                         <?php foreach ($mockups as $mockup): ?>
                             <article class="item-card">
-                                <a href="viewer.php?id=<?= h($mockup['id']) ?>" aria-label="Open mockup">
+                                <a href="viewer.php?id=<?= h($mockup['id']) ?>&back=<?= rawurlencode(page_url($page, $query)) ?>" aria-label="Open mockup">
                                     <img src="<?= h(result_url($mockup['mockup_file'])) ?>" alt="Mockup">
                                 </a>
                                 <h3><?= h(Display::contextTitle($mockup['context_id'])) ?></h3>
