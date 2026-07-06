@@ -136,18 +136,19 @@ function h($v): string
 
         /* Hero Section */
         .hero-section {
-            min-height: 100vh;
-            padding: 140px 4% 80px;
-            display: grid;
-            grid-template-columns: 0.95fr 1.05fr;
+            min-height: 90vh;
+            min-height: 90dvh;
+            padding: 160px 4% 100px;
+            display: flex;
             align-items: center;
-            gap: 40px;
             position: relative;
-            background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+            background: var(--bg);
+            overflow: hidden;
         }
         .hero-content {
             position: relative;
-            z-index: 2;
+            z-index: 5;
+            max-width: 550px;
         }
         .hero-content h1 {
             font-family: var(--font-serif);
@@ -280,60 +281,85 @@ function h($v): string
             color: var(--accent);
         }
         
-        /* High-Impact Hero Showcase Visuals: Fading Video Loop */
-        .showcase-video-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 760px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            filter: drop-shadow(0 30px 60px rgba(154, 123, 86, 0.16));
-            border-top: 1px solid var(--line);
-            border-bottom: 1px solid var(--line);
-            padding: 32px 0;
-        }
-        .showcase-video-frame {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 4/3;
-            border-radius: 28px;
+        /* High-Impact Hero Showcase Visuals: Immersive Backdrop Slider */
+        .hero-bg-slider {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
             overflow: hidden;
-            background: var(--surface-soft);
-            mask-image: radial-gradient(circle, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%);
-            -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
         }
-        .showcase-video-frame img {
+        .hero-slide {
             position: absolute;
             inset: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
             opacity: 0;
             transform: scale(1.02);
-            transition: transform 0.8s ease, opacity 0.8s ease;
-            animation: heroCrossfade 16s infinite ease-in-out;
+            transition: transform 1.2s ease, opacity 1.2s ease;
+            animation: heroBgFade 15s infinite ease-in-out;
+        }
+        .hero-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center center;
             display: block;
         }
+        .hero-slide:nth-child(1) { animation-delay: 0s; }
+        .hero-slide:nth-child(2) { animation-delay: 5s; }
+        .hero-slide:nth-child(3) { animation-delay: 10s; }
         
-        .showcase-video-frame img:nth-child(1) { animation-delay: 0s; }
-        .showcase-video-frame img:nth-child(2) { animation-delay: 4s; }
-        .showcase-video-frame img:nth-child(3) { animation-delay: 8s; }
-        .showcase-video-frame img:nth-child(4) { animation-delay: 12s; }
-        
-        @keyframes heroCrossfade {
-            0%, 5% {
+        @keyframes heroBgFade {
+            0%, 8% {
                 opacity: 0;
-                transform: scale(1.04);
+                transform: scale(1.03);
             }
-            10%, 25% {
+            15%, 33% {
                 opacity: 1;
                 transform: scale(1);
+                z-index: 2;
             }
-            30%, 100% {
+            40%, 100% {
                 opacity: 0;
-                transform: scale(1.02);
+                transform: scale(1.01);
+                z-index: 1;
             }
+        }
+        .hero-bg-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, 
+                rgba(250, 249, 246, 1) 0%, 
+                rgba(250, 249, 246, 0.95) 30%, 
+                rgba(250, 249, 246, 0.7) 48%, 
+                rgba(250, 249, 246, 0.1) 80%, 
+                rgba(250, 249, 246, 0) 100%
+            );
+            z-index: 3;
+            pointer-events: none;
+        }
+        .hero-section::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 4%;
+            right: 4%;
+            height: 1px;
+            background: var(--line);
+            z-index: 4;
+        }
+        .hero-section::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 4%;
+            right: 4%;
+            height: 1px;
+            background: var(--line);
+            z-index: 4;
         }
         .metadata-badge-grid {
             display: flex;
@@ -498,15 +524,11 @@ function h($v): string
                 <a href="#features" class="btn-secondary" style="padding: 14px 32px; font-size: 13px;">Explore Features</a>
             </div>
         </div>
-        <div class="hero-visual">
-            <div class="showcase-video-wrapper">
-                <div class="showcase-video-frame">
-                    <img src="assets/showcase/latest_artwork.png" alt="Original Fine Art Painting">
-                    <img src="assets/showcase/latest_mockup_1.jpg" alt="Generated Curation Mockup 1">
-                    <img src="assets/showcase/latest_mockup_2.jpg" alt="Generated Curation Mockup 2">
-                    <img src="assets/showcase/latest_mockup_3.jpg" alt="Generated Curation Mockup 3">
-                </div>
-            </div>
+        <div class="hero-bg-slider">
+            <div class="hero-slide"><img src="assets/showcase/latest_mockup_1.jpg" alt="Space 1"></div>
+            <div class="hero-slide"><img src="assets/showcase/latest_mockup_2.jpg" alt="Space 2"></div>
+            <div class="hero-slide"><img src="assets/showcase/latest_mockup_3.jpg" alt="Space 3"></div>
+            <div class="hero-bg-overlay"></div>
         </div>
     </section>
 
