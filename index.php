@@ -45,8 +45,8 @@ function h($v): string
             scroll-behavior: smooth;
         }
         body.landing-theme {
-            background: #090907;
-            color: #F7F2EA;
+            background: var(--bg);
+            color: var(--ink);
             font-family: var(--font-sans);
             overflow-x: hidden;
             margin: 0;
@@ -60,16 +60,17 @@ function h($v): string
         body.landing-theme h6,
         body.landing-theme .section-title,
         body.landing-theme .brand-title {
-            color: #F7F2EA !important;
+            color: var(--ink) !important;
         }
         body.landing-theme p {
-            color: rgba(247, 242, 234, 0.68) !important;
+            color: var(--muted) !important;
         }
         body.landing-theme a {
-            color: rgba(247, 242, 234, 0.8) !important;
+            color: var(--muted);
+            transition: color 0.2s ease;
         }
         body.landing-theme a:hover {
-            color: var(--accent) !important;
+            color: var(--accent);
         }
         body.landing-theme .section-kicker,
         body.landing-theme .hero-kicker,
@@ -77,38 +78,17 @@ function h($v): string
             color: var(--accent) !important;
             font-weight: 600;
         }
-        body.landing-theme .section-padding {
-            border-top: 1px solid rgba(247, 242, 234, 0.06) !important;
-            background: transparent !important;
-        }
-        body.landing-theme .feature-card {
-            background: rgba(247, 242, 234, 0.02) !important;
-            border: 1px solid rgba(247, 242, 234, 0.06) !important;
-        }
-        body.landing-theme .feature-card:hover {
-            border-color: rgba(154, 123, 86, 0.4) !important;
-            background: rgba(247, 242, 234, 0.04) !important;
-        }
-        body.landing-theme .btn-secondary {
-            color: #F7F2EA !important;
-            border-color: rgba(247, 242, 234, 0.2) !important;
-        }
-        body.landing-theme .btn-secondary:hover {
-            color: #090907 !important;
-            background: #F7F2EA !important;
-            border-color: #F7F2EA !important;
-        }
         
-        /* Glassmorphism Header */
+        /* Header */
         .landing-header {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             height: 80px;
-            background: rgba(9, 9, 7, 0.85);
+            background: rgba(250, 249, 246, 0.9);
             backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(247, 242, 234, 0.06);
+            border-bottom: 1px solid var(--line);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -116,7 +96,7 @@ function h($v): string
             z-index: 100;
         }
         .landing-header .brand-title {
-            color: #F7F2EA;
+            color: var(--ink) !important;
         }
         .landing-nav {
             display: flex;
@@ -124,33 +104,34 @@ function h($v): string
             gap: 32px;
         }
         .landing-nav a {
-            color: rgba(247, 242, 234, 0.72);
+            color: var(--muted) !important;
             text-decoration: none;
-            font-weight: 500;
-            font-size: 13px;
-            letter-spacing: 0.05em;
+            font-weight: 600;
+            font-size: 11px;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
-            transition: color 0.2s ease;
         }
         .landing-nav a:hover {
-            color: var(--accent);
+            color: var(--accent) !important;
         }
         .btn-cta {
-            background: var(--accent);
-            color: #090907 !important;
+            background: var(--accent) !important;
+            color: var(--bg) !important;
             padding: 10px 20px;
             border-radius: 4px;
             font-weight: 600 !important;
             text-transform: uppercase;
-            font-size: 12px;
+            font-size: 11px;
             letter-spacing: 0.08em;
             transition: all 0.2s ease;
-            border: 1px solid var(--accent);
+            border: 1px solid var(--accent) !important;
+            text-decoration: none;
+            display: inline-block;
         }
         .btn-cta:hover {
-            background: transparent;
+            background: transparent !important;
             color: var(--accent) !important;
-            box-shadow: 0 0 16px rgba(154, 123, 86, 0.3);
+            box-shadow: 0 4px 16px rgba(154, 123, 86, 0.15) !important;
         }
 
         /* Hero Section */
@@ -158,48 +139,29 @@ function h($v): string
             min-height: 100vh;
             padding: 140px 4% 80px;
             display: grid;
-            grid-template-columns: 1.1fr 0.9fr;
+            grid-template-columns: 1.15fr 0.85fr;
             align-items: center;
             gap: 60px;
             position: relative;
-        }
-        .hero-section::before {
-            content: '';
-            position: absolute;
-            top: 20%;
-            left: 50%;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(154, 123, 86, 0.08) 0%, transparent 70%);
-            z-index: 0;
-            pointer-events: none;
+            background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
         }
         .hero-content {
             position: relative;
             z-index: 2;
         }
-        .hero-kicker {
-            font-family: var(--font-sans);
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            color: var(--accent);
-            margin-bottom: 16px;
-        }
         .hero-content h1 {
             font-family: var(--font-serif);
-            font-size: clamp(42px, 5vw, 68px);
-            line-height: 1.1;
-            font-weight: 400;
+            font-size: clamp(42px, 4.8vw, 64px);
+            line-height: 1.15;
+            font-weight: 500;
             margin: 0 0 24px 0;
-            color: #F7F2EA;
+            color: var(--ink) !important;
             letter-spacing: -0.01em;
         }
         .hero-content p {
-            font-size: 16px;
+            font-size: 15px;
             line-height: 1.7;
-            color: rgba(247, 242, 234, 0.68);
+            color: var(--muted) !important;
             margin-bottom: 36px;
             max-width: 580px;
         }
@@ -208,24 +170,25 @@ function h($v): string
             gap: 16px;
         }
         .btn-secondary {
-            background: transparent;
-            color: #F7F2EA;
+            background: transparent !important;
+            color: var(--ink) !important;
             padding: 12px 28px;
             border-radius: 4px;
             font-weight: 600;
             text-transform: uppercase;
-            font-size: 12px;
+            font-size: 11px;
             letter-spacing: 0.08em;
-            border: 1px solid rgba(247, 242, 234, 0.2);
+            border: 1px solid var(--line) !important;
             text-decoration: none;
             transition: all 0.2s ease;
+            display: inline-block;
         }
         .btn-secondary:hover {
-            border-color: #F7F2EA;
-            background: rgba(247, 242, 234, 0.05);
+            border-color: var(--ink) !important;
+            background: var(--surface-soft) !important;
         }
 
-        /* Hero Image/Frame */
+        /* Hero Visual Frame */
         .hero-visual {
             position: relative;
             z-index: 2;
@@ -233,12 +196,11 @@ function h($v): string
             justify-content: center;
         }
         .frame-container {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(247, 242, 234, 0.08);
+            background: var(--surface);
+            border: 1px solid var(--line);
             padding: 16px;
             border-radius: 12px;
-            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(8px);
+            box-shadow: var(--shadow-hover);
             max-width: 100%;
         }
         .frame-image {
@@ -247,12 +209,12 @@ function h($v): string
             max-height: 480px;
             object-fit: cover;
             border-radius: 6px;
-            border: 1px solid rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--line);
             display: block;
         }
         .frame-caption {
             font-size: 11px;
-            color: rgba(247, 242, 234, 0.4);
+            color: var(--muted);
             margin-top: 12px;
             text-align: center;
             letter-spacing: 0.05em;
@@ -261,28 +223,21 @@ function h($v): string
         /* Features Section */
         .section-padding {
             padding: 100px 4%;
-            border-top: 1px solid rgba(247, 242, 234, 0.06);
+            border-top: 1px solid var(--line) !important;
             position: relative;
+            background: var(--bg) !important;
         }
         .section-title-wrapper {
             max-width: 700px;
             margin-bottom: 60px;
         }
-        .section-kicker {
-            color: var(--accent);
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            margin-bottom: 12px;
-            display: block;
-        }
         .section-title {
             font-family: var(--font-serif);
             font-size: 40px;
-            font-weight: 400;
+            font-weight: 500;
             margin: 0;
             line-height: 1.2;
+            color: var(--ink) !important;
         }
         
         .features-grid {
@@ -291,16 +246,17 @@ function h($v): string
             gap: 32px;
         }
         .feature-card {
-            background: rgba(247, 242, 234, 0.02);
-            border: 1px solid rgba(247, 242, 234, 0.06);
+            background: var(--surface) !important;
+            border: 1px solid var(--line) !important;
             padding: 32px;
             border-radius: 8px;
             transition: all 0.3s ease;
+            box-shadow: var(--shadow);
         }
         .feature-card:hover {
-            border-color: rgba(154, 123, 86, 0.4);
-            background: rgba(247, 242, 234, 0.04);
+            border-color: var(--accent) !important;
             transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
         }
         .feature-icon {
             width: 40px;
@@ -318,18 +274,18 @@ function h($v): string
         .feature-card h3 {
             font-family: var(--font-serif);
             font-size: 22px;
-            font-weight: 400;
+            font-weight: 500;
             margin: 0 0 12px 0;
-            color: #F7F2EA;
+            color: var(--ink) !important;
         }
         .feature-card p {
             font-size: 13px;
             line-height: 1.6;
-            color: rgba(247, 242, 234, 0.6);
+            color: var(--muted) !important;
             margin: 0;
         }
 
-        /* Showcase / Slider Section */
+        /* Showcase Section */
         .showcase-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -339,9 +295,8 @@ function h($v): string
             position: relative;
             border-radius: 8px;
             overflow: hidden;
-            border: 1px solid rgba(247, 242, 234, 0.06);
+            border: 1px solid var(--line);
             aspect-ratio: 4/3;
-            group: hover;
         }
         .showcase-item img {
             width: 100%;
@@ -355,37 +310,27 @@ function h($v): string
         .showcase-overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(to top, rgba(9,9,7,0.9) 0%, rgba(9,9,7,0.2) 60%, transparent 100%);
+            background: linear-gradient(to top, rgba(20,20,18,0.95) 0%, rgba(20,20,18,0.1) 60%, transparent 100%);
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
             padding: 24px;
-            opacity: 0.9;
-            transition: opacity 0.3s ease;
-        }
-        .showcase-tag {
-            font-size: 9px;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            color: var(--accent);
-            font-weight: 600;
-            margin-bottom: 6px;
         }
         .showcase-title {
             font-family: var(--font-serif);
             font-size: 18px;
-            color: #F7F2EA;
+            color: #FAF9F6 !important;
             margin: 0 0 4px 0;
         }
         .showcase-desc {
             font-size: 11px;
-            color: rgba(247, 242, 234, 0.5);
+            color: rgba(250, 249, 246, 0.75) !important;
             margin: 0;
         }
 
         /* Login Container Section */
         .login-section {
-            background: radial-gradient(circle at center, #141310 0%, #090907 100%);
+            background: var(--surface-soft) !important;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -393,8 +338,40 @@ function h($v): string
             text-align: center;
         }
         .login-section .auth-card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 32px;
+            width: min(100%, 420px);
+            box-shadow: var(--shadow-hover);
             text-align: left;
             margin-top: 24px;
+        }
+        .login-section label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 6px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+        .login-section input {
+            width: 100%;
+            height: 44px;
+            border-radius: 4px;
+            padding: 10px;
+            border: 1px solid var(--line);
+            background: var(--bg);
+            color: var(--ink);
+            font-family: var(--font-sans);
+            margin-bottom: 16px;
+            transition: all 0.2s ease;
+        }
+        .login-section input:focus {
+            border-color: var(--accent);
+            background: var(--surface);
+            outline: 2px solid rgba(154, 123, 86, 0.15);
         }
 
         /* Responsive */
@@ -448,8 +425,8 @@ function h($v): string
         </div>
         <div class="hero-visual">
             <div class="frame-container">
-                <img src="assets/auth/gallery-main.jpg" alt="Exhibition Room Mockup" class="frame-image">
-                <div class="frame-caption">Sala de Exhibición Coleccionista — Generada con Cámara Angular 3/4</div>
+                <img src="assets/showcase/brutalism.jpg" alt="Loft Brutalista" class="frame-image">
+                <div class="frame-caption">Loft Brutalista de Hormigón — Perspectiva Oblicua 3/4</div>
             </div>
         </div>
     </section>
@@ -492,27 +469,27 @@ function h($v): string
         </div>
         <div class="showcase-grid">
             <div class="showcase-item">
-                <img src="assets/auth/gallery-main.jpg" alt="Main Room Display">
+                <img src="assets/showcase/ibiza.jpg" alt="Salón en Ibiza">
                 <div class="showcase-overlay">
-                    <span class="showcase-tag">Plano Principal (Frontal)</span>
-                    <h3 class="showcase-title">Salón de Coleccionista</h3>
-                    <p class="showcase-desc">Perfecto para mostrar equilibrio de color y proporciones amplias.</p>
+                    <span class="showcase-tag">Sala Contemporánea</span>
+                    <h3 class="showcase-title">Salón Mediterráneo en Ibiza</h3>
+                    <p class="showcase-desc">Iluminación natural cálida y proporciones de escala real.</p>
                 </div>
             </div>
             <div class="showcase-item">
-                <img src="assets/auth/gallery-side.jpg" alt="Oblique Loft View">
+                <img src="assets/showcase/floor-leaning.jpg" alt="Estudio Hora Azul">
                 <div class="showcase-overlay">
-                    <span class="showcase-tag">Plano Oblicuo (3/4 Izquierda)</span>
-                    <h3 class="showcase-title">Estudio de Techo Alto</h3>
-                    <p class="showcase-desc">Muestra la obra integrada con la profundidad del espacio habitable.</p>
+                    <span class="showcase-tag">Obra Apoyada</span>
+                    <h3 class="showcase-title">Estudio en Hora Azul</h3>
+                    <p class="showcase-desc">Perspectiva lateral oblicua con luz natural tenue.</p>
                 </div>
             </div>
             <div class="showcase-item">
-                <img src="assets/auth/gallery-detail.jpg" alt="Close-up Texture Detail">
+                <img src="assets/showcase/nadir.jpg" alt="Perspectiva Nadir">
                 <div class="showcase-overlay">
-                    <span class="showcase-tag">Plano de Detalle (Macro)</span>
-                    <h3 class="showcase-title">Grano y Textura</h3>
-                    <p class="showcase-desc">Resalta el relieve físico y la fidelidad del bastidor pictórico.</p>
+                    <span class="showcase-tag">Contrapicado Suelo-Techo</span>
+                    <h3 class="showcase-title">Perspectiva Nadir Industrial</h3>
+                    <p class="showcase-desc">Plano dramático desde el suelo ideal para techos altos.</p>
                 </div>
             </div>
         </div>
@@ -543,14 +520,14 @@ function h($v): string
                 <button type="submit" class="btn-cta" style="width: 100%; padding: 12px; cursor: pointer; border-radius: 4px; font-size: 13px;">Iniciar Sesión</button>
             </form>
 
-            <p style="margin-top: 20px; font-size: 13px; color: rgba(247, 242, 234, 0.5);">
+            <p style="margin-top: 20px; font-size: 13px; color: var(--muted);">
                 ¿No tienes una cuenta? <a href="register.php" style="color: var(--accent); text-decoration: underline;">Regístrate aquí</a>
             </p>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer style="padding: 40px 4%; border-top: 1px solid rgba(247, 242, 234, 0.06); text-align: center; font-size: 12px; color: rgba(247, 242, 234, 0.3);">
+    <footer style="padding: 40px 4%; border-top: 1px solid var(--line); text-align: center; font-size: 12px; color: var(--muted);">
         <p>&copy; 2026 The Artwork Curator. Todos los derechos reservados. Tecnología impulsada por Vertex AI & Gemini.</p>
     </footer>
 
