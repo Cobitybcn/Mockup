@@ -284,7 +284,10 @@ function h($v): string
         /* High-Impact Hero Showcase Visuals: Immersive Backdrop Slider */
         .hero-bg-slider {
             position: absolute;
-            inset: 0;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            left: 36%;
             z-index: 1;
             overflow: hidden;
             display: flex;
@@ -333,9 +336,8 @@ function h($v): string
             inset: 0;
             background: linear-gradient(90deg, 
                 rgba(250, 249, 246, 1) 0%, 
-                rgba(250, 249, 246, 0.95) 30%, 
-                rgba(250, 249, 246, 0.7) 48%, 
-                rgba(250, 249, 246, 0.1) 80%, 
+                rgba(250, 249, 246, 0.8) 18%, 
+                rgba(250, 249, 246, 0.2) 65%, 
                 rgba(250, 249, 246, 0) 100%
             );
             z-index: 3;
