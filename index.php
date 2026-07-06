@@ -527,9 +527,44 @@ function h($v): string
             </div>
         </div>
         <div class="hero-bg-slider">
-            <div class="hero-slide"><img src="assets/showcase/latest_mockup_1.jpg" alt="Space 1"></div>
-            <div class="hero-slide"><img src="assets/showcase/latest_mockup_2.jpg" alt="Space 2"></div>
-            <div class="hero-slide"><img src="assets/showcase/latest_mockup_3.jpg" alt="Space 3"></div>
+            <?php
+            $showcaseDir = __DIR__ . '/assets/showcase';
+            $slides = [];
+            if (is_dir($showcaseDir)) {
+                $allFiles = glob($showcaseDir . '/*.{jpg,jpeg,png}', GLOB_BRACE) ?: [];
+                foreach ($allFiles as $file) {
+                    $name = basename($file);
+                    // Filter out original artworks or templates
+                    if (
+                        !str_contains(strtolower($name), 'artwork') 
+                        && !str_contains(strtolower($name), 'original')
+                        && is_file($file)
+                    ) {
+                        $slides[] = 'assets/showcase/' . $name;
+                    }
+                }
+            }
+            if (empty($slides)) {
+                $slides = [
+                    'assets/showcase/latest_mockup_1.jpg',
+                    'assets/showcase/latest_mockup_2.jpg',
+                    'assets/showcase/latest_mockup_3.jpg',
+                ];
+            }
+            
+            // Limit to 10 showcase images
+            $slides = array_slice($slides, 0, 10);
+            $totalSlides = count($slides);
+            ?>
+            <?php foreach ($slides as $index => $slidePath): ?>
+                <div class="hero-slide" style="
+                    animation-duration: <?= $totalSlides * 5 ?>s;
+                    animation-delay: <?= $index * 5 ?>s;
+                    z-index: <?= $totalSlides - $index ?>;
+                ">
+                    <img src="<?= htmlspecialchars($slidePath) ?>" alt="Showcase Space <?= $index + 1 ?>">
+                </div>
+            <?php endforeach; ?>
             <div class="hero-bg-overlay"></div>
         </div>
     </section>
