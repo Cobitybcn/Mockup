@@ -52,6 +52,52 @@ function h($v): string
             margin: 0;
             padding: 0;
         }
+        body.landing-theme h1,
+        body.landing-theme h2,
+        body.landing-theme h3,
+        body.landing-theme h4,
+        body.landing-theme h5,
+        body.landing-theme h6,
+        body.landing-theme .section-title,
+        body.landing-theme .brand-title {
+            color: #F7F2EA !important;
+        }
+        body.landing-theme p {
+            color: rgba(247, 242, 234, 0.68) !important;
+        }
+        body.landing-theme a {
+            color: rgba(247, 242, 234, 0.8) !important;
+        }
+        body.landing-theme a:hover {
+            color: var(--accent) !important;
+        }
+        body.landing-theme .section-kicker,
+        body.landing-theme .hero-kicker,
+        body.landing-theme .showcase-tag {
+            color: var(--accent) !important;
+            font-weight: 600;
+        }
+        body.landing-theme .section-padding {
+            border-top: 1px solid rgba(247, 242, 234, 0.06) !important;
+            background: transparent !important;
+        }
+        body.landing-theme .feature-card {
+            background: rgba(247, 242, 234, 0.02) !important;
+            border: 1px solid rgba(247, 242, 234, 0.06) !important;
+        }
+        body.landing-theme .feature-card:hover {
+            border-color: rgba(154, 123, 86, 0.4) !important;
+            background: rgba(247, 242, 234, 0.04) !important;
+        }
+        body.landing-theme .btn-secondary {
+            color: #F7F2EA !important;
+            border-color: rgba(247, 242, 234, 0.2) !important;
+        }
+        body.landing-theme .btn-secondary:hover {
+            color: #090907 !important;
+            background: #F7F2EA !important;
+            border-color: #F7F2EA !important;
+        }
         
         /* Glassmorphism Header */
         .landing-header {
