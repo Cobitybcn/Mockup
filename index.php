@@ -139,9 +139,9 @@ function h($v): string
             min-height: 100vh;
             padding: 140px 4% 80px;
             display: grid;
-            grid-template-columns: 1.15fr 0.85fr;
+            grid-template-columns: 0.95fr 1.05fr;
             align-items: center;
-            gap: 60px;
+            gap: 40px;
             position: relative;
             background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
         }
@@ -284,21 +284,24 @@ function h($v): string
         .showcase-video-wrapper {
             position: relative;
             width: 100%;
-            max-width: 620px;
+            max-width: 760px;
             display: flex;
             justify-content: center;
             align-items: center;
-            filter: drop-shadow(0 25px 50px rgba(154, 123, 86, 0.18));
+            filter: drop-shadow(0 30px 60px rgba(154, 123, 86, 0.16));
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+            padding: 32px 0;
         }
         .showcase-video-frame {
             position: relative;
             width: 100%;
             aspect-ratio: 4/3;
-            border-radius: 24px;
+            border-radius: 28px;
             overflow: hidden;
             background: var(--surface-soft);
-            mask-image: radial-gradient(circle, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
-            -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+            mask-image: radial-gradient(circle, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%);
+            -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%);
         }
         .showcase-video-frame img {
             position: absolute;
