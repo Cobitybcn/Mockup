@@ -604,11 +604,11 @@ function h($v): string
         </div>
         <div class="showcase-grid">
             <div class="showcase-item">
-                <img src="assets/showcase/ibiza.jpg" alt="Ibiza Mediterranean Lounge">
+                <img src="assets/showcase/34-right-view-attic-studio-3-4-right-view-medium-test-piece-mockup-02.jpg" alt="Attic Studio Gallery">
                 <div class="showcase-overlay">
-                    <span class="showcase-tag">Contemporary Space</span>
-                    <h3 class="showcase-title">Ibiza Mediterranean Lounge</h3>
-                    <p class="showcase-desc">Warm daylight casting soft shadows in an organic living space.</p>
+                    <span class="showcase-tag">Attic Space</span>
+                    <h3 class="showcase-title">Attic Studio Gallery</h3>
+                    <p class="showcase-desc">3/4 oblique perspective showing canvas texture under large skylights.</p>
                 </div>
             </div>
             <div class="showcase-item">
