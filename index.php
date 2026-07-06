@@ -286,20 +286,19 @@ function h($v): string
         }
         .collage-card {
             position: absolute;
-            background: var(--surface);
             border: 1px solid var(--line);
-            padding: 8px;
             border-radius: 12px;
-            box-shadow: 0 20px 50px rgba(20,20,18,0.08);
+            box-shadow: 0 20px 50px rgba(20,20,18,0.12);
             transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
             cursor: pointer;
             overflow: hidden;
+            background: none;
         }
         .collage-card img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 8px;
+            border-radius: 11px;
             display: block;
         }
         /* Card 1: Back/Left Card (Ibiza Room) */
