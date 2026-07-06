@@ -115,17 +115,12 @@ $authOpacities = [
     </section>
 
     <section class="auth-visual" aria-label="Artwork mockup preview">
-        <figure class="auth-gallery auth-gallery-main" style="--auth-gallery-opacity: <?= h($authOpacities['main']) ?>">
-            <img src="<?= h($authImages[0]) ?>" alt="">
-        </figure>
-        <figure class="auth-gallery auth-gallery-secondary" style="--auth-gallery-opacity: <?= h($authOpacities['secondary']) ?>">
-            <img src="<?= h($authImages[1]) ?>" alt="">
-        </figure>
-        <figure class="auth-gallery auth-gallery-tertiary" style="--auth-gallery-opacity: <?= h($authOpacities['tertiary']) ?>">
-            <img src="<?= h($authImages[2]) ?>" alt="">
-        </figure>
+        <div class="auth-visual-background">
+            <img src="assets/showcase/latest_mockup_1.jpg" alt="Gallery Mockup" class="auth-bg-image">
+            <div class="auth-visual-overlay"></div>
+        </div>
         <div class="auth-visual-caption">
-            Private archive for artworks, curated presentations, and collector-ready mockups.
+            Private workspace for architecturally precise art mockups and curated presentations.
         </div>
     </section>
 </main>

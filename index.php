@@ -281,16 +281,24 @@ function h($v): string
         }
         
         /* High-Impact Hero Showcase Visuals: Fading Video Loop */
+        .showcase-video-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 620px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            filter: drop-shadow(0 25px 50px rgba(154, 123, 86, 0.18));
+        }
         .showcase-video-frame {
             position: relative;
             width: 100%;
-            max-width: 580px;
             aspect-ratio: 4/3;
-            border-radius: 16px;
-            border: 1px solid var(--line);
-            box-shadow: 0 30px 80px rgba(20,20,18,0.12), 0 10px 30px rgba(20,20,18,0.06);
+            border-radius: 24px;
             overflow: hidden;
             background: var(--surface-soft);
+            mask-image: radial-gradient(circle, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+            -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
         }
         .showcase-video-frame img {
             position: absolute;
@@ -488,11 +496,13 @@ function h($v): string
             </div>
         </div>
         <div class="hero-visual">
-            <div class="showcase-video-frame">
-                <img src="assets/showcase/latest_artwork.png" alt="Original Fine Art Painting">
-                <img src="assets/showcase/latest_mockup_1.jpg" alt="Generated Curation Mockup 1">
-                <img src="assets/showcase/latest_mockup_2.jpg" alt="Generated Curation Mockup 2">
-                <img src="assets/showcase/latest_mockup_3.jpg" alt="Generated Curation Mockup 3">
+            <div class="showcase-video-wrapper">
+                <div class="showcase-video-frame">
+                    <img src="assets/showcase/latest_artwork.png" alt="Original Fine Art Painting">
+                    <img src="assets/showcase/latest_mockup_1.jpg" alt="Generated Curation Mockup 1">
+                    <img src="assets/showcase/latest_mockup_2.jpg" alt="Generated Curation Mockup 2">
+                    <img src="assets/showcase/latest_mockup_3.jpg" alt="Generated Curation Mockup 3">
+                </div>
             </div>
         </div>
     </section>
