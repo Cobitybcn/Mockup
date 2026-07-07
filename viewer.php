@@ -508,7 +508,7 @@ $otherSocial = [
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Mockup Viewer - The Artwork Curator</title>
+    <title>Mockup Viewer - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -901,7 +901,7 @@ $otherSocial = [
 <body>
     <header class="viewer-top">
         <div class="viewer-left">
-            <a class="brand" href="root_album.php">The Artwork Curator <span class="brand-mark"></span></a>
+            <a class="brand" href="root_album.php">Artwork Mockups <span class="brand-mark"></span></a>
         </div>
         <nav class="viewer-actions">
             <a class="icon-link back" href="<?= h($backUrl) ?>" aria-label="Back to details" title="Back to details"></a>

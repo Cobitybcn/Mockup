@@ -1,0 +1,64 @@
+GLOBAL OUTPUT FRAME RULE:
+- The final generated image must be square, 1:1 aspect ratio.
+- Compose the full photographic scene inside a square frame. Do not output portrait, vertical, landscape, panoramic, or cropped non-square images.
+- Keep the artwork fully inside the square composition unless the selected close-up camera explicitly requires a detail crop.
+
+Generar un mockup fotográfico premium a partir de IMAGEN 1 e IMAGEN 2.
+
+ROLES DE ENTRADA:
+IMAGEN 1 La primera imagen de referencia adjunta es IMAGEN 1. Preservar su identidad.
+
+
+IMAGEN 2 es la referencia para crear el estilo de entorno. Mantener su estilo, familia de materiales, lógica de luz, carácter de superficie e identidad espacial. No reemplazarla con un pasillo genérico, un vestíbulo, un pasaje de galería o un entorno inventado alternativo.
+
+
+Si la IMAGEN 2 contiene pinturas, lienzos, caballetes, marcos, dibujos, carteles u otras obras de arte, tratarlas solo como objetos ambientales. IMAGEN 1 es la obra de arte más importante en la nueva imagen. La escala de IMAGEN 1 debe estar en relación con los otros objetos de la composición, sean ventanas, sillones, muebles, lámparas, mesas. Prestar especial atención en sitios de doble altura. Nunca sobredimensionar la obra de arte o IMAGEN 1 para darle protagonismo. 
+
+ARTWORK PHYSICAL DATA:
+Artwork title: root_art_uploaded_uploaded_root_1783027079_5064_v1
+Artwork width: 80 cm
+Artwork height: 120 cm
+Artwork orientation: portrait
+Artwork size class: L
+
+CAMARA
+Usar una altura humana natural de pie o ligeramente bajada. Usar un objetivo de 35-45 mm adecuado para la profundidad, con perspectiva controlada.
+
+COMPOSICIÓN:
+Usar un ángulo descentrado de tres cuartos derecho. Las líneas del suelo, las líneas del techo, las uniones de las paredes, la iluminación, las ventanas, las columnas, las puertas o los planos de pared distantes pueden reforzar la profundidad. Evitar la simetría centrada para presentar la obra de arte.
+
+ENFOQUE:
+Establecer el plano de enfoque en la obra de arte. Mantener la superficie de la obra, los bordes del lienzo, el grosor, la textura y el área inmediata de la pared nítidos. Los planos de pared lejanos, las columnas remotas, las ventanas de fondo, las puertas lejanas, la profundidad del techo, la profundidad del suelo pueden desenfocarse naturalmente. El desenfoque debe sentirse óptico, no artificial. 
+
+DETERMINISMO DE LA OBRA DE ARTE:
+
+
+La obra de arte final instalada debe ser la misma imagen que la IMAGEN 1. No redibujar, repintar, simplificar, embellecer, completar, estilizar, intercambiar, fusionar o reinterpretar ninguna parte de la superficie de la obra de arte o IMAGEN 1. Si la IMAGEN 1 contiene rostros, figuras, símbolos, marcas texturales, áreas en blanco dispersas, bloques de color o proporciones inusuales, mantener esas relaciones exactas de la IMAGEN 1. Nunca sobredimensionar la obra de arte o IMAGEN 1 para darle protagonismo. 
+
+ESCALA:
+La obra de arte es de 80 x 120 cm, clase de tamaño L
+No ampliarla para que domine la habitación o llene la pared disponible. Para determinar el tamaño de la obra de arte utilice otros objetos de la escena. Mantener la obra de arte en su tamaño normal respecto a los otros objetos. Nunca sobredimensionar la obra de arte o IMAGEN 1 para darle protagonismo.
+
+ENVIRONMENTAL SCALE REASONING POLICY
+
+Before placing the artwork, infer the physical scale of IMAGE 2 from the visible environment. Use whatever scale evidence is naturally available in the scene: architectural modules, openings, repeated surface units, furniture, fixtures, objects, floor/wall junctions, shadows, spatial depth, human-scale traces, and material patterns.
+
+Do not rely on a single clue. Cross-check the artwork size against at least two or three independent visual anchors whenever the scene provides them. The installed artwork must harmonize with both the supplied artwork dimensions and the inferred scale of the world mother environment.
+
+Treat IMAGE 2 as scale evidence, not only as style evidence. Its objects, room proportions, openings, material units, and spatial distances must constrain the artwork's physical footprint. Empty wall area is not permission to enlarge the artwork.
+
+The artwork may become visually prominent through camera position, crop, lens choice, perspective, lighting, and composition, but its physical size must remain consistent with the surrounding environmental anchors.
+
+WORLD MOTHER ARTWORK QUARANTINE:
+IMAGE 2 may contain paintings, murals, wall drawings, posters, framed images, easel canvases, sketches, portraits, figures, decorative marks, or unfinished studio artwork. Treat all of those as unsafe environmental artifacts, not as content sources.
+
+Never copy, preserve, enlarge, translate, restyle, echo, or remix any artwork, mural, face, figure, brushwork, color composition, easel canvas, poster, frame content, or wall drawing from IMAGE 2 into IMAGE 1 or into the installed artwork. IMAGE 1 is the only artwork content allowed.
+
+If IMAGE 2 contains a large mural, figurative wall painting, colorful wall drawing, poster cluster, or competing artwork, neutralize that area into compatible blank wall, aged plaster, shelving, stacked blank canvases, furniture, shadow, or ordinary studio clutter. Do not keep it as a second prominent artwork in the final image.
+
+The final mockup must contain one primary artwork only: the supplied IMAGE 1 canvas/object. Any secondary canvas-like object may appear only as a blank support, turned-away canvas, neutral stretcher, or indistinct studio prop with no readable image, no face, no figure, and no decorative composition.
+
+MOCKUP IMPROVEMENT CONTROLS
+
+Reference mode adjustment: prioritize improving the existing generated mockup direction. Preserve the current scene family, artwork identity, and commercial intent while correcting only the requested aspects.
+Human presence adjustment: do not include visible people, silhouettes, hands, faces, bodies, or mannequins.

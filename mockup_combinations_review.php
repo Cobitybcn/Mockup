@@ -23,6 +23,7 @@ require_once __DIR__ . '/app/bootstrap.php';
 $user = Auth::requireUser();
 $isAdmin = Auth::isAdmin($user);
 $pdo = Database::connection();
+(new ArtworkGroupService($pdo))->syncUser((int)$user['id']);
 AdminSceneEditor::handlePost($user);
 
 if (!function_exists('h')) {
@@ -116,7 +117,6 @@ function scenes_dedupe_root_artwork_options(array $options): array
 function scenes_root_artwork_options(PDO $pdo, array $user): array
 {
     $userId = (int)$user['id'];
-    $isAdmin = Auth::isAdmin($user);
     $options = [];
     $knownRootFiles = [];
 
@@ -126,12 +126,9 @@ function scenes_root_artwork_options(PDO $pdo, array $user): array
         WHERE status = 'done'
         AND root_file IS NOT NULL
         AND root_file != ''
+        AND user_id = :user_id
     ";
-    $params = [];
-    if (!$isAdmin) {
-        $sql .= " AND user_id = :user_id";
-        $params['user_id'] = $userId;
-    }
+    $params = ['user_id' => $userId];
     $sql .= " ORDER BY updated_at DESC, created_at DESC";
 
     $stmt = $pdo->prepare($sql);
@@ -146,39 +143,175 @@ function scenes_root_artwork_options(PDO $pdo, array $user): array
         $knownRootFiles[$file] = true;
     }
 
-    if (!$isAdmin) {
-        $mockupStmt = $pdo->prepare("
-            SELECT artwork_file, MAX(created_at) AS updated_at
-            FROM mockups
-            WHERE user_id = :user_id
-            AND artwork_file IS NOT NULL
-            AND artwork_file != ''
-            GROUP BY artwork_file
-            ORDER BY MAX(created_at) DESC
-        ");
-        $mockupStmt->execute(['user_id' => $userId]);
+    $mockupStmt = $pdo->prepare("
+        SELECT artwork_file, MAX(created_at) AS updated_at
+        FROM mockups
+        WHERE user_id = :user_id
+        AND artwork_file IS NOT NULL
+        AND artwork_file != ''
+        GROUP BY artwork_file
+        ORDER BY MAX(created_at) DESC
+    ");
+    $mockupStmt->execute(['user_id' => $userId]);
 
-        foreach ($mockupStmt->fetchAll() as $row) {
-            $file = basename((string)($row['artwork_file'] ?? ''));
-            if ($file === '' || isset($knownRootFiles[$file]) || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $file)) {
-                continue;
-            }
-            $adopted = scenes_adopt_root_artwork($pdo, $userId, $file);
-            if ((int)($adopted['id'] ?? 0) > 0) {
-                $adopted['root_file'] = $file;
-                $adopted['updated_at'] = (string)($row['updated_at'] ?? ($adopted['updated_at'] ?? ''));
-                $options[] = $adopted;
-                $knownRootFiles[$file] = true;
-            }
+    foreach ($mockupStmt->fetchAll() as $row) {
+        $file = basename((string)($row['artwork_file'] ?? ''));
+        if ($file === '' || isset($knownRootFiles[$file]) || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $file)) {
+            continue;
+        }
+        $adopted = scenes_adopt_root_artwork($pdo, $userId, $file);
+        if ((int)($adopted['id'] ?? 0) > 0) {
+            $adopted['root_file'] = $file;
+            $adopted['updated_at'] = (string)($row['updated_at'] ?? ($adopted['updated_at'] ?? ''));
+            $options[] = $adopted;
+            $knownRootFiles[$file] = true;
         }
     }
 
     return scenes_dedupe_root_artwork_options($options);
 }
 
+function scenes_last_artwork_session_key(int $userId): string
+{
+    return 'last_scene_artwork_id_user_' . $userId;
+}
+
+function scenes_last_artwork_setting_key(int $userId): string
+{
+    return 'last_scene_artwork_id_user_' . $userId;
+}
+
+function scenes_option_id_exists(array $artworkOptions, int $artworkId): bool
+{
+    foreach ($artworkOptions as $option) {
+        if ((int)($option['id'] ?? 0) === $artworkId) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function scenes_option_id_for_root_file(array $artworkOptions, string $rootFile): int
+{
+    $rootFile = basename($rootFile);
+    if ($rootFile === '') {
+        return 0;
+    }
+
+    $groupKey = scenes_root_group_key($rootFile);
+    foreach ($artworkOptions as $option) {
+        if (scenes_root_group_key((string)($option['root_file'] ?? '')) === $groupKey) {
+            return (int)($option['id'] ?? 0);
+        }
+    }
+
+    return 0;
+}
+
+function scenes_artwork_option_id(PDO $pdo, int $userId, array $artworkOptions, int $artworkId): int
+{
+    if ($artworkId <= 0) {
+        return 0;
+    }
+    if (scenes_option_id_exists($artworkOptions, $artworkId)) {
+        return $artworkId;
+    }
+
+    $stmt = $pdo->prepare('
+        SELECT root_file
+        FROM artworks
+        WHERE id = :id
+        AND user_id = :user_id
+        LIMIT 1
+    ');
+    $stmt->execute([
+        'id' => $artworkId,
+        'user_id' => $userId,
+    ]);
+
+    return scenes_option_id_for_root_file($artworkOptions, (string)$stmt->fetchColumn());
+}
+
+function scenes_recent_mockup_artwork_id(PDO $pdo, int $userId, array $artworkOptions): int
+{
+    $stmt = $pdo->prepare('
+        SELECT source_artwork_id, artwork_file
+        FROM mockups
+        WHERE user_id = :user_id
+        ORDER BY created_at DESC
+        LIMIT 50
+    ');
+    $stmt->execute(['user_id' => $userId]);
+
+    foreach ($stmt->fetchAll() as $mockup) {
+        $sourceArtworkId = scenes_artwork_option_id($pdo, $userId, $artworkOptions, (int)($mockup['source_artwork_id'] ?? 0));
+        if ($sourceArtworkId > 0) {
+            return $sourceArtworkId;
+        }
+
+        $artworkFileId = scenes_option_id_for_root_file($artworkOptions, (string)($mockup['artwork_file'] ?? ''));
+        if ($artworkFileId > 0) {
+            return $artworkFileId;
+        }
+    }
+
+    return 0;
+}
+
+function scenes_last_artwork_id(PDO $pdo, int $userId, array $artworkOptions): int
+{
+    $sessionKey = scenes_last_artwork_session_key($userId);
+    $sessionArtworkId = scenes_artwork_option_id($pdo, $userId, $artworkOptions, max(0, (int)($_SESSION[$sessionKey] ?? 0)));
+    if ($sessionArtworkId > 0 && scenes_option_id_exists($artworkOptions, $sessionArtworkId)) {
+        return $sessionArtworkId;
+    }
+
+    $settingKey = scenes_last_artwork_setting_key($userId);
+    $sql = Database::isMysql()
+        ? 'SELECT value FROM app_settings WHERE `key` = :key LIMIT 1'
+        : 'SELECT value FROM app_settings WHERE key = :key LIMIT 1';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(['key' => $settingKey]);
+    $storedArtworkId = scenes_artwork_option_id($pdo, $userId, $artworkOptions, max(0, (int)$stmt->fetchColumn()));
+    if ($storedArtworkId > 0 && scenes_option_id_exists($artworkOptions, $storedArtworkId)) {
+        $_SESSION[$sessionKey] = $storedArtworkId;
+        return $storedArtworkId;
+    }
+
+    $recentMockupArtworkId = scenes_recent_mockup_artwork_id($pdo, $userId, $artworkOptions);
+    if ($recentMockupArtworkId > 0 && scenes_option_id_exists($artworkOptions, $recentMockupArtworkId)) {
+        scenes_remember_last_artwork($pdo, $userId, $recentMockupArtworkId);
+        return $recentMockupArtworkId;
+    }
+
+    return 0;
+}
+
+function scenes_remember_last_artwork(PDO $pdo, int $userId, int $artworkId): void
+{
+    if ($userId <= 0 || $artworkId <= 0) {
+        return;
+    }
+
+    $_SESSION[scenes_last_artwork_session_key($userId)] = $artworkId;
+    $stmt = $pdo->prepare(Database::appSettingUpsertSql());
+    $stmt->execute([
+        'key' => scenes_last_artwork_setting_key($userId),
+        'value' => (string)$artworkId,
+        'updated_at' => date('c'),
+    ]);
+}
+
 $artworkOptions = scenes_root_artwork_options($pdo, $user);
 $id = max(0, (int)($_GET['id'] ?? 0));
 if ($id <= 0) {
+    $rememberedArtworkId = scenes_last_artwork_id($pdo, (int)$user['id'], $artworkOptions);
+    if ($rememberedArtworkId > 0) {
+        header('Location: mockup_combinations_review.php?id=' . $rememberedArtworkId);
+        exit;
+    }
+
     $firstOption = $artworkOptions[0] ?? null;
     if (is_array($firstOption) && (int)($firstOption['id'] ?? 0) > 0) {
         header('Location: mockup_combinations_review.php?id=' . (int)$firstOption['id']);
@@ -198,6 +331,9 @@ if (!$artwork) {
 if ((int)$artwork['user_id'] !== (int)$user['id'] && !Auth::isAdmin($user)) {
     http_response_code(403);
     die('Access denied.');
+}
+if ((int)$artwork['user_id'] === (int)$user['id']) {
+    scenes_remember_last_artwork($pdo, (int)$user['id'], $id);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'choose_scene_root_view') {
@@ -395,12 +531,48 @@ foreach ($cameraSlots as $cameraSlot) {
 $suggestedWorldMotherCategories = (array)($review['suggested_world_mother_categories'] ?? []);
 $selectedWorldMotherCategory = (string)($review['selected_world_mother_category'] ?? $selectedWorldMotherCategory);
 $sceneBoardIndex = max(1, min(3, (int)($review['scene_board_index'] ?? $sceneBoardIndex)));
-$scenePageTitle = $sceneBoardIndex > 1 ? 'Scenes Batch ' . $sceneBoardIndex : 'Scenes';
+$scenePageTitle = $sceneBoardIndex > 1 ? 'Create Scenes Batch ' . $sceneBoardIndex : 'Create Scenes';
 $selectedWorldMotherImages = stable_world_mother_pool_for_artwork(
     (new WorldMotherLibrary())->imagesForCategory($selectedWorldMotherCategory),
     $selectedWorldMotherCategory,
     $id
 );
+$sceneDirectionOptions = [];
+$selectedSceneDirectionName = $selectedWorldMotherCategory;
+$worldMotherLibrary = new WorldMotherLibrary();
+foreach ($suggestedWorldMotherCategories as $scene) {
+    $slug = (string)($scene['category_slug'] ?? '');
+    if ($slug === '') {
+        continue;
+    }
+    $pool = stable_world_mother_pool_for_artwork($worldMotherLibrary->imagesForCategory($slug), $slug, $id);
+    $previewPath = (string)($pool[0]['relative_path'] ?? '');
+    $previewUrls = [];
+    foreach ($pool as $poolImage) {
+        $previewUrl = world_mother_image_url((string)($poolImage['relative_path'] ?? ''));
+        if ($previewUrl !== '') {
+            $previewUrls[] = $previewUrl;
+        }
+    }
+    $sceneName = (string)($scene['category_name'] ?? $slug);
+    if ($slug === $selectedWorldMotherCategory) {
+        $selectedSceneDirectionName = $sceneName;
+    }
+    $sceneDirectionOptions[] = [
+        'slug' => $slug,
+        'name' => $sceneName,
+        'image_count' => (int)($scene['image_count'] ?? count($pool)),
+        'preview_url' => world_mother_image_url($previewPath),
+        'preview_urls' => $previewUrls,
+    ];
+}
+$selectedScenePreviewUrl = '';
+foreach ($selectedWorldMotherImages as $sceneImage) {
+    $selectedScenePreviewUrl = world_mother_image_url((string)($sceneImage['relative_path'] ?? ''));
+    if ($selectedScenePreviewUrl !== '') {
+        break;
+    }
+}
 $favoriteWorldMotherCategories = world_mother_favorites((int)$user['id']);
 $favoriteWorldMotherLookup = array_fill_keys($favoriteWorldMotherCategories, true);
 $favoriteWorldMotherNormalizedLookup = [];
@@ -473,7 +645,7 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title><?= h($scenePageTitle) ?> - The Artwork Curator</title>
+    <title><?= h($scenePageTitle) ?> - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <?= AdminSceneEditor::styles() ?>
@@ -771,9 +943,28 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
         }
         .thumb-row {
             display: grid;
-            grid-template-columns: minmax(118px, .48fr) minmax(0, 1fr);
+            grid-template-columns: minmax(118px, .46fr) 42px minmax(0, 1fr);
             gap: 8px;
-            align-items: start;
+            align-items: center;
+        }
+        .combination-plus {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border: 1px solid rgba(183, 127, 134, .34);
+            border-radius: 50%;
+            background: rgba(183, 127, 134, .12);
+            color: #9d6770;
+            font-size: 29px;
+            line-height: 1;
+            font-weight: 300;
+            box-shadow: inset 0 0 0 5px rgba(255, 250, 247, .82), 0 5px 14px rgba(52, 36, 28, .08);
+            transform: translate(-12px, -2px);
+        }
+        .combination-plus::before {
+            content: "+";
         }
         .card-icon-actions {
             display: none;
@@ -1168,7 +1359,7 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
         .generation-overlay-card strong {
             display: block;
             margin-bottom: 8px;
-            font-family: var(--font-serif);
+            font-family: var(--font-sans);
             font-size: 24px;
             font-weight: 400;
             color: var(--ink);
@@ -1444,11 +1635,30 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
             color: var(--accent);
             box-shadow: none;
         }
+        .combination-card .combination-generate-btn {
+            width: 100%;
+            background: rgba(183, 127, 134, .18);
+            border-color: rgba(183, 127, 134, .32);
+            color: #8f5f67;
+            font-weight: 800;
+            letter-spacing: .08em;
+        }
+        .combination-card .combination-generate-btn:hover {
+            background: rgba(183, 127, 134, .28);
+            border-color: rgba(183, 127, 134, .48);
+            color: #7e535b;
+        }
         @media (max-width: 980px) {
             .review-grid,
-            .thumb-row,
             .scene-choice-grid {
                 grid-template-columns: 1fr;
+            }
+            .thumb-row {
+                grid-template-columns: 1fr;
+            }
+            .combination-plus {
+                justify-self: center;
+                transform: none;
             }
             .scene-browser-head {
                 display: block;
@@ -1481,7 +1691,12 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
                 grid-template-columns: repeat(3, minmax(0, 1fr));
             }
             .thumb-row {
-                grid-template-columns: minmax(112px, .46fr) minmax(0, 1fr);
+                grid-template-columns: minmax(112px, .44fr) 38px minmax(0, 1fr);
+            }
+            .combination-plus {
+                width: 38px;
+                height: 38px;
+                font-size: 26px;
             }
         }
         .breadcrumb-steps {
@@ -1512,6 +1727,252 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
             color: var(--line-dark);
             font-weight: normal;
         }
+        .scene-header-v3 {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 36px;
+            padding: 6px 0 24px;
+            margin-bottom: 26px;
+            border-bottom: 1px solid var(--line);
+        }
+        .scene-header-v3 .header-main-info {
+            display: block;
+            flex: 1;
+            min-width: 0;
+        }
+        .scene-header-v3 .header-title-block {
+            margin-bottom: 14px;
+        }
+        .scene-header-v3 .header-title-block h1 {
+            font-size: 44px;
+            line-height: 1;
+            margin: 0;
+            font-family: var(--font-serif);
+            font-weight: 500;
+        }
+        .scene-header-v3 .header-desc-block {
+            flex: 1;
+            min-width: 0;
+            max-width: 980px;
+            padding-top: 4px;
+        }
+        .scene-page-desc {
+            margin: 0;
+            line-height: 1.55;
+        }
+        .scene-page-desc .desc-kicker {
+            display: block;
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+        .scene-page-desc .desc-instructions {
+            display: block;
+            max-width: 900px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+        .scene-header-v3 .topbar-actions {
+            flex-shrink: 0;
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            padding-top: 4px;
+        }
+        .scene-primary-action {
+            flex: 0 0 150px;
+            align-self: flex-start;
+            padding-top: 2px;
+        }
+        .scene-primary-action #generate-all-btn {
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            zoom: 1 !important;
+            width: 150px !important;
+            min-width: 150px !important;
+            height: 150px !important;
+            min-height: 150px !important;
+            margin: 0 !important;
+            padding: 20px !important;
+            border-radius: 4px;
+            font-size: 13px !important;
+            line-height: 1.32 !important;
+            text-align: center;
+            white-space: normal;
+            overflow-wrap: normal;
+            background: #b77f86 !important;
+            border-color: #b77f86 !important;
+            color: #fffaf7 !important;
+        }
+        .scene-primary-action #generate-all-btn:hover {
+            background: #a86f77 !important;
+            border-color: #a86f77 !important;
+        }
+        .scene-direction-panel {
+            display: block;
+            margin: -8px 0 26px;
+            padding: 14px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: var(--surface);
+            box-shadow: var(--shadow);
+        }
+        .scene-direction-browser > span {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+        .scene-direction-browser {
+            min-width: 0;
+        }
+        .scene-direction-strip {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: 164px;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 1px 2px 10px;
+            scrollbar-color: #d8cbbb transparent;
+            scrollbar-width: thin;
+        }
+        .scene-direction-strip::-webkit-scrollbar {
+            height: 6px;
+        }
+        .scene-direction-strip::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .scene-direction-strip::-webkit-scrollbar-thumb {
+            background: #d8cbbb;
+            border-radius: 999px;
+        }
+        .scene-direction-strip::-webkit-scrollbar-thumb:hover {
+            background: #bda98f;
+        }
+        .scene-direction-card {
+            position: relative;
+            display: block;
+            min-width: 0;
+            padding: 7px;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            background: var(--surface-soft);
+            color: var(--ink);
+            text-decoration: none;
+        }
+        .scene-direction-card:hover,
+        .scene-direction-card.active {
+            border-color: var(--accent);
+            background: #fbf7ef;
+        }
+        .scene-direction-card.active {
+            box-shadow: inset 0 0 0 2px var(--accent);
+        }
+        .scene-direction-card.active::after {
+            content: "Selected";
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 4px 7px;
+            border-radius: 3px;
+            background: rgba(32, 24, 18, .86);
+            color: #fffaf7;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+        .scene-direction-card img {
+            display: block;
+            width: 100%;
+            aspect-ratio: 3 / 4;
+            height: auto;
+            object-fit: cover;
+            border-radius: 2px;
+            background: var(--surface);
+        }
+        .scene-direction-card strong {
+            display: block;
+            margin-top: 6px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 12px;
+            line-height: 1.2;
+        }
+        .scene-direction-preview-grid {
+            position: fixed;
+            left: var(--scene-preview-left, 50%);
+            top: var(--scene-preview-top, 160px);
+            z-index: 200;
+            display: none;
+            width: 520px;
+            max-width: calc(100vw - 32px);
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            padding: 7px;
+            border: 1px solid var(--line);
+            border-radius: 5px;
+            background: var(--surface);
+            box-shadow: var(--shadow-hover);
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+        .scene-direction-card:hover .scene-direction-preview-grid,
+        .scene-direction-card:focus-visible .scene-direction-preview-grid {
+            display: grid;
+        }
+        .scene-direction-preview-grid img {
+            width: 100%;
+            height: 108px;
+            object-fit: cover;
+            border-radius: 2px;
+            border: 1px solid var(--line);
+        }
+        .scene-select-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+        }
+        @media (max-width: 980px) {
+            .scene-header-v3 {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 16px;
+            }
+            .scene-header-v3 .topbar-actions {
+                justify-content: flex-start;
+                align-items: center;
+            }
+            .scene-primary-action {
+                flex: 0 0 auto;
+                width: 100%;
+            }
+            .scene-primary-action #generate-all-btn {
+                width: 100% !important;
+                min-width: 0 !important;
+                height: 56px !important;
+                min-height: 56px !important;
+            }
+        }
+        @media (max-width: 768px) {
+            .scene-header-v3 .header-main-info {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            .scene-header-v3 .header-desc-block {
+                padding-top: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1523,31 +1984,62 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
 
+        <div class="alert-strip">Choose a visual direction and generate scene combinations for the active artwork.</div>
+
         <div class="workspace">
-            <div class="workspace-header">
-                <div>
-                    <h1><?= h($scenePageTitle) ?></h1>
-                    <p>Choose the scene reference for this artwork, then generate the selected views.</p>
+            <div class="scene-header-v3">
+                <div class="header-main-info">
+                    <div class="header-title-block">
+                        <h1><?= h($scenePageTitle) ?></h1>
+                    </div>
+                    <div class="header-desc-block">
+                        <p class="scene-page-desc">
+                            <span class="desc-kicker">Choose a scene style for your artwork.</span>
+                            <span class="desc-instructions">Each set combines your root artwork with a visual scene direction: architecture, light, atmosphere and spatial mood. The AI uses this reference to place your artwork naturally into high-end mockup environments, without changing the original artwork.</span>
+                        </p>
+                    </div>
                 </div>
-                <div class="topbar-actions">
-                    <label class="scene-mother-select">
-                        <span>Scene mother</span>
-                        <select id="scene-select" aria-label="Select scene mother">
-                            <?php foreach ($suggestedWorldMotherCategories as $scene): ?>
-                                <?php
-                                $slug = (string)($scene['category_slug'] ?? '');
-                                $imageCount = (int)($scene['image_count'] ?? 0);
-                                ?>
-                                <option value="<?= h($slug) ?>" <?= $slug === $selectedWorldMotherCategory ? 'selected' : '' ?>>
-                                    <?= h((string)($scene['category_name'] ?? $slug)) ?> · <?= $imageCount ?> img
+                <div class="scene-primary-action">
+                    <button class="button-link" type="button" id="generate-all-btn" onclick="generateAllCombinations(this)">Generate All Combinations</button>
+                </div>
+            </div>
+
+            <section class="scene-direction-panel" aria-label="Scene direction">
+                <div class="scene-direction-browser">
+                    <span>Choose a visual direction</span>
+                    <div class="scene-direction-strip">
+                        <?php foreach ($sceneDirectionOptions as $sceneOption): ?>
+                            <?php
+                            $slug = (string)$sceneOption['slug'];
+                            $sceneUrl = 'mockup_combinations_review.php?id=' . (int)$id . '&board=' . (int)$sceneBoardIndex . '&world_mother_category=' . rawurlencode($slug);
+                            ?>
+                            <a class="scene-direction-card <?= $slug === $selectedWorldMotherCategory ? 'active' : '' ?>" href="<?= h($sceneUrl) ?>">
+                                <?php if ((string)$sceneOption['preview_url'] !== ''): ?>
+                                    <img src="<?= h((string)$sceneOption['preview_url']) ?>" alt="">
+                                <?php endif; ?>
+                                <strong><?= h((string)$sceneOption['name']) ?></strong>
+                                <?php if (!empty($sceneOption['preview_urls'])): ?>
+                                    <span class="scene-direction-preview-grid" aria-hidden="true">
+                                        <?php foreach ((array)$sceneOption['preview_urls'] as $previewUrl): ?>
+                                            <img src="<?= h((string)$previewUrl) ?>" alt="">
+                                        <?php endforeach; ?>
+                                    </span>
+                                <?php endif; ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                    <label class="scene-select-hidden">
+                        Scene direction
+                        <select id="scene-select" aria-label="Select scene direction">
+                            <?php foreach ($sceneDirectionOptions as $sceneOption): ?>
+                                <option value="<?= h((string)$sceneOption['slug']) ?>" <?= (string)$sceneOption['slug'] === $selectedWorldMotherCategory ? 'selected' : '' ?>>
+                                    <?= h((string)$sceneOption['name']) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </label>
-                    <button class="button-link" type="button" id="generate-all-btn" onclick="generateAllCombinations(this)">Generate All Scenes</button>
-                    <a class="button-link secondary" href="mockup_combination_results.php?id=<?= (int)$id ?>&board=<?= (int)$sceneBoardIndex ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Generated Results</a>
                 </div>
-            </div>
+            </section>
 
             <?php if (!empty($review['validation_notes'])): ?>
                 <div class="notice warning">
@@ -1665,6 +2157,7 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
                                         </div>
                                     <?php endif; ?>
                                 </div>
+                                <div class="combination-plus" aria-label="plus"></div>
                                 <div class="thumb-box scene-reference-thumb">
                                     <?php if ($worldImageUrl !== ''): ?>
                                         <img src="<?= h($worldImageUrl) ?>" alt="">
@@ -1765,7 +2258,7 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
                                 >
                                 <div id="prepare-result-<?= $idx ?>" class="prepare-result"></div>
                                 <button
-                                    class="button-link"
+                                    class="button-link combination-generate-btn"
                                     type="button"
                                     data-index="<?= $idx ?>"
                                     data-artwork-id="<?= (int)$id ?>"
@@ -1776,7 +2269,7 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
                                     data-scene-board="<?= (int)$sceneBoardIndex ?>"
                                     onclick="prepareCombination(this)"
                                     <?= empty($combo['generation_ready']) ? 'disabled' : '' ?>
-                                >Generate This Set</button>
+                                >Generate This Combination</button>
                             </div>
                         </div>
                     </details>
@@ -1799,6 +2292,7 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
 </div>
 
 <script>
+const ACTIVE_ARTWORK_ROOT_FILE = <?= json_encode(basename((string)$artwork['root_file'])) ?>;
 const generationOverlay = document.getElementById('generation-overlay');
 const generationOverlayTitle = document.getElementById('generation-overlay-title');
 const generationOverlayMessage = document.getElementById('generation-overlay-message');
@@ -1894,9 +2388,51 @@ function runCombinationGeneration(btn) {
         }))
         .then(result => {
             if (result.status === 200 && result.body.ok) {
-                status.innerHTML = (result.body.message || 'Image generated.') + ' <a href="' + result.body.results_url + '">Evaluate results</a>';
-                btn.textContent = 'Generated';
-                return result.body;
+                if (result.body.enqueued) {
+                    const jobId = result.body.job_id;
+                    const checkInterval = 2500;
+                    status.textContent = 'Queued in Cloud Tasks. Processing...';
+                    btn.textContent = 'Queued';
+                    
+                    return new Promise((resolve, reject) => {
+                        const poll = () => {
+                            fetch('mockup_batch_status.php?image=' + encodeURIComponent(ACTIVE_ARTWORK_ROOT_FILE))
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.ok && data.jobs) {
+                                        const job = data.jobs.find(j => parseInt(j.id, 10) === parseInt(jobId, 10));
+                                        if (job) {
+                                            if (job.status === 'done') {
+                                                status.innerHTML = 'Image generated. <a href="' + result.body.results_url + '">Evaluate results</a>';
+                                                btn.textContent = 'Generated';
+                                                resolve(result.body);
+                                            } else if (job.status === 'error') {
+                                                status.textContent = 'Generation failed: ' + job.error;
+                                                btn.disabled = false;
+                                                btn.textContent = originalText;
+                                                reject(new Error(job.error));
+                                            } else {
+                                                status.textContent = 'Generation in progress (' + job.status + ')...';
+                                                setTimeout(poll, checkInterval);
+                                            }
+                                        } else {
+                                            setTimeout(poll, checkInterval);
+                                        }
+                                    } else {
+                                        setTimeout(poll, checkInterval);
+                                    }
+                                })
+                                .catch(() => {
+                                    setTimeout(poll, checkInterval);
+                                });
+                        };
+                        poll();
+                    });
+                } else {
+                    status.innerHTML = (result.body.message || 'Image generated.') + ' <a href="' + result.body.results_url + '">Evaluate results</a>';
+                    btn.textContent = 'Generated';
+                    return result.body;
+                }
             } else {
                 status.textContent = (result.body && result.body.error) ? result.body.error : 'Preparation failed.';
                 btn.disabled = false;
@@ -1977,6 +2513,29 @@ if (sceneSelect) {
         }
     });
 }
+
+document.querySelectorAll('.scene-direction-card').forEach(card => {
+    const preview = card.querySelector('.scene-direction-preview-grid');
+    if (!preview) return;
+
+    const positionPreview = () => {
+        const rect = card.getBoundingClientRect();
+        const previewWidth = Math.min(520, window.innerWidth - 32);
+        let left = rect.left + (rect.width / 2);
+        left = Math.max(16 + (previewWidth / 2), Math.min(window.innerWidth - 16 - (previewWidth / 2), left));
+
+        const belowTop = rect.bottom + 10;
+        const previewHeight = Math.min(470, preview.scrollHeight || 360);
+        const fitsBelow = belowTop + previewHeight < window.innerHeight - 16;
+        const top = fitsBelow ? belowTop : Math.max(16, rect.top - previewHeight - 10);
+
+        preview.style.setProperty('--scene-preview-left', left + 'px');
+        preview.style.setProperty('--scene-preview-top', top + 'px');
+    };
+
+    card.addEventListener('mouseenter', positionPreview);
+    card.addEventListener('focusin', positionPreview);
+});
 
 document.querySelectorAll('[data-combination-card]').forEach(card => {
     card.addEventListener('toggle', () => {

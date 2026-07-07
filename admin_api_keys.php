@@ -42,7 +42,7 @@ $geminiImagePlans = [
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>API Settings - The Artwork Curator</title>
+    <title>API Settings - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .settings-grid {

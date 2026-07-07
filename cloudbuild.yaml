@@ -1,0 +1,58 @@
+steps:
+  # 1. Build Web Docker Image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build',
+      '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/mockups-repo/mockups-web:latest',
+      '-f', 'Dockerfile.web',
+      '.'
+    ]
+  
+  # 2. Build Worker Docker Image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build',
+      '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/mockups-repo/mockups-worker:latest',
+      '-f', 'Dockerfile.worker',
+      '.'
+    ]
+
+  # 3. Push Web Image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/mockups-repo/mockups-web:latest']
+
+  # 4. Push Worker Image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/mockups-repo/mockups-worker:latest']
+
+  # 5. Deploy Web Service to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'mockups-web'
+      - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/mockups-repo/mockups-web:latest'
+      - '--region=us-central1'
+      - '--service-account=mockups-web-sa@$PROJECT_ID.iam.gserviceaccount.com'
+      - '--allow-unauthenticated'
+      - '--min-instances=0'
+      - '--max-instances=2'
+
+  # 6. Deploy Worker Service to Cloud Run (Private/Internal)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'mockups-worker'
+      - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/mockups-repo/mockups-worker:latest'
+      - '--region=us-central1'
+      - '--service-account=mockups-worker-sa@$PROJECT_ID.iam.gserviceaccount.com'
+      - '--no-allow-unauthenticated'
+      - '--min-instances=0'
+      - '--max-instances=2'
+
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/mockups-repo/mockups-web:latest'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/mockups-repo/mockups-worker:latest'

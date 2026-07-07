@@ -26,14 +26,30 @@ if (str_ends_with($file, '.analysis.json')) {
     $path = RESULTS_DIR . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $file);
 }
 
-if (!is_file($path)) {
-    http_response_code(404);
-    exit('File not found.');
-}
-
 if (!Auth::isAdmin($user) && !user_can_access_result_file((int)$user['id'], $file)) {
     http_response_code(403);
     exit('No tienes acceso a este archivo.');
+}
+
+if (!is_file($path)) {
+    if (StorageService::isGcsActive()) {
+        $gcsKey = '';
+        if (str_ends_with($file, '.analysis.json')) {
+            $gcsKey = 'analysis/' . $file;
+        } elseif (str_ends_with($file, '.txt')) {
+            $gcsKey = 'mockup-prompts/' . $file;
+        } else {
+            $gcsKey = 'results/' . $file;
+        }
+        
+        $signedUrl = StorageService::getSignedUrl($gcsKey, 5);
+        if ($signedUrl) {
+            header('Location: ' . $signedUrl);
+            exit;
+        }
+    }
+    http_response_code(404);
+    exit('File not found.');
 }
 
 if (session_status() === PHP_SESSION_ACTIVE) {

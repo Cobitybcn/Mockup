@@ -119,8 +119,14 @@ try {
         echo json_encode(['ok' => false, 'error' => 'Access denied.'], JSON_UNESCAPED_UNICODE);
         exit;
     }
+    $existingMockup = null;
     if ((int)$improvementControls['existing_mockup_id'] > 0) {
-        $stmtExistingMockup = $pdo->prepare('SELECT id, mockup_file FROM mockups WHERE id = :id AND user_id = :user_id LIMIT 1');
+        $stmtExistingMockup = $pdo->prepare('
+            SELECT id, mockup_file, selector_state_json, source_artwork_id, artwork_group_id
+            FROM mockups
+            WHERE id = :id AND user_id = :user_id
+            LIMIT 1
+        ');
         $stmtExistingMockup->execute([
             'id' => (int)$improvementControls['existing_mockup_id'],
             'user_id' => (int)$artwork['user_id'],
@@ -151,6 +157,28 @@ try {
         if ((int)($candidate['combination_index'] ?? 0) === $combinationIndex) {
             $combination = $candidate;
             break;
+        }
+    }
+
+    if (!$combination && $existingMockup) {
+        $storedState = json_decode((string)($existingMockup['selector_state_json'] ?? ''), true);
+        $storedCombination = is_array($storedState) ? (array)($storedState['combination'] ?? []) : [];
+        $storedGenerationSource = is_array($storedState) ? (string)($storedState['generation_source'] ?? '') : '';
+        $storedArtworkId = (int)($storedCombination['artwork_id'] ?? $existingMockup['source_artwork_id'] ?? 0);
+        if (
+            $storedGenerationSource === 'mockup_combination_review'
+            && $storedCombination
+            && $storedArtworkId === $artworkId
+            && (int)($storedCombination['combination_index'] ?? 0) === $combinationIndex
+        ) {
+            $combination = $storedCombination;
+            if ($cameraSlotId !== '') {
+                $combination['selected_camera_slot_id'] = $cameraSlotId;
+            }
+            if ($worldMotherCategory !== '') {
+                $combination['world_mother_category'] = $worldMotherCategory;
+            }
+            $combination['world_mother_variant_offset'] = $worldMotherVariantOffset;
         }
     }
 
@@ -246,63 +274,134 @@ try {
     $audit['combination'] = $combinationForStorage;
     file_put_contents($auditPath, json_encode($audit, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
-    $result = ServiceFactory::mockupGenerator()->generate($rootPath, $contextId, $finalPrompt, [
-        'seo_params' => $seoParams,
-        'root_reference_path' => $rootPath,
-        'world_mother_reference_path' => $worldMotherPath,
-        'world_mother_reference_mode' => $worldMotherReferenceMode,
-        'world_mother_reference_path_original' => $worldMotherPath,
-        'world_mother_scale' => $worldMotherScale,
-        'prompt_passthrough_mode' => $finalPrompt,
-        // $contextId here is synthetic ("combination_N"), not a real mockup_contexts.id.
-        // Without this flag, GeminiMockupGenerator/OpenAIMockupGenerator would still call
-        // MockupWorldVisualPromptEnhancer with it; today that's a no-op only because the
-        // id never matches a real row (see docs/AUDITORIA_PROMPTS_MOCKUPS_20260701.md,
-        // Fase 4). This flag makes the bypass explicit and independent of that accident.
-        'skip_world_visual_enhancer' => true,
-        'slot_full_prompt_mode' => $slotFullPromptMode,
-        'mockup_combination' => $combinationForStorage,
-    ]);
-
+    // Prepare UI Selector State to save in the job
     $selectorState = [
         'generation_source' => 'mockup_combination_review',
         'audit_file' => 'analysis/mockup-combination-audit/' . $artworkId . '/' . $auditFile,
         'combination' => $combinationForStorage,
+        'world_mother_reference_mode' => $worldMotherReferenceMode,
+        'world_mother_scale' => $worldMotherScale,
+        'scene_board_index' => $sceneBoardIndex,
+        'world_mother_category' => $worldMotherCategory,
     ];
+    $selectorStateJson = json_encode($selectorState, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-    $mockupId = (int)Database::withBusyRetry(function () use ($user, $artwork, $result, $contextId, $selectorState): int {
-        $stmtInsert = Database::connection()->prepare("
-            INSERT INTO mockups (user_id, artwork_file, mockup_file, context_id, prompt_file, selector_state_json, created_at)
-            VALUES (:user_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :selector_state_json, :created_at)
-        ");
-        $stmtInsert->execute([
-            'user_id' => (int)$user['id'],
-            'artwork_file' => basename((string)$artwork['root_file']),
-            'mockup_file' => basename((string)$result['file']),
-            'context_id' => $contextId,
-            'prompt_file' => basename((string)$result['prompt_file']),
-            'selector_state_json' => json_encode($selectorState, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-            'created_at' => date('c'),
-        ]);
-        return (int)Database::connection()->lastInsertId();
-    }, 24);
+    // 1. Database Transaction: Lock user, check credits, deduct 1 credit, register ledger, insert job
+    $jobId = 0;
+    try {
+        $jobId = Database::createGenerationJobWithTransaction(
+            (int)$user['id'],
+            (int)$artworkId,
+            $contextId,
+            $finalPrompt,
+            $rootPath,
+            $selectorStateJson
+        );
+    } catch (Exception $e) {
+        $audit['status'] = 'failed';
+        $audit['error'] = $e->getMessage();
+        file_put_contents($auditPath, json_encode($audit, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        http_response_code(400);
+        echo json_encode(['ok' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 
-    $audit['status'] = 'generated';
-    $audit['completed_at'] = date(DATE_ATOM);
-    $audit['mockup_id'] = $mockupId;
-    $audit['mockup_file'] = basename((string)$result['file']);
-    $audit['prompt_file'] = basename((string)$result['prompt_file']);
-    file_put_contents($auditPath, json_encode($audit, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+    // 2. Dispatch the Task to Cloud Tasks (Async)
+    try {
+        if (ProviderSettings::allowRealApi() && class_exists('Google\Cloud\Tasks\V2\CloudTasksClient')) {
+            // Real environment: Enqueue job to Cloud Tasks queue targeting the worker
+            CloudTasksService::enqueueGeneration($jobId, (int)$user['id'], (int)$artworkId, $contextId);
+            Database::updateJobStatus($jobId, 'queued');
+        } else {
+            // Local offline debug / mock mode: run mock generation synchronously
+            $mockResult = [
+                'file' => 'mockup_' . $contextId . '_' . time() . '.jpg',
+                'prompt_file' => 'mockup-prompts/prompt_' . $contextId . '_' . time() . '.txt',
+                'message' => 'Mock mockup generated successfully.'
+            ];
+            
+            // Build mock files physically
+            if (is_file($worldMotherPath)) {
+                copy($worldMotherPath, __DIR__ . '/results/' . $mockResult['file']);
+            } else {
+                file_put_contents(__DIR__ . '/results/' . $mockResult['file'], 'mock mockup image content');
+            }
+            file_put_contents(__DIR__ . '/results/' . $mockResult['prompt_file'], $finalPrompt);
 
-    echo json_encode([
-        'ok' => true,
-        'message' => 'Combination image generated.',
-        'mockup_id' => $mockupId,
-        'mockup_file' => basename((string)$result['file']),
-        'audit_file' => 'analysis/mockup-combination-audit/' . $artworkId . '/' . $auditFile,
-        'results_url' => 'mockup_combination_results.php?id=' . $artworkId . '&board=' . $sceneBoardIndex . ($worldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($worldMotherCategory) : ''),
-        'generation_mode' => 'mockup_combination_full_generation',
-    ], JSON_UNESCAPED_UNICODE);
+            // Insert mockup record in DB
+            $mockupId = (int)Database::withBusyRetry(function () use ($user, $artwork, $mockResult, $contextId, $selectorStateJson): int {
+                $stmtInsert = Database::connection()->prepare("
+                    INSERT INTO mockups (user_id, artwork_group_id, source_artwork_id, artwork_file, mockup_file, context_id, prompt_file, selector_state_json, created_at)
+                    VALUES (:user_id, :artwork_group_id, :source_artwork_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :selector_state_json, :created_at)
+                ");
+                $stmtInsert->execute([
+                    'user_id' => (int)$user['id'],
+                    'artwork_group_id' => ((int)($artwork['artwork_group_id'] ?? 0) > 0) ? (int)$artwork['artwork_group_id'] : null,
+                    'source_artwork_id' => (int)$artwork['id'],
+                    'artwork_file' => basename((string)$artwork['root_file']),
+                    'mockup_file' => basename((string)$mockResult['file']),
+                    'context_id' => $contextId,
+                    'prompt_file' => basename((string)$mockResult['prompt_file']),
+                    'selector_state_json' => $selectorStateJson,
+                    'created_at' => date('c'),
+                ]);
+                return (int)Database::connection()->lastInsertId();
+            }, 24);
+
+            // Update job status to completed/done
+            Database::withBusyRetry(function () use ($jobId, $mockupId, $mockResult): void {
+                $pdo = Database::connection();
+                $pdo->prepare('
+                    UPDATE mockup_generation_jobs
+                    SET status = "done", mockup_id = :mockup_id, mockup_file = :mockup_file, prompt_file = :prompt_file, updated_at = :now
+                    WHERE id = :id
+                ')->execute([
+                    'mockup_id' => $mockupId,
+                    'mockup_file' => basename($mockResult['file']),
+                    'prompt_file' => basename($mockResult['prompt_file']),
+                    'now' => date('c'),
+                    'id' => $jobId
+                ]);
+            });
+        }
+
+        // Return immediate response to the caller
+        $audit['status'] = ProviderSettings::allowRealApi() ? 'queued' : 'generated';
+        $audit['completed_at'] = date(DATE_ATOM);
+        if (!ProviderSettings::allowRealApi() && isset($mockupId)) {
+            $audit['mockup_id'] = $mockupId;
+            $audit['mockup_file'] = basename((string)$mockResult['file']);
+            $audit['prompt_file'] = basename((string)$mockResult['prompt_file']);
+        }
+        file_put_contents($auditPath, json_encode($audit, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+
+        echo json_encode([
+            'ok' => true,
+            'enqueued' => ProviderSettings::allowRealApi(),
+            'job_id' => $jobId,
+            'message' => ProviderSettings::allowRealApi() ? 'Generation enqueued in Cloud Tasks.' : 'Mockup generated (mock mode).',
+            'audit_file' => 'analysis/mockup-combination-audit/' . $artworkId . '/' . $auditFile,
+            'results_url' => 'mockup_combination_results.php?id=' . $artworkId . '&board=' . $sceneBoardIndex . ($worldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($worldMotherCategory) : ''),
+            'generation_mode' => 'mockup_combination_full_generation',
+        ], JSON_UNESCAPED_UNICODE);
+
+    } catch (Exception $e) {
+        // Dispatch failed: Run Database refund transaction and mark job failed
+        if (ProviderSettings::allowRealApi()) {
+            Database::failEnqueueAndRefund((int)$user['id'], $jobId, $e->getMessage());
+        } else {
+            Database::updateJobStatus($jobId, 'error', $e->getMessage());
+        }
+
+        $audit['status'] = 'failed';
+        $audit['completed_at'] = date(DATE_ATOM);
+        $audit['error'] = $e->getMessage();
+        file_put_contents($auditPath, json_encode($audit, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+
+        http_response_code(500);
+        echo json_encode(['ok' => false, 'error' => 'No se pudo registrar la generación: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
+    }
+    exit;
 } catch (Throwable $e) {
     if (isset($auditPath, $audit)) {
         $audit['status'] = 'failed';

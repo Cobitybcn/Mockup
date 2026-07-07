@@ -857,17 +857,32 @@ usort($rootCandidatesList, static function (array $a, array $b) use ($rootCandid
     return $aOrder <=> $bOrder;
 });
 
-$mockupStmt = $pdo->prepare('
-    SELECT *
-    FROM mockups
-    WHERE user_id = :user_id
-    AND artwork_file = :artwork_file
-    ORDER BY created_at DESC
-');
-$mockupStmt->execute([
-    'user_id'      => $artworkOwnerId,
-    'artwork_file' => $rootFile,
-]);
+$artworkGroupId = (int)($artwork['artwork_group_id'] ?? 0);
+if ($artworkGroupId > 0) {
+    $mockupStmt = $pdo->prepare('
+        SELECT *
+        FROM mockups
+        WHERE user_id = :user_id
+        AND artwork_group_id = :artwork_group_id
+        ORDER BY created_at DESC
+    ');
+    $mockupStmt->execute([
+        'user_id' => $artworkOwnerId,
+        'artwork_group_id' => $artworkGroupId,
+    ]);
+} else {
+    $mockupStmt = $pdo->prepare('
+        SELECT *
+        FROM mockups
+        WHERE user_id = :user_id
+        AND artwork_file = :artwork_file
+        ORDER BY created_at DESC
+    ');
+    $mockupStmt->execute([
+        'user_id'      => $artworkOwnerId,
+        'artwork_file' => $rootFile,
+    ]);
+}
 $mockups = $mockupStmt->fetchAll();
 $favoriteMockupLookup = MockupFavorites::lookupForUser($artworkOwnerId);
 $relatedMockups = [];
@@ -938,7 +953,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Permanent Artwork Sheet - The Artwork Curator</title>
+    <title>Permanent Artwork Sheet - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>

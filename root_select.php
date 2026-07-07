@@ -105,7 +105,7 @@ function h($v): string {
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Select Root Image - The Artwork Curator</title>
+    <title>Select Root Image - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

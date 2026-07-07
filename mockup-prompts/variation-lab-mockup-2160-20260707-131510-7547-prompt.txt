@@ -1,0 +1,19 @@
+Edita la imagen proporcionada como una prueba de laboratorio. No generes una explicacion; devuelve solo una imagen final.
+
+REFERENCIAS ADJUNTAS:
+- IMAGEN 1 es el mockup existente que debe editarse. Su tipo de espacio y su logica ambiental son el punto de partida.
+- IMAGEN 2 es la obra raiz autoritativa. La obra visible en el resultado debe conservar la identidad de IMAGEN 2.
+- IMAGEN 3 es la Scene Mother original. Usarla para conservar familia de ambiente, materiales, luz, paleta, atmosfera y coherencia espacial. No inventar un tipo de lugar alternativo.
+
+OBRA:
+- Titulo: obra sin titulo
+- Altura de referencia de la obra: 120 cm
+
+TAMANO DE LA OBRA DE ARTE:
+Aumenta un 20% el tamano de la obra de arte.
+
+PRESENCIA HUMANA:
+Agrega una figura humana masculina de 2 mts de altura observando la obra y postura relajada. Puede ser asiatico, negro, blanco o de otra procedencia. Vestimenta de lujo occidental, no religiosa, con zapatos de lujo.
+
+ILUMINACION:
+Cambia la iluminacion del mockup a una escena nocturna elegante, con luz artificial premium.

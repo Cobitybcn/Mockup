@@ -224,7 +224,7 @@ function dashboard_page_url(int $page, string $query): string
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Dashboard - The Artwork Curator</title>
+    <title>Dashboard - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -237,7 +237,7 @@ function dashboard_page_url(int $page, string $query): string
         </header>
 
         <div class="alert-strip">
-            The Artwork Curator analyzes each artwork before generating mockups, helping artists choose visual environments that respect the work’s style, palette, composition and emotional atmosphere.
+            Artwork Mockups analyzes each artwork before generating mockups, helping artists choose visual environments that respect the work’s style, palette, composition and emotional atmosphere.
         </div>
 
         <div class="workspace">

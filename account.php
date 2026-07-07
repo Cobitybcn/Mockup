@@ -27,7 +27,7 @@ function h($v): string
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Account - The Artwork Curator</title>
+    <title>Account - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>

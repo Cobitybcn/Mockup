@@ -114,6 +114,10 @@ if (!copy($mainInputFile, $rootPath)) {
     fail_existing_root('Could not copy the existing root artwork to results.');
 }
 
+if (StorageService::isGcsActive()) {
+    StorageService::uploadFile('results/' . $rootFileName, $rootPath);
+}
+
 $now = date('c');
 $measurements = [
     'width' => $width,

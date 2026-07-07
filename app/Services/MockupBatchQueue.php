@@ -54,15 +54,18 @@ class MockupBatchQueue
             Database::withBusyRetry(function () use ($userId, $artworkId, $rootFile, $context, $contextId): void {
                 $pdo = Database::connection();
                 $now = date('c');
+                $groupId = self::groupIdForArtwork($pdo, $artworkId);
                 $insert = $pdo->prepare('
                     INSERT INTO mockup_generation_jobs
-                        (user_id, artwork_id, artwork_file, context_id, prompt, status, attempts, created_at, updated_at)
+                        (user_id, artwork_id, artwork_group_id, source_artwork_id, artwork_file, context_id, prompt, status, attempts, created_at, updated_at)
                     VALUES
-                        (:user_id, :artwork_id, :artwork_file, :context_id, :prompt, "queued", 0, :created_at, :updated_at)
+                        (:user_id, :artwork_id, :artwork_group_id, :source_artwork_id, :artwork_file, :context_id, :prompt, "queued", 0, :created_at, :updated_at)
                 ');
                 $insert->execute([
                     'user_id' => $userId,
                     'artwork_id' => $artworkId,
+                    'artwork_group_id' => $groupId,
+                    'source_artwork_id' => $artworkId,
                     'artwork_file' => basename($rootFile),
                     'context_id' => $contextId,
                     'prompt' => self::composeAdminPromptForContext($context),
@@ -156,15 +159,18 @@ class MockupBatchQueue
                         continue;
                     }
 
+                    $groupId = self::groupIdForArtwork($pdo, $artworkId);
                     $insert = $pdo->prepare('
                         INSERT INTO mockup_generation_jobs
-                            (user_id, artwork_id, artwork_file, context_id, prompt, status, attempts, created_at, updated_at)
+                            (user_id, artwork_id, artwork_group_id, source_artwork_id, artwork_file, context_id, prompt, status, attempts, created_at, updated_at)
                         VALUES
-                            (:user_id, :artwork_id, :artwork_file, :context_id, :prompt, "processing", 1, :created_at, :updated_at)
+                            (:user_id, :artwork_id, :artwork_group_id, :source_artwork_id, :artwork_file, :context_id, :prompt, "processing", 1, :created_at, :updated_at)
                     ');
                     $insert->execute([
                         'user_id' => $userId,
                         'artwork_id' => $artworkId,
+                        'artwork_group_id' => $groupId,
+                        'source_artwork_id' => $artworkId,
                         'artwork_file' => $rootFile,
                         'context_id' => $contextId,
                         'prompt' => self::composeAdminPromptForContext($context),
@@ -374,6 +380,14 @@ class MockupBatchQueue
         $stmt->execute(['artwork_id' => $artworkId]);
 
         return $stmt->fetchAll();
+    }
+
+    private static function groupIdForArtwork(PDO $pdo, int $artworkId): ?int
+    {
+        $stmt = $pdo->prepare('SELECT artwork_group_id FROM artworks WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $artworkId]);
+        $groupId = (int)$stmt->fetchColumn();
+        return $groupId > 0 ? $groupId : null;
     }
 
     public static function composeAdminPromptForContext(array $context): string

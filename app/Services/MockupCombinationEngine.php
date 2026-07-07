@@ -360,6 +360,22 @@ final class MockupCombinationEngine
         }
 
         $candidate = rtrim(RESULTS_DIR, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . basename($rootFile);
+        if (is_file($candidate)) {
+            return $candidate;
+        }
+
+        // Self-healing: if GCS is active, download it to the container's ephemeral disk
+        if (StorageService::isGcsActive()) {
+            $gcsPath = 'results/' . basename($rootFile);
+            $dir = dirname($candidate);
+            if (!is_dir($dir)) {
+                mkdir($dir, 0775, true);
+            }
+            if (StorageService::downloadFile($gcsPath, $candidate)) {
+                return $candidate;
+            }
+        }
+
         return $candidate;
     }
 

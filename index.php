@@ -34,7 +34,7 @@ function h($v): string
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>The Artwork Curator — AI-Curated Fine Art Mockups</title>
+    <title>Artwork Mockups — AI Art Mockup Generator for Artists & Galleries</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -174,6 +174,7 @@ function h($v): string
         .hero-actions {
             display: flex;
             gap: 16px;
+            flex-wrap: wrap;
         }
         .btn-secondary {
             background: transparent !important;
@@ -248,37 +249,85 @@ function h($v): string
         
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 32px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
         }
         .feature-card {
+            position: relative;
             background: var(--surface) !important;
             border: 1px solid var(--line) !important;
-            padding: 32px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow);
+            padding: 40px 24px 32px 24px;
+            border-radius: 16px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 20px rgba(20, 20, 18, 0.02);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .feature-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 48px;
+            height: 3px;
+            background: var(--accent);
+            border-radius: 0 0 3px 3px;
+            opacity: 0.8;
         }
         .feature-card:hover {
             border-color: var(--accent) !important;
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-hover);
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px rgba(20, 20, 18, 0.06);
         }
         .feature-icon {
-            width: 48px;
-            height: 48px;
-            border: 1px solid rgba(154, 123, 86, 0.25);
-            background: rgba(154, 123, 86, 0.04);
-            border-radius: 10px;
+            width: 76px;
+            height: 76px;
+            border: 1px solid var(--line);
+            background: radial-gradient(circle, #FFFFFF 0%, #FAF9F6 100%);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: var(--accent);
-            margin-bottom: 24px;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 4px rgba(20,20,18,0.02);
+            margin-bottom: 8px;
+            box-shadow: 0 4px 10px rgba(20, 20, 18, 0.02), inset 0 2px 4px rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
         }
         .feature-icon svg {
             color: var(--accent);
+        }
+        .feature-card:hover .feature-icon {
+            border-color: var(--accent);
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(154, 123, 86, 0.12), inset 0 1px 0 #FFFFFF;
+        }
+        .feature-card-divider {
+            width: 24px;
+            height: 1px;
+            background: var(--accent);
+            margin: 16px auto;
+            opacity: 0.5;
+        }
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 20px;
+            max-width: 320px;
+        }
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: var(--line-dark, #C5C3BD);
+            opacity: 0.5;
+        }
+        .divider-diamond {
+            color: var(--accent);
+            font-size: 8px;
+            line-height: 1;
         }
         
         /* High-Impact Hero Showcase Visuals: Immersive Backdrop Slider */
@@ -300,9 +349,13 @@ function h($v): string
             width: 100%;
             height: 100%;
             opacity: 0;
-            transform: scale(1.02);
-            transition: transform 1.2s ease, opacity 1.2s ease;
-            animation: heroBgFade 15s infinite ease-in-out;
+            z-index: 1;
+            transition: opacity 1.2s ease-in-out;
+            pointer-events: none;
+        }
+        .hero-slide.active {
+            opacity: 1;
+            z-index: 2;
         }
         .hero-slide img {
             width: 100%;
@@ -310,26 +363,6 @@ function h($v): string
             object-fit: cover;
             object-position: center center;
             display: block;
-        }
-        .hero-slide:nth-child(1) { animation-delay: 0s; }
-        .hero-slide:nth-child(2) { animation-delay: 5s; }
-        .hero-slide:nth-child(3) { animation-delay: 10s; }
-        
-        @keyframes heroBgFade {
-            0%, 8% {
-                opacity: 0;
-                transform: scale(1.03);
-            }
-            15%, 33% {
-                opacity: 1;
-                transform: scale(1);
-                z-index: 2;
-            }
-            40%, 100% {
-                opacity: 0;
-                transform: scale(1.01);
-                z-index: 1;
-            }
         }
         .hero-bg-overlay {
             position: absolute;
@@ -376,10 +409,11 @@ function h($v): string
         }
         .feature-card h3 {
             font-family: var(--font-serif);
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 500;
-            margin: 0 0 12px 0;
+            margin: 0 0 16px 0;
             color: var(--ink) !important;
+            line-height: 1.3;
         }
         .feature-card p {
             font-size: 13px;
@@ -502,10 +536,10 @@ function h($v): string
     <!-- Header -->
     <header class="landing-header">
         <div class="brand">
-            <span class="brand-kicker">Fine Art Mockups</span>
+            <span class="brand-kicker">ArtworkMockups.com</span>
             <div class="brand-title">
                 <span class="brand-mark"></span>
-                The Artwork Curator
+                Artwork Mockups
             </div>
         </div>
         <nav class="landing-nav">
@@ -518,12 +552,12 @@ function h($v): string
     <!-- Hero Section -->
     <section class="hero-section">
         <div class="hero-content">
-            <span class="hero-kicker">AI for Fine Artists & Galleries</span>
-            <h1>Create <em>Architecturally Precise</em> Art Mockups in Seconds</h1>
-            <p>Transform a flat photo of your painting into hyper-realistic mockup exhibitions. Display your art in high-end galleries, collector salons, and industrial lofts with natural lighting and true-to-scale integration.</p>
+            <span class="hero-kicker">AI Art Mockup Generator for Artists & Galleries</span>
+            <h1>Create Professional<br><em>Art Mockups</em><br>From One Artwork Photo</h1>
+            <p>Upload a photo of your painting, drawing or original artwork and generate realistic gallery mockups, interior mockups and collector-space presentations with AI-assisted photographic direction — preserving the original colors, texture, scale and proportions.</p>
             <div class="hero-actions">
-                <a href="#login" class="btn-cta" style="padding: 14px 32px; font-size: 13px;">Get Started</a>
-                <a href="#features" class="btn-secondary" style="padding: 14px 32px; font-size: 13px;">Explore Features</a>
+                <a href="#login" class="btn-cta" style="padding: 14px 32px; font-size: 13px;">CREATE YOUR FIRST MOCKUP</a>
+                <a href="#showcase" class="btn-secondary" style="padding: 14px 32px; font-size: 13px;">VIEW ART MOCKUP EXAMPLES</a>
             </div>
         </div>
         <div class="hero-bg-slider">
@@ -557,11 +591,7 @@ function h($v): string
             $totalSlides = count($slides);
             ?>
             <?php foreach ($slides as $index => $slidePath): ?>
-                <div class="hero-slide" style="
-                    animation-duration: <?= $totalSlides * 5 ?>s;
-                    animation-delay: <?= $index * 5 ?>s;
-                    z-index: <?= $totalSlides - $index ?>;
-                ">
+                <div class="hero-slide<?= $index === 0 ? ' active' : '' ?>">
                     <img src="<?= htmlspecialchars($slidePath) ?>" alt="Showcase Space <?= $index + 1 ?>">
                 </div>
             <?php endforeach; ?>
@@ -572,61 +602,63 @@ function h($v): string
     <!-- Features Section -->
     <section id="features" class="section-padding">
         <div class="section-title-wrapper">
-            <span class="section-kicker">The Technical Advantage</span>
-            <h2 class="section-title">Calibrated Specifically for Fine Art Curation</h2>
+            <span class="section-kicker">THE TECHNICAL ADVANTAGE</span>
+            <h2 class="section-title">Calibrated Specifically<br>for Fine Art Curation</h2>
+            <div class="section-divider">
+                <span class="divider-line"></span>
+                <span class="divider-diamond">♦</span>
+                <span class="divider-line"></span>
+            </div>
         </div>
         <div class="features-grid">
             <div class="feature-card">
                 <div class="feature-icon">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="6" y="6" width="12" height="12" rx="1" />
-                        <line x1="6" y1="3" x2="18" y2="3" />
-                        <path d="M9 1l-3 2 3 2M15 1l3 2-3 2" />
-                        <line x1="3" y1="6" x2="3" y2="18" />
-                        <path d="M1 9l2-3 2 3M1 15l2 3 2-3" />
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        <path d="M9 11l2 2 4-4" />
                     </svg>
                 </div>
-                <h3>True-to-Scale Invariance</h3>
-                <p>The engine calculates the physical dimensions of your canvas and scales it relative to furniture, windows, and ceiling heights. No more oversized or tiny art errors.</p>
+                <div class="feature-card-divider"></div>
+                <h3>Faithful Artwork Preservation</h3>
+                <p>Your painting, drawing or original artwork remains untouched. The system preserves composition, colors, texture, proportions and visual identity while changing only the presentation context.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M8 2h8M12 2v3" />
-                        <path d="M9 8c0-2 6-2 6 0H9z" />
-                        <path d="M7 12h10L15 8H9z" />
-                        <line x1="9" y1="12" x2="4" y2="22" stroke-opacity="0.4" />
-                        <line x1="15" y1="12" x2="20" y2="22" stroke-opacity="0.4" />
-                        <line x1="12" y1="13" x2="12" y2="17" />
-                        <line x1="10" y1="14" x2="9" y2="18" />
-                        <line x1="14" y1="14" x2="15" y2="18" />
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="6" y="6" width="12" height="12" />
+                        <path d="M6 3v6M3 6h6" />
+                        <path d="M18 3v6M15 6h6" />
+                        <path d="M6 15v6M3 18h6" />
+                        <path d="M18 15v6M15 18h6" />
                     </svg>
                 </div>
-                <h3>Natural Gallery Lighting</h3>
-                <p>Our AI projects soft-drop shadows and directional gallery spotlights on your canvas, accurately rendering the paint relief, varnish sheen, and linen texture.</p>
+                <div class="feature-card-divider"></div>
+                <h3>True-to-Scale Artwork Placement</h3>
+                <p>Artwork dimensions are used to place each piece realistically within galleries, interiors and collector spaces — avoiding oversized walls, tiny canvases or unnatural proportions.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10 6l4 2-2 4-4-2z" />
+                        <path d="M12.5 5.5l1.5-1.5M7.5 9.5l-1.5 1.5" />
+                        <path d="M12 10l-4 11M12 10l4 11M12 10v4" />
+                        <path d="M18 6l1 1-1 1-1-1zm-12 10l1 1-1 1-1-1z" />
+                    </svg>
+                </div>
+                <div class="feature-card-divider"></div>
+                <h3>AI-Assisted Photographic Lighting</h3>
+                <p>Generate mockups with natural daylight, gallery spotlights, soft shadows and realistic surface response, including canvas texture, paint relief and varnish reflections.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                         <circle cx="12" cy="13" r="4" />
                     </svg>
                 </div>
-                <h3>Editorial Perspectives</h3>
-                <p>Choose from direct frontal displays for corporate proposals, 3/4 oblique camera angles for depth, or low-angle floor-to-ceiling Nadir views.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="7" y="2" width="10" height="20" rx="2" />
-                        <polygon points="10,9 15,12 10,15" fill="currentColor" opacity="0.15" />
-                        <polygon points="10,9 15,12 10,15" />
-                        <line x1="11" y1="4" x2="13" y2="4" />
-                        <circle cx="12" cy="20" r="0.5" fill="currentColor" />
-                    </svg>
-                </div>
-                <h3>Integrated Social Video</h3>
-                <p>Compile vertical 9:16 video reels with slow, elegant Ken Burns panning transitions, ready to share on Instagram and TikTok directly.</p>
+                <div class="feature-card-divider"></div>
+                <h3>Curated Camera Perspectives</h3>
+                <p>Choose from frontal views, three-quarter angles, aerial compositions, low-angle perspectives and editorial close-ups designed for professional artwork presentation.</p>
             </div>
         </div>
     </section>
@@ -635,7 +667,8 @@ function h($v): string
     <section id="showcase" class="section-padding" style="background: #0D0D0A;">
         <div class="section-title-wrapper">
             <span class="section-kicker">Showcase Gallery</span>
-            <h2 class="section-title">Explore Editorial Perspectives & Rooms</h2>
+            <h2 class="section-title">Explore Artwork Mockups in Curated Rooms</h2>
+            <p style="font-size: 14px; margin-top: 10px; max-width: 600px;">Gallery walls, collector interiors, floor displays and editorial camera angles designed to present paintings, drawings and original artworks professionally.</p>
         </div>
         <div class="showcase-grid">
             <div class="showcase-item">
@@ -669,7 +702,7 @@ function h($v): string
     <section id="login" class="section-padding login-section">
         <div class="section-title-wrapper" style="text-align: center; margin-bottom: 24px;">
             <span class="section-kicker">Artist Workspace</span>
-            <h2 class="section-title">Enter the Curator</h2>
+            <h2 class="section-title">Enter Artwork Mockups</h2>
             <p style="color: var(--muted); font-size: 14px; margin-top: 10px;">Manage your artwork catalog and generate coordinated mockup sets.</p>
         </div>
 
@@ -698,8 +731,20 @@ function h($v): string
 
     <!-- Footer -->
     <footer style="padding: 40px 4%; border-top: 1px solid var(--line); text-align: center; font-size: 12px; color: var(--muted);">
-        <p>&copy; 2026 The Artwork Curator. All rights reserved. Powered by Vertex AI & Gemini.</p>
+        <p>&copy; 2026 ArtworkMockups.com. All rights reserved. Powered by Vertex AI & Gemini.</p>
     </footer>
 
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const slides = document.querySelectorAll('.hero-slide');
+        if (slides.length <= 1) return;
+        let currentSlide = 0;
+        setInterval(() => {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + 1) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }, 5000);
+    });
+    </script>
 </body>
 </html>

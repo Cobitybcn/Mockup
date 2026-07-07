@@ -254,101 +254,72 @@ $missing = [];
 $albumLoadError = '';
 $rootTotal = 0;
 $mockupTotal = 0;
+$variantRootTotal = 0;
 $pendingArtworks = [];
 
 if ($id <= 0) {
-    $albumSql = "
-        SELECT id, root_file, final_title, subtitle, width, height, unit, updated_at, created_at
-        FROM artworks
-        WHERE status = 'done'
-        AND root_file IS NOT NULL
-        AND root_file != ''
-    ";
-    $albumParams = [];
-    if (!$isAdmin) {
-        $albumSql .= " AND user_id = :user_id";
-        $albumParams['user_id'] = (int)$user['id'];
-    }
-    $albumSql .= " ORDER BY updated_at DESC, created_at DESC";
-
     try {
-        $albumStmt = $pdo->prepare($albumSql);
-        $albumStmt->execute($albumParams);
-        foreach ($albumStmt->fetchAll() as $row) {
+        (new ArtworkGroupService($pdo))->syncUser((int)$user['id']);
+
+        $groupSql = "
+            SELECT g.id AS group_id,
+                   g.canonical_artwork_id,
+                   g.official_root_artwork_ids,
+                   g.title AS group_title,
+                   g.updated_at,
+                   g.created_at,
+                   a.root_file,
+                   a.final_title,
+                   a.subtitle,
+                   a.width,
+                   a.height,
+                   a.unit,
+                   COUNT(DISTINCT roots.id) AS root_count,
+                   SUM(CASE WHEN roots.root_view_status = 'official' THEN 1 ELSE 0 END) AS official_count,
+                   SUM(CASE WHEN roots.root_view_status = 'variant' THEN 1 ELSE 0 END) AS variant_count,
+                   COUNT(DISTINCT m.id) AS mockup_count
+            FROM artwork_groups g
+            INNER JOIN artworks a ON a.id = g.canonical_artwork_id
+            LEFT JOIN artworks roots ON roots.artwork_group_id = g.id AND roots.user_id = g.user_id
+            LEFT JOIN mockups m ON m.artwork_group_id = g.id AND m.user_id = g.user_id
+            WHERE g.status = 'active'
+        ";
+        $groupSql .= " AND g.user_id = :user_id";
+        $groupParams = ['user_id' => (int)$user['id']];
+        $groupSql .= "
+            GROUP BY g.id, g.canonical_artwork_id, g.official_root_artwork_ids, g.title, g.updated_at, g.created_at,
+                     a.root_file, a.final_title, a.subtitle, a.width, a.height, a.unit
+            ORDER BY g.updated_at DESC, g.created_at DESC
+        ";
+
+        $groupStmt = $pdo->prepare($groupSql);
+        $groupStmt->execute($groupParams);
+        foreach ($groupStmt->fetchAll() as $row) {
             $file = basename((string)($row['root_file'] ?? ''));
             if ($file === '' || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $file)) {
                 continue;
             }
             $row['root_file'] = $file;
-            $row['source'] = 'artworks';
+            $row['id'] = (int)$row['canonical_artwork_id'];
+            $row['source'] = 'artwork_groups';
             $albumArtworks[] = $row;
         }
 
-        $knownRootFiles = [];
-        foreach ($albumArtworks as $albumArtwork) {
-            $knownRootFiles[(string)$albumArtwork['root_file']] = true;
-        }
-
-        $mockupRootSql = "
-            SELECT artwork_file, MAX(created_at) AS updated_at, COUNT(*) AS mockup_count
-            FROM mockups
-            WHERE artwork_file IS NOT NULL
-            AND artwork_file != ''
-        ";
-        $mockupRootParams = [];
-        if (!$isAdmin) {
-            $mockupRootSql .= " AND user_id = :user_id";
-            $mockupRootParams['user_id'] = (int)$user['id'];
-        }
-        $mockupRootSql .= " GROUP BY artwork_file ORDER BY MAX(created_at) DESC";
-        $mockupRootStmt = $pdo->prepare($mockupRootSql);
-        $mockupRootStmt->execute($mockupRootParams);
-        $findArtworkStmt = $pdo->prepare('SELECT id, final_title, subtitle, width, height, unit FROM artworks WHERE user_id = :user_id AND root_file = :root_file ORDER BY updated_at DESC LIMIT 1');
-        foreach ($mockupRootStmt->fetchAll() as $row) {
-            $file = basename((string)($row['artwork_file'] ?? ''));
-            if ($file === '' || isset($knownRootFiles[$file]) || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $file)) {
-                continue;
-            }
-            $findArtworkStmt->execute([
-                'user_id' => (int)$user['id'],
-                'root_file' => $file,
-            ]);
-            $linkedArtwork = $findArtworkStmt->fetch();
-            if (!is_array($linkedArtwork) && !$isAdmin) {
-                $linkedArtwork = root_album_adopt_root_artwork($pdo, (int)$user['id'], $file);
-            }
-            $albumArtworks[] = [
-                'id' => is_array($linkedArtwork) ? (int)$linkedArtwork['id'] : 0,
-                'root_file' => $file,
-                'final_title' => is_array($linkedArtwork) ? (string)($linkedArtwork['final_title'] ?? '') : '',
-                'subtitle' => is_array($linkedArtwork) ? (string)($linkedArtwork['subtitle'] ?? '') : '',
-                'width' => is_array($linkedArtwork) ? (string)($linkedArtwork['width'] ?? '') : '',
-                'height' => is_array($linkedArtwork) ? (string)($linkedArtwork['height'] ?? '') : '',
-                'unit' => is_array($linkedArtwork) ? (string)($linkedArtwork['unit'] ?? 'cm') : '',
-                'updated_at' => (string)($row['updated_at'] ?? ''),
-                'created_at' => (string)($row['updated_at'] ?? ''),
-                'mockup_count' => (int)($row['mockup_count'] ?? 0),
-                'source' => 'mockups',
-            ];
-            $knownRootFiles[$file] = true;
-        }
         // Get totals for stats header
-        $rootCountSql = "SELECT COUNT(*) FROM artworks WHERE status = 'done' AND root_file IS NOT NULL AND root_file != ''";
-        $rootParams = [];
-        if (!$isAdmin) {
-            $rootCountSql .= " AND user_id = :user_id";
-            $rootParams['user_id'] = (int)$user['id'];
-        }
+        $rootCountSql = "SELECT COUNT(*) FROM artwork_groups WHERE status = 'active' AND user_id = :user_id";
+        $rootParams = ['user_id' => (int)$user['id']];
         $rootCountStmt = $pdo->prepare($rootCountSql);
         $rootCountStmt->execute($rootParams);
         $rootTotal = (int)$rootCountStmt->fetchColumn();
 
-        $mockupCountSql = "SELECT COUNT(*) FROM mockups";
-        $mockupParams = [];
-        if (!$isAdmin) {
-            $mockupCountSql .= " WHERE user_id = :user_id";
-            $mockupParams['user_id'] = (int)$user['id'];
-        }
+        $variantCountSql = "SELECT COUNT(*) FROM artworks WHERE artwork_group_id IS NOT NULL AND root_view_status = 'variant' AND user_id = :user_id";
+        $variantParams = ['user_id' => (int)$user['id']];
+        $variantCountStmt = $pdo->prepare($variantCountSql);
+        $variantCountStmt->execute($variantParams);
+        $variantRootTotal = (int)$variantCountStmt->fetchColumn();
+
+        $mockupCountSql = "SELECT COUNT(*) FROM mockups WHERE user_id = :user_id";
+        $mockupParams = ['user_id' => (int)$user['id']];
         $mockupCountStmt = $pdo->prepare($mockupCountSql);
         $mockupCountStmt->execute($mockupParams);
         $mockupTotal = (int)$mockupCountStmt->fetchColumn();
@@ -358,11 +329,8 @@ if ($id <= 0) {
             FROM artworks
             WHERE (status != 'done' OR root_file IS NULL OR root_file = '')
         ";
-        $pendingParams = [];
-        if (!$isAdmin) {
-            $pendingSql .= " AND user_id = :user_id";
-            $pendingParams['user_id'] = (int)$user['id'];
-        }
+        $pendingSql .= " AND user_id = :user_id";
+        $pendingParams = ['user_id' => (int)$user['id']];
         $pendingSql .= " ORDER BY created_at DESC";
         $pendingStmt = $pdo->prepare($pendingSql);
         $pendingStmt->execute($pendingParams);
@@ -485,7 +453,7 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Root Album - Mockup Lab</title>
+    <title>Root Album - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -575,7 +543,7 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
         </header>
         <?php if ($id <= 0): ?>
             <div class="alert-strip">
-                The Artwork Curator analyzes each artwork before generating mockups, helping artists choose visual environments that respect the work’s style, palette, composition and emotional atmosphere.
+                Artwork Mockups analyzes each artwork before generating mockups, helping artists choose visual environments that respect the work’s style, palette, composition and emotional atmosphere.
             </div>
         <?php endif; ?>
         <div class="workspace">
@@ -583,7 +551,7 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                 <div class="workspace-header">
                     <div>
                         <h1>Root Artworks</h1>
-                        <p>Private archive of artworks, root images and mockups.</p>
+                        <p>Canonical artworks with official root views and attached mockups.</p>
                     </div>
                     <div class="topbar-actions">
                         <a class="button-link" href="artwork_new.php">Upload Artwork</a>
@@ -593,7 +561,7 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
 
                 <section class="stats">
                     <div class="stat-card">
-                        <span>Root Images</span>
+                        <span>Artworks</span>
                         <strong><?= h($rootTotal) ?></strong>
                     </div>
                     <div class="stat-card">
@@ -601,12 +569,12 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                         <strong><?= h($mockupTotal) ?></strong>
                     </div>
                     <div class="stat-card">
-                        <span>Credits</span>
-                        <strong><?= h($user['credits']) ?></strong>
+                        <span>Variants</span>
+                        <strong><?= h($variantRootTotal) ?></strong>
                     </div>
                     <div class="stat-card">
-                        <span>Status</span>
-                        <strong>Beta</strong>
+                        <span>Credits</span>
+                        <strong><?= h($user['credits']) ?></strong>
                     </div>
                 </section>
             <?php else: ?>
@@ -708,7 +676,10 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                         <div class="root-album-grid">
                             <?php foreach ($albumArtworks as $albumArtwork): ?>
                                 <?php
-                                $title = trim((string)($albumArtwork['final_title'] ?? ''));
+                                $title = trim((string)($albumArtwork['group_title'] ?? ''));
+                                if ($title === '') {
+                                    $title = trim((string)($albumArtwork['final_title'] ?? ''));
+                                }
                                 if ($title === '') {
                                     $title = 'Untitled';
                                 }
@@ -716,12 +687,12 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                                 $height = trim((string)($albumArtwork['height'] ?? ''));
                                 $unit = trim((string)($albumArtwork['unit'] ?? 'cm'));
                                 $size = ($width !== '' && $height !== '') ? trim($width . ' x ' . $height . ' ' . $unit) : '';
-                                $targetUrl = (int)($albumArtwork['id'] ?? 0) > 0
-                                    ? 'artwork_details.php?id=' . (int)$albumArtwork['id']
-                                    : 'mockups.php?q=' . rawurlencode((string)$albumArtwork['root_file']);
-                                $detailsUrl = (int)($albumArtwork['id'] ?? 0) > 0
-                                    ? 'artwork_details.php?id=' . (int)$albumArtwork['id']
-                                    : '';
+                                $targetUrl = 'artwork_details.php?id=' . (int)$albumArtwork['id'];
+                                $detailsUrl = $targetUrl;
+                                $rootCount = (int)($albumArtwork['root_count'] ?? 0);
+                                $officialCount = (int)($albumArtwork['official_count'] ?? 0);
+                                $variantCount = (int)($albumArtwork['variant_count'] ?? 0);
+                                $mockupCount = (int)($albumArtwork['mockup_count'] ?? 0);
                                 ?>
                                 <article class="root-album-card">
                                     <a href="<?= h($targetUrl) ?>">
@@ -729,11 +700,11 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                                     </a>
                                     <h2 class="root-album-title"><?= h($title) ?></h2>
                                     <p class="root-album-subtitle">
-                                        <?= (int)($albumArtwork['id'] ?? 0) > 0 ? '#' . (int)$albumArtwork['id'] : h((string)$albumArtwork['root_file']) ?>
+                                        Group #<?= (int)($albumArtwork['group_id'] ?? 0) ?> · Artwork #<?= (int)($albumArtwork['id'] ?? 0) ?>
                                         <?= $size !== '' ? ' - ' . h($size) : '' ?>
-                                        <?php if ((string)($albumArtwork['source'] ?? '') === 'mockups'): ?>
-                                            - <?= (int)($albumArtwork['mockup_count'] ?? 0) ?> mockups
-                                        <?php endif; ?>
+                                        · <?= h((string)$officialCount) ?> official / <?= h((string)$rootCount) ?> roots
+                                        <?= $variantCount > 0 ? ' · ' . h((string)$variantCount) . ' variants' : '' ?>
+                                        <?= $mockupCount > 0 ? ' · ' . h((string)$mockupCount) . ' mockups' : '' ?>
                                     </p>
                                     <?php if ($detailsUrl !== ''): ?>
                                         <a class="button-link secondary" href="<?= h($detailsUrl) ?>">Artwork Details</a>

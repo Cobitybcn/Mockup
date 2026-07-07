@@ -111,7 +111,7 @@ class SocialVideoService
             'social_video_specs' => ['format' => 'vertical', 'aspect_ratio' => '9:16', 'total_duration_seconds' => $duration, 'platform_intent' => ['Instagram Reels', 'TikTok', 'YouTube Shorts']],
             'tiktok_metadata' => ['hook' => 'Enter the world around this artwork.', 'caption' => 'A curated encounter with an original artwork.', 'hashtags' => ['#contemporaryart', '#artcollector', '#interiordesign'], 'suggested_audio_direction' => 'Subtle ambient room tone.'],
             'negative_prompt' => 'Never repaint, redesign, crop, mirror, distort, or reinterpret the artwork.',
-            'metadata' => ['workflow' => 'Social Video (beta)', 'generated_from' => 'The Artwork Curator', 'narrative_archetype' => $setup['narrative_archetype'] ?? 'contexto_vivido', 'tone_value' => (int)($setup['tone_value'] ?? $setup['suggested_tone_value'] ?? 50)],
+            'metadata' => ['workflow' => 'Social Video (beta)', 'generated_from' => 'Artwork Mockups', 'narrative_archetype' => $setup['narrative_archetype'] ?? 'contexto_vivido', 'tone_value' => (int)($setup['tone_value'] ?? $setup['suggested_tone_value'] ?? 50)],
         ];
 
         return $this->ask('social_video_director_prompt', $fallback, 'final multi-segment video concept', [

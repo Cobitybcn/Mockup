@@ -8,6 +8,8 @@ final class WorldMotherLibrary
     private string $basePath;
     private string $baseRelativePath;
     private bool $createdBaseDirectory = false;
+    private array $indexData = [];
+    private bool $indexLoaded = false;
 
     public function __construct(?string $basePath = null, string $baseRelativePath = 'storage/world_mothers')
     {
@@ -20,6 +22,21 @@ final class WorldMotherLibrary
             mkdir($this->basePath, 0775, true);
             $this->createdBaseDirectory = true;
         }
+    }
+
+    private function loadIndex(): void
+    {
+        if ($this->indexLoaded) {
+            return;
+        }
+        $indexPath = $this->basePath . DIRECTORY_SEPARATOR . 'index.json';
+        if (is_file($indexPath)) {
+            $data = json_decode((string)file_get_contents($indexPath), true);
+            if (is_array($data)) {
+                $this->indexData = $data;
+            }
+        }
+        $this->indexLoaded = true;
     }
 
     public function createdBaseDirectory(): bool
@@ -37,6 +54,17 @@ final class WorldMotherLibrary
      */
     public function categories(): array
     {
+        $this->loadIndex();
+        if (!empty($this->indexData['categories'])) {
+            $categories = [];
+            foreach ($this->indexData['categories'] as $cat) {
+                $cat['absolute_path'] = $this->basePath . DIRECTORY_SEPARATOR . $cat['category_slug'];
+                $cat['image_count'] = count($this->imagesForCategory($cat['category_slug']));
+                $categories[] = $cat;
+            }
+            return $categories;
+        }
+
         $categories = [];
         foreach ($this->categorySlugs() as $slug) {
             $absolutePath = $this->basePath . DIRECTORY_SEPARATOR . $slug;
@@ -61,6 +89,16 @@ final class WorldMotherLibrary
         $categorySlug = trim(str_replace(['\\', '/'], '', $categorySlug));
         if ($categorySlug === '') {
             return [];
+        }
+
+        $this->loadIndex();
+        if (!empty($this->indexData['images'][$categorySlug])) {
+            $images = [];
+            foreach ($this->indexData['images'][$categorySlug] as $img) {
+                $img['absolute_path'] = $this->basePath . DIRECTORY_SEPARATOR . $categorySlug . DIRECTORY_SEPARATOR . $img['file_name'];
+                $images[] = $img;
+            }
+            return $images;
         }
 
         $categoryPath = $this->basePath . DIRECTORY_SEPARATOR . $categorySlug;

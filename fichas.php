@@ -73,6 +73,7 @@ try {
             }
         }
 
+        (new ArtworkGroupService($pdo))->syncUser($userId);
         $_SESSION['fichas_notice'] = "Sincronización: {$embedded} obras embebidas, {$assigned} asignadas a fichas automáticamente" . ($pendingReview > 0 ? ", {$pendingReview} necesitan revisión en el asistente." : '.');
         header('Location: fichas.php');
         exit;
@@ -156,7 +157,7 @@ foreach ($sheets as $sheet) {
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Fichas - Mockup Lab</title>
+    <title>Fichas - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>

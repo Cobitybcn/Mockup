@@ -532,7 +532,7 @@ $totalArtworks = array_sum(array_map(fn($g) => count($g['artwork_ids']), $groups
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Confirmar Fichas - Mockup Lab</title>
+    <title>Confirmar Fichas - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>

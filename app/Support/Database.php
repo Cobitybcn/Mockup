@@ -229,6 +229,9 @@ class Database
         self::addColumnIfMissing($pdo, 'artworks', 'medium', "TEXT NOT NULL DEFAULT ''");
         self::addColumnIfMissing($pdo, 'artworks', 'artwork_year', "TEXT NOT NULL DEFAULT ''");
         self::addColumnIfMissing($pdo, 'artworks', 'series', "TEXT NOT NULL DEFAULT ''");
+        self::addColumnIfMissing($pdo, 'artworks', 'artwork_group_id', "INTEGER");
+        self::addColumnIfMissing($pdo, 'artworks', 'root_view_type', "TEXT NOT NULL DEFAULT 'unknown'");
+        self::addColumnIfMissing($pdo, 'artworks', 'root_view_status', "TEXT NOT NULL DEFAULT 'variant'");
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS mockups (
@@ -244,6 +247,8 @@ class Database
             )
         ");
         self::addColumnIfMissing($pdo, 'mockups', 'selector_state_json', "TEXT NOT NULL DEFAULT ''");
+        self::addColumnIfMissing($pdo, 'mockups', 'artwork_group_id', "INTEGER");
+        self::addColumnIfMissing($pdo, 'mockups', 'source_artwork_id', "INTEGER");
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS artist_profiles (
@@ -344,6 +349,9 @@ class Database
         ");
 
         $pdo->exec("CREATE INDEX IF NOT EXISTS idx_mockup_generation_jobs_artwork ON mockup_generation_jobs (artwork_id, status)");
+        self::addColumnIfMissing($pdo, 'mockup_generation_jobs', 'artwork_group_id', "INTEGER");
+        self::addColumnIfMissing($pdo, 'mockup_generation_jobs', 'source_artwork_id', "INTEGER");
+        self::addColumnIfMissing($pdo, 'mockup_generation_jobs', 'selector_state_json', "TEXT NULL");
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS social_video_workflows (
@@ -413,6 +421,25 @@ class Database
         $pdo->exec("CREATE INDEX IF NOT EXISTS idx_artwork_sheets_canonical ON artwork_sheets (canonical_artwork_id)");
 
         $pdo->exec("
+            CREATE TABLE IF NOT EXISTS artwork_groups (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                canonical_artwork_id INTEGER NOT NULL,
+                official_root_artwork_ids TEXT NOT NULL DEFAULT '',
+                title TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL DEFAULT 'active',
+                merged_into_group_id INTEGER,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (canonical_artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
+            )
+        ");
+        self::addColumnIfMissing($pdo, 'artwork_groups', 'merged_into_group_id', "INTEGER");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_artwork_groups_user ON artwork_groups (user_id)");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_artwork_groups_canonical ON artwork_groups (canonical_artwork_id)");
+
+        $pdo->exec("
             CREATE TABLE IF NOT EXISTS mockup_sheets (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
@@ -436,6 +463,7 @@ class Database
             )
         ");
         $pdo->exec("CREATE INDEX IF NOT EXISTS idx_mockup_sheets_artwork ON mockup_sheets (artwork_id, mockup_file)");
+        self::addColumnIfMissing($pdo, 'mockup_sheets', 'artwork_group_id', "INTEGER");
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS artwork_embeddings (
@@ -461,6 +489,14 @@ class Database
             )
         ");
         $pdo->exec("CREATE INDEX IF NOT EXISTS idx_root_artwork_candidates_artwork ON root_artwork_candidates (artwork_id, view_type)");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS sessions (
+                id TEXT PRIMARY KEY,
+                payload TEXT NOT NULL,
+                last_activity INTEGER NOT NULL
+            )
+        ");
     }
 
     private static function migrateMysql(PDO $pdo): void
@@ -511,6 +547,9 @@ class Database
         self::addColumnIfMissing($pdo, 'artworks', 'medium', "VARCHAR(255) NOT NULL DEFAULT ''");
         self::addColumnIfMissing($pdo, 'artworks', 'artwork_year', "VARCHAR(80) NOT NULL DEFAULT ''");
         self::addColumnIfMissing($pdo, 'artworks', 'series', "VARCHAR(255) NOT NULL DEFAULT ''");
+        self::addColumnIfMissing($pdo, 'artworks', 'artwork_group_id', "INT UNSIGNED NULL");
+        self::addColumnIfMissing($pdo, 'artworks', 'root_view_type', "VARCHAR(80) NOT NULL DEFAULT 'unknown'");
+        self::addColumnIfMissing($pdo, 'artworks', 'root_view_status', "VARCHAR(40) NOT NULL DEFAULT 'variant'");
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS mockups (
@@ -529,6 +568,8 @@ class Database
         ");
         self::addColumnIfMissing($pdo, 'mockups', 'selector_state_json', "MEDIUMTEXT NOT NULL");
         self::makeMysqlColumnNullableIfNeeded($pdo, 'mockups', 'selector_state_json', 'MEDIUMTEXT');
+        self::addColumnIfMissing($pdo, 'mockups', 'artwork_group_id', "INT UNSIGNED NULL");
+        self::addColumnIfMissing($pdo, 'mockups', 'source_artwork_id', "INT UNSIGNED NULL");
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS artist_profiles (
@@ -641,6 +682,9 @@ class Database
                 CONSTRAINT mockup_generation_jobs_artwork_fk FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
+        self::addColumnIfMissing($pdo, 'mockup_generation_jobs', 'artwork_group_id', "INT UNSIGNED NULL");
+        self::addColumnIfMissing($pdo, 'mockup_generation_jobs', 'source_artwork_id', "INT UNSIGNED NULL");
+        self::addColumnIfMissing($pdo, 'mockup_generation_jobs', 'selector_state_json', "MEDIUMTEXT NULL");
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS social_video_workflows (
@@ -717,6 +761,26 @@ class Database
         ");
 
         $pdo->exec("
+            CREATE TABLE IF NOT EXISTS artwork_groups (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                user_id INT UNSIGNED NOT NULL,
+                canonical_artwork_id INT UNSIGNED NOT NULL,
+                official_root_artwork_ids MEDIUMTEXT NOT NULL,
+                title VARCHAR(255) NOT NULL DEFAULT '',
+                status VARCHAR(40) NOT NULL DEFAULT 'active',
+                merged_into_group_id INT UNSIGNED NULL,
+                created_at VARCHAR(40) NOT NULL,
+                updated_at VARCHAR(40) NOT NULL,
+                PRIMARY KEY (id),
+                KEY idx_artwork_groups_user (user_id),
+                KEY idx_artwork_groups_canonical (canonical_artwork_id),
+                CONSTRAINT artwork_groups_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                CONSTRAINT artwork_groups_artwork_fk FOREIGN KEY (canonical_artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        self::addColumnIfMissing($pdo, 'artwork_groups', 'merged_into_group_id', "INT UNSIGNED NULL");
+
+        $pdo->exec("
             CREATE TABLE IF NOT EXISTS mockup_sheets (
                 id INT UNSIGNED NOT NULL AUTO_INCREMENT,
                 user_id INT UNSIGNED NOT NULL,
@@ -756,6 +820,7 @@ class Database
                 CONSTRAINT artwork_embeddings_artwork_fk FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
+        self::addColumnIfMissing($pdo, 'mockup_sheets', 'artwork_group_id', "INT UNSIGNED NULL");
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS root_artwork_candidates (
@@ -768,6 +833,16 @@ class Database
                 PRIMARY KEY (id),
                 KEY idx_root_artwork_candidates_artwork (artwork_id, view_type),
                 CONSTRAINT root_artwork_candidates_artwork_fk FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS sessions (
+                id VARCHAR(190) NOT NULL,
+                payload MEDIUMTEXT NOT NULL,
+                last_activity INT UNSIGNED NOT NULL,
+                PRIMARY KEY (id),
+                KEY idx_sessions_activity (last_activity)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
     }
@@ -945,5 +1020,157 @@ class Database
             'reason' => $reason,
             'created_at' => date('c'),
         ]);
+    }
+
+    public static function createGenerationJobWithTransaction(int $userId, int $artworkId, string $contextId, string $prompt, string $imagePath, ?string $selectorStateJson = null): int
+    {
+        return self::withBusyRetry(function () use ($userId, $artworkId, $contextId, $prompt, $imagePath, $selectorStateJson): int {
+            $pdo = self::connection();
+            $inTransaction = false;
+
+            try {
+                self::beginWriteTransaction($pdo);
+                $inTransaction = true;
+
+                // 1. Lock and check credits
+                $sql = 'SELECT credits FROM users WHERE id = :id';
+                if (self::isMysql()) {
+                    $sql .= ' FOR UPDATE';
+                }
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute(['id' => $userId]);
+                $credits = $stmt->fetchColumn();
+
+                if ($credits === false || (int)$credits < 1) {
+                    throw new RuntimeException('No tienes créditos suficientes para generar un mockup.');
+                }
+
+                // 2. Deduct credit
+                $now = date('c');
+                $pdo->prepare('UPDATE users SET credits = credits - 1, updated_at = :now WHERE id = :id')
+                    ->execute(['now' => $now, 'id' => $userId]);
+
+                // 3. Register transaction ledger
+                $pdo->prepare("
+                    INSERT INTO credit_transactions (user_id, amount, reason, created_at)
+                    VALUES (:user_id, -1, :reason, :created_at)
+                ")->execute([
+                    'user_id' => $userId,
+                    'reason' => 'mockup_generation:' . $contextId,
+                    'created_at' => $now,
+                ]);
+
+                // 4. Create generation job in pending_enqueue status
+                $groupId = null;
+                $stmtGroup = $pdo->prepare('SELECT id FROM artwork_groups WHERE user_id = :user_id AND canonical_artwork_id = :artwork_id LIMIT 1');
+                $stmtGroup->execute(['user_id' => $userId, 'artwork_id' => $artworkId]);
+                $groupVal = $stmtGroup->fetchColumn();
+                if ($groupVal !== false) {
+                    $groupId = (int)$groupVal;
+                }
+
+                $insert = $pdo->prepare('
+                    INSERT INTO mockup_generation_jobs
+                        (user_id, artwork_id, artwork_group_id, source_artwork_id, artwork_file, context_id, prompt, selector_state_json, status, attempts, created_at, updated_at)
+                    VALUES
+                        (:user_id, :artwork_id, :artwork_group_id, :source_artwork_id, :artwork_file, :context_id, :prompt, :selector_state_json, "pending_enqueue", 0, :created_at, :updated_at)
+                ');
+                $insert->execute([
+                    'user_id' => $userId,
+                    'artwork_id' => $artworkId,
+                    'artwork_group_id' => $groupId,
+                    'source_artwork_id' => $artworkId,
+                    'artwork_file' => basename($imagePath),
+                    'context_id' => $contextId,
+                    'prompt' => $prompt,
+                    'selector_state_json' => $selectorStateJson,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+
+                $jobId = (int)$pdo->lastInsertId();
+
+                $pdo->exec('COMMIT');
+                $inTransaction = false;
+                return $jobId;
+            } catch (Throwable $e) {
+                if ($inTransaction) {
+                    try {
+                        $pdo->exec('ROLLBACK');
+                    } catch (Throwable $rollbackErr) {
+                    }
+                }
+                throw $e;
+            }
+        }, 12);
+    }
+
+    public static function failEnqueueAndRefund(int $userId, int $jobId, string $reason): void
+    {
+        self::withBusyRetry(function () use ($userId, $jobId, $reason): void {
+            $pdo = self::connection();
+            $inTransaction = false;
+
+            try {
+                self::beginWriteTransaction($pdo);
+                $inTransaction = true;
+
+                $now = date('c');
+
+                // 1. Re-credit user
+                $pdo->prepare('UPDATE users SET credits = credits + 1, updated_at = :now WHERE id = :id')
+                    ->execute(['now' => $now, 'id' => $userId]);
+
+                // 2. Register refund ledger
+                $pdo->prepare("
+                    INSERT INTO credit_transactions (user_id, amount, reason, created_at)
+                    VALUES (:user_id, 1, :reason, :created_at)
+                ")->execute([
+                    'user_id' => $userId,
+                    'reason' => 'refund:enqueue_failed_job_' . $jobId,
+                    'created_at' => $now,
+                ]);
+
+                // 3. Update job status to failed_enqueue
+                $pdo->prepare('
+                    UPDATE mockup_generation_jobs
+                    SET status = "failed_enqueue", error = :error, updated_at = :now
+                    WHERE id = :id
+                ')->execute([
+                    'error' => $reason,
+                    'now' => $now,
+                    'id' => $jobId
+                ]);
+
+                $pdo->exec('COMMIT');
+                $inTransaction = false;
+            } catch (Throwable $e) {
+                if ($inTransaction) {
+                    try {
+                        $pdo->exec('ROLLBACK');
+                    } catch (Throwable $rollbackErr) {
+                    }
+                }
+                throw $e;
+            }
+        });
+    }
+
+    public static function updateJobStatus(int $jobId, string $status, ?string $error = null): void
+    {
+        self::withBusyRetry(function () use ($jobId, $status, $error): void {
+            $pdo = self::connection();
+            $stmt = $pdo->prepare('
+                UPDATE mockup_generation_jobs
+                SET status = :status, error = :error, updated_at = :now
+                WHERE id = :id
+            ');
+            $stmt->execute([
+                'status' => $status,
+                'error' => $error,
+                'now' => date('c'),
+                'id' => $jobId
+            ]);
+        });
     }
 }

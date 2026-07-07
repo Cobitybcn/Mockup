@@ -62,7 +62,7 @@ $totalAdmins = count(array_filter($users, fn($u) => !empty($u['is_admin'])));
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Users & Credits - The Artwork Curator</title>
+    <title>Users & Credits - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .users-table-container {

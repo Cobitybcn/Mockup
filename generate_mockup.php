@@ -755,7 +755,7 @@ if (wants_json_response()) {
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Generated Mockup - The Artwork Curator</title>
+    <title>Generated Mockup - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
 

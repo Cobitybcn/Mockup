@@ -207,7 +207,7 @@ function h($v): string {
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Preparing Root Image - The Artwork Curator</title>
+    <title>Preparing Root Image - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
 

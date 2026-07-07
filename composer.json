@@ -1,0 +1,14 @@
+{
+    "name": "artworkmockups/mockups",
+    "description": "Mockups generation platform secure architecture",
+    "require": {
+        "php": ">=8.1",
+        "google/cloud-storage": "^1.42",
+        "google/cloud-tasks": "^1.11"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    }
+}

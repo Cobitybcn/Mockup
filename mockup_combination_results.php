@@ -287,7 +287,7 @@ if (is_file($evalPath)) {
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Mockup Combination Results - The Artwork Curator</title>
+    <title>Mockup Combination Results - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <?= AdminSceneEditor::styles() ?>
@@ -350,42 +350,87 @@ if (is_file($evalPath)) {
             background: var(--surface);
             color: var(--accent);
         }
-        .next-batch-prompt {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            width: fit-content;
-            margin: 0 0 20px;
-            padding: 8px 10px 8px 12px;
-            border: 1px solid rgba(244, 196, 204, .72);
-            border-radius: 999px;
-            background: rgba(244, 196, 204, .18);
-            color: var(--muted);
-            font-size: 11px;
-            line-height: 1;
+        .results-header-v3 {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 36px;
+            padding: 6px 0 24px;
+            margin-bottom: 26px;
+            border-bottom: 1px solid var(--line);
         }
-        .next-batch-prompt strong {
+        .results-header-v3 .header-main-info {
+            display: block;
+            flex: 1;
+            min-width: 0;
+        }
+        .results-header-v3 h1 {
+            margin: 0 0 18px;
+            font-size: 44px;
+            line-height: 1;
+            font-family: var(--font-serif);
+            font-weight: 500;
             color: var(--ink);
+        }
+        .results-page-desc {
+            margin: 0;
+            line-height: 1.55;
+        }
+        .results-page-desc .desc-kicker {
+            display: block;
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+        .results-page-desc .desc-instructions {
+            display: block;
+            max-width: 900px;
+            font-size: 16px;
             font-weight: 600;
+            color: var(--accent);
+        }
+        .next-batch-prompt {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 18px;
+            margin: 0;
+            color: var(--accent);
+        }
+        .next-batch-prompt span {
+            max-width: 230px;
+            color: var(--accent);
+            font-size: 14px;
+            line-height: 1.45;
+            font-weight: 600;
+            text-align: right;
         }
         .next-batch-prompt a {
             display: inline-flex;
             align-items: center;
-            min-height: 24px;
-            padding: 0 10px;
-            border: 1px solid rgba(154, 123, 86, .32);
-            border-radius: 999px;
-            color: var(--accent);
-            background: rgba(255, 255, 255, .66);
+            justify-content: center;
+            width: 150px;
+            min-width: 150px;
+            height: 150px;
+            min-height: 150px;
+            padding: 20px;
+            border: 1px solid #b77f86;
+            border-radius: 4px;
+            color: #fffaf7;
+            background: #b77f86;
             text-decoration: none;
-            font-size: 9px;
+            font-size: 13px;
+            line-height: 1.32;
             font-weight: 800;
-            letter-spacing: .07em;
+            letter-spacing: .08em;
             text-transform: uppercase;
+            text-align: center;
+            box-shadow: 0 8px 22px rgba(183, 127, 134, .18);
         }
         .next-batch-prompt a:hover {
-            border-color: var(--accent);
-            background: var(--surface);
+            border-color: #a86f77;
+            background: #a86f77;
+            color: #fffaf7;
         }
         .result-card { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid rgba(154, 123, 86, .28); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; }
         .result-card.batch-1 { border-left-color: rgba(174, 136, 91, .42); }
@@ -753,7 +798,30 @@ if (is_file($evalPath)) {
             color: var(--muted);
             font-size: 11px;
         }
-        @media (max-width: 980px) { .results-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 980px) {
+            .results-header-v3 {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 16px;
+            }
+            .results-grid { grid-template-columns: 1fr; }
+            .next-batch-prompt {
+                justify-content: flex-start;
+                align-items: stretch;
+                width: 100%;
+                margin-top: 18px;
+            }
+            .next-batch-prompt span {
+                text-align: left;
+                max-width: none;
+            }
+            .next-batch-prompt a {
+                width: 100%;
+                min-width: 0;
+                height: 56px;
+                min-height: 56px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -765,26 +833,24 @@ if (is_file($evalPath)) {
         </header>
         <div class="alert-strip">Evaluate generated mockup combinations and keep the best candidates.</div>
         <div class="workspace">
-            <div class="workspace-header">
-                <div>
-                    <h1>Mockup Combination Results</h1>
-                    <p>Generated images from the six-combination review flow.</p>
+            <div class="results-header-v3">
+                <div class="header-main-info">
+                    <h1>Generated Results</h1>
+                    <p class="results-page-desc">
+                        <span class="desc-kicker">Evaluate generated mockup combinations and keep the best candidates.</span>
+                        <span class="desc-instructions">Regenerate individual mockups, delete weak results, or mark your best options as favorites. Use the controls on each image card to refine the board.</span>
+                    </p>
                 </div>
-                <div class="topbar-actions">
-                    <a class="button-link" href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$sceneBoardIndex ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Back to Combinations</a>
-                    <a class="button-link secondary" href="artwork_details.php?id=<?= (int)$id ?>">Artwork Details</a>
-                </div>
+                <?php if ($rows && $isAdmin && $nextSceneBoardHasScenes): ?>
+                    <div class="next-batch-prompt">
+                        <span>Would you like to generate a <?= $nextSceneBoardIndex === 2 ? 'second' : 'third' ?> mockup board?</span>
+                        <a href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$nextSceneBoardIndex ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Generate Batch <?= (int)$nextSceneBoardIndex ?></a>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <?php if (!$rows): ?>
                 <div class="notice">No generated combination images yet. Generate one from the combinations review screen.</div>
-            <?php endif; ?>
-
-            <?php if ($rows && $isAdmin && $nextSceneBoardHasScenes): ?>
-                <div class="next-batch-prompt">
-                    <strong>Would you like to generate a <?= $nextSceneBoardIndex === 2 ? 'second' : 'third' ?> mockup board?</strong>
-                    <a href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$nextSceneBoardIndex ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Prepare Batch <?= (int)$nextSceneBoardIndex ?></a>
-                </div>
             <?php endif; ?>
 
             <?php foreach ($resultGroups as $resultGroup): ?>
@@ -849,6 +915,7 @@ if (is_file($evalPath)) {
                                     data-artwork-id="<?= (int)$id ?>"
                                     data-combination-index="<?= (int)($combo['combination_index'] ?? 0) ?>"
                                     data-camera-slot="<?= h((string)($combo['selected_camera_slot_id'] ?? '')) ?>"
+                                    data-mockup-id="<?= $mockupId ?>"
                                     data-scene-board="<?= (int)$resultSceneBoardIndex ?>"
                                     data-world-mother-category="<?= h((string)($combo['world_mother_category'] ?? $selectedWorldMotherCategory)) ?>"
                                     data-world-mother-variant="<?= (int)($combo['world_mother_variant_offset'] ?? 0) ?>"
@@ -928,6 +995,7 @@ if (is_file($evalPath)) {
                                 data-artwork-id="<?= (int)$id ?>"
                                 data-combination-index="<?= (int)($combo['combination_index'] ?? 0) ?>"
                                 data-camera-slot="<?= h((string)($combo['selected_camera_slot_id'] ?? '')) ?>"
+                                data-mockup-id="<?= $mockupId ?>"
                                 data-scene-board="<?= (int)$resultSceneBoardIndex ?>"
                                 data-world-mother-category="<?= h((string)($combo['world_mother_category'] ?? $selectedWorldMotherCategory)) ?>"
                                 data-world-mother-variant="<?= (int)($combo['world_mother_variant_offset'] ?? 0) ?>"
@@ -1011,6 +1079,7 @@ if (is_file($evalPath)) {
     </main>
 </div>
 <script>
+const ACTIVE_ARTWORK_ROOT_FILE = <?= json_encode(basename((string)$artwork['root_file'])) ?>;
 function saveEvaluation(event, form) {
     event.preventDefault();
     const status = form.querySelector('.eval-status');
@@ -1101,6 +1170,14 @@ function redoResult(button) {
         formData.append('lighting', lighting?.value || '');
         formData.append('experimental_camera', experimentalCamera?.value || '');
         formData.append('camera_strength', panel.querySelector('[name="camera_strength"]')?.value || 'normal');
+    } else {
+        formData.append('existing_mockup_id', button.getAttribute('data-mockup-id') || '');
+        formData.append('reference_mode', 'existing_only');
+        formData.append('human_presence', 'none');
+        formData.append('artwork_scale', '0');
+        formData.append('lighting', '');
+        formData.append('experimental_camera', '');
+        formData.append('camera_strength', 'normal');
     }
     button.disabled = true;
 
@@ -1110,11 +1187,51 @@ function redoResult(button) {
             if (!result.body.ok) {
                 throw new Error(result.body.error || 'Regeneration failed.');
             }
-            window.location.href = result.body.results_url || window.location.href;
+            if (result.body.enqueued) {
+                const jobId = result.body.job_id;
+                const checkInterval = 2500;
+                button.textContent = 'Enqueued...';
+                
+                return new Promise((resolve, reject) => {
+                    const poll = () => {
+                        fetch('mockup_batch_status.php?image=' + encodeURIComponent(ACTIVE_ARTWORK_ROOT_FILE))
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.ok && data.jobs) {
+                                    const job = data.jobs.find(j => parseInt(j.id, 10) === parseInt(jobId, 10));
+                                    if (job) {
+                                        if (job.status === 'done') {
+                                            button.textContent = 'Regenerated';
+                                            window.location.href = result.body.results_url || window.location.href;
+                                            resolve(result.body);
+                                        } else if (job.status === 'error') {
+                                            button.textContent = 'Failed';
+                                            reject(new Error(job.error));
+                                        } else {
+                                            button.textContent = 'Processing (' + job.status + ')...';
+                                            setTimeout(poll, checkInterval);
+                                        }
+                                    } else {
+                                        setTimeout(poll, checkInterval);
+                                    }
+                                } else {
+                                    setTimeout(poll, checkInterval);
+                                }
+                            })
+                            .catch(() => {
+                                setTimeout(poll, checkInterval);
+                            });
+                    };
+                    poll();
+                });
+            } else {
+                window.location.href = result.body.results_url || window.location.href;
+            }
         })
         .catch(err => {
             alert(err.message);
             button.disabled = false;
+            button.textContent = 'Regenerar';
         });
 }
 

@@ -124,7 +124,7 @@ try {
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Mockup Prompt Drafts - The Artwork Curator</title>
+    <title>Mockup Prompt Drafts - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>

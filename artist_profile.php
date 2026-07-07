@@ -128,7 +128,7 @@ function admin_vars_hint(bool $isAdmin, string $field): void
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Artist Profile - The Artwork Curator</title>
+    <title>Artist Profile - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -163,6 +163,12 @@ function admin_vars_hint(bool $isAdmin, string $field): void
             border-bottom: 1px solid var(--line);
             padding-bottom: 12px;
             margin: 0;
+        }
+        .artist-profile-header {
+            background: rgba(183, 127, 134, 0.16);
+            border: 1px solid rgba(183, 127, 134, 0.28);
+            border-radius: var(--radius);
+            padding: 24px 26px;
         }
         .form-group {
             display: flex;
@@ -260,7 +266,7 @@ function admin_vars_hint(bool $isAdmin, string $field): void
         </div>
 
         <div class="workspace">
-            <div class="workspace-header">
+            <div class="workspace-header artist-profile-header">
                 <div>
                     <h1>Artist Profile</h1>
                     <p>Configure the artist context that shapes analysis, descriptions, and mockup guidance.</p>

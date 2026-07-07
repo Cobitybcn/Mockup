@@ -63,7 +63,7 @@ $rootViews = [
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>System Prompts — The Artwork Curator</title>
+    <title>System Prompts - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
     <style>
         /* ── Page layout ── */

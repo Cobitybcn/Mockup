@@ -1,0 +1,39 @@
+# Dockerfile.web
+FROM php:8.2-apache
+
+# Install system dependencies and PHP mysql extensions
+RUN apt-get update && apt-get install -y \
+    libzip-dev \
+    zip \
+    unzip \
+    git \
+    && docker-php-ext-install zip pdo_mysql bcmath
+
+# Enable Apache rewrite module
+RUN a2enmod rewrite
+
+# Configure PHP settings
+RUN echo "upload_max_filesize = 64M" > /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "post_max_size = 72M" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "memory_limit = 768M" >> /usr/local/etc/php/conf.d/uploads.ini
+
+# Copy composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy codebase
+COPY . /var/www/html/
+
+# Install dependencies
+RUN composer install --no-dev --optimize-autoloader
+
+# Configure Apache port to 8080 (Cloud Run standard)
+RUN sed -i 's/Listen 80/Listen 8080/g' /etc/apache2/ports.conf
+RUN sed -i 's/<VirtualHost \*:80>/<VirtualHost \*:8080>/g' /etc/apache2/sites-available/000-default.conf
+
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html
+
+EXPOSE 8080

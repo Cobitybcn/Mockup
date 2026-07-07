@@ -1,0 +1,30 @@
+# .gcloudignore
+# This file specifies files and directories that should be uploaded to GCP Cloud Build.
+
+.git
+.gitignore
+
+jobs
+results
+uploads
+logs
+logs/
+logs/*
+logs/**
+backups
+scratch
+analysis
+assets/showcase
+vendor
+*.log
+.env
+.idea/
+.vscode/
+
+# Ignore all contents in storage/ by default
+storage/*
+
+# Re-include the world_mothers folder structure and the index.json metadata
+!storage/world_mothers/
+storage/world_mothers/*
+!storage/world_mothers/index.json

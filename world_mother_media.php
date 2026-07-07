@@ -28,8 +28,19 @@ if (
     exit('File not found.');
 }
 
+$targetPath = __DIR__ . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $file);
+if (!is_file($targetPath)) {
+    if (StorageService::isGcsActive()) {
+        $dir = dirname($targetPath);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0775, true);
+        }
+        StorageService::downloadFile($file, $targetPath);
+    }
+}
+
 $basePath = realpath(__DIR__ . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'world_mothers');
-$path = realpath(__DIR__ . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $file));
+$path = realpath($targetPath);
 
 $basePathNormalized = $basePath !== false ? rtrim(str_replace('\\', '/', $basePath), '/') . '/' : '';
 $pathNormalized = $path !== false ? str_replace('\\', '/', $path) : '';

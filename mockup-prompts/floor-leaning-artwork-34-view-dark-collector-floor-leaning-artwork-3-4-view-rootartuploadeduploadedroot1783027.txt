@@ -1,4 +1,16 @@
-A high-angle, zenithal aerial view looking directly down from above onto the floor of a pristine, modern interior space. A single, physical portrait artwork, 'root_art_uploaded_uploaded_root_1783027079_5064_v1', with dimensions of 80cm by 120cm, is lying horizontally flat on the floor, perfectly centered and prominent within the frame. The floor itself is the primary visual plane, showcasing a refined texture such as polished concrete, light oak, or a luxurious minimalist rug. The full extent of the artwork is visible. Surrounding elements providing elegant, subtle context may include the edge of a low-profile coffee table, the corner of a designer sofa, or distinct floor lines, illuminated by soft, natural ambient light filtering from an unseen window. The scene emphasizes realism and a high-end aesthetic. Photorealistic, ultra-detailed, premium quality. IMAGE 1 as the central artwork, IMAGE 2 for environmental and textural inspiration. rasante_superficie_pintura, Rasante de Superficie Pictórica, L.
+GLOBAL OUTPUT FRAME RULE:
+- The final generated image must be square, 1:1 aspect ratio.
+- Compose the full photographic scene inside a square frame. Do not output portrait, vertical, landscape, panoramic, or cropped non-square images.
+- Keep the artwork fully inside the square composition unless the selected close-up camera explicitly requires a detail crop.
+
+Usa IMAGEN 1 como fuente absoluta de la obra y IMAGEN 2 solo como referencia de materiales, luz y atmósfera.
+
+Genera un mockup fotográfico en contrapicado extremo a ras de suelo. La obra está de pie, apoyada contra una pared o soporte estable, con el borde inferior tocando el piso. La cámara está muy cerca del borde inferior del lienzo, usando un ultra gran angular rectilíneo, para crear una perspectiva dramática desde abajo donde la base del canvas domina el primer plano y la parte superior se aleja.
+
+La obra debe conservarse exactamente fiel a IMAGEN 1.
+El ambiente debe tomar de IMAGEN 2 solo su carácter material y lumínico, apareciendo de forma secundaria y periférica.
+
+No vista frontal, no cámara a nivel de ojos, no vista desde arriba, no ojo de pez, no obra colgada, no obra acostada, no obra flotante, no deformación blanda, no rediseño de la pintura.
 
 ENVIRONMENTAL SCALE REASONING POLICY
 
@@ -18,3 +30,8 @@ Never copy, preserve, enlarge, translate, restyle, echo, or remix any artwork, m
 If IMAGE 2 contains a large mural, figurative wall painting, colorful wall drawing, poster cluster, or competing artwork, neutralize that area into compatible blank wall, aged plaster, shelving, stacked blank canvases, furniture, shadow, or ordinary studio clutter. Do not keep it as a second prominent artwork in the final image.
 
 The final mockup must contain one primary artwork only: the supplied IMAGE 1 canvas/object. Any secondary canvas-like object may appear only as a blank support, turned-away canvas, neutral stretcher, or indistinct studio prop with no readable image, no face, no figure, and no decorative composition.
+
+MOCKUP IMPROVEMENT CONTROLS
+
+Reference mode adjustment: prioritize improving the existing generated mockup direction. Preserve the current scene family, artwork identity, and commercial intent while correcting only the requested aspects.
+Human presence adjustment: do not include visible people, silhouettes, hands, faces, bodies, or mannequins.

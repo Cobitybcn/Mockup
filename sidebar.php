@@ -9,9 +9,90 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 $queryString = $_SERVER['QUERY_STRING'] ?? '';
 $currentImageParam = basename((string)($_GET['image'] ?? $_POST['image'] ?? ''));
 $currentArtworkIdParam = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
+$currentMockupIdParam = (int)($_GET['mockup_id'] ?? $_POST['mockup_id'] ?? ($selectedMockupId ?? 0));
 $sidebarContextArtworkId = 0;
 $sidebarContextRootFile = '';
 $sidebarArtistPhoto = '';
+
+if (!function_exists('sidebar_last_scene_artwork_setting_key')) {
+    function sidebar_last_scene_artwork_setting_key(int $userId): string
+    {
+        return 'last_scene_artwork_id_user_' . $userId;
+    }
+}
+
+if (!function_exists('sidebar_artwork_context_by_id')) {
+    function sidebar_artwork_context_by_id(PDO $db, int $userId, int $artworkId): ?array
+    {
+        if ($userId <= 0 || $artworkId <= 0) {
+            return null;
+        }
+
+        $stmt = $db->prepare("
+            SELECT id, root_file
+            FROM artworks
+            WHERE user_id = :user_id
+            AND id = :id
+            AND status = 'done'
+            AND root_file IS NOT NULL
+            AND root_file != ''
+            LIMIT 1
+        ");
+        $stmt->execute([
+            'user_id' => $userId,
+            'id' => $artworkId,
+        ]);
+        $artwork = $stmt->fetch();
+
+        return $artwork ?: null;
+    }
+}
+
+if (!function_exists('sidebar_remember_scene_artwork')) {
+    function sidebar_remember_scene_artwork(PDO $db, int $userId, int $artworkId): void
+    {
+        if ($userId <= 0 || $artworkId <= 0) {
+            return;
+        }
+
+        $_SESSION[sidebar_last_scene_artwork_setting_key($userId)] = $artworkId;
+        $stmt = $db->prepare(Database::appSettingUpsertSql());
+        $stmt->execute([
+            'key' => sidebar_last_scene_artwork_setting_key($userId),
+            'value' => (string)$artworkId,
+            'updated_at' => date('c'),
+        ]);
+    }
+}
+
+if (!function_exists('sidebar_remembered_scene_artwork')) {
+    function sidebar_remembered_scene_artwork(PDO $db, int $userId): ?array
+    {
+        if ($userId <= 0) {
+            return null;
+        }
+
+        $sessionArtworkId = max(0, (int)($_SESSION[sidebar_last_scene_artwork_setting_key($userId)] ?? 0));
+        $sessionArtwork = sidebar_artwork_context_by_id($db, $userId, $sessionArtworkId);
+        if ($sessionArtwork) {
+            return $sessionArtwork;
+        }
+
+        $sql = Database::isMysql()
+            ? 'SELECT value FROM app_settings WHERE `key` = :key LIMIT 1'
+            : 'SELECT value FROM app_settings WHERE key = :key LIMIT 1';
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['key' => sidebar_last_scene_artwork_setting_key($userId)]);
+        $storedArtworkId = max(0, (int)$stmt->fetchColumn());
+        $storedArtwork = sidebar_artwork_context_by_id($db, $userId, $storedArtworkId);
+        if ($storedArtwork) {
+            $_SESSION[sidebar_last_scene_artwork_setting_key($userId)] = (int)$storedArtwork['id'];
+            return $storedArtwork;
+        }
+
+        return null;
+    }
+}
 
 if ($sidebarUser) {
     try {
@@ -20,20 +101,7 @@ if ($sidebarUser) {
         $profileStmt->execute(['user_id' => (int)$sidebarUser['id']]);
         $sidebarArtistPhoto = basename((string)($profileStmt->fetchColumn() ?: ''));
 
-        if ($currentImageParam !== '') {
-            $stmt = $db->prepare("
-                SELECT id, root_file
-                FROM artworks
-                WHERE user_id = :user_id
-                AND root_file = :root_file
-                LIMIT 1
-            ");
-            $stmt->execute([
-                'user_id' => (int)$sidebarUser['id'],
-                'root_file' => $currentImageParam,
-            ]);
-            $contextArtwork = $stmt->fetch();
-        } elseif ($currentArtworkIdParam > 0) {
+        if ($currentArtworkIdParam > 0) {
             $stmt = $db->prepare("
                 SELECT id, root_file
                 FROM artworks
@@ -46,6 +114,66 @@ if ($sidebarUser) {
                 'id' => $currentArtworkIdParam,
             ]);
             $contextArtwork = $stmt->fetch();
+        } elseif ($currentMockupIdParam > 0) {
+            $mockupStmt = $db->prepare("
+                SELECT id, artwork_file, source_artwork_id
+                FROM mockups
+                WHERE user_id = :user_id
+                AND id = :id
+                LIMIT 1
+            ");
+            $mockupStmt->execute([
+                'user_id' => (int)$sidebarUser['id'],
+                'id' => $currentMockupIdParam,
+            ]);
+            $contextMockup = $mockupStmt->fetch();
+            $contextArtwork = null;
+
+            if ($contextMockup && (int)($contextMockup['source_artwork_id'] ?? 0) > 0) {
+                $stmt = $db->prepare("
+                    SELECT id, root_file
+                    FROM artworks
+                    WHERE user_id = :user_id
+                    AND id = :id
+                    LIMIT 1
+                ");
+                $stmt->execute([
+                    'user_id' => (int)$sidebarUser['id'],
+                    'id' => (int)$contextMockup['source_artwork_id'],
+                ]);
+                $contextArtwork = $stmt->fetch();
+            }
+
+            if (!$contextArtwork && $contextMockup) {
+                $mockupRootFile = basename((string)($contextMockup['artwork_file'] ?? ''));
+                if ($mockupRootFile !== '') {
+                    $stmt = $db->prepare("
+                        SELECT id, root_file
+                        FROM artworks
+                        WHERE user_id = :user_id
+                        AND root_file = :root_file
+                        LIMIT 1
+                    ");
+                    $stmt->execute([
+                        'user_id' => (int)$sidebarUser['id'],
+                        'root_file' => $mockupRootFile,
+                    ]);
+                    $contextArtwork = $stmt->fetch();
+                }
+            }
+        } elseif ($currentImageParam !== '') {
+            $stmt = $db->prepare("
+                SELECT id, root_file
+                FROM artworks
+                WHERE user_id = :user_id
+                AND root_file = :root_file
+                LIMIT 1
+            ");
+            $stmt->execute([
+                'user_id' => (int)$sidebarUser['id'],
+                'root_file' => $currentImageParam,
+            ]);
+            $contextArtwork = $stmt->fetch();
         } else {
             $contextArtwork = null;
         }
@@ -53,6 +181,13 @@ if ($sidebarUser) {
         if ($contextArtwork) {
             $sidebarContextArtworkId = (int)($contextArtwork['id'] ?? 0);
             $sidebarContextRootFile = basename((string)($contextArtwork['root_file'] ?? ''));
+            sidebar_remember_scene_artwork($db, (int)$sidebarUser['id'], $sidebarContextArtworkId);
+        } else {
+            $rememberedArtwork = sidebar_remembered_scene_artwork($db, (int)$sidebarUser['id']);
+            if ($rememberedArtwork) {
+                $sidebarContextArtworkId = (int)($rememberedArtwork['id'] ?? 0);
+                $sidebarContextRootFile = basename((string)($rememberedArtwork['root_file'] ?? ''));
+            }
         }
     } catch (Throwable $e) {
         // Fallback silently if DB is not ready
@@ -192,12 +327,45 @@ $generatedResultsUrl = $sidebarContextArtworkId > 0
     ? 'mockup_combination_results.php?id=' . urlencode((string)$sidebarContextArtworkId)
     : 'mockups.php';
 
+$variationLabUrl = 'mockup_variation_lab.php';
+if ($currentMockupIdParam > 0) {
+    $variationLabUrl .= '?' . ($sidebarContextArtworkId > 0 ? 'id=' . urlencode((string)$sidebarContextArtworkId) . '&' : '') . 'mockup_id=' . urlencode((string)$currentMockupIdParam);
+} elseif (($sidebarContextArtworkId > 0 || $sidebarContextRootFile !== '') && $sidebarUser) {
+    try {
+        $db = Database::connection();
+        $stmt = $db->prepare("
+            SELECT id
+            FROM mockups
+            WHERE user_id = :user_id
+            AND (
+                source_artwork_id = :source_artwork_id
+                OR artwork_file = :artwork_file
+            )
+            ORDER BY id DESC
+            LIMIT 1
+        ");
+        $stmt->execute([
+            'user_id' => (int)$sidebarUser['id'],
+            'source_artwork_id' => $sidebarContextArtworkId,
+            'artwork_file' => $sidebarContextRootFile,
+        ]);
+        $contextMockupId = (int)$stmt->fetchColumn();
+        if ($contextMockupId > 0) {
+            $variationLabUrl .= '?' . ($sidebarContextArtworkId > 0 ? 'id=' . urlencode((string)$sidebarContextArtworkId) . '&' : '') . 'mockup_id=' . urlencode((string)$contextMockupId);
+        } elseif ($sidebarContextArtworkId > 0) {
+            $variationLabUrl .= '?id=' . urlencode((string)$sidebarContextArtworkId);
+        }
+    } catch (Throwable $e) {
+        // Fallback silently if DB is not ready
+    }
+}
+
 ?>
 <aside class="sidebar">
     <div class="sidebar-head">
         <a class="brand" href="artwork_new.php">
-            <span class="brand-kicker">BETA WORKFLOW</span>
-            <span class="brand-title">MOCKUP LAB <span class="brand-mark"></span></span>
+            <span class="brand-kicker">ArtworkMockups.com</span>
+            <span class="brand-title">ARTWORK MOCKUPS <span class="brand-mark"></span></span>
         </a>
     </div>
 
@@ -209,7 +377,7 @@ $generatedResultsUrl = $sidebarContextArtworkId > 0
                     <a class="sidebar-tab <?= $step5Active && !$variationLabActive && !$generatedResultsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($step5Url, ENT_QUOTES, 'UTF-8') ?>">Scenes</a>
                 <?php endif; ?>
                 <a class="sidebar-tab <?= $generatedResultsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($generatedResultsUrl, ENT_QUOTES, 'UTF-8') ?>">Generated Results</a>
-                <a class="sidebar-tab <?= $variationLabActive ? 'active' : '' ?>" href="mockup_variation_lab.php">Variation Lab</a>
+                <a class="sidebar-tab <?= $variationLabActive ? 'active' : '' ?>" href="<?= htmlspecialchars($variationLabUrl, ENT_QUOTES, 'UTF-8') ?>">Variation Lab</a>
             </div>
         </section>
 

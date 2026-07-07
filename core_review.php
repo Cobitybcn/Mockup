@@ -313,7 +313,7 @@ $curatedMockupsUrl = $queuedMockups > 0
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Review Artwork Core - The Artwork Curator</title>
+    <title>Review Artwork Core - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>

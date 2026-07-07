@@ -447,7 +447,7 @@ $pageTitle = trim((string)$sheet['title']) ?: 'Ficha #' . $sheetId;
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title><?= h($pageTitle) ?> - Mockup Lab</title>
+    <title><?= h($pageTitle) ?> - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>

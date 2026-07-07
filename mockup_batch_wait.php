@@ -120,7 +120,7 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Preparing Mockups - The Artwork Curator</title>
+    <title>Preparing Mockups - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>

@@ -269,7 +269,7 @@ foreach ($studioSlots as $slotId => $_listedSlot) {
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Scenes - The Artwork Curator</title>
+    <title>Scenes - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
