@@ -2,7 +2,12 @@
 /results/
 /uploads/
 /logs/
-/storage/
+# Ignore storage except for the index.json metadata
+!/storage/
+/storage/*
+!/storage/world_mothers/
+/storage/world_mothers/*
+!/storage/world_mothers/index.json
 /backups/
 /scratch/
 *.log

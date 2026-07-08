@@ -18,13 +18,13 @@ function run_command(string $cmd): void
 }
 
 try {
-    // 1. Stage changes (the modified cloudbuild.yaml)
+    // 1. Stage changes (gitignore and the allowed index.json)
     run_command('git add .');
 
     // 2. Commit the changes
-    run_command('git commit -m "Set logging option to CLOUD_LOGGING_ONLY"');
+    run_command('git commit -m "Commit index.json and update .gitignore to allow it"');
 
-    // 3. Push to main (unblocked)
+    // 3. Push to main
     run_command('git push origin HEAD:main');
     
 } catch (Throwable $e) {
