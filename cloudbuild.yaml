@@ -56,3 +56,6 @@ steps:
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/mockups-repo/mockups-web:latest'
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/mockups-repo/mockups-worker:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
