@@ -6,14 +6,26 @@ class DatabaseSessionHandler implements SessionHandlerInterface
 {
     private PDO $pdo;
 
-    public function __construct()
+    public function __construct(PDO $pdo)
     {
-        $this->pdo = Database::connection();
+        $this->pdo = $pdo;
     }
 
-    public function open(string $path, string $name): bool
+    public function open($savePath, $sessionName): bool
     {
-        return true;
+        try {
+            // Keep it SQLite and MySQL compatible by not using database-specific syntax
+            $this->pdo->exec("
+                CREATE TABLE IF NOT EXISTS php_sessions (
+                    id VARCHAR(255) NOT NULL PRIMARY KEY,
+                    data TEXT NOT NULL,
+                    updated_at INT NOT NULL
+                )
+            ");
+            return true;
+        } catch (Throwable $e) {
+            return false;
+        }
     }
 
     public function close(): bool
@@ -21,56 +33,52 @@ class DatabaseSessionHandler implements SessionHandlerInterface
         return true;
     }
 
-    public function read(string $id): string
+    public function read($id): string
     {
         try {
-            $stmt = $this->pdo->prepare('SELECT payload FROM sessions WHERE id = :id');
+            $stmt = $this->pdo->prepare("SELECT data FROM php_sessions WHERE id = :id");
             $stmt->execute(['id' => $id]);
-            $payload = $stmt->fetchColumn();
-            return $payload !== false ? (string)$payload : '';
+            $data = $stmt->fetchColumn();
+            return is_string($data) ? $data : '';
         } catch (Throwable $e) {
             return '';
         }
     }
 
-    public function write(string $id, string $data): bool
+    public function write($id, $data): bool
     {
         try {
-            $now = time();
-            $stmt = $this->pdo->prepare('
-                INSERT INTO sessions (id, payload, last_activity)
-                VALUES (:id, :payload, :last_activity)
-                ON DUPLICATE KEY UPDATE
-                    payload = VALUES(payload),
-                    last_activity = VALUES(last_activity)
-            ');
+            // REPLACE INTO is standard and works in both MySQL and SQLite
+            $stmt = $this->pdo->prepare("
+                REPLACE INTO php_sessions (id, data, updated_at)
+                VALUES (:id, :data, :updated_at)
+            ");
             return $stmt->execute([
                 'id' => $id,
-                'payload' => $data,
-                'last_activity' => $now
+                'data' => $data,
+                'updated_at' => time()
             ]);
         } catch (Throwable $e) {
             return false;
         }
     }
 
-    public function destroy(string $id): bool
+    public function destroy($id): bool
     {
         try {
-            $stmt = $this->pdo->prepare('DELETE FROM sessions WHERE id = :id');
+            $stmt = $this->pdo->prepare("DELETE FROM php_sessions WHERE id = :id");
             return $stmt->execute(['id' => $id]);
         } catch (Throwable $e) {
             return false;
         }
     }
 
-    public function gc(int $max_lifetime): int|false
+    public function gc($maxlifetime): int|false
     {
         try {
-            $cutoff = time() - $max_lifetime;
-            $stmt = $this->pdo->prepare('DELETE FROM sessions WHERE last_activity < :cutoff');
-            $stmt->execute(['cutoff' => $cutoff]);
-            return $stmt->rowCount();
+            $stmt = $this->pdo->prepare("DELETE FROM php_sessions WHERE updated_at < :time");
+            $stmt->execute(['time' => time() - $maxlifetime]);
+            return true;
         } catch (Throwable $e) {
             return false;
         }

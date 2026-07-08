@@ -6,6 +6,10 @@ class Auth
     public static function start(): void
     {
         if (session_status() !== PHP_SESSION_ACTIVE) {
+            require_once __DIR__ . '/DatabaseSessionHandler.php';
+            $pdo = Database::connection();
+            session_set_save_handler(new DatabaseSessionHandler($pdo), true);
+
             session_set_cookie_params([
                 'httponly' => true,
                 'samesite' => 'Lax',

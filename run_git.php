@@ -18,11 +18,11 @@ function run_command(string $cmd): void
 }
 
 try {
-    // 1. Stage changes (gitignore and the allowed index.json)
+    // 1. Stage all changes
     run_command('git add .');
 
     // 2. Commit the changes
-    run_command('git commit -m "Commit index.json and update .gitignore to allow it"');
+    run_command('git commit -m "Add database session handler and commit index.json"');
 
     // 3. Push to main
     run_command('git push origin HEAD:main');
