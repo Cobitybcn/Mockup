@@ -1,0 +1,103 @@
+{
+    "hero_image": "/assets/uploads/strata-origin-20260606160314-05cf73.jpg",
+    "artist_profile": {
+        "name": "Maurizio Valch",
+        "tagline": "Abstract painting / Territory and Thought",
+        "intro": "",
+        "portrait": {
+            "image": "/assets/uploads/maurizio-valch-portrait-jpg-20260608142818-be256e.png",
+            "alt": "Maurizio Valch portrait",
+            "caption": ""
+        },
+        "biography": "Maurizio Valch is a visual artist working between abstraction, symbolic structure and metaphysical landscape. His paintings construct territories rather than depict places: fields of silence, passage, sediment, horizon and presence.\r\n\r\nHis current work explores how thought, structure and consciousness seem to emerge from the ground. Through strata, monolithic presences, incised lines and chromatic fields, Valch builds pictorial spaces where landscape becomes a field of perception rather than a representation of nature.\r\n\r\nHis practice has evolved through a continuous investigation into inner force, divided identity, territory and ground frequency. From the spiral movement of Inner Vortex, through the fragmented surfaces of Stratified Faces, to the territorial language of Structural Metaphysical Painting and Strata, his work traces how form and thought appear to take shape within the pictorial field.",
+        "statement_excerpt": "Valch’s work explores painting as a territory in formation. Horizons, monolithic forms, strata and incised lines become signs of emergence: not representations of landscape, but structures of perception, silence and thought.\r\n\r\nHis recent work moves between two perceptual conditions: Diurnal and Nocturnal Territories. Day reveals structure, horizon and spatial order. Night intensifies silence, depth and suspended presence.\r\n\r\nAcross large-scale formats, especially 120 × 160 cm, the paintings construct fields where matter, distance and consciousness seem to organize themselves within the pictorial surface.",
+        "statement_button_text": "Read Artist Statement",
+        "statement_button_url": "/artist-statement",
+        "statement_page": {
+            "title": "Territory and Thought",
+            "intro": "",
+            "body": [
+                "Maurizio Valch’s painting explores territories where structure, matter and thought appear to arise together. Rather than depicting specific landscapes, his work constructs silent pictorial fields: spaces of horizon, distance, strata, monolithic presence and incised frequency.",
+                "The surface becomes a place of discovery. Lines act as fault lines, traces or ground frequencies; chromatic masses suggest sediment, weight and emergence. The painting does not describe architecture or geography, but proposes a territory in formation, where perception begins to organize itself before language.",
+                "Valch’s work relates to painting as an originatory gesture: closer to the first human need to leave signs upon the world than to academic construction. Each painting becomes a field where silence, matter and consciousness meet.",
+                "Across his recent work, the landscape is gradually reduced to its essential signs: ground, horizon, strata, presence and vibration. What remains is not a representation of place, but an image where thought seems to appear within the territory itself."
+            ]
+        },
+        "studio_images": [
+            {
+                "image": "/assets/uploads/vista-4-20260608142818-6d12b9.jpg",
+                "alt": "",
+                "caption": "",
+                "sort": 1
+            }
+        ],
+        "genealogy": [
+            {
+                "title": "Inner Vortex",
+                "description": "The force before territory.",
+                "url": "/series/inner-vortex-series/",
+                "year": "2017"
+            },
+            {
+                "title": "Stratified Faces",
+                "description": "The face as divided territory.",
+                "url": "/series/stratified-faces/",
+                "year": "2019"
+            },
+            {
+                "title": "Structural Metaphysical Painting",
+                "description": "The territory becomes landscape, horizon and passage.",
+                "url": "/series/structural-metaphysical-painting/",
+                "year": "2026"
+            },
+            {
+                "title": "Strata",
+                "description": "The landscape is reduced to layers, fault lines and ground frequency.",
+                "url": "/series/strata-series-maurizio-valch/",
+                "year": "2026"
+            }
+        ],
+        "links": [
+            {
+                "text": "Read Artist Statement",
+                "url": "/artist-statement"
+            },
+            {
+                "text": "View Exhibitions & Collections",
+                "url": "/exhibitions-collections"
+            },
+            {
+                "text": "Explore Painting Series",
+                "url": "/series"
+            }
+        ],
+        "exhibitions": [
+            {
+                "title": "Reial Cercle Artistic de Barcelona",
+                "description": "Selected group exhibition context",
+                "url": ""
+            },
+            {
+                "title": "Gran Teatre del Liceu",
+                "description": "Work presented in Barcelona, 2017",
+                "url": ""
+            },
+            {
+                "title": "Private Collections",
+                "description": "Works acquired internationally through direct and marketplace channels",
+                "url": ""
+            },
+            {
+                "title": "Upcoming Solo Exhibition",
+                "description": "Valencia, Spain, 2026",
+                "url": ""
+            }
+        ],
+        "seo": {
+            "title": "Maurizio Valch | Artist",
+            "description": "Maurizio Valch is a visual artist developing abstract painting centered on territory, thought, horizons, strata and emerging consciousness.",
+            "keywords": "Maurizio Valch, abstract painting, territory and thought, contemporary artist",
+            "og_image": ""
+        }
+    }
+}

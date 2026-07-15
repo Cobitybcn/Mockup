@@ -1,0 +1,11 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - Dockerfile.hardening
+      - -t
+      - us-central1-docker.pkg.dev/$PROJECT_ID/mockups-repo/artist-site-web:release-20260714-artist1-r2
+      - .
+images:
+  - us-central1-docker.pkg.dev/$PROJECT_ID/mockups-repo/artist-site-web:release-20260714-artist1-r2

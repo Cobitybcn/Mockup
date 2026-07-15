@@ -1,0 +1,37 @@
+{
+  "schema_version": "2.0",
+  "operation": "upsert_editorial",
+  "request_id": "00000000-0000-4000-8000-000000000000",
+  "idempotency_key": "amw:artwork:10002:editorial:7",
+  "identity": {
+    "source": "artwork_mockups",
+    "source_artwork_id": "amw:10002",
+    "editorial_revision": 7,
+    "analysis_version": "2"
+  },
+  "artwork_facts": {
+    "slug": "echoes-in-blue",
+    "title": "Echoes in Blue",
+    "year": 2026,
+    "series": "strata",
+    "medium": "Acrylic on canvas",
+    "dimensions": { "width": 80, "height": 120, "depth": 3, "unit": "cm" },
+    "orientation": "vertical"
+  },
+  "editorial": {
+    "language": "en",
+    "subtitle": "",
+    "summary": "",
+    "concept": "",
+    "commercial_note": "Original painting with certificate of authenticity.",
+    "alt_text": "",
+    "caption": "",
+    "keywords": [],
+    "tags": []
+  },
+  "assets": {
+    "artwork": {},
+    "details": [],
+    "mockups": []
+  }
+}

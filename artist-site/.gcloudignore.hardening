@@ -1,0 +1,4 @@
+*
+!.htaccess
+!Dockerfile.hardening
+!cloudbuild.hardening.yaml

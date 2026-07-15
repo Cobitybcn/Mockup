@@ -1,0 +1,7 @@
+FROM us-central1-docker.pkg.dev/project-ff549db7-4f7f-4b0c-9a5/mockups-repo/artist-site-web:release-20260714-artist1
+
+COPY .htaccess /var/www/html/.htaccess
+RUN rm -f /var/www/html/Dockerfile /var/www/html/Dockerfile.* \
+        /var/www/html/.dockerignore /var/www/html/.gcloudignore /var/www/html/.gcloudignore.* \
+        /var/www/html/cloudbuild*.yaml \
+    && chown www-data:www-data /var/www/html/.htaccess
