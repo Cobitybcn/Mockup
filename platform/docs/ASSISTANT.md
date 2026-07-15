@@ -10,7 +10,7 @@ El asistente aparece desde `sidebar.php` en las pantallas autenticadas de Artwor
 - puede preparar una tarea técnica para Codex, pero no edita código ni datos de la plataforma;
 - no ejecuta generaciones, publicaciones ni cambios de prompts.
 
-Las cuentas `chiappero@gmail.com` y `mauriziovalch@gmail.com` pueden pertenecer a una misma identidad del asistente. Esto comparte historial y memoria, pero no combina usuarios, permisos ni roles de la aplicación.
+Dos cuentas de una misma persona pueden pertenecer a una identidad compartida del asistente. Esto comparte historial y memoria, pero no combina usuarios, permisos ni roles de la aplicación.
 
 ## Persistencia y Cloud Run
 
@@ -68,7 +68,7 @@ En local la clave puede provenir del entorno del sistema. En Cloud Run debe conf
 Vincular cuentas existentes sin cambiar roles:
 
 ```powershell
-php scripts/link_assistant_identity.php "chiappero@gmail.com,mauriziovalch@gmail.com" "Pablo"
+php scripts/link_assistant_identity.php "artist-owner@example.com,artist-studio@example.com" "Artist"
 ```
 
 Prueba de persistencia sin usar OpenAI:
@@ -80,13 +80,13 @@ php tests/run_assistant_tests.php
 Prueba real del proveedor configurado con rollback de escrituras de prueba:
 
 ```powershell
-php scripts/assistant_smoke.php "chiappero@gmail.com"
+php scripts/assistant_smoke.php "artist-owner@example.com"
 ```
 
 Prueba HTTP autenticada local con sesión temporal:
 
 ```powershell
-php scripts/assistant_http_smoke.php "chiappero@gmail.com"
+php scripts/assistant_http_smoke.php "artist-owner@example.com"
 ```
 
 ## Despliegue seguro

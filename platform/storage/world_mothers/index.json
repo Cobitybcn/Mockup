@@ -1,5 +1,5 @@
 {
-    "generated_at": "2026-07-14T10:01:06+00:00",
+    "generated_at": "2026-07-15T20:36:54+00:00",
     "categories": [
         {
             "category_slug": "Architecture Studios",
@@ -164,51 +164,6 @@
                 "title": "Artist Atelier (1)",
                 "relative_path": "storage/world_mothers/Attic Ateliers/artist_atelier (1).png",
                 "extension": "png"
-            },
-            {
-                "world_mother_id": "Attic Ateliers/artist_atelier (2)",
-                "category_slug": "Attic Ateliers",
-                "category_name": "Attic Ateliers",
-                "file_name": "artist_atelier (2).png",
-                "title": "Artist Atelier (2)",
-                "relative_path": "storage/world_mothers/Attic Ateliers/artist_atelier (2).png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Attic Ateliers/artist_atelier (3)",
-                "category_slug": "Attic Ateliers",
-                "category_name": "Attic Ateliers",
-                "file_name": "artist_atelier (3).png",
-                "title": "Artist Atelier (3)",
-                "relative_path": "storage/world_mothers/Attic Ateliers/artist_atelier (3).png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Attic Ateliers/atelier",
-                "category_slug": "Attic Ateliers",
-                "category_name": "Attic Ateliers",
-                "file_name": "atelier.png",
-                "title": "Atelier",
-                "relative_path": "storage/world_mothers/Attic Ateliers/atelier.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Attic Ateliers/aterlier-1",
-                "category_slug": "Attic Ateliers",
-                "category_name": "Attic Ateliers",
-                "file_name": "aterlier-1.png",
-                "title": "Aterlier 1",
-                "relative_path": "storage/world_mothers/Attic Ateliers/aterlier-1.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Attic Ateliers/aterlier-2",
-                "category_slug": "Attic Ateliers",
-                "category_name": "Attic Ateliers",
-                "file_name": "aterlier-2.png",
-                "title": "Aterlier 2",
-                "relative_path": "storage/world_mothers/Attic Ateliers/aterlier-2.png",
-                "extension": "png"
             }
         ],
         "Attic Studios": [
@@ -251,39 +206,12 @@
         ],
         "Blue Hour": [
             {
-                "world_mother_id": "Blue Hour/Blue_hour_interior-(13)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior-(13).jpg",
-                "title": "Blue Hour Interior (13)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior-(13).jpg",
-                "extension": "jpg"
-            },
-            {
                 "world_mother_id": "Blue Hour/Blue_hour_interior-(2)",
                 "category_slug": "Blue Hour",
                 "category_name": "Blue Hour",
                 "file_name": "Blue_hour_interior-(2).jpg",
                 "title": "Blue Hour Interior (2)",
                 "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior-(2).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Blue Hour/Blue_hour_interior-(6)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior-(6).jpg",
-                "title": "Blue Hour Interior (6)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior-(6).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Blue Hour/Blue_hour_interior-(9)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior-(9).jpg",
-                "title": "Blue Hour Interior (9)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior-(9).jpg",
                 "extension": "jpg"
             }
         ],
@@ -733,66 +661,12 @@
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "Dark Collector/dark_collector_home (11)",
-                "category_slug": "Dark Collector",
-                "category_name": "Dark Collector",
-                "file_name": "dark_collector_home (11).jpg",
-                "title": "Dark Collector Home (11)",
-                "relative_path": "storage/world_mothers/Dark Collector/dark_collector_home (11).jpg",
-                "extension": "jpg"
-            },
-            {
                 "world_mother_id": "Dark Collector/dark_collector_home (12)",
                 "category_slug": "Dark Collector",
                 "category_name": "Dark Collector",
                 "file_name": "dark_collector_home (12).jpg",
                 "title": "Dark Collector Home (12)",
                 "relative_path": "storage/world_mothers/Dark Collector/dark_collector_home (12).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Dark Collector/dark_collector_home (13)",
-                "category_slug": "Dark Collector",
-                "category_name": "Dark Collector",
-                "file_name": "dark_collector_home (13).jpg",
-                "title": "Dark Collector Home (13)",
-                "relative_path": "storage/world_mothers/Dark Collector/dark_collector_home (13).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Dark Collector/dark_collector_home (14)",
-                "category_slug": "Dark Collector",
-                "category_name": "Dark Collector",
-                "file_name": "dark_collector_home (14).jpg",
-                "title": "Dark Collector Home (14)",
-                "relative_path": "storage/world_mothers/Dark Collector/dark_collector_home (14).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Dark Collector/dark_collector_home (2)",
-                "category_slug": "Dark Collector",
-                "category_name": "Dark Collector",
-                "file_name": "dark_collector_home (2).jpg",
-                "title": "Dark Collector Home (2)",
-                "relative_path": "storage/world_mothers/Dark Collector/dark_collector_home (2).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Dark Collector/dark_collector_home (3)",
-                "category_slug": "Dark Collector",
-                "category_name": "Dark Collector",
-                "file_name": "dark_collector_home (3).jpg",
-                "title": "Dark Collector Home (3)",
-                "relative_path": "storage/world_mothers/Dark Collector/dark_collector_home (3).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Dark Collector/dark_collector_home (4)",
-                "category_slug": "Dark Collector",
-                "category_name": "Dark Collector",
-                "file_name": "dark_collector_home (4).jpg",
-                "title": "Dark Collector Home (4)",
-                "relative_path": "storage/world_mothers/Dark Collector/dark_collector_home (4).jpg",
                 "extension": "jpg"
             },
             {
@@ -805,30 +679,12 @@
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "Dark Collector/dark_collector_home (6)",
-                "category_slug": "Dark Collector",
-                "category_name": "Dark Collector",
-                "file_name": "dark_collector_home (6).jpg",
-                "title": "Dark Collector Home (6)",
-                "relative_path": "storage/world_mothers/Dark Collector/dark_collector_home (6).jpg",
-                "extension": "jpg"
-            },
-            {
                 "world_mother_id": "Dark Collector/dark_collector_home (7)",
                 "category_slug": "Dark Collector",
                 "category_name": "Dark Collector",
                 "file_name": "dark_collector_home (7).jpg",
                 "title": "Dark Collector Home (7)",
                 "relative_path": "storage/world_mothers/Dark Collector/dark_collector_home (7).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Dark Collector/dark_collector_home (8)",
-                "category_slug": "Dark Collector",
-                "category_name": "Dark Collector",
-                "file_name": "dark_collector_home (8).jpg",
-                "title": "Dark Collector Home (8)",
-                "relative_path": "storage/world_mothers/Dark Collector/dark_collector_home (8).jpg",
                 "extension": "jpg"
             },
             {
@@ -839,15 +695,6 @@
                 "title": "Dark Collector Home (9)",
                 "relative_path": "storage/world_mothers/Dark Collector/dark_collector_home (9).jpg",
                 "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Dark Collector/dark_wood_study_right",
-                "category_slug": "Dark Collector",
-                "category_name": "Dark Collector",
-                "file_name": "dark_wood_study_right.png",
-                "title": "Dark Wood Study Right",
-                "relative_path": "storage/world_mothers/Dark Collector/dark_wood_study_right.png",
-                "extension": "png"
             }
         ],
         "Golden Hour": [
@@ -1007,15 +854,6 @@
                 "title": "Loft",
                 "relative_path": "storage/world_mothers/Industrial Loft/loft.png",
                 "extension": "png"
-            },
-            {
-                "world_mother_id": "Industrial Loft/ny loft 2",
-                "category_slug": "Industrial Loft",
-                "category_name": "Industrial Loft",
-                "file_name": "ny loft 2.jpg",
-                "title": "Ny Loft 2",
-                "relative_path": "storage/world_mothers/Industrial Loft/ny loft 2.jpg",
-                "extension": "jpg"
             }
         ],
         "Low Light Luxury": [
@@ -1296,33 +1134,6 @@
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "Moody Contemporary Interiors/Blue_hour_interior (11)",
-                "category_slug": "Moody Contemporary Interiors",
-                "category_name": "Moody Contemporary Interiors",
-                "file_name": "Blue_hour_interior (11).jpg",
-                "title": "Blue Hour Interior (11)",
-                "relative_path": "storage/world_mothers/Moody Contemporary Interiors/Blue_hour_interior (11).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Moody Contemporary Interiors/Blue_hour_interior (4)",
-                "category_slug": "Moody Contemporary Interiors",
-                "category_name": "Moody Contemporary Interiors",
-                "file_name": "Blue_hour_interior (4).jpg",
-                "title": "Blue Hour Interior (4)",
-                "relative_path": "storage/world_mothers/Moody Contemporary Interiors/Blue_hour_interior (4).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Moody Contemporary Interiors/Blue_hour_interior (5)",
-                "category_slug": "Moody Contemporary Interiors",
-                "category_name": "Moody Contemporary Interiors",
-                "file_name": "Blue_hour_interior (5).jpg",
-                "title": "Blue Hour Interior (5)",
-                "relative_path": "storage/world_mothers/Moody Contemporary Interiors/Blue_hour_interior (5).jpg",
-                "extension": "jpg"
-            },
-            {
                 "world_mother_id": "Moody Contemporary Interiors/Blue_hour_interior (6)",
                 "category_slug": "Moody Contemporary Interiors",
                 "category_name": "Moody Contemporary Interiors",
@@ -1587,15 +1398,6 @@
                 "file_name": "permitier 1 opcion que tape parte de la obra de forma artistica es util- esto crea deseo.jpg",
                 "title": "Permitier 1 Opcion Que Tape Parte De La Obra De Forma Artistica Es Util Esto Crea Deseo",
                 "relative_path": "storage/world_mothers/Quiet Luxury/permitier 1 opcion que tape parte de la obra de forma artistica es util- esto crea deseo.jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Quiet Luxury/que camara tome un pasillo y quite del centro a la obra la hace más protagonista y proxima",
-                "category_slug": "Quiet Luxury",
-                "category_name": "Quiet Luxury",
-                "file_name": "que camara tome un pasillo y quite del centro a la obra la hace más protagonista y proxima.jpg",
-                "title": "Que Camara Tome Un Pasillo Y Quite Del Centro A La Obra La Hace Más Protagonista Y Proxima",
-                "relative_path": "storage/world_mothers/Quiet Luxury/que camara tome un pasillo y quite del centro a la obra la hace más protagonista y proxima.jpg",
                 "extension": "jpg"
             }
         ]

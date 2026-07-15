@@ -7,7 +7,7 @@ Test accounts can own database records and media that are still referenced by an
 From `platform/`:
 
 ```powershell
-php scripts/archive_user.php --email=chiappero@gmail.com
+php scripts/archive_user.php --email=test-account@example.com
 ```
 
 This is the default dry-run mode. It reads the database and filesystem, reports the rows and files associated with the account, and separates files that are still referenced elsewhere. It does not write, move, or delete anything.
@@ -18,8 +18,8 @@ Use a new archive directory outside the Git repository and deployment context:
 
 ```powershell
 php scripts/archive_user.php `
-  --email=chiappero@gmail.com `
-  --archive-dir=C:\laragon\archives\artworkmockups\retired-users\user-1-20260715 `
+  --email=test-account@example.com `
+  --archive-dir=C:\laragon\archives\artworkmockups\retired-users\user-42-YYYYMMDD `
   --copy
 ```
 
@@ -40,25 +40,25 @@ Only after the archive is complete, first preview the reversible status change:
 
 ```powershell
 php scripts/set_user_status.php `
-  --email=chiappero@gmail.com `
+  --email=test-account@example.com `
   --status=disabled `
-  --archive-manifest=C:\laragon\archives\artworkmockups\retired-users\user-1-20260715\manifest.json
+  --archive-manifest=C:\laragon\archives\artworkmockups\retired-users\user-42-YYYYMMDD\manifest.json
 ```
 
 Apply it only after the preview identifies the expected user and archive:
 
 ```powershell
 php scripts/set_user_status.php `
-  --email=chiappero@gmail.com `
+  --email=test-account@example.com `
   --status=disabled `
-  --archive-manifest=C:\laragon\archives\artworkmockups\retired-users\user-1-20260715\manifest.json `
+  --archive-manifest=C:\laragon\archives\artworkmockups\retired-users\user-42-YYYYMMDD\manifest.json `
   --execute
 ```
 
 Disabled accounts cannot log in, use existing sessions, or request/reset a password. Their rows and files remain intact. Reactivation is explicit and does not require restoring the archive:
 
 ```powershell
-php scripts/set_user_status.php --email=chiappero@gmail.com --status=active --execute
+php scripts/set_user_status.php --email=test-account@example.com --status=active --execute
 ```
 
 Then:
@@ -70,3 +70,17 @@ Then:
 5. Hard-delete database rows only after a restore test and an explicit approval.
 
 Archiving and deletion intentionally are not combined in one command.
+
+## 4. Permanent purge
+
+After an explicit approval, the verified archive can drive a permanent purge of the disabled account and its exclusive active files:
+
+```powershell
+php scripts/purge_archived_user.php `
+  --email=test-account@example.com `
+  --archive-manifest=C:\laragon\archives\artworkmockups\retired-users\user-42-YYYYMMDD\manifest.json `
+  --execute `
+  --confirm=DELETE
+```
+
+The purge keeps files that are referenced by another account and does not delete the archive itself.
