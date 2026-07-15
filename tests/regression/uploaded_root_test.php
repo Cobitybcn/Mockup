@@ -52,9 +52,42 @@ function run_uploaded_root_regression_tests(): void
     );
 
     TestHarness::assertContains(
-        "header('Location: mockup_combinations_review.php?id=' . \$artworkId . '&world_mother_category=selected');",
+        "header('Location: mockup_combinations_review.php?id=' . \$artworkId);",
         $source,
-        'el flujo redirige a mockup_combinations_review.php tras subir la obra raiz'
+        'el flujo redirige al selector de escenas sin una categoria virtual obsoleta'
+    );
+    TestHarness::assertTrue(
+        !str_contains($source, 'world_mother_category=selected'),
+        'la subida no vuelve a apuntar a la carpeta eliminada selected'
+    );
+
+    $selectRootSource = (string)file_get_contents(dirname(__DIR__, 2) . '/select_root.php');
+    TestHarness::assertTrue(
+        !str_contains($selectRootSource, 'world_mother_category=selected'),
+        'la seleccion de Root abre el paso de escenas con una categoria real'
+    );
+
+    $artworkNewSource = (string)file_get_contents(dirname(__DIR__, 2) . '/artwork_new.php');
+    TestHarness::assertTrue(
+        !str_contains($artworkNewSource, 'world_mother_category=selected'),
+        'las obras generadas abren el selector sin el marcador selected'
+    );
+
+    $engine = (new ReflectionClass(MockupCombinationEngine::class))->newInstanceWithoutConstructor();
+    $resolver = new ReflectionMethod(MockupCombinationEngine::class, 'resolveWorldMotherCategory');
+    $availableScenes = [
+        'Patina Surfaces' => [['file_name' => 'patina.jpg']],
+        'Quiet Luxury' => [['file_name' => 'quiet.jpg']],
+    ];
+    TestHarness::assertSame(
+        '',
+        $resolver->invoke($engine, 'selected', $availableScenes),
+        'un enlace antiguo con selected cae en la seleccion de una escena indexada'
+    );
+    TestHarness::assertSame(
+        'Quiet Luxury',
+        $resolver->invoke($engine, 'quiet_luxury', $availableScenes),
+        'los slugs normalizados de escenas reales siguen siendo compatibles'
     );
 
     TestHarness::assertContains(

@@ -51,6 +51,16 @@ function build_existing_root_scale_text(array $measurements): string
     return $text;
 }
 
+function quick_scene_size_measurements(string $size): array
+{
+    return match (strtoupper(trim($size))) {
+        'L' => ['width' => '120', 'height' => '150', 'depth' => '4', 'unit' => 'cm'],
+        'XL' => ['width' => '170', 'height' => '210', 'depth' => '4', 'unit' => 'cm'],
+        'MONUMENTAL' => ['width' => '240', 'height' => '300', 'depth' => '5', 'unit' => 'cm'],
+        default => ['width' => '80', 'height' => '100', 'depth' => '3', 'unit' => 'cm'],
+    };
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     fail_existing_root('Method not allowed.');
 }
@@ -69,10 +79,14 @@ if ($imageInfo === false) {
     fail_existing_root('The uploaded file is not a valid image.');
 }
 
-$width = trim((string)($_POST['width'] ?? ''));
-$height = trim((string)($_POST['height'] ?? ''));
-$depth = trim((string)($_POST['depth'] ?? ''));
-$unit = trim((string)($_POST['unit'] ?? 'cm'));
+$isUserSceneFlow = !empty($_POST['user_scene_flow']);
+$quickSize = trim((string)($_POST['quick_size'] ?? ''));
+$quickMeasurements = $isUserSceneFlow ? quick_scene_size_measurements($quickSize) : [];
+
+$width = trim((string)($_POST['width'] ?? ($quickMeasurements['width'] ?? '')));
+$height = trim((string)($_POST['height'] ?? ($quickMeasurements['height'] ?? '')));
+$depth = trim((string)($_POST['depth'] ?? ($quickMeasurements['depth'] ?? '')));
+$unit = trim((string)($_POST['unit'] ?? ($quickMeasurements['unit'] ?? 'cm')));
 
 if ($width === '' || $height === '') {
     fail_existing_root('Width and height are required.');
@@ -124,6 +138,7 @@ $measurements = [
     'height' => $height,
     'depth' => $depth,
     'unit' => $unit,
+    'quick_size' => $quickSize,
 ];
 
 $status = [
@@ -186,8 +201,21 @@ file_put_contents(
         'scale_text' => build_existing_root_scale_text($measurements),
         'root_source' => 'uploaded_final',
         'generation_skipped' => true,
+        'user_scene_flow' => $isUserSceneFlow,
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
 );
 
-header('Location: mockup_combinations_review.php?id=' . $artworkId . '&world_mother_category=selected');
+$sceneCategory = trim(str_replace(['\\', '/'], '', (string)($_POST['scene_category'] ?? 'selected')));
+$sceneBoard = max(1, min(3, (int)($_POST['scene_board'] ?? 1)));
+$sceneLimit = max(1, min(4, (int)($_POST['scene_limit'] ?? 4)));
+
+if ($isUserSceneFlow) {
+    header('Location: mockup_combinations_review.php?id=' . $artworkId
+        . '&board=' . $sceneBoard
+        . '&world_mother_category=' . rawurlencode($sceneCategory)
+        . '&auto_generate=1&compact=1&scene_limit=' . $sceneLimit);
+    exit;
+}
+
+header('Location: mockup_combinations_review.php?id=' . $artworkId);
 exit;

@@ -195,6 +195,7 @@ if ($sidebarUser) {
 }
 
 // Step active states
+$createScenesActive = ($currentPage === 'create_scenes.php');
 $step1Active = ($currentPage === 'artwork_new.php' || $currentPage === 'root_select.php' || $currentPage === 'waiting.php');
 $step2Active = ($currentPage === 'root_select.php' || $currentPage === 'waiting.php');
 $step3Active = ($currentPage === 'core_review.php');
@@ -209,13 +210,20 @@ $cameraStudioActive = ($currentPage === 'camera_studio.php');
 $variationLabActive = ($currentPage === 'mockup_variation_lab.php');
 $generatedResultsActive = ($currentPage === 'mockup_combination_results.php');
 $rootAlbumActive = ($currentPage === 'root_album.php');
+$seriesActive = ($currentPage === 'series.php');
 $profileActive = ($currentPage === 'artist_profile.php');
+$websiteActive = in_array($currentPage, ['website_board.php', 'website_catalog.php', 'website_studio_notes.php'], true);
+$socialMediaCatalogActive = in_array($currentPage, ['social_media_catalog.php', 'social_media_board.php'], true);
 $usersActive = ($currentPage === 'admin_users.php');
 $accountActive = ($currentPage === 'account.php');
+$pinterestActive = str_contains(str_replace('\\', '/', (string)($_SERVER['PHP_SELF'] ?? '')), '/integrations/pinterest/');
+$metaActive = str_contains(str_replace('\\', '/', (string)($_SERVER['PHP_SELF'] ?? '')), '/integrations/meta/');
+$connectionsActive = $pinterestActive || $metaActive;
 
 // Admin active states
 $promptsActive = ($currentPage === 'admin_prompts.php');
 $apiActive = ($currentPage === 'admin_api_keys.php');
+$sidebarCanUseSocialCatalog = $sidebarIsAdmin || (int)($sidebarUser['credits'] ?? 0) > 0;
 
 // Step 2 link determination (Select Root Artwork)
 $step2Url = '#';
@@ -321,6 +329,11 @@ if ($step5Disabled && $sidebarUser) {
     }
 }
 
+if (!$sidebarIsAdmin) {
+    $step5Url = 'create_scenes.php';
+    $step5Disabled = false;
+}
+
 $rootAlbumUrl = 'root_album.php';
 
 $generatedResultsUrl = $sidebarContextArtworkId > 0
@@ -328,7 +341,11 @@ $generatedResultsUrl = $sidebarContextArtworkId > 0
     : 'mockups.php';
 
 $variationLabUrl = 'mockup_variation_lab.php';
-if ($currentMockupIdParam > 0) {
+if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
+    // Entering from Art Mockups must not pin an older card. Let Mockup Lab
+    // resolve the newest eligible mockup for this artwork itself.
+    $variationLabUrl .= '?id=' . urlencode((string)$sidebarContextArtworkId);
+} elseif ($currentMockupIdParam > 0) {
     $variationLabUrl .= '?' . ($sidebarContextArtworkId > 0 ? 'id=' . urlencode((string)$sidebarContextArtworkId) . '&' : '') . 'mockup_id=' . urlencode((string)$currentMockupIdParam);
 } elseif (($sidebarContextArtworkId > 0 || $sidebarContextRootFile !== '') && $sidebarUser) {
     try {
@@ -361,57 +378,633 @@ if ($currentMockupIdParam > 0) {
 }
 
 ?>
+<?php if ($sidebarIsAdmin): ?>
+<script>
+(function () {
+    document.body.dataset.sidebarFlowMode = localStorage.getItem('sidebarFlowMode') === 'normal' ? 'normal' : 'admin';
+})();
+</script>
+<?php endif; ?>
+<?php if (!$sidebarIsAdmin): ?>
+<style>
+@media (max-width: 760px) {
+    .main-area > .app-header {
+        display: none !important;
+    }
+}
+</style>
+<?php endif; ?>
+<style>
+    .sidebar-mobile-menu {
+        display: block;
+        position: fixed;
+        top: calc(env(safe-area-inset-top, 0px) + 9px);
+        right: 12px;
+        width: 46px;
+        height: 38px;
+        z-index: 2147483600;
+        pointer-events: auto;
+    }
+    .sidebar-mobile-menu[open] {
+        width: auto;
+        height: auto;
+    }
+    .sidebar-mobile-menu summary {
+        width: 46px;
+        height: 38px;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        border: 1px solid rgba(183, 127, 134, 0.42);
+        border-radius: 4px;
+        background: rgba(255, 250, 247, 0.96);
+        box-shadow: 0 10px 24px rgba(28, 23, 20, 0.10);
+        list-style: none;
+        cursor: pointer;
+    }
+    .sidebar-mobile-menu summary::-webkit-details-marker {
+        display: none;
+    }
+    .sidebar-mobile-menu summary span {
+        width: 22px;
+        height: 2px;
+        border-radius: 999px;
+        background: #b77f86;
+    }
+    .sidebar-mobile-menu[open] summary {
+        background: #fffaf7;
+    }
+    .sidebar-mobile-menu[open] summary span {
+        background: #9c6870;
+    }
+    .sidebar-mobile-panel {
+        position: fixed;
+        top: calc(env(safe-area-inset-top, 0px) + 54px);
+        right: 18px;
+        left: auto;
+        bottom: auto;
+        width: min(320px, calc(100vw - 36px));
+        z-index: 2147482999;
+        max-height: min(72vh, 560px);
+        overflow-y: auto;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 250, 247, 0.98);
+        box-shadow: 0 18px 48px rgba(34, 28, 20, 0.18);
+    }
+    .sidebar-mobile-section {
+        display: grid;
+        gap: 4px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--line);
+    }
+    .sidebar-mobile-section:last-child {
+        border-bottom: 0;
+    }
+    .sidebar-mobile-section > span {
+        padding: 4px 8px 6px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }
+    .sidebar-mobile-section a {
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        border-radius: 6px;
+        color: var(--ink);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    .sidebar-mobile-section a.active {
+        background: rgba(183, 127, 134, 0.14);
+        color: #9c6870;
+    }
+    .sidebar-mobile-section.sidebar-studios-mobile {
+        border-top: 3px double var(--line);
+    }
+    .sidebar-studios {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: stretch;
+        padding-left: 16px;
+        border-left: 3px double var(--line);
+    }
+    .sidebar-submenu {
+        display: flex;
+        align-items: stretch;
+    }
+
+    .sidebar-submenu-panel {
+        display: none;
+        position: fixed;
+        z-index: 2147482500;
+        min-width: 168px;
+        padding: 8px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: rgba(255, 250, 247, 0.98);
+        box-shadow: 0 18px 42px rgba(34, 28, 20, 0.16);
+    }
+    .sidebar-submenu-panel.is-open {
+        display: grid;
+        gap: 4px;
+    }
+    .sidebar-submenu-panel a {
+        min-height: 34px;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .sidebar-submenu-panel a.active,
+    .sidebar-submenu-panel a:hover {
+        color: var(--accent);
+        background: rgba(168, 129, 86, 0.08);
+    }
+    .sidebar-mobile-flow-selector {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+        padding: 0 8px 4px;
+    }
+    .sidebar-mobile-flow-selector button {
+        min-height: 38px;
+        padding: 0 12px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--surface-soft);
+        color: var(--muted);
+        font: inherit;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .sidebar-mobile-flow-selector button.is-active {
+        border-color: var(--accent);
+        background: rgba(183, 127, 134, 0.14);
+        color: var(--accent);
+    }
+    .sidebar-mode-switch-wrap {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 16px;
+        border-left: 1px solid var(--line);
+        border-right: 1px solid var(--line);
+    }
+    .sidebar-mode-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 34px;
+        padding: 4px 7px 4px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--surface);
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(20, 20, 18, 0.04);
+    }
+    .sidebar-mode-switch input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .sidebar-mode-switch-track {
+        position: relative;
+        width: 46px;
+        height: 24px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--surface-soft);
+        transition: background 0.2s, border-color 0.2s;
+    }
+    .sidebar-mode-switch-track::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--surface);
+        box-shadow: 0 2px 6px rgba(20, 20, 18, 0.18);
+        transition: transform 0.2s;
+    }
+    .sidebar-mode-switch input:checked + .sidebar-mode-switch-track {
+        background: var(--accent);
+        border-color: var(--accent);
+    }
+    .sidebar-mode-switch input:checked + .sidebar-mode-switch-track::after {
+        transform: translateX(22px);
+    }
+    body[data-sidebar-flow-mode="normal"] .admin-flow-only {
+        display: none !important;
+    }
+    body[data-sidebar-flow-mode="admin"] .normal-flow-only {
+        display: none !important;
+    }
+    @media (min-width: 981px) {
+        .app-shell {
+            display: grid !important;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto 1fr;
+        }
+        .sidebar {
+            display: flex !important;
+            visibility: visible !important;
+            min-height: 58px;
+            height: auto;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .sidebar-head,
+        .sidebar-tabs,
+        .sidebar-tab-group,
+        .sidebar-tab-row,
+        .sidebar-mode-switch-wrap,
+        .sidebar-context,
+        .sidebar-studios,
+        .sidebar-account {
+            display: flex !important;
+            visibility: visible !important;
+        }
+        .sidebar-head .brand-title {
+            display: flex !important;
+            font-size: 21px;
+            letter-spacing: 0.18em;
+            transform: scaleY(1.18);
+        }
+        .sidebar-head .brand-mark {
+            display: inline-block !important;
+        }
+        .sidebar-mobile-menu {
+            display: none !important;
+        }
+    }
+    @media (max-width: 980px) {
+        .sidebar-head {
+            min-height: 56px;
+            padding: 8px 76px 8px 18px;
+            justify-content: flex-start;
+            position: relative;
+        }
+        .sidebar-head .brand {
+            width: auto;
+            align-items: center;
+            text-align: left;
+        }
+        .sidebar-head .brand-title {
+            display: flex;
+            font-size: 21px;
+            letter-spacing: 0.07em;
+            gap: 8px;
+            transform: none;
+        }
+        .sidebar-head .brand-mark {
+            display: inline-block;
+            width: 13px;
+            height: 13px;
+            border: 2px solid #b77f86;
+            transform: none;
+        }
+        .sidebar > .sidebar-mobile-menu:not(.sidebar-mobile-menu-head) {
+            display: none !important;
+        }
+        .sidebar-mode-switch-wrap {
+            display: flex !important;
+            align-self: stretch;
+            border-left: none;
+            border-right: none;
+            padding: 10px 12px 6px;
+        }
+        .sidebar-mobile-menu-head {
+            display: block !important;
+            position: absolute !important;
+            top: 50% !important;
+            right: 12px !important;
+            transform: translateY(-50%) !important;
+            width: 46px !important;
+            height: 38px !important;
+            z-index: 50 !important;
+        }
+    }
+    @media (max-width: 760px) {
+        .sidebar-studios {
+            display: none !important;
+        }
+    }
+</style>
 <aside class="sidebar">
     <div class="sidebar-head">
-        <a class="brand" href="artwork_new.php">
+        <a class="brand" href="<?= $sidebarIsAdmin ? 'artwork_new.php' : 'create_scenes.php' ?>" data-admin-href="artwork_new.php" data-normal-href="create_scenes.php">
             <span class="brand-kicker">ArtworkMockups.com</span>
             <span class="brand-title">ARTWORK MOCKUPS <span class="brand-mark"></span></span>
         </a>
+        <details class="sidebar-mobile-menu sidebar-mobile-menu-head">
+            <summary aria-label="Open menu"><span></span><span></span><span></span></summary>
+            <div class="sidebar-mobile-panel">
+                <?php if ($sidebarIsAdmin): ?>
+                    <div class="sidebar-mobile-section">
+                        <span>View mode</span>
+                        <div class="sidebar-mobile-flow-selector" role="group" aria-label="Cambiar entre vista normal y admin">
+                            <button type="button" data-sidebar-flow-mode-option="normal">Normal</button>
+                            <button type="button" data-sidebar-flow-mode-option="admin">Admin</button>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                <div class="sidebar-mobile-section">
+                    <span>Create</span>
+                    <a class="normal-flow-only <?= $createScenesActive ? 'active' : '' ?>" href="create_scenes.php">Create Art</a>
+                    <?php if ($sidebarIsAdmin): ?>
+                        <a class="admin-flow-only <?= $step1Active ? 'active' : '' ?>" href="artwork_new.php">Upload Artwork</a>
+                    <?php endif; ?>
+                    <a class="<?= $generatedResultsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($generatedResultsUrl, ENT_QUOTES, 'UTF-8') ?>">Art Mockups</a>
+                    <a class="<?= $variationLabActive ? 'active' : '' ?>" href="<?= htmlspecialchars($variationLabUrl, ENT_QUOTES, 'UTF-8') ?>">Mockup Lab</a>
+                </div>
+                <div class="sidebar-mobile-section">
+                    <span>Library</span>
+                    <a class="<?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
+                    <a class="<?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
+                    <a class="<?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
+                    <a class="<?= $websiteActive ? 'active' : '' ?>" href="website_board.php">Website</a>
+                    <?php if ($sidebarCanUseSocialCatalog): ?><a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="social_media_board.php">Social Media</a><?php endif; ?>
+                    <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
+                </div>
+                <div class="sidebar-mobile-section sidebar-studios-mobile">
+                    <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
+                    <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
+                </div>
+                <?php if ($sidebarIsAdmin): ?>
+                    <div class="sidebar-mobile-section">
+                        <span>Admin</span>
+                        <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
+                        <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a>
+                        <a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a>
+                        <a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a>
+                        <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
+                        <a href="logout.php">Logout</a>
+                    </div>
+                <?php else: ?>
+                    <div class="sidebar-mobile-section">
+                        <span>Admin</span>
+                        <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
+                        <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
+                        <a href="logout.php">Logout</a>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </details>
     </div>
 
     <nav class="sidebar-tabs" aria-label="Primary navigation">
         <section class="sidebar-tab-group">
             <div class="sidebar-tab-row">
-                <a class="sidebar-tab <?= $step1Active ? 'active' : '' ?>" href="artwork_new.php">Upload Artwork</a>
-                <?php if (!$step5Disabled || $step5Active): ?>
-                    <a class="sidebar-tab <?= $step5Active && !$variationLabActive && !$generatedResultsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($step5Url, ENT_QUOTES, 'UTF-8') ?>">Scenes</a>
+                <a class="sidebar-tab normal-flow-only <?= $createScenesActive ? 'active' : '' ?>" href="create_scenes.php">
+                    <svg class="sidebar-tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7h3l1.4-2h7.2L17 7h3v12H4V7Z"/>
+                        <circle cx="12" cy="13" r="4" stroke-width="1.5"/>
+                    </svg>
+                    <span>Create Art</span>
+                </a>
+                <?php if ($sidebarIsAdmin): ?>
+                    <a class="sidebar-tab mobile-hide-upload admin-flow-only <?= $step1Active ? 'active' : '' ?>" href="artwork_new.php">Upload Artwork</a>
                 <?php endif; ?>
-                <a class="sidebar-tab <?= $generatedResultsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($generatedResultsUrl, ENT_QUOTES, 'UTF-8') ?>">Generated Results</a>
-                <a class="sidebar-tab <?= $variationLabActive ? 'active' : '' ?>" href="<?= htmlspecialchars($variationLabUrl, ENT_QUOTES, 'UTF-8') ?>">Variation Lab</a>
+                <?php if ($sidebarIsAdmin && (!$step5Disabled || $step5Active)): ?>
+                    <a class="sidebar-tab admin-flow-only <?= $step5Active && !$variationLabActive && !$generatedResultsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($step5Url, ENT_QUOTES, 'UTF-8') ?>">Scenes</a>
+                <?php endif; ?>
+                <a class="sidebar-tab <?= $generatedResultsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($generatedResultsUrl, ENT_QUOTES, 'UTF-8') ?>">Art Mockups</a>
+                <a class="sidebar-tab <?= $variationLabActive ? 'active' : '' ?>" href="<?= htmlspecialchars($variationLabUrl, ENT_QUOTES, 'UTF-8') ?>">Mockup Lab</a>
             </div>
         </section>
 
+        <?php if ($sidebarIsAdmin): ?>
+            <section class="sidebar-mode-switch-wrap" aria-label="Flow view selector">
+                <label class="sidebar-mode-switch" for="sidebar-flow-mode-toggle">
+                    <span id="sidebar-flow-mode-label">Admin</span>
+                    <input type="checkbox" id="sidebar-flow-mode-toggle" aria-label="Cambiar entre flujo usuario normal y admin">
+                    <span class="sidebar-mode-switch-track" aria-hidden="true"></span>
+                </label>
+            </section>
+        <?php endif; ?>
+
         <section class="sidebar-context">
             <div class="sidebar-tab-row">
-                <a class="sidebar-tab <?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">Root Artworks</a>
+                <a class="sidebar-tab <?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
+                <a class="sidebar-tab <?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
                 <a class="sidebar-tab <?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
+                <a class="sidebar-tab <?= $websiteActive ? 'active' : '' ?>" href="website_board.php">Website</a>
+                <?php if ($sidebarCanUseSocialCatalog): ?><a class="sidebar-tab <?= $socialMediaCatalogActive ? 'active' : '' ?>" href="social_media_board.php">Social Media</a><?php endif; ?>
                 <a class="sidebar-tab <?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
             </div>
         </section>
 
-        <section class="sidebar-tab-group sidebar-account">
+        <section class="sidebar-studios" aria-label="Studios">
             <div class="sidebar-tab-row">
-                <?php if ($sidebarArtistPhoto !== ''): ?>
-                    <a class="sidebar-artist-photo" href="artist_profile.php" title="Artist Profile" aria-label="Artist Profile">
-                        <img src="uploads/artist_profiles/<?= rawurlencode($sidebarArtistPhoto) ?>" alt="">
-                    </a>
-                <?php endif; ?>
-                <a class="sidebar-tab compact <?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
-                <a class="sidebar-tab compact" href="logout.php">Logout</a>
+                <a class="sidebar-tab <?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
+                <a class="sidebar-tab <?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
             </div>
         </section>
+
     </nav>
 
-    <?php if ($sidebarIsAdmin): ?>
-        <details class="sidebar-more">
-            <summary>Admin</summary>
-            <ul class="nav">
+    <details class="sidebar-more">
+        <summary>Admin</summary>
+        <ul class="nav">
+            <li><a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a></li>
+            <?php if ($sidebarIsAdmin): ?>
                 <li><a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a></li>
-                <li><a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Studio</a></li>
-                <li><a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Studio</a></li>
-                <li><a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">System Prompts</a></li>
+                <li><a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a></li>
                 <li><a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a></li>
-            </ul>
-        </details>
-    <?php endif; ?>
+            <?php endif; ?>
+            <li><a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a></li>
+            <li><a href="logout.php">Logout</a></li>
+        </ul>
+    </details>
+
+    <details class="sidebar-mobile-menu">
+        <summary aria-label="Open menu"><span></span><span></span><span></span></summary>
+        <div class="sidebar-mobile-panel">
+            <div class="sidebar-mobile-section">
+                <a class="<?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
+                <a class="<?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
+                <a class="<?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
+                <a class="<?= $websiteActive ? 'active' : '' ?>" href="website_board.php">Website</a>
+                <?php if ($sidebarCanUseSocialCatalog): ?><a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="social_media_board.php">Social Media</a><?php endif; ?>
+                <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
+            </div>
+            <div class="sidebar-mobile-section sidebar-studios-mobile">
+                <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
+                <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
+            </div>
+            <?php if ($sidebarIsAdmin): ?>
+                <div class="sidebar-mobile-section">
+                    <span>Admin</span>
+                    <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
+                    <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a>
+                    <a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a>
+                    <a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a>
+                    <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
+                    <a href="logout.php">Logout</a>
+                </div>
+            <?php else: ?>
+                <div class="sidebar-mobile-section">
+                    <span>Admin</span>
+                    <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
+                    <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
+                    <a href="logout.php">Logout</a>
+                </div>
+            <?php endif; ?>
+        </div>
+    </details>
 </aside>
+<script>
+(function () {
+    const menu = document.querySelector('[data-sidebar-website-menu]');
+    const toggle = document.querySelector('[data-sidebar-website-toggle]');
+    const panel = menu ? menu.querySelector('.sidebar-submenu-panel') : null;
+    if (!menu || !toggle || !panel) return;
+
+    document.body.appendChild(panel);
+
+    function cumulativeZoom(el) {
+        let zoom = 1;
+        let node = el;
+        while (node) {
+            const z = parseFloat(window.getComputedStyle(node).zoom);
+            if (!isNaN(z) && z > 0) zoom *= z;
+            node = node.parentElement;
+        }
+        return zoom;
+    }
+
+    function positionPanel() {
+        const rect = toggle.getBoundingClientRect();
+        // The panel lives under <body>/<html>, which can carry a different
+        // cumulative CSS `zoom` than the toggle (see style.css "Laptop Scaling
+        // Tweak"). getBoundingClientRect() already returns true viewport
+        // pixels, but assigning that value straight to style.left/top gets
+        // re-scaled by the panel's own zoom context, so we pre-divide by it.
+        const zoom = cumulativeZoom(panel.parentElement);
+        const computedLeft = Math.round(rect.left / zoom);
+        const computedTop = Math.round((rect.bottom + 1) / zoom);
+        panel.style.left = computedLeft + 'px';
+        panel.style.top = computedTop + 'px';
+    }
+
+    function closePanel() {
+        panel.classList.remove('is-open');
+        toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    toggle.addEventListener('click', function (event) {
+        event.preventDefault();
+        const willOpen = !panel.classList.contains('is-open');
+        if (!willOpen) {
+            closePanel();
+            return;
+        }
+        positionPanel();
+        panel.classList.add('is-open');
+        toggle.setAttribute('aria-expanded', 'true');
+    });
+    document.addEventListener('click', function (event) {
+        if (!toggle.contains(event.target) && !panel.contains(event.target)) {
+            closePanel();
+        }
+    });
+    window.addEventListener('resize', function () {
+        if (panel.classList.contains('is-open')) positionPanel();
+    });
+    document.querySelector('.sidebar-tabs')?.addEventListener('scroll', function () {
+        if (panel.classList.contains('is-open')) positionPanel();
+    });
+})();
+</script>
+<?php if ($sidebarIsAdmin): ?>
+<script>
+(function () {
+    const storageKey = 'sidebarFlowMode';
+    const toggle = document.getElementById('sidebar-flow-mode-toggle');
+    const label = document.getElementById('sidebar-flow-mode-label');
+    const brand = document.querySelector('.brand[data-admin-href][data-normal-href]');
+    const modeButtons = document.querySelectorAll('[data-sidebar-flow-mode-option]');
+
+    function setFlowMode(mode) {
+        const normalized = mode === 'normal' ? 'normal' : 'admin';
+        const cookieMatch = document.cookie.match(/(?:^|; )sidebar_flow_mode=([^;]*)/);
+        const cookieMode = cookieMatch ? decodeURIComponent(cookieMatch[1]) : '';
+        document.cookie = 'sidebar_flow_mode=' + encodeURIComponent(normalized) + '; path=/; max-age=31536000; samesite=lax';
+        if (cookieMode !== normalized && /\/mockup_variation_lab\.php$/.test(window.location.pathname)) {
+            window.location.reload();
+            return;
+        }
+        document.body.dataset.sidebarFlowMode = normalized;
+        if (toggle) {
+            toggle.checked = normalized === 'admin';
+        }
+        if (label) {
+            label.textContent = normalized === 'admin' ? 'Admin' : 'Usuario';
+        }
+        if (brand) {
+            brand.href = normalized === 'admin' ? brand.dataset.adminHref : brand.dataset.normalHref;
+        }
+        modeButtons.forEach(function (button) {
+            const isActive = button.dataset.sidebarFlowModeOption === normalized;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+    }
+
+    setFlowMode(localStorage.getItem(storageKey) || 'admin');
+
+    if (toggle) {
+        toggle.addEventListener('change', function () {
+            const mode = toggle.checked ? 'admin' : 'normal';
+            localStorage.setItem(storageKey, mode);
+            setFlowMode(mode);
+        });
+    }
+
+    modeButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+            const mode = button.dataset.sidebarFlowModeOption === 'normal' ? 'normal' : 'admin';
+            localStorage.setItem(storageKey, mode);
+            setFlowMode(mode);
+        });
+    });
+})();
+</script>
+<?php endif; ?>
+<?php
+if ($sidebarUser) {
+    AssistantView::render($sidebarUser, [
+        'current_route' => $currentPage,
+        'artwork_id' => $sidebarContextArtworkId ?: $currentArtworkIdParam,
+        'mockup_id' => $currentMockupIdParam,
+        'series_id' => $currentPage === 'series.php' ? (int)($_GET['id'] ?? 0) : 0,
+        'generation_id' => (int)($_GET['generation_id'] ?? $_GET['job_id'] ?? 0),
+        'publication_id' => (int)($_GET['publication_id'] ?? 0),
+    ]);
+}
+?>

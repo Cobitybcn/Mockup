@@ -452,14 +452,13 @@ final class ArtworkSheetService
         $generated = $fallback;
 
         if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && ProviderSettings::imageProvider() === 'gemini' && $imagePath !== '') {
-            $prompt = "Analyze this specific artwork mockup and create public-facing SEO metadata in English for this exact image.\n"
-                . "All generated fields must be written in natural, polished English for an international art/design audience.\n"
-                . "Clearly distinguish the artwork from the mockup context.\n"
-                . "If the user's notes are in Spanish, translate their intent into English instead of copying them literally.\n"
-                . "Devuelve JSON estricto con claves: title, description, keywords, tags, alt_text, caption.\n"
-                . "keywords y tags deben ser arrays de strings in English.\n"
-                . "Parent artwork title: " . (string)($artworkSheet['title'] ?? '') . "\n"
-                . "Notas del usuario para este mockup:\n{$notes}";
+            $artworkIdentity = json_decode((string)($artworkSheet['generated_json'] ?? ''), true);
+            $artworkIdentity = is_array($artworkIdentity) ? $artworkIdentity : [];
+            $prompt = "Analyze this exact mockup image. The approved artwork identity is authoritative; analyze the scene without renaming, reinterpreting, or inventing facts about the artwork. Return strict JSON only.\n"
+                . "APPROVED ARTWORK IDENTITY:\n" . json_encode($artworkIdentity ?: ['title'=>$artworkSheet['title'],'subtitle'=>$artworkSheet['subtitle'],'description'=>$artworkSheet['description']], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) . "\n"
+                . "MOCKUP RULES: describe space type, architecture, materials, lighting, camera, scale perception, atmosphere, and artwork-space relationship. Keywords, long tails, tags, captions and channel copy must be justified by the visible image. Never use generic repeated copy. Never call the artwork framed unless a real frame is visible. Exclude home decor, wall art, perfect for any room, elevate your space, decor inspiration, and generic interior-marketing filler. Do not invent furniture, materials, colors, light, artwork facts, or destination links. Website is detailed and collector-facing; Pinterest is shorter and traffic-oriented; Instagram is visual/community-oriented; Facebook is conversational; TikTok is future preparation only.\n"
+                . "USER NOTES: {$notes}\n"
+                . 'Return: {"schema_version":"mockup-analysis.v2","neutral":{"context_title":"","contextual_description":"","alt_text":"","caption":"","keywords":[],"long_tail_keywords":[],"tags":[],"scene":{"space_type":"","architecture":"","materials":[],"lighting":"","camera":"","scale_reading":"","atmosphere":[],"artwork_space_relationship":"","distinctive_features":[]}},"channels":{"website":{"description":"","caption":"","alt_text":"","seo_keywords":[],"long_tail_keywords":[]},"pinterest":{"title":"","description":"","board_suggestions":[],"topic_suggestions":[],"keywords":[]},"instagram":{"caption":"","hook":"","hashtags":[],"cta":""},"facebook":{"headline":"","post_text":"","link_description":"","cta":""},"tiktok":{"status":"future","tiktok_ready":false,"visual_hook":"","suggested_motion":"","sequence_role":"","caption_seed":"","video_notes":""}},"review":{"status":"draft","warnings":[]}}';
             try {
                 $text = $this->client->generateText([
                     $this->client->textPart($prompt),
@@ -467,7 +466,17 @@ final class ArtworkSheetService
                 ], 'gemini-2.5-flash');
                 $decoded = json_decode($this->extractJson($text), true);
                 if (is_array($decoded)) {
-                    $generated = array_merge($fallback, $decoded);
+                    $neutral = is_array($decoded['neutral'] ?? null) ? $decoded['neutral'] : [];
+                    $generated = array_merge($fallback, [
+                        'title'=>(string)($neutral['context_title']??''),
+                        'description'=>(string)($neutral['contextual_description']??''),
+                        'keywords'=>(array)($neutral['keywords']??[]),
+                        'tags'=>(array)($neutral['tags']??[]),
+                        'alt_text'=>(string)($neutral['alt_text']??''),
+                        'caption'=>(string)($neutral['caption']??''),
+                        'long_tail_keywords'=>(array)($neutral['long_tail_keywords']??[]),
+                        'mockup_analysis_v2'=>$decoded,
+                    ]);
                 }
             } catch (Throwable $e) {
                 $generated = $fallback;

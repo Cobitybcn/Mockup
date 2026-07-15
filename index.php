@@ -4,8 +4,9 @@ declare(strict_types=1);
 require_once __DIR__ . '/app/bootstrap.php';
 
 // Redirect if already logged in
-if (Auth::user()) {
-    header('Location: root_album.php');
+$authenticatedUser = Auth::user();
+if ($authenticatedUser) {
+    header('Location: ' . (Auth::isAdmin($authenticatedUser) ? 'artwork_new.php' : 'create_scenes.php'));
     exit;
 }
 
@@ -17,7 +18,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $password = (string)($_POST['password'] ?? '');
 
     if (Auth::login($email, $password)) {
-        header('Location: root_album.php');
+        $authenticatedUser = Auth::user();
+        header('Location: ' . ($authenticatedUser && Auth::isAdmin($authenticatedUser) ? 'artwork_new.php' : 'create_scenes.php'));
         exit;
     }
 
@@ -39,6 +41,7 @@ function h($v): string
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=landing-2">
+    <link rel="stylesheet" href="assets/public-pages.css?v=2">
     <style>
         /* Landing Page Specific Scoped Styling */
         html {
@@ -511,6 +514,73 @@ function h($v): string
             outline: 2px solid rgba(154, 123, 86, 0.15);
         }
 
+        /* Public trust and Pinterest integration */
+        .integration-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
+            gap: 56px;
+            align-items: center;
+        }
+        .integration-copy {
+            max-width: 620px;
+        }
+        .integration-copy > p {
+            font-size: 15px;
+            line-height: 1.75;
+            margin: 20px 0 30px;
+        }
+        .integration-card {
+            background: var(--surface) !important;
+            border: 1px solid var(--line) !important;
+            border-radius: 16px;
+            padding: 34px;
+            box-shadow: 0 14px 36px rgba(20, 20, 18, 0.05);
+        }
+        .integration-card h3 {
+            font-family: var(--font-serif);
+            font-size: 26px;
+            font-weight: 500;
+            margin: 0 0 20px;
+        }
+        .integration-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 16px;
+        }
+        .integration-list li {
+            position: relative;
+            padding-left: 25px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .integration-list li::before {
+            content: "♦";
+            position: absolute;
+            left: 0;
+            top: 1px;
+            color: var(--accent);
+            font-size: 9px;
+        }
+        .trust-strip {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 40px;
+            align-items: center;
+            background: var(--surface-soft) !important;
+        }
+        .trust-strip .section-title-wrapper {
+            margin: 0;
+        }
+        .trust-links {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
         /* Responsive */
         @media (max-width: 960px) {
             .hero-section {
@@ -528,6 +598,13 @@ function h($v): string
             .showcase-grid {
                 grid-template-columns: 1fr;
             }
+            .integration-grid,
+            .trust-strip {
+                grid-template-columns: 1fr;
+            }
+            .trust-links {
+                justify-content: flex-start;
+            }
         }
     </style>
 </head>
@@ -537,10 +614,7 @@ function h($v): string
     <header class="landing-header">
         <div class="brand">
             <span class="brand-kicker">ArtworkMockups.com</span>
-            <div class="brand-title">
-                <span class="brand-mark"></span>
-                Artwork Mockups
-            </div>
+            <div class="brand-title">ARTWORK MOCKUPS <span class="brand-mark" aria-hidden="true"></span></div>
         </div>
         <nav class="landing-nav">
             <a href="#features">Technology</a>
@@ -698,6 +772,46 @@ function h($v): string
         </div>
     </section>
 
+    <!-- Pinterest Integration -->
+    <section class="section-padding" aria-labelledby="pinterest-heading">
+        <div class="integration-grid">
+            <div class="integration-copy">
+                <span class="section-kicker">Optional Pinterest Integration</span>
+                <h2 id="pinterest-heading" class="section-title">Publish selected artwork mockups to your own boards</h2>
+                <div class="section-divider" aria-hidden="true">
+                    <span class="divider-line"></span>
+                    <span class="divider-diamond">♦</span>
+                    <span class="divider-line"></span>
+                </div>
+                <p>Choose a mockup, review its image, title, description and destination link, then confirm the Pin yourself. Artwork Mockups does not publish automatically and never selects a board on your behalf.</p>
+                <a href="<?= PublicPage::h(PublicPage::path('integrations/pinterest/')) ?>" class="btn-secondary">Explore Pinterest Integration</a>
+            </div>
+            <aside class="integration-card" aria-label="Pinterest publishing controls">
+                <h3>You remain in control</h3>
+                <ul class="integration-list">
+                    <li>Every Pin requires an explicit user action.</li>
+                    <li>You choose the exact artwork mockup and Pinterest board.</li>
+                    <li>You can edit publishing details before confirmation.</li>
+                    <li>You can disconnect Pinterest or revoke access at any time.</li>
+                </ul>
+            </aside>
+        </div>
+    </section>
+
+    <!-- Public Support and Policies -->
+    <section class="section-padding trust-strip" aria-labelledby="support-heading">
+        <div class="section-title-wrapper">
+            <span class="section-kicker">Support &amp; Transparency</span>
+            <h2 id="support-heading" class="section-title">Questions about your account, artwork or privacy?</h2>
+            <p style="font-size: 14px; margin: 14px 0 0; max-width: 650px;">Contact Artwork Mockups for support, privacy requests, account deletion, copyright matters or questions about third-party integrations.</p>
+        </div>
+        <div class="trust-links">
+            <a href="<?= PublicPage::h(PublicPage::path('contact/')) ?>" class="btn-cta">Contact Us</a>
+            <a href="<?= PublicPage::h(PublicPage::path('privacy/')) ?>" class="btn-secondary">Privacy</a>
+            <a href="<?= PublicPage::h(PublicPage::path('terms/')) ?>" class="btn-secondary">Terms</a>
+        </div>
+    </section>
+
     <!-- Login Area -->
     <section id="login" class="section-padding login-section">
         <div class="section-title-wrapper" style="text-align: center; margin-bottom: 24px;">
@@ -730,9 +844,7 @@ function h($v): string
     </section>
 
     <!-- Footer -->
-    <footer style="padding: 40px 4%; border-top: 1px solid var(--line); text-align: center; font-size: 12px; color: var(--muted);">
-        <p>&copy; 2026 ArtworkMockups.com. All rights reserved. Powered by Vertex AI & Gemini.</p>
-    </footer>
+    <?php PublicPage::footer(); ?>
 
     <script>
     document.addEventListener("DOMContentLoaded", function() {

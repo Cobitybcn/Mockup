@@ -51,12 +51,9 @@ class OpenAIMockupGenerator implements MockupGeneratorInterface
 
             file_put_contents($promptsDir . DIRECTORY_SEPARATOR . $promptName, $finalPrompt);
             file_put_contents($resultsDir . DIRECTORY_SEPARATOR . $outputName, $imageData);
-            
-            // Apply ImageResizer to scale the generated mockup proportionally to 2200 px on shortest side
-            ImageResizer::resize($resultsDir . DIRECTORY_SEPARATOR . $outputName);
 
             $elapsed = round(microtime(true) - $t0, 2);
-            Logger::log("Mockup OpenAI generado y redimensionado exitosamente en {$elapsed}s. Archivo: {$outputName}", 'openai');
+            Logger::log("Mockup OpenAI generado en resolucion nativa en {$elapsed}s. Archivo: {$outputName}", 'openai');
         } catch (Throwable $e) {
             $elapsed = round(microtime(true) - $t0, 2);
             Logger::log("Error generando mockup OpenAI despues de {$elapsed}s. Error: " . $e->getMessage(), 'error');

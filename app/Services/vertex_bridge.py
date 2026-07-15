@@ -11,6 +11,7 @@ if 'GOOGLE_APPLICATION_CREDENTIALS' not in os.environ:
 import argparse
 import time
 import random
+import io
 from google import genai
 from google.genai import types
 from google.genai.errors import ClientError
@@ -39,12 +40,13 @@ if MOCKUP_PROMPT_FIRST_MODE:
 def get_client():
     import httpx
     # Punto #4: project ID desde variable de entorno, fallback al valor original
-    project_id = os.environ.get('VERTEX_PROJECT_ID', 'project-3c7fb926-f021-47c6-9cc')
-    # Initialize the client with Vertex AI, location global, and the specific project
+    project_id = os.environ.get('VERTEX_PROJECT_ID', 'project-ff549db7-4f7f-4b0c-9a5')
+    location = os.environ.get('VERTEX_LOCATION', 'global')
+    # Initialize the client with Vertex AI, location, and the specific project
     return genai.Client(
         vertexai=True,
         project=project_id,
-        location="global",
+        location=location,
         http_options={'httpx_client': httpx.Client(timeout=600.0)}
     )
 
@@ -119,6 +121,40 @@ def image_model_fallback_chain(selected_model, model_map):
             chain.append(model)
 
     return chain
+
+def parse_ratio_dimensions(value):
+    try:
+        from fractions import Fraction
+        left, right = str(value or "").split(":", 1)
+        ratio = Fraction(left.strip()) / Fraction(right.strip())
+        if ratio.numerator > 0 and ratio.denominator > 0:
+            return ratio.numerator, ratio.denominator
+    except Exception:
+        pass
+    return 4, 5
+
+def normalize_mockup_output_frame(img, requested_ratio):
+    """Center-crop saved mockups to the exact requested output ratio."""
+    if not isinstance(img, Image.Image):
+        return img
+
+    width, height = img.size
+    if width <= 0 or height <= 0:
+        return img
+
+    ratio_width, ratio_height = parse_ratio_dimensions(requested_ratio)
+    scale = min(width // ratio_width, height // ratio_height)
+    if scale <= 0:
+        return img
+
+    target_width = ratio_width * scale
+    target_height = ratio_height * scale
+    if target_width == width and target_height == height:
+        return img
+
+    left = max(0, (width - target_width) // 2)
+    top = max(0, (height - target_height) // 2)
+    return img.crop((left, top, left + target_width, top + target_height))
 
 def prompt_float_control(prompt, key, default):
     import re
@@ -720,7 +756,6 @@ def handle_generate_image(args):
             # Grayscale ("L") mode
             # 255 = White (the area to be edited/replaced by the model)
             # 0 = Black (the area to keep/preserve)
-            import io
             mask_img = Image.new("L", (canvas_size, canvas_size), color=255)
             art_mask_part = Image.new("L", art_resized.size, color=0)
             if art_resized.mode == "RGBA":
@@ -797,7 +832,22 @@ def handle_generate_image(args):
             print(f"[DEBUG] Image details: size={img_rgb.size}, mode={img_rgb.mode}", file=sys.stderr)
             
         contents.insert(0, gemini_prompt)
+        output_aspect_ratio = os.environ.get("GEMINI_OUTPUT_ASPECT_RATIO", args.aspect_ratio or "1:1")
+        skip_output_frame_contract = os.environ.get("GEMINI_SKIP_OUTPUT_FRAME_CONTRACT", "false").lower() == "true"
+        if is_mockup and not skip_output_frame_contract:
+            gemini_prompt = (
+                f"OUTPUT FRAME CONTRACT: Generate the final artwork mockup in exactly {output_aspect_ratio}. "
+                "This output ratio is mandatory and must not be inherited from IMAGE 1, IMAGE 2, or any other reference. "
+                "Keep the room, artwork, floor, wall, and camera drama composed inside this standard catalog and social-feed frame.\n\n"
+                + gemini_prompt
+            )
+            contents[0] = gemini_prompt
+        generation_config = types.GenerateContentConfig(
+            response_modalities=["IMAGE"],
+            image_config=types.ImageConfig(aspect_ratio=output_aspect_ratio),
+        )
         print(f"[DEBUG] Selected Gemini Image Plan: {selected_model}", file=sys.stderr)
+        print(f"[DEBUG] Requested output aspect ratio: {output_aspect_ratio}", file=sys.stderr)
         print(f"[DEBUG] Prompt Length: {len(gemini_prompt)} characters", file=sys.stderr)
         print(f"[DEBUG] Contents List Length: {len(contents)} items", file=sys.stderr)
 
@@ -810,7 +860,8 @@ def handle_generate_image(args):
                 response = call_with_retry(
                     lambda m=resolved_model: client.models.generate_content(
                         model=m,
-                        contents=contents
+                        contents=contents,
+                        config=generation_config,
                     ),
                     max_retries=4
                 )
@@ -843,10 +894,21 @@ def handle_generate_image(args):
                     os.makedirs(out_dir, exist_ok=True)
                 
                 if hasattr(img, 'image_bytes') and img.image_bytes:
-                    with open(args.output, "wb") as f:
-                        f.write(img.image_bytes)
+                    saved_img = Image.open(io.BytesIO(img.image_bytes))
+                    if is_mockup:
+                        before_size = saved_img.size
+                        saved_img = normalize_mockup_output_frame(saved_img, output_aspect_ratio)
+                        if saved_img.size != before_size:
+                            print(f"[DEBUG] Normalized Gemini mockup frame from {before_size} to {saved_img.size}", file=sys.stderr)
+                    saved_img.save(args.output, format="PNG")
                 elif hasattr(img, 'save'):
-                    img.save(args.output)
+                    saved_img = img
+                    if is_mockup:
+                        before_size = saved_img.size
+                        saved_img = normalize_mockup_output_frame(saved_img, output_aspect_ratio)
+                        if saved_img.size != before_size:
+                            print(f"[DEBUG] Normalized Gemini mockup frame from {before_size} to {saved_img.size}", file=sys.stderr)
+                    saved_img.save(args.output)
                 else:
                     raise RuntimeError("Unknown image object type returned from SDK.")
                     
@@ -861,7 +923,6 @@ def handle_generate_image(args):
         
     elif args.image and (MOCKUP_PROMPT_FIRST_NO_MASK_MODE or not (is_mockup and not MOCKUP_USE_PRECOMPOSITION and not MOCKUP_USE_BACKGROUND_EDIT)):
         # Image-to-image or background replacement using edit_image (Imagen models)
-        import io
         img_byte_arr = io.BytesIO()
         pil_img.save(img_byte_arr, format='PNG')
         image_bytes = img_byte_arr.getvalue()
@@ -980,7 +1041,8 @@ def handle_generate_image(args):
         
         config_args = {
             "number_of_images": 1,
-            "output_mime_type": "image/png"
+            "output_mime_type": "image/png",
+            "aspect_ratio": args.aspect_ratio,
         }
         if edit_mode:
             config_args["edit_mode"] = edit_mode
@@ -1020,8 +1082,17 @@ def handle_generate_image(args):
     if out_dir and not os.path.exists(out_dir):
         os.makedirs(out_dir, exist_ok=True)
         
-    with open(args.output, "wb") as f:
-        f.write(image_bytes)
+    if is_mockup:
+        output_aspect_ratio = os.environ.get("GEMINI_OUTPUT_ASPECT_RATIO", args.aspect_ratio or "4:5")
+        saved_img = Image.open(io.BytesIO(image_bytes))
+        before_size = saved_img.size
+        saved_img = normalize_mockup_output_frame(saved_img, output_aspect_ratio)
+        if saved_img.size != before_size:
+            print(f"[DEBUG] Normalized Imagen mockup frame from {before_size} to {saved_img.size}", file=sys.stderr)
+        saved_img.save(args.output, format="PNG")
+    else:
+        with open(args.output, "wb") as f:
+            f.write(image_bytes)
         
     print(f"SUCCESS: Image saved to {args.output}")
 
@@ -1037,7 +1108,8 @@ def handle_generate_image(args):
         if pil_img:
             input_size_str = f"{pil_img.width}x{pil_img.height}"
             
-        output_size_str = "1024x1024" # Default for Imagen
+        output_size = Image.open(args.output).size
+        output_size_str = f"{output_size[0]}x{output_size[1]}"
         
         with open(os.path.join(log_dir, 'vertex_bridge.log'), 'a', encoding='utf-8') as f:
             f.write(f"[{timestamp}] JOB: {os.path.basename(args.output) if args.output else 'unknown'}\n")
@@ -1086,7 +1158,7 @@ def handle_embed_image(args):
     import google.auth
     import google.auth.transport.requests
 
-    project_id = os.environ.get('VERTEX_PROJECT_ID', 'project-3c7fb926-f021-47c6-9cc')
+    project_id = os.environ.get('VERTEX_PROJECT_ID', 'project-ff549db7-4f7f-4b0c-9a5')
     location = os.environ.get('VERTEX_EMBED_LOCATION', 'us-central1')
     url = (f"https://{location}-aiplatform.googleapis.com/v1/projects/{project_id}"
            f"/locations/{location}/publishers/google/models/multimodalembedding@001:predict")

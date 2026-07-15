@@ -55,18 +55,15 @@ class MockMockupGenerator implements MockupGeneratorInterface
         // Draw and save the mock raster image
         $this->drawMockPng($contextId, basename($imagePath), $prompt, $outputPath, $mime);
 
-        // Apply ImageResizer to scale the generated mockup proportionally to 2200 px on shortest side
-        ImageResizer::resize($outputPath);
-
         $elapsed = round(microtime(true) - $t0, 2);
-        Logger::log("Mockup MOCK generado y redimensionado exitosamente en {$elapsed}s. Archivo: {$outputName}", 'mock');
+        Logger::log("Mockup MOCK generado en resolucion nativa en {$elapsed}s. Archivo: {$outputName}", 'mock');
 
         return [
             'file' => $outputName,
             'path' => $outputPath,
             'prompt_file' => $promptName,
             'mock' => true,
-            'message' => 'Mockup placeholder generated locally and resized proportionally.',
+            'message' => 'Mockup placeholder generated locally at native resolution.',
         ];
     }
 

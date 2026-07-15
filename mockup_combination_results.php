@@ -10,6 +10,8 @@ AdminSceneEditor::handlePost($user);
 $id = max(0, (int)($_GET['id'] ?? 0));
 $selectedWorldMotherCategory = trim(str_replace(['\\', '/'], '', (string)($_GET['world_mother_category'] ?? '')));
 $sceneBoardIndex = max(1, min(3, (int)($_GET['board'] ?? 1)));
+$compactSceneFlow = !empty($_GET['compact']);
+$compactSceneLimit = max(1, min(4, (int)($_GET['scene_limit'] ?? 4)));
 if ($id <= 0) {
     http_response_code(404);
     die('Artwork ID is missing.');
@@ -41,7 +43,7 @@ function world_mother_image_url(string $file): string
         return '';
     }
 
-    return 'world_mother_media.php?file=' . rawurlencode($file);
+    return 'world_mother_media.php?file=' . rawurlencode($file) . '&thumb=1&w=640';
 }
 
 function results_friendly_camera_name(string $slug): string
@@ -98,6 +100,7 @@ $stmt = $pdo->prepare('
     WHERE user_id = :user_id
     AND (
         artwork_file = :artwork_file
+        OR source_artwork_id = :source_artwork_id
         OR selector_state_json LIKE :audit_path
     )
     ORDER BY id DESC
@@ -105,6 +108,7 @@ $stmt = $pdo->prepare('
 $stmt->execute([
     'user_id' => (int)$artwork['user_id'],
     'artwork_file' => basename((string)$artwork['root_file']),
+    'source_artwork_id' => (int)$id,
     'audit_path' => '%analysis/mockup-combination-audit/' . (int)$id . '/%',
 ]);
 $rows = [];
@@ -119,6 +123,73 @@ foreach ($stmt->fetchAll() ?: [] as $row) {
     $state['combination'] = $combo;
     $row['selector_state'] = $state;
     $rows[] = $row;
+}
+
+$rowIds = [];
+$rowFiles = [];
+foreach ($rows as $row) {
+    $rowIds[(int)$row['id']] = true;
+    $rowFile = basename((string)($row['mockup_file'] ?? ''));
+    if ($rowFile !== '') {
+        $rowFiles[$rowFile] = true;
+    }
+}
+
+$jobStmt = $pdo->prepare('
+    SELECT *
+    FROM mockup_generation_jobs
+    WHERE user_id = :user_id
+    AND status = "done"
+    AND mockup_file IS NOT NULL
+    AND mockup_file <> ""
+    AND (
+        artwork_id = :artwork_id
+        OR source_artwork_id = :source_artwork_id
+        OR artwork_file = :artwork_file
+    )
+    ORDER BY id DESC
+');
+$jobStmt->execute([
+    'user_id' => (int)$artwork['user_id'],
+    'artwork_id' => (int)$id,
+    'source_artwork_id' => (int)$id,
+    'artwork_file' => basename((string)$artwork['root_file']),
+]);
+foreach ($jobStmt->fetchAll() ?: [] as $jobRow) {
+    $mockupId = (int)($jobRow['mockup_id'] ?? 0);
+    if ($mockupId > 0 && isset($rowIds[$mockupId])) {
+        continue;
+    }
+    $mockupFile = basename((string)($jobRow['mockup_file'] ?? ''));
+    if ($mockupFile === '' || isset($rowFiles[$mockupFile])) {
+        continue;
+    }
+
+    $state = json_decode((string)($jobRow['selector_state_json'] ?? ''), true);
+    if (!is_array($state) || ($state['generation_source'] ?? '') !== 'mockup_combination_review') {
+        continue;
+    }
+
+    $combo = (array)($state['combination'] ?? []);
+    $rowSceneBoardIndex = max(1, min(3, (int)($combo['camera_slot_scene_board_index'] ?? $state['scene_board_index'] ?? 1)));
+    $combo['camera_slot_scene_board_index'] = $rowSceneBoardIndex;
+    $state['combination'] = $combo;
+
+    $fallbackRow = [
+        'id' => $mockupId > 0 ? $mockupId : (int)$jobRow['id'],
+        'user_id' => (int)$jobRow['user_id'],
+        'artwork_file' => basename((string)$jobRow['artwork_file']),
+        'mockup_file' => $mockupFile,
+        'context_id' => (string)$jobRow['context_id'],
+        'prompt_file' => basename((string)($jobRow['prompt_file'] ?? '')),
+        'selector_state_json' => (string)($jobRow['selector_state_json'] ?? ''),
+        'created_at' => (string)($jobRow['updated_at'] ?? ''),
+        'selector_state' => $state,
+    ];
+
+    $rows[] = $fallbackRow;
+    $rowIds[(int)$fallbackRow['id']] = true;
+    $rowFiles[$mockupFile] = true;
 }
 $favoriteMockupLookup = MockupFavorites::lookupForUser((int)$user['id']);
 $generatedBoardIndexes = [];
@@ -260,7 +331,9 @@ foreach ($rows as $row) {
 }
 foreach ($resultGroups as &$resultGroup) {
     usort($resultGroup['items'], static function (array $a, array $b): int {
-        $batchCompare = ((int)($a['scene_board_index'] ?? 1)) <=> ((int)($b['scene_board_index'] ?? 1));
+        // Show the newest generated batch first so the mobile slider opens on the
+        // four mockups the user has just requested, not on the previous batch.
+        $batchCompare = ((int)($b['scene_board_index'] ?? 1)) <=> ((int)($a['scene_board_index'] ?? 1));
         if ($batchCompare !== 0) {
             return $batchCompare;
         }
@@ -822,6 +895,89 @@ if (is_file($evalPath)) {
                 min-height: 56px;
             }
         }
+        @media (max-width: 760px) {
+            .app-header {
+                display: none;
+            }
+            .workspace {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            .alert-strip,
+            .results-page-desc .desc-instructions,
+            .results-group-head,
+            .batch-filter,
+            .result-variant-badge,
+            .result-title-row,
+            .camera-report {
+                display: none !important;
+            }
+            .results-header-v3 {
+                gap: 10px;
+                padding: 2px 0 14px;
+                margin-bottom: 14px;
+            }
+            .results-header-v3 h1 {
+                margin-bottom: 8px;
+                font-size: 31px;
+                line-height: 1.04;
+            }
+            .results-page-desc .desc-kicker {
+                font-size: 12px;
+                line-height: 1.45;
+                margin-bottom: 0;
+            }
+            .results-group {
+                margin-bottom: 14px;
+            }
+            .results-grid {
+                position: relative;
+                display: grid;
+                grid-template-columns: none;
+                grid-auto-flow: column;
+                grid-auto-columns: calc(100% - 18px);
+                gap: 10px;
+                overflow-x: auto;
+                overflow-y: hidden;
+                scroll-snap-type: x mandatory;
+                scroll-padding-inline: 0;
+                overscroll-behavior-x: contain;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                padding-bottom: 2px;
+            }
+            .results-grid::-webkit-scrollbar {
+                display: none;
+            }
+            .result-card {
+                display: block;
+                scroll-snap-align: start;
+                scroll-snap-stop: always;
+                padding: 10px;
+                border-left-width: 0;
+                border-radius: 6px;
+                user-select: none;
+                -webkit-user-drag: none;
+            }
+            .result-card.active {
+                box-shadow: inset 0 0 0 2px #b77f86, var(--shadow);
+            }
+            .result-image-link img {
+                aspect-ratio: 3 / 4;
+                border-radius: 4px;
+                pointer-events: none;
+            }
+            .result-image-actions {
+                opacity: 1;
+                transform: none;
+            }
+            .next-batch-prompt {
+                margin-top: 8px;
+            }
+            .next-batch-prompt span {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -835,16 +991,21 @@ if (is_file($evalPath)) {
         <div class="workspace">
             <div class="results-header-v3">
                 <div class="header-main-info">
-                    <h1>Generated Results</h1>
+                    <h1>Scene Mockups</h1>
                     <p class="results-page-desc">
                         <span class="desc-kicker">Evaluate generated mockup combinations and keep the best candidates.</span>
                         <span class="desc-instructions">Regenerate individual mockups, delete weak results, or mark your best options as favorites. Use the controls on each image card to refine the board.</span>
                     </p>
                 </div>
-                <?php if ($rows && $isAdmin && $nextSceneBoardHasScenes): ?>
+                <?php if ($rows && ($isAdmin || $compactSceneFlow) && $nextSceneBoardHasScenes): ?>
                     <div class="next-batch-prompt">
-                        <span>Would you like to generate a <?= $nextSceneBoardIndex === 2 ? 'second' : 'third' ?> mockup board?</span>
-                        <a href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$nextSceneBoardIndex ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Generate Batch <?= (int)$nextSceneBoardIndex ?></a>
+                        <?php if ($compactSceneFlow): ?>
+                            <span>Create 4 more views<br><small>Explore different angles and scene compositions.</small></span>
+                            <a href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$nextSceneBoardIndex ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>&auto_generate=1&compact=1&scene_limit=<?= (int)$compactSceneLimit ?>">Create 4 more views</a>
+                        <?php else: ?>
+                            <span>Would you like to generate a <?= $nextSceneBoardIndex === 2 ? 'second' : 'third' ?> mockup board?</span>
+                            <a href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$nextSceneBoardIndex ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Generate Batch <?= (int)$nextSceneBoardIndex ?></a>
+                        <?php endif; ?>
                     </div>
                 <?php endif; ?>
             </div>
@@ -895,7 +1056,7 @@ if (is_file($evalPath)) {
                     <section class="result-card batch-<?= (int)$resultSceneBoardIndex ?>" id="result-card-<?= $mockupId ?>" data-result-batch="<?= (int)$resultSceneBoardIndex ?>">
                         <div class="result-image-wrap">
                             <a class="result-image-link" href="viewer.php?id=<?= $mockupId ?>&back=<?= rawurlencode('mockup_combination_results.php?id=' . (int)$id . ($selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '')) ?>" aria-label="Open in Mockup Album">
-                                <img src="media.php?file=<?= rawurlencode(basename((string)$row['mockup_file'])) ?>" alt="">
+                                <img src="media.php?file=<?= rawurlencode(basename((string)$row['mockup_file'])) ?>&thumb=1&w=640&v=<?= $mockupId ?>" alt="" loading="lazy" decoding="async">
                             </a>
                             <button
                                 class="favorite-overlay-btn <?= isset($favoriteMockupLookup[$mockupId]) ? 'active' : '' ?>"
@@ -1030,6 +1191,7 @@ if (is_file($evalPath)) {
                 </section>
             <?php endforeach; ?>
 
+            <?php if ($isAdmin && !$compactSceneFlow): ?>
             <section class="camera-report">
                 <div class="camera-report-head">
                     <h2>Camera Generation Report</h2>
@@ -1075,6 +1237,7 @@ if (is_file($evalPath)) {
                     <div class="notice" style="margin: 18px 20px;">No generated or failed cameras yet.</div>
                 <?php endif; ?>
             </section>
+            <?php endif; ?>
         </div>
     </main>
 </div>
@@ -1234,6 +1397,109 @@ function redoResult(button) {
             button.textContent = 'Regenerar';
         });
 }
+
+function initMobileResultsSliders() {
+    const mobileQuery = window.matchMedia('(max-width: 760px)');
+    document.querySelectorAll('.results-grid').forEach(grid => {
+        const cards = Array.from(grid.querySelectorAll('.result-card'));
+        if (!cards.length || grid.dataset.sliderReady === '1') return;
+        grid.dataset.sliderReady = '1';
+
+        let index = 0;
+        let scrollTimer = 0;
+        let suppressClick = false;
+        let startX = 0;
+        let startY = 0;
+
+        function isMobile() {
+            return mobileQuery.matches;
+        }
+
+        function apply() {
+            if (!isMobile()) {
+                cards.forEach(card => {
+                    card.classList.remove('active');
+                    card.removeAttribute('aria-current');
+                });
+                return;
+            }
+            cards.forEach((card, cardIndex) => {
+                const active = cardIndex === index;
+                card.classList.toggle('active', active);
+                card.setAttribute('aria-current', active ? 'true' : 'false');
+            });
+        }
+
+        function setIndex(nextIndex, options = {}) {
+            index = Math.max(0, Math.min(cards.length - 1, nextIndex));
+            apply();
+            if (options.scroll) {
+                const activeCard = cards[index];
+                if (activeCard) {
+                    grid.scrollTo({
+                        left: activeCard.offsetLeft - grid.offsetLeft,
+                        behavior: options.smooth ? 'smooth' : 'auto'
+                    });
+                }
+            }
+        }
+
+        function syncFromScroll() {
+            if (!isMobile() || !cards.length) return;
+            const gridRect = grid.getBoundingClientRect();
+            const targetLeft = gridRect.left + 10;
+            let closestIndex = index;
+            let closestDistance = Number.POSITIVE_INFINITY;
+            cards.forEach((card, cardIndex) => {
+                const distance = Math.abs(card.getBoundingClientRect().left - targetLeft);
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestIndex = cardIndex;
+                }
+            });
+            setIndex(closestIndex);
+        }
+
+        grid.addEventListener('pointerdown', event => {
+            if (!isMobile() || !cards.length || event.target.closest('button')) return;
+            suppressClick = false;
+            startX = event.clientX;
+            startY = event.clientY;
+        }, { passive: true });
+
+        grid.addEventListener('pointermove', event => {
+            if (!isMobile()) return;
+            const dx = Math.abs(event.clientX - startX);
+            const dy = Math.abs(event.clientY - startY);
+            if (dx > 10 && dx > dy) {
+                suppressClick = true;
+            }
+        }, { passive: true });
+
+        grid.addEventListener('pointerup', () => {
+            window.setTimeout(() => { suppressClick = false; }, 180);
+        }, { passive: true });
+
+        grid.addEventListener('pointercancel', () => {
+            window.setTimeout(() => { suppressClick = false; }, 180);
+        }, { passive: true });
+
+        grid.addEventListener('scroll', () => {
+            window.clearTimeout(scrollTimer);
+            scrollTimer = window.setTimeout(syncFromScroll, 80);
+        }, { passive: true });
+
+        grid.addEventListener('click', event => {
+            if (!isMobile() || !suppressClick) return;
+            event.preventDefault();
+            event.stopPropagation();
+        }, true);
+        mobileQuery.addEventListener?.('change', () => setIndex(index, { scroll: true }));
+        window.addEventListener('resize', () => setIndex(index, { scroll: true }));
+        setIndex(index, { scroll: true });
+    });
+}
+initMobileResultsSliders();
 
 document.addEventListener('click', event => {
     const target = actionTarget(event);

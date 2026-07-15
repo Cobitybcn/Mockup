@@ -7,14 +7,48 @@ use Google\Cloud\Tasks\V2\Task;
 use Google\Cloud\Tasks\V2\HttpRequest;
 use Google\Cloud\Tasks\V2\HttpMethod;
 use Google\Cloud\Tasks\V2\OidcToken;
+use Google\Protobuf\Timestamp;
 
 class CloudTasksService
 {
     public static function enqueueGeneration(int $jobId, int $userId, int $artworkId, string $contextId): string
     {
+        return self::enqueue('worker.php', [
+            'job_id' => $jobId,
+            'user_id' => $userId,
+            'artwork_id' => $artworkId,
+            'context_id' => $contextId,
+            'timestamp' => date('c'),
+        ]);
+    }
+
+    public static function enqueueRootGeneration(string $jobId, int $userId): string
+    {
+        return self::enqueue('root_worker.php', [
+            'job_id' => $jobId,
+            'user_id' => $userId,
+            'timestamp' => date('c'),
+        ]);
+    }
+
+    public static function enqueueSocialPublication(int $jobId, DateTimeImmutable $scheduledAt): string
+    {
+        return self::enqueue('social_publish_worker.php', [
+            'job_id' => $jobId,
+            'timestamp' => date('c'),
+        ], $scheduledAt, app_env('GCP_SOCIAL_QUEUE_NAME', app_env('GCP_QUEUE_NAME', 'mockups-generation-queue')));
+    }
+
+    private static function enqueue(
+        string $workerScript,
+        array $payload,
+        ?DateTimeImmutable $scheduledAt = null,
+        string $queueOverride = ''
+    ): string
+    {
         $projectId = app_env('GCP_PROJECT_ID', '');
         $location = app_env('GCP_LOCATION', 'us-central1');
-        $queue = app_env('GCP_QUEUE_NAME', 'mockups-generation-queue');
+        $queue = $queueOverride !== '' ? $queueOverride : app_env('GCP_QUEUE_NAME', 'mockups-generation-queue');
         $workerUrl = app_env('GCP_WORKER_URL', '');
         $invokerSa = app_env('GCP_TASKS_INVOKER_SA', '');
 
@@ -22,19 +56,10 @@ class CloudTasksService
             throw new RuntimeException('Configuración de GCP incompleta en .env (requiere GCP_PROJECT_ID, GCP_WORKER_URL, GCP_TASKS_INVOKER_SA).');
         }
 
-        // Direct the task execution to worker.php instead of the PoC endpoint
-        $targetUrl = str_replace('poc_worker.php', 'worker.php', $workerUrl);
+        $targetUrl = self::targetUrl($workerUrl, $workerScript);
 
         $client = new CloudTasksClient();
         $queueName = $client->queueName($projectId, $location, $queue);
-
-        $payload = [
-            'job_id' => $jobId,
-            'user_id' => $userId,
-            'artwork_id' => $artworkId,
-            'context_id' => $contextId,
-            'timestamp' => date('c'),
-        ];
 
         $oidcToken = new OidcToken();
         $oidcToken->setServiceAccountEmail($invokerSa);
@@ -49,8 +74,28 @@ class CloudTasksService
 
         $task = new Task();
         $task->setHttpRequest($httpRequest);
+        if ($scheduledAt instanceof DateTimeImmutable) {
+            $utc = $scheduledAt->setTimezone(new DateTimeZone('UTC'));
+            $timestamp = new Timestamp();
+            $timestamp->setSeconds($utc->getTimestamp());
+            $task->setScheduleTime($timestamp);
+        }
 
         $response = $client->createTask($queueName, $task);
         return $response->getName();
+    }
+
+    private static function targetUrl(string $workerUrl, string $workerScript): string
+    {
+        $workerUrl = trim($workerUrl);
+        if ($workerUrl === '') {
+            return $workerUrl;
+        }
+
+        if (preg_match('#/[^/]+\.php(?:\?.*)?$#', $workerUrl) === 1) {
+            return preg_replace('#/[^/]+\.php(?:\?.*)?$#', '/' . $workerScript, $workerUrl) ?: $workerUrl;
+        }
+
+        return rtrim($workerUrl, '/') . '/' . $workerScript;
     }
 }

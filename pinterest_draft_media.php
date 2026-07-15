@@ -1,0 +1,6 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__.'/app/bootstrap.php';
+$token=(string)($_GET['token']??'');if(!preg_match('/^[a-f0-9]{64}$/',$token)){http_response_code(404);exit;}
+$stmt=Database::connection()->prepare("SELECT d.variant_file,m.mockup_file FROM pinterest_pin_drafts d JOIN mockups m ON m.id=d.mockup_id WHERE d.media_token=? AND d.status IN ('draft','board_selected','failed','published') LIMIT 1");$stmt->execute([$token]);$row=$stmt->fetch(PDO::FETCH_ASSOC);$variant=basename((string)($row['variant_file']??''));$path=__DIR__.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'pinterest_drafts'.DIRECTORY_SEPARATOR.$variant;if($variant!==''&&!is_file($path)&&StorageService::isGcsActive())StorageService::downloadFile('pinterest-drafts/'.$variant,$path);if($variant===''||!is_file($path)){$file=basename((string)($row['mockup_file']??''));$path=RESULTS_DIR.DIRECTORY_SEPARATOR.$file;if($file!==''&&!is_file($path)&&StorageService::isGcsActive())StorageService::downloadFile('results/'.$file,$path);}if(!is_file($path)){http_response_code(404);exit;}
+$mime=(string)(mime_content_type($path)?:'application/octet-stream');if(!in_array($mime,['image/jpeg','image/png','image/webp'],true)){http_response_code(415);exit;}header('Content-Type: '.$mime);header('Content-Length: '.filesize($path));header('Cache-Control: public, max-age=86400');readfile($path);

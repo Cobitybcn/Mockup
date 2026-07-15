@@ -21,11 +21,15 @@ require_once __DIR__ . '/regression/root_artwork_test.php';
 require_once __DIR__ . '/regression/seo_filename_test.php';
 require_once __DIR__ . '/regression/slot_full_prompt_isolation_test.php';
 require_once __DIR__ . '/regression/uploaded_root_test.php';
+require_once __DIR__ . '/regression/public_pages_test.php';
+require_once __DIR__ . '/regression/world_mother_library_admin_test.php';
 
 run_camera_slots_regression_tests();
 run_root_artwork_regression_tests();
 run_seo_filename_regression_tests();
 run_slot_full_prompt_isolation_tests();
 run_uploaded_root_regression_tests();
+run_public_pages_regression_tests();
+run_world_mother_library_admin_tests();
 
 exit(TestHarness::summary());

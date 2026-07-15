@@ -395,7 +395,7 @@ function world_mother_image_url(string $file): string
         return '';
     }
 
-    return 'world_mother_media.php?file=' . rawurlencode($file);
+    return 'world_mother_media.php?file=' . rawurlencode($file) . '&thumb=1&w=640';
 }
 
 function scene_root_view_label(string $viewType): string
@@ -511,6 +511,9 @@ foreach (($_GET['world_variant'] ?? []) as $index => $offset) {
 }
 $selectedWorldMotherCategory = trim(str_replace(['\\', '/'], '', (string)($_GET['world_mother_category'] ?? '')));
 $sceneBoardIndex = max(1, min(3, (int)($_GET['board'] ?? 1)));
+$compactSceneFlow = !empty($_GET['compact']);
+$autoGenerateSceneFlow = !empty($_GET['auto_generate']);
+$compactSceneLimit = max(1, min(4, (int)($_GET['scene_limit'] ?? 4)));
 
 $engine = new MockupCombinationEngine();
 $review = $engine->buildForArtwork($id, $selectedSlots, [
@@ -1973,13 +1976,148 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
                 padding-top: 0;
             }
         }
+        body.compact-scene-runner {
+            min-height: 100vh;
+            background: var(--bg);
+        }
+        body.compact-scene-runner .sidebar,
+        body.compact-scene-runner .app-header,
+        body.compact-scene-runner .alert-strip,
+        body.compact-scene-runner .workspace,
+        body.compact-scene-runner .generation-overlay {
+            display: none !important;
+        }
+        body.compact-scene-runner .app-shell {
+            display: block;
+            min-height: 100vh;
+        }
+        body.compact-scene-runner .main-area {
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            place-items: center;
+            background: var(--bg);
+        }
+        .compact-scene-status {
+            display: none;
+        }
+        body.compact-scene-runner .compact-scene-status {
+            width: min(520px, calc(100vw - 32px));
+            display: block;
+            text-align: center;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: clamp(26px, 8vw, 48px);
+            box-shadow: var(--shadow);
+        }
+        .compact-scene-status .generation-spinner {
+            margin: 0 auto 22px;
+        }
+        .compact-scene-status h1 {
+            margin: 0;
+            font-family: var(--font-serif);
+            font-size: clamp(34px, 8vw, 54px);
+            font-weight: 500;
+            line-height: 0.95;
+        }
+        .compact-scene-status p {
+            margin: 14px auto 0;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .compact-view-progress {
+            display: grid;
+            gap: 10px;
+            margin-top: 26px;
+            text-align: left;
+        }
+        .compact-view-row {
+            display: grid;
+            gap: 7px;
+        }
+        .compact-view-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+        .compact-view-head strong {
+            color: var(--ink);
+            font-size: 13px;
+        }
+        .compact-view-track {
+            height: 5px;
+            border-radius: 999px;
+            background: var(--surface-soft);
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+        .compact-view-bar {
+            width: 8%;
+            height: 100%;
+            border-radius: inherit;
+            background: var(--line);
+            transition: width 0.35s ease, background 0.35s ease;
+        }
+        .compact-view-row.creating .compact-view-bar,
+        .compact-view-row.retrying .compact-view-bar {
+            width: 58%;
+            background: linear-gradient(90deg, var(--accent), rgba(183,127,134,0.35), var(--accent));
+            background-size: 180% 100%;
+            animation: compactProgress 1.15s linear infinite;
+        }
+        .compact-view-row.ready .compact-view-bar {
+            width: 100%;
+            background: var(--accent);
+            animation: none;
+        }
+        .compact-view-row.failed .compact-view-bar {
+            width: 100%;
+            background: #b95c5c;
+            animation: none;
+        }
+        .compact-tip {
+            min-height: 38px;
+            margin-top: 22px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+        @keyframes compactProgress {
+            from { background-position: 0% 0; }
+            to { background-position: 180% 0; }
+        }
     </style>
 </head>
-<body>
+<body class="<?= $compactSceneFlow ? 'compact-scene-runner' : '' ?>">
 <div class="app-shell">
     <?php include __DIR__ . '/sidebar.php'; ?>
 
     <main class="main-area">
+        <?php if ($compactSceneFlow): ?>
+            <section class="compact-scene-status" aria-live="polite">
+                <div class="generation-spinner" aria-hidden="true"></div>
+                <h1>Creating 4 scenes</h1>
+                <p>Rendering four scene views.</p>
+                <div class="compact-view-progress" aria-label="Scene progress">
+                    <?php for ($compactViewIndex = 1; $compactViewIndex <= 4; $compactViewIndex++): ?>
+                        <div class="compact-view-row queued" data-compact-view-row="<?= $compactViewIndex ?>">
+                            <div class="compact-view-head">
+                                <strong>View <?= $compactViewIndex ?></strong>
+                                <span data-compact-view-status="<?= $compactViewIndex ?>">Queued</span>
+                            </div>
+                            <div class="compact-view-track"><div class="compact-view-bar"></div></div>
+                        </div>
+                    <?php endfor; ?>
+                </div>
+                <div class="compact-tip" id="compactSceneTip"></div>
+            </section>
+        <?php endif; ?>
         <header class="app-header">
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
@@ -2000,7 +2138,7 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
                     </div>
                 </div>
                 <div class="scene-primary-action">
-                    <button class="button-link" type="button" id="generate-all-btn" onclick="generateAllCombinations(this)">Generate All Combinations</button>
+                    <button class="button-link" type="button" id="generate-all-btn" onclick="generateAllCombinations(this)"><?= $compactSceneFlow ? 'Create 4 scenes' : 'Generate All Combinations' ?></button>
                 </div>
             </div>
 
@@ -2267,6 +2405,7 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
                                     data-world-mother-category="<?= h($selectedWorldMotherCategory) ?>"
                                     data-world-mother-variant="<?= $currentVariantOffset ?>"
                                     data-scene-board="<?= (int)$sceneBoardIndex ?>"
+                                    data-validation-notes="<?= h(implode(' | ', array_map('strval', (array)($combo['validation_notes'] ?? [])))) ?>"
                                     onclick="prepareCombination(this)"
                                     <?= empty($combo['generation_ready']) ? 'disabled' : '' ?>
                                 >Generate This Combination</button>
@@ -2293,6 +2432,10 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
 
 <script>
 const ACTIVE_ARTWORK_ROOT_FILE = <?= json_encode(basename((string)$artwork['root_file'])) ?>;
+const MOCKUP_BATCH_WORKER_COUNT = <?= (int)ProviderSettings::mockupWorkerCount() ?>;
+const USER_SCENE_FLOW = <?= $compactSceneFlow ? 'true' : 'false' ?>;
+const USER_SCENE_AUTO_GENERATE = <?= $autoGenerateSceneFlow ? 'true' : 'false' ?>;
+const USER_SCENE_LIMIT = <?= (int)$compactSceneLimit ?>;
 const generationOverlay = document.getElementById('generation-overlay');
 const generationOverlayTitle = document.getElementById('generation-overlay-title');
 const generationOverlayMessage = document.getElementById('generation-overlay-message');
@@ -2332,6 +2475,7 @@ function toggleOverlayMaximize(e) {
 }
 
 function showGenerationOverlay(title, message) {
+    if (USER_SCENE_FLOW) return;
     if (!generationOverlay) return;
     generationOverlayTitle.textContent = title || 'Generating scenes';
     generationOverlayMessage.textContent = message || 'Preparing the selected artwork and scene reference.';
@@ -2340,6 +2484,7 @@ function showGenerationOverlay(title, message) {
 }
 
 function hideGenerationOverlay() {
+    if (USER_SCENE_FLOW) return;
     if (!generationOverlay) return;
     generationOverlay.classList.remove('active');
     generationOverlay.setAttribute('aria-hidden', 'true');
@@ -2379,6 +2524,7 @@ function runCombinationGeneration(btn) {
     const originalText = btn.textContent;
     btn.textContent = 'Generating...';
     status.textContent = 'Generating image from root artwork, world mother reference, selected camera, and ADMIN prompt.';
+    console.info('[scene-generation] request start', { index: index, camera: btn.getAttribute('data-camera-name') || '' });
 
     return fetch('generate_mockup_combination.php', { method: 'POST', body: formData })
         .then(response => response.text().then(text => {
@@ -2403,6 +2549,7 @@ function runCombinationGeneration(btn) {
                                         const job = data.jobs.find(j => parseInt(j.id, 10) === parseInt(jobId, 10));
                                         if (job) {
                                             if (job.status === 'done') {
+                                                console.info('[scene-generation] request done', { index: index, enqueued: true, jobId: jobId });
                                                 status.innerHTML = 'Image generated. <a href="' + result.body.results_url + '">Evaluate results</a>';
                                                 btn.textContent = 'Generated';
                                                 resolve(result.body);
@@ -2429,6 +2576,7 @@ function runCombinationGeneration(btn) {
                         poll();
                     });
                 } else {
+                    console.info('[scene-generation] request done', { index: index, enqueued: false });
                     status.innerHTML = (result.body.message || 'Image generated.') + ' <a href="' + result.body.results_url + '">Evaluate results</a>';
                     btn.textContent = 'Generated';
                     return result.body;
@@ -2454,13 +2602,62 @@ function runCombinationGeneration(btn) {
         });
 }
 
+function isRetryableGenerationError(err) {
+    const message = err && err.message ? err.message : '';
+    return /429|RESOURCE_EXHAUSTED|quota|rate limit|temporar/i.test(message);
+}
+
+function waitForRetry(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function setCompactViewState(index, state, label) {
+    if (!USER_SCENE_FLOW) return;
+    const row = document.querySelector('[data-compact-view-row="' + index + '"]');
+    const status = document.querySelector('[data-compact-view-status="' + index + '"]');
+    if (!row || !status) return;
+    row.classList.remove('queued', 'creating', 'ready', 'retrying', 'failed');
+    row.classList.add(state);
+    status.textContent = label;
+}
+
+const compactSceneTips = [
+    'Use a clear photo with the artwork filling most of the frame.',
+    'Scene views explore different angles and compositions for the same artwork.',
+    'Scale helps the mockups keep the artwork believable in each space.',
+    'You can create 4 more views after the first set is ready.'
+];
+let compactSceneTipIndex = 0;
+
+function rotateCompactSceneTip() {
+    const target = document.getElementById('compactSceneTip');
+    if (!target || !USER_SCENE_FLOW) return;
+    target.textContent = compactSceneTips[compactSceneTipIndex % compactSceneTips.length];
+    compactSceneTipIndex++;
+}
+
 async function generateAllCombinations(btn) {
-    const buttons = Array.from(document.querySelectorAll('button[data-index][data-artwork-id][data-camera-slot]:not([disabled])'));
+    let buttons = Array.from(document.querySelectorAll('button[data-index][data-artwork-id][data-camera-slot]:not([disabled])'));
+    if (USER_SCENE_FLOW) {
+        buttons = buttons.slice(0, USER_SCENE_LIMIT);
+    }
     if (buttons.length === 0) {
-        alert('No combinations are available to generate.');
+        const disabled = Array.from(document.querySelectorAll('button[data-index][data-artwork-id][data-camera-slot][disabled]'));
+        const reasons = disabled
+            .map(button => button.getAttribute('data-validation-notes') || '')
+            .filter(Boolean)
+            .filter((reason, index, list) => list.indexOf(reason) === index)
+            .slice(0, 6);
+        alert(reasons.length
+            ? 'No combinations are available to generate.\n\nReason:\n- ' + reasons.join('\n- ')
+            : 'No combinations are available to generate. Open one scene card to inspect its validation notes.');
         return;
     }
-    if (!confirm('Generate all ' + buttons.length + ' combinations now? This may consume one real API credit per combination when real API mode is enabled.')) {
+    const confirmText = USER_SCENE_FLOW
+        ? 'Create ' + buttons.length + ' scenes now?'
+        : 'Generate all ' + buttons.length + ' combinations now? This may consume one real API credit per combination when real API mode is enabled.';
+    const shouldConfirmBatch = btn.getAttribute('data-skip-batch-confirm') !== '1';
+    if (shouldConfirmBatch && !confirm(confirmText)) {
         return;
     }
 
@@ -2468,26 +2665,78 @@ async function generateAllCombinations(btn) {
     const originalText = btn.textContent;
     let successCount = 0;
     let failCount = 0;
+    const failures = [];
 
     isGenerationRunning = true;
 
-    for (let i = 0; i < buttons.length; i++) {
-        const comboBtn = buttons[i];
-        comboBtn.dataset.batchGeneration = '1';
-        btn.textContent = 'Generating ' + (i + 1) + ' / ' + buttons.length + '...';
-        showGenerationOverlay(
-            'Generating scenes',
-            'Generating ' + (i + 1) + ' of ' + buttons.length + ': ' + (comboBtn.getAttribute('data-camera-name') || 'selected camera') + '.'
-        );
-        try {
-            await prepareCombination(comboBtn, true);
-            successCount++;
-        } catch (err) {
-            failCount++;
-        } finally {
-            delete comboBtn.dataset.batchGeneration;
+    const workerCount = Math.max(1, Math.min(MOCKUP_BATCH_WORKER_COUNT || 1, buttons.length));
+    console.info('[scene-generation] starting batch', {
+        userSceneFlow: USER_SCENE_FLOW,
+        requestedScenes: buttons.length,
+        workerCount: workerCount
+    });
+    let nextIndex = 0;
+    let completedCount = 0;
+    btn.textContent = 'Generating 0 / ' + buttons.length + '...';
+    showGenerationOverlay(
+        USER_SCENE_FLOW ? 'Creating 4 scenes' : 'Generating scenes',
+        'Running ' + workerCount + ' parallel worker' + (workerCount === 1 ? '' : 's') + '. Completed 0 of ' + buttons.length + '.'
+    );
+
+    const runNext = async () => {
+        while (nextIndex < buttons.length) {
+            const currentIndex = nextIndex++;
+            const comboBtn = buttons[currentIndex];
+            const compactViewIndex = currentIndex + 1;
+            comboBtn.dataset.batchGeneration = '1';
+            setCompactViewState(compactViewIndex, 'creating', 'Creating');
+            btn.textContent = 'Generating ' + completedCount + ' / ' + buttons.length + '...';
+            showGenerationOverlay(
+                USER_SCENE_FLOW ? 'Creating 4 scenes' : 'Generating scenes',
+                'Running ' + workerCount + ' parallel worker' + (workerCount === 1 ? '' : 's') + '. Completed ' + completedCount + ' of ' + buttons.length + '.'
+            );
+            try {
+                try {
+                    await prepareCombination(comboBtn, true);
+                } catch (err) {
+                    if (!isRetryableGenerationError(err)) {
+                        throw err;
+                    }
+
+                    const retryDelay = 12000 + Math.floor(Math.random() * 8000);
+                    const cameraName = comboBtn.getAttribute('data-camera-name') || 'selected camera';
+                    showGenerationOverlay(
+                        'Retrying one scene',
+                        'Vertex quota pushed back on ' + cameraName + '. Waiting ' + Math.round(retryDelay / 1000) + 's before retry.'
+                    );
+                    setCompactViewState(compactViewIndex, 'retrying', 'Retrying');
+                    await waitForRetry(retryDelay);
+                    setCompactViewState(compactViewIndex, 'creating', 'Creating');
+                    await prepareCombination(comboBtn, true);
+                }
+                successCount++;
+                setCompactViewState(compactViewIndex, 'ready', 'Ready');
+            } catch (err) {
+                failCount++;
+                setCompactViewState(compactViewIndex, 'failed', 'Failed');
+                failures.push({
+                    index: comboBtn.getAttribute('data-index') || '?',
+                    camera: comboBtn.getAttribute('data-camera-name') || 'selected camera',
+                    error: err && err.message ? err.message : 'Unknown error',
+                });
+            } finally {
+                completedCount++;
+                btn.textContent = 'Generating ' + completedCount + ' / ' + buttons.length + '...';
+                showGenerationOverlay(
+                    USER_SCENE_FLOW ? 'Creating 4 scenes' : 'Generating scenes',
+                    'Running ' + workerCount + ' parallel worker' + (workerCount === 1 ? '' : 's') + '. Completed ' + completedCount + ' of ' + buttons.length + '.'
+                );
+                delete comboBtn.dataset.batchGeneration;
+            }
         }
-    }
+    };
+
+    await Promise.all(Array.from({ length: workerCount }, () => runNext()));
 
     btn.disabled = false;
     btn.textContent = originalText;
@@ -2495,13 +2744,49 @@ async function generateAllCombinations(btn) {
     hideGenerationOverlay();
 
     if (successCount > 0) {
-        const go = confirm('Generation complete. Success: ' + successCount + ', failed: ' + failCount + '. Open results now?');
+        const resultsUrl = 'mockup_combination_results.php?id=<?= (int)$id ?>&board=<?= (int)$sceneBoardIndex ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?><?= $compactSceneFlow ? '&compact=1&scene_limit=' . (int)$compactSceneLimit : '' ?>';
+        if (USER_SCENE_FLOW && failCount === 0) {
+            window.location.href = resultsUrl;
+            return;
+        }
+
+        let summary = USER_SCENE_FLOW
+            ? successCount + ' scenes ready. Failed: ' + failCount + '.'
+            : 'Generation complete. Success: ' + successCount + ', failed: ' + failCount + '.';
+        if (failures.length > 0) {
+            summary += '\n\nFailed combinations:\n' + failures
+                .slice(0, 8)
+                .map(item => '- #' + item.index + ' ' + item.camera + ': ' + item.error.substring(0, 600))
+                .join('\n');
+        }
+        summary += '\n\nOpen results now?';
+        const go = confirm(summary);
         if (go) {
-            window.location.href = 'mockup_combination_results.php?id=<?= (int)$id ?>&board=<?= (int)$sceneBoardIndex ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>';
+            window.location.href = resultsUrl;
         }
     } else {
-        alert('No combinations were generated. Check the messages on each card.');
+        let summary = 'No combinations were generated.';
+        if (failures.length > 0) {
+            summary += '\n\nFailed combinations:\n' + failures
+                .slice(0, 8)
+                .map(item => '- #' + item.index + ' ' + item.camera + ': ' + item.error.substring(0, 600))
+                .join('\n');
+        } else {
+            summary += ' Check the messages on each card.';
+        }
+        alert(summary);
     }
+}
+
+if (USER_SCENE_AUTO_GENERATE) {
+    window.addEventListener('DOMContentLoaded', () => {
+        rotateCompactSceneTip();
+        setInterval(rotateCompactSceneTip, 5200);
+        const btn = document.getElementById('generate-all-btn');
+        if (!btn) return;
+        btn.setAttribute('data-skip-batch-confirm', '1');
+        generateAllCombinations(btn);
+    });
 }
 
 const sceneSelect = document.getElementById('scene-select');

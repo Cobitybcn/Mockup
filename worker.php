@@ -152,13 +152,22 @@ try {
     $generator = ServiceFactory::mockupGenerator();
     $result = $generator->generate($localArtworkPath, $job['context_id'], $job['prompt'], $options);
 
+    if (array_key_exists('fidelity_review', $result)) {
+        $selectorState['fidelity_validation'] = [
+            'review' => $result['fidelity_review'],
+            'attempts' => (int)($result['fidelity_attempts'] ?? 1),
+            'rejected_candidates' => (int)($result['fidelity_rejected_candidates'] ?? 0),
+            'reviews' => $result['fidelity_reviews'] ?? [],
+        ];
+    }
+
     $generatedImageLocal = RESULTS_DIR . DIRECTORY_SEPARATOR . basename((string)$result['file']);
-    $generatedPromptLocal = RESULTS_DIR . DIRECTORY_SEPARATOR . basename((string)$result['prompt_file']);
+    $generatedPromptLocal = PROMPTS_DIR . DIRECTORY_SEPARATOR . basename((string)$result['prompt_file']);
 
     // 9. Persist result files to GCS if active
     if (StorageService::isGcsActive()) {
         $uploadedImg = StorageService::uploadFile('results/' . basename($result['file']), $generatedImageLocal);
-        $uploadedPrompt = StorageService::uploadFile('results/' . basename($result['prompt_file']), $generatedPromptLocal);
+        $uploadedPrompt = StorageService::uploadFile('mockup-prompts/' . basename($result['prompt_file']), $generatedPromptLocal);
 
         if (!$uploadedImg || !$uploadedPrompt) {
             throw new RuntimeException('Failed to upload generation output files to GCS.');
@@ -213,6 +222,19 @@ try {
     ]);
 
 } catch (Throwable $e) {
+    $isFidelityRejection = $e instanceof ArtworkFidelityRejectedException;
+
+    if ($isFidelityRejection && isset($job, $jobId) && is_array($job)) {
+        try {
+            Database::refundCredit(
+                (int)$job['user_id'],
+                'artwork_fidelity_rejected_job_' . (int)$jobId
+            );
+        } catch (Throwable $refundErr) {
+            Logger::log('Could not refund fidelity-rejected job ' . (int)$jobId . ': ' . $refundErr->getMessage(), 'fidelity_error');
+        }
+    }
+
     // Save error inside job table
     if (isset($pdo, $jobId)) {
         try {
@@ -226,7 +248,9 @@ try {
         }
     }
 
-    http_response_code(500);
+    // The fidelity decorator has already used its complete internal retry budget.
+    // Returning 200 here prevents Cloud Tasks from multiplying those paid attempts.
+    http_response_code($isFidelityRejection ? 200 : 500);
     echo json_encode([
         'ok' => false,
         'error' => $e->getMessage()

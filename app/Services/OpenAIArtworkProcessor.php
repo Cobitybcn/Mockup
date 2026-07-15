@@ -12,6 +12,7 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
         if (!$mainFile || !is_file($source)) {
             throw new RuntimeException('No se encontro la imagen principal del job.');
         }
+        $source = ManualArtworkFrameCropper::cropIfAvailable($source, $status, $jobDir);
 
         $resultsDir = RESULTS_DIR;
 
@@ -22,7 +23,7 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
         $outputNameTemplate = 'base_artwork_ai_' . $jobId . '_v';
         $prompt = $this->buildPrompt($status, $source);
         $targetSize = $this->targetSize($status, $source);
-        $rootCount = PromptSettings::rootArtworkCount();
+        $rootCount = !empty($status['user_scene_flow']) ? 1 : PromptSettings::rootArtworkCount();
 
         file_put_contents($jobDir . '/prompt.txt', $prompt);
         file_put_contents($jobDir . '/target_size.txt', $targetSize);
@@ -53,7 +54,23 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
 
     private function buildPrompt(array $status, string $source): string
     {
-        return trim(PromptSettings::rootArtworkRules());
+        $prompt = trim(PromptSettings::rootArtworkRules());
+        $m = (array)($status['measurements'] ?? []);
+        $shape = (string)($m['artwork_shape'] ?? '');
+        $width = trim((string)($m['width'] ?? ''));
+        $height = trim((string)($m['height'] ?? ''));
+        $unit = trim((string)($m['unit'] ?? 'cm'));
+
+        $lines = [];
+        if (in_array($shape, ['portrait', 'landscape', 'square'], true)) {
+            $lines[] = 'Resolved artwork format: ' . $shape . '. Preserve this orientation and aspect family. Do not square, rotate, stretch, squeeze, widen, shorten, or reinterpret the artwork format.';
+        }
+        if ($width !== '' && $height !== '') {
+            $lines[] = "Resolved physical artwork dimensions: {$width} {$unit} wide x {$height} {$unit} high. Use these as hidden metadata only; never render measurement text.";
+        }
+        $lines[] = 'If the uploaded photo includes background, margins, wall, floor, hands, camera perspective, or surrounding objects, treat them only as capture noise. The framed/cropped artwork is the only root artwork authority.';
+
+        return rtrim($prompt) . "\n\nROOT ARTWORK GEOMETRY LOCK\n" . implode("\n", $lines);
     }
 
     private function callImageEditCandidates(string $jobDir, string $source, array $status, string $prompt, string $targetSize, int $rootCount): array

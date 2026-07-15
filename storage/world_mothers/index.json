@@ -1,15 +1,20 @@
 {
-    "generated_at": "2026-07-07T23:08:36+00:00",
+    "generated_at": "2026-07-14T10:01:06+00:00",
     "categories": [
         {
-            "category_slug": "Atelier",
-            "category_name": "Atelier",
-            "relative_path": "storage/world_mothers/Atelier"
+            "category_slug": "Architecture Studios",
+            "category_name": "Architecture Studios",
+            "relative_path": "storage/world_mothers/Architecture Studios"
         },
         {
-            "category_slug": "Attic Studio",
-            "category_name": "Attic Studio",
-            "relative_path": "storage/world_mothers/Attic Studio"
+            "category_slug": "Attic Ateliers",
+            "category_name": "Attic Ateliers",
+            "relative_path": "storage/world_mothers/Attic Ateliers"
+        },
+        {
+            "category_slug": "Attic Studios",
+            "category_name": "Attic Studios",
+            "relative_path": "storage/world_mothers/Attic Studios"
         },
         {
             "category_slug": "Blue Hour",
@@ -17,9 +22,34 @@
             "relative_path": "storage/world_mothers/Blue Hour"
         },
         {
-            "category_slug": "Brutalismo",
-            "category_name": "Brutalismo",
-            "relative_path": "storage/world_mothers/Brutalismo"
+            "category_slug": "Bohemian Ateliers",
+            "category_name": "Bohemian Ateliers",
+            "relative_path": "storage/world_mothers/Bohemian Ateliers"
+        },
+        {
+            "category_slug": "Brutalist Sanctuaries",
+            "category_name": "Brutalist Sanctuaries",
+            "relative_path": "storage/world_mothers/Brutalist Sanctuaries"
+        },
+        {
+            "category_slug": "Catalan Modernisme",
+            "category_name": "Catalan Modernisme",
+            "relative_path": "storage/world_mothers/Catalan Modernisme"
+        },
+        {
+            "category_slug": "Collector Study",
+            "category_name": "Collector Study",
+            "relative_path": "storage/world_mothers/Collector Study"
+        },
+        {
+            "category_slug": "Contemporary Galleries",
+            "category_name": "Contemporary Galleries",
+            "relative_path": "storage/world_mothers/Contemporary Galleries"
+        },
+        {
+            "category_slug": "Creative Lofts",
+            "category_name": "Creative Lofts",
+            "relative_path": "storage/world_mothers/Creative Lofts"
         },
         {
             "category_slug": "Dark Collector",
@@ -27,257 +57,199 @@
             "relative_path": "storage/world_mothers/Dark Collector"
         },
         {
-            "category_slug": "Hora Dorada",
-            "category_name": "Hora Dorada",
-            "relative_path": "storage/world_mothers/Hora Dorada"
+            "category_slug": "Golden Hour",
+            "category_name": "Golden Hour",
+            "relative_path": "storage/world_mothers/Golden Hour"
         },
         {
-            "category_slug": "Living Room Ibiza",
-            "category_name": "Living Room Ibiza",
-            "relative_path": "storage/world_mothers/Living Room Ibiza"
+            "category_slug": "Historic European Interiors",
+            "category_name": "Historic European Interiors",
+            "relative_path": "storage/world_mothers/Historic European Interiors"
         },
         {
-            "category_slug": "Luxury doube height",
-            "category_name": "Luxury Doube Height",
-            "relative_path": "storage/world_mothers/Luxury doube height"
+            "category_slug": "Industrial Loft",
+            "category_name": "Industrial Loft",
+            "relative_path": "storage/world_mothers/Industrial Loft"
         },
         {
-            "category_slug": "Patio Interior Andaluz",
-            "category_name": "Patio Interior Andaluz",
-            "relative_path": "storage/world_mothers/Patio Interior Andaluz"
-        },
-        {
-            "category_slug": "Ritual",
-            "category_name": "Ritual",
-            "relative_path": "storage/world_mothers/Ritual"
-        },
-        {
-            "category_slug": "Studio Arquitectura",
-            "category_name": "Studio Arquitectura",
-            "relative_path": "storage/world_mothers/Studio Arquitectura"
-        },
-        {
-            "category_slug": "industrial_loft_high_ceilings",
-            "category_name": "Industrial Loft High Ceilings",
-            "relative_path": "storage/world_mothers/industrial_loft_high_ceilings"
-        },
-        {
-            "category_slug": "loft",
-            "category_name": "Loft",
-            "relative_path": "storage/world_mothers/loft"
-        },
-        {
-            "category_slug": "low_light_luxury",
+            "category_slug": "Low Light Luxury",
             "category_name": "Low Light Luxury",
-            "relative_path": "storage/world_mothers/low_light_luxury"
+            "relative_path": "storage/world_mothers/Low Light Luxury"
         },
         {
-            "category_slug": "modernismo_catalan",
-            "category_name": "Modernismo Catalan",
-            "relative_path": "storage/world_mothers/modernismo_catalan"
+            "category_slug": "Mediterranean Patios",
+            "category_name": "Mediterranean Patios",
+            "relative_path": "storage/world_mothers/Mediterranean Patios"
         },
         {
-            "category_slug": "modernismo_catalan_espa_referencia",
-            "category_name": "Modernismo Catalan Espa Referencia",
-            "relative_path": "storage/world_mothers/modernismo_catalan_espa_referencia"
+            "category_slug": "Monumental Interiors",
+            "category_name": "Monumental Interiors",
+            "relative_path": "storage/world_mothers/Monumental Interiors"
         },
         {
-            "category_slug": "pink hour",
-            "category_name": "Pink Hour",
-            "relative_path": "storage/world_mothers/pink hour"
+            "category_slug": "Moody Contemporary Interiors",
+            "category_name": "Moody Contemporary Interiors",
+            "relative_path": "storage/world_mothers/Moody Contemporary Interiors"
         },
         {
-            "category_slug": "urban artist",
-            "category_name": "Urban Artist",
-            "relative_path": "storage/world_mothers/urban artist"
+            "category_slug": "Organic Minimalism",
+            "category_name": "Organic Minimalism",
+            "relative_path": "storage/world_mothers/Organic Minimalism"
+        },
+        {
+            "category_slug": "Patina Surfaces",
+            "category_name": "Patina Surfaces",
+            "relative_path": "storage/world_mothers/Patina Surfaces"
+        },
+        {
+            "category_slug": "Quiet Luxury",
+            "category_name": "Quiet Luxury",
+            "relative_path": "storage/world_mothers/Quiet Luxury"
         }
     ],
     "images": {
-        "Atelier": [
+        "Architecture Studios": [
             {
-                "world_mother_id": "Atelier/artist_atelier (1)",
-                "category_slug": "Atelier",
-                "category_name": "Atelier",
-                "file_name": "artist_atelier (1).jpg",
-                "title": "Artist Atelier (1)",
-                "relative_path": "storage/world_mothers/Atelier/artist_atelier (1).jpg",
+                "world_mother_id": "Architecture Studios/Architecture Studios (1)",
+                "category_slug": "Architecture Studios",
+                "category_name": "Architecture Studios",
+                "file_name": "Architecture Studios (1).jpg",
+                "title": "Architecture Studios (1)",
+                "relative_path": "storage/world_mothers/Architecture Studios/Architecture Studios (1).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "Atelier/artist_atelier (1)",
-                "category_slug": "Atelier",
-                "category_name": "Atelier",
-                "file_name": "artist_atelier (1).png",
-                "title": "Artist Atelier (1)",
-                "relative_path": "storage/world_mothers/Atelier/artist_atelier (1).png",
+                "world_mother_id": "Architecture Studios/Architecture Studios (1)",
+                "category_slug": "Architecture Studios",
+                "category_name": "Architecture Studios",
+                "file_name": "Architecture Studios (1).png",
+                "title": "Architecture Studios (1)",
+                "relative_path": "storage/world_mothers/Architecture Studios/Architecture Studios (1).png",
                 "extension": "png"
             },
             {
-                "world_mother_id": "Atelier/artist_atelier (2)",
-                "category_slug": "Atelier",
-                "category_name": "Atelier",
-                "file_name": "artist_atelier (2).jpg",
-                "title": "Artist Atelier (2)",
-                "relative_path": "storage/world_mothers/Atelier/artist_atelier (2).jpg",
+                "world_mother_id": "Architecture Studios/Architecture Studios (2)",
+                "category_slug": "Architecture Studios",
+                "category_name": "Architecture Studios",
+                "file_name": "Architecture Studios (2).jpg",
+                "title": "Architecture Studios (2)",
+                "relative_path": "storage/world_mothers/Architecture Studios/Architecture Studios (2).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "Atelier/artist_atelier (2)",
-                "category_slug": "Atelier",
-                "category_name": "Atelier",
-                "file_name": "artist_atelier (2).png",
-                "title": "Artist Atelier (2)",
-                "relative_path": "storage/world_mothers/Atelier/artist_atelier (2).png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Atelier/artist_atelier (3)",
-                "category_slug": "Atelier",
-                "category_name": "Atelier",
-                "file_name": "artist_atelier (3).png",
-                "title": "Artist Atelier (3)",
-                "relative_path": "storage/world_mothers/Atelier/artist_atelier (3).png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Atelier/atelier",
-                "category_slug": "Atelier",
-                "category_name": "Atelier",
-                "file_name": "atelier.png",
-                "title": "Atelier",
-                "relative_path": "storage/world_mothers/Atelier/atelier.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Atelier/aterlier-1",
-                "category_slug": "Atelier",
-                "category_name": "Atelier",
-                "file_name": "aterlier-1.png",
-                "title": "Aterlier 1",
-                "relative_path": "storage/world_mothers/Atelier/aterlier-1.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Atelier/aterlier-2",
-                "category_slug": "Atelier",
-                "category_name": "Atelier",
-                "file_name": "aterlier-2.png",
-                "title": "Aterlier 2",
-                "relative_path": "storage/world_mothers/Atelier/aterlier-2.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Atelier/collerctor_study (2)",
-                "category_slug": "Atelier",
-                "category_name": "Atelier",
-                "file_name": "collerctor_study (2).jpg",
-                "title": "Collerctor Study (2)",
-                "relative_path": "storage/world_mothers/Atelier/collerctor_study (2).jpg",
+                "world_mother_id": "Architecture Studios/Architecture Studios (3)",
+                "category_slug": "Architecture Studios",
+                "category_name": "Architecture Studios",
+                "file_name": "Architecture Studios (3).jpg",
+                "title": "Architecture Studios (3)",
+                "relative_path": "storage/world_mothers/Architecture Studios/Architecture Studios (3).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "Atelier/collerctor_study (3)",
-                "category_slug": "Atelier",
-                "category_name": "Atelier",
-                "file_name": "collerctor_study (3).jpg",
-                "title": "Collerctor Study (3)",
-                "relative_path": "storage/world_mothers/Atelier/collerctor_study (3).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Atelier/collerctor_study (4)",
-                "category_slug": "Atelier",
-                "category_name": "Atelier",
-                "file_name": "collerctor_study (4).jpg",
-                "title": "Collerctor Study (4)",
-                "relative_path": "storage/world_mothers/Atelier/collerctor_study (4).jpg",
+                "world_mother_id": "Architecture Studios/Architecture Studios (4)",
+                "category_slug": "Architecture Studios",
+                "category_name": "Architecture Studios",
+                "file_name": "Architecture Studios (4).jpg",
+                "title": "Architecture Studios (4)",
+                "relative_path": "storage/world_mothers/Architecture Studios/Architecture Studios (4).jpg",
                 "extension": "jpg"
             }
         ],
-        "Attic Studio": [
+        "Attic Ateliers": [
             {
-                "world_mother_id": "Attic Studio/artist_atelier (4)",
-                "category_slug": "Attic Studio",
-                "category_name": "Attic Studio",
-                "file_name": "artist_atelier (4).png",
-                "title": "Artist Atelier (4)",
-                "relative_path": "storage/world_mothers/Attic Studio/artist_atelier (4).png",
+                "world_mother_id": "Attic Ateliers/artist_atelier (1)",
+                "category_slug": "Attic Ateliers",
+                "category_name": "Attic Ateliers",
+                "file_name": "artist_atelier (1).png",
+                "title": "Artist Atelier (1)",
+                "relative_path": "storage/world_mothers/Attic Ateliers/artist_atelier (1).png",
                 "extension": "png"
             },
             {
-                "world_mother_id": "Attic Studio/attic_studio",
-                "category_slug": "Attic Studio",
-                "category_name": "Attic Studio",
+                "world_mother_id": "Attic Ateliers/artist_atelier (2)",
+                "category_slug": "Attic Ateliers",
+                "category_name": "Attic Ateliers",
+                "file_name": "artist_atelier (2).png",
+                "title": "Artist Atelier (2)",
+                "relative_path": "storage/world_mothers/Attic Ateliers/artist_atelier (2).png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Attic Ateliers/artist_atelier (3)",
+                "category_slug": "Attic Ateliers",
+                "category_name": "Attic Ateliers",
+                "file_name": "artist_atelier (3).png",
+                "title": "Artist Atelier (3)",
+                "relative_path": "storage/world_mothers/Attic Ateliers/artist_atelier (3).png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Attic Ateliers/atelier",
+                "category_slug": "Attic Ateliers",
+                "category_name": "Attic Ateliers",
+                "file_name": "atelier.png",
+                "title": "Atelier",
+                "relative_path": "storage/world_mothers/Attic Ateliers/atelier.png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Attic Ateliers/aterlier-1",
+                "category_slug": "Attic Ateliers",
+                "category_name": "Attic Ateliers",
+                "file_name": "aterlier-1.png",
+                "title": "Aterlier 1",
+                "relative_path": "storage/world_mothers/Attic Ateliers/aterlier-1.png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Attic Ateliers/aterlier-2",
+                "category_slug": "Attic Ateliers",
+                "category_name": "Attic Ateliers",
+                "file_name": "aterlier-2.png",
+                "title": "Aterlier 2",
+                "relative_path": "storage/world_mothers/Attic Ateliers/aterlier-2.png",
+                "extension": "png"
+            }
+        ],
+        "Attic Studios": [
+            {
+                "world_mother_id": "Attic Studios/artist_atelier (4)",
+                "category_slug": "Attic Studios",
+                "category_name": "Attic Studios",
+                "file_name": "artist_atelier (4).png",
+                "title": "Artist Atelier (4)",
+                "relative_path": "storage/world_mothers/Attic Studios/artist_atelier (4).png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Attic Studios/attic_studio",
+                "category_slug": "Attic Studios",
+                "category_name": "Attic Studios",
                 "file_name": "attic_studio.jpg",
                 "title": "Attic Studio",
-                "relative_path": "storage/world_mothers/Attic Studio/attic_studio.jpg",
+                "relative_path": "storage/world_mothers/Attic Studios/attic_studio.jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "Attic Studio/industrial_loft_1",
-                "category_slug": "Attic Studio",
-                "category_name": "Attic Studio",
+                "world_mother_id": "Attic Studios/industrial_loft_1",
+                "category_slug": "Attic Studios",
+                "category_name": "Attic Studios",
                 "file_name": "industrial_loft_1.jpg",
                 "title": "Industrial Loft 1",
-                "relative_path": "storage/world_mothers/Attic Studio/industrial_loft_1.jpg",
+                "relative_path": "storage/world_mothers/Attic Studios/industrial_loft_1.jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "Attic Studio/ny loft 1",
-                "category_slug": "Attic Studio",
-                "category_name": "Attic Studio",
+                "world_mother_id": "Attic Studios/ny loft 1",
+                "category_slug": "Attic Studios",
+                "category_name": "Attic Studios",
                 "file_name": "ny loft 1.jpg",
                 "title": "Ny Loft 1",
-                "relative_path": "storage/world_mothers/Attic Studio/ny loft 1.jpg",
+                "relative_path": "storage/world_mothers/Attic Studios/ny loft 1.jpg",
                 "extension": "jpg"
             }
         ],
         "Blue Hour": [
-            {
-                "world_mother_id": "Blue Hour/Blue_hour_interior (1)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior (1).jpg",
-                "title": "Blue Hour Interior (1)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior (1).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Blue Hour/Blue_hour_interior (10)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior (10).jpg",
-                "title": "Blue Hour Interior (10)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior (10).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Blue Hour/Blue_hour_interior (11)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior (11).jpg",
-                "title": "Blue Hour Interior (11)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior (11).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Blue Hour/Blue_hour_interior (12)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior (12).jpg",
-                "title": "Blue Hour Interior (12)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior (12).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Blue Hour/Blue_hour_interior (13)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior (13).jpg",
-                "title": "Blue Hour Interior (13)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior (13).jpg",
-                "extension": "jpg"
-            },
             {
                 "world_mother_id": "Blue Hour/Blue_hour_interior-(13)",
                 "category_slug": "Blue Hour",
@@ -285,24 +257,6 @@
                 "file_name": "Blue_hour_interior-(13).jpg",
                 "title": "Blue Hour Interior (13)",
                 "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior-(13).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Blue Hour/Blue_hour_interior (14)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior (14).jpg",
-                "title": "Blue Hour Interior (14)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior (14).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Blue Hour/Blue_hour_interior (2)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior (2).jpg",
-                "title": "Blue Hour Interior (2)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior (2).jpg",
                 "extension": "jpg"
             },
             {
@@ -315,75 +269,12 @@
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "Blue Hour/Blue_hour_interior (3)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior (3).jpg",
-                "title": "Blue Hour Interior (3)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior (3).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Blue Hour/Blue_hour_interior (4)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior (4).jpg",
-                "title": "Blue Hour Interior (4)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior (4).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Blue Hour/Blue_hour_interior (5)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior (5).jpg",
-                "title": "Blue Hour Interior (5)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior (5).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Blue Hour/Blue_hour_interior (6)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior (6).jpg",
-                "title": "Blue Hour Interior (6)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior (6).jpg",
-                "extension": "jpg"
-            },
-            {
                 "world_mother_id": "Blue Hour/Blue_hour_interior-(6)",
                 "category_slug": "Blue Hour",
                 "category_name": "Blue Hour",
                 "file_name": "Blue_hour_interior-(6).jpg",
                 "title": "Blue Hour Interior (6)",
                 "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior-(6).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Blue Hour/Blue_hour_interior (7)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior (7).jpg",
-                "title": "Blue Hour Interior (7)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior (7).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Blue Hour/Blue_hour_interior (8)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior (8).jpg",
-                "title": "Blue Hour Interior (8)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior (8).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Blue Hour/Blue_hour_interior (9)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior (9).jpg",
-                "title": "Blue Hour Interior (9)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior (9).jpg",
                 "extension": "jpg"
             },
             {
@@ -396,68 +287,438 @@
                 "extension": "jpg"
             }
         ],
-        "Brutalismo": [
+        "Bohemian Ateliers": [
             {
-                "world_mother_id": "Brutalismo/brutalismo (1)",
-                "category_slug": "Brutalismo",
-                "category_name": "Brutalismo",
-                "file_name": "brutalismo (1).jpg",
-                "title": "Brutalismo (1)",
-                "relative_path": "storage/world_mothers/Brutalismo/brutalismo (1).jpg",
+                "world_mother_id": "Bohemian Ateliers/Bohemian Ateliers (1)",
+                "category_slug": "Bohemian Ateliers",
+                "category_name": "Bohemian Ateliers",
+                "file_name": "Bohemian Ateliers (1).jpg",
+                "title": "Bohemian Ateliers (1)",
+                "relative_path": "storage/world_mothers/Bohemian Ateliers/Bohemian Ateliers (1).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "Brutalismo/brutalismo (2)",
-                "category_slug": "Brutalismo",
-                "category_name": "Brutalismo",
-                "file_name": "brutalismo (2).jpg",
-                "title": "Brutalismo (2)",
-                "relative_path": "storage/world_mothers/Brutalismo/brutalismo (2).jpg",
+                "world_mother_id": "Bohemian Ateliers/Bohemian Ateliers (2)",
+                "category_slug": "Bohemian Ateliers",
+                "category_name": "Bohemian Ateliers",
+                "file_name": "Bohemian Ateliers (2).jpg",
+                "title": "Bohemian Ateliers (2)",
+                "relative_path": "storage/world_mothers/Bohemian Ateliers/Bohemian Ateliers (2).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "Brutalismo/brutalismo (3)",
-                "category_slug": "Brutalismo",
-                "category_name": "Brutalismo",
-                "file_name": "brutalismo (3).jpg",
-                "title": "Brutalismo (3)",
-                "relative_path": "storage/world_mothers/Brutalismo/brutalismo (3).jpg",
+                "world_mother_id": "Bohemian Ateliers/Bohemian Ateliers (3)",
+                "category_slug": "Bohemian Ateliers",
+                "category_name": "Bohemian Ateliers",
+                "file_name": "Bohemian Ateliers (3).jpg",
+                "title": "Bohemian Ateliers (3)",
+                "relative_path": "storage/world_mothers/Bohemian Ateliers/Bohemian Ateliers (3).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "Brutalismo/concrete_light_well_left",
-                "category_slug": "Brutalismo",
-                "category_name": "Brutalismo",
-                "file_name": "concrete_light_well_left.png",
-                "title": "Concrete Light Well Left",
-                "relative_path": "storage/world_mothers/Brutalismo/concrete_light_well_left.png",
+                "world_mother_id": "Bohemian Ateliers/Bohemian Ateliers (4)",
+                "category_slug": "Bohemian Ateliers",
+                "category_name": "Bohemian Ateliers",
+                "file_name": "Bohemian Ateliers (4).jpg",
+                "title": "Bohemian Ateliers (4)",
+                "relative_path": "storage/world_mothers/Bohemian Ateliers/Bohemian Ateliers (4).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Bohemian Ateliers/Bohemian Ateliers (5)",
+                "category_slug": "Bohemian Ateliers",
+                "category_name": "Bohemian Ateliers",
+                "file_name": "Bohemian Ateliers (5).jpg",
+                "title": "Bohemian Ateliers (5)",
+                "relative_path": "storage/world_mothers/Bohemian Ateliers/Bohemian Ateliers (5).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Bohemian Ateliers/Bohemian Ateliers (6)",
+                "category_slug": "Bohemian Ateliers",
+                "category_name": "Bohemian Ateliers",
+                "file_name": "Bohemian Ateliers (6).jpg",
+                "title": "Bohemian Ateliers (6)",
+                "relative_path": "storage/world_mothers/Bohemian Ateliers/Bohemian Ateliers (6).jpg",
+                "extension": "jpg"
+            }
+        ],
+        "Brutalist Sanctuaries": [
+            {
+                "world_mother_id": "Brutalist Sanctuaries/Brutalist Sanctuaries (1)",
+                "category_slug": "Brutalist Sanctuaries",
+                "category_name": "Brutalist Sanctuaries",
+                "file_name": "Brutalist Sanctuaries (1).jpg",
+                "title": "Brutalist Sanctuaries (1)",
+                "relative_path": "storage/world_mothers/Brutalist Sanctuaries/Brutalist Sanctuaries (1).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Brutalist Sanctuaries/Brutalist Sanctuaries (1)",
+                "category_slug": "Brutalist Sanctuaries",
+                "category_name": "Brutalist Sanctuaries",
+                "file_name": "Brutalist Sanctuaries (1).png",
+                "title": "Brutalist Sanctuaries (1)",
+                "relative_path": "storage/world_mothers/Brutalist Sanctuaries/Brutalist Sanctuaries (1).png",
                 "extension": "png"
             },
             {
-                "world_mother_id": "Brutalismo/concrete_light_well_right",
-                "category_slug": "Brutalismo",
-                "category_name": "Brutalismo",
-                "file_name": "concrete_light_well_right.png",
-                "title": "Concrete Light Well Right",
-                "relative_path": "storage/world_mothers/Brutalismo/concrete_light_well_right.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Brutalismo/las opciones brutalistas deben contener un aura mistico-para ello la iluminacion natural desde arriba-casi celestial-lafigura humana de inocencia ayuda",
-                "category_slug": "Brutalismo",
-                "category_name": "Brutalismo",
-                "file_name": "las opciones brutalistas deben contener un aura mistico-para ello la iluminacion natural desde arriba-casi celestial-lafigura humana de inocencia ayuda.jpg",
-                "title": "Las Opciones Brutalistas Deben Contener Un Aura Mistico Para Ello La Iluminacion Natural Desde Arriba Casi Celestial Lafigura Humana De Inocencia Ayuda",
-                "relative_path": "storage/world_mothers/Brutalismo/las opciones brutalistas deben contener un aura mistico-para ello la iluminacion natural desde arriba-casi celestial-lafigura humana de inocencia ayuda.jpg",
+                "world_mother_id": "Brutalist Sanctuaries/Brutalist Sanctuaries (2)",
+                "category_slug": "Brutalist Sanctuaries",
+                "category_name": "Brutalist Sanctuaries",
+                "file_name": "Brutalist Sanctuaries (2).jpg",
+                "title": "Brutalist Sanctuaries (2)",
+                "relative_path": "storage/world_mothers/Brutalist Sanctuaries/Brutalist Sanctuaries (2).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "Brutalismo/obra divina",
-                "category_slug": "Brutalismo",
-                "category_name": "Brutalismo",
-                "file_name": "obra divina.jpg",
-                "title": "Obra Divina",
-                "relative_path": "storage/world_mothers/Brutalismo/obra divina.jpg",
+                "world_mother_id": "Brutalist Sanctuaries/Brutalist Sanctuaries (2)",
+                "category_slug": "Brutalist Sanctuaries",
+                "category_name": "Brutalist Sanctuaries",
+                "file_name": "Brutalist Sanctuaries (2).png",
+                "title": "Brutalist Sanctuaries (2)",
+                "relative_path": "storage/world_mothers/Brutalist Sanctuaries/Brutalist Sanctuaries (2).png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Brutalist Sanctuaries/Brutalist Sanctuaries (3)",
+                "category_slug": "Brutalist Sanctuaries",
+                "category_name": "Brutalist Sanctuaries",
+                "file_name": "Brutalist Sanctuaries (3).jpg",
+                "title": "Brutalist Sanctuaries (3)",
+                "relative_path": "storage/world_mothers/Brutalist Sanctuaries/Brutalist Sanctuaries (3).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Brutalist Sanctuaries/Brutalist Sanctuaries (4)",
+                "category_slug": "Brutalist Sanctuaries",
+                "category_name": "Brutalist Sanctuaries",
+                "file_name": "Brutalist Sanctuaries (4).jpg",
+                "title": "Brutalist Sanctuaries (4)",
+                "relative_path": "storage/world_mothers/Brutalist Sanctuaries/Brutalist Sanctuaries (4).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Brutalist Sanctuaries/Brutalist Sanctuaries (5)",
+                "category_slug": "Brutalist Sanctuaries",
+                "category_name": "Brutalist Sanctuaries",
+                "file_name": "Brutalist Sanctuaries (5).jpg",
+                "title": "Brutalist Sanctuaries (5)",
+                "relative_path": "storage/world_mothers/Brutalist Sanctuaries/Brutalist Sanctuaries (5).jpg",
+                "extension": "jpg"
+            }
+        ],
+        "Catalan Modernisme": [
+            {
+                "world_mother_id": "Catalan Modernisme/Catalan Modernisme (1)",
+                "category_slug": "Catalan Modernisme",
+                "category_name": "Catalan Modernisme",
+                "file_name": "Catalan Modernisme (1).jpg",
+                "title": "Catalan Modernisme (1)",
+                "relative_path": "storage/world_mothers/Catalan Modernisme/Catalan Modernisme (1).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Catalan Modernisme/Catalan Modernisme (1)",
+                "category_slug": "Catalan Modernisme",
+                "category_name": "Catalan Modernisme",
+                "file_name": "Catalan Modernisme (1).png",
+                "title": "Catalan Modernisme (1)",
+                "relative_path": "storage/world_mothers/Catalan Modernisme/Catalan Modernisme (1).png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Catalan Modernisme/Catalan Modernisme (2)",
+                "category_slug": "Catalan Modernisme",
+                "category_name": "Catalan Modernisme",
+                "file_name": "Catalan Modernisme (2).png",
+                "title": "Catalan Modernisme (2)",
+                "relative_path": "storage/world_mothers/Catalan Modernisme/Catalan Modernisme (2).png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Catalan Modernisme/Catalan Modernisme (3)",
+                "category_slug": "Catalan Modernisme",
+                "category_name": "Catalan Modernisme",
+                "file_name": "Catalan Modernisme (3).png",
+                "title": "Catalan Modernisme (3)",
+                "relative_path": "storage/world_mothers/Catalan Modernisme/Catalan Modernisme (3).png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Catalan Modernisme/Catalan Modernisme (4)",
+                "category_slug": "Catalan Modernisme",
+                "category_name": "Catalan Modernisme",
+                "file_name": "Catalan Modernisme (4).png",
+                "title": "Catalan Modernisme (4)",
+                "relative_path": "storage/world_mothers/Catalan Modernisme/Catalan Modernisme (4).png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Catalan Modernisme/Catalan Modernisme (5)",
+                "category_slug": "Catalan Modernisme",
+                "category_name": "Catalan Modernisme",
+                "file_name": "Catalan Modernisme (5).png",
+                "title": "Catalan Modernisme (5)",
+                "relative_path": "storage/world_mothers/Catalan Modernisme/Catalan Modernisme (5).png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Catalan Modernisme/Catalan Modernisme (6)",
+                "category_slug": "Catalan Modernisme",
+                "category_name": "Catalan Modernisme",
+                "file_name": "Catalan Modernisme (6).png",
+                "title": "Catalan Modernisme (6)",
+                "relative_path": "storage/world_mothers/Catalan Modernisme/Catalan Modernisme (6).png",
+                "extension": "png"
+            }
+        ],
+        "Collector Study": [
+            {
+                "world_mother_id": "Collector Study/collectors",
+                "category_slug": "Collector Study",
+                "category_name": "Collector Study",
+                "file_name": "collectors.jpg",
+                "title": "Collectors",
+                "relative_path": "storage/world_mothers/Collector Study/collectors.jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Collector Study/collerctor_study (2)",
+                "category_slug": "Collector Study",
+                "category_name": "Collector Study",
+                "file_name": "collerctor_study (2).jpg",
+                "title": "Collerctor Study (2)",
+                "relative_path": "storage/world_mothers/Collector Study/collerctor_study (2).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Collector Study/collerctor_study (3)",
+                "category_slug": "Collector Study",
+                "category_name": "Collector Study",
+                "file_name": "collerctor_study (3).jpg",
+                "title": "Collerctor Study (3)",
+                "relative_path": "storage/world_mothers/Collector Study/collerctor_study (3).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Collector Study/collerctor_study (4)",
+                "category_slug": "Collector Study",
+                "category_name": "Collector Study",
+                "file_name": "collerctor_study (4).jpg",
+                "title": "Collerctor Study (4)",
+                "relative_path": "storage/world_mothers/Collector Study/collerctor_study (4).jpg",
+                "extension": "jpg"
+            }
+        ],
+        "Contemporary Galleries": [
+            {
+                "world_mother_id": "Contemporary Galleries/Contemporary Galleries (1)",
+                "category_slug": "Contemporary Galleries",
+                "category_name": "Contemporary Galleries",
+                "file_name": "Contemporary Galleries (1).jpg",
+                "title": "Contemporary Galleries (1)",
+                "relative_path": "storage/world_mothers/Contemporary Galleries/Contemporary Galleries (1).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Contemporary Galleries/Contemporary Galleries (10)",
+                "category_slug": "Contemporary Galleries",
+                "category_name": "Contemporary Galleries",
+                "file_name": "Contemporary Galleries (10).jpg",
+                "title": "Contemporary Galleries (10)",
+                "relative_path": "storage/world_mothers/Contemporary Galleries/Contemporary Galleries (10).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Contemporary Galleries/Contemporary Galleries (11)",
+                "category_slug": "Contemporary Galleries",
+                "category_name": "Contemporary Galleries",
+                "file_name": "Contemporary Galleries (11).jpg",
+                "title": "Contemporary Galleries (11)",
+                "relative_path": "storage/world_mothers/Contemporary Galleries/Contemporary Galleries (11).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Contemporary Galleries/Contemporary Galleries (12)",
+                "category_slug": "Contemporary Galleries",
+                "category_name": "Contemporary Galleries",
+                "file_name": "Contemporary Galleries (12).jpg",
+                "title": "Contemporary Galleries (12)",
+                "relative_path": "storage/world_mothers/Contemporary Galleries/Contemporary Galleries (12).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Contemporary Galleries/Contemporary Galleries (13)",
+                "category_slug": "Contemporary Galleries",
+                "category_name": "Contemporary Galleries",
+                "file_name": "Contemporary Galleries (13).jpg",
+                "title": "Contemporary Galleries (13)",
+                "relative_path": "storage/world_mothers/Contemporary Galleries/Contemporary Galleries (13).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Contemporary Galleries/Contemporary Galleries (2)",
+                "category_slug": "Contemporary Galleries",
+                "category_name": "Contemporary Galleries",
+                "file_name": "Contemporary Galleries (2).jpg",
+                "title": "Contemporary Galleries (2)",
+                "relative_path": "storage/world_mothers/Contemporary Galleries/Contemporary Galleries (2).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Contemporary Galleries/Contemporary Galleries (3)",
+                "category_slug": "Contemporary Galleries",
+                "category_name": "Contemporary Galleries",
+                "file_name": "Contemporary Galleries (3).jpg",
+                "title": "Contemporary Galleries (3)",
+                "relative_path": "storage/world_mothers/Contemporary Galleries/Contemporary Galleries (3).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Contemporary Galleries/Contemporary Galleries (4)",
+                "category_slug": "Contemporary Galleries",
+                "category_name": "Contemporary Galleries",
+                "file_name": "Contemporary Galleries (4).jpg",
+                "title": "Contemporary Galleries (4)",
+                "relative_path": "storage/world_mothers/Contemporary Galleries/Contemporary Galleries (4).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Contemporary Galleries/Contemporary Galleries (5)",
+                "category_slug": "Contemporary Galleries",
+                "category_name": "Contemporary Galleries",
+                "file_name": "Contemporary Galleries (5).jpg",
+                "title": "Contemporary Galleries (5)",
+                "relative_path": "storage/world_mothers/Contemporary Galleries/Contemporary Galleries (5).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Contemporary Galleries/Contemporary Galleries (6)",
+                "category_slug": "Contemporary Galleries",
+                "category_name": "Contemporary Galleries",
+                "file_name": "Contemporary Galleries (6).jpg",
+                "title": "Contemporary Galleries (6)",
+                "relative_path": "storage/world_mothers/Contemporary Galleries/Contemporary Galleries (6).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Contemporary Galleries/Contemporary Galleries (7)",
+                "category_slug": "Contemporary Galleries",
+                "category_name": "Contemporary Galleries",
+                "file_name": "Contemporary Galleries (7).jpg",
+                "title": "Contemporary Galleries (7)",
+                "relative_path": "storage/world_mothers/Contemporary Galleries/Contemporary Galleries (7).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Contemporary Galleries/Contemporary Galleries (8)",
+                "category_slug": "Contemporary Galleries",
+                "category_name": "Contemporary Galleries",
+                "file_name": "Contemporary Galleries (8).jpg",
+                "title": "Contemporary Galleries (8)",
+                "relative_path": "storage/world_mothers/Contemporary Galleries/Contemporary Galleries (8).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Contemporary Galleries/Contemporary Galleries (9)",
+                "category_slug": "Contemporary Galleries",
+                "category_name": "Contemporary Galleries",
+                "file_name": "Contemporary Galleries (9).jpg",
+                "title": "Contemporary Galleries (9)",
+                "relative_path": "storage/world_mothers/Contemporary Galleries/Contemporary Galleries (9).jpg",
+                "extension": "jpg"
+            }
+        ],
+        "Creative Lofts": [
+            {
+                "world_mother_id": "Creative Lofts/Creative Lofts (1)",
+                "category_slug": "Creative Lofts",
+                "category_name": "Creative Lofts",
+                "file_name": "Creative Lofts (1).jpg",
+                "title": "Creative Lofts (1)",
+                "relative_path": "storage/world_mothers/Creative Lofts/Creative Lofts (1).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Creative Lofts/Creative Lofts (10)",
+                "category_slug": "Creative Lofts",
+                "category_name": "Creative Lofts",
+                "file_name": "Creative Lofts (10).jpg",
+                "title": "Creative Lofts (10)",
+                "relative_path": "storage/world_mothers/Creative Lofts/Creative Lofts (10).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Creative Lofts/Creative Lofts (2)",
+                "category_slug": "Creative Lofts",
+                "category_name": "Creative Lofts",
+                "file_name": "Creative Lofts (2).jpg",
+                "title": "Creative Lofts (2)",
+                "relative_path": "storage/world_mothers/Creative Lofts/Creative Lofts (2).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Creative Lofts/Creative Lofts (3)",
+                "category_slug": "Creative Lofts",
+                "category_name": "Creative Lofts",
+                "file_name": "Creative Lofts (3).jpg",
+                "title": "Creative Lofts (3)",
+                "relative_path": "storage/world_mothers/Creative Lofts/Creative Lofts (3).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Creative Lofts/Creative Lofts (4)",
+                "category_slug": "Creative Lofts",
+                "category_name": "Creative Lofts",
+                "file_name": "Creative Lofts (4).jpg",
+                "title": "Creative Lofts (4)",
+                "relative_path": "storage/world_mothers/Creative Lofts/Creative Lofts (4).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Creative Lofts/Creative Lofts (5)",
+                "category_slug": "Creative Lofts",
+                "category_name": "Creative Lofts",
+                "file_name": "Creative Lofts (5).jpg",
+                "title": "Creative Lofts (5)",
+                "relative_path": "storage/world_mothers/Creative Lofts/Creative Lofts (5).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Creative Lofts/Creative Lofts (6)",
+                "category_slug": "Creative Lofts",
+                "category_name": "Creative Lofts",
+                "file_name": "Creative Lofts (6).jpg",
+                "title": "Creative Lofts (6)",
+                "relative_path": "storage/world_mothers/Creative Lofts/Creative Lofts (6).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Creative Lofts/Creative Lofts (7)",
+                "category_slug": "Creative Lofts",
+                "category_name": "Creative Lofts",
+                "file_name": "Creative Lofts (7).jpg",
+                "title": "Creative Lofts (7)",
+                "relative_path": "storage/world_mothers/Creative Lofts/Creative Lofts (7).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Creative Lofts/Creative Lofts (8)",
+                "category_slug": "Creative Lofts",
+                "category_name": "Creative Lofts",
+                "file_name": "Creative Lofts (8).jpg",
+                "title": "Creative Lofts (8)",
+                "relative_path": "storage/world_mothers/Creative Lofts/Creative Lofts (8).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Creative Lofts/Creative Lofts (9)",
+                "category_slug": "Creative Lofts",
+                "category_name": "Creative Lofts",
+                "file_name": "Creative Lofts (9).jpg",
+                "title": "Creative Lofts (9)",
+                "relative_path": "storage/world_mothers/Creative Lofts/Creative Lofts (9).jpg",
                 "extension": "jpg"
             }
         ],
@@ -589,713 +850,752 @@
                 "extension": "png"
             }
         ],
-        "Hora Dorada": [
+        "Golden Hour": [
             {
-                "world_mother_id": "Hora Dorada/iluminacion dorada de ventana sobre la obra - haz de luz- es paz y amor  - vende",
-                "category_slug": "Hora Dorada",
-                "category_name": "Hora Dorada",
-                "file_name": "iluminacion dorada de ventana sobre la obra - haz de luz- es paz y amor  - vende.jpg",
-                "title": "Iluminacion Dorada De Ventana Sobre La Obra Haz De Luz Es Paz Y Amor Vende",
-                "relative_path": "storage/world_mothers/Hora Dorada/iluminacion dorada de ventana sobre la obra - haz de luz- es paz y amor  - vende.jpg",
+                "world_mother_id": "Golden Hour/golden hour (1)",
+                "category_slug": "Golden Hour",
+                "category_name": "Golden Hour",
+                "file_name": "golden hour (1).jpg",
+                "title": "Golden Hour (1)",
+                "relative_path": "storage/world_mothers/Golden Hour/golden hour (1).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Golden Hour/golden hour (2)",
+                "category_slug": "Golden Hour",
+                "category_name": "Golden Hour",
+                "file_name": "golden hour (2).jpg",
+                "title": "Golden Hour (2)",
+                "relative_path": "storage/world_mothers/Golden Hour/golden hour (2).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Golden Hour/golden hour (3)",
+                "category_slug": "Golden Hour",
+                "category_name": "Golden Hour",
+                "file_name": "golden hour (3).jpg",
+                "title": "Golden Hour (3)",
+                "relative_path": "storage/world_mothers/Golden Hour/golden hour (3).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Golden Hour/golden hour (4)",
+                "category_slug": "Golden Hour",
+                "category_name": "Golden Hour",
+                "file_name": "golden hour (4).jpg",
+                "title": "Golden Hour (4)",
+                "relative_path": "storage/world_mothers/Golden Hour/golden hour (4).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Golden Hour/golden hour (5)",
+                "category_slug": "Golden Hour",
+                "category_name": "Golden Hour",
+                "file_name": "golden hour (5).jpg",
+                "title": "Golden Hour (5)",
+                "relative_path": "storage/world_mothers/Golden Hour/golden hour (5).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Golden Hour/golden hour (6)",
+                "category_slug": "Golden Hour",
+                "category_name": "Golden Hour",
+                "file_name": "golden hour (6).jpg",
+                "title": "Golden Hour (6)",
+                "relative_path": "storage/world_mothers/Golden Hour/golden hour (6).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Golden Hour/golden hour (7)",
+                "category_slug": "Golden Hour",
+                "category_name": "Golden Hour",
+                "file_name": "golden hour (7).jpg",
+                "title": "Golden Hour (7)",
+                "relative_path": "storage/world_mothers/Golden Hour/golden hour (7).jpg",
                 "extension": "jpg"
             }
         ],
-        "Living Room Ibiza": [
+        "Historic European Interiors": [
             {
-                "world_mother_id": "Living Room Ibiza/architectural_living_room",
-                "category_slug": "Living Room Ibiza",
-                "category_name": "Living Room Ibiza",
-                "file_name": "architectural_living_room.png",
-                "title": "Architectural Living Room",
-                "relative_path": "storage/world_mothers/Living Room Ibiza/architectural_living_room.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Living Room Ibiza/ChatGPT Image 30 jun 2026, 14_20_15",
-                "category_slug": "Living Room Ibiza",
-                "category_name": "Living Room Ibiza",
-                "file_name": "ChatGPT Image 30 jun 2026, 14_20_15.png",
-                "title": "Chatgpt Image 30 Jun 2026, 14 20 15",
-                "relative_path": "storage/world_mothers/Living Room Ibiza/ChatGPT Image 30 jun 2026, 14_20_15.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Living Room Ibiza/ChatGPT Image 30 jun 2026, 14_23_15",
-                "category_slug": "Living Room Ibiza",
-                "category_name": "Living Room Ibiza",
-                "file_name": "ChatGPT Image 30 jun 2026, 14_23_15.png",
-                "title": "Chatgpt Image 30 Jun 2026, 14 23 15",
-                "relative_path": "storage/world_mothers/Living Room Ibiza/ChatGPT Image 30 jun 2026, 14_23_15.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Living Room Ibiza/chilli (1)",
-                "category_slug": "Living Room Ibiza",
-                "category_name": "Living Room Ibiza",
-                "file_name": "chilli (1).jpg",
-                "title": "Chilli (1)",
-                "relative_path": "storage/world_mothers/Living Room Ibiza/chilli (1).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Living Room Ibiza/chilli (2)",
-                "category_slug": "Living Room Ibiza",
-                "category_name": "Living Room Ibiza",
-                "file_name": "chilli (2).jpg",
-                "title": "Chilli (2)",
-                "relative_path": "storage/world_mothers/Living Room Ibiza/chilli (2).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Living Room Ibiza/chilli (3)",
-                "category_slug": "Living Room Ibiza",
-                "category_name": "Living Room Ibiza",
-                "file_name": "chilli (3).jpg",
-                "title": "Chilli (3)",
-                "relative_path": "storage/world_mothers/Living Room Ibiza/chilli (3).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Living Room Ibiza/chilli (4)",
-                "category_slug": "Living Room Ibiza",
-                "category_name": "Living Room Ibiza",
-                "file_name": "chilli (4).jpg",
-                "title": "Chilli (4)",
-                "relative_path": "storage/world_mothers/Living Room Ibiza/chilli (4).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Living Room Ibiza/ibiza_style_home (5)",
-                "category_slug": "Living Room Ibiza",
-                "category_name": "Living Room Ibiza",
-                "file_name": "ibiza_style_home (5).jpg",
-                "title": "Ibiza Style Home (5)",
-                "relative_path": "storage/world_mothers/Living Room Ibiza/ibiza_style_home (5).jpg",
-                "extension": "jpg"
-            }
-        ],
-        "Luxury doube height": [
-            {
-                "world_mother_id": "Luxury doube height/double_height_luxury_home (1)",
-                "category_slug": "Luxury doube height",
-                "category_name": "Luxury Doube Height",
-                "file_name": "double_height_luxury_home (1).jpg",
-                "title": "Double Height Luxury Home (1)",
-                "relative_path": "storage/world_mothers/Luxury doube height/double_height_luxury_home (1).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Luxury doube height/double_height_luxury_home (11)",
-                "category_slug": "Luxury doube height",
-                "category_name": "Luxury Doube Height",
-                "file_name": "double_height_luxury_home (11).jpg",
-                "title": "Double Height Luxury Home (11)",
-                "relative_path": "storage/world_mothers/Luxury doube height/double_height_luxury_home (11).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Luxury doube height/double_height_luxury_home (12)",
-                "category_slug": "Luxury doube height",
-                "category_name": "Luxury Doube Height",
-                "file_name": "double_height_luxury_home (12).jpg",
-                "title": "Double Height Luxury Home (12)",
-                "relative_path": "storage/world_mothers/Luxury doube height/double_height_luxury_home (12).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Luxury doube height/double_height_luxury_home (13)",
-                "category_slug": "Luxury doube height",
-                "category_name": "Luxury Doube Height",
-                "file_name": "double_height_luxury_home (13).jpg",
-                "title": "Double Height Luxury Home (13)",
-                "relative_path": "storage/world_mothers/Luxury doube height/double_height_luxury_home (13).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Luxury doube height/gran formato",
-                "category_slug": "Luxury doube height",
-                "category_name": "Luxury Doube Height",
-                "file_name": "gran formato.jpg",
-                "title": "Gran Formato",
-                "relative_path": "storage/world_mothers/Luxury doube height/gran formato.jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Luxury doube height/grand_salon (1)",
-                "category_slug": "Luxury doube height",
-                "category_name": "Luxury Doube Height",
-                "file_name": "grand_salon (1).jpg",
-                "title": "Grand Salon (1)",
-                "relative_path": "storage/world_mothers/Luxury doube height/grand_salon (1).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Luxury doube height/grand_salon (2)",
-                "category_slug": "Luxury doube height",
-                "category_name": "Luxury Doube Height",
-                "file_name": "grand_salon (2).jpg",
-                "title": "Grand Salon (2)",
-                "relative_path": "storage/world_mothers/Luxury doube height/grand_salon (2).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Luxury doube height/grand_salon (3)",
-                "category_slug": "Luxury doube height",
-                "category_name": "Luxury Doube Height",
-                "file_name": "grand_salon (3).jpg",
-                "title": "Grand Salon (3)",
-                "relative_path": "storage/world_mothers/Luxury doube height/grand_salon (3).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Luxury doube height/grand_salon (4)",
-                "category_slug": "Luxury doube height",
-                "category_name": "Luxury Doube Height",
-                "file_name": "grand_salon (4).jpg",
-                "title": "Grand Salon (4)",
-                "relative_path": "storage/world_mothers/Luxury doube height/grand_salon (4).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Luxury doube height/grand_salon (5)",
-                "category_slug": "Luxury doube height",
-                "category_name": "Luxury Doube Height",
-                "file_name": "grand_salon (5).jpg",
-                "title": "Grand Salon (5)",
-                "relative_path": "storage/world_mothers/Luxury doube height/grand_salon (5).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Luxury doube height/minimal_contemplative_space (4)",
-                "category_slug": "Luxury doube height",
-                "category_name": "Luxury Doube Height",
-                "file_name": "minimal_contemplative_space (4).jpg",
-                "title": "Minimal Contemplative Space (4)",
-                "relative_path": "storage/world_mothers/Luxury doube height/minimal_contemplative_space (4).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Luxury doube height/minimal_contemplative_space (5)",
-                "category_slug": "Luxury doube height",
-                "category_name": "Luxury Doube Height",
-                "file_name": "minimal_contemplative_space (5).jpg",
-                "title": "Minimal Contemplative Space (5)",
-                "relative_path": "storage/world_mothers/Luxury doube height/minimal_contemplative_space (5).jpg",
-                "extension": "jpg"
-            }
-        ],
-        "Patio Interior Andaluz": [
-            {
-                "world_mother_id": "Patio Interior Andaluz/jardin sevillano",
-                "category_slug": "Patio Interior Andaluz",
-                "category_name": "Patio Interior Andaluz",
-                "file_name": "jardin sevillano.png",
-                "title": "Jardin Sevillano",
-                "relative_path": "storage/world_mothers/Patio Interior Andaluz/jardin sevillano.png",
-                "extension": "png"
-            }
-        ],
-        "Ritual": [
-            {
-                "world_mother_id": "Ritual/ritual (1)",
-                "category_slug": "Ritual",
-                "category_name": "Ritual",
+                "world_mother_id": "Historic European Interiors/ritual (1)",
+                "category_slug": "Historic European Interiors",
+                "category_name": "Historic European Interiors",
                 "file_name": "ritual (1).png",
                 "title": "Ritual (1)",
-                "relative_path": "storage/world_mothers/Ritual/ritual (1).png",
+                "relative_path": "storage/world_mothers/Historic European Interiors/ritual (1).png",
                 "extension": "png"
             },
             {
-                "world_mother_id": "Ritual/ritual (2)",
-                "category_slug": "Ritual",
-                "category_name": "Ritual",
+                "world_mother_id": "Historic European Interiors/ritual (2)",
+                "category_slug": "Historic European Interiors",
+                "category_name": "Historic European Interiors",
                 "file_name": "ritual (2).png",
                 "title": "Ritual (2)",
-                "relative_path": "storage/world_mothers/Ritual/ritual (2).png",
+                "relative_path": "storage/world_mothers/Historic European Interiors/ritual (2).png",
                 "extension": "png"
             },
             {
-                "world_mother_id": "Ritual/ritual (3)",
-                "category_slug": "Ritual",
-                "category_name": "Ritual",
+                "world_mother_id": "Historic European Interiors/ritual (3)",
+                "category_slug": "Historic European Interiors",
+                "category_name": "Historic European Interiors",
                 "file_name": "ritual (3).png",
                 "title": "Ritual (3)",
-                "relative_path": "storage/world_mothers/Ritual/ritual (3).png",
+                "relative_path": "storage/world_mothers/Historic European Interiors/ritual (3).png",
                 "extension": "png"
             },
             {
-                "world_mother_id": "Ritual/ritual (4)",
-                "category_slug": "Ritual",
-                "category_name": "Ritual",
+                "world_mother_id": "Historic European Interiors/ritual (4)",
+                "category_slug": "Historic European Interiors",
+                "category_name": "Historic European Interiors",
                 "file_name": "ritual (4).png",
                 "title": "Ritual (4)",
-                "relative_path": "storage/world_mothers/Ritual/ritual (4).png",
+                "relative_path": "storage/world_mothers/Historic European Interiors/ritual (4).png",
                 "extension": "png"
             },
             {
-                "world_mother_id": "Ritual/ritual (5)",
-                "category_slug": "Ritual",
-                "category_name": "Ritual",
+                "world_mother_id": "Historic European Interiors/ritual (5)",
+                "category_slug": "Historic European Interiors",
+                "category_name": "Historic European Interiors",
                 "file_name": "ritual (5).png",
                 "title": "Ritual (5)",
-                "relative_path": "storage/world_mothers/Ritual/ritual (5).png",
+                "relative_path": "storage/world_mothers/Historic European Interiors/ritual (5).png",
                 "extension": "png"
             }
         ],
-        "Studio Arquitectura": [
+        "Industrial Loft": [
             {
-                "world_mother_id": "Studio Arquitectura/architecture_1",
-                "category_slug": "Studio Arquitectura",
-                "category_name": "Studio Arquitectura",
-                "file_name": "architecture_1.png",
-                "title": "Architecture 1",
-                "relative_path": "storage/world_mothers/Studio Arquitectura/architecture_1.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Studio Arquitectura/architecture_studio_office",
-                "category_slug": "Studio Arquitectura",
-                "category_name": "Studio Arquitectura",
-                "file_name": "architecture_studio_office.png",
-                "title": "Architecture Studio Office",
-                "relative_path": "storage/world_mothers/Studio Arquitectura/architecture_studio_office.png",
-                "extension": "png"
-            }
-        ],
-        "industrial_loft_high_ceilings": [
-            {
-                "world_mother_id": "industrial_loft_high_ceilings/world_mother_20260701_160029_2835_01",
-                "category_slug": "industrial_loft_high_ceilings",
-                "category_name": "Industrial Loft High Ceilings",
-                "file_name": "world_mother_20260701_160029_2835_01.png",
-                "title": "World Mother 20260701 160029 2835 01",
-                "relative_path": "storage/world_mothers/industrial_loft_high_ceilings/world_mother_20260701_160029_2835_01.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "industrial_loft_high_ceilings/world_mother_20260701_160029_2835_02",
-                "category_slug": "industrial_loft_high_ceilings",
-                "category_name": "Industrial Loft High Ceilings",
-                "file_name": "world_mother_20260701_160029_2835_02.png",
-                "title": "World Mother 20260701 160029 2835 02",
-                "relative_path": "storage/world_mothers/industrial_loft_high_ceilings/world_mother_20260701_160029_2835_02.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "industrial_loft_high_ceilings/world_mother_20260701_160029_2835_03",
-                "category_slug": "industrial_loft_high_ceilings",
-                "category_name": "Industrial Loft High Ceilings",
-                "file_name": "world_mother_20260701_160029_2835_03.png",
-                "title": "World Mother 20260701 160029 2835 03",
-                "relative_path": "storage/world_mothers/industrial_loft_high_ceilings/world_mother_20260701_160029_2835_03.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "industrial_loft_high_ceilings/world_mother_20260701_160029_2835_04",
-                "category_slug": "industrial_loft_high_ceilings",
-                "category_name": "Industrial Loft High Ceilings",
-                "file_name": "world_mother_20260701_160029_2835_04.png",
-                "title": "World Mother 20260701 160029 2835 04",
-                "relative_path": "storage/world_mothers/industrial_loft_high_ceilings/world_mother_20260701_160029_2835_04.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "industrial_loft_high_ceilings/world_mother_20260701_162040_2472_01",
-                "category_slug": "industrial_loft_high_ceilings",
-                "category_name": "Industrial Loft High Ceilings",
-                "file_name": "world_mother_20260701_162040_2472_01.png",
-                "title": "World Mother 20260701 162040 2472 01",
-                "relative_path": "storage/world_mothers/industrial_loft_high_ceilings/world_mother_20260701_162040_2472_01.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "industrial_loft_high_ceilings/world_mother_20260701_162040_2472_02",
-                "category_slug": "industrial_loft_high_ceilings",
-                "category_name": "Industrial Loft High Ceilings",
-                "file_name": "world_mother_20260701_162040_2472_02.png",
-                "title": "World Mother 20260701 162040 2472 02",
-                "relative_path": "storage/world_mothers/industrial_loft_high_ceilings/world_mother_20260701_162040_2472_02.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "industrial_loft_high_ceilings/world_mother_20260701_162040_2472_03",
-                "category_slug": "industrial_loft_high_ceilings",
-                "category_name": "Industrial Loft High Ceilings",
-                "file_name": "world_mother_20260701_162040_2472_03.png",
-                "title": "World Mother 20260701 162040 2472 03",
-                "relative_path": "storage/world_mothers/industrial_loft_high_ceilings/world_mother_20260701_162040_2472_03.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "industrial_loft_high_ceilings/world_mother_20260701_162040_2472_04",
-                "category_slug": "industrial_loft_high_ceilings",
-                "category_name": "Industrial Loft High Ceilings",
-                "file_name": "world_mother_20260701_162040_2472_04.png",
-                "title": "World Mother 20260701 162040 2472 04",
-                "relative_path": "storage/world_mothers/industrial_loft_high_ceilings/world_mother_20260701_162040_2472_04.png",
-                "extension": "png"
-            }
-        ],
-        "loft": [
-            {
-                "world_mother_id": "loft/excelente vista aerea y contexto de ventanas",
-                "category_slug": "loft",
-                "category_name": "Loft",
-                "file_name": "excelente vista aerea y contexto de ventanas.jpg",
-                "title": "Excelente Vista Aerea Y Contexto De Ventanas",
-                "relative_path": "storage/world_mothers/loft/excelente vista aerea y contexto de ventanas.jpg",
+                "world_mother_id": "Industrial Loft/industrial loft",
+                "category_slug": "Industrial Loft",
+                "category_name": "Industrial Loft",
+                "file_name": "industrial loft.jpg",
+                "title": "Industrial Loft",
+                "relative_path": "storage/world_mothers/Industrial Loft/industrial loft.jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "loft/ny loft 2",
-                "category_slug": "loft",
-                "category_name": "Loft",
+                "world_mother_id": "Industrial Loft/industrial loft 1",
+                "category_slug": "Industrial Loft",
+                "category_name": "Industrial Loft",
+                "file_name": "industrial loft 1.jpg",
+                "title": "Industrial Loft 1",
+                "relative_path": "storage/world_mothers/Industrial Loft/industrial loft 1.jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Industrial Loft/industrial loft 2",
+                "category_slug": "Industrial Loft",
+                "category_name": "Industrial Loft",
+                "file_name": "industrial loft 2.jpg",
+                "title": "Industrial Loft 2",
+                "relative_path": "storage/world_mothers/Industrial Loft/industrial loft 2.jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Industrial Loft/industrial loft 3",
+                "category_slug": "Industrial Loft",
+                "category_name": "Industrial Loft",
+                "file_name": "industrial loft 3.jpg",
+                "title": "Industrial Loft 3",
+                "relative_path": "storage/world_mothers/Industrial Loft/industrial loft 3.jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Industrial Loft/loft",
+                "category_slug": "Industrial Loft",
+                "category_name": "Industrial Loft",
+                "file_name": "loft.png",
+                "title": "Loft",
+                "relative_path": "storage/world_mothers/Industrial Loft/loft.png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Industrial Loft/ny loft 2",
+                "category_slug": "Industrial Loft",
+                "category_name": "Industrial Loft",
                 "file_name": "ny loft 2.jpg",
                 "title": "Ny Loft 2",
-                "relative_path": "storage/world_mothers/loft/ny loft 2.jpg",
+                "relative_path": "storage/world_mothers/Industrial Loft/ny loft 2.jpg",
                 "extension": "jpg"
             }
         ],
-        "low_light_luxury": [
+        "Low Light Luxury": [
             {
-                "world_mother_id": "low_light_luxury/los espacios de doble altura son muy muy lujosos y fertiles para crear deseo",
-                "category_slug": "low_light_luxury",
+                "world_mother_id": "Low Light Luxury/Low Light Luxury (1)",
+                "category_slug": "Low Light Luxury",
                 "category_name": "Low Light Luxury",
-                "file_name": "los espacios de doble altura son muy muy lujosos y fertiles para crear deseo.jpg",
-                "title": "Los Espacios De Doble Altura Son Muy Muy Lujosos Y Fertiles Para Crear Deseo",
-                "relative_path": "storage/world_mothers/low_light_luxury/los espacios de doble altura son muy muy lujosos y fertiles para crear deseo.jpg",
+                "file_name": "Low Light Luxury (1).jpg",
+                "title": "Low Light Luxury (1)",
+                "relative_path": "storage/world_mothers/Low Light Luxury/Low Light Luxury (1).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "low_light_luxury/low_light_luxury_room (1)",
-                "category_slug": "low_light_luxury",
+                "world_mother_id": "Low Light Luxury/Low Light Luxury (2)",
+                "category_slug": "Low Light Luxury",
                 "category_name": "Low Light Luxury",
-                "file_name": "low_light_luxury_room (1).jpg",
-                "title": "Low Light Luxury Room (1)",
-                "relative_path": "storage/world_mothers/low_light_luxury/low_light_luxury_room (1).jpg",
+                "file_name": "Low Light Luxury (2).jpg",
+                "title": "Low Light Luxury (2)",
+                "relative_path": "storage/world_mothers/Low Light Luxury/Low Light Luxury (2).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "low_light_luxury/low_light_luxury_room (2)",
-                "category_slug": "low_light_luxury",
+                "world_mother_id": "Low Light Luxury/Low Light Luxury (3)",
+                "category_slug": "Low Light Luxury",
                 "category_name": "Low Light Luxury",
-                "file_name": "low_light_luxury_room (2).jpg",
-                "title": "Low Light Luxury Room (2)",
-                "relative_path": "storage/world_mothers/low_light_luxury/low_light_luxury_room (2).jpg",
+                "file_name": "Low Light Luxury (3).jpg",
+                "title": "Low Light Luxury (3)",
+                "relative_path": "storage/world_mothers/Low Light Luxury/Low Light Luxury (3).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "low_light_luxury/low_light_luxury_room (3)",
-                "category_slug": "low_light_luxury",
+                "world_mother_id": "Low Light Luxury/Low Light Luxury (4)",
+                "category_slug": "Low Light Luxury",
                 "category_name": "Low Light Luxury",
-                "file_name": "low_light_luxury_room (3).jpg",
-                "title": "Low Light Luxury Room (3)",
-                "relative_path": "storage/world_mothers/low_light_luxury/low_light_luxury_room (3).jpg",
+                "file_name": "Low Light Luxury (4).jpg",
+                "title": "Low Light Luxury (4)",
+                "relative_path": "storage/world_mothers/Low Light Luxury/Low Light Luxury (4).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "low_light_luxury/low_light_luxury_room (4)",
-                "category_slug": "low_light_luxury",
+                "world_mother_id": "Low Light Luxury/Low Light Luxury (5)",
+                "category_slug": "Low Light Luxury",
                 "category_name": "Low Light Luxury",
-                "file_name": "low_light_luxury_room (4).jpg",
-                "title": "Low Light Luxury Room (4)",
-                "relative_path": "storage/world_mothers/low_light_luxury/low_light_luxury_room (4).jpg",
+                "file_name": "Low Light Luxury (5).jpg",
+                "title": "Low Light Luxury (5)",
+                "relative_path": "storage/world_mothers/Low Light Luxury/Low Light Luxury (5).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "low_light_luxury/low_light_luxury_room (5)",
-                "category_slug": "low_light_luxury",
+                "world_mother_id": "Low Light Luxury/Low Light Luxury (6)",
+                "category_slug": "Low Light Luxury",
                 "category_name": "Low Light Luxury",
-                "file_name": "low_light_luxury_room (5).jpg",
-                "title": "Low Light Luxury Room (5)",
-                "relative_path": "storage/world_mothers/low_light_luxury/low_light_luxury_room (5).jpg",
+                "file_name": "Low Light Luxury (6).jpg",
+                "title": "Low Light Luxury (6)",
+                "relative_path": "storage/world_mothers/Low Light Luxury/Low Light Luxury (6).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "low_light_luxury/low_light_luxury_room (6)",
-                "category_slug": "low_light_luxury",
+                "world_mother_id": "Low Light Luxury/Low Light Luxury (7)",
+                "category_slug": "Low Light Luxury",
                 "category_name": "Low Light Luxury",
-                "file_name": "low_light_luxury_room (6).jpg",
-                "title": "Low Light Luxury Room (6)",
-                "relative_path": "storage/world_mothers/low_light_luxury/low_light_luxury_room (6).jpg",
+                "file_name": "Low Light Luxury (7).jpg",
+                "title": "Low Light Luxury (7)",
+                "relative_path": "storage/world_mothers/Low Light Luxury/Low Light Luxury (7).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "low_light_luxury/low_light_luxury_room (7)",
-                "category_slug": "low_light_luxury",
+                "world_mother_id": "Low Light Luxury/Low Light Luxury (8)",
+                "category_slug": "Low Light Luxury",
                 "category_name": "Low Light Luxury",
-                "file_name": "low_light_luxury_room (7).jpg",
-                "title": "Low Light Luxury Room (7)",
-                "relative_path": "storage/world_mothers/low_light_luxury/low_light_luxury_room (7).jpg",
+                "file_name": "Low Light Luxury (8).jpg",
+                "title": "Low Light Luxury (8)",
+                "relative_path": "storage/world_mothers/Low Light Luxury/Low Light Luxury (8).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "low_light_luxury/low_light_luxury_room (8)",
-                "category_slug": "low_light_luxury",
+                "world_mother_id": "Low Light Luxury/Low Light Luxury (9)",
+                "category_slug": "Low Light Luxury",
                 "category_name": "Low Light Luxury",
-                "file_name": "low_light_luxury_room (8).jpg",
-                "title": "Low Light Luxury Room (8)",
-                "relative_path": "storage/world_mothers/low_light_luxury/low_light_luxury_room (8).jpg",
+                "file_name": "Low Light Luxury (9).jpg",
+                "title": "Low Light Luxury (9)",
+                "relative_path": "storage/world_mothers/Low Light Luxury/Low Light Luxury (9).jpg",
                 "extension": "jpg"
             }
         ],
-        "modernismo_catalan": [
+        "Mediterranean Patios": [
             {
-                "world_mother_id": "modernismo_catalan/world_mother_20260701_150151_1704_01",
-                "category_slug": "modernismo_catalan",
-                "category_name": "Modernismo Catalan",
-                "file_name": "world_mother_20260701_150151_1704_01.png",
-                "title": "World Mother 20260701 150151 1704 01",
-                "relative_path": "storage/world_mothers/modernismo_catalan/world_mother_20260701_150151_1704_01.png",
+                "world_mother_id": "Mediterranean Patios/Mediterranean Patios (1)",
+                "category_slug": "Mediterranean Patios",
+                "category_name": "Mediterranean Patios",
+                "file_name": "Mediterranean Patios (1).png",
+                "title": "Mediterranean Patios (1)",
+                "relative_path": "storage/world_mothers/Mediterranean Patios/Mediterranean Patios (1).png",
                 "extension": "png"
             },
             {
-                "world_mother_id": "modernismo_catalan/world_mother_20260701_150151_1704_02",
-                "category_slug": "modernismo_catalan",
-                "category_name": "Modernismo Catalan",
-                "file_name": "world_mother_20260701_150151_1704_02.png",
-                "title": "World Mother 20260701 150151 1704 02",
-                "relative_path": "storage/world_mothers/modernismo_catalan/world_mother_20260701_150151_1704_02.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "modernismo_catalan/world_mother_20260701_150151_1704_03",
-                "category_slug": "modernismo_catalan",
-                "category_name": "Modernismo Catalan",
-                "file_name": "world_mother_20260701_150151_1704_03.png",
-                "title": "World Mother 20260701 150151 1704 03",
-                "relative_path": "storage/world_mothers/modernismo_catalan/world_mother_20260701_150151_1704_03.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "modernismo_catalan/world_mother_20260701_150151_1704_04",
-                "category_slug": "modernismo_catalan",
-                "category_name": "Modernismo Catalan",
-                "file_name": "world_mother_20260701_150151_1704_04.png",
-                "title": "World Mother 20260701 150151 1704 04",
-                "relative_path": "storage/world_mothers/modernismo_catalan/world_mother_20260701_150151_1704_04.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "modernismo_catalan/world_mother_20260701_152125_7448_01",
-                "category_slug": "modernismo_catalan",
-                "category_name": "Modernismo Catalan",
-                "file_name": "world_mother_20260701_152125_7448_01.png",
-                "title": "World Mother 20260701 152125 7448 01",
-                "relative_path": "storage/world_mothers/modernismo_catalan/world_mother_20260701_152125_7448_01.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "modernismo_catalan/world_mother_20260701_152125_7448_02",
-                "category_slug": "modernismo_catalan",
-                "category_name": "Modernismo Catalan",
-                "file_name": "world_mother_20260701_152125_7448_02.png",
-                "title": "World Mother 20260701 152125 7448 02",
-                "relative_path": "storage/world_mothers/modernismo_catalan/world_mother_20260701_152125_7448_02.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "modernismo_catalan/world_mother_20260701_152125_7448_03",
-                "category_slug": "modernismo_catalan",
-                "category_name": "Modernismo Catalan",
-                "file_name": "world_mother_20260701_152125_7448_03.png",
-                "title": "World Mother 20260701 152125 7448 03",
-                "relative_path": "storage/world_mothers/modernismo_catalan/world_mother_20260701_152125_7448_03.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "modernismo_catalan/world_mother_20260701_152125_7448_04",
-                "category_slug": "modernismo_catalan",
-                "category_name": "Modernismo Catalan",
-                "file_name": "world_mother_20260701_152125_7448_04.png",
-                "title": "World Mother 20260701 152125 7448 04",
-                "relative_path": "storage/world_mothers/modernismo_catalan/world_mother_20260701_152125_7448_04.png",
-                "extension": "png"
-            }
-        ],
-        "modernismo_catalan_espa_referencia": [
-            {
-                "world_mother_id": "modernismo_catalan_espa_referencia/world_mother_20260701_144904_8115_01",
-                "category_slug": "modernismo_catalan_espa_referencia",
-                "category_name": "Modernismo Catalan Espa Referencia",
-                "file_name": "world_mother_20260701_144904_8115_01.png",
-                "title": "World Mother 20260701 144904 8115 01",
-                "relative_path": "storage/world_mothers/modernismo_catalan_espa_referencia/world_mother_20260701_144904_8115_01.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "modernismo_catalan_espa_referencia/world_mother_20260701_144904_8115_02",
-                "category_slug": "modernismo_catalan_espa_referencia",
-                "category_name": "Modernismo Catalan Espa Referencia",
-                "file_name": "world_mother_20260701_144904_8115_02.png",
-                "title": "World Mother 20260701 144904 8115 02",
-                "relative_path": "storage/world_mothers/modernismo_catalan_espa_referencia/world_mother_20260701_144904_8115_02.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "modernismo_catalan_espa_referencia/world_mother_20260701_144904_8115_03",
-                "category_slug": "modernismo_catalan_espa_referencia",
-                "category_name": "Modernismo Catalan Espa Referencia",
-                "file_name": "world_mother_20260701_144904_8115_03.png",
-                "title": "World Mother 20260701 144904 8115 03",
-                "relative_path": "storage/world_mothers/modernismo_catalan_espa_referencia/world_mother_20260701_144904_8115_03.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "modernismo_catalan_espa_referencia/world_mother_20260701_144904_8115_04",
-                "category_slug": "modernismo_catalan_espa_referencia",
-                "category_name": "Modernismo Catalan Espa Referencia",
-                "file_name": "world_mother_20260701_144904_8115_04.png",
-                "title": "World Mother 20260701 144904 8115 04",
-                "relative_path": "storage/world_mothers/modernismo_catalan_espa_referencia/world_mother_20260701_144904_8115_04.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "modernismo_catalan_espa_referencia/world_mother_20260701_145734_9323_01",
-                "category_slug": "modernismo_catalan_espa_referencia",
-                "category_name": "Modernismo Catalan Espa Referencia",
-                "file_name": "world_mother_20260701_145734_9323_01.png",
-                "title": "World Mother 20260701 145734 9323 01",
-                "relative_path": "storage/world_mothers/modernismo_catalan_espa_referencia/world_mother_20260701_145734_9323_01.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "modernismo_catalan_espa_referencia/world_mother_20260701_145734_9323_02",
-                "category_slug": "modernismo_catalan_espa_referencia",
-                "category_name": "Modernismo Catalan Espa Referencia",
-                "file_name": "world_mother_20260701_145734_9323_02.png",
-                "title": "World Mother 20260701 145734 9323 02",
-                "relative_path": "storage/world_mothers/modernismo_catalan_espa_referencia/world_mother_20260701_145734_9323_02.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "modernismo_catalan_espa_referencia/world_mother_20260701_145734_9323_03",
-                "category_slug": "modernismo_catalan_espa_referencia",
-                "category_name": "Modernismo Catalan Espa Referencia",
-                "file_name": "world_mother_20260701_145734_9323_03.png",
-                "title": "World Mother 20260701 145734 9323 03",
-                "relative_path": "storage/world_mothers/modernismo_catalan_espa_referencia/world_mother_20260701_145734_9323_03.png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "modernismo_catalan_espa_referencia/world_mother_20260701_145734_9323_04",
-                "category_slug": "modernismo_catalan_espa_referencia",
-                "category_name": "Modernismo Catalan Espa Referencia",
-                "file_name": "world_mother_20260701_145734_9323_04.png",
-                "title": "World Mother 20260701 145734 9323 04",
-                "relative_path": "storage/world_mothers/modernismo_catalan_espa_referencia/world_mother_20260701_145734_9323_04.png",
-                "extension": "png"
-            }
-        ],
-        "pink hour": [
-            {
-                "world_mother_id": "pink hour/earth_architecture_interior (3)",
-                "category_slug": "pink hour",
-                "category_name": "Pink Hour",
-                "file_name": "earth_architecture_interior (3).jpg",
-                "title": "Earth Architecture Interior (3)",
-                "relative_path": "storage/world_mothers/pink hour/earth_architecture_interior (3).jpg",
+                "world_mother_id": "Mediterranean Patios/Mediterranean Patios (2)",
+                "category_slug": "Mediterranean Patios",
+                "category_name": "Mediterranean Patios",
+                "file_name": "Mediterranean Patios (2).jpg",
+                "title": "Mediterranean Patios (2)",
+                "relative_path": "storage/world_mothers/Mediterranean Patios/Mediterranean Patios (2).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "pink hour/earth_architecture_interior (6)",
-                "category_slug": "pink hour",
-                "category_name": "Pink Hour",
-                "file_name": "earth_architecture_interior (6).jpg",
-                "title": "Earth Architecture Interior (6)",
-                "relative_path": "storage/world_mothers/pink hour/earth_architecture_interior (6).jpg",
+                "world_mother_id": "Mediterranean Patios/Mediterranean Patios (3)",
+                "category_slug": "Mediterranean Patios",
+                "category_name": "Mediterranean Patios",
+                "file_name": "Mediterranean Patios (3).jpg",
+                "title": "Mediterranean Patios (3)",
+                "relative_path": "storage/world_mothers/Mediterranean Patios/Mediterranean Patios (3).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Mediterranean Patios/Mediterranean Patios (4)",
+                "category_slug": "Mediterranean Patios",
+                "category_name": "Mediterranean Patios",
+                "file_name": "Mediterranean Patios (4).jpg",
+                "title": "Mediterranean Patios (4)",
+                "relative_path": "storage/world_mothers/Mediterranean Patios/Mediterranean Patios (4).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Mediterranean Patios/Mediterranean Patios (5)",
+                "category_slug": "Mediterranean Patios",
+                "category_name": "Mediterranean Patios",
+                "file_name": "Mediterranean Patios (5).jpg",
+                "title": "Mediterranean Patios (5)",
+                "relative_path": "storage/world_mothers/Mediterranean Patios/Mediterranean Patios (5).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Mediterranean Patios/Mediterranean Patios (6)",
+                "category_slug": "Mediterranean Patios",
+                "category_name": "Mediterranean Patios",
+                "file_name": "Mediterranean Patios (6).jpg",
+                "title": "Mediterranean Patios (6)",
+                "relative_path": "storage/world_mothers/Mediterranean Patios/Mediterranean Patios (6).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Mediterranean Patios/Mediterranean Patios (7)",
+                "category_slug": "Mediterranean Patios",
+                "category_name": "Mediterranean Patios",
+                "file_name": "Mediterranean Patios (7).jpg",
+                "title": "Mediterranean Patios (7)",
+                "relative_path": "storage/world_mothers/Mediterranean Patios/Mediterranean Patios (7).jpg",
                 "extension": "jpg"
             }
         ],
-        "urban artist": [
+        "Monumental Interiors": [
             {
-                "world_mother_id": "urban artist/urban_artist_workspace (1)",
-                "category_slug": "urban artist",
-                "category_name": "Urban Artist",
-                "file_name": "urban_artist_workspace (1).jpg",
-                "title": "Urban Artist Workspace (1)",
-                "relative_path": "storage/world_mothers/urban artist/urban_artist_workspace (1).jpg",
+                "world_mother_id": "Monumental Interiors/Monumental Interiors (1)",
+                "category_slug": "Monumental Interiors",
+                "category_name": "Monumental Interiors",
+                "file_name": "Monumental Interiors (1).jpg",
+                "title": "Monumental Interiors (1)",
+                "relative_path": "storage/world_mothers/Monumental Interiors/Monumental Interiors (1).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "urban artist/urban_artist_workspace (10)",
-                "category_slug": "urban artist",
-                "category_name": "Urban Artist",
-                "file_name": "urban_artist_workspace (10).jpg",
-                "title": "Urban Artist Workspace (10)",
-                "relative_path": "storage/world_mothers/urban artist/urban_artist_workspace (10).jpg",
+                "world_mother_id": "Monumental Interiors/Monumental Interiors (10)",
+                "category_slug": "Monumental Interiors",
+                "category_name": "Monumental Interiors",
+                "file_name": "Monumental Interiors (10).jpg",
+                "title": "Monumental Interiors (10)",
+                "relative_path": "storage/world_mothers/Monumental Interiors/Monumental Interiors (10).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "urban artist/urban_artist_workspace (2)",
-                "category_slug": "urban artist",
-                "category_name": "Urban Artist",
-                "file_name": "urban_artist_workspace (2).jpg",
-                "title": "Urban Artist Workspace (2)",
-                "relative_path": "storage/world_mothers/urban artist/urban_artist_workspace (2).jpg",
+                "world_mother_id": "Monumental Interiors/Monumental Interiors (11)",
+                "category_slug": "Monumental Interiors",
+                "category_name": "Monumental Interiors",
+                "file_name": "Monumental Interiors (11).jpg",
+                "title": "Monumental Interiors (11)",
+                "relative_path": "storage/world_mothers/Monumental Interiors/Monumental Interiors (11).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "urban artist/urban_artist_workspace (3)",
-                "category_slug": "urban artist",
-                "category_name": "Urban Artist",
-                "file_name": "urban_artist_workspace (3).jpg",
-                "title": "Urban Artist Workspace (3)",
-                "relative_path": "storage/world_mothers/urban artist/urban_artist_workspace (3).jpg",
+                "world_mother_id": "Monumental Interiors/Monumental Interiors (12)",
+                "category_slug": "Monumental Interiors",
+                "category_name": "Monumental Interiors",
+                "file_name": "Monumental Interiors (12).jpg",
+                "title": "Monumental Interiors (12)",
+                "relative_path": "storage/world_mothers/Monumental Interiors/Monumental Interiors (12).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "urban artist/urban_artist_workspace (4)",
-                "category_slug": "urban artist",
-                "category_name": "Urban Artist",
-                "file_name": "urban_artist_workspace (4).jpg",
-                "title": "Urban Artist Workspace (4)",
-                "relative_path": "storage/world_mothers/urban artist/urban_artist_workspace (4).jpg",
+                "world_mother_id": "Monumental Interiors/Monumental Interiors (2)",
+                "category_slug": "Monumental Interiors",
+                "category_name": "Monumental Interiors",
+                "file_name": "Monumental Interiors (2).jpg",
+                "title": "Monumental Interiors (2)",
+                "relative_path": "storage/world_mothers/Monumental Interiors/Monumental Interiors (2).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "urban artist/urban_artist_workspace (5)",
-                "category_slug": "urban artist",
-                "category_name": "Urban Artist",
-                "file_name": "urban_artist_workspace (5).jpg",
-                "title": "Urban Artist Workspace (5)",
-                "relative_path": "storage/world_mothers/urban artist/urban_artist_workspace (5).jpg",
+                "world_mother_id": "Monumental Interiors/Monumental Interiors (3)",
+                "category_slug": "Monumental Interiors",
+                "category_name": "Monumental Interiors",
+                "file_name": "Monumental Interiors (3).jpg",
+                "title": "Monumental Interiors (3)",
+                "relative_path": "storage/world_mothers/Monumental Interiors/Monumental Interiors (3).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "urban artist/urban_artist_workspace (6)",
-                "category_slug": "urban artist",
-                "category_name": "Urban Artist",
-                "file_name": "urban_artist_workspace (6).jpg",
-                "title": "Urban Artist Workspace (6)",
-                "relative_path": "storage/world_mothers/urban artist/urban_artist_workspace (6).jpg",
+                "world_mother_id": "Monumental Interiors/Monumental Interiors (4)",
+                "category_slug": "Monumental Interiors",
+                "category_name": "Monumental Interiors",
+                "file_name": "Monumental Interiors (4).jpg",
+                "title": "Monumental Interiors (4)",
+                "relative_path": "storage/world_mothers/Monumental Interiors/Monumental Interiors (4).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "urban artist/urban_artist_workspace (7)",
-                "category_slug": "urban artist",
-                "category_name": "Urban Artist",
-                "file_name": "urban_artist_workspace (7).jpg",
-                "title": "Urban Artist Workspace (7)",
-                "relative_path": "storage/world_mothers/urban artist/urban_artist_workspace (7).jpg",
+                "world_mother_id": "Monumental Interiors/Monumental Interiors (5)",
+                "category_slug": "Monumental Interiors",
+                "category_name": "Monumental Interiors",
+                "file_name": "Monumental Interiors (5).jpg",
+                "title": "Monumental Interiors (5)",
+                "relative_path": "storage/world_mothers/Monumental Interiors/Monumental Interiors (5).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "urban artist/urban_artist_workspace (8)",
-                "category_slug": "urban artist",
-                "category_name": "Urban Artist",
-                "file_name": "urban_artist_workspace (8).jpg",
-                "title": "Urban Artist Workspace (8)",
-                "relative_path": "storage/world_mothers/urban artist/urban_artist_workspace (8).jpg",
+                "world_mother_id": "Monumental Interiors/Monumental Interiors (6)",
+                "category_slug": "Monumental Interiors",
+                "category_name": "Monumental Interiors",
+                "file_name": "Monumental Interiors (6).jpg",
+                "title": "Monumental Interiors (6)",
+                "relative_path": "storage/world_mothers/Monumental Interiors/Monumental Interiors (6).jpg",
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "urban artist/urban_artist_workspace (9)",
-                "category_slug": "urban artist",
-                "category_name": "Urban Artist",
-                "file_name": "urban_artist_workspace (9).jpg",
-                "title": "Urban Artist Workspace (9)",
-                "relative_path": "storage/world_mothers/urban artist/urban_artist_workspace (9).jpg",
+                "world_mother_id": "Monumental Interiors/Monumental Interiors (7)",
+                "category_slug": "Monumental Interiors",
+                "category_name": "Monumental Interiors",
+                "file_name": "Monumental Interiors (7).jpg",
+                "title": "Monumental Interiors (7)",
+                "relative_path": "storage/world_mothers/Monumental Interiors/Monumental Interiors (7).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Monumental Interiors/Monumental Interiors (8)",
+                "category_slug": "Monumental Interiors",
+                "category_name": "Monumental Interiors",
+                "file_name": "Monumental Interiors (8).jpg",
+                "title": "Monumental Interiors (8)",
+                "relative_path": "storage/world_mothers/Monumental Interiors/Monumental Interiors (8).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Monumental Interiors/Monumental Interiors (9)",
+                "category_slug": "Monumental Interiors",
+                "category_name": "Monumental Interiors",
+                "file_name": "Monumental Interiors (9).jpg",
+                "title": "Monumental Interiors (9)",
+                "relative_path": "storage/world_mothers/Monumental Interiors/Monumental Interiors (9).jpg",
+                "extension": "jpg"
+            }
+        ],
+        "Moody Contemporary Interiors": [
+            {
+                "world_mother_id": "Moody Contemporary Interiors/Blue_hour_interior (1)",
+                "category_slug": "Moody Contemporary Interiors",
+                "category_name": "Moody Contemporary Interiors",
+                "file_name": "Blue_hour_interior (1).jpg",
+                "title": "Blue Hour Interior (1)",
+                "relative_path": "storage/world_mothers/Moody Contemporary Interiors/Blue_hour_interior (1).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Moody Contemporary Interiors/Blue_hour_interior (10)",
+                "category_slug": "Moody Contemporary Interiors",
+                "category_name": "Moody Contemporary Interiors",
+                "file_name": "Blue_hour_interior (10).jpg",
+                "title": "Blue Hour Interior (10)",
+                "relative_path": "storage/world_mothers/Moody Contemporary Interiors/Blue_hour_interior (10).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Moody Contemporary Interiors/Blue_hour_interior (11)",
+                "category_slug": "Moody Contemporary Interiors",
+                "category_name": "Moody Contemporary Interiors",
+                "file_name": "Blue_hour_interior (11).jpg",
+                "title": "Blue Hour Interior (11)",
+                "relative_path": "storage/world_mothers/Moody Contemporary Interiors/Blue_hour_interior (11).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Moody Contemporary Interiors/Blue_hour_interior (4)",
+                "category_slug": "Moody Contemporary Interiors",
+                "category_name": "Moody Contemporary Interiors",
+                "file_name": "Blue_hour_interior (4).jpg",
+                "title": "Blue Hour Interior (4)",
+                "relative_path": "storage/world_mothers/Moody Contemporary Interiors/Blue_hour_interior (4).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Moody Contemporary Interiors/Blue_hour_interior (5)",
+                "category_slug": "Moody Contemporary Interiors",
+                "category_name": "Moody Contemporary Interiors",
+                "file_name": "Blue_hour_interior (5).jpg",
+                "title": "Blue Hour Interior (5)",
+                "relative_path": "storage/world_mothers/Moody Contemporary Interiors/Blue_hour_interior (5).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Moody Contemporary Interiors/Blue_hour_interior (6)",
+                "category_slug": "Moody Contemporary Interiors",
+                "category_name": "Moody Contemporary Interiors",
+                "file_name": "Blue_hour_interior (6).jpg",
+                "title": "Blue Hour Interior (6)",
+                "relative_path": "storage/world_mothers/Moody Contemporary Interiors/Blue_hour_interior (6).jpg",
+                "extension": "jpg"
+            }
+        ],
+        "Organic Minimalism": [
+            {
+                "world_mother_id": "Organic Minimalism/Organic Minimalism (1)",
+                "category_slug": "Organic Minimalism",
+                "category_name": "Organic Minimalism",
+                "file_name": "Organic Minimalism (1).jpg",
+                "title": "Organic Minimalism (1)",
+                "relative_path": "storage/world_mothers/Organic Minimalism/Organic Minimalism (1).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Organic Minimalism/Organic Minimalism (1)",
+                "category_slug": "Organic Minimalism",
+                "category_name": "Organic Minimalism",
+                "file_name": "Organic Minimalism (1).png",
+                "title": "Organic Minimalism (1)",
+                "relative_path": "storage/world_mothers/Organic Minimalism/Organic Minimalism (1).png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Organic Minimalism/Organic Minimalism (2)",
+                "category_slug": "Organic Minimalism",
+                "category_name": "Organic Minimalism",
+                "file_name": "Organic Minimalism (2).jpg",
+                "title": "Organic Minimalism (2)",
+                "relative_path": "storage/world_mothers/Organic Minimalism/Organic Minimalism (2).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Organic Minimalism/Organic Minimalism (2)",
+                "category_slug": "Organic Minimalism",
+                "category_name": "Organic Minimalism",
+                "file_name": "Organic Minimalism (2).png",
+                "title": "Organic Minimalism (2)",
+                "relative_path": "storage/world_mothers/Organic Minimalism/Organic Minimalism (2).png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Organic Minimalism/Organic Minimalism (3)",
+                "category_slug": "Organic Minimalism",
+                "category_name": "Organic Minimalism",
+                "file_name": "Organic Minimalism (3).jpg",
+                "title": "Organic Minimalism (3)",
+                "relative_path": "storage/world_mothers/Organic Minimalism/Organic Minimalism (3).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Organic Minimalism/Organic Minimalism (4)",
+                "category_slug": "Organic Minimalism",
+                "category_name": "Organic Minimalism",
+                "file_name": "Organic Minimalism (4).jpg",
+                "title": "Organic Minimalism (4)",
+                "relative_path": "storage/world_mothers/Organic Minimalism/Organic Minimalism (4).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Organic Minimalism/Organic Minimalism (5)",
+                "category_slug": "Organic Minimalism",
+                "category_name": "Organic Minimalism",
+                "file_name": "Organic Minimalism (5).jpg",
+                "title": "Organic Minimalism (5)",
+                "relative_path": "storage/world_mothers/Organic Minimalism/Organic Minimalism (5).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Organic Minimalism/Organic Minimalism (6)",
+                "category_slug": "Organic Minimalism",
+                "category_name": "Organic Minimalism",
+                "file_name": "Organic Minimalism (6).jpg",
+                "title": "Organic Minimalism (6)",
+                "relative_path": "storage/world_mothers/Organic Minimalism/Organic Minimalism (6).jpg",
+                "extension": "jpg"
+            }
+        ],
+        "Patina Surfaces": [
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (1)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (1).jpg",
+                "title": "Patina Surfaces (1)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (1).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (10)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (10).jpg",
+                "title": "Patina Surfaces (10)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (10).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (11)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (11).jpg",
+                "title": "Patina Surfaces (11)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (11).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (12)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (12).jpg",
+                "title": "Patina Surfaces (12)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (12).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (14)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (14).jpg",
+                "title": "Patina Surfaces (14)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (14).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (15)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (15).jpg",
+                "title": "Patina Surfaces (15)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (15).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (16)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (16).jpg",
+                "title": "Patina Surfaces (16)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (16).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (18)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (18).jpg",
+                "title": "Patina Surfaces (18)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (18).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (19)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (19).jpg",
+                "title": "Patina Surfaces (19)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (19).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (20)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (20).jpg",
+                "title": "Patina Surfaces (20)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (20).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (22)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (22).jpg",
+                "title": "Patina Surfaces (22)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (22).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (23)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (23).jpg",
+                "title": "Patina Surfaces (23)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (23).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (3)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (3).jpg",
+                "title": "Patina Surfaces (3)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (3).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (4)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (4).jpg",
+                "title": "Patina Surfaces (4)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (4).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (5)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (5).jpg",
+                "title": "Patina Surfaces (5)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (5).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (6)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (6).jpg",
+                "title": "Patina Surfaces (6)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (6).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (7)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (7).jpg",
+                "title": "Patina Surfaces (7)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (7).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Patina Surfaces/Patina Surfaces (9)",
+                "category_slug": "Patina Surfaces",
+                "category_name": "Patina Surfaces",
+                "file_name": "Patina Surfaces (9).jpg",
+                "title": "Patina Surfaces (9)",
+                "relative_path": "storage/world_mothers/Patina Surfaces/Patina Surfaces (9).jpg",
+                "extension": "jpg"
+            }
+        ],
+        "Quiet Luxury": [
+            {
+                "world_mother_id": "Quiet Luxury/la obra en el piso con figura humana femenina imponente-Esta es una fotografia artística en cualquier contexto-Hay sujeto y obra en contacto y conexion-Figura de dominancia y deseo-Funciona comercial",
+                "category_slug": "Quiet Luxury",
+                "category_name": "Quiet Luxury",
+                "file_name": "la obra en el piso con figura humana femenina imponente-Esta es una fotografia artística en cualquier contexto-Hay sujeto y obra en contacto y conexion-Figura de dominancia y deseo-Funciona comercial.jpg",
+                "title": "La Obra En El Piso Con Figura Humana Femenina Imponente Esta Es Una Fotografia Artística En Cualquier Contexto Hay Sujeto Y Obra En Contacto Y Conexion Figura De Dominancia Y Deseo Funciona Comercial",
+                "relative_path": "storage/world_mothers/Quiet Luxury/la obra en el piso con figura humana femenina imponente-Esta es una fotografia artística en cualquier contexto-Hay sujeto y obra en contacto y conexion-Figura de dominancia y deseo-Funciona comercial.jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Quiet Luxury/permitier 1 opcion que tape parte de la obra de forma artistica es util- esto crea deseo",
+                "category_slug": "Quiet Luxury",
+                "category_name": "Quiet Luxury",
+                "file_name": "permitier 1 opcion que tape parte de la obra de forma artistica es util- esto crea deseo.jpg",
+                "title": "Permitier 1 Opcion Que Tape Parte De La Obra De Forma Artistica Es Util Esto Crea Deseo",
+                "relative_path": "storage/world_mothers/Quiet Luxury/permitier 1 opcion que tape parte de la obra de forma artistica es util- esto crea deseo.jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Quiet Luxury/que camara tome un pasillo y quite del centro a la obra la hace más protagonista y proxima",
+                "category_slug": "Quiet Luxury",
+                "category_name": "Quiet Luxury",
+                "file_name": "que camara tome un pasillo y quite del centro a la obra la hace más protagonista y proxima.jpg",
+                "title": "Que Camara Tome Un Pasillo Y Quite Del Centro A La Obra La Hace Más Protagonista Y Proxima",
+                "relative_path": "storage/world_mothers/Quiet Luxury/que camara tome un pasillo y quite del centro a la obra la hace más protagonista y proxima.jpg",
                 "extension": "jpg"
             }
         ]

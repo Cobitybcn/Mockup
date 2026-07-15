@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
 
-ini_set('max_execution_time', '120');
-ini_set('max_input_time', '120');
+ini_set('max_execution_time', '420');
+ini_set('max_input_time', '420');
 ini_set('memory_limit', '512M');
 ini_set('display_errors', '1');
 ini_set('log_errors', '1');
 
-set_time_limit(300);
+set_time_limit(420);
 ignore_user_abort(true);
 
 require_once __DIR__ . '/app/bootstrap.php';
@@ -31,14 +31,23 @@ if (!$jobId) {
 $jobDir = __DIR__ . '/jobs/' . $jobId;
 $statusFile = $jobDir . '/status.json';
 
-if (!is_dir($jobDir) || !is_file($statusFile)) {
+if (!is_dir($jobDir)) {
+    mkdir($jobDir, 0775, true);
+}
+
+if (!is_file($statusFile) && StorageService::isGcsActive()) {
+    StorageService::downloadFile('jobs/' . $jobId . '/status.json', $statusFile);
+}
+
+if (!is_file($statusFile)) {
+    http_response_code(404);
     exit("No existe el trabajo\n");
 }
 
 // Configurar el log de errores de PHP en el directorio del trabajo
 ini_set('error_log', $jobDir . '/process_err.log');
 
-if (PHP_SAPI !== 'cli') {
+if (PHP_SAPI !== 'cli' && !defined('PROCESS_GENERATE_ALLOW_HTTP')) {
     http_response_code(403);
     exit("La ejecucion por HTTP esta deshabilitada. Este script solo puede ejecutarse en segundo plano desde CLI.\n");
 }
@@ -57,6 +66,10 @@ function write_status_file(string $statusFile, array $data): void
         $statusFile,
         json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
     );
+
+    if (StorageService::isGcsActive() && !empty($data['job_id'])) {
+        StorageService::uploadFile('jobs/' . basename((string)$data['job_id']) . '/status.json', $statusFile);
+    }
 }
 
 function update_job_status(string $statusFile, string $status, string $message, ?string $resultFile = null, ?string $error = null): void
@@ -110,6 +123,14 @@ try {
     $status = read_status_file($statusFile);
     ProviderSettings::set($status['provider_settings'] ?? []);
 
+    $mainFile = basename((string)($status['main_file'] ?? ''));
+    if ($mainFile !== '') {
+        $mainPath = $jobDir . DIRECTORY_SEPARATOR . $mainFile;
+        if (!is_file($mainPath) && StorageService::isGcsActive()) {
+            StorageService::downloadFile('jobs/' . $jobId . '/' . $mainFile, $mainPath);
+        }
+    }
+
     update_job_status(
         $statusFile,
         'processing',
@@ -134,15 +155,69 @@ try {
         $diskStatus = $status;
     }
 
-    $diskStatus['status'] = 'done';
-    $diskStatus['message'] = 'Root image candidates created. Awaiting user selection.';
-    $diskStatus['candidates'] = $result['files'];
-    $diskStatus['result_file'] = null; // No selected root image yet
-    write_status_file($statusFile, $diskStatus);
+    $candidateFiles = array_values(array_filter(array_map('basename', (array)($result['files'] ?? []))));
 
-    // Update SQLite database status of artwork to awaiting_selection
-    update_artwork_record($diskStatus, 'awaiting_selection', null);
+    if (StorageService::isGcsActive()) {
+        foreach ($candidateFiles as $candidateFile) {
+            $candidatePath = RESULTS_DIR . DIRECTORY_SEPARATOR . basename((string)$candidateFile);
+            if (is_file($candidatePath)) {
+                StorageService::uploadFile('results/' . basename((string)$candidateFile), $candidatePath);
+            }
+        }
+    }
 
+    if (!empty($diskStatus['user_scene_flow']) && $candidateFiles !== []) {
+        $selectedRootFile = (string)$candidateFiles[0];
+        $diskStatus['status'] = 'done';
+        $diskStatus['message'] = 'Root image prepared. Creating scenes next.';
+        $diskStatus['candidates'] = $candidateFiles;
+        $diskStatus['result_file'] = $selectedRootFile;
+        write_status_file($statusFile, $diskStatus);
+
+        update_artwork_record($diskStatus, 'done', $selectedRootFile);
+
+        if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && ProviderSettings::imageProvider() === 'gemini') {
+            try {
+                $v2Stmt=Database::connection()->prepare('SELECT * FROM artworks WHERE job_id=? LIMIT 1');$v2Stmt->execute([(string)$diskStatus['job_id']]);$v2Artwork=$v2Stmt->fetch(PDO::FETCH_ASSOC);
+                if(is_array($v2Artwork)){
+                    $v2Profile=ArtistProfile::findForUser((int)$v2Artwork['user_id']);
+                    (new ArtworkAnalysisV2Service(new GeminiImageClient()))->generateDraft($v2Artwork,$v2Profile,RESULTS_DIR.DIRECTORY_SEPARATOR.$selectedRootFile,(string)($diskStatus['artist_notes']??'Automatic v2 analysis for new artwork.'));
+                    $diskStatus['artwork_analysis_v2']='draft_ready';write_status_file($statusFile,$diskStatus);
+                }
+            }catch(Throwable $v2Error){error_log('Artwork v2 analysis was not generated: '.$v2Error->getMessage());$diskStatus['artwork_analysis_v2']='error';$diskStatus['artwork_analysis_v2_error']=$v2Error->getMessage();write_status_file($statusFile,$diskStatus);}
+        }
+
+        $metaName = pathinfo($selectedRootFile, PATHINFO_FILENAME) . '.meta.json';
+        $metaPath = RESULTS_DIR . DIRECTORY_SEPARATOR . $metaName;
+        file_put_contents(
+            $metaPath,
+            json_encode([
+                'source_job_id' => $jobId,
+                'user_id' => (int)($diskStatus['user_id'] ?? 0),
+                'root_file' => $selectedRootFile,
+                'measurements' => $diskStatus['measurements'] ?? [],
+                'artist_notes' => $diskStatus['artist_notes'] ?? '',
+                'provider_settings' => $diskStatus['provider_settings'] ?? ProviderSettings::all(),
+                'scale_text' => build_scale_text_for_meta((array)($diskStatus['measurements'] ?? [])),
+                'root_source' => 'auto_selected_user_scene_flow',
+                'user_scene_flow' => true,
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        );
+        if (StorageService::isGcsActive()) {
+            StorageService::uploadFile('results/' . basename($metaName), $metaPath);
+        }
+    } else {
+        $diskStatus['status'] = 'done';
+        $diskStatus['message'] = 'Root image candidates created. Awaiting user selection.';
+        $diskStatus['candidates'] = $candidateFiles;
+        $diskStatus['result_file'] = null; // No selected root image yet
+        write_status_file($statusFile, $diskStatus);
+
+        // Update SQLite database status of artwork to awaiting_selection
+        update_artwork_record($diskStatus, 'awaiting_selection', null);
+    }
+
+    NextPlatformSync::run();
     exit('DONE candidate generation for job ' . $jobId . "\n");
 } catch (Throwable $e) {
     update_job_status($statusFile, 'error', 'Generation error.', null, $e->getMessage());

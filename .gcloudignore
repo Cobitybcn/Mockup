@@ -14,10 +14,24 @@ logs/**
 backups
 scratch
 analysis
-assets/showcase
+dump_output.txt
+mockup-prompts/*
+!mockup-prompts/.htaccess
+assets/showcase/*
+!assets/showcase/latest_mockup_1.jpg
+!assets/showcase/latest_mockup_2.jpg
+!assets/showcase/latest_mockup_3.jpg
+!assets/showcase/34-right-view-attic-studio-3-4-right-view-medium-test-piece-mockup-02.jpg
+!assets/showcase/floor-leaning.jpg
+!assets/showcase/nadir.jpg
 vendor
 *.log
+__pycache__/
+*.pyc
 .env
+.agents/
+.claude/
+.codex/
 .idea/
 .vscode/
 

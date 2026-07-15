@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 class ProviderSettings
 {
-    private const MAX_MOCKUP_WORKERS = 6;
+    private const MAX_MOCKUP_WORKERS = 8;
 
     private static array $settings = [];
     private static bool $loaded = false;

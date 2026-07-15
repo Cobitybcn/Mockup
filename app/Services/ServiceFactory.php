@@ -71,7 +71,7 @@ class ServiceFactory
         if (ProviderSettings::isRealMode()) {
             if (self::imageProvider() === 'gemini') {
                 self::assertGeminiProvider();
-                return new GeminiMockupGenerator();
+                return new FidelityValidatingMockupGenerator(new GeminiMockupGenerator());
             }
 
             self::assertOpenAIMode();

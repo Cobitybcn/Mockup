@@ -105,8 +105,7 @@ return array (
         22 => 'Personas o animales en la escena.',
       ),
       'full_prompt_template' => 'Una vista aérea cenital, de alta calidad y resolución, de una obra de arte con un título \'{{ARTWORK_TITLE}}\' (`IMAGE 1`) que mide {{ARTWORK_WIDTH_CM}}cm de ancho por {{ARTWORK_HEIGHT_CM}}cm de alto con orientación {{ARTWORK_ORIENTATION}} y de la clase de tamaño {{ARTWORK_SIZE_CLASS}}. La obra de arte está colocada horizontalmente y plana sobre un [material_piso, ej. suelo de madera clara con grano sutil, alfombra de lana bouclé gris, hormigón pulido con juntas minimalistas] en un [tipo_habitación, ej. loft moderno con luz natural, sala de estar minimalista y acogedora, estudio de diseño con muebles de líneas limpias]. La cámara está directamente encima, mirando hacia abajo con una perspectiva cenital. La composición muestra la obra de arte completa y parte del entorno inmediato. Alrededor de la obra, hay elementos de contexto ambiental que la integran al espacio, como [descripción_contexto, ej. una alfombra de tonos neutros que enmarca la obra, una mesa baja de diseño escandinavo con una única planta en maceta, el borde de un sofá de lino natural, sutiles líneas de baldosas que convergen o el reflejo suave de una ventana grande en el suelo pulido]. El estilo y la atmósfera de la escena están fuertemente influenciados por el ADN ambiental de `IMAGE 2`, fusionando sus características atmosféricas y detalles contextuales con la composición principal. La iluminación es [tipo_luz, ej. natural y difusa proveniente de una ventana lateral, suave y uniforme desde el techo] creando sombras sutiles que anclan la obra al espacio. La obra debe verse como una pieza física real, cuidadosamente ubicada en el espacio, no como una imagen flotante o digitalmente pegada. Los detalles finos del suelo y del entorno son visibles. La profundidad de campo es moderada, manteniendo la obra y su contexto principal nítidos y realistas. Esta es una representación de alta fidelidad, de calidad premium, centrada en la obra \'{{ARTWORK_TITLE}}\' en un entorno doméstico o de galería no tradicional.',
-      'primary_scene_set' => true,
-      'board_order' => 1,
+      'primary_scene_set' => false,
     ),
     'detalle_textura_lienzo' =>
     array (
@@ -194,7 +193,7 @@ The artwork remains a real physical canvas/object at the supplied dimensions. Cr
 NEGATIVE PROMPT:
 No poster, no flat print, no digital screen, no invented imagery, no artwork substitution, no artificial impasto, no invented relief, no cracks, no scratches, no incisions, no extra ridges, no wet paint, no glossy plastic shine, no embossed effects, no heavy paste, no new tactile marks, no room atmosphere, no full room, no furniture, no easel, no table setup, no shelves, no large windows, no window-dominant composition, no dramatic atelier mood, no cinematic haze, no golden-room storytelling, no people, no pets, no crowds, no children, no visible text, no logos, no watermarks.',
       'primary_scene_set' => true,
-      'board_order' => 7,
+      'board_order' => 4,
     ),
     'borde_canvas_closeup' =>
     array (
@@ -281,8 +280,7 @@ No atmospheric scene-building. No dramatic atelier mood. No cinematic haze. No g
 
 NEGATIVE PROMPT:
 No poster, no flat print, no paper sheet, no digital screen, no floating panel, no exaggerated thickness, no block canvas, no slab, no plinth, no box, no wedge, no invented frame, no ornate frame, no raw wood stretcher bars unless visible in IMAGE 1, no staples unless visible in IMAGE 1, no redesigned side edge, no changed artwork format, no squared portrait artwork, no stretched artwork, no compressed artwork, no artwork substitution, no invented imagery, no invented marks, no artificial impasto, no new tactile marks, no full room, no room atmosphere, no furniture, no easel, no table setup, no shelves, no large windows, no window-dominant composition, no dramatic atelier mood, no cinematic haze, no golden-room storytelling, no people, no pets, no crowds, no children, no visible text, no logos, no watermarks.',
-      'primary_scene_set' => true,
-      'board_order' => 8,
+      'primary_scene_set' => false,
     ),
     'rasante_superficie_pintura' =>
     array (
@@ -556,8 +554,7 @@ No full-room view. No distant mockup view. No atmospheric scene-building. No dra
 
 NEGATIVE PROMPT:
 No full-room side view, no distant mockup view, no normal room mockup, no melted canvas, no bent canvas, no curved canvas, no torn canvas, no impossible wedge, no warped canvas, no changed composition, no invented marks, no invented landscape, no figures, no portraits, no decorative motifs, no digital screen, no poster, no flat print, no artwork substitution, no invented painting, no artificial impasto, no cracks, no scratches, no incisions, no extra ridges, no wet paint, no raw beige canvas edge, no unpainted canvas edge, no bare wood edge, no exposed stretcher bars, no room atmosphere, no furniture, no easel, no large windows, no people, no pets, no crowds, no children, no visible text, no logos, no watermarks.',
-      'primary_scene_set' => true,
-      'board_order' => 2,
+      'primary_scene_set' => false,
     ),
     'obra_apoyada_suelo_7_8' =>
     array (
@@ -626,8 +623,7 @@ La obra debe conservarse exactamente fiel a IMAGEN 1.
 El ambiente debe tomar de IMAGEN 2 solo su carácter material y lumínico, apareciendo de forma secundaria y periférica.
 
 No vista frontal, no cámara a nivel de ojos, no vista desde arriba, no ojo de pez, no obra colgada, no obra acostada, no obra flotante, no deformación blanda, no rediseño de la pintura.',
-      'primary_scene_set' => true,
-      'board_order' => 5,
+      'primary_scene_set' => false,
     ),
     'diagonal_estudio_moderno' =>
     array (
@@ -705,7 +701,8 @@ ESCALA:
 Respetar las dimensiones suministradas ({{ARTWORK_WIDTH_CM}} x {{ARTWORK_HEIGHT_CM}} cm). Al usar una vista frontal, es crítico que la obra de arte se mantenga a escala real comparada con los objetos cercanos (muebles, interruptores, marcos de puertas o altura del techo). No llenar la pared con la obra de arte. Dejar espacio negativo alrededor (arriba, abajo y a los lados) para que la obra "respire" y mantenga su relación proporcional con el mobiliario de la IMAGEN 
 
 Prohibido: Vista de tres cuartos, vista diagonal, composición descentrada, perspectiva de fuga profunda, ángulos de cámara exagerados, distorsión de lente gran angular, simetría forzada que deforme la obra, que la obra sea más grande que el mueble de referencia debajo de ella, efecto de mural, que la obra toque el techo o el suelo.',
-      'primary_scene_set' => false,
+      'primary_scene_set' => true,
+      'board_order' => 1,
     ),
     'nadir_extremo_arquitectonico' =>
     array (
@@ -857,8 +854,7 @@ La superficie pintada final debe ser la misma imagen que IMAGEN 1 en cuanto a co
 
 ESCALA:
 La obra de arte es de {{ARTWORK_WIDTH_CM}} x {{ARTWORK_HEIGHT_CM}} cm, clase de tamaño {{ARTWORK_SIZE_CLASS}}. Al ser una vista aérea con distancia considerable entre cámara y obra, prestar especial atención a que la obra no se perciba desproporcionadamente grande respecto a los elementos de planta baja (sillones, mesas, piso). Usar la escala humana o mobiliario visible como referencia. Nunca sobredimensionar la obra para darle protagonismo artificial a pesar de la distancia de cámara.',
-      'primary_scene_set' => true,
-      'board_order' => 6,
+      'primary_scene_set' => false,
     ),
     'contrapicado_7_8' =>
     array (
@@ -932,7 +928,8 @@ IMAGEN 1 debe conservarse fiel: composición, colores, marcas, proporciones inte
 El ambiente de IMAGEN 2 debe aparecer solo parcialmente en los bordes, arriba o al fondo, como contexto secundario. No copiar la cámara ni la composición de IMAGEN 2.
 
 No queremos: vista frontal, cámara a nivel normal, cámara mirando recto a la pared, obra plana contra el muro, obra centrada como postal, sala completa simétrica, obra colgada, obra acostada, ojo de pez, mural gigante, rediseño de la obra, deformación blanda, lienzo curvado, pintura inventada.',
-      'primary_scene_set' => false,
+      'primary_scene_set' => true,
+      'board_order' => 2,
     ),
     'reflejo_dorado_tarde_palazzo' =>
     array (
@@ -1204,8 +1201,7 @@ La obra de arte final instalada debe ser la misma imagen que la IMAGEN 1. No red
 ESCALA:
 La obra de arte es de {{ARTWORK_WIDTH_CM}} x {{ARTWORK_HEIGHT_CM}} cm, clase de tamaño {{ARTWORK_SIZE_CLASS}}
 No ampliarla para que domine la habitación o llene la pared disponible. Para determinar el tamaño de la obra de arte utilice otros objetos de la escena. Mantener la obra de arte en su tamaño normal respecto a los otros objetos. Nunca sobredimensionar la obra de arte o IMAGEN 1 para darle protagonismo.',
-      'primary_scene_set' => true,
-      'board_order' => 4,
+      'primary_scene_set' => false,
     ),
     'contrapicado_raton_puro' =>
     array (
@@ -1433,16 +1429,12 @@ La obra de arte es de {{ARTWORK_WIDTH_CM}} x {{ARTWORK_HEIGHT_CM}} cm, clase de 
     ),
     'slots' =>
     array (
-      0 => 'vista_aerea_obra_piso_contexto_cenital',
-      1 => 'esquina_obra_perspectiva_extrema',
+      0 => 'diagonal_estudio_moderno',
+      1 => 'contrapicado_7_8',
       2 => 'borgona_recovecos_3_4_loft_hormigon',
-      3 => 'pasillo_obra_descentrada_proxima',
-      4 => 'obra_apoyada_suelo_7_8',
-      5 => 'vista_aerea_contexto_ventanas',
-      6 => 'detalle_textura_lienzo',
-      7 => 'borde_canvas_closeup',
+      3 => 'detalle_textura_lienzo',
     ),
-    'updated_at' => '2026-07-06T12:45:01+00:00',
+    'updated_at' => '2026-07-11T21:02:21+00:00',
   ),
   'scene_boards' =>
   array (
@@ -1451,36 +1443,36 @@ La obra de arte es de {{ARTWORK_WIDTH_CM}} x {{ARTWORK_HEIGHT_CM}} cm, clase de 
       'label' => 'Tablero 1',
       'slots' =>
       array (
-        0 => 'vista_aerea_obra_piso_contexto_cenital',
-        1 => 'esquina_obra_perspectiva_extrema',
+        0 => 'diagonal_estudio_moderno',
+        1 => 'contrapicado_7_8',
         2 => 'borgona_recovecos_3_4_loft_hormigon',
-        3 => 'pasillo_obra_descentrada_proxima',
-        4 => 'obra_apoyada_suelo_7_8',
-        5 => 'vista_aerea_contexto_ventanas',
-        6 => 'detalle_textura_lienzo',
-        7 => 'borde_canvas_closeup',
+        3 => 'detalle_textura_lienzo',
       ),
-      'updated_at' => '2026-07-06T12:45:01+00:00',
+      'updated_at' => '2026-07-11T21:02:21+00:00',
     ),
     2 =>
     array (
       'label' => 'Tablero 2',
       'slots' =>
       array (
-        0 => 'diagonal_estudio_moderno',
-        1 => 'contrapicado_7_8',
-        2 => 'nadir_extremo_arquitectonico',
-        3 => 'contrapicado_raton_puro',
+        0 => 'nadir_extremo_arquitectonico',
+        1 => 'vista_aerea_obra_piso_contexto_cenital',
+        2 => 'pasillo_obra_descentrada_proxima',
+        3 => 'borde_canvas_closeup',
       ),
-      'updated_at' => '2026-07-06T12:45:01+00:00',
+      'updated_at' => '2026-07-11T21:02:21+00:00',
     ),
     3 =>
     array (
       'label' => 'Tablero 3',
       'slots' =>
       array (
+        0 => 'contrapicado_raton_puro',
+        1 => 'vista_aerea_contexto_ventanas',
+        2 => 'obra_apoyada_suelo_7_8',
+        3 => 'esquina_obra_perspectiva_extrema',
       ),
-      'updated_at' => '2026-07-06T12:45:01+00:00',
+      'updated_at' => '2026-07-11T21:02:21+00:00',
     ),
   ),
 );

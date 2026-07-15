@@ -15,7 +15,7 @@ function artist_profile_photo_dir(): string
 function artist_profile_photo_url(string $file): string
 {
     $file = basename($file);
-    return $file !== '' ? 'uploads/artist_profiles/' . rawurlencode($file) : '';
+    return $file !== '' ? 'profile_media.php?file=' . rawurlencode($file) : '';
 }
 
 function handle_artist_photo_upload(int $userId, string $existingFile): string
@@ -63,6 +63,11 @@ function handle_artist_photo_upload(int $userId, string $existingFile): string
 
     if (!move_uploaded_file($tmp, $target)) {
         throw new RuntimeException('Could not save artist photo.');
+    }
+    if (StorageService::isGcsActive()
+        && !StorageService::uploadFile('uploads/artist_profiles/' . $name, $target)) {
+        @unlink($target);
+        throw new RuntimeException('Could not persist artist photo.');
     }
 
     return $name;
@@ -250,6 +255,105 @@ function admin_vars_hint(bool $isAdmin, string $field): void
             object-fit: cover;
             display: block;
         }
+        @media (max-width: 760px) {
+            .app-header,
+            .alert-strip {
+                display: none;
+            }
+            .workspace {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            .artist-profile-header {
+                display: block;
+                margin-bottom: 14px;
+                padding: 0 0 14px;
+                border: 0;
+                border-bottom: 1px solid var(--line);
+                border-radius: 0;
+                background: transparent;
+            }
+            .artist-profile-header h1 {
+                margin-bottom: 8px;
+                font-size: 31px;
+                line-height: 1.04;
+            }
+            .artist-profile-header p {
+                margin: 0;
+                font-size: 12px;
+                line-height: 1.45;
+            }
+            .artist-profile-header .topbar-actions {
+                display: none;
+            }
+            .profile-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .profile-card {
+                padding: 14px 10px;
+                border-left: 0;
+                border-right: 0;
+                border-radius: 0;
+                box-shadow: none;
+                gap: 14px;
+            }
+            .profile-card:hover {
+                box-shadow: none;
+                border-color: var(--line);
+            }
+            .profile-card h3 {
+                padding-bottom: 8px;
+                font-size: 19px;
+            }
+            .artist-photo-box {
+                grid-template-columns: 70px minmax(0, 1fr);
+                gap: 10px;
+                padding: 10px;
+                border-radius: 6px;
+            }
+            .artist-photo-preview {
+                width: 70px;
+                height: 70px;
+            }
+            .form-group {
+                gap: 5px;
+            }
+            .form-group label {
+                font-size: 10px;
+            }
+            .form-group input,
+            .form-group textarea {
+                width: 100%;
+                min-height: 46px;
+                box-sizing: border-box;
+                font-size: 14px;
+            }
+            .form-group textarea {
+                min-height: 104px;
+            }
+            .form-group small {
+                display: none;
+            }
+            .form-group small.admin-vars {
+                display: block;
+            }
+            .submit-container {
+                margin-top: 14px;
+                position: sticky;
+                bottom: 0;
+                z-index: 30;
+                padding: 10px 0 2px;
+                background: linear-gradient(180deg, rgba(250, 249, 246, 0), var(--bg) 28%);
+            }
+            .submit-container button {
+                width: 100%;
+                min-width: 0;
+                min-height: 52px;
+                background: #b77f86;
+                border-color: #b77f86;
+            }
+        }
     </style>
 </head>
 <body>
@@ -272,7 +376,7 @@ function admin_vars_hint(bool $isAdmin, string $field): void
                     <p>Configure the artist context that shapes analysis, descriptions, and mockup guidance.</p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link secondary" href="root_album.php">Root Artworks</a>
+                    <a class="button-link secondary" href="root_album.php">ArtWorks</a>
                 </div>
             </div>
 
@@ -311,6 +415,19 @@ function admin_vars_hint(bool $isAdmin, string $field): void
                             <label>Artistic Name</label>
                             <input type="text" name="artist_name" value="<?= field_value($profile, 'artist_name') ?>" placeholder="e.g. Elena Rostova">
                             <?php admin_vars_hint($isAdmin, 'artist_name'); ?>
+                        </div>
+
+                        <div class="grid-2col" style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom: 14px;">
+                            <div class="form-group">
+                                <label>Subdominio de la Plataforma (*.artworkmockups.com)</label>
+                                <input type="text" name="subdomain" value="<?= field_value($profile, 'subdomain') ?>" placeholder="e.g. elena" pattern="^[a-z0-9\-]+$" title="Solo letras minúsculas, números y guiones.">
+                                <small style="color: var(--gray-text);">Dirección corta (ej. maurizio para maurizio.artworkmockups.com).</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Dominio Personalizado Propio</label>
+                                <input type="text" name="custom_domain" value="<?= field_value($profile, 'custom_domain') ?>" placeholder="e.g. elenarostova.com">
+                                <small style="color: var(--gray-text);">Dominio web independiente opcional.</small>
+                            </div>
                         </div>
 
                         <div class="form-group">

@@ -1,0 +1,9 @@
+<?php
+declare(strict_types=1);
+require_once dirname(__DIR__).'/app/bootstrap.php';
+$pdo=Database::connection();$mysql=Database::isMysql();$direction=$argv[1]??'up';if($direction!=='up')throw new RuntimeException('This additive migration is not rolled back separately.');
+$definitions=$mysql?['board_section_id'=>"VARCHAR(190) NOT NULL DEFAULT ''",'board_section_name'=>"VARCHAR(255) NOT NULL DEFAULT ''",'media_token'=>"VARCHAR(64) NOT NULL DEFAULT ''",'external_id'=>"VARCHAR(255) NOT NULL DEFAULT ''",'external_url'=>"MEDIUMTEXT NOT NULL",'error'=>"MEDIUMTEXT NOT NULL"]:['board_section_id'=>"TEXT NOT NULL DEFAULT ''",'board_section_name'=>"TEXT NOT NULL DEFAULT ''",'media_token'=>"TEXT NOT NULL DEFAULT ''",'external_id'=>"TEXT NOT NULL DEFAULT ''",'external_url'=>"TEXT NOT NULL DEFAULT ''",'error'=>"TEXT NOT NULL DEFAULT ''"];
+if($mysql){foreach($definitions as $column=>$definition){$stmt=$pdo->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=?');$stmt->execute(['pinterest_pin_drafts',$column]);if(!(int)$stmt->fetchColumn())$pdo->exec("ALTER TABLE pinterest_pin_drafts ADD COLUMN {$column} {$definition}");}}
+else{$columns=array_column($pdo->query('PRAGMA table_info(pinterest_pin_drafts)')->fetchAll(PDO::FETCH_ASSOC),'name');foreach($definitions as $column=>$definition)if(!in_array($column,$columns,true))$pdo->exec("ALTER TABLE pinterest_pin_drafts ADD COLUMN {$column} {$definition}");}
+$rows=$pdo->query("SELECT id FROM pinterest_pin_drafts WHERE media_token='' OR media_token IS NULL")->fetchAll(PDO::FETCH_COLUMN);$update=$pdo->prepare('UPDATE pinterest_pin_drafts SET media_token=? WHERE id=?');foreach($rows as $id)$update->execute([bin2hex(random_bytes(32)),(int)$id]);
+echo "Pinterest drafts completed for sections, public media and publication results.\n";

@@ -9,6 +9,13 @@ final class MockupFavorites
     public static function idsForUser(int $userId): array
     {
         $path = self::path($userId);
+        if (!is_file($path) && class_exists('StorageService') && StorageService::isGcsActive()) {
+            $dir = dirname($path);
+            if (!is_dir($dir)) {
+                mkdir($dir, 0775, true);
+            }
+            StorageService::downloadFile(self::storageKey($userId), $path);
+        }
         if (!is_file($path)) {
             return [];
         }
@@ -91,14 +98,26 @@ final class MockupFavorites
             throw new RuntimeException('Could not create mockup favorites directory.');
         }
 
-        file_put_contents(
+        $written = file_put_contents(
             self::path($userId),
             json_encode(array_values($ids), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
         );
+        if ($written === false) {
+            throw new RuntimeException('Could not save mockup favorites.');
+        }
+        if (class_exists('StorageService') && StorageService::isGcsActive()
+            && !StorageService::uploadFile(self::storageKey($userId), self::path($userId))) {
+            throw new RuntimeException('Could not persist mockup favorites.');
+        }
     }
 
     private static function path(int $userId): string
     {
         return dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'mockup_favorites' . DIRECTORY_SEPARATOR . 'user_' . $userId . '.json';
+    }
+
+    private static function storageKey(int $userId): string
+    {
+        return 'storage/mockup_favorites/user_' . $userId . '.json';
     }
 }

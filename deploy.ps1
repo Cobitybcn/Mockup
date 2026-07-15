@@ -1,5 +1,16 @@
+param(
+    [string]$ProjectId = "project-ff549db7-4f7f-4b0c-9a5",
+    [string]$Region = "us-central1",
+    [string]$Repository = "mockups-repo",
+    [string]$WebService = "mockups-web",
+    [string]$WorkerService = "mockups-worker",
+    [string]$TasksInvokerServiceAccountName = "mockups-tasks-invoker-sa"
+)
+
 # deploy.ps1
 # Local script to build and deploy both mockups-web and mockups-worker quickly.
+
+$ErrorActionPreference = "Stop"
 
 # 1. Update the local world mothers metadata index
 if (Get-Command php -ErrorAction SilentlyContinue) {
@@ -9,30 +20,17 @@ if (Get-Command php -ErrorAction SilentlyContinue) {
     Write-Host "PHP not found in global path. Skipping index rebuild (will use existing index.json)." -ForegroundColor Yellow
 }
 
-# 2. Deploy Web container to Cloud Run
-Write-Host "Deploying mockups-web..." -ForegroundColor Cyan
-Copy-Item Dockerfile.web Dockerfile
-gcloud builds submit --tag=us-central1-docker.pkg.dev/artwork-mockups-serverless/mockups-repo/mockups-web:latest .
-Remove-Item Dockerfile
-gcloud run deploy mockups-web `
-    --image=us-central1-docker.pkg.dev/artwork-mockups-serverless/mockups-repo/mockups-web:latest `
-    --allow-unauthenticated `
-    --service-account=mockups-web-sa@artwork-mockups-serverless.iam.gserviceaccount.com `
-    --min-instances=0 `
-    --max-instances=2 `
-    --region=us-central1
+& "$PSScriptRoot\deploy_web.ps1" `
+    -ProjectId $ProjectId `
+    -Region $Region `
+    -Repository $Repository `
+    -WebService $WebService
 
-# 3. Deploy Worker container to Cloud Run
-Write-Host "Deploying mockups-worker..." -ForegroundColor Cyan
-Copy-Item Dockerfile.worker Dockerfile
-gcloud builds submit --tag=us-central1-docker.pkg.dev/artwork-mockups-serverless/mockups-repo/mockups-worker:latest .
-Remove-Item Dockerfile
-gcloud run deploy mockups-worker `
-    --image=us-central1-docker.pkg.dev/artwork-mockups-serverless/mockups-repo/mockups-worker:latest `
-    --no-allow-unauthenticated `
-    --service-account=mockups-worker-sa@artwork-mockups-serverless.iam.gserviceaccount.com `
-    --min-instances=0 `
-    --max-instances=2 `
-    --region=us-central1
+& "$PSScriptRoot\deploy_worker.ps1" `
+    -ProjectId $ProjectId `
+    -Region $Region `
+    -Repository $Repository `
+    -WorkerService $WorkerService `
+    -TasksInvokerServiceAccountName $TasksInvokerServiceAccountName
 
 Write-Host "SUCCESS: Both services successfully deployed to Cloud Run!" -ForegroundColor Green

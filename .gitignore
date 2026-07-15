@@ -2,6 +2,7 @@
 /results/
 /uploads/
 /logs/
+/analysis/
 # Ignore storage except for the index.json metadata
 !/storage/
 /storage/*
@@ -10,8 +11,13 @@
 !/storage/world_mothers/index.json
 /backups/
 /scratch/
+/mockup-prompts/*
+!/mockup-prompts/.htaccess
 *.log
 .env
+.agents/
+.claude/
+.codex/
 .idea/
 .vscode/
 
@@ -24,3 +30,4 @@ app/Services/__pycache__/
 # Temp files
 wmi_outer_err.txt
 test.txt
+dump_output.txt

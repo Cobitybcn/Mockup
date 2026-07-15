@@ -47,9 +47,13 @@ function h($v): string
     return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 }
 
-function result_url(?string $file): string
+function result_url(?string $file, int $thumbWidth = 0): string
 {
-    return $file ? 'media.php?file=' . rawurlencode(basename($file)) : '';
+    if (!$file) {
+        return '';
+    }
+    $url = 'media.php?file=' . rawurlencode(basename($file));
+    return $thumbWidth > 0 ? $url . '&thumb=1&w=' . max(240, min(1200, $thumbWidth)) : $url;
 }
 
 function download_url(?string $file): string
@@ -100,7 +104,7 @@ function page_url(int $page, string $query): string
                 </div>
                 <div class="topbar-actions">
                     <a class="button-link" href="artwork_new.php">Upload Artwork</a>
-                    <a class="button-link secondary" href="root_album.php">Root Artworks</a>
+                    <a class="button-link secondary" href="root_album.php">ArtWorks</a>
                 </div>
             </div>
 
@@ -126,7 +130,7 @@ function page_url(int $page, string $query): string
                             <article class="item-card">
                                 <?php if (!empty($artwork['root_file']) && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . basename((string)$artwork['root_file']))): ?>
                                     <a href="artwork.php?id=<?= h($artwork['id']) ?>" aria-label="Open artwork details">
-                                        <img src="<?= h(result_url($artwork['root_file'])) ?>" alt="<?= h($artwork['final_title'] !== '' ? $artwork['final_title'] : 'Root artwork') ?>">
+                                        <img src="<?= h(result_url($artwork['root_file'], 520)) ?>" alt="<?= h($artwork['final_title'] !== '' ? $artwork['final_title'] : 'Root artwork') ?>" loading="lazy" decoding="async">
                                     </a>
                                 <?php endif; ?>
 

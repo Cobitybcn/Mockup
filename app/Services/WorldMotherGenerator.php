@@ -108,6 +108,7 @@ final class WorldMotherGenerator
         } else {
             $this->drawMockWorldMother($referencePath, $outputPath, $analysis, $categorySlug);
         }
+        $this->persistGeneratedImage('storage/world_mothers/' . $categorySlug . '/' . $fileName, $outputPath);
 
         $auditDir = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'analysis' . DIRECTORY_SEPARATOR . 'world-mother-generation-audit';
         if (!is_dir($auditDir)) {
@@ -128,6 +129,8 @@ final class WorldMotherGenerator
             'options' => $options,
         ];
         file_put_contents($auditPath, json_encode($audit, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+
+        $this->library->rebuildIndex();
 
         return [
             'category_slug' => $categorySlug,
@@ -200,6 +203,7 @@ final class WorldMotherGenerator
             } else {
                 $this->drawMockWorldMother($referencePaths[($i - 1) % count($referencePaths)], $outputPath, $analysis, $categorySlug);
             }
+            $this->persistGeneratedImage('storage/world_mothers/' . $categorySlug . '/' . $fileName, $outputPath);
 
             $images[] = [
                 'file_name' => $fileName,
@@ -228,6 +232,8 @@ final class WorldMotherGenerator
             'options' => $options,
         ];
         file_put_contents($auditPath, json_encode($audit, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+
+        $this->library->rebuildIndex();
 
         return [
             'category_slug' => $categorySlug,
@@ -274,6 +280,7 @@ final class WorldMotherGenerator
         } else {
             $this->drawMockWorldMother(null, $outputPath, $analysis, $categorySlug);
         }
+        $this->persistGeneratedImage('storage/world_mothers/' . $categorySlug . '/' . $fileName, $outputPath);
 
         $auditDir = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'analysis' . DIRECTORY_SEPARATOR . 'world-mother-generation-audit';
         if (!is_dir($auditDir)) {
@@ -294,6 +301,8 @@ final class WorldMotherGenerator
             'options' => $options,
         ];
         file_put_contents($auditPath, json_encode($audit, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+
+        $this->library->rebuildIndex();
 
         return [
             'category_slug' => $categorySlug,
@@ -320,6 +329,13 @@ final class WorldMotherGenerator
     private function precompositionOverride(): array
     {
         return ['MOCKUP_USE_PRECOMPOSITION' => 'false'];
+    }
+
+    private function persistGeneratedImage(string $relativePath, string $absolutePath): void
+    {
+        if (StorageService::isGcsActive() && !StorageService::uploadFile($relativePath, $absolutePath)) {
+            throw new RuntimeException('The generated scene reference could not be saved to persistent storage.');
+        }
     }
 
     public static function safeSlug(string $value): string

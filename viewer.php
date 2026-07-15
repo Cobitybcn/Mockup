@@ -351,158 +351,85 @@ function read_json_file(string $path): array
     return is_array($data) ? $data : [];
 }
 
-function words_from($value): array
-{
-    if (is_array($value)) {
-        $items = [];
-        foreach ($value as $item) {
-            $items = array_merge($items, words_from($item));
-        }
-
-        return $items;
-    }
-
-    $parts = preg_split('/[,;|\/\n]+/', strtolower((string)$value));
-
-    return array_values(array_filter(array_map(
-        fn($part) => trim(preg_replace('/\s+/', ' ', (string)$part)),
-        $parts ?: []
-    )));
-}
-
-function unique_limited(array $items, int $limit, array $fallback = []): array
-{
-    $out = [];
-
-    foreach (array_merge($items, $fallback) as $item) {
-        $item = trim(preg_replace('/\s+/', ' ', (string)$item));
-
-        if ($item === '') {
-            continue;
-        }
-
-        $key = strtolower($item);
-        if (!isset($out[$key])) {
-            $out[$key] = $item;
-        }
-
-        if (count($out) >= $limit) {
-            break;
-        }
-    }
-
-    return array_values($out);
-}
-
-function english_term(string $value): string
-{
-    $value = str_replace(
-        ['Á', 'É', 'Í', 'Ó', 'Ú', 'Ü', 'Ñ', 'á', 'é', 'í', 'ó', 'ú', 'ü', 'ñ'],
-        ['A', 'E', 'I', 'O', 'U', 'U', 'N', 'a', 'e', 'i', 'o', 'u', 'u', 'n'],
-        $value
-    );
-    $value = strtolower(trim(preg_replace('/[_-]+/', ' ', $value)));
-    $map = [
-        'abstracto' => 'abstract',
-        'contemporaneo' => 'contemporary',
-        'geometrico' => 'geometric',
-        'arquitectonico' => 'architectural',
-        'organico' => 'organic',
-        'minimalista' => 'minimal',
-        'figurativo' => 'figurative',
-        'expresivo' => 'expressive',
-        'estructural' => 'structural',
-        'simbolico' => 'symbolic',
-        'metafisico' => 'metaphysical',
-        'silencio' => 'silence',
-        'territorio' => 'territory',
-        'austeridad' => 'austerity',
-        'monolitos' => 'monoliths',
-        'coleccionistas' => 'collectors',
-        'galeria' => 'gallery',
-        'sutil' => 'subtle',
-    ];
-
-    return $map[$value] ?? $value;
-}
-
-function english_terms(array $items, array $fallback): array
-{
-    $terms = [];
-
-    foreach ($items as $item) {
-        $term = english_term((string)$item);
-        if (str_word_count($term) <= 4 && strlen($term) <= 42) {
-            $terms[] = $term;
-        }
-    }
-
-    return unique_limited($terms, 12, $fallback);
-}
-
-function title_case_soft(string $value): string
-{
-    $small = ['and', 'or', 'of', 'in', 'the', 'a', 'an', 'with', 'for'];
-    $words = preg_split('/\s+/', strtolower(trim($value))) ?: [];
-    $words = array_map(fn(string $word): string => in_array($word, $small, true) ? $word : ucfirst($word), $words);
-
-    if ($words) {
-        $words[0] = ucfirst($words[0]);
-    }
-
-    return implode(' ', $words);
-}
-
 $rootFile = is_array($artwork) ? basename((string)($artwork['root_file'] ?? '')) : basename((string)$mockup['artwork_file']);
 $rootBase = $rootFile ? pathinfo($rootFile, PATHINFO_FILENAME) : '';
 $analysis = $rootBase ? read_json_file(ANALYSIS_DIR . DIRECTORY_SEPARATOR . $rootBase . '.analysis.json') : [];
 $profile = is_array($analysis['artwork_profile'] ?? null) ? $analysis['artwork_profile'] : [];
 $artistProfile = is_array($profile['_artist_profile'] ?? null) ? $profile['_artist_profile'] : ArtistProfile::findForUser((int)$user['id']);
-$artistName = trim((string)($artistProfile['artist_name'] ?? ''));
-$style = english_terms(words_from($profile['style_tags'] ?? $artistProfile['visual_language'] ?? []), ['contemporary', 'abstract', 'material']);
-$mood = english_terms(words_from($profile['mood_tags'] ?? []), ['quiet intensity', 'contemplative', 'collector-grade']);
-$palette = english_terms(words_from($profile['palette'] ?? $artistProfile['palette_notes'] ?? []), ['balanced palette', 'sober tones']);
-$themes = english_terms(words_from($artistProfile['recurring_themes'] ?? ''), ['territory', 'silence', 'material presence']);
 $contextTitle = Display::contextTitle($mockup['context_id']);
-$storedTitle = is_array($artwork) ? trim((string)($artwork['final_title'] ?? '')) : '';
-$baseTitle = $storedTitle !== '' ? $storedTitle : title_case_soft(($palette[0] ?? 'Balanced Palette') . ' in ' . ($themes[0] ?? 'Quiet Space'));
-$subtitle = is_array($artwork) && trim((string)($artwork['subtitle'] ?? '')) !== ''
-    ? trim((string)$artwork['subtitle'])
-    : title_case_soft('a ' . ($style[0] ?? 'contemporary') . ' artwork for collectors');
-$titleLine = $baseTitle . ': ' . $subtitle;
-$sizeText = '';
-if (is_array($artwork) && trim((string)($artwork['width'] ?? '')) !== '' && trim((string)($artwork['height'] ?? '')) !== '') {
-    $sizeText = trim((string)$artwork['width'] . ' x ' . (string)$artwork['height'] . ' ' . (string)($artwork['unit'] ?? 'cm'));
+$viewerMockupId = (int)($mockup['id'] ?? 0);
+$viewerFavoriteLookup = $viewerMockupId > 0 ? MockupFavorites::lookupForUser((int)$user['id']) : [];
+$viewerIsFavorite = $viewerMockupId > 0 && isset($viewerFavoriteLookup[$viewerMockupId]);
+$pinterestDraftNotice=(string)($_SESSION['pinterest_draft_notice']??'');unset($_SESSION['pinterest_draft_notice']);
+$pinterestDraftError=(string)($_SESSION['pinterest_draft_error']??'');unset($_SESSION['pinterest_draft_error']);
+$metaDraftNotice=(string)($_SESSION['meta_draft_notice']??'');unset($_SESSION['meta_draft_notice']);
+$metaDraftError=(string)($_SESSION['meta_draft_error']??'');unset($_SESSION['meta_draft_error']);
+$_SESSION['pinterest_draft_csrf']=bin2hex(random_bytes(24));
+$_SESSION['meta_draft_csrf']=bin2hex(random_bytes(24));
+$editorial = MockupEditorialContent::build(is_array($artwork) ? $artwork : [], $analysis, $artistProfile, $contextTitle);
+$pinBoard = $editorial['board'];
+$pinTitle = $editorial['title'];
+$pinDescription = $editorial['description'];
+$pinAlt = $editorial['altText'];
+$pinKeywords = $editorial['keywords'];
+$pinHashtags = $editorial['hashtags'];
+$otherSocial = $editorial['social'];
+$titleLine = $editorial['titleLine'];
+
+// La ficha editorial vigente vive en el viewer. La vinculamos con la obra madre
+// y persistimos su copy actual para que el publicador use este mockup exacto.
+$publicationSheetId = 0;
+$publicationMockupSheetId = 0;
+if ($artworkId > 0 && $viewerMockupId > 0) {
+    try {
+        $artworkSheetService = new ArtworkSheetService($pdo);
+        $publicationArtworkSheet = $artworkSheetService->sheetForArtwork($artworkId, (int)$user['id']);
+        $publicationMockupSheet = $artworkSheetService->attachMockupFile(
+            (int)$publicationArtworkSheet['id'],
+            (int)$user['id'],
+            (string)$mockup['mockup_file']
+        );
+        $publicationSheetId = (int)$publicationArtworkSheet['id'];
+        $publicationMockupSheetId = (int)$publicationMockupSheet['id'];
+        if (trim((string)($publicationMockupSheet['title'] ?? '')) === '') {
+            $artworkSheetService->saveMockupSheet($publicationMockupSheetId, (int)$user['id'], [
+                'title' => $pinTitle,
+                'description' => $pinDescription,
+                'keywords' => implode(', ', $pinKeywords),
+                'tags' => implode(', ', array_map(static fn(string $tag): string => ltrim($tag, '#'), $pinHashtags)),
+                'alt_text' => $pinAlt,
+                'caption' => (string)($otherSocial['Instagram'] ?? $titleLine),
+                'status' => 'review',
+            ]);
+        }
+    } catch (Throwable $publicationError) {
+        $publicationSheetId = 0;
+        $publicationMockupSheetId = 0;
+    }
 }
-$pinBoard = in_array('architectural', $style, true) || in_array('structural', $style, true)
-    ? 'Architectural Minimalism'
-    : 'Contemporary Abstract Art';
-$pinTitle = $baseTitle . ' - Original Contemporary Abstract Artwork';
-$pinDescription = $titleLine . "\n\n" .
-    'This Pin features a generated curatorial mockup of an original contemporary artwork in a ' . strtolower($contextTitle) . ' setting. The image highlights the artwork scale, wall presence, color atmosphere, and gallery-ready presentation for collectors, interior designers, galleries, and buyers searching for abstract art for interiors.';
-$pinAlt = 'A generated mockup showing ' . $baseTitle . ' as a contemporary artwork in a ' . strtolower($contextTitle) . ' setting, with visible wall placement, artwork scale, color presence, and surrounding interior atmosphere.';
-$pinKeywords = unique_limited(array_merge([
-    'contemporary abstract art',
-    'original painting for sale',
-    'artwork for collectors',
-    'abstract painting for interiors',
-    'minimalist abstract painting',
-    'large wall art',
-    'gallery ready artwork',
-    'art for interior designers',
-    'statement painting',
-    'modern collector art',
-], $style, $palette, $themes), 14);
-$pinHashtags = array_map(
-    fn($tag) => '#' . preg_replace('/[^a-z0-9]/', '', strtolower($tag)),
-    unique_limited(['contemporary art', 'abstract painting', 'original artwork', 'art collectors', 'interior design art', 'large painting', 'statement art'], 8)
-);
-$otherSocial = [
-    'Instagram' => $titleLine . "\n\n" . 'Generated curatorial mockup for ' . strtolower($contextTitle) . '. ' . title_case_soft(implode(', ', array_slice($style, 0, 3))) . ' with ' . implode(', ', array_slice($mood, 0, 2)) . ".\n\n" . implode(' ', array_slice($pinHashtags, 0, 8)),
-    'Facebook' => $titleLine . "\n\n" . 'A curated mockup presentation prepared for collectors, interior designers, galleries, and marketplace publication. This image can accompany the artwork listing, auction page, or artist profile.',
-    'X' => $baseTitle . ' - original contemporary artwork shown in a curated mockup for collectors, interiors, and art platforms.',
-    'TikTok' => 'Use this mockup as a short reveal: start with the room context, move into the artwork surface and scale, then end with the title "' . $baseTitle . '" and the destination link.',
-];
+$mockupV2 = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'generate_mockup_v2') {
+    try {
+        if ($publicationSheetId <= 0 || $publicationMockupSheetId <= 0) throw new RuntimeException('Mockup sheet is not available.');
+        $artworkSheetService->generateMockupSheet($publicationSheetId, $artworkId, (string)$mockup['mockup_file'], (int)$user['id'], 'Generate neutral mockup analysis v2 and channel adapters.');
+        header('Location: viewer.php?id=' . $viewerMockupId . $viewerBackParam . '&mockup_v2_generated=1');
+        exit;
+    } catch (Throwable $e) {
+        header('Location: viewer.php?id=' . $viewerMockupId . $viewerBackParam . '&mockup_v2_error=' . rawurlencode($e->getMessage()));
+        exit;
+    }
+}
+if (is_array($publicationMockupSheet ?? null)) {
+    $storedMockupGenerated = json_decode((string)($publicationMockupSheet['generated_json'] ?? ''), true);
+    if (is_array($storedMockupGenerated['mockup_analysis_v2'] ?? null)) $mockupV2 = $storedMockupGenerated['mockup_analysis_v2'];
+}
+if ($mockupV2) {
+    $neutralV2=(array)($mockupV2['neutral']??[]); $channelsV2=(array)($mockupV2['channels']??[]); $pinterestV2=(array)($channelsV2['pinterest']??[]);
+    $pinTitle=trim((string)($pinterestV2['title']??''))?:$pinTitle; $pinDescription=trim((string)($pinterestV2['description']??''))?:$pinDescription; $pinAlt=trim((string)($neutralV2['alt_text']??''))?:$pinAlt;
+    $pinKeywords=(array)($pinterestV2['keywords']??[])?:$pinKeywords; $v2Boards=(array)($pinterestV2['board_suggestions']??[]); if($v2Boards)$pinBoard=(string)$v2Boards[0];
+    $instagramV2=(array)($channelsV2['instagram']??[]); $facebookV2=(array)($channelsV2['facebook']??[]); $tiktokV2=(array)($channelsV2['tiktok']??[]);
+    $otherSocial=['Instagram'=>trim((string)($instagramV2['caption']??'')."\n\n".implode(' ',(array)($instagramV2['hashtags']??[]))),'Facebook'=>trim((string)($facebookV2['headline']??'')."\n\n".(string)($facebookV2['post_text']??'')),'TikTok · future'=>trim((string)($tiktokV2['caption_seed']??'')."\n".(string)($tiktokV2['video_notes']??''))];
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -653,6 +580,37 @@ $otherSocial = [
         .viewer-actions a:hover {
             color: var(--accent);
             border-color: var(--accent);
+        }
+
+        .viewer-favorite-btn {
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(183, 127, 134, .72);
+            border-radius: 999px;
+            background: rgba(255, 250, 247, .86);
+            color: var(--accent);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: 0 10px 28px rgba(28, 23, 20, .12);
+            transition: background .16s ease, color .16s ease, border-color .16s ease;
+        }
+
+        .viewer-favorite-btn:hover,
+        .viewer-favorite-btn:focus-visible,
+        .viewer-favorite-btn.active {
+            background: #b77f86;
+            border-color: #b77f86;
+            color: #fffaf7;
+            outline: none;
+        }
+
+        .viewer-favorite-btn[disabled] {
+            cursor: wait;
+            opacity: .62;
         }
 
         .viewer-actions .icon-link {
@@ -906,6 +864,19 @@ $otherSocial = [
         <nav class="viewer-actions">
             <a class="icon-link back" href="<?= h($backUrl) ?>" aria-label="Back to details" title="Back to details"></a>
             <a href="mockups.php">Mockups</a>
+            <?php if ($publicationSheetId > 0 && $publicationMockupSheetId > 0): ?>
+                <a href="publish_mockup.php?id=<?= $viewerMockupId ?>">Publish mockup</a>
+            <?php endif; ?>
+            <?php if ($viewerMockupId > 0): ?>
+                <button
+                    class="viewer-favorite-btn <?= $viewerIsFavorite ? 'active' : '' ?>"
+                    type="button"
+                    title="<?= $viewerIsFavorite ? 'Remove favorite' : 'Add favorite' ?>"
+                    aria-label="<?= $viewerIsFavorite ? 'Remove favorite' : 'Add favorite' ?>"
+                    data-favorite-mockup
+                    data-mockup-id="<?= (int)$viewerMockupId ?>"
+                >★</button>
+            <?php endif; ?>
             <a class="icon-link download" href="<?= h(download_url($mockup['mockup_file'])) ?>" aria-label="Download mockup" title="Download mockup"><span class="download-base" aria-hidden="true"></span></a>
         </nav>
     </header>
@@ -928,7 +899,61 @@ $otherSocial = [
     </footer>
 
     <section class="publication">
-        <section class="panel pinterest">
+        <?php if(isset($_GET['mockup_v2_generated'])):?><div class="notice success">Mockup analysis v2 generated as a draft. Nothing was published.</div><?php endif;?>
+        <?php if(isset($_GET['mockup_v2_error'])):?><div class="notice error"><?=h((string)$_GET['mockup_v2_error'])?></div><?php endif;?>
+        <?php if($pinterestDraftNotice!==''):?><div class="notice success"><?=h($pinterestDraftNotice)?></div><?php endif;?>
+        <?php if($pinterestDraftError!==''):?><div class="notice error"><?=h($pinterestDraftError)?></div><?php endif;?>
+        <?php if($metaDraftNotice!==''):?><div class="notice success"><?=h($metaDraftNotice)?></div><?php endif;?>
+        <?php if($metaDraftError!==''):?><div class="notice error"><?=h($metaDraftError)?></div><?php endif;?>
+        <?php if($viewerMockupId>0): ?>
+            <section class="panel">
+                <div class="section-heading">
+                    <div><h2>Admin · Mockup Analysis v2</h2><p>Neutral scene analysis derived from the approved artwork identity and this exact mockup.</p></div>
+                    <form method="post"><input type="hidden" name="action" value="generate_mockup_v2"><button type="submit"><?= $mockupV2 ? 'Regenerate v2' : 'Generate mockup analysis v2' ?></button></form>
+                </div>
+                <?php if($mockupV2): $neutral=(array)($mockupV2['neutral']??[]); $channels=(array)($mockupV2['channels']??[]); $scene=(array)($neutral['scene']??[]); ?>
+                    <div class="pin-fields">
+                        <div class="pin-field full"><label>Neutral mockup description</label><h3><?=h($neutral['context_title']??'')?></h3><p><?=h($neutral['contextual_description']??'')?></p></div>
+                        <div class="pin-field"><label>Scene</label><p><?=h($scene['space_type']??'')?> · <?=h($scene['architecture']??'')?></p><p><?=h($scene['lighting']??'')?> · <?=h($scene['camera']??'')?></p></div>
+                        <div class="pin-field"><label>Keywords / Long tails / Tags</label><p><?=h(implode(', ',(array)($neutral['keywords']??[])))?></p><p><?=h(implode(', ',(array)($neutral['long_tail_keywords']??[])))?></p><p><?=h(implode(', ',(array)($neutral['tags']??[])))?></p></div>
+                    </div>
+                    <div class="social-grid">
+                        <?php foreach(['website'=>'Website','instagram'=>'Instagram','facebook'=>'Facebook','tiktok'=>'TikTok · future'] as $key=>$label): $channel=(array)($channels[$key]??[]); ?>
+                            <article class="social-card">
+                                <h3><?=h($label)?></h3>
+                                <?php foreach($channel as $field=>$value): ?>
+                                    <div style="margin-top:10px;">
+                                        <strong style="display:block;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px;"><?=h(str_replace('_',' ',$field))?></strong>
+                                        <?php if(is_array($value)): ?>
+                                            <?php if($field==='video_structure'||$field==='on_screen_text'): ?>
+                                                <ol style="margin:0;padding-left:18px;font-size:12px;line-height:1.5;"><?php foreach($value as $item): ?><li><?=h(is_scalar($item)?$item:json_encode($item,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES))?></li><?php endforeach; ?></ol>
+                                            <?php else: ?>
+                                                <div class="keyword-wrap"><?php foreach($value as $item): ?><span class="keyword-chip"><?=h(is_scalar($item)?$item:json_encode($item,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES))?></span><?php endforeach; ?></div>
+                                            <?php endif; ?>
+                                        <?php elseif(is_bool($value)): ?>
+                                            <span><?= $value ? 'Yes' : 'No' ?></span>
+                                        <?php else: ?>
+                                            <p class="copy-block" style="margin:0;white-space:pre-line;"><?=h((string)$value)?></p>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endforeach; ?>
+                                <?php if($key==='facebook'||$key==='instagram'): ?>
+                                    <form method="post" action="meta_mockup_draft.php" style="margin-top:12px;">
+                                        <input type="hidden" name="mockup_id" value="<?=$viewerMockupId?>"><input type="hidden" name="channel" value="<?=h($key)?>">
+                                        <input type="hidden" name="csrf" value="<?=h($_SESSION['meta_draft_csrf'])?>">
+                                        <label>Destination <?= $key==='instagram' ? '(optional; profile/link strategy)' : 'link' ?></label>
+                                        <input type="url" name="destination_url" placeholder="https://mauriziovalch.com/artwork/..." <?= $key==='facebook' ? 'required' : '' ?>>
+                                        <button type="submit" class="copy-button">Prepare <?=h(ucfirst($key))?> draft</button>
+                                    </form>
+                                <?php endif; ?>
+                            </article>
+                        <?php endforeach; ?>
+                    </div>
+                    <details style="margin-top:14px;"><summary style="cursor:pointer;font-size:11px;color:var(--muted);">Technical JSON</summary><pre style="white-space:pre-wrap;overflow:auto;max-height:320px;font-size:10px;"><?=h(json_encode($mockupV2,JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES))?></pre></details>
+                <?php else: ?><p>No v2 draft exists for this mockup yet.</p><?php endif; ?>
+            </section>
+        <?php endif; ?>
+        <?php if($mockupV2): ?><section class="panel pinterest">
             <div class="section-heading">
                 <div>
                     <h2>Pinterest Pin Content</h2>
@@ -962,12 +987,14 @@ $otherSocial = [
                     <button class="copy-button" type="button" data-copy="<?= h($pinAlt) ?>">Copy Alt Text</button>
                 </div>
 
-                <div class="pin-field full">
+                <form class="pin-field full" method="post" action="pinterest_mockup_draft.php">
                     <label>Destination Link</label>
-                    <input id="destination_link" type="text" placeholder="Paste Saatchi Art, Catawiki, Artsy, gallery, marketplace or artist website URL">
-                    <small>Add the final sales page, auction page, artwork page, artist profile, or gallery listing before publishing.</small>
-                    <button class="copy-button" type="button" data-copy-source="destination_link">Copy Destination Link</button>
-                </div>
+                    <input type="hidden" name="csrf" value="<?=h($_SESSION['pinterest_draft_csrf'])?>"><input type="hidden" name="mockup_id" value="<?=$viewerMockupId?>">
+                    <input id="destination_link" name="destination_url" type="url" required placeholder="https://artist-website.com/artwork">
+                    <?php if($isAdmin):?><label>Pinterest identity</label><select name="purpose"><option value="artist">Artist account</option><option value="platform">Artwork Mockups platform account</option></select><?php else:?><input type="hidden" name="purpose" value="artist"><?php endif;?>
+                    <small>The draft keeps this exact mockup content. Nothing is published.</small>
+                    <button class="button-link secondary" type="submit">Prepare Pinterest draft</button>
+                </form>
 
                 <div class="pin-field">
                     <label>Suggested Pinterest Keywords</label>
@@ -985,27 +1012,8 @@ $otherSocial = [
                     <button class="copy-button" type="button" data-copy="<?= h(implode(' ', $pinHashtags)) ?>">Copy Hashtags</button>
                 </div>
             </div>
-        </section>
+        </section><?php endif; ?>
 
-        <section class="panel">
-            <div class="section-heading">
-                <div>
-                    <h2>Other Social Media Content</h2>
-                    <p>Captions prepared for this exact mockup image.</p>
-                </div>
-                <p>Instagram, Facebook, X and TikTok</p>
-            </div>
-
-            <div class="social-grid">
-                <?php foreach ($otherSocial as $platform => $copy): ?>
-                    <article class="social-card">
-                        <h3><?= h($platform) ?></h3>
-                        <p class="copy-block"><?= h($copy) ?></p>
-                        <button class="copy-button" type="button" data-copy="<?= h($copy) ?>">Copy</button>
-                    </article>
-                <?php endforeach; ?>
-            </div>
-        </section>
     </section>
 
     <script>
@@ -1052,6 +1060,36 @@ $otherSocial = [
             if (event.key === 'Escape') {
                 window.location.href = <?= json_encode($backUrl, JSON_UNESCAPED_SLASHES) ?>;
             }
+        });
+
+        document.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-favorite-mockup]');
+            if (!button) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            const body = new FormData();
+            body.append('mockup_id', button.getAttribute('data-mockup-id') || '');
+            button.disabled = true;
+
+            fetch('toggle_mockup_favorite.php', { method: 'POST', body })
+                .then(response => response.json().then(payload => ({ ok: response.ok, payload })))
+                .then(result => {
+                    if (!result.ok || !result.payload.ok) {
+                        throw new Error(result.payload.error || 'Could not update favorite.');
+                    }
+
+                    button.classList.toggle('active', !!result.payload.favorite);
+                    button.title = result.payload.favorite ? 'Remove favorite' : 'Add favorite';
+                    button.setAttribute('aria-label', button.title);
+                })
+                .catch(error => alert(error.message || 'Could not update favorite.'))
+                .finally(() => {
+                    button.disabled = false;
+                });
         });
     </script>
 </body>

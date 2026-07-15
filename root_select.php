@@ -70,7 +70,7 @@ try {
     foreach ($stmt->fetchAll() as $row) {
         $file = basename((string)($row['root_file'] ?? ''));
         if ($file !== '' && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $file)) {
-            $albumSlides[$file] = 'media.php?file=' . rawurlencode($file);
+            $albumSlides[$file] = 'media.php?file=' . rawurlencode($file) . '&thumb=1&w=640';
         }
     }
 
@@ -83,7 +83,7 @@ try {
         foreach ($fallbackFiles as $path) {
             $file = basename($path);
             if (!isset($albumSlides[$file])) {
-                $albumSlides[$file] = 'media.php?file=' . rawurlencode($file);
+                $albumSlides[$file] = 'media.php?file=' . rawurlencode($file) . '&thumb=1&w=640';
             }
             if (count($albumSlides) >= 12) {
                 break;
@@ -1005,7 +1005,7 @@ function h($v): string {
                 </div>
                 <div class="topbar-actions" style="display: flex; gap: 12px; margin-bottom: 4px;">
                     <a class="button-link secondary" href="waiting.php?action=cancel&job=<?= urlencode($job) ?>">Cancel Upload</a>
-                    <a class="button-link secondary" href="root_album.php">Root Artworks</a>
+                    <a class="button-link secondary" href="root_album.php">ArtWorks</a>
                 </div>
             </div>
 

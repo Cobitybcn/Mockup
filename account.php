@@ -6,6 +6,27 @@ require_once __DIR__ . '/app/bootstrap.php';
 $user = Auth::requireUser();
 $isAdmin = Auth::isAdmin($user);
 $pdo = Database::connection();
+$passwordSuccess = '';
+$passwordError = '';
+
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && ($_POST['action'] ?? '') === 'change_password') {
+    $currentPassword = (string)($_POST['current_password'] ?? '');
+    $newPassword = (string)($_POST['new_password'] ?? '');
+    $confirmPassword = (string)($_POST['confirm_password'] ?? '');
+
+    if ($newPassword !== $confirmPassword) {
+        $passwordError = 'New passwords do not match.';
+    } else {
+        try {
+            Auth::changePassword($currentPassword, $newPassword);
+            $passwordSuccess = 'Your password has been updated successfully.';
+        } catch (RuntimeException $e) {
+            $passwordError = $e->getMessage();
+        } catch (Throwable $e) {
+            $passwordError = 'We could not update your password. Please try again.';
+        }
+    }
+}
 
 // Punto #10: historial de transacciones de créditos
 $txStmt = $pdo->prepare("
@@ -18,6 +39,30 @@ $txStmt = $pdo->prepare("
 $txStmt->execute(['user_id' => (int)$user['id']]);
 $creditHistory = $txStmt->fetchAll();
 
+$rootArtworkTotal = 0;
+$mockupTotal = 0;
+$variantRootTotal = 0;
+$pendingArtworkTotal = 0;
+try {
+    $rootStmt = $pdo->prepare('SELECT COUNT(*) FROM artwork_groups WHERE status = "active" AND user_id = :user_id');
+    $rootStmt->execute(['user_id' => (int)$user['id']]);
+    $rootArtworkTotal = (int)$rootStmt->fetchColumn();
+
+    $mockupStmt = $pdo->prepare('SELECT COUNT(*) FROM mockups WHERE user_id = :user_id');
+    $mockupStmt->execute(['user_id' => (int)$user['id']]);
+    $mockupTotal = (int)$mockupStmt->fetchColumn();
+
+    $variantStmt = $pdo->prepare('SELECT COUNT(*) FROM artworks WHERE artwork_group_id IS NOT NULL AND root_view_status = "variant" AND user_id = :user_id');
+    $variantStmt->execute(['user_id' => (int)$user['id']]);
+    $variantRootTotal = (int)$variantStmt->fetchColumn();
+
+    $pendingStmt = $pdo->prepare('SELECT COUNT(*) FROM artworks WHERE user_id = :user_id AND (status != "done" OR root_file IS NULL OR root_file = "")');
+    $pendingStmt->execute(['user_id' => (int)$user['id']]);
+    $pendingArtworkTotal = (int)$pendingStmt->fetchColumn();
+} catch (Throwable $e) {
+    // Keep account available even if a stats table is not ready in a local build.
+}
+
 function h($v): string
 {
     return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
@@ -28,9 +73,117 @@ function h($v): string
 <head>
     <meta charset="utf-8">
     <title>Account - Artwork Mockups</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
+    <style>
+        .account-page .stat-link {
+            color: inherit;
+            text-decoration: none;
+            transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+        }
+        .account-page .stat-link:hover {
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+        .account-security-form {
+            max-width: 760px;
+        }
+        .account-security-fields {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+        .account-security-fields label {
+            margin-top: 18px;
+        }
+        .account-security-form button {
+            width: auto;
+            min-width: 180px;
+        }
+        @media (max-width: 760px) {
+            .account-page .main-area > .app-header,
+            .account-page .main-area > .alert-strip {
+                display: none;
+            }
+            .account-page .workspace {
+                padding: 22px 14px 32px;
+            }
+            .account-page .workspace-header {
+                align-items: flex-start;
+                margin-bottom: 16px;
+            }
+            .account-page .workspace-header h1 {
+                font-size: clamp(34px, 12vw, 48px);
+                line-height: .92;
+                margin-bottom: 0;
+            }
+            .account-page .workspace-header p {
+                display: block;
+                margin-top: 10px;
+                color: var(--muted);
+                font-size: 13px;
+                line-height: 1.35;
+                overflow-wrap: anywhere;
+            }
+            .account-page .topbar-actions {
+                display: none;
+            }
+            .account-page .stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+                margin-bottom: 14px;
+            }
+            .account-page .stat-card {
+                min-height: 92px;
+                padding: 14px 12px;
+                border-radius: 8px;
+                background: #fffaf7;
+            }
+            .account-page .stat-card span {
+                font-size: 10px;
+                letter-spacing: .08em;
+                line-height: 1.2;
+            }
+            .account-page .stat-card strong {
+                font-size: 24px;
+                line-height: 1;
+            }
+            .account-page .panel {
+                padding: 16px;
+                border-radius: 8px;
+                margin-top: 12px;
+            }
+            .account-page .panel h2 {
+                font-size: 13px;
+                letter-spacing: .12em;
+                text-transform: uppercase;
+                margin-bottom: 8px;
+            }
+            .account-page .panel p {
+                font-size: 13px;
+                line-height: 1.45;
+            }
+            .account-page .panel:last-child {
+                display: none;
+            }
+            .account-page table {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                white-space: nowrap;
+            }
+            .account-security-fields {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+            .account-security-form button {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
-<body>
+<body class="account-page">
 <div class="app-shell">
     <?php include __DIR__ . '/sidebar.php'; ?>
 
@@ -50,30 +203,69 @@ function h($v): string
                     <p><?= h($user['email']) ?></p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link secondary" href="root_album.php">Root Artworks</a>
+                    <a class="button-link secondary" href="integrations/pinterest/">Pinterest Connections</a>
+                    <a class="button-link secondary" href="root_album.php">ArtWorks</a>
                 </div>
             </div>
 
             <section class="stats">
-                <div class="stat-card">
+                <a class="stat-card stat-link" href="account.php#credits">
                     <span>Available Credits</span>
                     <strong><?= h($user['credits']) ?></strong>
-                </div>
-                <div class="stat-card">
-                    <span>Plan</span>
-                    <strong>Beta</strong>
-                </div>
-                <div class="stat-card">
-                    <span>Payments</span>
-                    <strong>Off</strong>
-                </div>
-                <div class="stat-card">
-                    <span>Generation</span>
-                    <strong>Active</strong>
-                </div>
+                </a>
+                <a class="stat-card stat-link" href="root_album.php">
+                    <span>ArtWorks</span>
+                    <strong><?= h($rootArtworkTotal) ?></strong>
+                </a>
+                <a class="stat-card stat-link" href="mockups.php">
+                    <span>Scene Mockups</span>
+                    <strong><?= h($mockupTotal) ?></strong>
+                </a>
+                <a class="stat-card stat-link" href="root_album.php">
+                    <span>Root Variants</span>
+                    <strong><?= h($variantRootTotal) ?></strong>
+                </a>
+                <?php if ($pendingArtworkTotal > 0): ?>
+                    <a class="stat-card stat-link" href="root_album.php#pendientes">
+                        <span>Pending</span>
+                        <strong><?= h($pendingArtworkTotal) ?></strong>
+                    </a>
+                <?php endif; ?>
             </section>
 
-            <section class="panel">
+            <section class="panel" id="security">
+                <h2>Change password</h2>
+                <p>Enter your current password, then choose a new password with at least 8 characters.</p>
+
+                <?php if ($passwordSuccess !== ''): ?>
+                    <div class="notice" role="status"><?= h($passwordSuccess) ?></div>
+                <?php endif; ?>
+
+                <?php if ($passwordError !== ''): ?>
+                    <div class="notice error" role="alert"><?= h($passwordError) ?></div>
+                <?php endif; ?>
+
+                <form method="post" class="account-security-form">
+                    <input type="hidden" name="action" value="change_password">
+                    <div class="account-security-fields">
+                        <div>
+                            <label for="current_password">Current password</label>
+                            <input type="password" id="current_password" name="current_password" required autocomplete="current-password">
+                        </div>
+                        <div>
+                            <label for="new_password">New password</label>
+                            <input type="password" id="new_password" name="new_password" required minlength="8" autocomplete="new-password">
+                        </div>
+                        <div>
+                            <label for="confirm_password">Confirm new password</label>
+                            <input type="password" id="confirm_password" name="confirm_password" required minlength="8" autocomplete="new-password">
+                        </div>
+                    </div>
+                    <button type="submit">Change password</button>
+                </form>
+            </section>
+
+            <section class="panel" id="credits">
                 <h2>Beta Credits</h2>
                 <p>Each mockup generation uses 1 credit. Root image creation (Step 1) is free in Beta. Credits are refunded automatically if a generation fails.</p>
 

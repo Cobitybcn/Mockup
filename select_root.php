@@ -115,7 +115,7 @@ try {
 
     persist_root_artwork_candidates($db, $artworkId, (array)$candidates, $filename);
 
-    $redirect = 'mockup_combinations_review.php?id=' . $artworkId . '&world_mother_category=selected';
+    $redirect = 'mockup_combinations_review.php?id=' . $artworkId;
 
     echo json_encode([
         'ok' => true,

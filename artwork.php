@@ -2,11 +2,16 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
+require_once __DIR__ . '/app/Support/ArtworkAnalysisV2.php';
+require_once __DIR__ . '/app/Support/ArtworkOriginalityChecker.php';
+require_once __DIR__ . '/app/Support/DescriptionDiversityEngine.php';
+require_once __DIR__ . '/app/Services/ArtworkAnalysisV2Service.php';
 
 $user = Auth::requireUser();
 $isAdmin = Auth::isAdmin($user);
 $pdo = Database::connection();
 $id = max(0, (int)($_GET['id'] ?? 0));
+$metadataErrorMessage = trim((string)($_GET['metadata_error'] ?? ''));
 
 function h($v): string
 {
@@ -405,6 +410,57 @@ if ($id <= 0) {
     exit;
 }
 
+function artwork_v2_draft_for_image(string $imageFile): ?array
+{
+    $imageFile = basename($imageFile);
+    if ($imageFile === '') return null;
+    $matches = [];
+    $files = array_merge(
+        glob(__DIR__ . '/storage/artwork_analysis_v2_drafts/*.json') ?: [],
+        glob(__DIR__ . '/tmp/drafts/*.json') ?: []
+    );
+    foreach ($files as $file) {
+        if (str_ends_with($file, '.invalid.json')) continue;
+        $data = json_decode((string)@file_get_contents($file), true);
+        if (!is_array($data) || ($data['schema_version'] ?? '') !== ArtworkAnalysisV2::SCHEMA_VERSION) continue;
+        if (basename((string)($data['source']['image_file'] ?? '')) !== $imageFile) continue;
+        $matches[] = ['file'=>$file, 'mtime'=>(int)@filemtime($file), 'data'=>$data];
+    }
+    if (!$matches) return null;
+    usort($matches, static fn(array $a, array $b): int => $b['mtime'] <=> $a['mtime']);
+    return $matches[0];
+}
+
+function artwork_apply_v2_metadata(PDO $pdo, int $artworkId, int $userId, array $draft): void
+{
+    $errors = ArtworkAnalysisV2::validate($draft, false);
+    if ($errors) throw new RuntimeException(implode(' ', $errors));
+    $editorial = (array)($draft['canonical_editorial'] ?? []);
+    $search = (array)($draft['search_metadata'] ?? []);
+    $keywords = array_values(array_unique(array_filter(array_map('trim', array_merge(
+        (array)($search['core_keywords'] ?? []),
+        (array)($search['specific_keywords'] ?? [])
+    )))));
+    $sheetService = new ArtworkSheetService($pdo);
+    $sheet = $sheetService->sheetForArtwork($artworkId, $userId);
+    $sheetService->saveArtworkSheet((int)$sheet['id'], $userId, [
+        'related_artwork_ids'=>(string)$sheet['related_artwork_ids'],
+        'source_image_file'=>(string)$sheet['source_image_file'],
+        'title'=>(string)($editorial['title'] ?? ''),
+        'subtitle'=>(string)($editorial['subtitle'] ?? ''),
+        'description'=>(string)($editorial['master_description'] ?? ''),
+        'short_description'=>(string)($editorial['short_description'] ?? ''),
+        'keywords'=>implode(', ', $keywords),
+        'tags'=>(string)$sheet['tags'],
+        'alt_text'=>(string)($editorial['alt_text'] ?? ''),
+        'caption'=>(string)($editorial['caption'] ?? ''),
+        'user_notes'=>(string)$sheet['user_notes'],
+        'status'=>'validated',
+    ]);
+    $pdo->prepare('UPDATE artwork_sheets SET generated_json = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+        ->execute([json_encode($draft, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE), date('c'), (int)$sheet['id'], $userId]);
+}
+
 if ($isAdmin) {
     $stmt = $pdo->prepare('
         SELECT *
@@ -459,9 +515,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'selec
                     'user_id' => $artworkOwnerId,
                 ]);
         }, 12);
+        if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && ProviderSettings::imageProvider() === 'gemini') {
+            try {
+                $artworkForV2=$artwork;$artworkForV2['root_file']=$candidateFile;
+                $generated=(new ArtworkAnalysisV2Service(new GeminiImageClient()))->generateDraft($artworkForV2,ArtistProfile::findForUser($artworkOwnerId),RESULTS_DIR.DIRECTORY_SEPARATOR.$candidateFile,'Automatic v2 analysis after root selection.');
+                artwork_apply_v2_metadata($pdo,$id,$artworkOwnerId,(array)$generated['draft']);
+                header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&root_selected=1&v2_generated=1');exit;
+            } catch (Throwable $v2Error) {
+                header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&root_selected=1&metadata_error=' . rawurlencode($v2Error->getMessage()));exit;
+            }
+        }
     }
 
     header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&root_selected=1');
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'assign_series') {
+    $rawSeriesId = trim((string)($_POST['series_id'] ?? ''));
+    ArtworkSeries::assignArtwork($pdo, $artworkOwnerId, $id, $rawSeriesId === '' ? null : (int)$rawSeriesId);
+    header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&series_updated=1');
     exit;
 }
 
@@ -490,19 +563,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
 
     header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&saved=1');
     exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'generate_artwork_metadata') {
-    try {
-        $sheetService = new ArtworkSheetService($pdo);
-        $sheet = $sheetService->sheetForArtwork($id, $artworkOwnerId);
-        $sheetService->generateArtworkSheet((int)$sheet['id'], $artworkOwnerId);
-        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&metadata_generated=1');
-        exit;
-    } catch (Throwable $e) {
-        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&metadata_error=' . rawurlencode($e->getMessage()));
-        exit;
-    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_artwork_metadata') {
@@ -699,6 +759,55 @@ if (!function_exists('artwork_latest_root_view_job_candidates')) {
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'apply_v2_artwork_draft') {
+    try {
+        $draftMatch = artwork_v2_draft_for_image((string)($artwork['root_file'] ?? ''));
+        if (!$draftMatch) throw new RuntimeException('No valid v2 draft exists for the selected root artwork.');
+        artwork_apply_v2_metadata($pdo, $id, $artworkOwnerId, (array)$draftMatch['data']);
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&v2_applied=1#artwork-metadata');
+        exit;
+    } catch (Throwable $e) {
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&metadata_error=' . rawurlencode($e->getMessage()) . '#artwork-metadata');
+        exit;
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'generate_v2_artwork_draft') {
+    try {
+        if (!ProviderSettings::isRealMode() || !ProviderSettings::allowRealApi() || ProviderSettings::imageProvider() !== 'gemini') throw new RuntimeException('Gemini real analysis is not enabled in this environment.');
+        $imageFile = basename((string)($artwork['root_file'] ?? ''));
+        $imagePath = $imageFile !== '' ? RESULTS_DIR . DIRECTORY_SEPARATOR . $imageFile : '';
+        if ($imagePath === '' || !is_file($imagePath)) throw new RuntimeException('Selected root artwork image was not found.');
+        $profileForV2 = ArtistProfile::findForUser($artworkOwnerId);
+        $sheetForNotes = (new ArtworkSheetService($pdo))->sheetForArtwork($id, $artworkOwnerId);
+        $v2Service = new ArtworkAnalysisV2Service(new GeminiImageClient());
+        $generated=$v2Service->generateDraft($artwork, $profileForV2, $imagePath, (string)($sheetForNotes['user_notes']??''));
+        artwork_apply_v2_metadata($pdo,$id,$artworkOwnerId,(array)$generated['draft']);
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&v2_applied=1#artwork-metadata');
+        exit;
+    } catch (Throwable $e) {
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&metadata_error=' . rawurlencode($e->getMessage()) . '#artwork-metadata');
+        exit;
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'sync_artwork_website_v2') {
+    try {
+        $sheet = (new ArtworkSheetService($pdo))->sheetForArtwork($id, $artworkOwnerId);
+        if (!in_array((string)($sheet['status'] ?? ''), ['validated', 'approved'], true)) {
+            throw new RuntimeException('Validate the artwork analysis before sending it to the website.');
+        }
+        $publicationId = (new PublicationService($pdo))->createForSheet((int)$sheet['id'], $artworkOwnerId);
+        $website = new ArtworkWebsiteV2Service($pdo);
+        $result = $website->send($website->buildContract($publicationId, $artworkOwnerId));
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&website_v2_synced=' . rawurlencode((string)($result['status'] ?? 'updated')));
+        exit;
+    } catch (Throwable $e) {
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&metadata_error=' . rawurlencode($e->getMessage()));
+        exit;
+    }
+}
+
 if (!function_exists('artwork_adopt_root_view_candidates')) {
     /**
      * @param array<int,array{file_name:string,view_type:string,job_id?:string}> $candidates
@@ -856,6 +965,19 @@ usort($rootCandidatesList, static function (array $a, array $b) use ($rootCandid
     $bOrder = $rootCandidateOrder[(string)($b['view_type'] ?? '')] ?? 99;
     return $aOrder <=> $bOrder;
 });
+$requiredRootViews = [
+    'frontal' => 'Frontal',
+    'three-quarter-left' => '3/4 Left',
+    'three-quarter-right' => '3/4 Right',
+];
+$availableRootViews = [];
+foreach ($rootCandidatesList as $candidate) {
+    $candidateFile = basename((string)($candidate['file_name'] ?? ''));
+    if ($candidateFile !== '' && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $candidateFile)) {
+        $availableRootViews[(string)($candidate['view_type'] ?? '')] = true;
+    }
+}
+$missingRootViews = array_diff_key($requiredRootViews, $availableRootViews);
 
 $artworkGroupId = (int)($artwork['artwork_group_id'] ?? 0);
 if ($artworkGroupId > 0) {
@@ -898,14 +1020,8 @@ foreach ($mockups ?: [] as $relatedMockup) {
     $relatedMockup['is_favorite'] = isset($favoriteMockupLookup[(int)$relatedMockup['id']]);
     $relatedMockups[] = $relatedMockup;
 }
+usort($relatedMockups, static fn (array $a, array $b): int => (!empty($b['is_favorite'])) <=> (!empty($a['is_favorite'])));
 $favoriteMockups = array_values(array_filter($relatedMockups, static fn (array $mockup): bool => !empty($mockup['is_favorite'])));
-$firstVariationMockup = null;
-foreach ($relatedMockups as $candidateVariationMockup) {
-    if (!empty($candidateVariationMockup['variation_lab_available'])) {
-        $firstVariationMockup = $candidateVariationMockup;
-        break;
-    }
-}
 
 $measurement = $meta['measurements'] ?? [];
 $unit = (string)($measurement['unit'] ?? $artwork['unit'] ?? 'cm');
@@ -928,6 +1044,20 @@ $sheetService = new ArtworkSheetService($pdo);
 $artworkSheet = $sheetService->sheetForArtwork($id, $artworkOwnerId);
 $artworkSheetGenerated = json_decode((string)($artworkSheet['generated_json'] ?? ''), true);
 $artworkSheetGenerated = is_array($artworkSheetGenerated) ? $artworkSheetGenerated : [];
+$v2DraftMatch = artwork_v2_draft_for_image($rootFile);
+$v2Draft = is_array($v2DraftMatch['data'] ?? null)
+    ? $v2DraftMatch['data']
+    : (($artworkSheetGenerated['schema_version'] ?? '') === ArtworkAnalysisV2::SCHEMA_VERSION ? $artworkSheetGenerated : null);
+if ($v2Draft && !in_array((string)($artworkSheet['status'] ?? ''), ['validated', 'approved'], true)) {
+    try {
+        artwork_apply_v2_metadata($pdo, $id, $artworkOwnerId, $v2Draft);
+        $artworkSheet = $sheetService->sheetForArtwork($id, $artworkOwnerId);
+        $artworkSheetGenerated = json_decode((string)($artworkSheet['generated_json'] ?? ''), true);
+        $artworkSheetGenerated = is_array($artworkSheetGenerated) ? $artworkSheetGenerated : [];
+    } catch (Throwable $metadataApplyError) {
+        // Keep the generated analysis visible and editable even if automatic persistence needs attention.
+    }
+}
 $artworkSheetLongTail = is_array($artworkSheetGenerated['long_tail_terms'] ?? null)
     ? $artworkSheetGenerated['long_tail_terms']
     : (is_array($artworkSheetGenerated['long_tail_keywords'] ?? null) ? $artworkSheetGenerated['long_tail_keywords'] : []);
@@ -936,14 +1066,18 @@ $artworkSheetHasMetadata = trim((string)($artworkSheet['title'] ?? '')) !== ''
     || trim((string)($artworkSheet['alt_text'] ?? '')) !== ''
     || trim((string)($artworkSheet['keywords'] ?? '')) !== ''
     || !empty($artworkSheetLongTail);
+$artworkMetadataValidated = $artworkSheetHasMetadata
+    && in_array((string)($artworkSheet['status'] ?? ''), ['review', 'validated', 'approved'], true);
 $storedTitle = trim((string)($artwork['final_title'] ?? ''));
 $storedSubtitle = trim((string)($artwork['subtitle'] ?? ''));
-$selectedTitle = ($storedTitle !== '' && !looks_spanish($storedTitle)) ? $storedTitle : $package['titles'][0];
-$selectedSubtitle = ($storedSubtitle !== '' && !looks_spanish($storedSubtitle)) ? $storedSubtitle : $package['suggested_subtitle'];
-$selectedPublicationDescription = $package['premium_descriptions'][$selectedTitle] ?? trim($package['description']);
+$selectedTitle = $storedTitle !== '' ? $storedTitle : 'Untitled';
+$selectedSubtitle = $storedSubtitle;
+$selectedPublicationDescription = '';
 $displayTitle = trim((string)($artworkSheet['title'] ?? '')) !== '' ? trim((string)$artworkSheet['title']) : $selectedTitle;
 $displaySubtitle = trim((string)($artworkSheet['subtitle'] ?? '')) !== '' ? trim((string)$artworkSheet['subtitle']) : $selectedSubtitle;
-$displayDescription = trim((string)($artworkSheet['description'] ?? '')) !== '' ? trim((string)$artworkSheet['description']) : $selectedPublicationDescription;
+$displayDescription = trim((string)($artworkSheet['description'] ?? ''));
+$artworkSeriesRows = ArtworkSeries::seriesList($pdo, $artworkOwnerId);
+$artworkSeriesName = ArtworkSeries::display((string)($artwork['series'] ?? ''));
 $publicationCopy = trim($selectedTitle . ($selectedSubtitle !== '' ? "\n" . $selectedSubtitle : '') . "\n\n" . $selectedPublicationDescription);
 
 $copyIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
@@ -957,6 +1091,41 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
+        .artwork-series-form { flex-shrink:0; margin:0; }
+        .artwork-series-form select { width:auto; min-width:180px; min-height:auto; padding:8px 12px; }
+        .artwork-page-header h1 { display:inline-block; border-bottom:4px solid #b77f86; padding-bottom:10px; }
+        .v2-admin-panel { border-color:var(--accent); }
+        .v2-admin-head { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; }
+        .v2-admin-badge { padding:5px 9px; border-radius:999px; background:var(--surface-soft); font-size:10px; font-weight:700; text-transform:uppercase; white-space:nowrap; }
+        .v2-admin-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:16px; }
+        .v2-admin-card { border:1px solid var(--line); border-radius:var(--radius); padding:14px; background:var(--surface-soft); }
+        .v2-admin-card h3 { margin:0 0 8px; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+        .v2-admin-card p { margin:0 0 8px; font-size:13px; line-height:1.55; }
+        .v2-admin-card p:last-child { margin-bottom:0; }
+        .v2-admin-description { white-space:pre-line; }
+        .v2-admin-details { margin-top:14px; }
+        .v2-admin-details summary { cursor:pointer; font-weight:600; }
+        .v2-admin-actions { display:flex; align-items:center; gap:12px; margin-top:16px; }
+        .v2-mobile-toggle { display:none; }
+        .artwork-metadata-v2-form { max-width:1180px; margin:22px auto 0; padding:24px; }
+        .artwork-metadata-v2-form .artwork-metadata-form-grid { gap:18px; }
+        .artwork-metadata-v2-form .artwork-metadata-field { gap:8px; }
+        .artwork-metadata-v2-form .artwork-metadata-field label { font-size:11px; letter-spacing:.07em; }
+        .artwork-metadata-v2-form input,
+        .artwork-metadata-v2-form textarea { padding:13px 14px; font-size:15px; line-height:1.55; }
+        .artwork-metadata-v2-form textarea[name="description"] { min-height:210px; }
+        .artwork-metadata-more { grid-column:1 / -1; margin-top:2px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
+        .artwork-metadata-more > summary { cursor:pointer; padding:14px 16px; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+        .artwork-metadata-more-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; padding:4px 16px 16px; }
+        .admin-analysis-details { max-width:1180px; margin:14px auto 0; }
+        .artwork-metadata-finished { max-width:980px; margin:22px 0 0; padding:30px 34px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); }
+        .artwork-metadata-finished h3 { margin:0; font:500 clamp(28px,3vw,42px)/1.08 var(--font-serif); color:var(--ink); }
+        .artwork-metadata-finished .metadata-subtitle { margin:9px 0 0; font:400 20px/1.35 var(--font-serif); color:var(--accent); }
+        .artwork-metadata-finished .metadata-description { margin:24px 0 0; max-width:78ch; color:var(--ink); font-size:16px; line-height:1.75; white-space:pre-line; }
+        .artwork-metadata-edit { max-width:980px; margin:12px 0 0; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-soft); }
+        .artwork-metadata-edit > summary { cursor:pointer; padding:13px 16px; color:var(--accent); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        .artwork-metadata-edit .artwork-metadata-v2-form { margin:0; max-width:none; border:0; border-top:1px solid var(--line); border-radius:0; box-shadow:none; }
+        @media (max-width:800px) { .v2-admin-grid { grid-template-columns:1fr; } }
         .artwork-sheet {
             display: grid;
             grid-template-columns: minmax(280px, 420px) 1fr;
@@ -1448,7 +1617,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
 
         .artwork-overview-grid {
             display: grid;
-            grid-template-columns: minmax(620px, 1.45fr) minmax(240px, .55fr) minmax(300px, .78fr);
+            grid-template-columns: minmax(700px, 1.65fr) minmax(420px, .95fr);
             gap: 14px;
             align-items: stretch;
         }
@@ -1463,6 +1632,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
         .artwork-overview-grid > .artwork-root-views-card {
             grid-column: 1;
             grid-row: 1;
+            align-self: start;
         }
 
         .artwork-root-views-card h3 {
@@ -1481,6 +1651,11 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
         .artwork-primary-metadata-card {
             grid-column: 3;
             grid-row: 1;
+        }
+
+        .artwork-primary-metadata-card,
+        .artwork-metadata-secondary-row {
+            display: none !important;
         }
 
         .artwork-sheet-card h3 {
@@ -1667,7 +1842,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 12px;
-            align-items: start;
+            align-items: stretch;
             justify-content: start;
             max-width: 100%;
         }
@@ -1676,11 +1851,21 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             min-width: 0;
         }
 
+        .mobile-root-artwork {
+            display: none;
+        }
+
+        .artwork-metadata-slot {
+            grid-column: 1;
+            grid-row: 2;
+            min-width: 0;
+        }
+
         .favorite-mockups-panel {
             grid-column: 2;
-            grid-row: 1;
+            grid-row: 1 / 3;
             min-width: 0;
-            height: 100%;
+            height: auto;
             box-sizing: border-box;
             background: var(--surface-soft);
             border: 1px solid var(--line);
@@ -1688,7 +1873,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             padding: 14px;
             display: flex;
             flex-direction: column;
-            align-self: stretch;
+            align-self: start;
         }
 
         .favorite-mockups-panel h3 {
@@ -1701,67 +1886,58 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             text-transform: uppercase;
         }
 
-        .favorite-mockups-grid {
+        .related-mockups-count {
+            text-transform: none;
+            font-weight: 400;
+            letter-spacing: normal;
+        }
+
+        .related-mockups-sidebar-grid {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 7px;
-            align-content: start;
-        }
-
-        .favorite-mockups-grid.count-2,
-        .favorite-mockups-grid.count-3,
-        .favorite-mockups-grid.count-4 {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .favorite-mockups-grid.count-5,
-        .favorite-mockups-grid.count-6 {
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 6px;
+            gap: 8px;
         }
 
-        .favorite-mockups-grid.count-5 .favorite-mockup-tile span,
-        .favorite-mockups-grid.count-6 .favorite-mockup-tile span {
+        .related-mockups-sidebar-grid .related-mockup-card {
+            padding: 5px;
+            grid-template-rows: auto 14px 22px;
+            gap: 4px;
+        }
+
+        .related-mockups-sidebar-grid .related-mockup-meta {
+            min-height: 12px;
+        }
+
+        .related-mockups-sidebar-grid .related-mockup-meta strong,
+        .related-mockups-sidebar-grid .related-mockup-meta span {
             font-size: 8px;
         }
 
-        .favorite-mockup-tile {
-            display: block;
-            min-width: 0;
-            color: var(--muted);
-            text-decoration: none;
+        .related-mockups-sidebar-grid .related-mockup-actions a {
+            min-height: 22px;
+            padding: 0 4px;
+            font-size: 8px;
         }
 
-        .favorite-mockup-tile-wrap {
-            position: relative;
-            min-width: 0;
-        }
-
-        .favorite-mockup-tile img {
-            width: 100%;
-            aspect-ratio: 4 / 3;
-            object-fit: cover;
-            display: block;
-            background: var(--surface);
-            border: 1px solid var(--line);
-            border-radius: 3px;
-        }
-
-        .favorite-mockup-tile span {
-            display: block;
-            margin-top: 4px;
-            overflow: hidden;
-            color: var(--muted);
+        .related-mockups-sidebar-grid .favorite-overlay-btn,
+        .related-mockups-sidebar-grid .mockup-delete-overlay-btn {
+            width: 16px;
+            height: 16px;
+            min-height: 16px;
+            top: 4px;
             font-size: 9px;
-            letter-spacing: .04em;
-            text-overflow: ellipsis;
-            text-transform: uppercase;
-            white-space: nowrap;
+        }
+
+        .related-mockups-sidebar-grid .favorite-overlay-btn {
+            left: 4px;
+        }
+
+        .related-mockups-sidebar-grid .mockup-delete-overlay-btn {
+            right: 4px;
         }
 
         .favorite-empty {
-            flex: 1;
-            min-height: 100%;
+            min-height: 150px;
             border: 1px dashed var(--line);
             border-radius: var(--radius);
             display: flex;
@@ -1842,8 +2018,6 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             transition: opacity .16s ease, background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
         }
 
-        .favorite-mockup-tile-wrap:hover .mockup-delete-overlay-btn,
-        .favorite-mockup-tile-wrap:focus-within .mockup-delete-overlay-btn,
         .related-mockup-image:hover .mockup-delete-overlay-btn,
         .related-mockup-image:focus-within .mockup-delete-overlay-btn,
         .mockup-delete-overlay-btn:hover,
@@ -1938,6 +2112,63 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
         .root-version-card.is-selected img {
             border-color: var(--accent);
             box-shadow: 0 0 0 1px var(--accent);
+        }
+
+        .root-version-missing {
+            min-height: 100%;
+            border: 1px dashed rgba(154, 123, 86, .48);
+            border-radius: 3px;
+            background: rgba(154, 123, 86, .045);
+        }
+
+        .root-version-missing form,
+        .root-version-missing button {
+            width: 100%;
+            height: 100%;
+            min-height: 100%;
+            margin: 0;
+        }
+
+        .root-version-missing button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 22px;
+            border: 0;
+            background: transparent;
+            color: var(--accent);
+            box-shadow: none;
+        }
+
+        .root-version-missing button:hover,
+        .root-version-missing button:focus-visible {
+            background: rgba(154, 123, 86, .09);
+            color: var(--ink);
+            outline: none;
+        }
+
+        .root-version-missing svg {
+            width: 42px;
+            height: 42px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.4;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .root-version-missing strong {
+            font-size: 11px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .root-version-missing small {
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 500;
         }
 
         .root-version-label {
@@ -2120,6 +2351,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
 
             .artwork-overview-grid > .artwork-root-views-card,
             .artwork-primary-metadata-card,
+            .artwork-metadata-slot,
             .favorite-mockups-panel,
             .artwork-metadata-secondary-row {
                 grid-column: 1;
@@ -2137,6 +2369,161 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
         }
 
         @media (max-width: 700px) {
+            .workspace {
+                padding: 6px 10px 40px;
+            }
+
+            .artwork-session-header,
+            .artwork-page-header {
+                display: none !important;
+            }
+
+            .artwork-page-actions,
+            .related-mockup-page-actions,
+            .alert-strip,
+            .artwork-root-views-card > h3 {
+                display: none !important;
+            }
+
+            .artwork-page-header {
+                margin-bottom: 8px;
+            }
+
+            .artwork-page-header > div:first-child p {
+                display: none;
+            }
+
+            .artwork-overview-panel {
+                padding: 14px 10px;
+            }
+
+            .artwork-overview-panel > .section-heading {
+                margin-bottom: 12px;
+            }
+
+            .artwork-overview-panel > .section-heading p {
+                display: none;
+            }
+
+            .artwork-primary-metadata-card.metadata-unvalidated {
+                display: none;
+            }
+
+            .artwork-metadata-secondary-row.metadata-unvalidated,
+            .favorite-mockups-panel.mobile-defer-until-metadata {
+                display: none;
+            }
+
+            .v2-admin-actions {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .v2-admin-actions form,
+            .v2-admin-actions button {
+                width: 100%;
+            }
+
+            .v2-admin-panel {
+                padding: 0 10px;
+                border: 0;
+                background: #d8b7b5;
+                box-shadow: none;
+            }
+
+            .v2-mobile-toggle {
+                display: flex;
+                width: 100%;
+                align-items: center;
+                justify-content: space-between;
+                min-height: 0;
+                padding: 10px 2px;
+                border: 0;
+                border-radius: 0;
+                background: transparent;
+                box-shadow: none;
+                color: var(--accent);
+                font-family: var(--font-serif);
+                font-size: 20px;
+                font-weight: 500;
+                letter-spacing: 0;
+                text-align: left;
+                text-transform: none;
+            }
+
+            .v2-mobile-toggle:hover,
+            .v2-mobile-toggle:focus {
+                border: 0;
+                background: transparent;
+                box-shadow: none;
+                color: var(--accent-dark, var(--accent));
+            }
+
+            .v2-mobile-toggle::after {
+                content: '+';
+                font-family: sans-serif;
+                font-size: 24px;
+                font-weight: 400;
+            }
+
+            .v2-admin-panel.is-open .v2-mobile-toggle::after {
+                content: '−';
+            }
+
+            .v2-admin-panel:not(.is-open) > :not(.v2-mobile-toggle) {
+                display: none !important;
+            }
+
+            .mobile-root-artwork {
+                display: block;
+                margin: 0 0 12px;
+            }
+
+            .mobile-root-artwork a,
+            .mobile-root-artwork img {
+                display: block;
+                width: 100%;
+            }
+
+            .mobile-root-artwork img {
+                height: auto;
+                max-height: 72vh;
+                object-fit: contain;
+                background: transparent;
+                border: 0;
+                border-radius: 0;
+            }
+
+            .artwork-root-views-card {
+                padding: 0;
+                border: 0;
+                background: transparent;
+            }
+
+            .artwork-overview-grid,
+            .root-overview-media-grid {
+                width: 100%;
+            }
+
+            .mobile-root-artwork-label {
+                display: block;
+                margin-top: 7px;
+                color: var(--muted);
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: .08em;
+                text-transform: uppercase;
+            }
+
+            .root-version-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 8px;
+            }
+
+            .root-version-grid .root-version-card.is-selected {
+                display: none;
+            }
+
             .metadata-grid {
                 grid-template-columns: 1fr;
             }
@@ -2170,7 +2557,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
     <?php include __DIR__ . '/sidebar.php'; ?>
 
     <main class="main-area">
-        <header class="app-header">
+        <header class="app-header artwork-session-header">
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
 
@@ -2179,19 +2566,15 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
         </div>
 
         <div class="workspace">
-            <div class="workspace-header">
+            <div class="workspace-header artwork-page-header">
                 <div>
-                    <h1>Artwork Details</h1>
-                    <p>Root selection and scene-mother camera workflow.</p>
-                </div>
-                <div class="topbar-actions">
-                    <?php if ($rootFile): ?>
-                        <a class="button-link" href="mockup_combinations_review.php?id=<?= (int)$id ?>">Review Mockup Combinations</a>
-                        <a class="button-link secondary" href="mockup_combination_results.php?id=<?= (int)$id ?>">Results</a>
-                    <?php endif; ?>
+                    <h1><?= h($displayTitle) ?></h1>
                 </div>
             </div>
 
+            <?php if (isset($_GET['series_updated'])): ?>
+                <div class="notice">Artwork series updated.</div>
+            <?php endif; ?>
             <?php if (isset($_GET['saved'])): ?>
                 <div class="notice">Artwork sheet saved.</div>
             <?php endif; ?>
@@ -2201,11 +2584,23 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             <?php if (isset($_GET['metadata_saved'])): ?>
                 <div class="notice">Artwork metadata saved.</div>
             <?php endif; ?>
+            <?php if (isset($_GET['v2_applied'])): ?>
+                <div class="notice">Analysis v2 validated as the artwork metadata. Nothing was published.</div>
+            <?php endif; ?>
+            <?php if (isset($_GET['v2_generated'])): ?>
+                <div class="notice">Analysis v2 draft generated. Review it below; nothing was published or applied.</div>
+            <?php endif; ?>
+            <?php if (isset($_GET['website_v2_synced'])): ?>
+                <div class="notice">Artwork sent to the Maurizio Valch catalogue. It remains hidden until you enable it in the website admin.</div>
+            <?php endif; ?>
             <?php if (isset($_GET['metadata_error'])): ?>
                 <div class="notice error"><?= h((string)$_GET['metadata_error']) ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['root_selected'])): ?>
                 <div class="notice">Root artwork selected.</div>
+            <?php endif; ?>
+            <?php if (isset($_GET['root_views_completed'])): ?>
+                <div class="notice">The two missing root views were added to this artwork.</div>
             <?php endif; ?>
 
             <?php if ($analysisNeedsRefresh): ?>
@@ -2214,20 +2609,150 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                 </div>
             <?php endif; ?>
 
-            <section class="panel">
+            <?php ob_start(); ?>
+            <?php if (true): ?>
+                <?php if ($v2Draft): ?>
+                    <?php
+                    $v2Editorial = (array)($v2Draft['canonical_editorial'] ?? []);
+                    $v2Visual = (array)($v2Draft['visual_analysis'] ?? []);
+                    $v2Interpretation = (array)($v2Draft['interpretation'] ?? []);
+                    $v2Strategy = (array)($v2Draft['editorial_strategy'] ?? []);
+                    $v2Originality = (array)($v2Draft['originality_check'] ?? []);
+                    $v2Evidence = (array)($v2Draft['evidence_sources'] ?? []);
+                    ?>
+                    <section class="panel v2-admin-panel" id="artwork-metadata">
+                        <button class="v2-mobile-toggle" type="button" aria-expanded="false">Artwork Metadata</button>
+                        <div class="v2-admin-head">
+                            <div class="section-heading" style="margin:0;">
+                                <h2>Artwork Metadata</h2>
+                                <p>Generated from the artwork analysis. Edit only what you need.</p>
+                            </div>
+                            <?php if ($isAdmin): ?><span class="v2-admin-badge"><?= ($v2Originality['passed'] ?? false) ? 'Analysis ready' : 'Review recommended' ?></span><?php endif; ?>
+                        </div>
+
+                        <article class="artwork-metadata-finished">
+                            <h3><?= h($displayTitle) ?></h3>
+                            <?php if ($displaySubtitle !== ''): ?><p class="metadata-subtitle"><?= h($displaySubtitle) ?></p><?php endif; ?>
+                            <div class="metadata-description"><?= h($displayDescription) ?></div>
+                        </article>
+
+                        <details class="artwork-metadata-edit">
+                            <summary>Edit metadata</summary>
+                        <form method="post" class="v2-admin-card artwork-metadata-v2-form">
+                            <input type="hidden" name="action" value="save_artwork_metadata">
+                            <div class="artwork-metadata-form-grid">
+                                <div class="artwork-metadata-field"><label>Title</label><input type="text" name="title" value="<?= h($displayTitle) ?>"></div>
+                                <div class="artwork-metadata-field"><label>Subtitle</label><input type="text" name="subtitle" value="<?= h($displaySubtitle) ?>"></div>
+                                <div class="artwork-metadata-field full"><label>Description</label><textarea name="description" rows="5"><?= h($displayDescription) ?></textarea></div>
+                                <details class="artwork-metadata-more">
+                                    <summary>More metadata</summary>
+                                    <div class="artwork-metadata-more-grid">
+                                        <div class="artwork-metadata-field full"><label>Short description</label><textarea name="short_description" rows="3"><?= h((string)($artworkSheet['short_description'] ?? '')) ?></textarea></div>
+                                        <div class="artwork-metadata-field"><label>Keywords</label><textarea name="keywords" rows="4"><?= h((string)($artworkSheet['keywords'] ?? '')) ?></textarea></div>
+                                        <div class="artwork-metadata-field"><label>Tags</label><textarea name="tags" rows="4"><?= h((string)($artworkSheet['tags'] ?? '')) ?></textarea></div>
+                                        <div class="artwork-metadata-field"><label>Alt text</label><textarea name="alt_text" rows="4"><?= h((string)($artworkSheet['alt_text'] ?? '')) ?></textarea></div>
+                                        <div class="artwork-metadata-field"><label>Caption</label><textarea name="caption" rows="4"><?= h((string)($artworkSheet['caption'] ?? '')) ?></textarea></div>
+                                    </div>
+                                </details>
+                                <input type="hidden" name="long_tail_terms" value="<?= h(implode(', ', array_map('strval', $artworkSheetLongTail))) ?>">
+                                <input type="hidden" name="medium" value="<?= h((string)($artwork['medium'] ?? '')) ?>">
+                                <input type="hidden" name="artwork_year" value="<?= h((string)($artwork['artwork_year'] ?? '')) ?>">
+                                <input type="hidden" name="series" value="<?= h((string)($artwork['series'] ?? '')) ?>">
+                            </div>
+                            <div class="artwork-metadata-save"><button type="submit">Save</button></div>
+                        </form>
+                        </details>
+
+                        <?php if($isAdmin): ?><details class="details-panel admin-analysis-details"><summary>Analysis details</summary><div class="v2-admin-grid">
+                            <div class="v2-admin-card">
+                                <h3>Editorial strategy</h3>
+                                <p>Opening: <strong><?= h($v2Strategy['description_opening_type'] ?? '') ?></strong></p>
+                                <p>Rhythm: <?= h($v2Strategy['description_opening_rhythm'] ?? '') ?></p>
+                                <p>Structure: <?= h($v2Strategy['description_structure_type'] ?? '') ?></p>
+                            </div>
+                            <div class="v2-admin-card">
+                                <h3>Originality</h3>
+                                <p>Title similarity: <?= h(number_format(((float)($v2Originality['title_similarity']??0))*100, 1)) ?>%</p>
+                                <p>Description similarity: <?= h(number_format(((float)($v2Originality['description_similarity']??0))*100, 1)) ?>%</p>
+                                <p><?= ($v2Originality['passed'] ?? false) ? 'No blockers.' : h(implode(' ', (array)($v2Originality['warnings']??[]))) ?></p>
+                            </div>
+                            <div class="v2-admin-card">
+                                <h3>Evidence provenance</h3>
+                                <p><?= count((array)($v2Evidence['artist_or_record_facts']??[])) ?> artist/record facts</p>
+                                <p><?= count((array)($v2Evidence['visual_observations']??[])) ?> visual observations</p>
+                                <p><?= count((array)($v2Evidence['interpretive_claims']??[])) ?> interpretive claims</p>
+                            </div>
+                        </div></details>
+
+                        <details class="details-panel v2-admin-details">
+                            <summary>Visual analysis, interpretation, and paragraph plan</summary>
+                            <div class="v2-admin-grid">
+                                <div class="v2-admin-card"><h3>Surface and movement</h3><p><?= h($v2Visual['surface_and_texture']??'') ?></p><p><?= h($v2Visual['rhythm_and_movement']??'') ?></p></div>
+                                <div class="v2-admin-card"><h3>Central reading</h3><p><?= h($v2Interpretation['central_reading']??'') ?></p></div>
+                                <div class="v2-admin-card"><h3>Paragraph functions</h3><ol style="margin:0;padding-left:18px;font-size:12px;line-height:1.55;"><?php foreach ((array)($v2Strategy['paragraph_functions']??[]) as $item): ?><li><?= h($item) ?></li><?php endforeach; ?></ol></div>
+                            </div>
+                        </details>
+
+                        <details class="details-panel v2-admin-details">
+                            <summary>Prompt used</summary>
+                            <?php $v2PromptFile = (string)($v2DraftMatch['file'] ?? '') . '.prompt.txt'; ?>
+                            <pre style="white-space:pre-wrap;max-height:360px;overflow:auto;font-size:10px;"><?= h(is_file($v2PromptFile) ? file_get_contents($v2PromptFile) : 'Prompt file is not available for this draft.') ?></pre>
+                        </details>
+                        <?php endif; ?>
+
+                        <div class="v2-admin-actions">
+                            <?php if ($isAdmin): ?>
+                                <details class="details-panel"><summary>Admin tools</summary><form method="post" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='Generating…';"><input type="hidden" name="action" value="generate_v2_artwork_draft"><button type="submit" class="secondary">Regenerate analysis</button></form></details>
+                            <?php endif; ?>
+                        </div>
+                    </section>
+                <?php else: ?>
+                    <section class="panel v2-admin-panel" id="artwork-metadata">
+                        <button class="v2-mobile-toggle" type="button" aria-expanded="false">Artwork Metadata</button>
+                        <div class="v2-admin-head">
+                            <div class="section-heading" style="margin:0;"><h2>Artwork Metadata</h2><p><?= $metadataErrorMessage !== '' ? 'The analysis finished but did not pass validation.' : 'No metadata exists for this artwork yet.' ?></p></div>
+                            <form method="post" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='Generating v2…';">
+                                <input type="hidden" name="action" value="generate_v2_artwork_draft">
+                                <button type="submit">Generate Metadata</button>
+                            </form>
+                        </div>
+                        <?php if ($metadataErrorMessage !== ''): ?><div class="notice error" style="margin:14px 0 0;"><?= h($metadataErrorMessage) ?></div><?php endif; ?>
+                    </section>
+                <?php endif; ?>
+            <?php endif; ?>
+            <?php $artworkMetadataPanelHtml = ob_get_clean(); ?>
+
+            <section class="panel artwork-overview-panel">
                 <div class="section-heading">
-                    <h2>Artwork Overview</h2>
-                    <p>Root views, basic information, and direct access to the mockup workflow.</p>
+                    <div>
+                        <h2><?= $artworkSeriesName !== '' ? h($artworkSeriesName) . ' Series' : 'NO SERIE' ?></h2>
+                        <p>Root views, basic information, and direct access to the mockup workflow.</p>
+                    </div>
+                    <form method="post" class="artwork-series-form">
+                        <input type="hidden" name="action" value="assign_series">
+                        <select name="series_id" onchange="this.form.submit()">
+                            <option value="">NO SERIE</option>
+                            <?php foreach ($artworkSeriesRows as $seriesRow): ?>
+                                <option value="<?= (int)$seriesRow['id'] ?>" <?= (int)($artwork['series_id'] ?? 0) === (int)$seriesRow['id'] ? 'selected' : '' ?>><?= h($seriesRow['title']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </form>
                 </div>
                 <?php if ($rootFile && is_file($rootPath)): ?>
                     <form id="artwork-generate-metadata-form" class="artwork-metadata-action-form" method="post">
-                        <input type="hidden" name="action" value="generate_artwork_metadata">
+                        <input type="hidden" name="action" value="generate_v2_artwork_draft">
                     </form>
                     <div class="artwork-overview-grid">
                         <section class="artwork-root-views-card">
                             <h3>Root Views</h3>
                             <div class="root-overview-media-grid">
-                                <?php if (!empty($rootCandidatesList)): ?>
+                                <div class="mobile-root-artwork">
+                                    <a href="<?= h('viewer.php?file=' . rawurlencode($rootFile) . '&back=' . rawurlencode('artwork.php?id=' . (int)$id)) ?>">
+                                        <img src="<?= h(media_url($rootFile)) ?>" alt="Selected root artwork">
+                                    </a>
+                                    <span class="mobile-root-artwork-label">Selected root artwork</span>
+                                </div>
+                                <?php if (!empty($rootCandidatesList) || !empty($missingRootViews)): ?>
                                     <div class="root-version-grid">
                                         <?php
                                         $viewLabels = [
@@ -2264,6 +2789,21 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                                                 </div>
                                             </article>
                                         <?php endforeach; ?>
+                                        <?php foreach ($missingRootViews as $missingViewType => $missingViewLabel): ?>
+                                            <article class="root-version-card root-version-missing">
+                                                <form method="post" action="complete_root_views.php" onsubmit="return confirm('Generate the missing root views from the current artwork?');">
+                                                    <input type="hidden" name="artwork_id" value="<?= (int)$id ?>">
+                                                    <button type="submit" title="Generate missing root views">
+                                                        <svg viewBox="0 0 48 48" aria-hidden="true">
+                                                            <rect x="7" y="10" width="34" height="28" rx="3"></rect>
+                                                            <path d="M17 10l3-4h8l3 4M24 18v12M18 24h12"></path>
+                                                        </svg>
+                                                        <strong><?= h($missingViewLabel) ?></strong>
+                                                        <small>Generate both missing views</small>
+                                                    </button>
+                                                </form>
+                                            </article>
+                                        <?php endforeach; ?>
                                     </div>
                                 <?php else: ?>
                                     <div class="notice">Only the selected root image is available.</div>
@@ -2271,16 +2811,18 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                             </div>
                         </section>
 
+                        <div class="artwork-metadata-slot"><?= $artworkMetadataPanelHtml ?></div>
+
                         <form class="artwork-metadata-layout-form" method="post">
                             <input type="hidden" name="action" value="save_artwork_metadata">
-                            <section class="artwork-sheet-card artwork-primary-metadata-card">
+                            <section class="artwork-sheet-card artwork-primary-metadata-card <?= $artworkMetadataValidated ? 'metadata-validated' : 'metadata-unvalidated' ?>">
                                 <div class="artwork-sheet-card-head">
                                     <div>
                                         <h3>Artwork Metadata</h3>
                                         <p>Title, subtitle, and description.</p>
                                     </div>
                                     <div class="topbar-actions">
-                                        <button type="submit" form="artwork-generate-metadata-form" class="<?= $artworkSheetHasMetadata ? 'secondary' : '' ?>"><?= $artworkSheetHasMetadata ? 'Regenerate' : 'Generate' ?></button>
+                                        <button type="submit" form="artwork-generate-metadata-form" class="<?= $artworkSheetHasMetadata ? 'secondary' : '' ?>"><?= $v2Draft ? 'Regenerate v2 draft' : 'Generate v2 draft' ?></button>
                                     </div>
                                 </div>
 
@@ -2308,7 +2850,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                                 </div>
                             </section>
 
-                            <details class="artwork-metadata-editor artwork-metadata-secondary-row">
+                            <details class="artwork-metadata-editor artwork-metadata-secondary-row <?= $artworkMetadataValidated ? 'metadata-validated' : 'metadata-unvalidated' ?>">
                                 <summary>More metadata</summary>
                                 <div class="artwork-metadata-form">
                                     <div class="artwork-metadata-sections">
@@ -2374,36 +2916,53 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                                 </div>
                             </details>
 
-                            <aside class="favorite-mockups-panel">
-                                <h3>Favorites</h3>
-                                <?php if ($favoriteMockups): ?>
-                                    <?php $visibleFavoriteMockups = array_slice($favoriteMockups, 0, 6); ?>
-                                    <div class="favorite-mockups-grid count-<?= count($visibleFavoriteMockups) ?>">
-                                        <?php foreach ($visibleFavoriteMockups as $favoriteMockup): ?>
+                            <aside class="favorite-mockups-panel <?= $artworkMetadataValidated ? '' : 'mobile-defer-until-metadata' ?>">
+                                <h3>Related Mockups <span class="related-mockups-count">· <?= count($relatedMockups) ?></span></h3>
+                                <?php if ($relatedMockups): ?>
+                                    <div class="related-mockups-sidebar-grid">
+                                        <?php foreach ($relatedMockups as $sidebarMockup): ?>
                                             <?php
-                                            $favoriteFile = (string)$favoriteMockup['mockup_file_basename'];
-                                            $favoriteState = (array)($favoriteMockup['selector_state'] ?? []);
-                                            $favoriteCombo = (array)($favoriteState['combination'] ?? []);
-                                            $favoriteLabel = trim((string)($favoriteCombo['camera_slot_name'] ?? $favoriteMockup['context_id'] ?? 'Favorite'));
+                                            $sidebarFile = (string)$sidebarMockup['mockup_file_basename'];
+                                            $sidebarState = (array)($sidebarMockup['selector_state'] ?? []);
+                                            $sidebarCombo = (array)($sidebarState['combination'] ?? []);
+                                            $sidebarLabel = trim((string)($sidebarCombo['camera_slot_name'] ?? $sidebarMockup['context_id'] ?? 'Mockup'));
                                             ?>
-                                            <div class="favorite-mockup-tile-wrap" data-mockup-card data-mockup-id="<?= (int)$favoriteMockup['id'] ?>">
-                                                <a class="favorite-mockup-tile" href="<?= h('viewer.php?id=' . (int)$favoriteMockup['id'] . '&back=' . rawurlencode('artwork.php?id=' . (int)$id)) ?>">
-                                                    <img src="<?= h('media.php?file=' . rawurlencode($favoriteFile)) ?>" alt="<?= h($favoriteLabel) ?>">
-                                                    <span><?= h($favoriteLabel !== '' ? $favoriteLabel : 'Favorite') ?></span>
-                                                </a>
-                                                <button
-                                                    class="mockup-delete-overlay-btn"
-                                                    type="button"
-                                                    title="Delete mockup"
-                                                    aria-label="Delete mockup"
-                                                    data-delete-mockup
-                                                    data-mockup-id="<?= (int)$favoriteMockup['id'] ?>"
-                                                >×</button>
-                                            </div>
+                                            <article class="related-mockup-card" data-mockup-card data-mockup-id="<?= (int)$sidebarMockup['id'] ?>">
+                                                <div class="related-mockup-image">
+                                                    <a href="<?= h('viewer.php?id=' . (int)$sidebarMockup['id'] . '&back=' . rawurlencode('artwork.php?id=' . (int)$id)) ?>">
+                                                        <img src="<?= h('media.php?file=' . rawurlencode($sidebarFile)) ?>" alt="<?= h($sidebarLabel) ?>">
+                                                    </a>
+                                                    <button
+                                                        class="favorite-overlay-btn <?= !empty($sidebarMockup['is_favorite']) ? 'active' : '' ?>"
+                                                        type="button"
+                                                        title="<?= !empty($sidebarMockup['is_favorite']) ? 'Remove favorite' : 'Add favorite' ?>"
+                                                        aria-label="<?= !empty($sidebarMockup['is_favorite']) ? 'Remove favorite' : 'Add favorite' ?>"
+                                                        data-favorite-mockup
+                                                        data-mockup-id="<?= (int)$sidebarMockup['id'] ?>"
+                                                    >★</button>
+                                                    <button
+                                                        class="mockup-delete-overlay-btn"
+                                                        type="button"
+                                                        title="Delete mockup"
+                                                        aria-label="Delete mockup"
+                                                        data-delete-mockup
+                                                        data-mockup-id="<?= (int)$sidebarMockup['id'] ?>"
+                                                    >×</button>
+                                                </div>
+                                                <div class="related-mockup-meta">
+                                                    <strong title="<?= h($sidebarLabel !== '' ? $sidebarLabel : 'Mockup') ?>"><?= h($sidebarLabel !== '' ? $sidebarLabel : 'Mockup') ?></strong>
+                                                    <span>#<?= (int)$sidebarMockup['id'] ?></span>
+                                                </div>
+                                                <?php if (!empty($sidebarMockup['variation_lab_available'])): ?>
+                                                    <div class="related-mockup-actions">
+                                                        <a class="button-link" href="mockup_variation_lab.php?mockup_id=<?= (int)$sidebarMockup['id'] ?>">Variation</a>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </article>
                                         <?php endforeach; ?>
                                     </div>
                                 <?php else: ?>
-                                    <div class="favorite-empty">Mark mockups as favorites to curate this column.</div>
+                                    <div class="favorite-empty">No related mockups have been generated for this selected root yet.</div>
                                 <?php endif; ?>
                             </aside>
                         </form>
@@ -2413,70 +2972,6 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                 <?php endif; ?>
             </section>
 
-            <section class="panel related-mockups-panel">
-                <div class="related-mockups-head">
-                    <div class="section-heading" style="margin: 0;">
-                        <h2>Related Mockups</h2>
-                        <p><?= count($relatedMockups) ?> generated mockup<?= count($relatedMockups) === 1 ? '' : 's' ?> linked to this artwork root.</p>
-                    </div>
-                    <div class="topbar-actions">
-                        <?php if ($rootFile): ?>
-                            <a class="button-link secondary" href="mockup_combination_results.php?id=<?= (int)$id ?>">Open Results</a>
-                        <?php endif; ?>
-                        <?php if ($firstVariationMockup): ?>
-                            <a class="button-link" href="mockup_variation_lab.php?mockup_id=<?= (int)$firstVariationMockup['id'] ?>">Variation LAB</a>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <?php if ($relatedMockups): ?>
-                    <div class="related-mockups-grid">
-                        <?php foreach ($relatedMockups as $relatedMockup): ?>
-                            <?php
-                            $relatedFile = (string)$relatedMockup['mockup_file_basename'];
-                            $relatedUrl = 'media.php?file=' . rawurlencode($relatedFile);
-                            $relatedViewerUrl = 'viewer.php?id=' . (int)$relatedMockup['id'] . '&back=' . rawurlencode('artwork.php?id=' . (int)$id);
-                            $relatedState = (array)($relatedMockup['selector_state'] ?? []);
-                            $relatedCombo = (array)($relatedState['combination'] ?? []);
-                            $relatedLabel = trim((string)($relatedCombo['camera_slot_name'] ?? $relatedMockup['context_id'] ?? 'Mockup'));
-                            ?>
-                            <article class="related-mockup-card" data-mockup-card data-mockup-id="<?= (int)$relatedMockup['id'] ?>">
-                                <div class="related-mockup-image">
-                                    <a href="<?= h($relatedViewerUrl) ?>">
-                                        <img src="<?= h($relatedUrl) ?>" alt="<?= h($relatedLabel) ?>">
-                                    </a>
-                                    <button
-                                        class="favorite-overlay-btn <?= !empty($relatedMockup['is_favorite']) ? 'active' : '' ?>"
-                                        type="button"
-                                        title="<?= !empty($relatedMockup['is_favorite']) ? 'Remove favorite' : 'Add favorite' ?>"
-                                        aria-label="<?= !empty($relatedMockup['is_favorite']) ? 'Remove favorite' : 'Add favorite' ?>"
-                                        data-favorite-mockup
-                                        data-mockup-id="<?= (int)$relatedMockup['id'] ?>"
-                                    >★</button>
-                                    <button
-                                        class="mockup-delete-overlay-btn"
-                                        type="button"
-                                        title="Delete mockup"
-                                        aria-label="Delete mockup"
-                                        data-delete-mockup
-                                        data-mockup-id="<?= (int)$relatedMockup['id'] ?>"
-                                    >×</button>
-                                </div>
-                                <div class="related-mockup-meta">
-                                    <strong title="<?= h($relatedLabel !== '' ? $relatedLabel : 'Mockup') ?>"><?= h($relatedLabel !== '' ? $relatedLabel : 'Mockup') ?></strong>
-                                    <span>#<?= (int)$relatedMockup['id'] ?></span>
-                                </div>
-                                <?php if (!empty($relatedMockup['variation_lab_available'])): ?>
-                                    <div class="related-mockup-actions">
-                                        <a class="button-link" href="mockup_variation_lab.php?mockup_id=<?= (int)$relatedMockup['id'] ?>">Variation</a>
-                                    </div>
-                                <?php endif; ?>
-                            </article>
-                        <?php endforeach; ?>
-                    </div>
-                <?php else: ?>
-                    <div class="notice">No related mockups have been generated for this selected root yet.</div>
-                <?php endif; ?>
-            </section>
 
             <section class="artwork-sheet beta-hidden-stage">
                 <aside class="root-panel">
@@ -3229,6 +3724,16 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
     function escapeAttribute(value) {
         return escapeHtml(value);
     }
+</script>
+<script>
+document.querySelectorAll('.v2-mobile-toggle').forEach((button) => {
+    button.addEventListener('click', () => {
+        const panel = button.closest('.v2-admin-panel');
+        if (!panel) return;
+        const open = panel.classList.toggle('is-open');
+        button.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+});
 </script>
 </body>
 </html>

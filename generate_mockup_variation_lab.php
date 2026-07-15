@@ -8,6 +8,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 try {
     $user = Auth::requireUser();
+    $isAdmin = Auth::isAdmin($user);
     $pdo = Database::connection();
 
     $mockupId = max(0, (int)($_POST['mockup_id'] ?? 0));
@@ -20,6 +21,18 @@ try {
     $cameraStrength = mockup_variation_lab_camera_strength((string)($_POST['camera_strength'] ?? 'normal'));
     $customInstruction = trim((string)($_POST['custom_instruction'] ?? ''));
 
+    if (!$isAdmin) {
+        $referenceMode = 'mockup_root';
+        $allowedUserAngles = [
+            'camera_less_profile',
+            'camera_more_profile',
+        ];
+        if (!in_array($cameraModifier, $allowedUserAngles, true)) {
+            $cameraModifier = '';
+        }
+        $cameraStrength = 'normal';
+    }
+
     if ($humanPresence === '' && $artworkScale === '' && $lightingModifier === '' && $cameraModifier === '' && $legacyVariationType !== '') {
         [$humanPresence, $artworkScale, $lightingModifier, $cameraModifier] = mockup_variation_lab_legacy_variation_to_modifiers($legacyVariationType);
     }
@@ -27,8 +40,6 @@ try {
         if ($referenceMode === 'mockup_root_strict') {
             $referenceMode = 'mockup_root';
         }
-        $humanPresence = '';
-        $artworkScale = '';
     } else {
         $cameraStrength = 'normal';
     }
@@ -57,7 +68,7 @@ try {
         echo json_encode(['ok' => false, 'error' => 'Mockup not found.'], JSON_UNESCAPED_UNICODE);
         exit;
     }
-    if ((int)$mockup['user_id'] !== (int)$user['id'] && !Auth::isAdmin($user)) {
+    if ((int)$mockup['user_id'] !== (int)$user['id'] && !$isAdmin) {
         http_response_code(403);
         echo json_encode(['ok' => false, 'error' => 'You do not have access to this mockup.'], JSON_UNESCAPED_UNICODE);
         exit;
@@ -80,6 +91,10 @@ try {
     $sourceCombination = (array)($selectorState['combination'] ?? []);
     $worldMotherRelativePath = trim(str_replace(['\\'], '/', (string)($sourceCombination['world_mother_image_path'] ?? '')));
     $worldMotherPath = mockup_variation_lab_world_mother_path($worldMotherRelativePath);
+    if (!$isAdmin) {
+        $worldMotherRelativePath = '';
+        $worldMotherPath = '';
+    }
 
     $stmt = $pdo->prepare('SELECT * FROM artworks WHERE user_id = :user_id AND root_file = :root_file LIMIT 1');
     $stmt->execute([
@@ -142,6 +157,13 @@ try {
         $worldMotherPath !== ''
     );
 
+    $isDirectSceneEdit = in_array($cameraModifier, ['camera_less_profile', 'camera_more_profile'], true)
+        || $customInstruction !== '';
+    $attachedImages = $isDirectSceneEdit
+        ? [$mockupFile]
+        : [$mockupFile, $rootFile];
+    $effectiveReferenceMode = $isDirectSceneEdit ? 'mockup_only' : 'mockup_root';
+
     $audit = [
         'schema' => 'mockup_variation_lab.v1',
         'started_at' => date(DATE_ATOM),
@@ -149,7 +171,7 @@ try {
         'mockup_owner_user_id' => $ownerId,
         'mockup_id' => $mockupId,
         'artwork_id' => (int)$artwork['id'],
-        'reference_mode' => $referenceMode,
+        'reference_mode' => $effectiveReferenceMode,
         'variation_type' => $variationType,
         'human_presence' => $humanPresence,
         'artwork_scale' => $artworkScale,
@@ -158,9 +180,11 @@ try {
         'camera_strength' => $cameraStrength,
         'custom_instruction' => $customInstruction,
         'input_mockup_file' => $mockupFile,
+        'scene_root_file' => $mockupFile,
         'input_root_file' => $rootFile,
-        'input_world_mother_file' => $worldMotherRelativePath,
-        'input_world_mother_found' => $worldMotherPath !== '',
+        'attached_images' => $attachedImages,
+        'input_world_mother_file' => '',
+        'input_world_mother_found' => false,
         'output_file' => $outputFile,
         'prompt_file' => $promptFile,
         'status' => 'prepared',
@@ -171,21 +195,16 @@ try {
 
     $client = new GeminiImageClient();
     $parts = [$client->textPart($prompt)];
-    $parts[] = $client->textPart("IMAGEN 1 - MOCKUP EXISTENTE: conservar su escena, encuadre base, materiales y relacion fisica entre obra y ambiente salvo cambios explicitamente solicitados.");
     $parts[] = $client->imagePart($mockupPath);
-    if ($referenceMode !== 'mockup_only') {
-        $parts[] = $client->textPart("IMAGEN 2 - OBRA RAIZ: referencia autoritativa para preservar la identidad visual exacta de la obra.");
+    if (!$isDirectSceneEdit) {
         $parts[] = $client->imagePart($rootPath);
-    }
-    if ($worldMotherPath !== '') {
-        $parts[] = $client->textPart("IMAGEN " . ($referenceMode !== 'mockup_only' ? '3' : '2') . " - SCENE MOTHER: referencia ambiental original. Usar su familia de espacio, materiales, luz, paleta y atmosfera para no inventar otro tipo de lugar.");
-        $parts[] = $client->imagePart($worldMotherPath);
     }
 
     $imageB64 = $client->generateImage($parts, ProviderSettings::geminiImageModel(), [
         'MOCKUP_USE_PRECOMPOSITION' => 'false',
         'MOCKUP_USE_BACKGROUND_EDIT' => 'false',
         'MOCKUP_PROMPT_FIRST_NO_MASK_MODE' => 'false',
+        'GEMINI_SKIP_OUTPUT_FRAME_CONTRACT' => 'true',
     ]);
     $bytes = base64_decode($imageB64);
     if ($bytes === false) {
@@ -199,7 +218,7 @@ try {
         'generation_source' => 'mockup_variation_lab',
         'source_mockup_id' => $mockupId,
         'variation_type' => $variationType,
-        'reference_mode' => $referenceMode,
+        'reference_mode' => $effectiveReferenceMode,
         'human_presence' => $humanPresence,
         'artwork_scale' => $artworkScale,
         'lighting_modifier' => $lightingModifier,
@@ -208,6 +227,7 @@ try {
         'custom_instruction' => $customInstruction,
         'input_mockup_file' => $mockupFile,
         'input_root_file' => $rootFile,
+        'attached_images' => $attachedImages,
         'input_world_mother_file' => $worldMotherRelativePath,
         'lab_output_file' => 'storage/experiments/mockup-variation-lab/' . $outputFile,
         'lab_prompt_file' => 'storage/experiments/mockup-variation-lab/' . $promptFile,
@@ -215,21 +235,38 @@ try {
     ];
     file_put_contents(RESULTS_DIR . DIRECTORY_SEPARATOR . $registeredMockupFile, $bytes);
     file_put_contents(PROMPTS_DIR . DIRECTORY_SEPARATOR . $registeredPromptFile, $prompt);
-    ImageResizer::resize(RESULTS_DIR . DIRECTORY_SEPARATOR . $registeredMockupFile);
+
+    if (StorageService::isGcsActive()) {
+        $persistentFiles = [
+            'results/' . $registeredMockupFile => RESULTS_DIR . DIRECTORY_SEPARATOR . $registeredMockupFile,
+            'mockup-prompts/' . $registeredPromptFile => PROMPTS_DIR . DIRECTORY_SEPARATOR . $registeredPromptFile,
+            'storage/experiments/mockup-variation-lab/' . $outputFile => $labDir . DIRECTORY_SEPARATOR . $outputFile,
+            'storage/experiments/mockup-variation-lab/' . $promptFile => $labDir . DIRECTORY_SEPARATOR . $promptFile,
+            'storage/experiments/mockup-variation-lab/' . $auditFile => $labDir . DIRECTORY_SEPARATOR . $auditFile,
+        ];
+        foreach ($persistentFiles as $storageKey => $localPath) {
+            if (!StorageService::uploadFile($storageKey, $localPath)) {
+                throw new RuntimeException('The generated variation could not be saved to persistent storage.');
+            }
+        }
+    }
 
     $registeredMockupId = (int)Database::withBusyRetry(function () use (
         $ownerId,
+        $artwork,
         $rootFile,
         $registeredMockupFile,
         $registeredPromptFile,
         $registeredSelectorState
     ): int {
         $insert = Database::connection()->prepare("
-            INSERT INTO mockups (user_id, artwork_file, mockup_file, context_id, prompt_file, selector_state_json, created_at)
-            VALUES (:user_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :selector_state_json, :created_at)
+            INSERT INTO mockups (user_id, artwork_group_id, source_artwork_id, artwork_file, mockup_file, context_id, prompt_file, selector_state_json, created_at)
+            VALUES (:user_id, :artwork_group_id, :source_artwork_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :selector_state_json, :created_at)
         ");
         $insert->execute([
             'user_id' => $ownerId,
+            'artwork_group_id' => !empty($artwork['artwork_group_id']) ? (int)$artwork['artwork_group_id'] : null,
+            'source_artwork_id' => !empty($artwork['id']) ? (int)$artwork['id'] : null,
             'artwork_file' => $rootFile,
             'mockup_file' => $registeredMockupFile,
             'context_id' => 'variation_lab',
@@ -247,13 +284,20 @@ try {
     $audit['registered_mockup_file'] = $registeredMockupFile;
     $audit['registered_prompt_file'] = $registeredPromptFile;
     file_put_contents($labDir . DIRECTORY_SEPARATOR . $auditFile, json_encode($audit, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+    if (StorageService::isGcsActive() && !StorageService::uploadFile(
+        'storage/experiments/mockup-variation-lab/' . $auditFile,
+        $labDir . DIRECTORY_SEPARATOR . $auditFile
+    )) {
+        Logger::log('The completed variation lab audit could not be refreshed in persistent storage: ' . $auditFile, 'warning');
+    }
 
+    NextPlatformSync::run();
     echo json_encode([
         'ok' => true,
-        'message' => 'Test generated.',
+        'message' => 'Variation generated.',
         'output_file' => $outputFile,
-        'output_url' => 'mockup_variation_lab_file.php?file=' . rawurlencode($outputFile),
-        'viewer_url' => 'mockup_variation_lab_viewer.php?mockup_id=' . $mockupId . '&file=' . rawurlencode($outputFile),
+        'output_url' => 'media.php?file=' . rawurlencode($registeredMockupFile),
+        'viewer_url' => 'viewer.php?id=' . rawurlencode((string)$registeredMockupId) . '&back=' . rawurlencode('mockup_variation_lab.php?mockup_id=' . $mockupId),
         'prompt_url' => 'mockup_variation_lab_file.php?file=' . rawurlencode($promptFile),
         'audit_url' => 'mockup_variation_lab_file.php?file=' . rawurlencode($auditFile),
         'registered_mockup_id' => $registeredMockupId,
@@ -311,12 +355,17 @@ function mockup_variation_lab_variation_type(string $value): string
         'scale_minus_60',
         'scale_plus_60',
         'light_day',
+        'light_overcast',
         'light_night',
         'light_golden',
         'camera_aerial',
         'camera_nadir',
         'camera_profile_left',
         'camera_profile_right',
+        'camera_less_profile',
+        'camera_more_profile',
+        'camera_left_3_4',
+        'camera_right_3_4',
         'custom',
     ];
 
@@ -326,14 +375,14 @@ function mockup_variation_lab_variation_type(string $value): string
 function mockup_variation_lab_human_presence(string $value): string
 {
     $value = strtolower(trim($value));
-    if (in_array($value, ['female_155', 'female_160'], true)) {
-        return 'female_180';
+    if (in_array($value, ['female_155', 'female_160', 'female_180'], true)) {
+        return 'female_160';
     }
-    if ($value === 'male_180') {
-        return 'male_200';
+    if (in_array($value, ['male_180', 'male_200'], true)) {
+        return 'male_180';
     }
 
-    return in_array($value, ['none', '', 'female_180', 'male_200'], true) ? ($value === 'none' ? '' : $value) : '';
+    return in_array($value, ['none', '', 'female_160', 'male_180'], true) ? $value : '';
 }
 
 function mockup_variation_lab_artwork_scale(string $value): string
@@ -345,13 +394,18 @@ function mockup_variation_lab_artwork_scale(string $value): string
 function mockup_variation_lab_lighting_modifier(string $value): string
 {
     $value = strtolower(trim($value));
-    return in_array($value, ['none', '', 'light_day', 'light_night', 'light_golden'], true) ? ($value === 'none' ? '' : $value) : '';
+    return in_array($value, ['none', '', 'light_day', 'light_overcast', 'light_night', 'light_golden'], true) ? ($value === 'none' ? '' : $value) : '';
 }
 
 function mockup_variation_lab_camera_modifier(string $value): string
 {
     $value = strtolower(trim($value));
-    return in_array($value, ['none', '', 'camera_aerial', 'camera_nadir', 'camera_profile_left', 'camera_profile_right'], true) ? ($value === 'none' ? '' : $value) : '';
+    return in_array($value, [
+        'none', '',
+        'camera_aerial', 'camera_nadir', 'camera_profile_left', 'camera_profile_right',
+        'camera_less_profile', 'camera_more_profile',
+        'camera_left_3_4', 'camera_right_3_4',
+    ], true) ? ($value === 'none' ? '' : $value) : '';
 }
 
 function mockup_variation_lab_camera_strength(string $value): string
@@ -363,11 +417,13 @@ function mockup_variation_lab_camera_strength(string $value): string
 function mockup_variation_lab_legacy_variation_to_modifiers(string $variationType): array
 {
     return match ($variationType) {
-        'female_155', 'female_160', 'female_180' => ['female_180', '', '', ''],
-        'male_180', 'male_200' => ['male_200', '', '', ''],
+        'female_155', 'female_160', 'female_180' => ['female_160', '', '', ''],
+        'male_180', 'male_200' => ['male_180', '', '', ''],
         'scale_minus_20', 'scale_plus_20', 'scale_minus_40', 'scale_plus_40', 'scale_minus_60', 'scale_plus_60' => ['', $variationType, '', ''],
-        'light_day', 'light_night', 'light_golden' => ['', '', $variationType, ''],
-        'camera_aerial', 'camera_nadir', 'camera_profile_left', 'camera_profile_right' => ['', '', '', $variationType],
+        'light_day', 'light_overcast', 'light_night', 'light_golden' => ['', '', $variationType, ''],
+        'camera_aerial', 'camera_nadir', 'camera_profile_left', 'camera_profile_right',
+        'camera_less_profile', 'camera_more_profile',
+        'camera_left_3_4', 'camera_right_3_4' => ['', '', '', $variationType],
         default => ['', '', '', ''],
     };
 }
@@ -406,91 +462,109 @@ function mockup_variation_lab_prompt(
     string $unit,
     bool $hasWorldMotherReference = false
 ): string {
-    $usesRoot = $referenceMode !== 'mockup_only';
-    $strict = $referenceMode === 'mockup_root_strict';
-    $title = trim($title) !== '' ? trim($title) : 'obra sin titulo';
-    $dimensions = trim($height) !== ''
-        ? trim($height) . ' ' . (trim($unit) !== '' ? trim($unit) : 'cm')
-        : 'altura cargada en el sistema';
-
-    $referenceLines = ["- IMAGEN 1 es el mockup existente que debe editarse. Su tipo de espacio y su logica ambiental son el punto de partida."];
-    if ($usesRoot) {
-        $referenceLines[] = "- IMAGEN 2 es la obra raiz autoritativa. La obra visible en el resultado debe conservar la identidad de IMAGEN 2.";
-        if ($hasWorldMotherReference) {
-            $referenceLines[] = "- IMAGEN 3 es la Scene Mother original. Usarla para conservar familia de ambiente, materiales, luz, paleta, atmosfera y coherencia espacial. No inventar un tipo de lugar alternativo.";
-        }
-    } elseif ($hasWorldMotherReference) {
-        $referenceLines[] = "- IMAGEN 2 es la Scene Mother original. Usarla para conservar familia de ambiente, materiales, luz, paleta, atmosfera y coherencia espacial. No inventar un tipo de lugar alternativo.";
+    if ($cameraModifier === 'camera_less_profile') {
+        return 'Quiero tener una vista de la obra de arte menos perfilada.';
     }
-
-    $referenceBlock = "REFERENCIAS ADJUNTAS:\n" . implode("\n", $referenceLines) . "\n";
-    $base = "Edita la imagen proporcionada como una prueba de laboratorio. No generes una explicacion; devuelve solo una imagen final.\n\n"
-        . $referenceBlock
-        . "\nOBRA:\n- Titulo: {$title}\n- Altura de referencia de la obra: {$dimensions}\n";
-
-    if ($strict) {
-        $base .= "- Modo estricto: prioriza conservar la escena original de IMAGEN 1 y la fidelidad de la obra de IMAGEN 2. Si una instruccion compite con esa fidelidad, simplifica la variacion antes que rehacer la escena.\n";
+    if ($cameraModifier === 'camera_more_profile') {
+        return 'Quiero tener una vista de la obra de arte mas perfilada.';
+    }
+    if ($cameraModifier === 'camera_left_3_4') {
+        return mockup_variation_lab_side_angle_text('izquierdo');
+    }
+    if ($cameraModifier === 'camera_right_3_4') {
+        return mockup_variation_lab_side_angle_text('derecho');
     }
 
     $variationBlocks = [];
     if ($cameraModifier !== '') {
         $variationBlocks[] = match ($cameraModifier) {
-            'camera_aerial' => mockup_variation_lab_camera_text('vista aerea', $cameraStrength),
-            'camera_nadir' => mockup_variation_lab_nadir_text($cameraStrength),
-            'camera_profile_left' => mockup_variation_lab_camera_text('vista perfilada hacia la izquierda', $cameraStrength),
-            'camera_profile_right' => mockup_variation_lab_camera_text('vista perfilada hacia la derecha', $cameraStrength),
+            'camera_aerial' => 'Cambia la perspectiva de esta imagen a una vista aerea.',
+            'camera_nadir' => 'Cambia la perspectiva de esta imagen a una vista desde abajo.',
+            'camera_profile_left' => 'Haz un cambio de perspectiva marcado desde el lado izquierdo.',
+            'camera_profile_right' => 'Haz un cambio de perspectiva marcado desde el lado derecho.',
+            'camera_left_3_4' => mockup_variation_lab_side_angle_text('izquierdo'),
+            'camera_right_3_4' => mockup_variation_lab_side_angle_text('derecho'),
             default => '',
         };
     }
 
-    if ($cameraModifier === '') {
-        if ($artworkScale !== '') {
-            $variationBlocks[] = match ($artworkScale) {
-                'scale_minus_20' => mockup_variation_lab_scale_text('20', 'mas pequena', $dimensions),
-                'scale_plus_20' => mockup_variation_lab_scale_text('20', 'mas grande', $dimensions),
-                'scale_minus_40' => mockup_variation_lab_scale_text('40', 'mas pequena', $dimensions),
-                'scale_plus_40' => mockup_variation_lab_scale_text('40', 'mas grande', $dimensions),
-                'scale_minus_60' => mockup_variation_lab_scale_text('60', 'mas pequena', $dimensions),
-                'scale_plus_60' => mockup_variation_lab_scale_text('60', 'mas grande', $dimensions),
-                default => '',
-            };
-        }
-        if ($humanPresence !== '') {
-            $variationBlocks[] = match ($humanPresence) {
-                'female_180' => "PRESENCIA HUMANA:\nAgrega una figura humana femenina de 1.8 mts de altura observando la obra y postura relajada. Puede ser asiatica, negra, blanca o de otra procedencia. Vestimenta de lujo occidental, no religiosa, con zapatos de lujo.",
-                'male_200' => "PRESENCIA HUMANA:\nAgrega una figura humana masculina de 2 mts de altura observando la obra y postura relajada. Puede ser asiatico, negro, blanco o de otra procedencia. Vestimenta de lujo occidental, no religiosa, con zapatos de lujo.",
-                default => '',
-            };
-        }
+    if ($artworkScale !== '') {
+        $variationBlocks[] = match ($artworkScale) {
+            'scale_minus_20' => mockup_variation_lab_scale_text('20', 'reduce'),
+            'scale_plus_20' => mockup_variation_lab_scale_text('20', 'aumenta'),
+            'scale_minus_40' => mockup_variation_lab_scale_text('40', 'reduce'),
+            'scale_plus_40' => mockup_variation_lab_scale_text('40', 'aumenta'),
+            'scale_minus_60' => mockup_variation_lab_scale_text('60', 'reduce'),
+            'scale_plus_60' => mockup_variation_lab_scale_text('60', 'aumenta'),
+            default => '',
+        };
+    }
+    if ($humanPresence !== '') {
+        $variationBlocks[] = match ($humanPresence) {
+            'none' => 'Quita todas las figuras humanas de esta imagen.',
+            'female_160' => mockup_variation_lab_human_text('femenina', '1.80 m'),
+            'male_180' => mockup_variation_lab_human_text('masculina', '2.00 m'),
+            default => '',
+        };
     }
 
     if ($lightingModifier !== '') {
         $variationBlocks[] = match ($lightingModifier) {
-            'light_day' => "ILUMINACION:\nCambia la iluminacion del mockup a luz de dia natural, limpia y premium.",
-            'light_night' => "ILUMINACION:\nCambia la iluminacion del mockup a una escena nocturna elegante, con luz artificial premium.",
-            'light_golden' => "ILUMINACION:\nCambia la iluminacion del mockup a luz dorada de la tarde.",
+            'light_day' => 'Agrega luz natural de dia a esta imagen.',
+            'light_overcast' => 'Agrega luz natural de un dia nublado a esta imagen.',
+            'light_night' => 'Convierte la iluminacion de esta imagen en luz nocturna.',
+            'light_golden' => 'Agrega luz de atardecer dorada a esta imagen.',
             default => '',
         };
     }
 
     if ($customInstruction !== '') {
-        $variationBlocks[] = "INSTRUCCION ADICIONAL DEL USUARIO:\n" . $customInstruction;
+        $variationBlocks[] = $customInstruction;
     }
-    if (!$variationBlocks) {
-        $variationBlocks[] = "VARIACION SOLICITADA:\nRealiza una variacion sutil conservando el mockup y la obra.";
-    }
-    $variation = implode("\n\n", array_filter($variationBlocks));
 
-    return trim($base . "\n" . $variation);
+    return trim(implode("\n", array_filter($variationBlocks)));
 }
 
-function mockup_variation_lab_scale_text(string $percent, string $direction, string $dimensions): string
+function mockup_variation_lab_scale_text(string $percent, string $action): string
 {
-    if ($direction === 'mas pequena') {
-        return "TAMANO DE LA OBRA DE ARTE:\nReduce un {$percent}% el tamano de la obra de arte.";
-    }
+    $percentValue = max(0, min(100, (int)$percent));
+    $verb = $action === 'reduce' ? 'Reduce' : 'Aumenta';
+    return "{$verb} la obra de arte un {$percentValue}% en relacion con el resto de la imagen.";
+}
 
-    return "TAMANO DE LA OBRA DE ARTE:\nAumenta un {$percent}% el tamano de la obra de arte.";
+function mockup_variation_lab_size_class(string $width, string $height, string $unit): string
+{
+    $w = (float)str_replace(',', '.', trim($width));
+    $h = (float)str_replace(',', '.', trim($height));
+    $longSide = max($w, $h);
+    if ($longSide <= 0) {
+        return 'unknown';
+    }
+    if (strtolower(trim($unit)) === 'in') {
+        $longSide *= 2.54;
+    }
+    if ($longSide <= 40) {
+        return 'M - lado mayor hasta 40 cm';
+    }
+    if ($longSide < 80) {
+        return 'L - lado mayor mayor a 40 cm y menor a 80 cm';
+    }
+    if ($longSide < 150) {
+        return 'XL - lado mayor mayor a 80 cm y menor a 150 cm';
+    }
+    return 'Monumental - lado mayor entre 150 cm y 250 cm';
+}
+
+function mockup_variation_lab_human_text(string $gender, string $height): string
+{
+    return "Agrega una nueva figura humana {$gender} de aproximadamente {$height}, de cuerpo completo, situada cerca de la obra de arte y observando atentamente un sector especifico de la obra de arte, dibujo o pintura. "
+        . "No debe posar para la camara, tocar la obra de arte, ni interponerse adelante.";
+}
+
+function mockup_variation_lab_side_angle_text(string $side): string
+{
+    $direction = $side === 'izquierdo' ? 'izquierda' : 'derecha';
+    return "quiero tener una vista del mockup más de costado, más perfilada hacia la {$direction}";
 }
 
 function mockup_variation_lab_camera_text(string $camera, string $strength): string

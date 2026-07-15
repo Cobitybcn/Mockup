@@ -6,6 +6,8 @@ require_once __DIR__ . '/app/bootstrap.php';
 $user = Auth::requireUser();
 $pdo = Database::connection();
 $isAdmin = Auth::isAdmin($user);
+ArtworkSeries::ensureSchema($pdo);
+ArtworkSeries::syncUser($pdo, (int)$user['id']);
 $id = max(0, (int)($_GET['id'] ?? $_POST['id'] ?? 0));
 $artwork = null;
 
@@ -30,7 +32,7 @@ if ($id > 0) {
 if ($id > 0 && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'select_root_candidate') {
     $candidateId = max(0, (int)($_POST['candidate_id'] ?? 0));
     $candidateFile = basename((string)($_POST['candidate_file'] ?? ''));
-    if ($candidateFile !== '' && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $candidateFile)) {
+    if ($candidateFile !== '' && root_album_file_exists($candidateFile)) {
         Database::withBusyRetry(function () use ($pdo, $id, $artwork, $candidateId, $candidateFile): void {
             $pdo->prepare('UPDATE root_artwork_candidates SET is_selected = 0 WHERE artwork_id = :artwork_id')
                 ->execute(['artwork_id' => $id]);
@@ -216,7 +218,32 @@ function root_album_normalized_view_type(string $viewType): string
 
 function root_album_media_url(string $file): string
 {
-    return 'media.php?file=' . rawurlencode(basename($file));
+    return 'media.php?file=' . rawurlencode(basename($file)) . '&thumb=1&w=520';
+}
+
+function root_album_file_exists(string $file): bool
+{
+    $file = basename($file);
+    if ($file === '') {
+        return false;
+    }
+
+    if (is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $file)) {
+        return true;
+    }
+
+    if (!StorageService::isGcsActive()) {
+        return false;
+    }
+
+    $safeName = preg_replace('/[^A-Za-z0-9._-]+/', '_', $file) ?: 'root-image';
+    $tmpPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'root_album_' . $safeName;
+    $exists = StorageService::downloadFile('results/' . $file, $tmpPath);
+    if (is_file($tmpPath)) {
+        @unlink($tmpPath);
+    }
+
+    return $exists;
 }
 
 function root_album_sibling_root_candidates(string $rootFile): array
@@ -234,7 +261,7 @@ function root_album_sibling_root_candidates(string $rootFile): array
     $candidates = [];
     for ($version = 1; $version <= 3; $version++) {
         $file = $matches[1] . '_v' . $version . $matches[3];
-        if (!is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $file)) {
+        if (!root_album_file_exists($file)) {
             continue;
         }
         $candidates[] = [
@@ -271,6 +298,8 @@ if ($id <= 0) {
                    a.root_file,
                    a.final_title,
                    a.subtitle,
+                   a.series,
+                   s.title AS series_title,
                    a.width,
                    a.height,
                    a.unit,
@@ -280,6 +309,7 @@ if ($id <= 0) {
                    COUNT(DISTINCT m.id) AS mockup_count
             FROM artwork_groups g
             INNER JOIN artworks a ON a.id = g.canonical_artwork_id
+            LEFT JOIN artwork_series s ON s.id = a.series_id AND s.user_id = a.user_id
             LEFT JOIN artworks roots ON roots.artwork_group_id = g.id AND roots.user_id = g.user_id
             LEFT JOIN mockups m ON m.artwork_group_id = g.id AND m.user_id = g.user_id
             WHERE g.status = 'active'
@@ -288,7 +318,7 @@ if ($id <= 0) {
         $groupParams = ['user_id' => (int)$user['id']];
         $groupSql .= "
             GROUP BY g.id, g.canonical_artwork_id, g.official_root_artwork_ids, g.title, g.updated_at, g.created_at,
-                     a.root_file, a.final_title, a.subtitle, a.width, a.height, a.unit
+                     a.root_file, a.final_title, a.subtitle, a.series, s.title, a.width, a.height, a.unit
             ORDER BY g.updated_at DESC, g.created_at DESC
         ";
 
@@ -296,7 +326,7 @@ if ($id <= 0) {
         $groupStmt->execute($groupParams);
         foreach ($groupStmt->fetchAll() as $row) {
             $file = basename((string)($row['root_file'] ?? ''));
-            if ($file === '' || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $file)) {
+            if ($file === '' || !root_album_file_exists($file)) {
                 continue;
             }
             $row['root_file'] = $file;
@@ -348,7 +378,7 @@ if ($id <= 0) {
     $candidateStmt->execute(['artwork_id' => $id]);
     foreach ($candidateStmt->fetchAll() as $candidate) {
         $file = basename((string)($candidate['file_name'] ?? ''));
-        if ($file === '' || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $file)) {
+        if ($file === '' || !root_album_file_exists($file)) {
             continue;
         }
         $candidates[] = [
@@ -361,7 +391,7 @@ if ($id <= 0) {
 
     if (!$candidates) {
         $rootFile = basename((string)($artwork['root_file'] ?? ''));
-        if ($rootFile !== '' && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $rootFile)) {
+        if ($rootFile !== '' && root_album_file_exists($rootFile)) {
             $candidates[] = [
                 'id' => 0,
                 'file_name' => $rootFile,
@@ -456,6 +486,7 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
     <title>Root Album - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="ui-catalog.css">
     <style>
         .root-album-grid {
             display: grid;
@@ -463,6 +494,7 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
             gap: 16px;
         }
         .root-album-card {
+            position: relative;
             background: var(--surface);
             border: 1px solid var(--line);
             border-radius: var(--radius);
@@ -476,7 +508,8 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
         .root-album-card img {
             display: block;
             width: 100%;
-            height: 210px;
+            aspect-ratio: 3 / 4;
+            height: auto;
             object-fit: cover;
             border: 1px solid var(--line);
             border-radius: 3px;
@@ -506,6 +539,51 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
             width: 100%;
             margin-top: 12px;
         }
+        .artwork-delete-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 6;
+            width: 36px !important;
+            height: 36px !important;
+            min-width: 36px !important;
+            min-height: 36px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 1px solid rgba(255, 255, 255, .56);
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(24, 22, 21, .28);
+            color: rgba(255, 255, 255, .9);
+            box-shadow: 0 8px 22px rgba(22, 19, 18, .17);
+            backdrop-filter: blur(9px) saturate(115%);
+            opacity: .7;
+            cursor: pointer;
+            transition: opacity .16s ease, background .16s ease, border-color .16s ease;
+        }
+        .artwork-delete-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.4;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            pointer-events: none;
+        }
+        .artwork-delete-btn:hover,
+        .artwork-delete-btn:focus-visible {
+            background: rgba(145, 85, 93, .84);
+            border-color: rgba(255, 255, 255, .78);
+            opacity: 1;
+            outline: none;
+        }
+        .artwork-delete-btn[disabled] {
+            cursor: wait;
+            opacity: .5;
+        }
         .root-album-title {
             margin: 10px 0 0;
             font-family: var(--font-serif);
@@ -532,6 +610,130 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
             width: auto;
             margin: 0;
         }
+        .mobile-root-slider {
+            display: none;
+        }
+        @media (max-width: 760px) {
+            .main-area > .app-header,
+            .main-area > .alert-strip {
+                display: none;
+            }
+            .workspace {
+                padding: 22px 14px 32px;
+            }
+            .workspace-header {
+                align-items: flex-start;
+                margin-bottom: 16px;
+            }
+            .workspace-header h1 {
+                font-size: clamp(34px, 11vw, 48px);
+                line-height: .92;
+                margin-bottom: 0;
+            }
+            .workspace-header p,
+            .topbar-actions,
+            .stats,
+            .root-pending-panel {
+                display: none !important;
+            }
+            .panel {
+                padding: 0;
+                border: 0;
+                box-shadow: none;
+                background: transparent;
+            }
+            .mobile-root-slider {
+                display: grid;
+                grid-auto-flow: column;
+                grid-auto-columns: minmax(84%, 1fr);
+                gap: 14px;
+                overflow-x: auto;
+                overscroll-behavior-x: contain;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+                padding: 2px 2px 16px;
+                margin: 0 -2px 18px;
+                scrollbar-width: none;
+                touch-action: pan-x;
+            }
+            .mobile-root-slider::-webkit-scrollbar {
+                display: none;
+            }
+            .mobile-root-slide {
+                position: relative;
+                scroll-snap-align: center;
+                background: #fffaf7;
+                border: 1.5px solid #b77f86;
+                border-radius: 8px;
+                padding: 10px;
+                box-shadow: 0 14px 34px rgba(83, 61, 43, .11);
+                text-decoration: none;
+                color: inherit;
+            }
+            .mobile-root-slide-link {
+                display: block;
+                color: inherit;
+                text-decoration: none;
+            }
+            .mobile-root-slide .artwork-delete-btn,
+            .root-album-card .artwork-delete-btn {
+                top: 18px;
+                right: 18px;
+                width: 34px !important;
+                height: 34px !important;
+                min-width: 34px !important;
+                min-height: 34px !important;
+                opacity: .9;
+            }
+            .mobile-root-slide img {
+                width: 100%;
+                aspect-ratio: 3 / 4;
+                object-fit: cover;
+                display: block;
+                border-radius: 6px;
+                background: #f4f0eb;
+            }
+            .mobile-root-slide h2 {
+                margin: 12px 0 5px;
+                font: 700 13px/1.15 var(--font-sans);
+                letter-spacing: .05em;
+                text-transform: uppercase;
+            }
+            .mobile-root-slide p {
+                margin: 0;
+                color: var(--muted);
+                font: 600 11px/1.45 var(--font-sans);
+                letter-spacing: .02em;
+            }
+            .root-album-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+            }
+            .root-album-card {
+                padding: 0;
+                border-radius: 7px;
+                box-shadow: none;
+                overflow: hidden;
+                background: #fff;
+            }
+            .root-album-card img {
+                aspect-ratio: 3 / 4;
+                height: auto;
+                object-fit: cover;
+                border-radius: 0;
+                margin-bottom: 0;
+            }
+            .root-album-title {
+                margin: 8px 8px 2px;
+                font: 700 11px/1.2 var(--font-sans);
+                letter-spacing: .04em;
+                text-transform: uppercase;
+            }
+            .root-album-subtitle,
+            .root-album-card .button-link {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -550,7 +752,7 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
             <?php if ($id <= 0): ?>
                 <div class="workspace-header">
                     <div>
-                        <h1>Root Artworks</h1>
+                        <h1>ArtWorks</h1>
                         <p>Canonical artworks with official root views and attached mockups.</p>
                     </div>
                     <div class="topbar-actions">
@@ -596,7 +798,7 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
             <?php endif; ?>
 
             <?php if ($id <= 0 && !empty($pendingArtworks)): ?>
-                <section class="panel" id="pendientes" style="border-left: 3px solid var(--accent); background: rgba(154, 123, 86, 0.02); margin-bottom: 30px;">
+                <section class="panel root-pending-panel" id="pendientes" style="border-left: 3px solid var(--accent); background: rgba(154, 123, 86, 0.02); margin-bottom: 30px;">
                     <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                         <div>
                             <h2 style="margin:0;">Pending Artworks & Selections</h2>
@@ -673,6 +875,39 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
             <section class="panel">
                 <?php if ($id <= 0): ?>
                     <?php if ($albumArtworks): ?>
+                        <div class="mobile-root-slider" aria-label="Root artwork carousel">
+                            <?php foreach ($albumArtworks as $albumArtwork): ?>
+                                <?php
+                                $title = trim((string)($albumArtwork['group_title'] ?? ''));
+                                if ($title === '') {
+                                    $title = trim((string)($albumArtwork['final_title'] ?? ''));
+                                }
+                                if ($title === '') {
+                                    $title = 'Untitled';
+                                }
+                                $seriesTitle = ArtworkSeries::display((string)($albumArtwork['series_title'] ?: $albumArtwork['series'] ?? ''));
+                                $width = trim((string)($albumArtwork['width'] ?? ''));
+                                $height = trim((string)($albumArtwork['height'] ?? ''));
+                                $unit = trim((string)($albumArtwork['unit'] ?? 'cm'));
+                                $size = ($width !== '' && $height !== '') ? trim($width . ' x ' . $height . ' ' . $unit) : '';
+                                $rootCount = (int)($albumArtwork['root_count'] ?? 0);
+                                $mockupCount = (int)($albumArtwork['mockup_count'] ?? 0);
+                                $targetUrl = 'artwork_details.php?id=' . (int)$albumArtwork['id'];
+                                ?>
+                                <article class="mobile-root-slide">
+                                    <a class="mobile-root-slide-link" href="<?= h($targetUrl) ?>">
+                                        <img src="<?= h(root_album_media_url((string)$albumArtwork['root_file'])) ?>" alt="<?= h($title) ?>" loading="lazy">
+                                        <h2><?= h($title) ?><?php if ($seriesTitle !== ''): ?> <span class="title-series-soft">(<?= h($seriesTitle) ?>)</span><?php endif; ?></h2>
+                                        <p>
+                                            <?= $size !== '' ? h($size) . ' · ' : '' ?><?= h((string)$rootCount) ?> roots<?= $mockupCount > 0 ? ' · ' . h((string)$mockupCount) . ' mockups' : '' ?>
+                                        </p>
+                                    </a>
+                                    <button class="artwork-delete-btn" type="button" title="Delete artwork" aria-label="Delete artwork" data-delete-artwork data-artwork-id="<?= (int)$albumArtwork['id'] ?>">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 8.5h7l-.55 9h-5.9l-.55-9Z"/><path d="M7.5 6.5h9M10 6.5V5h4v1.5M10.5 11v4.2M13.5 11v4.2"/></svg>
+                                    </button>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
                         <div class="root-album-grid">
                             <?php foreach ($albumArtworks as $albumArtwork): ?>
                                 <?php
@@ -683,12 +918,12 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                                 if ($title === '') {
                                     $title = 'Untitled';
                                 }
+                                $seriesTitle = ArtworkSeries::display((string)($albumArtwork['series_title'] ?: $albumArtwork['series'] ?? ''));
                                 $width = trim((string)($albumArtwork['width'] ?? ''));
                                 $height = trim((string)($albumArtwork['height'] ?? ''));
                                 $unit = trim((string)($albumArtwork['unit'] ?? 'cm'));
                                 $size = ($width !== '' && $height !== '') ? trim($width . ' x ' . $height . ' ' . $unit) : '';
                                 $targetUrl = 'artwork_details.php?id=' . (int)$albumArtwork['id'];
-                                $detailsUrl = $targetUrl;
                                 $rootCount = (int)($albumArtwork['root_count'] ?? 0);
                                 $officialCount = (int)($albumArtwork['official_count'] ?? 0);
                                 $variantCount = (int)($albumArtwork['variant_count'] ?? 0);
@@ -698,7 +933,10 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                                     <a href="<?= h($targetUrl) ?>">
                                         <img src="<?= h(root_album_media_url((string)$albumArtwork['root_file'])) ?>" alt="<?= h($title) ?>" loading="lazy">
                                     </a>
-                                    <h2 class="root-album-title"><?= h($title) ?></h2>
+                                    <button class="artwork-delete-btn" type="button" title="Delete artwork" aria-label="Delete artwork" data-delete-artwork data-artwork-id="<?= (int)$albumArtwork['id'] ?>">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 8.5h7l-.55 9h-5.9l-.55-9Z"/><path d="M7.5 6.5h9M10 6.5V5h4v1.5M10.5 11v4.2M13.5 11v4.2"/></svg>
+                                    </button>
+                                    <h2 class="root-album-title"><?= h($title) ?><?php if ($seriesTitle !== ''): ?> <span class="title-series-soft">(<?= h($seriesTitle) ?>)</span><?php endif; ?></h2>
                                     <p class="root-album-subtitle">
                                         Group #<?= (int)($albumArtwork['group_id'] ?? 0) ?> · Artwork #<?= (int)($albumArtwork['id'] ?? 0) ?>
                                         <?= $size !== '' ? ' - ' . h($size) : '' ?>
@@ -706,14 +944,11 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                                         <?= $variantCount > 0 ? ' · ' . h((string)$variantCount) . ' variants' : '' ?>
                                         <?= $mockupCount > 0 ? ' · ' . h((string)$mockupCount) . ' mockups' : '' ?>
                                     </p>
-                                    <?php if ($detailsUrl !== ''): ?>
-                                        <a class="button-link secondary" href="<?= h($detailsUrl) ?>">Artwork Details</a>
-                                    <?php endif; ?>
                                 </article>
                             <?php endforeach; ?>
                         </div>
                     <?php else: ?>
-                        <div class="notice">No root artworks are available yet.</div>
+                        <div class="notice">No ArtWorks are available yet.</div>
                     <?php endif; ?>
                 <?php elseif ($candidates): ?>
                     <div class="root-album-grid">
@@ -747,5 +982,36 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
         </div>
     </main>
 </div>
+<script>
+function parseArtworkDeleteJson(response) {
+    return response.text().then(text => {
+        try { return JSON.parse(text); } catch (err) { throw new Error(text.substring(0, 220)); }
+    });
+}
+
+document.addEventListener('click', event => {
+    const button = event.target.closest('[data-delete-artwork]');
+    if (!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (!confirm('Delete this artwork, all its root views and associated mockups? This cannot be undone.')) return;
+
+    const artworkId = button.getAttribute('data-artwork-id') || '';
+    const formData = new FormData();
+    formData.append('artwork_id', artworkId);
+    document.querySelectorAll('[data-delete-artwork][data-artwork-id="' + CSS.escape(artworkId) + '"]').forEach(item => item.disabled = true);
+
+    fetch('delete_artwork_group.php', { method: 'POST', body: formData })
+        .then(parseArtworkDeleteJson)
+        .then(result => {
+            if (!result.ok) throw new Error(result.error || 'Could not delete artwork.');
+            window.location.reload();
+        })
+        .catch(err => {
+            alert(err.message);
+            document.querySelectorAll('[data-delete-artwork][data-artwork-id="' + CSS.escape(artworkId) + '"]').forEach(item => item.disabled = false);
+        });
+});
+</script>
 </body>
 </html>

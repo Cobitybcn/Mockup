@@ -78,6 +78,9 @@ class ArtworkEmbeddingService
         if (defined('VERTEX_PROJECT_ID') && VERTEX_PROJECT_ID !== '') {
             $env['VERTEX_PROJECT_ID'] = (string)VERTEX_PROJECT_ID;
         }
+        if (defined('VERTEX_LOCATION') && VERTEX_LOCATION !== '') {
+            $env['VERTEX_LOCATION'] = (string)VERTEX_LOCATION;
+        }
 
         $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
         $process = proc_open($cmd, $descriptors, $pipes, null, $env);

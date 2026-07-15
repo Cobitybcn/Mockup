@@ -104,6 +104,17 @@ if (!is_array($artwork)) {
     exit;
 }
 
+$existingViewsStmt = $pdo->prepare('SELECT DISTINCT view_type FROM root_artwork_candidates WHERE artwork_id = :artwork_id');
+$existingViewsStmt->execute(['artwork_id'=>$artworkId]);
+$existingViews = array_fill_keys(array_map('strval', $existingViewsStmt->fetchAll(PDO::FETCH_COLUMN) ?: []), true);
+$neededVersions = [];
+if (empty($existingViews['three-quarter-left'])) $neededVersions[] = 2;
+if (empty($existingViews['three-quarter-right'])) $neededVersions[] = 3;
+if (!$neededVersions) {
+    header('Location: artwork.php?id=' . rawurlencode((string)$artworkId));
+    exit;
+}
+
 $sourceFile = basename((string)($artwork['root_file'] ?: $artwork['main_file'] ?? ''));
 $sourcePath = '';
 foreach ([
@@ -182,14 +193,27 @@ file_put_contents(
 try {
     ProviderSettings::set($status['provider_settings']);
     $result = ServiceFactory::artworkProcessor()->createRootImage($jobDir, $status);
-    $files = array_values(array_map('basename', (array)($result['files'] ?? [])));
-    if (!$files) {
+    $generatedFiles = array_values(array_map('basename', (array)($result['files'] ?? [])));
+    if (!$generatedFiles) {
         throw new RuntimeException('No root view candidates were generated.');
+    }
+    $files = [];
+    foreach ($generatedFiles as $index => $generatedFile) {
+        $version = $index + 1;
+        if (preg_match('/_v(\d+)\.(?:png|jpe?g|webp)$/i', $generatedFile, $matches) === 1) {
+            $version = (int)$matches[1];
+        }
+        if (in_array($version, $neededVersions, true)) {
+            $files[] = $generatedFile;
+        }
+    }
+    if (!$files) {
+        throw new RuntimeException('The left and right root views were not generated.');
     }
 
     $status['status'] = 'done';
     $status['updated_at'] = date('c');
-    $status['message'] = 'Root view candidates created. Choose the best official root.';
+    $status['message'] = 'Missing left and right root views added to the existing artwork.';
     $status['candidates'] = $files;
     file_put_contents(
         $jobDir . DIRECTORY_SEPARATOR . 'status.json',
@@ -197,16 +221,10 @@ try {
     );
     complete_root_views_store_candidates($pdo, $artworkId, (int)$user['id'], $jobId, $files, basename((string)($artwork['root_file'] ?? '')));
 
-    $pdo->prepare('UPDATE artworks SET job_id = :job_id, status = :status, updated_at = :updated_at WHERE id = :id AND user_id = :user_id')
-        ->execute([
-            'job_id' => $jobId,
-            'status' => 'done',
-            'updated_at' => date('c'),
-            'id' => $artworkId,
-            'user_id' => (int)$user['id'],
-        ]);
+    $pdo->prepare('UPDATE artworks SET updated_at = :updated_at WHERE id = :id AND user_id = :user_id')
+        ->execute(['updated_at'=>date('c'),'id'=>$artworkId,'user_id'=>(int)$user['id']]);
 
-    header('Location: root_select.php?job=' . rawurlencode($jobId));
+    header('Location: artwork.php?id=' . rawurlencode((string)$artworkId) . '&root_views_completed=1');
     exit;
 } catch (Throwable $e) {
     $status['status'] = 'error';

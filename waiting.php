@@ -67,6 +67,25 @@ $error = $status['error'] ?? null;
 
 $resultUrl = null;
 
+if ($currentStatus === 'done' && !empty($status['user_scene_flow']) && !empty($status['result_file'])) {
+    $stmtArtwork = Database::connection()->prepare('SELECT id FROM artworks WHERE job_id = :job_id AND user_id = :user_id LIMIT 1');
+    $stmtArtwork->execute([
+        'job_id' => $job,
+        'user_id' => (int)$currentUser['id'],
+    ]);
+    $artworkId = (int)$stmtArtwork->fetchColumn();
+    if ($artworkId > 0) {
+        $sceneCategory = trim(str_replace(['\\', '/'], '', (string)($status['scene_category'] ?? 'selected')));
+        $sceneBoard = max(1, min(3, (int)($status['scene_board'] ?? 1)));
+        $sceneLimit = max(1, min(4, (int)($status['scene_limit'] ?? 4)));
+        header('Location: mockup_combinations_review.php?id=' . $artworkId
+            . '&board=' . $sceneBoard
+            . '&world_mother_category=' . rawurlencode($sceneCategory)
+            . '&auto_generate=1&compact=1&scene_limit=' . $sceneLimit);
+        exit;
+    }
+}
+
 if ($currentStatus === 'done') {
     header('Location: root_select.php?job=' . urlencode($job));
     exit;
@@ -104,7 +123,7 @@ try {
     foreach ($stmt->fetchAll() as $row) {
         $file = basename((string)($row['root_file'] ?? ''));
         if ($file !== '' && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $file)) {
-            $albumSlides[$file] = 'media.php?file=' . rawurlencode($file);
+            $albumSlides[$file] = 'media.php?file=' . rawurlencode($file) . '&thumb=1&w=640';
         }
     }
 
@@ -117,7 +136,7 @@ try {
         foreach ($fallbackFiles as $path) {
             $file = basename($path);
             if (!isset($albumSlides[$file])) {
-                $albumSlides[$file] = 'media.php?file=' . rawurlencode($file);
+                $albumSlides[$file] = 'media.php?file=' . rawurlencode($file) . '&thumb=1&w=640';
             }
             if (count($albumSlides) >= 12) {
                 break;

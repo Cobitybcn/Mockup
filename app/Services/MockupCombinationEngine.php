@@ -90,6 +90,9 @@ final class MockupCombinationEngine
             $cameraSlot = $cameraSlots[$selectedSlotId] ?? [];
             $variantOffset = max(0, (int)($worldMotherVariantOffsets[$i + 1] ?? 0));
             $worldMother = $this->selectWorldMotherImageFromCategory($category, $worldImages, $selectedSlotId, $i + 1, $artworkId, $variantOffset);
+            if ($worldMother) {
+                $worldMother = $this->resolveWorldMotherImagePath($worldMother);
+            }
             if ($category !== '' && empty($worldMother)) {
                 $worldMother = [
                     'category_slug' => $category,
@@ -273,7 +276,11 @@ final class MockupCombinationEngine
             }
         }
 
-        return $normalized;
+        // Stale links used to pass the virtual category "selected". That
+        // folder no longer exists after the scene-library reorganization.
+        // Treat every unknown category as no selection so the caller can
+        // choose a real, indexed scene instead of building a broken batch.
+        return '';
     }
 
     /**
@@ -377,6 +384,42 @@ final class MockupCombinationEngine
         }
 
         return $candidate;
+    }
+
+    /**
+     * @param array<string,mixed> $worldMother
+     * @return array<string,mixed>
+     */
+    private function resolveWorldMotherImagePath(array $worldMother): array
+    {
+        $absolutePath = (string)($worldMother['absolute_path'] ?? '');
+        if ($absolutePath !== '' && is_file($absolutePath)) {
+            return $worldMother;
+        }
+
+        $relativePath = trim(str_replace('\\', '/', (string)($worldMother['relative_path'] ?? '')));
+        if ($relativePath === '' || !str_starts_with($relativePath, 'storage/world_mothers/')) {
+            return $worldMother;
+        }
+
+        if ($absolutePath === '') {
+            $absolutePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
+            $worldMother['absolute_path'] = $absolutePath;
+        }
+
+        if (!StorageService::isGcsActive()) {
+            return $worldMother;
+        }
+
+        $dir = dirname($absolutePath);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0775, true);
+        }
+        if (StorageService::downloadFile($relativePath, $absolutePath)) {
+            $worldMother['absolute_path'] = $absolutePath;
+        }
+
+        return $worldMother;
     }
 
     /**

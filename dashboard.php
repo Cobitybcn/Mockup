@@ -199,9 +199,13 @@ function h($v): string
     return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 }
 
-function result_url(?string $file): string
+function result_url(?string $file, int $thumbWidth = 0): string
 {
-    return $file ? 'media.php?file=' . rawurlencode(basename($file)) : '';
+    if (!$file) {
+        return '';
+    }
+    $url = 'media.php?file=' . rawurlencode(basename($file));
+    return $thumbWidth > 0 ? $url . '&thumb=1&w=' . max(240, min(1200, $thumbWidth)) : $url;
 }
 
 function download_url(?string $file): string
@@ -355,7 +359,7 @@ function dashboard_page_url(int $page, string $query): string
                             <article class="item-card">
                                 <?php if (!empty($artwork['root_file']) && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . basename((string)$artwork['root_file']))): ?>
                                     <a href="artwork.php?id=<?= h($artwork['id']) ?>" aria-label="Open artwork file">
-                                        <img src="<?= h(result_url($artwork['root_file'])) ?>" alt="Root artwork">
+                                        <img src="<?= h(result_url($artwork['root_file'], 520)) ?>" alt="Root artwork" loading="lazy" decoding="async">
                                     </a>
                                 <?php endif; ?>
 
@@ -407,7 +411,7 @@ function dashboard_page_url(int $page, string $query): string
                         <?php foreach ($mockups as $mockup): ?>
                             <article class="item-card">
                                 <a href="viewer.php?id=<?= h($mockup['id']) ?>" aria-label="Open mockup">
-                                    <img src="<?= h(result_url($mockup['mockup_file'])) ?>" alt="Mockup">
+                                    <img src="<?= h(result_url($mockup['mockup_file'], 520)) ?>" alt="Mockup" loading="lazy" decoding="async">
                                 </a>
                                 <h3><?= h(Display::contextTitle($mockup['context_id'])) ?></h3>
                                 <div class="card-actions">

@@ -1,0 +1,18 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__ . '/app/bootstrap.php';
+function pubh($v): string { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
+try { $publication=(new PublicationService(Database::connection()))->publicBySlug(trim((string)($_GET['slug']??''))); }
+catch(Throwable $e){ http_response_code(404); exit('Publicación no encontrada.'); }
+$title=(string)$publication['title']; $desc=(string)($publication['short_description'] ?: $publication['description']);
+$cover=$publication['items'][0]['mockup_file'] ?? $publication['source_image_file'];
+$coverUrl='publication_media.php?slug='.rawurlencode((string)$publication['slug']).'&file='.rawurlencode(basename((string)$cover));
+$configuredBase=rtrim(app_env('APP_PUBLIC_URL',''),'/');
+$requestBase=(!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off'?'https':'http').'://'.($_SERVER['HTTP_HOST']??'localhost');
+$base=$configuredBase!==''?$configuredBase:$requestBase;
+$canonical=$base.'/public_artwork.php?slug='.rawurlencode((string)$publication['slug']);
+$coverUrl=$base.'/'.$coverUrl;
+?>
+<!doctype html><html lang="<?=pubh($publication['language'])?>"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=pubh($title)?></title><meta name="description" content="<?=pubh($desc)?>"><link rel="canonical" href="<?=pubh($canonical)?>"><meta property="og:type" content="website"><meta property="og:title" content="<?=pubh($title)?>"><meta property="og:description" content="<?=pubh($desc)?>"><meta property="og:image" content="<?=pubh($coverUrl)?>"><meta property="og:url" content="<?=pubh($canonical)?>"><script type="application/ld+json"><?=json_encode(['@context'=>'https://schema.org','@type'=>'VisualArtwork','name'=>$title,'description'=>$publication['description'],'image'=>$coverUrl,'keywords'=>$publication['keywords']],JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE)?></script><style>
+*{box-sizing:border-box}body{margin:0;background:#f4f1eb;color:#201f1c;font-family:Georgia,serif}.hero{max-width:1180px;margin:auto;padding:64px 24px}.eyebrow{font:12px Arial,sans-serif;letter-spacing:.15em;text-transform:uppercase;color:#777}.lead{font-size:20px;line-height:1.55;max-width:760px}.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin:40px 0}.gallery figure{margin:0;background:#fff;padding:10px}.gallery img{display:block;width:100%;height:auto}.gallery figcaption{padding:10px 2px 2px;font:13px/1.4 Arial,sans-serif;color:#666}.cta{display:inline-block;background:#201f1c;color:white;padding:13px 20px;text-decoration:none;font-family:Arial,sans-serif}.disclosure{font:12px Arial,sans-serif;color:#777;margin-top:36px}@media(max-width:700px){.gallery{grid-template-columns:1fr}.hero{padding-top:36px}}
+</style></head><body><main class="hero"><div class="eyebrow">Artwork presentation</div><h1><?=pubh($title)?></h1><?php if($publication['subtitle']):?><h2><?=pubh($publication['subtitle'])?></h2><?php endif;?><p class="lead"><?=nl2br(pubh($publication['description']))?></p><section class="gallery"><?php foreach($publication['items'] as $item):?><figure><img src="publication_media.php?slug=<?=rawurlencode($publication['slug'])?>&file=<?=rawurlencode(basename((string)$item['mockup_file']))?>" alt="<?=pubh($item['alt_text'] ?: $item['title'])?>"><figcaption><?=pubh($item['caption'] ?: $item['title'])?></figcaption></figure><?php endforeach;?></section><?php if($publication['cta_url']):?><a class="cta" rel="noopener" href="<?=pubh($publication['cta_url'])?>"><?=pubh($publication['cta_label'] ?: 'Learn more')?></a><?php endif;?><p class="disclosure">Interior scenes may be digital visualizations created to present the artwork in context.</p></main></body></html>

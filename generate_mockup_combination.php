@@ -78,6 +78,9 @@ function build_combination_adjustment_prompt(array $controls): string
 
 try {
     $user = Auth::requireUser();
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_write_close();
+    }
     $artworkId = max(0, (int)($_POST['artwork_id'] ?? $_GET['artwork_id'] ?? 0));
     $combinationIndex = max(0, (int)($_POST['combination_index'] ?? $_GET['combination_index'] ?? 0));
     $cameraSlotId = trim((string)($_POST['camera_slot_id'] ?? $_GET['camera_slot_id'] ?? ''));
@@ -312,6 +315,68 @@ try {
             // Real environment: Enqueue job to Cloud Tasks queue targeting the worker
             CloudTasksService::enqueueGeneration($jobId, (int)$user['id'], (int)$artworkId, $contextId);
             Database::updateJobStatus($jobId, 'queued');
+        } elseif (ProviderSettings::allowRealApi()) {
+            Database::updateJobStatus($jobId, 'processing');
+
+            ProviderSettings::set(ProviderSettings::readForRoot($rootPath));
+
+            $generator = ServiceFactory::mockupGenerator();
+            $mockResult = $generator->generate($rootPath, $contextId, $finalPrompt, [
+                'seo_params' => $seoParams,
+                'root_reference_path' => $rootPath,
+                'world_mother_reference_path' => is_file($worldMotherPath) ? $worldMotherPath : '',
+                'world_mother_reference_mode' => $worldMotherReferenceMode,
+                'world_mother_reference_path_original' => is_file($worldMotherPath) ? $worldMotherPath : '',
+                'world_mother_scale' => $worldMotherScale,
+                'prompt_passthrough_mode' => $finalPrompt,
+                'skip_world_visual_enhancer' => true,
+                'slot_full_prompt_mode' => $slotFullPromptMode,
+                'mockup_combination' => $combinationForStorage,
+            ]);
+
+            if (array_key_exists('fidelity_review', $mockResult)) {
+                $selectorState['fidelity_validation'] = [
+                    'review' => $mockResult['fidelity_review'],
+                    'attempts' => (int)($mockResult['fidelity_attempts'] ?? 1),
+                    'rejected_candidates' => (int)($mockResult['fidelity_rejected_candidates'] ?? 0),
+                    'reviews' => $mockResult['fidelity_reviews'] ?? [],
+                ];
+                $selectorStateJson = json_encode($selectorState, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            }
+
+            $mockupId = (int)Database::withBusyRetry(function () use ($user, $artwork, $mockResult, $contextId, $selectorStateJson): int {
+                $stmtInsert = Database::connection()->prepare("
+                    INSERT INTO mockups (user_id, artwork_group_id, source_artwork_id, artwork_file, mockup_file, context_id, prompt_file, selector_state_json, created_at)
+                    VALUES (:user_id, :artwork_group_id, :source_artwork_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :selector_state_json, :created_at)
+                ");
+                $stmtInsert->execute([
+                    'user_id' => (int)$user['id'],
+                    'artwork_group_id' => ((int)($artwork['artwork_group_id'] ?? 0) > 0) ? (int)$artwork['artwork_group_id'] : null,
+                    'source_artwork_id' => (int)$artwork['id'],
+                    'artwork_file' => basename((string)$artwork['root_file']),
+                    'mockup_file' => basename((string)$mockResult['file']),
+                    'context_id' => $contextId,
+                    'prompt_file' => basename((string)$mockResult['prompt_file']),
+                    'selector_state_json' => $selectorStateJson,
+                    'created_at' => date('c'),
+                ]);
+                return (int)Database::connection()->lastInsertId();
+            }, 24);
+
+            Database::withBusyRetry(function () use ($jobId, $mockupId, $mockResult): void {
+                $pdo = Database::connection();
+                $pdo->prepare('
+                    UPDATE mockup_generation_jobs
+                    SET status = "done", mockup_id = :mockup_id, mockup_file = :mockup_file, prompt_file = :prompt_file, updated_at = :now
+                    WHERE id = :id
+                ')->execute([
+                    'mockup_id' => $mockupId,
+                    'mockup_file' => basename($mockResult['file']),
+                    'prompt_file' => basename($mockResult['prompt_file']),
+                    'now' => date('c'),
+                    'id' => $jobId
+                ]);
+            });
         } else {
             // Local offline debug / mock mode: run mock generation synchronously
             $mockResult = [
@@ -365,21 +430,31 @@ try {
             });
         }
 
+        if (isset($mockupId) && ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && ProviderSettings::imageProvider() === 'gemini') {
+            try {
+                $v2Sheets=new ArtworkSheetService(Database::connection());$v2ArtworkSheet=$v2Sheets->sheetForArtwork((int)$artwork['id'],(int)$user['id']);
+                $v2Sheets->generateMockupSheet((int)$v2ArtworkSheet['id'],(int)$artwork['id'],basename((string)$mockResult['file']),(int)$user['id'],'Automatic mockup analysis v2 during batch creation.');
+            }catch(Throwable $mockupV2Error){Logger::log('Mockup v2 analysis was not generated for mockup #'.$mockupId.': '.$mockupV2Error->getMessage(),'analysis_warning');}
+        }
+
         // Return immediate response to the caller
-        $audit['status'] = ProviderSettings::allowRealApi() ? 'queued' : 'generated';
+        $audit['status'] = ProviderSettings::allowRealApi() && !isset($mockupId) ? 'queued' : 'generated';
         $audit['completed_at'] = date(DATE_ATOM);
-        if (!ProviderSettings::allowRealApi() && isset($mockupId)) {
+        if (isset($mockupId)) {
             $audit['mockup_id'] = $mockupId;
             $audit['mockup_file'] = basename((string)$mockResult['file']);
             $audit['prompt_file'] = basename((string)$mockResult['prompt_file']);
         }
         file_put_contents($auditPath, json_encode($audit, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
+        if(isset($mockupId))NextPlatformSync::run();
         echo json_encode([
             'ok' => true,
-            'enqueued' => ProviderSettings::allowRealApi(),
+            'enqueued' => ProviderSettings::allowRealApi() && !isset($mockupId),
             'job_id' => $jobId,
-            'message' => ProviderSettings::allowRealApi() ? 'Generation enqueued in Cloud Tasks.' : 'Mockup generated (mock mode).',
+            'message' => ProviderSettings::allowRealApi() && !isset($mockupId)
+                ? 'Generation enqueued in Cloud Tasks.'
+                : (ProviderSettings::allowRealApi() ? 'Mockup generated locally with real API.' : 'Mockup generated (mock mode).'),
             'audit_file' => 'analysis/mockup-combination-audit/' . $artworkId . '/' . $auditFile,
             'results_url' => 'mockup_combination_results.php?id=' . $artworkId . '&board=' . $sceneBoardIndex . ($worldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($worldMotherCategory) : ''),
             'generation_mode' => 'mockup_combination_full_generation',

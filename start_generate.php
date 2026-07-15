@@ -39,6 +39,21 @@ function selected_provider_settings(): array
     return ProviderSettings::all();
 }
 
+function measurement_to_cm_string(string $value, string $unit): string
+{
+    $normalized = trim(str_replace(',', '.', $value));
+    if ($normalized === '' || !is_numeric($normalized)) {
+        return $value;
+    }
+
+    $number = (float)$normalized;
+    if (strtolower(trim($unit)) === 'in') {
+        $number *= 2.54;
+    }
+
+    return rtrim(rtrim(number_format($number, 2, '.', ''), '0'), '.');
+}
+
 if (empty($_FILES['main_artwork']) || $_FILES['main_artwork']['error'] !== UPLOAD_ERR_OK) {
     fail('Did not receive the main artwork correctly.');
 }
@@ -82,6 +97,10 @@ if (!save_uploaded_file($_FILES['main_artwork'], $mainInputFile)) {
     fail('Could not save the main artwork.');
 }
 
+if (StorageService::isGcsActive()) {
+    StorageService::uploadFile('jobs/' . $jobId . '/' . basename($mainInputFile), $mainInputFile);
+}
+
 /* =========================
    GUARDAR IMÁGENES ADICIONALES
 ========================= */
@@ -92,10 +111,46 @@ $extraFiles = [];
    DATOS DEL FORMULARIO
 ========================= */
 
+$isUserSceneFlow = !empty($_POST['user_scene_flow']);
+$realDimensionsEnabled = !empty($_POST['real_dimensions_enabled']);
 $width  = trim((string)($_POST['width'] ?? ''));
 $height = trim((string)($_POST['height'] ?? ''));
-$depth  = trim((string)($_POST['depth'] ?? ''));
+$depth  = trim((string)($_POST['depth'] ?? '3'));
 $unit   = trim((string)($_POST['unit'] ?? 'cm'));
+
+if ($isUserSceneFlow && ($width === '' || $height === '')) {
+    fail('Please enter the artwork width and height.');
+}
+
+$originalMeasurements = [
+    'width' => $width,
+    'height' => $height,
+    'depth' => $depth,
+    'unit' => $unit,
+];
+if (strtolower($unit) === 'in') {
+    $width = measurement_to_cm_string($width, $unit);
+    $height = measurement_to_cm_string($height, $unit);
+    $depth = measurement_to_cm_string($depth, $unit);
+    $unit = 'cm';
+}
+
+$widthNumber = (float)str_replace(',', '.', $width);
+$heightNumber = (float)str_replace(',', '.', $height);
+if ($isUserSceneFlow && ($widthNumber <= 0 || $heightNumber <= 0)) {
+    fail('Artwork width and height must be greater than zero.');
+}
+
+$artworkShape = 'square';
+if ($widthNumber > $heightNumber) {
+    $artworkShape = 'landscape';
+} elseif ($heightNumber > $widthNumber) {
+    $artworkShape = 'portrait';
+}
+
+$sceneCategory = trim(str_replace(['\\', '/'], '', (string)($_POST['scene_category'] ?? 'selected')));
+$sceneBoard = max(1, min(3, (int)($_POST['scene_board'] ?? 1)));
+$sceneLimit = max(1, min(4, (int)($_POST['scene_limit'] ?? 4)));
 
 $artistNotes = '';
 $providerSettings = selected_provider_settings();
@@ -120,16 +175,27 @@ $status = [
         'height' => $height,
         'depth' => $depth,
         'unit' => $unit,
+        'original_user_measurements' => $originalMeasurements,
+        'real_dimensions_enabled' => $realDimensionsEnabled,
+        'artwork_shape' => $artworkShape,
     ],
     'artist_notes' => $artistNotes,
     'provider_settings' => $providerSettings,
     'user_id' => (int)$currentUser['id'],
+    'user_scene_flow' => $isUserSceneFlow,
+    'scene_category' => $sceneCategory,
+    'scene_board' => $sceneBoard,
+    'scene_limit' => $sceneLimit,
 ];
 
 file_put_contents(
     $jobDir . '/status.json',
     json_encode($status, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
 );
+
+if (StorageService::isGcsActive()) {
+    StorageService::uploadFile('jobs/' . $jobId . '/status.json', $jobDir . '/status.json');
+}
 
 $stmt = Database::connection()->prepare("
     INSERT INTO artworks (user_id, job_id, main_file, status, width, height, depth, unit, created_at, updated_at)
@@ -152,7 +218,11 @@ $stmt->execute([
    REDIRECCIÓN INMEDIATA
 ========================= */
 
-header('Location: waiting.php?job=' . urlencode($jobId));
+if ($isUserSceneFlow) {
+    header('Location: create_scenes_wait.php?job=' . urlencode($jobId));
+} else {
+    header('Location: waiting.php?job=' . urlencode($jobId));
+}
 
 $phpPath = PHP_BINARY ?: 'php';
 
@@ -210,6 +280,46 @@ $logOut = $jobDir . DIRECTORY_SEPARATOR . 'process_out.log';
 $logErr = $jobDir . DIRECTORY_SEPARATOR . 'process_err.log';
 
 $started = false;
+
+if (ProviderSettings::allowRealApi() && class_exists('Google\\Cloud\\Tasks\\V2\\CloudTasksClient')) {
+    try {
+        CloudTasksService::enqueueRootGeneration($jobId, (int)$currentUser['id']);
+        file_put_contents($jobDir . '/start_method.txt', 'Cloud Tasks root_worker');
+        exit;
+    } catch (Throwable $e) {
+        $status['status'] = 'error';
+        $status['message'] = 'Could not enqueue artwork preparation.';
+        $status['error'] = $e->getMessage();
+        $status['updated_at'] = date('c');
+        file_put_contents($jobDir . '/status.json', json_encode($status, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        if (StorageService::isGcsActive()) {
+            StorageService::uploadFile('jobs/' . $jobId . '/status.json', $jobDir . '/status.json');
+        }
+        error_log('Could not enqueue root generation: ' . $e->getMessage());
+        exit;
+    }
+}
+
+// Método 0: Linux/Cloud Run - lanzar PHP CLI en segundo plano.
+// En localhost Windows se salta y cae en los métodos COM/start/WMIC.
+if (!$started && DIRECTORY_SEPARATOR === '/') {
+    try {
+        $phpCli = PHP_BINARY ?: 'php';
+        $cmd = sprintf(
+            'nohup %s %s %s > %s 2> %s &',
+            escapeshellarg($phpCli),
+            escapeshellarg($scriptPath),
+            escapeshellarg($jobId),
+            escapeshellarg($logOut),
+            escapeshellarg($logErr)
+        );
+        @exec($cmd);
+        $started = true;
+        file_put_contents($jobDir . '/start_method.txt', 'linux nohup');
+    } catch (Throwable $e) {
+        // Fallback al siguiente método
+    }
+}
 
 // Método 1: COM (WScript.Shell) - Excelente para Windows bajo Apache ya que no hereda handles ni bloquea FastCGI
 if (class_exists('COM')) {
@@ -284,4 +394,3 @@ if (!$started) {
 }
 
 exit;
-

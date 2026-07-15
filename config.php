@@ -61,6 +61,7 @@ define('ADMIN_EMAILS', app_env('ADMIN_EMAILS', ''));
 define('DB_CONNECTION', app_env('DB_CONNECTION', 'sqlite'));
 define('DB_HOST', app_env('DB_HOST', '127.0.0.1'));
 define('DB_PORT', app_env('DB_PORT', '3306'));
+define('DB_SOCKET', app_env('DB_SOCKET', ''));
 define('DB_DATABASE', app_env('DB_DATABASE', 'mockups'));
 define('DB_USERNAME', app_env('DB_USERNAME', 'root'));
 define('DB_PASSWORD', app_env('DB_PASSWORD', ''));
@@ -71,6 +72,11 @@ define('MOCKUP_PROMPT_FIRST_NO_MASK_MODE', strtolower(app_env('MOCKUP_PROMPT_FIR
 define('MOCKUP_USE_PRECOMPOSITION', strtolower(app_env('MOCKUP_USE_PRECOMPOSITION', 'false')) === 'true');
 define('MOCKUP_USE_BACKGROUND_EDIT', strtolower(app_env('MOCKUP_USE_BACKGROUND_EDIT', 'false')) === 'true');
 define('LEGACY_MOCKUP_FLOW_ENABLED', strtolower(app_env('LEGACY_MOCKUP_FLOW_ENABLED', 'false')) === 'true');
+define('MOCKUP_FIDELITY_GATE_ENABLED', strtolower(app_env('MOCKUP_FIDELITY_GATE_ENABLED', 'true')) === 'true');
+define('MOCKUP_FIDELITY_FAIL_OPEN', strtolower(app_env('MOCKUP_FIDELITY_FAIL_OPEN', 'false')) === 'true');
+define('MOCKUP_FIDELITY_MAX_REGENERATIONS', max(0, min(2, (int)app_env('MOCKUP_FIDELITY_MAX_REGENERATIONS', '2'))));
+define('MOCKUP_FIDELITY_MIN_SCORE', max(0.0, min(100.0, (float)app_env('MOCKUP_FIDELITY_MIN_SCORE', '72'))));
+define('MOCKUP_FIDELITY_REVIEW_MODEL', app_env('MOCKUP_FIDELITY_REVIEW_MODEL', 'gemini-2.5-flash'));
 
 
 // Punto #2: ruta configurable al ejecutable PHP (evita rutas hardcodeadas a versiones específicas)
@@ -80,7 +86,8 @@ define('PHP_BINARY_PATH', app_env('PHP_BINARY_PATH', ''));
 define('PYTHON_BINARY_PATH', app_env('PYTHON_BINARY_PATH', ''));
 
 // Punto #4: ID del proyecto en Google Cloud / Vertex AI
-define('VERTEX_PROJECT_ID', app_env('VERTEX_PROJECT_ID', 'project-3c7fb926-f021-47c6-9cc'));
+define('VERTEX_PROJECT_ID', app_env('VERTEX_PROJECT_ID', 'project-ff549db7-4f7f-4b0c-9a5'));
+define('VERTEX_LOCATION', app_env('VERTEX_LOCATION', 'global'));
 
 define('ANALYSIS_DIR', __DIR__ . DIRECTORY_SEPARATOR . 'analysis');
 define('PROMPTS_DIR', __DIR__ . DIRECTORY_SEPARATOR . 'mockup-prompts');

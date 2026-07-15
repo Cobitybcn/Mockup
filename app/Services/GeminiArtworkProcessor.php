@@ -19,6 +19,7 @@ class GeminiArtworkProcessor implements ArtworkProcessorInterface
         if (!$mainFile || !is_file($source)) {
             throw new RuntimeException('No se encontro la imagen principal del job.');
         }
+        $source = ManualArtworkFrameCropper::cropIfAvailable($source, $status, $jobDir);
 
         $resultsDir = RESULTS_DIR;
 
@@ -26,7 +27,7 @@ class GeminiArtworkProcessor implements ArtworkProcessorInterface
             mkdir($resultsDir, 0775, true);
         }
 
-        $rootCount = PromptSettings::rootArtworkCount();
+        $rootCount = !empty($status['user_scene_flow']) ? 1 : PromptSettings::rootArtworkCount();
 
         $promptsMap = [];
         for ($i = 1; $i <= $rootCount; $i++) {
@@ -82,17 +83,24 @@ class GeminiArtworkProcessor implements ArtworkProcessorInterface
             // Log prompt details for auditability
             $this->logRootPromptInfo($i, $promptsMap[$i]);
         }
-
-        // Run all commands in parallel
-        $results = $this->client->runCommandsParallel($cmds, $prompts, 150);
+        // Root preparation can be slower on Cloud Run cold starts and mobile uploads.
+        $rootTimeout = !empty($status['user_scene_flow']) ? 360 : 240;
+        $results = $this->client->runCommandsParallel($cmds, $prompts, $rootTimeout);
 
         // Validate results
         foreach ($results as $index => $res) {
             $v = $index + 1;
-            if ($res['exit_code'] !== 0) {
-                throw new RuntimeException("Error al generar la version {$v} de la imagen base: " . trim($res['stderr']));
+            $outputExists = is_file($paths[$index]);
+            if ($res['exit_code'] !== 0 && !$outputExists) {
+                $rawError = trim((string)($res['stderr'] ?? ''));
+                file_put_contents($jobDir . '/gemini_root_v' . $v . '_stderr.log', $rawError);
+                throw new RuntimeException($this->friendlyRootError($rawError, $v));
             }
-            if (!is_file($paths[$index])) {
+            if ($res['exit_code'] !== 0 && $outputExists) {
+                $rawError = trim((string)($res['stderr'] ?? ''));
+                file_put_contents($jobDir . '/gemini_root_v' . $v . '_stderr_warning.log', $rawError);
+            }
+            if (!$outputExists) {
                 throw new RuntimeException("La version {$v} de la imagen base no fue creada por el subproceso.");
             }
         }
@@ -107,28 +115,66 @@ class GeminiArtworkProcessor implements ArtworkProcessorInterface
         ];
     }
 
+    private function friendlyRootError(string $rawError, int $version): string
+    {
+        $error = strtolower($rawError);
+        if (str_contains($error, 'permission_denied') || str_contains($error, 'iam_permission_denied') || str_contains($error, 'aiplatform.endpoints.predict')) {
+            return 'Artwork preparation is not authorized for the configured Vertex AI project. Please verify the active Google Cloud account and Vertex AI permissions.';
+        }
+        if (str_contains($error, 'resource_exhausted') || str_contains($error, '429') || str_contains($error, 'quota')) {
+            return 'Artwork preparation is temporarily limited by image generation capacity. Please try again in a few minutes.';
+        }
+        if (str_contains($error, 'timed out') || str_contains($error, 'deadline') || str_contains($error, 'timeout')) {
+            return 'Artwork preparation took too long. Please try again with a clearer or smaller photo.';
+        }
+        if (str_contains($error, 'no candidates') || str_contains($error, 'blocked') || str_contains($error, 'safety')) {
+            return 'Artwork preparation could not create a usable base image from this photo. Please try a clearer, well-lit image.';
+        }
+        return 'Artwork preparation could not be completed. Please try again with a clearer photo.';
+    }
+
     private function buildPromptForVersion(int $version, array $status, string $source): string
     {
         if ($version === 1) {
-            return trim(PromptSettings::rootArtworkRulesFrontal());
+            return $this->withGeometryDirective(trim(PromptSettings::rootArtworkRulesFrontal()), $status);
         }
 
         if ($version === 2) {
-            return trim(PromptSettings::rootArtworkRulesLeft());
+            return $this->withGeometryDirective(trim(PromptSettings::rootArtworkRulesLeft()), $status);
         }
 
         if ($version === 3) {
-            return trim(PromptSettings::rootArtworkRulesRight());
+            return $this->withGeometryDirective(trim(PromptSettings::rootArtworkRulesRight()), $status);
         }
 
         // Fallback for version > 3
         if ($version % 3 === 1) {
-            return trim(PromptSettings::rootArtworkRulesFrontal());
+            return $this->withGeometryDirective(trim(PromptSettings::rootArtworkRulesFrontal()), $status);
         } elseif ($version % 3 === 2) {
-            return trim(PromptSettings::rootArtworkRulesLeft());
+            return $this->withGeometryDirective(trim(PromptSettings::rootArtworkRulesLeft()), $status);
         } else {
-            return trim(PromptSettings::rootArtworkRulesRight());
+            return $this->withGeometryDirective(trim(PromptSettings::rootArtworkRulesRight()), $status);
         }
+    }
+
+    private function withGeometryDirective(string $prompt, array $status): string
+    {
+        $m = (array)($status['measurements'] ?? []);
+        $shape = (string)($m['artwork_shape'] ?? '');
+        $width = trim((string)($m['width'] ?? ''));
+        $height = trim((string)($m['height'] ?? ''));
+        $unit = trim((string)($m['unit'] ?? 'cm'));
+
+        $lines = [];
+        if (in_array($shape, ['portrait', 'landscape', 'square'], true)) {
+            $lines[] = 'Resolved artwork format: ' . $shape . '. Preserve this orientation and aspect family. Do not square, rotate, stretch, squeeze, widen, shorten, or reinterpret the artwork format.';
+        }
+        if ($width !== '' && $height !== '') {
+            $lines[] = "Resolved physical artwork dimensions: {$width} {$unit} wide x {$height} {$unit} high. Use these as hidden metadata only; never render measurement text.";
+        }
+        $lines[] = 'If the uploaded photo includes background, margins, wall, floor, hands, camera perspective, or surrounding objects, treat them only as capture noise. The framed/cropped artwork is the only root artwork authority.';
+
+        return rtrim($prompt) . "\n\nROOT ARTWORK GEOMETRY LOCK\n" . implode("\n", $lines);
     }
 
     private function logRootPromptInfo(int $version, string $finalPrompt): void

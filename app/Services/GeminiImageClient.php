@@ -54,6 +54,11 @@ class GeminiImageClient
         $model = $model ?: ProviderSettings::geminiImageModel();
 
         $cmd = '"' . $python . '" ' . escapeshellarg($bridgeScript) . ' generate-image --output ' . escapeshellarg($tempOutput);
+        $aspectRatio = trim((string)($envOverrides['GEMINI_OUTPUT_ASPECT_RATIO'] ?? ''));
+        if ($aspectRatio === '') {
+            $aspectRatio = '1:1';
+        }
+        $cmd .= ' --aspect_ratio ' . escapeshellarg($aspectRatio);
         foreach ($imagePaths as $imagePath) {
             $cmd .= ' --image ' . escapeshellarg($imagePath);
         }
@@ -129,17 +134,24 @@ class GeminiImageClient
             $status = proc_get_status($process);
         }
 
-        $exitCode = proc_close($process);
-
+        $realExitCode = (int)$status['exitcode'];
         $stdout = (string)@file_get_contents($tempOutFile);
         $stderr = (string)@file_get_contents($tempErrFile);
+
+        if ($status['signaled']) {
+            $realExitCode = -1;
+            $signalNum = (int)$status['termsig'];
+            $stderr .= "\n[PHP Process Monitor] Process was terminated by signal $signalNum";
+        }
+
+        proc_close($process);
 
         @unlink($tempPromptFile);
         @unlink($tempOutFile);
         @unlink($tempErrFile);
 
-        if ($exitCode !== 0) {
-            throw new RuntimeException("Vertex bridge failed (exit code $exitCode): " . trim($stderr));
+        if ($realExitCode !== 0) {
+            throw new RuntimeException("Vertex bridge failed (exit code $realExitCode): " . trim($stderr));
         }
 
         return $stdout;
@@ -265,6 +277,7 @@ class GeminiImageClient
                 'out_file' => $tempOutFile,
                 'err_file' => $tempErrFile,
                 'cmd' => $fullCmd,
+                'exit_code' => null,
             ];
         }
 
@@ -287,12 +300,15 @@ class GeminiImageClient
             }
 
             $activeCount = 0;
-            foreach ($processes as $index => $pData) {
+            foreach ($processes as $index => &$pData) {
                 $status = proc_get_status($pData['process']);
                 if ($status['running']) {
                     $activeCount++;
+                } elseif ($pData['exit_code'] === null && isset($status['exitcode']) && (int)$status['exitcode'] !== -1) {
+                    $pData['exit_code'] = (int)$status['exitcode'];
                 }
             }
+            unset($pData);
             if ($activeCount > 0) {
                 usleep(100000); // 100ms
             }
@@ -301,7 +317,11 @@ class GeminiImageClient
         // Collect exit codes and outputs
         $results = [];
         foreach ($processes as $index => $pData) {
-            $exitCode = proc_close($pData['process']);
+            $closeExitCode = proc_close($pData['process']);
+            $exitCode = $pData['exit_code'];
+            if ($exitCode === null || (int)$exitCode === -1) {
+                $exitCode = $closeExitCode;
+            }
             $stdout = (string)@file_get_contents($pData['out_file']);
             $stderr = (string)@file_get_contents($pData['err_file']);
 
@@ -326,9 +346,14 @@ class GeminiImageClient
         $env = is_array($env) ? array_map('strval', $env) : [];
         $env['PYTHONIOENCODING'] = 'utf-8';
         $env['PYTHONUTF8'] = '1';
+        $env['PYTHONUNBUFFERED'] = '1';
 
         if (defined('VERTEX_PROJECT_ID') && VERTEX_PROJECT_ID !== '') {
             $env['VERTEX_PROJECT_ID'] = (string)VERTEX_PROJECT_ID;
+        }
+
+        if (defined('VERTEX_LOCATION') && VERTEX_LOCATION !== '') {
+            $env['VERTEX_LOCATION'] = (string)VERTEX_LOCATION;
         }
 
         if (defined('MOCKUP_PROMPT_FIRST_MODE')) {

@@ -20,7 +20,7 @@ Project name:
 The Artwork Curator
 
 Domain:
-theartworkcurator.ai
+artworkmockups.com
 
 Tagline:
 AI-curated mockups for paintings, drawings and original artworks.
@@ -81,4 +81,4 @@ The Admin V7 Composed Prompt and One-by-One Generation flow are completed and va
 3. **Passthrough Generation Mode**: `GeminiMockupGenerator.php` accepts a `prompt_passthrough_mode` metadata parameter which, if specified, forces Vertex/Gemini to receive the exact composed prompt string without appending legacy/experimental directives.
 4. **Controlled Endpoint**: `generate_one_mockup_from_composed_admin_prompt.php` performs authentication, ownership validation, deterministically computes proposal indexes, writes a pre-generation audit JSON, processes credit deduction if applicable, triggers passthrough generation, inserts the resulting mockup to database, and updates the audit JSON with result details.
 5. **Auditing**: Creates comprehensive audit files in `analysis/mockup-generation-audit/{artwork_id}/composed-admin-context-{context_id}-{timestamp}.generation.json` verifying that the prompt sent to Vertex matches the composed prompt exactly.
-6. **UI Integration**: Added a dedicated "Phase 2.3 — Admin V7 Composed Prompt Test" section to `mockup_prompt_drafts_review.php` with read-only previews, copy-to-clipboard actions, and interactive generation controls.
+6. **UI Integration**: Added a dedicated "Phase 2.3 — Admin V7 Composed Prompt Test" section to `mockup_prompt_drafts_review.php` with read-only previews, copy-to-clipboard actions, and interactive generation controls.

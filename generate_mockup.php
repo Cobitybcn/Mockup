@@ -882,7 +882,7 @@ if (wants_json_response()) {
         </a>
 
         <a class="button secondary" href="root_album.php">
-            Root Artworks
+            ArtWorks
         </a>
     </div>
 </div>

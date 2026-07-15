@@ -17,10 +17,6 @@ class AdminPromptComposerPreview
         
         // Normalize any carriage returns first for check
         $normalizedAdmin = str_replace("\r\n", "\n", $adminPrompt);
-        
-        if (strpos($normalizedAdmin, '{{MOCKUP_CONTEXT_PROPOSAL}}') === false) {
-            throw new RuntimeException('The Admin V7 prompt template does not contain the required {{MOCKUP_CONTEXT_PROPOSAL}} placeholder.');
-        }
 
         // 1. Get dynamic scale rules based on artwork dimensions from CORE JSON or database details
         $artworkId = isset($contextProposal['artwork_id']) ? (int)$contextProposal['artwork_id'] : 0;
@@ -160,13 +156,24 @@ class AdminPromptComposerPreview
         $slotFullPrompt = self::slotFullPromptTemplate($fields['camera_slot_id']);
         if ($slotFullPrompt !== '') {
             $slotFullPrompt = rtrim($slotFullPrompt)
-                . "\n\n" . ArtworkPhysicalIntegrityPolicy::environmentalScaleReasoningBlock()
+                . "\n\n" . ArtworkPhysicalIntegrityPolicy::promptBlock(
+                    $width,
+                    $height,
+                    $depth,
+                    $orientation,
+                    $fields['camera_slot_id']
+                )
                 . "\n\n" . self::slotFullPromptWorldMotherArtworkQuarantine();
             return $this->sanitizeRenderableMeasurementLabels(str_replace(
                 array_keys($replacements),
                 array_values($replacements),
                 str_replace("\r\n", "\n", $slotFullPrompt)
             ));
+        }
+
+        if (strpos($normalizedAdmin, '{{MOCKUP_CONTEXT_PROPOSAL}}') === false) {
+            Logger::log('Admin V7 prompt template missing {{MOCKUP_CONTEXT_PROPOSAL}} placeholder. Appending context block fallback.', 'warning');
+            $normalizedAdmin = rtrim($normalizedAdmin) . "\n\nSELECTED MOCKUP CONTEXT PROPOSAL\n\n{{MOCKUP_CONTEXT_PROPOSAL}}";
         }
 
         $composed = str_replace(
@@ -291,18 +298,7 @@ class AdminPromptComposerPreview
 
     private function artworkSizeClass(float $width, float $height): string
     {
-        $longestSide = max($width, $height);
-        if ($longestSide <= 70.0) {
-            return 'M';
-        }
-        if ($longestSide <= 130.0) {
-            return 'L';
-        }
-        if ($longestSide <= 180.0) {
-            return 'XL';
-        }
-
-        return 'Monumental/XXL';
+        return ArtworkPhysicalIntegrityPolicy::sizeClass(max($width, $height));
     }
 
     public static function hasSlotFullPromptTemplate(string $slotId): bool

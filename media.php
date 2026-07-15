@@ -11,6 +11,10 @@ if (!$isSocialVideo) {
     $file = basename($file);
 }
 $download = isset($_GET['download']) && $_GET['download'] === '1';
+$thumbWidth = 0;
+if (!$download && isset($_GET['thumb'])) {
+    $thumbWidth = max(240, min(1200, (int)($_GET['w'] ?? 640)));
+}
 
 if ($file === '') {
     http_response_code(400);
@@ -24,6 +28,10 @@ if (str_ends_with($file, '.analysis.json')) {
     $path = PROMPTS_DIR . DIRECTORY_SEPARATOR . $file;
 } else {
     $path = RESULTS_DIR . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $file);
+    if (!is_file($path)) {
+        $seriesHeaderPath = ArtworkSeries::headerUploadDir((int)$user['id']) . DIRECTORY_SEPARATOR . basename($file);
+        if (is_file($seriesHeaderPath)) $path = $seriesHeaderPath;
+    }
 }
 
 if (!Auth::isAdmin($user) && !user_can_access_result_file((int)$user['id'], $file)) {
@@ -42,18 +50,43 @@ if (!is_file($path)) {
             $gcsKey = 'results/' . $file;
         }
         
-        $signedUrl = StorageService::getSignedUrl($gcsKey, 5);
-        if ($signedUrl) {
-            header('Location: ' . $signedUrl);
-            exit;
+        if (!StorageService::downloadFile($gcsKey, $path) || !is_file($path)) {
+            $signedUrl = StorageService::getSignedUrl($gcsKey, 5);
+            if ($signedUrl) {
+                header('Location: ' . $signedUrl);
+                exit;
+            }
         }
     }
-    http_response_code(404);
-    exit('File not found.');
+    if (!is_file($path)) {
+        http_response_code(404);
+        exit('File not found.');
+    }
 }
 
 if (session_status() === PHP_SESSION_ACTIVE) {
     session_write_close();
+}
+
+$isImage = preg_match('/\.(jpe?g|png|webp|gif)$/i', $file) === 1;
+if ($thumbWidth > 0 && $isImage && !$isSocialVideo) {
+    $thumbPath = media_thumbnail_path($file, $thumbWidth);
+    $thumbKey = media_thumbnail_key($file, $thumbWidth);
+
+    if (!is_file($thumbPath) && StorageService::isGcsActive()) {
+        StorageService::downloadFile($thumbKey, $thumbPath);
+    }
+
+    if (!is_file($thumbPath)) {
+        media_create_thumbnail($path, $thumbPath, $thumbWidth);
+        if (is_file($thumbPath) && StorageService::isGcsActive()) {
+            StorageService::uploadFile($thumbKey, $thumbPath);
+        }
+    }
+
+    if (is_file($thumbPath)) {
+        $path = $thumbPath;
+    }
 }
 
 $mime = @mime_content_type($path) ?: 'application/octet-stream';
@@ -61,7 +94,7 @@ $mime = @mime_content_type($path) ?: 'application/octet-stream';
 header('Content-Type: ' . $mime);
 header('Content-Length: ' . filesize($path));
 header('X-Content-Type-Options: nosniff');
-header('Cache-Control: private, max-age=3600');
+header('Cache-Control: private, max-age=' . ($thumbWidth > 0 ? '86400' : '3600'));
 
 if ($download) {
     $downloadName = $file;
@@ -111,6 +144,10 @@ function user_can_access_result_file(int $userId, string $file): bool
     }
 
     $file = basename($file);
+
+    if (is_file(ArtworkSeries::headerUploadDir($userId) . DIRECTORY_SEPARATOR . $file)) {
+        return true;
+    }
 
     if (user_can_access_exact_result_file($pdo, $userId, $file)) {
         return true;
@@ -287,4 +324,67 @@ function root_version_prefix(string $file): string
     }
 
     return '';
+}
+
+function media_thumbnail_path(string $file, int $width): string
+{
+    $baseName = pathinfo(basename($file), PATHINFO_FILENAME);
+    $safeBase = preg_replace('/[^A-Za-z0-9._-]+/', '_', $baseName) ?: 'image';
+    $extension = function_exists('imagewebp') ? 'webp' : 'jpg';
+    return RESULTS_DIR . DIRECTORY_SEPARATOR . 'thumbnails' . DIRECTORY_SEPARATOR . $width . DIRECTORY_SEPARATOR . $safeBase . '.' . $extension;
+}
+
+function media_thumbnail_key(string $file, int $width): string
+{
+    return 'thumbnails/' . $width . '/' . basename(media_thumbnail_path($file, $width));
+}
+
+function media_create_thumbnail(string $sourcePath, string $thumbPath, int $targetWidth): bool
+{
+    if (!is_file($sourcePath)) {
+        return false;
+    }
+
+    $info = @getimagesize($sourcePath);
+    if (!$info || empty($info[0]) || empty($info[1])) {
+        return false;
+    }
+
+    $sourceWidth = (int)$info[0];
+    $sourceHeight = (int)$info[1];
+    $mime = (string)($info['mime'] ?? '');
+    if ($sourceWidth <= 0 || $sourceHeight <= 0) {
+        return false;
+    }
+
+    $targetWidth = min($targetWidth, $sourceWidth);
+    $targetHeight = max(1, (int)round($sourceHeight * ($targetWidth / $sourceWidth)));
+
+    $source = match ($mime) {
+        'image/jpeg', 'image/jpg' => @imagecreatefromjpeg($sourcePath),
+        'image/png' => @imagecreatefrompng($sourcePath),
+        'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($sourcePath) : false,
+        'image/gif' => @imagecreatefromgif($sourcePath),
+        default => @imagecreatefromstring((string)@file_get_contents($sourcePath)),
+    };
+    if (!$source) {
+        return false;
+    }
+
+    $thumb = imagecreatetruecolor($targetWidth, $targetHeight);
+    imagecopyresampled($thumb, $source, 0, 0, 0, 0, $targetWidth, $targetHeight, $sourceWidth, $sourceHeight);
+
+    $dir = dirname($thumbPath);
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0775, true);
+    }
+
+    $saved = function_exists('imagewebp')
+        ? @imagewebp($thumb, $thumbPath, 78)
+        : @imagejpeg($thumb, $thumbPath, 82);
+
+    imagedestroy($source);
+    imagedestroy($thumb);
+
+    return (bool)$saved;
 }

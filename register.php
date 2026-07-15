@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/app/bootstrap.php';
 
 if (Auth::user()) {
-    header('Location: root_album.php');
+    header('Location: create_scenes.php');
     exit;
 }
 
@@ -18,7 +18,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             (string)($_POST['name'] ?? '')
         );
 
-        header('Location: root_album.php');
+        header('Location: create_scenes.php');
         exit;
     } catch (Throwable $e) {
         $error = $e->getMessage();
@@ -84,7 +84,7 @@ $authOpacities = [
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Register - Artwork Mockups</title>
-    <link rel="stylesheet" href="style.css?v=auth-gallery-5">
+    <link rel="stylesheet" href="style.css?v=auth-gallery-6">
 </head>
 <body class="auth-page">
 

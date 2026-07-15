@@ -13,6 +13,21 @@ if (!Auth::isAdmin($currentUser)) {
 $pdo = Database::connection();
 $saved = false;
 $error = '';
+$notice = '';
+$resetLink = '';
+
+function admin_user_by_id(PDO $pdo, int $userId): ?array
+{
+    if ($userId <= 0) {
+        return null;
+    }
+
+    $stmt = $pdo->prepare('SELECT * FROM users WHERE id = :id LIMIT 1');
+    $stmt->execute(['id' => $userId]);
+    $user = $stmt->fetch();
+
+    return is_array($user) ? $user : null;
+}
 
 // Handle credit adjustment form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_credits') {
@@ -32,6 +47,111 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         }
     } else {
         $error = 'Invalid user ID or credit amount.';
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'send_password_reset') {
+    $targetUserId = (int)($_POST['user_id'] ?? 0);
+    $targetUser = admin_user_by_id($pdo, $targetUserId);
+
+    if (!$targetUser) {
+        $error = 'User not found.';
+    } else {
+        $result = Auth::requestPasswordReset((string)$targetUser['email']);
+        $resetLink = (string)($result['debug_link'] ?? '');
+        $notice = $resetLink !== ''
+            ? 'Password reset link generated.'
+            : 'Password reset email requested. If mail is configured, the user will receive it.';
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete_user') {
+    $targetUserId = (int)($_POST['user_id'] ?? 0);
+    $confirmation = trim((string)($_POST['delete_confirmation'] ?? ''));
+    $targetUser = admin_user_by_id($pdo, $targetUserId);
+
+    if (!$targetUser) {
+        $error = 'User not found.';
+    } elseif ($targetUserId === (int)$currentUser['id']) {
+        $error = 'You cannot delete your own account from this panel.';
+    } elseif (Auth::isAdmin($targetUser)) {
+        $error = 'Admin users are protected. Remove admin status manually before deleting.';
+    } elseif ($confirmation !== 'DELETE') {
+        $error = 'Type DELETE to confirm user deletion.';
+    } else {
+        try {
+            Database::withBusyRetry(function () use ($pdo, $targetUserId): void {
+                Database::beginWriteTransaction($pdo);
+                try {
+                    $stmt = $pdo->prepare('DELETE FROM users WHERE id = :id');
+                    $stmt->execute(['id' => $targetUserId]);
+                    $pdo->exec('COMMIT');
+                } catch (Throwable $e) {
+                    try {
+                        $pdo->exec('ROLLBACK');
+                    } catch (Throwable $rollbackError) {
+                    }
+                    throw $e;
+                }
+            });
+            $notice = 'User deleted successfully.';
+        } catch (Throwable $e) {
+            $error = 'Error deleting user: ' . $e->getMessage();
+        }
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'bulk_delete_users') {
+    $selectedIds = array_values(array_unique(array_map('intval', (array)($_POST['selected_user_ids'] ?? []))));
+    $selectedIds = array_values(array_filter($selectedIds, static fn(int $id): bool => $id > 0));
+    $confirmation = trim((string)($_POST['bulk_delete_confirmation'] ?? ''));
+
+    if (empty($selectedIds)) {
+        $error = 'Select at least one user to delete.';
+    } elseif ($confirmation !== 'DELETE') {
+        $error = 'Type DELETE to confirm bulk deletion.';
+    } else {
+        try {
+            $deletedCount = Database::withBusyRetry(function () use ($pdo, $selectedIds, $currentUser): int {
+                Database::beginWriteTransaction($pdo);
+                try {
+                    $placeholders = implode(',', array_fill(0, count($selectedIds), '?'));
+                    $stmt = $pdo->prepare("SELECT * FROM users WHERE id IN ({$placeholders})");
+                    $stmt->execute($selectedIds);
+                    $targets = $stmt->fetchAll();
+
+                    $deletableIds = [];
+                    foreach ($targets as $target) {
+                        $targetId = (int)($target['id'] ?? 0);
+                        if ($targetId <= 0 || $targetId === (int)$currentUser['id'] || Auth::isAdmin($target)) {
+                            continue;
+                        }
+                        $deletableIds[] = $targetId;
+                    }
+
+                    if (!empty($deletableIds)) {
+                        $deletePlaceholders = implode(',', array_fill(0, count($deletableIds), '?'));
+                        $delete = $pdo->prepare("DELETE FROM users WHERE id IN ({$deletePlaceholders})");
+                        $delete->execute($deletableIds);
+                    }
+
+                    $pdo->exec('COMMIT');
+                    return count($deletableIds);
+                } catch (Throwable $e) {
+                    try {
+                        $pdo->exec('ROLLBACK');
+                    } catch (Throwable $rollbackError) {
+                    }
+                    throw $e;
+                }
+            });
+
+            $notice = $deletedCount > 0
+                ? "{$deletedCount} user(s) deleted successfully."
+                : 'No users were deleted. Admin and current accounts are protected.';
+        } catch (Throwable $e) {
+            $error = 'Error deleting selected users: ' . $e->getMessage();
+        }
     }
 }
 
@@ -143,6 +263,86 @@ $totalAdmins = count(array_filter($users, fn($u) => !empty($u['is_admin'])));
             font-size: 11px;
         }
 
+        .user-actions {
+            display: grid;
+            gap: 8px;
+            min-width: 230px;
+        }
+
+        .user-actions-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .user-actions button {
+            width: auto;
+            margin: 0;
+            padding: 6px 10px;
+            font-size: 10px;
+        }
+
+        .bulk-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+            padding: 12px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: var(--surface-soft);
+        }
+
+        .bulk-actions form {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 0;
+        }
+
+        .bulk-actions input[type="text"] {
+            width: 96px;
+            padding: 7px 9px;
+            margin: 0;
+            font-size: 11px;
+        }
+
+        .bulk-actions button {
+            width: auto;
+            margin: 0;
+            padding: 7px 12px;
+            font-size: 10px;
+        }
+
+        .delete-user-form {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .delete-user-form input[type="text"] {
+            width: 86px;
+            padding: 6px 8px;
+            margin: 0;
+            font-size: 11px;
+        }
+
+        .danger-button {
+            border-color: var(--danger);
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .danger-button:hover {
+            border-color: #7f2d2d;
+            background: #7f2d2d;
+        }
+
         .transaction-log {
             margin-top: 32px;
         }
@@ -187,12 +387,21 @@ $totalAdmins = count(array_filter($users, fn($u) => !empty($u['is_admin'])));
                 </div>
                 <div class="topbar-actions">
                     <a class="button-link secondary" href="admin_api_keys.php">API Settings</a>
-                    <a class="button-link secondary" href="root_album.php">Root Artworks</a>
+                    <a class="button-link secondary" href="root_album.php">ArtWorks</a>
                 </div>
             </div>
 
             <?php if ($saved): ?>
                 <div class="notice">Credits adjusted successfully.</div>
+            <?php endif; ?>
+
+            <?php if ($notice !== ''): ?>
+                <div class="notice">
+                    <?= h($notice) ?>
+                    <?php if ($resetLink !== ''): ?>
+                        <br><a href="<?= h($resetLink) ?>">Open password reset link</a>
+                    <?php endif; ?>
+                </div>
             <?php endif; ?>
 
             <?php if ($error !== ''): ?>
@@ -225,21 +434,36 @@ $totalAdmins = count(array_filter($users, fn($u) => !empty($u['is_admin'])));
                 <p style="color: var(--muted); margin-bottom: 16px;">
                     Review registered artist accounts and adjust their credit balances in real-time.
                 </p>
+                <div class="bulk-actions">
+                    <span style="color: var(--muted); font-size: 12px;">Select generated/test users to remove. Admin accounts are ignored.</span>
+                    <form id="bulkDeleteUsersForm" method="post" onsubmit="return confirm('Delete selected users and their related data? This cannot be undone.');">
+                        <input type="hidden" name="action" value="bulk_delete_users">
+                        <input type="text" name="bulk_delete_confirmation" placeholder="DELETE" autocomplete="off" required>
+                        <button type="submit" class="danger-button">Delete selected</button>
+                    </form>
+                </div>
                 <div class="users-table-container">
                     <table class="premium-table">
                         <thead>
                         <tr>
+                            <th>Select</th>
                             <th>User ID</th>
                             <th>Name</th>
                             <th>Email Address</th>
                             <th>Role</th>
                             <th>Credits</th>
                             <th style="width: 420px;">Adjust Credit Balance</th>
+                            <th style="width: 260px;">Account Actions</th>
                         </tr>
                         </thead>
                         <tbody>
                         <?php foreach ($users as $u): ?>
                             <tr>
+                                <td>
+                                    <?php if ((int)$u['id'] !== (int)$currentUser['id'] && !Auth::isAdmin($u)): ?>
+                                        <input type="checkbox" name="selected_user_ids[]" value="<?= (int)$u['id'] ?>" form="bulkDeleteUsersForm">
+                                    <?php endif; ?>
+                                </td>
                                 <td><code>#<?= (int)$u['id'] ?></code></td>
                                 <td><strong><?= h($u['name'] !== '' ? $u['name'] : 'N/A') ?></strong></td>
                                 <td><?= h($u['email']) ?></td>
@@ -263,6 +487,29 @@ $totalAdmins = count(array_filter($users, fn($u) => !empty($u['is_admin'])));
                                         <input type="text" name="reason" placeholder="Reason (e.g. Purchase, Promo)" required>
                                         <button type="submit" class="button">Set</button>
                                     </form>
+                                </td>
+                                <td>
+                                    <div class="user-actions">
+                                        <div class="user-actions-row">
+                                            <form method="post">
+                                                <input type="hidden" name="action" value="send_password_reset">
+                                                <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
+                                                <button type="submit" class="secondary">Reset link</button>
+                                            </form>
+                                        </div>
+                                        <?php if ((int)$u['id'] === (int)$currentUser['id']): ?>
+                                            <small>Current admin account protected.</small>
+                                        <?php elseif (Auth::isAdmin($u)): ?>
+                                            <small>Admin account protected.</small>
+                                        <?php else: ?>
+                                            <form method="post" class="delete-user-form" onsubmit="return confirm('Delete this user and related data? This cannot be undone.');">
+                                                <input type="hidden" name="action" value="delete_user">
+                                                <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
+                                                <input type="text" name="delete_confirmation" placeholder="DELETE" autocomplete="off" required>
+                                                <button type="submit" class="danger-button">Delete</button>
+                                            </form>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

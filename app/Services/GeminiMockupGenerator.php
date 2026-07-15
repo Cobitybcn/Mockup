@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 class GeminiMockupGenerator implements MockupGeneratorInterface
 {
+    private const OUTPUT_ASPECT_RATIO = '4:5';
+
     private GeminiImageClient $client;
 
     public function __construct(?GeminiImageClient $client = null)
@@ -48,12 +50,14 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
             . "- Never replace the ROOT ARTWORK with a blank wall, empty canvas, decorative panel or object from the WORLD MOTHER.\n"
             . "- All written dimensions and measurements are hidden instructions only. Never render visible text, captions, labels, measurement callouts, arrows, rulers, scale bars, unit labels, or numeric size annotations in the generated image.\n"
             . "- If the camera or environment conflicts with the artwork, preserve IMAGE 1 and adapt the environment around it.";
-        $squareFrameContract = "GLOBAL OUTPUT FRAME RULE:\n"
-            . "- The final generated image must be square, 1:1 aspect ratio.\n"
-            . "- Compose the full photographic scene inside a square frame. Do not output portrait, vertical, landscape, panoramic, or cropped non-square images.\n"
-            . "- Keep the artwork fully inside the square composition unless the selected close-up camera explicitly requires a detail crop.";
+        $outputAspectRatio = self::OUTPUT_ASPECT_RATIO;
+        $outputFrameContract = "GLOBAL OUTPUT FRAME RULE:\n"
+            . "- The final generated image must use an exact {$outputAspectRatio} portrait aspect ratio.\n"
+            . "- Compose the complete photographic scene inside this standard catalog and social-feed frame. Do not inherit the aspect ratio of any reference image.\n"
+            . "- Do not output square, landscape, panoramic, 3:4, 2:3, 9:16, or other frame proportions.\n"
+            . "- Keep the artwork fully inside the {$outputAspectRatio} composition unless the selected close-up camera explicitly requires a detail crop.";
         $submittedPrompt = ($slotFullPromptMode || $usesGraphicPerspectiveGeminiDirect) ? $finalPrompt : $roleContract . "\n\n" . $finalPrompt;
-        $submittedPrompt = $squareFrameContract . "\n\n" . $submittedPrompt;
+        $submittedPrompt = $outputFrameContract . "\n\n" . $submittedPrompt;
         $parts = [$this->client->textPart($submittedPrompt)];
         if ($usesGraphicPerspectiveGeminiDirect) {
             $platePath = $this->graphicPerspectivePlatePath($cameraSlotId);
@@ -105,11 +109,14 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
             // Fase 5). Today MOCKUP_USE_PRECOMPOSITION is already false everywhere, so this is a
             // no-op in practice; it removes the dependency on that flag staying off by accident.
             $usesInpaintingCamera = $this->usesInpaintingCamera($cameraSlotId);
-            $envOverrides = [];
+            $envOverrides = [
+                'GEMINI_OUTPUT_ASPECT_RATIO' => self::OUTPUT_ASPECT_RATIO,
+            ];
             $modelOverride = null;
 
             if ($usesInpaintingCamera) {
                 $envOverrides = [
+                    'GEMINI_OUTPUT_ASPECT_RATIO' => self::OUTPUT_ASPECT_RATIO,
                     'MOCKUP_PROMPT_FIRST_MODE' => 'false',
                     'MOCKUP_USE_PRECOMPOSITION' => 'true',
                     'MOCKUP_USE_BACKGROUND_EDIT' => 'false',
@@ -129,6 +136,7 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
                 $modelOverride = (string)($metadata['image_model'] ?? 'imagen-3.0-capability-001');
             } elseif ($usesGraphicPerspectiveGeminiDirect) {
                 $envOverrides = [
+                    'GEMINI_OUTPUT_ASPECT_RATIO' => self::OUTPUT_ASPECT_RATIO,
                     'MOCKUP_USE_PRECOMPOSITION' => 'false',
                     'MOCKUP_USE_BACKGROUND_EDIT' => 'false',
                     'MOCKUP_PROMPT_FIRST_NO_MASK_MODE' => 'false',
@@ -136,6 +144,7 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
                 $modelOverride = $this->graphicPerspectiveImageModel($cameraSlotId);
             } elseif ($usesGraphicPerspectiveSlot) {
                 $envOverrides = [
+                    'GEMINI_OUTPUT_ASPECT_RATIO' => self::OUTPUT_ASPECT_RATIO,
                     'MOCKUP_PROMPT_FIRST_MODE' => 'false',
                     'MOCKUP_USE_PRECOMPOSITION' => 'true',
                     'MOCKUP_USE_BACKGROUND_EDIT' => 'false',
@@ -145,7 +154,10 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
                 ];
                 $modelOverride = $this->graphicPerspectiveImageModel($cameraSlotId);
             } elseif (!empty($metadata['force_disable_precomposition'])) {
-                $envOverrides = ['MOCKUP_USE_PRECOMPOSITION' => 'false'];
+                $envOverrides = [
+                    'GEMINI_OUTPUT_ASPECT_RATIO' => self::OUTPUT_ASPECT_RATIO,
+                    'MOCKUP_USE_PRECOMPOSITION' => 'false',
+                ];
             }
 
             $b64 = $this->client->generateImage($parts, $modelOverride, $envOverrides);
@@ -167,14 +179,19 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
             }
             $promptName = pathinfo($outputName, PATHINFO_FILENAME) . '.txt';
 
-            file_put_contents($promptsDir . DIRECTORY_SEPARATOR . $promptName, $submittedPrompt);
-            file_put_contents($resultsDir . DIRECTORY_SEPARATOR . $outputName, $imageData);
-            
-            // Apply ImageResizer to scale the generated mockup proportionally to 2200 px on shortest side
-            ImageResizer::resize($resultsDir . DIRECTORY_SEPARATOR . $outputName);
+            $promptPath = $promptsDir . DIRECTORY_SEPARATOR . $promptName;
+            $outputPath = $resultsDir . DIRECTORY_SEPARATOR . $outputName;
+
+            file_put_contents($promptPath, $submittedPrompt);
+            file_put_contents($outputPath, $imageData);
+
+            if (StorageService::isGcsActive()) {
+                StorageService::uploadFile('results/' . $outputName, $outputPath);
+                StorageService::uploadFile('mockup-prompts/' . $promptName, $promptPath);
+            }
 
             $elapsed = round(microtime(true) - $t0, 2);
-            Logger::log("Mockup Gemini generado y redimensionado exitosamente en {$elapsed}s. Archivo: {$outputName}", 'gemini');
+            Logger::log("Mockup Gemini generado en resolucion nativa en {$elapsed}s. Archivo: {$outputName}", 'gemini');
         } catch (Throwable $e) {
             $elapsed = round(microtime(true) - $t0, 2);
             Logger::log("Error generando mockup Gemini despues de {$elapsed}s. Error: " . $e->getMessage(), 'error');

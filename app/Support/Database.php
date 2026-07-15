@@ -136,12 +136,13 @@ class Database
     {
         $host = app_env('DB_HOST', '127.0.0.1');
         $port = app_env('DB_PORT', '3306');
+        $socket = app_env('DB_SOCKET', '');
         $database = app_env('DB_DATABASE', 'mockups');
         $username = app_env('DB_USERNAME', 'root');
         $password = app_env('DB_PASSWORD', '');
         $charset = app_env('DB_CHARSET', 'utf8mb4');
 
-        $serverDsn = "mysql:host={$host};port={$port};charset={$charset}";
+        $serverDsn = self::mysqlDsn('', $charset, $host, $port, $socket);
         $server = new PDO($serverDsn, $username, $password, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -151,10 +152,29 @@ class Database
             "CHARACTER SET {$charset} COLLATE {$charset}_unicode_ci"
         );
 
-        $dsn = "mysql:host={$host};port={$port};dbname={$database};charset={$charset}";
+        $dsn = self::mysqlDsn($database, $charset, $host, $port, $socket);
         return new PDO($dsn, $username, $password, [
             PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$charset}",
         ]);
+    }
+
+    private static function mysqlDsn(string $database, string $charset, string $host, string $port, string $socket): string
+    {
+        $params = [];
+        if ($socket !== '') {
+            $params[] = 'unix_socket=' . $socket;
+        } else {
+            $params[] = 'host=' . $host;
+            $params[] = 'port=' . $port;
+        }
+
+        if ($database !== '') {
+            $params[] = 'dbname=' . $database;
+        }
+
+        $params[] = 'charset=' . $charset;
+
+        return 'mysql:' . implode(';', $params);
     }
 
     private static function isBusyError(Throwable $e): bool
@@ -180,10 +200,14 @@ class Database
     {
         if (self::isMysql()) {
             self::migrateMysql($pdo);
-            return;
+        } else {
+            self::migrateSqlite($pdo);
         }
-
-        self::migrateSqlite($pdo);
+        self::migratePinterest($pdo);
+        self::migrateMeta($pdo);
+        self::migrateInstagram($pdo);
+        require_once __DIR__ . '/../Assistant/AssistantSchema.php';
+        AssistantSchema::migrate($pdo);
     }
 
     private static function migrateSqlite(PDO $pdo): void
@@ -497,6 +521,33 @@ class Database
                 last_activity INTEGER NOT NULL
             )
         ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS password_resets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                email TEXT NOT NULL,
+                token_hash TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                used_at TEXT,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets (token_hash)");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets (user_id, used_at)");
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS contact_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL,
+                subject TEXT NOT NULL,
+                message TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'new',
+                created_at TEXT NOT NULL
+            )
+        ");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_contact_status_created ON contact_messages (status, created_at)");
     }
 
     private static function migrateMysql(PDO $pdo): void
@@ -605,6 +656,8 @@ class Database
         self::addColumnIfMissing($pdo, 'artist_profiles', 'social_strategy', "TEXT NOT NULL");
         self::addColumnIfMissing($pdo, 'artist_profiles', 'pinterest_strategy', "TEXT NOT NULL");
         self::addColumnIfMissing($pdo, 'artist_profiles', 'photo_file', "VARCHAR(255) NOT NULL DEFAULT ''");
+        self::addColumnIfMissing($pdo, 'artist_profiles', 'subdomain', "VARCHAR(190) NOT NULL DEFAULT ''");
+        self::addColumnIfMissing($pdo, 'artist_profiles', 'custom_domain', "VARCHAR(190) NOT NULL DEFAULT ''");
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS credit_transactions (
@@ -845,6 +898,309 @@ class Database
                 KEY idx_sessions_activity (last_activity)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS password_resets (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                user_id INT UNSIGNED NOT NULL,
+                email VARCHAR(255) NOT NULL,
+                token_hash VARCHAR(255) NOT NULL,
+                expires_at VARCHAR(40) NOT NULL,
+                used_at VARCHAR(40) NULL,
+                created_at VARCHAR(40) NOT NULL,
+                PRIMARY KEY (id),
+                KEY idx_password_resets_token (token_hash),
+                KEY idx_password_resets_user (user_id, used_at),
+                CONSTRAINT password_resets_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS contact_messages (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                name VARCHAR(100) NOT NULL,
+                email VARCHAR(254) NOT NULL,
+                subject VARCHAR(80) NOT NULL,
+                message MEDIUMTEXT NOT NULL,
+                status VARCHAR(30) NOT NULL DEFAULT 'new',
+                created_at VARCHAR(40) NOT NULL,
+                PRIMARY KEY (id),
+                KEY idx_contact_status_created (status, created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+    }
+
+    private static function migratePinterest(PDO $pdo): void
+    {
+        if (self::isMysql()) {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS pinterest_connections (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                user_id INT UNSIGNED NOT NULL,
+                purpose VARCHAR(20) NOT NULL DEFAULT 'artist',
+                pinterest_account_id VARCHAR(190) NOT NULL,
+                access_token_encrypted MEDIUMTEXT NULL,
+                refresh_token_encrypted MEDIUMTEXT NULL,
+                access_token_expires_at VARCHAR(40) NULL,
+                refresh_token_expires_at VARCHAR(40) NULL,
+                scopes TEXT NOT NULL,
+                status VARCHAR(30) NOT NULL DEFAULT 'pending',
+                connected_at VARCHAR(40) NULL,
+                disconnected_at VARCHAR(40) NULL,
+                created_at VARCHAR(40) NOT NULL,
+                updated_at VARCHAR(40) NOT NULL,
+                UNIQUE KEY uq_pinterest_connections_user_purpose (user_id,purpose),
+                CONSTRAINT pinterest_connections_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            $pdo->exec("CREATE TABLE IF NOT EXISTS pinterest_pin_drafts (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                user_id INT UNSIGNED NOT NULL,
+                mockup_id INT UNSIGNED NOT NULL,
+                purpose VARCHAR(20) NOT NULL DEFAULT 'artist',
+                board_suggestion VARCHAR(255) NOT NULL DEFAULT '',
+                board_id VARCHAR(190) NOT NULL DEFAULT '',
+                board_name VARCHAR(255) NOT NULL DEFAULT '',
+                board_section_id VARCHAR(190) NOT NULL DEFAULT '',
+                board_section_name VARCHAR(255) NOT NULL DEFAULT '',
+                title VARCHAR(100) NOT NULL DEFAULT '',
+                description VARCHAR(500) NOT NULL DEFAULT '',
+                alt_text VARCHAR(500) NOT NULL DEFAULT '',
+                keywords MEDIUMTEXT NOT NULL,
+                hashtags MEDIUMTEXT NOT NULL,
+                destination_url MEDIUMTEXT NOT NULL,
+                status VARCHAR(30) NOT NULL DEFAULT 'draft',
+                payload_json MEDIUMTEXT NOT NULL,
+                media_token VARCHAR(64) NOT NULL DEFAULT '',
+                external_id VARCHAR(255) NOT NULL DEFAULT '',
+                external_url MEDIUMTEXT NOT NULL,
+                error MEDIUMTEXT NOT NULL,
+                crop_x DECIMAL(6,5) NOT NULL DEFAULT 0.5,
+                crop_y DECIMAL(6,5) NOT NULL DEFAULT 0.5,
+                crop_zoom DECIMAL(6,3) NOT NULL DEFAULT 1,
+                variant_file VARCHAR(255) NOT NULL DEFAULT '',
+                variant_width INT NOT NULL DEFAULT 0,
+                variant_height INT NOT NULL DEFAULT 0,
+                created_at VARCHAR(40) NOT NULL,
+                updated_at VARCHAR(40) NOT NULL,
+                KEY idx_pin_drafts_user_status (user_id,status),
+                CONSTRAINT pin_drafts_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                CONSTRAINT pin_drafts_mockup_fk FOREIGN KEY (mockup_id) REFERENCES mockups(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            $pdo->exec("CREATE TABLE IF NOT EXISTS pinterest_batches (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,user_id INT UNSIGNED NOT NULL,purpose VARCHAR(20) NOT NULL,
+                destination_url MEDIUMTEXT NOT NULL,status VARCHAR(30) NOT NULL DEFAULT 'draft',created_at VARCHAR(40) NOT NULL,updated_at VARCHAR(40) NOT NULL,
+                KEY idx_pinterest_batches_user_status (user_id,status),CONSTRAINT pinterest_batches_user_fk FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            $pdo->exec("CREATE TABLE IF NOT EXISTS pinterest_batch_items (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,batch_id INT UNSIGNED NOT NULL,draft_id INT UNSIGNED NOT NULL,position INT NOT NULL DEFAULT 0,status VARCHAR(30) NOT NULL DEFAULT 'draft',
+                UNIQUE KEY uq_pinterest_batch_draft (batch_id,draft_id),CONSTRAINT pinterest_batch_items_batch_fk FOREIGN KEY(batch_id) REFERENCES pinterest_batches(id) ON DELETE CASCADE,
+                CONSTRAINT pinterest_batch_items_draft_fk FOREIGN KEY(draft_id) REFERENCES pinterest_pin_drafts(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            $pdo->exec("CREATE TABLE IF NOT EXISTS pinterest_pin_destinations (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,draft_id INT UNSIGNED NOT NULL,user_id INT UNSIGNED NOT NULL,mockup_id INT UNSIGNED NOT NULL,purpose VARCHAR(20) NOT NULL,
+                board_id VARCHAR(190) NOT NULL,board_name VARCHAR(255) NOT NULL DEFAULT '',status VARCHAR(30) NOT NULL DEFAULT 'selected',external_id VARCHAR(255) NOT NULL DEFAULT '',
+                external_url MEDIUMTEXT NOT NULL,error MEDIUMTEXT NOT NULL,created_at VARCHAR(40) NOT NULL,updated_at VARCHAR(40) NOT NULL,
+                UNIQUE KEY uq_pinterest_destination_draft_board (draft_id,board_id),KEY idx_pinterest_destination_history (user_id,mockup_id,purpose,board_id,status),
+                CONSTRAINT pinterest_destinations_draft_fk FOREIGN KEY(draft_id) REFERENCES pinterest_pin_drafts(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            return;
+        }
+
+        $pdo->exec("CREATE TABLE IF NOT EXISTS pinterest_connections (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,purpose TEXT NOT NULL DEFAULT 'artist',
+            pinterest_account_id TEXT NOT NULL,access_token_encrypted TEXT,refresh_token_encrypted TEXT,
+            access_token_expires_at TEXT,refresh_token_expires_at TEXT,scopes TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'pending',
+            connected_at TEXT,disconnected_at TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,UNIQUE(user_id,purpose)
+        )");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS pinterest_pin_drafts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,mockup_id INTEGER NOT NULL,
+            purpose TEXT NOT NULL DEFAULT 'artist',board_suggestion TEXT NOT NULL DEFAULT '',board_id TEXT NOT NULL DEFAULT '',
+            board_name TEXT NOT NULL DEFAULT '',board_section_id TEXT NOT NULL DEFAULT '',board_section_name TEXT NOT NULL DEFAULT '',
+            title TEXT NOT NULL DEFAULT '',description TEXT NOT NULL DEFAULT '',alt_text TEXT NOT NULL DEFAULT '',keywords TEXT NOT NULL DEFAULT '',
+            hashtags TEXT NOT NULL DEFAULT '',destination_url TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'draft',payload_json TEXT NOT NULL DEFAULT '',
+            media_token TEXT NOT NULL DEFAULT '',external_id TEXT NOT NULL DEFAULT '',external_url TEXT NOT NULL DEFAULT '',error TEXT NOT NULL DEFAULT '',
+            crop_x REAL NOT NULL DEFAULT 0.5,crop_y REAL NOT NULL DEFAULT 0.5,crop_zoom REAL NOT NULL DEFAULT 1,
+            variant_file TEXT NOT NULL DEFAULT '',variant_width INTEGER NOT NULL DEFAULT 0,variant_height INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,updated_at TEXT NOT NULL,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,FOREIGN KEY(mockup_id) REFERENCES mockups(id) ON DELETE CASCADE
+        )");
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_pin_drafts_user_status ON pinterest_pin_drafts(user_id,status)');
+        $pdo->exec("CREATE TABLE IF NOT EXISTS pinterest_batches (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,purpose TEXT NOT NULL,destination_url TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'draft',created_at TEXT NOT NULL,updated_at TEXT NOT NULL,FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE)");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS pinterest_batch_items (id INTEGER PRIMARY KEY AUTOINCREMENT,batch_id INTEGER NOT NULL,draft_id INTEGER NOT NULL,position INTEGER NOT NULL DEFAULT 0,status TEXT NOT NULL DEFAULT 'draft',UNIQUE(batch_id,draft_id),FOREIGN KEY(batch_id) REFERENCES pinterest_batches(id) ON DELETE CASCADE,FOREIGN KEY(draft_id) REFERENCES pinterest_pin_drafts(id) ON DELETE CASCADE)");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS pinterest_pin_destinations (id INTEGER PRIMARY KEY AUTOINCREMENT,draft_id INTEGER NOT NULL,user_id INTEGER NOT NULL,mockup_id INTEGER NOT NULL,purpose TEXT NOT NULL,board_id TEXT NOT NULL,board_name TEXT NOT NULL DEFAULT '',status TEXT NOT NULL DEFAULT 'selected',external_id TEXT NOT NULL DEFAULT '',external_url TEXT NOT NULL DEFAULT '',error TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL,updated_at TEXT NOT NULL,UNIQUE(draft_id,board_id),FOREIGN KEY(draft_id) REFERENCES pinterest_pin_drafts(id) ON DELETE CASCADE)");
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_pinterest_destination_history ON pinterest_pin_destinations(user_id,mockup_id,purpose,board_id,status)');
+    }
+
+    private static function migrateMeta(PDO $pdo): void
+    {
+        if (self::isMysql()) {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS meta_connections (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                user_id INT UNSIGNED NOT NULL,
+                purpose VARCHAR(20) NOT NULL DEFAULT 'artist',
+                meta_user_id VARCHAR(190) NOT NULL DEFAULT '',
+                meta_user_name VARCHAR(255) NOT NULL DEFAULT '',
+                user_access_token_encrypted MEDIUMTEXT NULL,
+                token_expires_at VARCHAR(40) NULL,
+                page_id VARCHAR(190) NOT NULL DEFAULT '',
+                page_name VARCHAR(255) NOT NULL DEFAULT '',
+                page_access_token_encrypted MEDIUMTEXT NULL,
+                instagram_account_id VARCHAR(190) NOT NULL DEFAULT '',
+                instagram_username VARCHAR(255) NOT NULL DEFAULT '',
+                scopes TEXT NOT NULL,
+                status VARCHAR(30) NOT NULL DEFAULT 'pending',
+                connected_at VARCHAR(40) NULL,
+                disconnected_at VARCHAR(40) NULL,
+                created_at VARCHAR(40) NOT NULL,
+                updated_at VARCHAR(40) NOT NULL,
+                UNIQUE KEY uq_meta_connections_user_purpose (user_id,purpose),
+                CONSTRAINT meta_connections_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            $pdo->exec("CREATE TABLE IF NOT EXISTS social_channel_drafts (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                user_id INT UNSIGNED NOT NULL,
+                mockup_id INT UNSIGNED NOT NULL,
+                channel VARCHAR(24) NOT NULL,
+                purpose VARCHAR(20) NOT NULL DEFAULT 'artist',
+                title MEDIUMTEXT NOT NULL,
+                description MEDIUMTEXT NOT NULL,
+                hashtags MEDIUMTEXT NOT NULL,
+                alt_text MEDIUMTEXT NOT NULL,
+                destination_url MEDIUMTEXT NOT NULL,
+                status VARCHAR(30) NOT NULL DEFAULT 'draft',
+                payload_json MEDIUMTEXT NOT NULL,
+                media_token VARCHAR(64) NOT NULL DEFAULT '',
+                media_expires_at VARCHAR(40) NULL,
+                variant_file VARCHAR(255) NOT NULL DEFAULT '',
+                variant_width INT NOT NULL DEFAULT 0,
+                variant_height INT NOT NULL DEFAULT 0,
+                crop_x DECIMAL(6,5) NOT NULL DEFAULT 0.5,
+                crop_y DECIMAL(6,5) NOT NULL DEFAULT 0.5,
+                crop_zoom DECIMAL(6,3) NOT NULL DEFAULT 1,
+                publish_attempt_id VARCHAR(64) NOT NULL DEFAULT '',
+                external_id VARCHAR(255) NOT NULL DEFAULT '',
+                external_url MEDIUMTEXT NOT NULL,
+                error MEDIUMTEXT NOT NULL,
+                created_at VARCHAR(40) NOT NULL,
+                updated_at VARCHAR(40) NOT NULL,
+                KEY idx_social_channel_drafts_user_status (user_id,channel,status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            $pdo->exec("CREATE TABLE IF NOT EXISTS meta_batches (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                user_id INT UNSIGNED NOT NULL,
+                purpose VARCHAR(20) NOT NULL DEFAULT 'artist',
+                status VARCHAR(30) NOT NULL DEFAULT 'draft',
+                created_at VARCHAR(40) NOT NULL,
+                updated_at VARCHAR(40) NOT NULL,
+                KEY idx_meta_batches_user_status (user_id,status),
+                CONSTRAINT meta_batches_user_fk FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            $pdo->exec("CREATE TABLE IF NOT EXISTS meta_batch_items (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                batch_id INT UNSIGNED NOT NULL,
+                draft_id INT UNSIGNED NOT NULL,
+                position INT NOT NULL DEFAULT 0,
+                status VARCHAR(30) NOT NULL DEFAULT 'draft',
+                UNIQUE KEY uq_meta_batch_draft (batch_id,draft_id),
+                CONSTRAINT meta_batch_items_batch_fk FOREIGN KEY(batch_id) REFERENCES meta_batches(id) ON DELETE CASCADE,
+                CONSTRAINT meta_batch_items_draft_fk FOREIGN KEY(draft_id) REFERENCES social_channel_drafts(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        } else {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS meta_connections (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,purpose TEXT NOT NULL DEFAULT 'artist',
+                meta_user_id TEXT NOT NULL DEFAULT '',meta_user_name TEXT NOT NULL DEFAULT '',user_access_token_encrypted TEXT,
+                token_expires_at TEXT,page_id TEXT NOT NULL DEFAULT '',page_name TEXT NOT NULL DEFAULT '',page_access_token_encrypted TEXT,
+                instagram_account_id TEXT NOT NULL DEFAULT '',instagram_username TEXT NOT NULL DEFAULT '',scopes TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL DEFAULT 'pending',connected_at TEXT,disconnected_at TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,UNIQUE(user_id,purpose)
+            )");
+            $pdo->exec("CREATE TABLE IF NOT EXISTS social_channel_drafts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,mockup_id INTEGER NOT NULL,
+                channel TEXT NOT NULL,purpose TEXT NOT NULL DEFAULT 'artist',title TEXT NOT NULL,description TEXT NOT NULL,
+                hashtags TEXT NOT NULL,alt_text TEXT NOT NULL DEFAULT '',destination_url TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'draft',
+                payload_json TEXT NOT NULL,media_token TEXT NOT NULL DEFAULT '',media_expires_at TEXT,variant_file TEXT NOT NULL DEFAULT '',
+                variant_width INTEGER NOT NULL DEFAULT 0,variant_height INTEGER NOT NULL DEFAULT 0,crop_x REAL NOT NULL DEFAULT 0.5,
+                crop_y REAL NOT NULL DEFAULT 0.5,crop_zoom REAL NOT NULL DEFAULT 1,publish_attempt_id TEXT NOT NULL DEFAULT '',
+                external_id TEXT NOT NULL DEFAULT '',external_url TEXT NOT NULL DEFAULT '',error TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL,updated_at TEXT NOT NULL
+            )");
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_social_channel_drafts_user_status ON social_channel_drafts(user_id,channel,status)');
+            $pdo->exec("CREATE TABLE IF NOT EXISTS meta_batches (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,purpose TEXT NOT NULL DEFAULT 'artist',
+                status TEXT NOT NULL DEFAULT 'draft',created_at TEXT NOT NULL,updated_at TEXT NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            )");
+            $pdo->exec("CREATE TABLE IF NOT EXISTS meta_batch_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,batch_id INTEGER NOT NULL,draft_id INTEGER NOT NULL,
+                position INTEGER NOT NULL DEFAULT 0,status TEXT NOT NULL DEFAULT 'draft',UNIQUE(batch_id,draft_id),
+                FOREIGN KEY(batch_id) REFERENCES meta_batches(id) ON DELETE CASCADE,
+                FOREIGN KEY(draft_id) REFERENCES social_channel_drafts(id) ON DELETE CASCADE
+            )");
+        }
+
+        $text = self::isMysql() ? 'MEDIUMTEXT NOT NULL' : "TEXT NOT NULL DEFAULT ''";
+        $varchar20 = self::isMysql() ? "VARCHAR(20) NOT NULL DEFAULT 'artist'" : "TEXT NOT NULL DEFAULT 'artist'";
+        $varchar40Nullable = self::isMysql() ? 'VARCHAR(40) NULL' : 'TEXT';
+        $varchar64 = self::isMysql() ? "VARCHAR(64) NOT NULL DEFAULT ''" : "TEXT NOT NULL DEFAULT ''";
+        $varchar255 = self::isMysql() ? "VARCHAR(255) NOT NULL DEFAULT ''" : "TEXT NOT NULL DEFAULT ''";
+        $integer = self::isMysql() ? 'INT NOT NULL DEFAULT 0' : 'INTEGER NOT NULL DEFAULT 0';
+        $decimal = self::isMysql() ? 'DECIMAL(6,5) NOT NULL DEFAULT 0.5' : 'REAL NOT NULL DEFAULT 0.5';
+        $zoom = self::isMysql() ? 'DECIMAL(6,3) NOT NULL DEFAULT 1' : 'REAL NOT NULL DEFAULT 1';
+        self::addColumnIfMissing($pdo, 'social_channel_drafts', 'purpose', $varchar20);
+        self::addColumnIfMissing($pdo, 'social_channel_drafts', 'alt_text', $text);
+        self::addColumnIfMissing($pdo, 'social_channel_drafts', 'media_token', $varchar64);
+        self::addColumnIfMissing($pdo, 'social_channel_drafts', 'media_expires_at', $varchar40Nullable);
+        self::addColumnIfMissing($pdo, 'social_channel_drafts', 'variant_file', $varchar255);
+        self::addColumnIfMissing($pdo, 'social_channel_drafts', 'variant_width', $integer);
+        self::addColumnIfMissing($pdo, 'social_channel_drafts', 'variant_height', $integer);
+        self::addColumnIfMissing($pdo, 'social_channel_drafts', 'crop_x', $decimal);
+        self::addColumnIfMissing($pdo, 'social_channel_drafts', 'crop_y', $decimal);
+        self::addColumnIfMissing($pdo, 'social_channel_drafts', 'crop_zoom', $zoom);
+        self::addColumnIfMissing($pdo, 'social_channel_drafts', 'publish_attempt_id', $varchar64);
+    }
+
+    private static function migrateInstagram(PDO $pdo): void
+    {
+        if (self::isMysql()) {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS instagram_connections (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                user_id INT UNSIGNED NOT NULL,
+                purpose VARCHAR(20) NOT NULL DEFAULT 'artist',
+                instagram_user_id VARCHAR(190) NOT NULL DEFAULT '',
+                username VARCHAR(255) NOT NULL DEFAULT '',
+                account_type VARCHAR(80) NOT NULL DEFAULT '',
+                access_token_encrypted MEDIUMTEXT NULL,
+                token_expires_at VARCHAR(40) NULL,
+                scopes TEXT NOT NULL,
+                status VARCHAR(30) NOT NULL DEFAULT 'pending',
+                connected_at VARCHAR(40) NULL,
+                disconnected_at VARCHAR(40) NULL,
+                created_at VARCHAR(40) NOT NULL,
+                updated_at VARCHAR(40) NOT NULL,
+                UNIQUE KEY uq_instagram_connections_user_purpose (user_id,purpose),
+                CONSTRAINT instagram_connections_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            return;
+        }
+
+        $pdo->exec("CREATE TABLE IF NOT EXISTS instagram_connections (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            purpose TEXT NOT NULL DEFAULT 'artist',
+            instagram_user_id TEXT NOT NULL DEFAULT '',
+            username TEXT NOT NULL DEFAULT '',
+            account_type TEXT NOT NULL DEFAULT '',
+            access_token_encrypted TEXT,
+            token_expires_at TEXT,
+            scopes TEXT NOT NULL DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'pending',
+            connected_at TEXT,
+            disconnected_at TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE(user_id,purpose)
+        )");
     }
 
     private static function addColumnIfMissing(PDO $pdo, string $table, string $column, string $definition): void

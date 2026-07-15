@@ -227,7 +227,7 @@ foreach ($sheets as $sheet) {
             <?php else: ?>
                 <div class="fichas-grid">
                     <?php foreach ($cards as $card): ?>
-                        <a class="ficha-card" href="ficha.php?id=<?= $card['sheet_id'] ?>">
+                        <a class="ficha-card" href="artwork.php?id=<?= (int)$card['canonical_artwork_id'] ?>">
                             <?php if ($card['image'] !== ''): ?>
                                 <img src="<?= h($card['image']) ?>" alt="<?= h($card['title']) ?>" loading="lazy" decoding="async">
                             <?php else: ?>

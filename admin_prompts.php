@@ -24,10 +24,7 @@ $adminPromptKeys = [
     'root_artwork_rules_frontal',
     'root_artwork_rules_left',
     'root_artwork_rules_right',
-    'artwork_analysis_prompt',
-    'mockup_final_request',
     'root_artwork_count',
-    'mockup_context_count',
 ];
 
 $storedDefaultKeys = [];
@@ -401,7 +398,7 @@ $rootViews = [
                     <p>Prompt directives sent to Vertex AI. Each field is the exact text sent — no mixing, no hidden additions.</p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link secondary" href="root_album.php">Root Artworks</a>
+                    <a class="button-link secondary" href="root_album.php">ArtWorks</a>
                 </div>
             </div>
 
@@ -484,152 +481,6 @@ $rootViews = [
                         </div>
                     </div>
                 </div><!-- /root artwork -->
-
-
-                <!-- ══════════════════════════════════════════
-                     SECTION 2 — ARTWORK ANALYSIS
-                ══════════════════════════════════════════ -->
-                <?php
-                    $analysisKey      = 'artwork_analysis_prompt';
-                    $analysisActive   = (string)($settings[$analysisKey] ?? '');
-                    $analysisDefault  = (string)($defaultDirectives[$analysisKey] ?? '');
-                    $analysisHasDefault = trim($analysisDefault) !== '';
-                ?>
-                <div class="prompt-section">
-                    <div class="prompt-section-header">
-                        <div class="prompt-section-header-left">
-                            <h2 class="prompt-section-title">Análisis de Obra</h2>
-                            <span class="section-badge">Formulario 2</span>
-                        </div>
-                        <div class="prompt-section-meta">
-                            <label for="mockup_context_count">Propuestas de contexto</label>
-                            <input
-                                type="number"
-                                id="mockup_context_count"
-                                name="mockup_context_count"
-                                min="1" max="10" step="1"
-                                value="<?= h($settings['mockup_context_count'] ?? '6') ?>"
-                            >
-                        </div>
-                    </div>
-
-                    <div class="prompt-section-body">
-                        <div class="analysis-field">
-                            <label for="<?= h($analysisKey) ?>">Prompt de análisis</label>
-                            <small>Instrucciones para analizar la obra y proponer contextos. Mantener los marcadores <code>{placeholder}</code> y la estructura JSON intacta.</small>
-
-                            <!-- Placeholder reference (collapsed) -->
-                            <button type="button" class="placeholder-toggle" id="ph-toggle" aria-expanded="false">
-                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                                    <path d="M3 1.5L7 5L3 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                Variables disponibles
-                            </button>
-                            <div class="placeholder-chips" id="ph-chips" role="list">
-                                <?php foreach (['{artist_profile_prompt}','{artist_statement}','{visual_language}','{recurring_symbols}','{preferred_atmospheres}','{title}','{width_cm}','{height_cm}','{depth_cm}','{notes}','{preferred_style}','{target_market}','{orientation}','{region}','{scale_text}','{context_count}'] as $ph): ?>
-                                    <code data-placeholder="<?= h($ph) ?>" title="Click para copiar"><?= h($ph) ?></code>
-                                <?php endforeach; ?>
-                            </div>
-
-                            <textarea
-                                id="<?= h($analysisKey) ?>"
-                                name="<?= h($analysisKey) ?>"
-                            ><?= h($analysisActive) ?></textarea>
-
-                            <?php if ($analysisHasDefault): ?>
-                            <button
-                                type="button"
-                                class="default-editor-toggle"
-                                data-panel="panel-<?= h($analysisKey) ?>"
-                                aria-expanded="false"
-                            >
-                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                                    <path d="M3 1.5L7 5L3 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                Valor por defecto
-                            </button>
-                            <div class="default-editor-panel" id="panel-<?= h($analysisKey) ?>">
-                                <span class="default-editor-label">Texto de restauración</span>
-                                <textarea
-                                    id="<?= h($analysisKey) ?>_default"
-                                    name="default_directives[<?= h($analysisKey) ?>]"
-                                ><?= h($analysisDefault) ?></textarea>
-                                <button
-                                    type="button"
-                                    class="secondary restore-btn use-default-directive"
-                                    data-target="<?= h($analysisKey) ?>"
-                                    data-source="<?= h($analysisKey) ?>_default"
-                                >↩ Restaurar</button>
-                            </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div><!-- /analysis -->
-
-                <!-- ══════════════════════════════════════════
-                     SECTION 3 — MOCKUP FINAL REQUEST / ADMIN V7
-                ══════════════════════════════════════════ -->
-                <?php
-                    $finalRequestKey      = 'mockup_final_request';
-                    $finalRequestActive   = (string)($settings[$finalRequestKey] ?? '');
-                    $finalRequestDefault  = (string)($defaultDirectives[$finalRequestKey] ?? '');
-                    $finalRequestHasDefault = trim($finalRequestDefault) !== '';
-                    $showPlaceholderWarning = (strpos($finalRequestActive, '{{MOCKUP_CONTEXT_PROPOSAL}}') === false);
-                ?>
-                <div class="prompt-section">
-                    <div class="prompt-section-header">
-                        <div class="prompt-section-header-left">
-                            <h2 class="prompt-section-title">Petición final de mockups / Admin V7</h2>
-                            <span class="section-badge" style="background: #1a73e8; color: #fff; border: none;">Admin V7</span>
-                        </div>
-                    </div>
-
-                    <div class="prompt-section-body">
-                        <div class="analysis-field">
-                            <label for="<?= h($finalRequestKey) ?>">Prompt final de generación</label>
-                            <small>Este prompt es la autoridad final para generar mockups. Debe contener el marcador <code>{{MOCKUP_CONTEXT_PROPOSAL}}</code>, donde el sistema insertará una propuesta de contexto subordinada. No debe devolver JSON.</small>
-
-                            <?php if ($showPlaceholderWarning): ?>
-                                <div class="notice error" style="margin-top: 10px; margin-bottom: 10px; border-left: 4px solid var(--danger); background: #FFF5F5; color: var(--danger); padding: 12px; font-size: 13px; border-radius: var(--radius);">
-                                    <strong>¡Atención!</strong> Falta el marcador obligatorio <code>{{MOCKUP_CONTEXT_PROPOSAL}}</code>. El generador Phase 2.3 fallará si este marcador no está presente.
-                                </div>
-                            <?php endif; ?>
-
-                            <textarea
-                                id="<?= h($finalRequestKey) ?>"
-                                name="<?= h($finalRequestKey) ?>"
-                                style="min-height: 420px;"
-                            ><?= h($finalRequestActive) ?></textarea>
-
-                            <?php if ($finalRequestHasDefault): ?>
-                            <button
-                                type="button"
-                                class="default-editor-toggle"
-                                data-panel="panel-<?= h($finalRequestKey) ?>"
-                                aria-expanded="false"
-                            >
-                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                                    <path d="M3 1.5L7 5L3 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                Valor por defecto
-                            </button>
-                            <div class="default-editor-panel" id="panel-<?= h($finalRequestKey) ?>">
-                                <span class="default-editor-label">Texto de restauración</span>
-                                <textarea
-                                    id="<?= h($finalRequestKey) ?>_default"
-                                    name="default_directives[<?= h($finalRequestKey) ?>]"
-                                ><?= h($finalRequestDefault) ?></textarea>
-                                <button
-                                    type="button"
-                                    class="secondary restore-btn use-default-directive"
-                                    data-target="<?= h($finalRequestKey) ?>"
-                                    data-source="<?= h($finalRequestKey) ?>_default"
-                                >↩ Restaurar</button>
-                            </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div><!-- /mockup final request -->
 
             </div><!-- /prompts-workspace -->
 

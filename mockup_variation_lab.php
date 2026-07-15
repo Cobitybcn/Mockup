@@ -4,6 +4,9 @@ declare(strict_types=1);
 require_once __DIR__ . '/app/bootstrap.php';
 
 $user = Auth::requireUser();
+$isAdmin = Auth::isAdmin($user);
+$labFlowMode = (string)($_COOKIE['sidebar_flow_mode'] ?? '');
+$useSimpleLab = !$isAdmin || $labFlowMode === 'normal';
 $pdo = Database::connection();
 
 if (!function_exists('h')) {
@@ -11,6 +14,12 @@ if (!function_exists('h')) {
     {
         return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
     }
+}
+
+function lab_thumb_url(string $file, int $width = 640): string
+{
+    $file = basename($file);
+    return $file !== '' ? 'media.php?file=' . rawurlencode($file) . '&thumb=1&w=' . max(240, min(1200, $width)) : '';
 }
 
 function mockup_variation_lab_register_run(PDO $pdo, array $run, array $selectedMockup, string $labDir): array
@@ -49,7 +58,18 @@ function mockup_variation_lab_register_run(PDO $pdo, array $run, array $selected
     if ($promptText !== '') {
         file_put_contents(PROMPTS_DIR . DIRECTORY_SEPARATOR . $registeredPromptFile, $promptText);
     }
-    ImageResizer::resize(RESULTS_DIR . DIRECTORY_SEPARATOR . $registeredMockupFile);
+
+    if (StorageService::isGcsActive()) {
+        if (!StorageService::uploadFile('results/' . $registeredMockupFile, RESULTS_DIR . DIRECTORY_SEPARATOR . $registeredMockupFile)) {
+            throw new RuntimeException('The variation could not be saved to persistent storage.');
+        }
+        if ($promptText !== '' && !StorageService::uploadFile(
+            'mockup-prompts/' . $registeredPromptFile,
+            PROMPTS_DIR . DIRECTORY_SEPARATOR . $registeredPromptFile
+        )) {
+            throw new RuntimeException('The variation prompt could not be saved to persistent storage.');
+        }
+    }
 
     $selectorState = [
         'generation_source' => 'mockup_variation_lab',
@@ -164,6 +184,7 @@ if ($selectedArtworkId > 0) {
         $mockups = $contextMockups;
     }
 }
+usort($mockups, static fn(array $a, array $b): int => (int)($b['id'] ?? 0) <=> (int)($a['id'] ?? 0));
 
 if ($selectedMockupId > 0) {
     $selectedMockupIsInContext = false;
@@ -189,6 +210,31 @@ foreach ($mockups as $row) {
         break;
     }
 }
+$mockupsById = [];
+foreach ($mockups as $mockup) {
+    $mockupsById[(int)$mockup['id']] = $mockup;
+}
+$modificationHistory = [];
+$activeChainIds = $selectedMockupId > 0 ? [$selectedMockupId => true] : [];
+$lineageCursor = $selectedMockup;
+for ($depth = 0; $depth < 16 && is_array($lineageCursor); $depth++) {
+    $lineageState = json_decode((string)($lineageCursor['selector_state_json'] ?? ''), true);
+    if (!is_array($lineageState) || ($lineageState['generation_source'] ?? '') !== 'mockup_variation_lab') {
+        break;
+    }
+    $parentId = (int)($lineageState['source_mockup_id'] ?? 0);
+    if ($parentId <= 0 || isset($activeChainIds[$parentId]) || !isset($mockupsById[$parentId])) {
+        break;
+    }
+    $parent = $mockupsById[$parentId];
+    $modificationHistory[] = $parent;
+    $activeChainIds[$parentId] = true;
+    $lineageCursor = $parent;
+}
+$otherVariations = array_values(array_filter($mockups, static function (array $mockup) use ($activeChainIds): bool {
+    return !isset($activeChainIds[(int)($mockup['id'] ?? 0)]);
+}));
+$otherVariations = array_slice($otherVariations, 0, 16);
 if ($selectedMockup && $selectedArtworkId <= 0) {
     $selectedArtworkId = (int)($selectedMockup['source_artwork_id'] ?? 0);
     if ($selectedArtworkId <= 0 && is_array($selectedMockup['artwork'] ?? null)) {
@@ -208,9 +254,19 @@ foreach (glob($labDir . DIRECTORY_SEPARATOR . '*.audit.json') ?: [] as $auditPat
         continue;
     }
     $audit['audit_file'] = basename($auditPath);
+    $audit['_sort_timestamp'] = max(
+        strtotime((string)($audit['started_at'] ?? '')) ?: 0,
+        (int)(filemtime($auditPath) ?: 0)
+    );
     $labRuns[] = $audit;
 }
-usort($labRuns, static fn(array $a, array $b): int => strcmp((string)($b['started_at'] ?? ''), (string)($a['started_at'] ?? '')));
+usort($labRuns, static function (array $a, array $b): int {
+    $timeCompare = (int)($b['_sort_timestamp'] ?? 0) <=> (int)($a['_sort_timestamp'] ?? 0);
+    if ($timeCompare !== 0) {
+        return $timeCompare;
+    }
+    return strcmp((string)($b['audit_file'] ?? ''), (string)($a['audit_file'] ?? ''));
+});
 $labRuns = array_slice($labRuns, 0, 16);
 if ($selectedMockup) {
     foreach ($labRuns as $index => $run) {
@@ -222,11 +278,12 @@ $favoriteLookup = MockupFavorites::lookupForUser((int)$user['id']);
 $referenceModes = [
     'mockup_only' => 'A - Existing mockup only',
     'mockup_root' => 'B - Mockup + root artwork',
+    'mockup_root_strict' => 'C - Strict mockup + root artwork',
 ];
 $humanOptions = [
     'none' => ['title' => 'None', 'detail' => ''],
-    'female_180' => ['title' => 'Female', 'detail' => '1.60 m'],
-    'male_200' => ['title' => 'Male', 'detail' => '1.80 m'],
+    'female_160' => ['title' => 'Female', 'detail' => '1.80 m'],
+    'male_180' => ['title' => 'Male', 'detail' => '2.00 m'],
 ];
 $scaleOptions = [
     'scale_minus_60' => '-60%',
@@ -240,27 +297,16 @@ $scaleOptions = [
 $lightingOptions = [
     'none' => 'No lighting change',
     'light_day' => 'Daylight',
+    'light_overcast' => 'Overcast',
     'light_night' => 'Night light',
     'light_golden' => 'Golden hour',
-];
-$cameraOptions = [
-    'none' => 'No camera change',
-    'camera_aerial' => 'Aerial view',
-    'camera_nadir' => 'Nadir view',
-    'camera_profile_left' => 'Left profile view',
-    'camera_profile_right' => 'Right profile view',
-];
-$cameraStrengthOptions = [
-    'normal' => 'Normal',
-    'intermediate' => 'Intermediate',
-    'extreme' => 'Extreme',
 ];
 ?>
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Mockup Variation LAB - Artwork Mockups</title>
+    <title>Mockup Lab - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -302,6 +348,17 @@ $cameraStrengthOptions = [
             font-family: var(--font-serif);
             font-weight: 500;
         }
+        .mobile-lab-title {
+            display: none;
+        }
+        .mobile-mockup-overlays {
+            display: none;
+        }
+        .mobile-active-apply,
+        .mobile-cascade-history,
+        .mobile-prompt-details {
+            display: none;
+        }
         .lab-page-desc {
             margin: 0;
             line-height: 1.55;
@@ -324,7 +381,8 @@ $cameraStrengthOptions = [
             align-self: flex-start;
             padding-top: 2px;
         }
-        .lab-primary-action .lab-run-primary {
+        .lab-primary-action .lab-run-primary,
+        .lab-bottom-action .lab-run-primary {
             display: inline-flex !important;
             align-items: center;
             justify-content: center;
@@ -344,7 +402,8 @@ $cameraStrengthOptions = [
             border-color: #b77f86 !important;
             color: #fffaf7 !important;
         }
-        .lab-primary-action .lab-run-primary:hover {
+        .lab-primary-action .lab-run-primary:hover,
+        .lab-bottom-action .lab-run-primary:hover {
             background: #a86f77 !important;
             border-color: #a86f77 !important;
         }
@@ -825,11 +884,11 @@ $cameraStrengthOptions = [
         }
         .lab-mockup-card:hover,
         .lab-mockup-card.active {
-            border-color: var(--accent);
+            border-color: #b77f86;
             background: #fbf7ef;
         }
         .lab-mockup-card.active {
-            box-shadow: inset 0 0 0 2px var(--accent);
+            box-shadow: inset 0 0 0 2px #b77f86;
         }
         .lab-mockup-card.active::after {
             content: "Selected";
@@ -882,7 +941,49 @@ $cameraStrengthOptions = [
             clip-path: inset(50%);
             white-space: nowrap;
         }
+        .lab-bottom-action {
+            display: none;
+        }
         @media (max-width: 980px) {
+            .sidebar-mobile-menu {
+                display: block !important;
+                position: absolute !important;
+                top: 50% !important;
+                right: 12px !important;
+                width: 46px !important;
+                height: 38px !important;
+                transform: translateY(-50%) !important;
+                z-index: 50 !important;
+                pointer-events: auto !important;
+            }
+
+            .sidebar > .sidebar-mobile-menu:not(.sidebar-mobile-menu-head) {
+                display: none !important;
+            }
+
+            .sidebar-mobile-menu summary {
+                width: 46px !important;
+                height: 38px !important;
+                border: 1px solid rgba(183, 127, 134, 0.42) !important;
+                border-radius: 5px !important;
+                background: rgba(255, 250, 247, 0.96) !important;
+                box-shadow: 0 10px 24px rgba(28, 23, 20, 0.10) !important;
+            }
+
+            .sidebar-mobile-menu summary span {
+                width: 22px !important;
+                background: #b77f86 !important;
+            }
+
+            .sidebar-mobile-menu[open] {
+                width: auto !important;
+                height: auto !important;
+            }
+
+            .sidebar-mobile-panel {
+                z-index: 2147483599 !important;
+            }
+
             .lab-header-v3 {
                 flex-direction: column;
                 align-items: stretch;
@@ -893,11 +994,16 @@ $cameraStrengthOptions = [
                 width: 100%;
                 padding-right: 0;
             }
-            .lab-primary-action .lab-run-primary {
+            .lab-primary-action .lab-run-primary,
+            .lab-bottom-action .lab-run-primary {
                 width: 100% !important;
                 min-width: 0 !important;
                 height: 56px !important;
                 min-height: 56px !important;
+            }
+            .lab-bottom-action {
+                display: block;
+                margin-top: 18px;
             }
             .lab-equation { grid-template-columns: 1fr; }
             .lab-equation-mark { display: none; }
@@ -907,30 +1013,666 @@ $cameraStrengthOptions = [
             .lab-grid, .preview-grid, .runs-grid { grid-template-columns: 1fr; }
             .preview-grid::after { display: none; }
         }
+        <?php if ($useSimpleLab): ?>
+        body.lab-user .workspace {
+            width: min(100%, 760px);
+            margin-left: auto;
+            margin-right: auto;
+        }
+        <?php endif; ?>
+        @media (max-width: <?= $useSimpleLab ? '10000px' : '760px' ?>) {
+            .app-header {
+                display: none;
+            }
+            .workspace {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            .alert-strip,
+            .lab-page-desc .desc-instructions,
+            .lab-primary-action,
+            .lab-stage-link,
+            .preview-box strong,
+            .root-reference-box,
+            .lab-equation-mark {
+                display: none !important;
+            }
+            .desktop-lab-title {
+                display: none;
+            }
+            .mobile-lab-title {
+                display: inline;
+            }
+            .lab-header-v3 {
+                gap: 8px;
+                padding: 0 0 4px;
+                margin-bottom: 4px;
+            }
+            .lab-header-v3 h1 {
+                display: none;
+            }
+            .lab-page-desc {
+                max-width: 32rem;
+            }
+            .lab-page-desc .desc-kicker {
+                font-size: 11px;
+                line-height: 1.3;
+            }
+            .lab-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                width: 100%;
+            }
+            .lab-main-column {
+                display: contents;
+            }
+            .lab-selector-panel {
+                order: 1;
+                position: relative;
+                width: 100%;
+                margin-left: 0;
+                margin-right: 0;
+                padding: 10px;
+                border-radius: 6px;
+                overflow: visible;
+            }
+            .lab-control-panel {
+                display: none;
+            }
+            .lab-stage {
+                display: none;
+            }
+            .lab-mockup-browser > span {
+                display: none;
+            }
+            .lab-mockup-strip {
+                position: relative;
+                display: grid;
+                grid-auto-flow: column;
+                grid-auto-columns: 100%;
+                gap: 10px;
+                overflow-x: auto;
+                overflow-y: hidden;
+                scroll-snap-type: x mandatory;
+                scroll-padding-inline: 0;
+                overscroll-behavior-x: contain;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                padding: 0 0 2px;
+                width: 100%;
+                margin-left: 0;
+                margin-right: 0;
+            }
+            .lab-mockup-strip::-webkit-scrollbar {
+                display: none;
+            }
+            .lab-mockup-card {
+                display: block;
+                scroll-snap-align: start;
+                scroll-snap-stop: always;
+                min-height: 0;
+                padding: 0;
+                overflow: hidden;
+                border-radius: 6px;
+                background: #eee7dd;
+                box-sizing: border-box;
+                user-select: none;
+                -webkit-user-drag: none;
+            }
+            .lab-mockup-card.active {
+                box-shadow: inset 0 0 0 2px #b77f86;
+            }
+            .lab-mockup-card img {
+                width: 100%;
+                aspect-ratio: 1 / 1;
+                height: auto;
+                object-fit: contain;
+                object-position: center center;
+                background: #eee7dd;
+                border-radius: 0;
+                pointer-events: none;
+            }
+            .reference-mode-control,
+            .human-presence-control,
+            .artwork-scale-control,
+            .lighting-select-control {
+                display: none !important;
+            }
+            .mobile-mockup-overlays {
+                position: absolute;
+                inset: 10px;
+                z-index: 8;
+                display: block;
+                pointer-events: none;
+            }
+            .mobile-scale-dial {
+                position: absolute;
+                left: -19px;
+                top: 18%;
+                width: 38px;
+                height: 64px;
+                min-width: 38px;
+                min-height: 64px;
+                max-width: 38px;
+                max-height: 64px;
+                margin: 0 !important;
+                padding: 7px 3px 6px !important;
+                transform: translateY(-50%);
+                border: 1px solid rgba(255, 255, 255, .68);
+                border-radius: 999px;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 0;
+                background: rgba(28, 27, 25, .34);
+                color: #fff;
+                box-shadow: 0 8px 22px rgba(18, 16, 14, .16), inset 0 0 0 1px rgba(255, 255, 255, .08);
+                backdrop-filter: blur(10px) saturate(115%);
+                -webkit-backdrop-filter: blur(10px) saturate(115%);
+                pointer-events: auto;
+                touch-action: none;
+                user-select: none;
+                -webkit-user-select: none;
+            }
+            .mobile-scale-dial .dial-kicker {
+                font-size: 6px;
+                line-height: 1;
+                font-weight: 800;
+                letter-spacing: .12em;
+                opacity: .68;
+            }
+            .mobile-scale-dial strong {
+                margin: 3px 0 1px;
+                font-size: 15px;
+                line-height: 1;
+                font-family: var(--font-sans);
+                font-weight: 700;
+                letter-spacing: -.03em;
+            }
+            .mobile-scale-dial .dial-unit {
+                font-size: 6px;
+                line-height: 1;
+                font-weight: 700;
+                letter-spacing: .08em;
+                opacity: .64;
+            }
+            .mobile-scale-dial:hover,
+            .mobile-scale-dial:active,
+            .mobile-scale-dial.is-dragging {
+                transform: translateY(-50%);
+            }
+            .mobile-scale-dial.is-dragging {
+                background: rgba(183, 127, 134, .62);
+            }
+            .mobile-human-dial {
+                position: absolute;
+                left: -19px;
+                top: 42%;
+                transform: translateY(-50%);
+                display: grid;
+                gap: 0;
+                border: 1px solid rgba(255, 255, 255, .5);
+                border-radius: 999px;
+                overflow: hidden;
+                background: rgba(28, 27, 25, .28);
+                box-shadow: 0 8px 20px rgba(18, 16, 14, .14);
+                backdrop-filter: blur(9px) saturate(115%);
+                -webkit-backdrop-filter: blur(9px) saturate(115%);
+                pointer-events: auto;
+            }
+            .mobile-view-angle {
+                position: absolute;
+                top: -25px;
+                width: 50px;
+                height: 50px;
+                min-width: 50px;
+                min-height: 50px;
+                padding: 5px;
+                border: 1px solid rgba(255, 255, 255, .52);
+                border-radius: 50%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 2px;
+                background: rgba(28, 27, 25, .3);
+                color: rgba(255, 255, 255, .82);
+                box-shadow: 0 7px 18px rgba(18, 16, 14, .14);
+                backdrop-filter: blur(9px) saturate(115%);
+                -webkit-backdrop-filter: blur(9px) saturate(115%);
+                pointer-events: auto;
+                touch-action: none;
+                user-select: none;
+                -webkit-user-select: none;
+            }
+            .mobile-view-angle[data-angle-side="less"] {
+                left: -25px;
+            }
+            .mobile-view-angle[data-angle-side="more"] {
+                right: -25px;
+            }
+            .mobile-view-angle svg {
+                width: 21px;
+                height: 17px;
+                fill: none;
+                stroke: currentColor;
+                stroke-width: 1.6;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+            }
+            .mobile-view-angle[data-angle-side="more"] svg {
+                transform: scaleX(-1);
+            }
+            .mobile-view-angle .angle-value {
+                font-size: 8px;
+                line-height: 1;
+                font-weight: 800;
+                letter-spacing: .03em;
+                opacity: .72;
+            }
+            .mobile-view-angle[aria-pressed="true"] {
+                border-color: rgba(255, 255, 255, .88);
+                background: rgba(183, 127, 134, .68);
+                color: #fff;
+                transform: scale(1.06);
+                box-shadow: 0 8px 22px rgba(18, 16, 14, .2), 0 0 0 2px rgba(183, 127, 134, .24);
+            }
+            .mobile-view-angle.is-dragging {
+                background: rgba(183, 127, 134, .8);
+            }
+            .mobile-human-option {
+                width: 38px;
+                height: 32px;
+                min-width: 38px;
+                min-height: 32px;
+                max-width: 38px;
+                max-height: 32px;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-sizing: border-box;
+                border: 0;
+                border-bottom: 1px solid rgba(255, 255, 255, .24);
+                border-radius: 0;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                background: transparent;
+                color: rgba(255, 255, 255, .78);
+                box-shadow: none;
+                transition: transform .16s ease, background .16s ease, border-color .16s ease, color .16s ease;
+            }
+            .mobile-human-option svg {
+                width: 17px;
+                height: 17px;
+                fill: none;
+                stroke: currentColor;
+                stroke-width: 1.65;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+            }
+            .mobile-human-option:last-child {
+                border-bottom: 0;
+            }
+            .mobile-human-option[aria-pressed="true"] {
+                transform: none;
+                background: rgba(183, 127, 134, .64);
+                color: #fff;
+                box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .2);
+            }
+            .mobile-lighting-dial {
+                position: absolute;
+                left: 50%;
+                top: 0;
+                transform: translate(-50%, -50%);
+                display: grid;
+                grid-auto-flow: column;
+                gap: 0;
+                border: 1px solid rgba(255, 255, 255, .5);
+                border-radius: 999px;
+                overflow: hidden;
+                background: rgba(28, 27, 25, .28);
+                box-shadow: 0 8px 20px rgba(18, 16, 14, .14);
+                backdrop-filter: blur(9px) saturate(115%);
+                -webkit-backdrop-filter: blur(9px) saturate(115%);
+                pointer-events: auto;
+            }
+            .mobile-light-option {
+                width: 28px;
+                height: 28px;
+                min-width: 28px;
+                min-height: 28px;
+                max-width: 28px;
+                max-height: 28px;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-sizing: border-box;
+                border: 0;
+                border-right: 1px solid rgba(255, 255, 255, .24);
+                border-radius: 0;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                background: transparent;
+                color: rgba(255, 255, 255, .76);
+                box-shadow: none;
+                transition: opacity .16s ease, background .16s ease, color .16s ease;
+            }
+            .mobile-light-option:last-child {
+                border-right: 0;
+            }
+            .mobile-light-option svg {
+                width: 15px;
+                height: 15px;
+                fill: none;
+                stroke: currentColor;
+                stroke-width: 1.7;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+            }
+            .mobile-light-option[data-lighting-value="light_golden"] {
+                background: rgba(202, 151, 54, .76);
+                color: #fff;
+            }
+            .mobile-light-option[data-lighting-value="light_overcast"] {
+                color: rgba(225, 230, 235, .94);
+            }
+            .mobile-light-option[data-lighting-value="light_night"] {
+                background: rgba(91, 157, 211, .74);
+                color: #fff;
+            }
+            .mobile-light-option[aria-pressed="true"] {
+                transform: none;
+                background: rgba(183, 127, 134, .68);
+                color: #fff;
+                box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .2);
+            }
+            .mobile-light-option[data-lighting-value="light_golden"][aria-pressed="true"] {
+                background: rgba(185, 129, 35, .96);
+                color: #fff;
+                box-shadow: inset 0 0 0 1px rgba(255, 244, 216, .48);
+            }
+            .mobile-light-option[data-lighting-value="light_night"][aria-pressed="true"] {
+                background: rgba(55, 122, 181, .96);
+                color: #fff;
+                box-shadow: inset 0 0 0 1px rgba(238, 248, 255, .5);
+            }
+            .mobile-active-apply,
+            .mobile-history-apply {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                min-height: 48px;
+                margin: 18px 0 0;
+                border: 1px solid #b77f86;
+                border-radius: 4px;
+                background: #b77f86;
+                color: #fffaf7;
+                font-size: 12px;
+                font-weight: 800;
+                letter-spacing: .09em;
+                text-transform: uppercase;
+            }
+            .mobile-prompt-details {
+                display: block;
+                margin: 12px 0 0;
+                border: 1px solid rgba(183, 127, 134, .28);
+                border-radius: 4px;
+                background: rgba(255, 250, 247, .72);
+                overflow: hidden;
+            }
+            .mobile-prompt-details summary {
+                min-height: 38px;
+                padding: 0 12px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                color: var(--muted);
+                font-size: 10px;
+                font-weight: 800;
+                letter-spacing: .08em;
+                text-transform: uppercase;
+                cursor: pointer;
+                list-style: none;
+            }
+            .mobile-prompt-details summary::-webkit-details-marker {
+                display: none;
+            }
+            .mobile-prompt-details summary::after {
+                content: "+";
+                color: #b77f86;
+                font-size: 16px;
+                font-weight: 500;
+            }
+            .mobile-prompt-details[open] summary::after {
+                content: "−";
+            }
+            .mobile-prompt-details textarea {
+                width: calc(100% - 20px);
+                min-height: 82px;
+                margin: 0 10px 10px;
+                padding: 9px 10px;
+                box-sizing: border-box;
+                border: 1px solid var(--line);
+                border-radius: 4px;
+                background: rgba(255, 255, 255, .82);
+                color: var(--ink);
+                font-family: var(--font-sans);
+                font-size: 13px;
+                line-height: 1.4;
+                resize: vertical;
+            }
+            .mobile-cascade-history {
+                order: 2;
+                display: grid;
+                gap: 14px;
+                width: 100%;
+            }
+            .mobile-cascade-title {
+                margin: 4px 0 0;
+                color: var(--muted);
+                font-size: 10px;
+                font-weight: 800;
+                letter-spacing: .1em;
+                text-transform: uppercase;
+            }
+            .mobile-history-card {
+                position: relative;
+                padding: 10px 10px 10px 34px;
+                border: 1px solid var(--line);
+                border-radius: 6px;
+                background: var(--surface);
+                box-shadow: var(--shadow);
+            }
+            .mobile-history-card > img {
+                width: 100%;
+                height: clamp(320px, 58vh, 480px);
+                display: block;
+                object-fit: cover;
+                object-position: center;
+                border-radius: 4px;
+                background: #eee7dd;
+            }
+            .mobile-history-controls-host > .mobile-mockup-overlays {
+                inset: 10px;
+            }
+            .mobile-history-apply {
+                position: relative;
+                z-index: 10;
+                margin-top: 12px;
+            }
+            .mobile-other-variations {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 8px;
+            }
+            .mobile-other-variation {
+                display: block;
+                border: 1px solid var(--line);
+                border-radius: 5px;
+                overflow: hidden;
+                background: var(--surface);
+            }
+            .mobile-other-variation img {
+                width: 100%;
+                aspect-ratio: 3 / 4;
+                display: block;
+                object-fit: cover;
+            }
+            .lab-mockup-card.active::after {
+                display: none;
+            }
+            .lab-mockup-card strong,
+            .lab-mockup-card span {
+                display: none;
+            }
+            .lab-mockup-card small {
+                display: none;
+            }
+            .lab-form {
+                width: 100%;
+                gap: 10px;
+            }
+            .lab-form > label,
+            .lab-form [data-compound-control],
+            .lab-advanced {
+                width: 100%;
+            }
+            .lab-form select,
+            .lab-form textarea,
+            .lab-form input[type="text"],
+            .lab-form input[type="number"] {
+                min-height: 46px;
+                font-size: 14px;
+            }
+            .lab-form textarea {
+                min-height: 118px;
+            }
+            .segmented-row,
+            .segmented-control,
+            .lab-radio-grid {
+                width: 100%;
+                gap: 8px;
+            }
+            .segmented-control.human-control {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 6px;
+            }
+            .segmented-control input + span {
+                min-height: 42px;
+                padding: 7px 5px;
+                font-size: 11px;
+                line-height: 1.15;
+            }
+            .human-control input + span {
+                min-height: 50px;
+                padding: 6px 3px;
+            }
+            .human-control .human-detail {
+                display: none;
+            }
+            .scale-slider-wrap {
+                gap: 4px;
+            }
+            .scale-ticks {
+                font-size: 10px;
+            }
+            .lab-note {
+                display: none;
+            }
+            .lab-equation {
+                display: block;
+            }
+            .lab-equation-col:first-child {
+                display: none;
+            }
+            .lab-equation-title {
+                display: none;
+            }
+            .lab-equation-col.result-col {
+                margin-top: 12px;
+            }
+            #history-section h2 {
+                margin-top: 16px !important;
+                font-size: 13px;
+                letter-spacing: .08em;
+                text-transform: uppercase;
+            }
+            .runs-grid {
+                display: grid;
+                grid-template-columns: none;
+                grid-auto-flow: column;
+                grid-auto-columns: calc(100% - 18px);
+                gap: 10px;
+                overflow-x: auto;
+                overflow-y: hidden;
+                scroll-snap-type: x mandatory;
+                scroll-padding-inline: 0;
+                overscroll-behavior-x: contain;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                padding: 0 0 2px;
+                width: 100%;
+                margin-left: 0;
+                margin-right: 0;
+                margin-top: 10px;
+            }
+            .runs-grid::-webkit-scrollbar {
+                display: none;
+            }
+            .runs-grid .result-card {
+                scroll-snap-align: start;
+                scroll-snap-stop: always;
+                padding: 0;
+                border-radius: 6px;
+                overflow: hidden;
+            }
+            .runs-grid .lab-result-media {
+                height: clamp(300px, 58vh, 460px);
+                background: #eee7dd;
+                border: 0;
+            }
+            .runs-grid .result-card img {
+                object-fit: cover;
+                background: #eee7dd;
+            }
+            .runs-grid .result-card .meta {
+                display: none;
+            }
+            .lab-bottom-action {
+                display: none;
+            }
+            .lab-advanced {
+                display: none !important;
+            }
+        }
     </style>
 </head>
-<body>
+<body class="<?= $useSimpleLab ? 'lab-user' : 'lab-admin' ?>">
 <div class="app-shell">
     <?php include __DIR__ . '/sidebar.php'; ?>
     <main class="main-area">
         <header class="app-header">
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
-        <div class="alert-strip">Isolated LAB: test variations on existing mockups without touching the main workflow.</div>
+        <div class="alert-strip">Mockup Lab: create controlled variations from existing mockups.</div>
         <div class="workspace">
             <?php if (!$mockups): ?>
-                <div class="notice">No mockups are available for testing.</div>
+                <div class="notice">No mockups are available for variation.</div>
             <?php else: ?>
                 <div class="lab-header-v3">
                     <div class="header-main-info">
-                        <h1>Mockup Variation LAB</h1>
+                        <h1><span class="desktop-lab-title">Mockup Lab</span><span class="mobile-lab-title">Mockup Lab</span></h1>
                         <p class="lab-page-desc">
-                            <span class="desc-kicker">Test controlled variations on an existing generated mockup.</span>
+                            <span class="desc-kicker">Create controlled variations from an existing generated mockup.</span>
                             <span class="desc-instructions">Use this module to adjust human presence, artwork scale, lighting or camera direction without changing the main scene workflow. The selected mockup is IMAGE 1; the root artwork can optionally guide the variation as IMAGE 2.</span>
                         </p>
                     </div>
                     <div class="lab-primary-action">
-                        <button class="button-link lab-run-primary" type="submit" form="lab-form" data-lab-submit <?= !$selectedMockup ? 'disabled' : '' ?>>Generate Variation</button>
+                        <button class="button-link lab-run-primary" type="submit" form="lab-form" data-lab-submit <?= !$selectedMockup ? 'disabled' : '' ?>>Apply Changes</button>
                     </div>
                 </div>
 
@@ -949,15 +1691,19 @@ $cameraStrengthOptions = [
                                     <?php endforeach; ?>
                                 </select>
                             </label>
-                            <label>
-                                Reference mode
-                                <select name="reference_mode">
-                                    <?php foreach ($referenceModes as $value => $label): ?>
-                                        <option value="<?= h($value) ?>" <?= $value === 'mockup_only' ? 'selected' : '' ?>><?= h($label) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </label>
-                            <div data-compound-control>
+                            <?php if ($isAdmin): ?>
+                                <label class="reference-mode-control">
+                                    Reference mode
+                                    <select name="reference_mode">
+                                        <?php foreach ($referenceModes as $value => $label): ?>
+                                            <option value="<?= h($value) ?>" <?= $value === 'mockup_root_strict' ? 'selected' : '' ?>><?= h($label) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </label>
+                            <?php else: ?>
+                                <input type="hidden" name="reference_mode" value="mockup_root">
+                            <?php endif; ?>
+                            <div data-compound-control class="human-presence-control">
                                 <div class="segmented-control human-control">
                                     <?php foreach ($humanOptions as $value => $label): ?>
                                         <label>
@@ -970,7 +1716,7 @@ $cameraStrengthOptions = [
                                     <?php endforeach; ?>
                                 </div>
                             </div>
-                            <div data-compound-control>
+                            <div data-compound-control class="artwork-scale-control">
                                 <span class="control-label">Artwork scale</span>
                                 <div class="scale-slider-wrap">
                                     <input type="hidden" name="artwork_scale" id="artwork-scale-value" value="none">
@@ -996,31 +1742,16 @@ $cameraStrengthOptions = [
                                     </div>
                                 </div>
                             </div>
-                            <label>
-                                Lighting
+                            <label class="lighting-select-control">
+                                Time of day
                                 <select name="lighting_modifier">
                                     <?php foreach ($lightingOptions as $value => $label): ?>
                                         <option value="<?= h($value) ?>"><?= h($label) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </label>
-                            <label>
-                                Experimental camera
-                                <select name="camera_modifier" id="camera-modifier">
-                                    <?php foreach ($cameraOptions as $value => $label): ?>
-                                        <option value="<?= h($value) ?>"><?= h($label) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </label>
-                            <label>
-                                Camera strength
-                                <select name="camera_strength" id="camera-strength">
-                                    <?php foreach ($cameraStrengthOptions as $value => $label): ?>
-                                        <option value="<?= h($value) ?>"><?= h($label) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </label>
-                            <div class="lab-note" id="camera-note">Human presence, scale, and lighting can be combined. If you choose an experimental camera, the LAB runs it alone to evaluate recomposition.</div>
+                            <input type="hidden" name="camera_modifier" id="camera-modifier" value="none">
+                            <input type="hidden" name="camera_strength" id="camera-strength" value="normal">
                             <details class="lab-advanced">
                                 <summary>Prompt instruction</summary>
                                 <label style="margin-top:10px;">
@@ -1032,6 +1763,9 @@ $cameraStrengthOptions = [
                                 <div class="lab-status" id="lab-status"></div>
                             </div>
                         </form>
+                        <div class="lab-bottom-action">
+                            <button class="button-link lab-run-primary" type="submit" form="lab-form" data-lab-submit <?= !$selectedMockup ? 'disabled' : '' ?>>Apply Changes</button>
+                        </div>
                     </section>
 
                     <div class="lab-main-column">
@@ -1051,11 +1785,13 @@ $cameraStrengthOptions = [
                                         <a
                                             class="lab-mockup-card <?= $isActiveMockup ? 'active' : '' ?>"
                                             href="mockup_variation_lab.php?<?= h($labContextQuery) ?>mockup_id=<?= $mockupId ?>"
+                                            data-mockup-id="<?= $mockupId ?>"
+                                            data-viewer-url="viewer.php?id=<?= $mockupId ?>&back=<?= rawurlencode('mockup_variation_lab.php?' . $labContextQuery . 'mockup_id=' . $mockupId) ?>"
                                             title="<?= h($label . ' - ' . $meta) ?>"
                                             aria-label="Select <?= h($label) ?>"
                                         >
                                             <?php if ($mockupFile !== ''): ?>
-                                                <img src="media.php?file=<?= rawurlencode($mockupFile) ?>" alt="">
+                                                <img src="<?= h(lab_thumb_url($mockupFile, 640)) ?>" alt="" loading="lazy" decoding="async">
                                             <?php endif; ?>
                                             <strong><?= h($label) ?></strong>
                                             <small><?= h($meta) ?></small>
@@ -1063,6 +1799,81 @@ $cameraStrengthOptions = [
                                     <?php endforeach; ?>
                                 </div>
                             </div>
+                            <?php if ($selectedMockup): ?>
+                                <div class="mobile-mockup-overlays" aria-label="Mockup controls">
+                                    <div class="mobile-human-dial" aria-label="Human presence">
+                                        <button class="mobile-human-option" type="button" data-human-value="none" aria-label="No person" title="None" aria-pressed="true">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"></circle><path d="M7 7l10 10"></path></svg>
+                                        </button>
+                                        <button class="mobile-human-option" type="button" data-human-value="female_160" aria-label="Female figure" title="Female" aria-pressed="false">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5.5" r="2.5"></circle><path d="M12 8v5M8.5 18h7L12 10.5 8.5 18ZM12 18v4"></path></svg>
+                                        </button>
+                                        <button class="mobile-human-option" type="button" data-human-value="male_180" aria-label="Male figure" title="Male" aria-pressed="false">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5.5" r="2.5"></circle><path d="M12 8v7M8.5 11.5 12 9l3.5 2.5M12 15l-3 7M12 15l3 7"></path></svg>
+                                        </button>
+                                    </div>
+                                    <button class="mobile-scale-dial" id="mobile-scale-dial" type="button" role="slider" aria-label="Artwork scale. Swipe up to increase and down to decrease." aria-valuemin="-60" aria-valuemax="60" aria-valuenow="0">
+                                        <span class="dial-kicker">SCALE</span>
+                                        <strong id="mobile-scale-display">0</strong>
+                                        <span class="dial-unit">%</span>
+                                    </button>
+                                    <div class="mobile-lighting-dial" aria-label="Lighting">
+                                        <button class="mobile-light-option" type="button" data-lighting-value="light_overcast" aria-label="Overcast" title="Overcast" aria-pressed="false">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.8 18.5h10.3a3.7 3.7 0 0 0 .5-7.4A5.7 5.7 0 0 0 6.7 9.8a4.4 4.4 0 0 0 .1 8.7Z"></path></svg>
+                                        </button>
+                                        <button class="mobile-light-option" type="button" data-lighting-value="light_day" aria-label="Daylight" title="Daylight" aria-pressed="false">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5"></circle><path d="M12 2v2.2M12 19.8V22M2 12h2.2M19.8 12H22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M19.1 4.9l-1.6 1.6M6.5 17.5l-1.6 1.6"></path></svg>
+                                        </button>
+                                        <button class="mobile-light-option" type="button" data-lighting-value="light_golden" aria-label="Golden Hour" title="Golden Hour" aria-pressed="false">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.8"></circle><path d="M12 2v2.2M12 19.8V22M2 12h2.2M19.8 12H22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M19.1 4.9l-1.6 1.6M6.5 17.5l-1.6 1.6"></path></svg>
+                                        </button>
+                                        <button class="mobile-light-option" type="button" data-lighting-value="light_night" aria-label="Night Light" title="Night Light" aria-pressed="false">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 15.2A8 8 0 0 1 8.8 4.5 8 8 0 1 0 19.5 15.2Z"></path></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <details class="mobile-prompt-details">
+                                    <summary>Additional prompt</summary>
+                                    <textarea id="mobile-custom-instruction" placeholder="Optional instruction for this modification"></textarea>
+                                </details>
+                                <button class="mobile-active-apply" type="submit" form="lab-form" data-lab-submit>Apply Changes</button>
+                            <?php endif; ?>
+                        </section>
+
+                        <section class="mobile-cascade-history" aria-label="Modification history">
+                            <?php if ($modificationHistory): ?>
+                                <h2 class="mobile-cascade-title">Modification history</h2>
+                                <?php foreach ($modificationHistory as $historyMockup): ?>
+                                    <?php
+                                    $historyMockupId = (int)$historyMockup['id'];
+                                    $historyMockupFile = basename((string)($historyMockup['mockup_file'] ?? ''));
+                                    ?>
+                                    <article class="mobile-history-card" data-history-mockup-id="<?= $historyMockupId ?>" data-history-scale="0" data-history-human="none" data-history-lighting="none" data-history-camera="none">
+                                        <img src="<?= h(lab_thumb_url($historyMockupFile, 640)) ?>" alt="" loading="lazy" decoding="async">
+                                        <div class="mobile-history-controls-host"></div>
+                                        <details class="mobile-prompt-details">
+                                            <summary>Additional prompt</summary>
+                                            <textarea class="mobile-history-instruction" placeholder="Optional instruction for this modification"></textarea>
+                                        </details>
+                                        <button class="mobile-history-apply" type="button">Apply Changes</button>
+                                    </article>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+
+                            <?php if ($otherVariations): ?>
+                                <h2 class="mobile-cascade-title">Other previous variations</h2>
+                                <div class="mobile-other-variations">
+                                    <?php foreach ($otherVariations as $otherMockup): ?>
+                                        <?php
+                                        $otherMockupId = (int)$otherMockup['id'];
+                                        $otherMockupFile = basename((string)($otherMockup['mockup_file'] ?? ''));
+                                        ?>
+                                        <a class="mobile-other-variation" href="mockup_variation_lab.php?<?= h($labContextQuery) ?>mockup_id=<?= $otherMockupId ?>" aria-label="Edit previous variation <?= $otherMockupId ?>">
+                                            <img src="<?= h(lab_thumb_url($otherMockupFile, 420)) ?>" alt="" loading="lazy" decoding="async">
+                                        </a>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
                         </section>
 
                         <section class="lab-panel lab-stage">
@@ -1083,13 +1894,13 @@ $cameraStrengthOptions = [
                                         <div class="preview-box">
                                             <strong>IMAGE 1 - Existing mockup</strong>
                                             <div class="image-frame">
-                                                <img src="media.php?file=<?= rawurlencode($mockupFile) ?>" alt="">
+                                                <img src="<?= h(lab_thumb_url($mockupFile, 640)) ?>" alt="" loading="lazy" decoding="async">
                                             </div>
                                         </div>
                                         <div class="preview-box root-reference-box">
                                             <strong>IMAGE 2 - Root artwork</strong>
                                             <div class="image-frame">
-                                                <img src="media.php?file=<?= rawurlencode($rootFile) ?>" alt="">
+                                                <img src="<?= h(lab_thumb_url($rootFile, 640)) ?>" alt="" loading="lazy" decoding="async">
                                             </div>
                                         </div>
                                     </div>
@@ -1107,12 +1918,19 @@ $cameraStrengthOptions = [
                                         <?php
                                         $latestOutputFile = basename((string)$labRuns[0]['output_file']);
                                         $latestRegisteredId = (int)($labRuns[0]['registered_mockup_id'] ?? 0);
+                                        $latestRegisteredFile = basename((string)($labRuns[0]['registered_mockup_file'] ?? ''));
+                                        $latestImageUrl = $latestRegisteredId > 0 && $latestRegisteredFile !== ''
+                                            ? lab_thumb_url($latestRegisteredFile, 640)
+                                            : 'mockup_variation_lab_file.php?file=' . rawurlencode($latestOutputFile);
+                                        $latestViewerUrl = $latestRegisteredId > 0
+                                            ? 'viewer.php?id=' . rawurlencode((string)$latestRegisteredId) . '&back=' . rawurlencode('mockup_variation_lab.php?mockup_id=' . (int)$selectedMockupId)
+                                            : 'mockup_variation_lab_viewer.php?mockup_id=' . (int)$selectedMockupId . '&file=' . rawurlencode($latestOutputFile);
                                         $latestIsFavorite = $latestRegisteredId > 0 && isset($favoriteLookup[$latestRegisteredId]);
                                         ?>
                                         <div class="result-card">
                                             <div class="lab-result-media" data-registered-mockup-id="<?= $latestRegisteredId ?>">
-                                                <a href="mockup_variation_lab_viewer.php?mockup_id=<?= (int)$selectedMockupId ?>&file=<?= rawurlencode($latestOutputFile) ?>">
-                                                    <img src="mockup_variation_lab_file.php?file=<?= rawurlencode($latestOutputFile) ?>" alt="">
+                                                <a href="<?= h($latestViewerUrl) ?>">
+                                                    <img src="<?= h($latestImageUrl) ?>" alt="">
                                                 </a>
                                                 <?php if ($latestRegisteredId > 0): ?>
                                                     <div class="lab-result-actions" aria-label="Mockup actions">
@@ -1121,29 +1939,36 @@ $cameraStrengthOptions = [
                                                     </div>
                                                 <?php endif; ?>
                                             </div>
-                                            <div class="meta">Latest generated test</div>
+                                            <div class="meta">Latest variation</div>
                                         </div>
                                     <?php else: ?>
-                                        <div class="result-placeholder">Run a test to generate the edited mockup here.</div>
+                                        <div class="result-placeholder">Generate a variation to see the edited mockup here.</div>
                                     <?php endif; ?>
                                 </div>
                             </div>
                         </div>
 
                             <section id="history-section">
-                            <h2 style="margin-top:18px;">Latest tests for this mockup</h2>
+                            <h2 style="margin-top:18px;">Latest variations for this mockup</h2>
                             <div class="runs-grid" id="lab-runs-grid">
                                 <?php foreach ($labRuns as $run): ?>
                                     <?php
                                     $outputFile = basename((string)($run['output_file'] ?? ''));
                                     $registeredId = (int)($run['registered_mockup_id'] ?? 0);
+                                    $registeredFile = basename((string)($run['registered_mockup_file'] ?? ''));
+                                    $runImageUrl = $registeredId > 0 && $registeredFile !== ''
+                                        ? lab_thumb_url($registeredFile, 640)
+                                        : 'mockup_variation_lab_file.php?file=' . rawurlencode($outputFile);
+                                    $runViewerUrl = $registeredId > 0
+                                        ? 'viewer.php?id=' . rawurlencode((string)$registeredId) . '&back=' . rawurlencode('mockup_variation_lab.php?mockup_id=' . (int)$selectedMockupId)
+                                        : 'mockup_variation_lab_viewer.php?mockup_id=' . (int)$selectedMockupId . '&file=' . rawurlencode($outputFile);
                                     $isFavorite = $registeredId > 0 && isset($favoriteLookup[$registeredId]);
                                     ?>
                                     <div class="result-card">
                                         <?php if ($outputFile !== '' && ($run['status'] ?? '') === 'generated'): ?>
                                             <div class="lab-result-media" data-registered-mockup-id="<?= $registeredId ?>">
-                                                <a href="mockup_variation_lab_viewer.php?mockup_id=<?= (int)$selectedMockupId ?>&file=<?= rawurlencode($outputFile) ?>">
-                                                    <img src="mockup_variation_lab_file.php?file=<?= rawurlencode($outputFile) ?>" alt="">
+                                                <a href="<?= h($runViewerUrl) ?>">
+                                                    <img src="<?= h($runImageUrl) ?>" alt="">
                                                 </a>
                                                 <?php if ($registeredId > 0): ?>
                                                     <div class="lab-result-actions" aria-label="Mockup actions">
@@ -1156,17 +1981,17 @@ $cameraStrengthOptions = [
                                             <div class="notice">No generated image.</div>
                                         <?php endif; ?>
                                         <div class="meta">
-                                            <div><strong><?= h((string)($run['variation_type'] ?? '')) ?></strong> / <?= h((string)($run['reference_mode'] ?? '')) ?></div>
+                                            <div><strong><?= h((string)($run['variation_type'] ?? '')) ?></strong><?php if ($isAdmin): ?> / <?= h((string)($run['reference_mode'] ?? '')) ?><?php endif; ?></div>
                                             <div><?= h((string)($run['started_at'] ?? '')) ?></div>
                                             <?php if (!empty($run['error'])): ?><div>Error: <?= h((string)$run['error']) ?></div><?php endif; ?>
-                                            <?php if (!empty($run['prompt_file'])): ?>
+                                            <?php if ($isAdmin && !empty($run['prompt_file'])): ?>
                                                 <div><a href="mockup_variation_lab_file.php?file=<?= rawurlencode(basename((string)$run['prompt_file'])) ?>" target="_blank" rel="noopener">View prompt</a></div>
                                             <?php endif; ?>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
                                 <?php if (!$labRuns): ?>
-                                    <div class="notice" id="empty-history">There are no generated tests for this mockup yet.</div>
+                                    <div class="notice" id="empty-history">There are no generated variations for this mockup yet.</div>
                                 <?php endif; ?>
                             </div>
                             </section>
@@ -1179,7 +2004,7 @@ $cameraStrengthOptions = [
 </div>
 <div class="lab-generating-overlay" role="status" aria-live="polite">
     <span class="lab-spinner" aria-hidden="true"></span>
-    <span>Generating test...</span>
+    <span>Generating variation...</span>
 </div>
 <script>
 const form = document.getElementById('lab-form');
@@ -1188,8 +2013,164 @@ const cameraStrength = document.getElementById('camera-strength');
 const scaleSlider = document.getElementById('scale-slider');
 const scaleHidden = document.getElementById('artwork-scale-value');
 const scaleDisplay = document.getElementById('scale-display');
+const mobileScaleDial = document.getElementById('mobile-scale-dial');
+const mobileScaleDisplay = document.getElementById('mobile-scale-display');
+const lightingSelect = document.querySelector('select[name="lighting_modifier"]');
+const activeMobileOverlay = document.querySelector('.lab-selector-panel .mobile-mockup-overlays');
+const historyCards = Array.from(document.querySelectorAll('.mobile-history-card'));
+historyCards.forEach(card => {
+    const host = card.querySelector('.mobile-history-controls-host');
+    if (!host || !activeMobileOverlay) return;
+    const controls = activeMobileOverlay.cloneNode(true);
+    controls.removeAttribute('aria-label');
+    controls.querySelectorAll('[id]').forEach(element => element.removeAttribute('id'));
+    controls.querySelectorAll('[aria-pressed="true"]').forEach(element => element.setAttribute('aria-pressed', 'false'));
+    controls.querySelectorAll('[data-angle-side]').forEach(element => {
+        element.dataset.angleLevel = '0';
+        element.setAttribute('aria-pressed', 'false');
+        const value = element.querySelector('.angle-value');
+        if (value) value.textContent = element.dataset.angleSide === 'less' ? '−' : '+';
+    });
+    const noneHuman = controls.querySelector('[data-human-value="none"]');
+    if (noneHuman) noneHuman.setAttribute('aria-pressed', 'true');
+    host.appendChild(controls);
+});
+const mobileLightingOptions = Array.from(document.querySelectorAll('.lab-selector-panel [data-lighting-value]'));
+const humanPresenceInputs = Array.from(document.querySelectorAll('input[name="human_presence"]'));
+const mobileHumanOptions = Array.from(document.querySelectorAll('.lab-selector-panel [data-human-value]'));
+const mobileAngleControls = Array.from(document.querySelectorAll('.lab-selector-panel [data-angle-side]'));
+const customInstructionInput = document.querySelector('#lab-form textarea[name="custom_instruction"]');
+const mobileCustomInstruction = document.getElementById('mobile-custom-instruction');
+if (customInstructionInput && mobileCustomInstruction) {
+    mobileCustomInstruction.value = customInstructionInput.value;
+    mobileCustomInstruction.addEventListener('input', () => {
+        customInstructionInput.value = mobileCustomInstruction.value;
+        clearTransientResult();
+    });
+}
 const referenceModeSelect = document.querySelector('select[name="reference_mode"]');
 const referencePreviewGrid = document.getElementById('reference-preview-grid');
+const labMockupStrip = document.querySelector('.lab-mockup-strip');
+const labRunsGrid = document.getElementById('lab-runs-grid');
+function showLatestLabRun(options = {}) {
+    if (!labRunsGrid || !window.matchMedia('(max-width: 760px)').matches) return;
+    window.requestAnimationFrame(() => {
+        labRunsGrid.scrollTo({ left: 0, behavior: options.smooth ? 'smooth' : 'auto' });
+    });
+}
+showLatestLabRun();
+window.addEventListener('pageshow', () => showLatestLabRun());
+if (labMockupStrip) {
+    const labSliderCards = Array.from(labMockupStrip.querySelectorAll('.lab-mockup-card'));
+    const mockupSelect = document.querySelector('select[name="mockup_id"]');
+    const mobileSliderQuery = window.matchMedia('(max-width: 760px)');
+    let labSliderIndex = Math.max(0, labSliderCards.findIndex(card => card.classList.contains('active')));
+    let labScrollTimer = 0;
+    let labPointerStartX = 0;
+    let labPointerStartY = 0;
+    let labSuppressClick = false;
+
+    function labSliderIsMobile() {
+        return mobileSliderQuery.matches;
+    }
+
+    function applyLabSliderPosition() {
+        if (!labSliderIsMobile()) {
+            labSliderCards.forEach(card => card.removeAttribute('aria-current'));
+            return;
+        }
+        labSliderCards.forEach((card, index) => {
+            const active = index === labSliderIndex;
+            card.classList.toggle('active', active);
+            card.setAttribute('aria-current', active ? 'true' : 'false');
+        });
+        const activeCard = labSliderCards[labSliderIndex];
+        if (mockupSelect && activeCard && activeCard.dataset.mockupId) {
+            mockupSelect.value = activeCard.dataset.mockupId;
+        }
+    }
+
+    function setLabSliderIndex(index, options = {}) {
+        const previousIndex = labSliderIndex;
+        labSliderIndex = Math.max(0, Math.min(labSliderCards.length - 1, index));
+        applyLabSliderPosition();
+        if (options.scroll) {
+            const activeCard = labSliderCards[labSliderIndex];
+            if (activeCard) {
+                labMockupStrip.scrollTo({
+                    left: activeCard.offsetLeft - labMockupStrip.offsetLeft,
+                    behavior: options.smooth ? 'smooth' : 'auto'
+                });
+            }
+        }
+        if (labSliderIndex !== previousIndex && options.clear !== false) {
+            clearTransientResult();
+        }
+    }
+
+    function syncLabSliderFromScroll() {
+        if (!labSliderIsMobile() || !labSliderCards.length) return;
+        const stripRect = labMockupStrip.getBoundingClientRect();
+        const targetLeft = stripRect.left + 10;
+        let closestIndex = labSliderIndex;
+        let closestDistance = Number.POSITIVE_INFINITY;
+        labSliderCards.forEach((card, index) => {
+            const cardRect = card.getBoundingClientRect();
+            const distance = Math.abs(cardRect.left - targetLeft);
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestIndex = index;
+            }
+        });
+        setLabSliderIndex(closestIndex, { clear: false });
+    }
+
+    labSliderCards.forEach((card, index) => {
+        card.addEventListener('click', event => {
+            if (!labSliderIsMobile()) return;
+            event.preventDefault();
+            if (labSuppressClick) return;
+            if (index === labSliderIndex && card.dataset.viewerUrl) {
+                window.location.href = card.dataset.viewerUrl;
+                return;
+            }
+            setLabSliderIndex(index, { scroll: true, smooth: true });
+        });
+    });
+
+    labMockupStrip.addEventListener('pointerdown', event => {
+        if (!labSliderIsMobile()) return;
+        labPointerStartX = event.clientX;
+        labPointerStartY = event.clientY;
+        labSuppressClick = false;
+    }, { passive: true });
+
+    labMockupStrip.addEventListener('pointermove', event => {
+        if (!labSliderIsMobile()) return;
+        const dx = Math.abs(event.clientX - labPointerStartX);
+        const dy = Math.abs(event.clientY - labPointerStartY);
+        if (dx > 10 && dx > dy) {
+            labSuppressClick = true;
+        }
+    }, { passive: true });
+
+    labMockupStrip.addEventListener('pointerup', () => {
+        window.setTimeout(() => { labSuppressClick = false; }, 180);
+    }, { passive: true });
+
+    labMockupStrip.addEventListener('pointercancel', () => {
+        window.setTimeout(() => { labSuppressClick = false; }, 180);
+    }, { passive: true });
+
+    labMockupStrip.addEventListener('scroll', () => {
+        window.clearTimeout(labScrollTimer);
+        labScrollTimer = window.setTimeout(syncLabSliderFromScroll, 80);
+    }, { passive: true });
+
+    window.addEventListener('resize', () => setLabSliderIndex(labSliderIndex, { scroll: true, clear: false }));
+    mobileSliderQuery.addEventListener?.('change', () => setLabSliderIndex(labSliderIndex, { scroll: true, clear: false }));
+    setLabSliderIndex(labSliderIndex, { scroll: true, clear: false });
+}
 function selectedRadioLabel(name) {
     const checked = document.querySelector('input[name="' + name + '"]:checked');
     if (!checked) return '';
@@ -1208,6 +2189,79 @@ function formatScaleValue(value) {
     if (numeric < 0) return numeric + '%';
     return '0';
 }
+function angleModifierValue(side, level) {
+    if (level === 1 && side === 'less') return 'camera_less_profile';
+    if (level === 1 && side === 'more') return 'camera_more_profile';
+    return 'none';
+}
+function setupAngleControls(buttons, onChange) {
+    const updateButton = (button, level) => {
+        const bounded = Math.max(0, Math.min(1, parseInt(level || '0', 10)));
+        button.dataset.angleLevel = String(bounded);
+        button.setAttribute('aria-pressed', bounded > 0 ? 'true' : 'false');
+        const value = button.querySelector('.angle-value');
+        if (value) value.textContent = button.dataset.angleSide === 'less' ? '−' : '+';
+    };
+    const notify = () => {
+        const active = buttons.find(button => parseInt(button.dataset.angleLevel || '0', 10) > 0);
+        onChange(active
+            ? angleModifierValue(active.dataset.angleSide || 'less', parseInt(active.dataset.angleLevel || '0', 10))
+            : 'none');
+    };
+    buttons.forEach(button => {
+        let pointerId = null;
+        let startY = 0;
+        let startLevel = 0;
+        let dragged = false;
+        const applyLevel = level => {
+            const bounded = Math.max(0, Math.min(1, level));
+            if (bounded > 0) {
+                buttons.forEach(other => {
+                    if (other !== button) updateButton(other, 0);
+                });
+            }
+            updateButton(button, bounded);
+            notify();
+        };
+        button.addEventListener('pointerdown', event => {
+            event.preventDefault();
+            pointerId = event.pointerId;
+            startY = event.clientY;
+            startLevel = parseInt(button.dataset.angleLevel || '0', 10);
+            dragged = false;
+            button.classList.add('is-dragging');
+            button.setPointerCapture?.(event.pointerId);
+        });
+        button.addEventListener('pointermove', event => {
+            if (pointerId !== event.pointerId) return;
+            const delta = startY - event.clientY;
+            if (Math.abs(delta) < 12) return;
+            event.preventDefault();
+            dragged = true;
+            applyLevel(startLevel + Math.round(delta / 24));
+        });
+        const finish = event => {
+            if (pointerId !== null && event.pointerId !== undefined && pointerId !== event.pointerId) return;
+            pointerId = null;
+            button.classList.remove('is-dragging');
+        };
+        button.addEventListener('pointerup', finish);
+        button.addEventListener('pointercancel', event => {
+            dragged = false;
+            finish(event);
+        });
+        button.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (dragged) {
+                dragged = false;
+                return;
+            }
+            const current = parseInt(button.dataset.angleLevel || '0', 10);
+            applyLevel(current === 1 ? 0 : 1);
+        });
+    });
+}
 function scaleValueToField(value) {
     const numeric = parseInt(value || '0', 10);
     if (numeric < 0) return 'scale_minus_' + Math.abs(numeric);
@@ -1218,11 +2272,29 @@ function syncScaleSlider() {
     if (!scaleSlider || !scaleHidden || !scaleDisplay) return;
     scaleHidden.value = scaleValueToField(scaleSlider.value);
     scaleDisplay.textContent = formatScaleValue(scaleSlider.value);
+    if (mobileScaleDial && mobileScaleDisplay) {
+        const numeric = parseInt(scaleSlider.value || '0', 10);
+        mobileScaleDisplay.textContent = numeric > 0 ? '+' + numeric : String(numeric);
+        mobileScaleDial.setAttribute('aria-valuenow', String(numeric));
+        mobileScaleDial.setAttribute('aria-valuetext', formatScaleValue(numeric));
+    }
+}
+function syncMobileLighting() {
+    const selected = lightingSelect ? lightingSelect.value : 'none';
+    mobileLightingOptions.forEach(button => {
+        button.setAttribute('aria-pressed', button.dataset.lightingValue === selected ? 'true' : 'false');
+    });
+}
+function syncMobileHumanPresence() {
+    const selected = humanPresenceInputs.find(input => input.checked)?.value || 'none';
+    mobileHumanOptions.forEach(button => {
+        button.setAttribute('aria-pressed', button.dataset.humanValue === selected ? 'true' : 'false');
+    });
 }
 function currentScaleLabel() {
     if (!scaleSlider) return '';
     const numeric = parseInt(scaleSlider.value || '0', 10);
-    return numeric === 0 ? '' : formatScaleValue(numeric);
+    return numeric === 0 ? '' : 'Scale ' + formatScaleValue(numeric);
 }
 function currentVariationSummary() {
     const parts = [
@@ -1230,10 +2302,14 @@ function currentVariationSummary() {
         currentScaleLabel(),
         selectedSelectLabel('lighting_modifier')
     ].filter(Boolean);
-    const camera = cameraModifier && cameraModifier.value !== 'none'
-        ? cameraModifier.options[cameraModifier.selectedIndex].text
-        : '';
-    const strength = camera && cameraStrength ? cameraStrength.options[cameraStrength.selectedIndex].text : '';
+    const cameraLabels = {
+        camera_less_profile: 'Less profiled',
+        camera_more_profile: 'More profiled',
+        camera_left_3_4: 'Left 3/4 · 45°',
+        camera_right_3_4: 'Right 3/4 · 45°'
+    };
+    const camera = cameraModifier ? (cameraLabels[cameraModifier.value] || '') : '';
+    const strength = '';
     if (camera) {
         const cameraLabel = strength ? camera + ' / ' + strength : camera;
         const lighting = selectedSelectLabel('lighting_modifier');
@@ -1252,9 +2328,9 @@ function clearTransientResult() {
     const resultBox = document.getElementById('new-result');
     const status = document.getElementById('lab-status');
     if (resultBox && resultBox.innerHTML.trim() !== '') {
-        resultBox.innerHTML = '<div class="lab-note">Selection changed. Run a new test to see the updated result.</div>';
+        resultBox.innerHTML = '<div class="lab-note">Selection changed. Generate a new variation to see the updated result.</div>';
     }
-    if (status && status.textContent !== 'Generating test...') {
+    if (status && status.textContent !== 'Generating variation...') {
         status.textContent = '';
     }
 }
@@ -1304,6 +2380,182 @@ if (scaleSlider) {
         clearTransientResult();
     });
 }
+if (mobileScaleDial && scaleSlider) {
+    let scaleDragStartY = 0;
+    let scaleDragStartValue = 0;
+    let scalePointerId = null;
+
+    const applyMobileScale = value => {
+        const bounded = Math.max(-60, Math.min(60, Math.round(value / 20) * 20));
+        if (parseInt(scaleSlider.value || '0', 10) === bounded) return;
+        scaleSlider.value = String(bounded);
+        scaleSlider.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+
+    mobileScaleDial.addEventListener('pointerdown', event => {
+        if (scaleSlider.disabled) return;
+        event.preventDefault();
+        scalePointerId = event.pointerId;
+        scaleDragStartY = event.clientY;
+        scaleDragStartValue = parseInt(scaleSlider.value || '0', 10);
+        mobileScaleDial.classList.add('is-dragging');
+        mobileScaleDial.setPointerCapture?.(event.pointerId);
+    });
+    mobileScaleDial.addEventListener('pointermove', event => {
+        if (scalePointerId !== event.pointerId) return;
+        event.preventDefault();
+        const steps = Math.round((scaleDragStartY - event.clientY) / 24);
+        applyMobileScale(scaleDragStartValue + (steps * 20));
+    });
+    const finishScaleGesture = event => {
+        if (scalePointerId !== null && event.pointerId !== undefined && scalePointerId !== event.pointerId) return;
+        scalePointerId = null;
+        mobileScaleDial.classList.remove('is-dragging');
+    };
+    mobileScaleDial.addEventListener('pointerup', finishScaleGesture);
+    mobileScaleDial.addEventListener('pointercancel', finishScaleGesture);
+    mobileScaleDial.addEventListener('keydown', event => {
+        const current = parseInt(scaleSlider.value || '0', 10);
+        if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
+            event.preventDefault();
+            applyMobileScale(current + 20);
+        } else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') {
+            event.preventDefault();
+            applyMobileScale(current - 20);
+        } else if (event.key === 'Home') {
+            event.preventDefault();
+            applyMobileScale(0);
+        }
+    });
+}
+if (lightingSelect && mobileLightingOptions.length) {
+    mobileLightingOptions.forEach(button => {
+        button.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            const requested = button.dataset.lightingValue || 'none';
+            lightingSelect.value = lightingSelect.value === requested ? 'none' : requested;
+            syncMobileLighting();
+            lightingSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    });
+    syncMobileLighting();
+}
+if (humanPresenceInputs.length && mobileHumanOptions.length) {
+    mobileHumanOptions.forEach(button => {
+        button.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            const requested = button.dataset.humanValue || 'none';
+            const input = humanPresenceInputs.find(candidate => candidate.value === requested);
+            if (!input || input.disabled) return;
+            input.checked = true;
+            syncMobileHumanPresence();
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    });
+    syncMobileHumanPresence();
+}
+if (mobileAngleControls.length && cameraModifier) {
+    setupAngleControls(mobileAngleControls, value => {
+        cameraModifier.value = value;
+        clearTransientResult();
+    });
+}
+historyCards.forEach(card => {
+    const historyHumanButtons = Array.from(card.querySelectorAll('[data-human-value]'));
+    const historyLightingButtons = Array.from(card.querySelectorAll('[data-lighting-value]'));
+    const historyScaleDial = card.querySelector('.mobile-scale-dial');
+    const historyScaleDisplay = historyScaleDial ? historyScaleDial.querySelector('strong') : null;
+    const historyAngleControls = Array.from(card.querySelectorAll('[data-angle-side]'));
+    const historyApply = card.querySelector('.mobile-history-apply');
+
+    setupAngleControls(historyAngleControls, value => {
+        card.dataset.historyCamera = value;
+    });
+
+    historyHumanButtons.forEach(button => {
+        button.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            card.dataset.historyHuman = button.dataset.humanValue || 'none';
+            historyHumanButtons.forEach(option => option.setAttribute('aria-pressed', option === button ? 'true' : 'false'));
+        });
+    });
+
+    historyLightingButtons.forEach(button => {
+        button.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            const requested = button.dataset.lightingValue || 'none';
+            card.dataset.historyLighting = card.dataset.historyLighting === requested ? 'none' : requested;
+            historyLightingButtons.forEach(option => {
+                option.setAttribute('aria-pressed', option.dataset.lightingValue === card.dataset.historyLighting ? 'true' : 'false');
+            });
+        });
+    });
+
+    if (historyScaleDial && historyScaleDisplay) {
+        let historyPointerId = null;
+        let historyStartY = 0;
+        let historyStartValue = 0;
+        const applyHistoryScale = value => {
+            const bounded = Math.max(-60, Math.min(60, Math.round(value / 20) * 20));
+            card.dataset.historyScale = String(bounded);
+            historyScaleDisplay.textContent = bounded > 0 ? '+' + bounded : String(bounded);
+            historyScaleDial.setAttribute('aria-valuenow', String(bounded));
+            historyScaleDial.setAttribute('aria-valuetext', formatScaleValue(bounded));
+        };
+        historyScaleDial.addEventListener('pointerdown', event => {
+            event.preventDefault();
+            historyPointerId = event.pointerId;
+            historyStartY = event.clientY;
+            historyStartValue = parseInt(card.dataset.historyScale || '0', 10);
+            historyScaleDial.classList.add('is-dragging');
+            historyScaleDial.setPointerCapture?.(event.pointerId);
+        });
+        historyScaleDial.addEventListener('pointermove', event => {
+            if (historyPointerId !== event.pointerId) return;
+            event.preventDefault();
+            const steps = Math.round((historyStartY - event.clientY) / 24);
+            applyHistoryScale(historyStartValue + (steps * 20));
+        });
+        const finishHistoryScale = event => {
+            if (historyPointerId !== null && event.pointerId !== undefined && historyPointerId !== event.pointerId) return;
+            historyPointerId = null;
+            historyScaleDial.classList.remove('is-dragging');
+        };
+        historyScaleDial.addEventListener('pointerup', finishHistoryScale);
+        historyScaleDial.addEventListener('pointercancel', finishHistoryScale);
+    }
+
+    historyApply?.addEventListener('click', () => {
+        const mockupSelect = document.querySelector('select[name="mockup_id"]');
+        const historyMockupId = card.dataset.historyMockupId || '';
+        if (!form || !mockupSelect || historyMockupId === '') return;
+        mockupSelect.value = historyMockupId;
+
+        const requestedHuman = card.dataset.historyHuman || 'none';
+        const humanInput = humanPresenceInputs.find(input => input.value === requestedHuman);
+        if (humanInput) humanInput.checked = true;
+
+        if (scaleSlider) {
+            scaleSlider.value = card.dataset.historyScale || '0';
+            syncScaleSlider();
+        }
+        if (lightingSelect) {
+            lightingSelect.value = card.dataset.historyLighting || 'none';
+            syncMobileLighting();
+        }
+        if (cameraModifier) {
+            cameraModifier.value = card.dataset.historyCamera || 'none';
+        }
+        if (customInstructionInput) {
+            customInstructionInput.value = card.querySelector('.mobile-history-instruction')?.value || '';
+        }
+        form.requestSubmit();
+    });
+});
 document.querySelectorAll('#lab-form input, #lab-form select, #lab-form textarea').forEach(control => {
     if (control.name === 'mockup_id' || control.id === 'camera-modifier' || control.id === 'scale-slider') return;
     control.addEventListener('change', clearTransientResult);
@@ -1314,15 +2566,16 @@ if (form) {
         event.preventDefault();
         const status = document.getElementById('lab-status');
         const resultBox = document.getElementById('new-result');
-        const button = document.querySelector('[data-lab-submit]');
-        if (!confirm('Run this test with real Gemini generation? It will consume 1 credit if the generation completes.')) {
+        const buttons = Array.from(document.querySelectorAll('[data-lab-submit]'));
+        if (!confirm('Generate this variation? It will consume 1 credit if the generation completes.')) {
             return;
         }
-        if (button) button.disabled = true;
+        buttons.forEach(button => { button.disabled = true; });
         document.body.classList.add('lab-is-generating');
         status.classList.add('is-loading');
-        status.textContent = 'Generating test...';
+        status.textContent = 'Generating variation...';
         resultBox.innerHTML = '<div class="result-placeholder"><span class="lab-spinner" aria-hidden="true"></span><span>Generating edited mockup...</span></div>';
+        syncScaleSlider();
         fetch('generate_mockup_variation_lab.php', { method: 'POST', body: new FormData(form) })
             .then(response => response.text().then(text => {
                 let parsed;
@@ -1331,13 +2584,19 @@ if (form) {
             }))
             .then(result => {
                 if (!result.body.ok) {
-                    throw new Error(result.body.error || 'The test failed.');
+                    throw new Error(result.body.error || 'The variation failed.');
                 }
                 document.body.classList.remove('lab-is-generating');
                 status.textContent = result.body.message || 'Test generated.';
                 status.classList.remove('is-loading');
                 const summary = currentVariationSummary();
                 const registeredMockupId = parseInt(result.body.registered_mockup_id || '0', 10);
+                if (registeredMockupId > 0) {
+                    const promotedUrl = new URL(window.location.href);
+                    promotedUrl.searchParams.set('mockup_id', String(registeredMockupId));
+                    window.location.assign(promotedUrl.toString());
+                    return;
+                }
                 resultBox.innerHTML =
                     '<div class="result-card">' +
                     '<div class="lab-result-media" data-registered-mockup-id="' + registeredMockupId + '">' +
@@ -1367,6 +2626,7 @@ if (form) {
                         '<div><a href="' + result.body.prompt_url + '" target="_blank" rel="noopener">View prompt</a></div>' +
                         '</div>';
                     historyGrid.prepend(card);
+                    showLatestLabRun({ smooth: true });
                 }
             })
             .catch(err => {
@@ -1377,7 +2637,7 @@ if (form) {
             .finally(() => {
                 document.body.classList.remove('lab-is-generating');
                 status.classList.remove('is-loading');
-                if (button) button.disabled = false;
+                buttons.forEach(button => { button.disabled = false; });
             });
     });
 }

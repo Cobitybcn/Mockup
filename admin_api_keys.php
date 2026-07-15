@@ -117,7 +117,7 @@ $geminiImagePlans = [
                 </div>
                 <div class="topbar-actions">
                     <a class="button-link secondary" href="admin_prompts.php">System Prompts</a>
-                    <a class="button-link secondary" href="root_album.php">Root Artworks</a>
+                    <a class="button-link secondary" href="root_album.php">ArtWorks</a>
                 </div>
             </div>
 
@@ -209,12 +209,12 @@ $geminiImagePlans = [
                             name="mockup_worker_count"
                             type="number"
                             min="1"
-                            max="6"
+                            max="8"
                             step="1"
                             value="<?= h($settings['mockup_worker_count'] ?? '4') ?>"
                         >
                         <p class="checkbox-line" style="margin-top: 14px;">
-                            Recommended testing path: 4, then 5 or 6 if Vertex remains stable. Higher concurrency tends to trigger Vertex quota errors.
+                            Recommended testing path: 4, then 6 or 8 if Vertex remains stable. Higher concurrency tends to trigger Vertex quota errors.
                         </p>
                     </section>
                 </div>

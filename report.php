@@ -2645,7 +2645,7 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                 <?php endif; ?>
                 <a href="artwork_new.php">Back to step 1</a>
                 &nbsp;·&nbsp;
-                <a href="root_album.php">Root Artworks</a>
+                <a href="root_album.php">ArtWorks</a>
             </div>
         </div>
     </div>

@@ -49,6 +49,8 @@ class ArtistProfile
                     social_strategy = :social_strategy,
                     pinterest_strategy = :pinterest_strategy,
                     photo_file = :photo_file,
+                    subdomain = :subdomain,
+                    custom_domain = :custom_domain,
                     updated_at = :updated_at
                 WHERE id = :id
                 AND user_id = :user_id
@@ -64,13 +66,13 @@ class ArtistProfile
                 recurring_themes, palette_notes, target_audience, preferred_regions,
                 preferred_contexts, forbidden_contexts, commercial_positioning,
                 conceptual_keywords, tone_of_voice, marketplace_strategy, social_strategy, pinterest_strategy,
-                photo_file, created_at, updated_at
+                photo_file, subdomain, custom_domain, created_at, updated_at
             ) VALUES (
                 :user_id, :artist_name, :short_bio, :statement, :visual_language, :materials,
                 :recurring_themes, :palette_notes, :target_audience, :preferred_regions,
                 :preferred_contexts, :forbidden_contexts, :commercial_positioning,
                 :conceptual_keywords, :tone_of_voice, :marketplace_strategy, :social_strategy, :pinterest_strategy,
-                :photo_file, :created_at, :updated_at
+                :photo_file, :subdomain, :custom_domain, :created_at, :updated_at
             )
         ');
         $stmt->execute($profile);
@@ -139,6 +141,8 @@ class ArtistProfile
             'social_strategy',
             'pinterest_strategy',
             'photo_file',
+            'subdomain',
+            'custom_domain',
         ];
     }
 

@@ -67,11 +67,12 @@ def find_coeffs(pa, pb):
 
 def get_client():
     import httpx
-    project_id = os.environ.get('VERTEX_PROJECT_ID', 'project-3c7fb926-f021-47c6-9cc')
+    project_id = os.environ.get('VERTEX_PROJECT_ID', 'artwork-mockups-serverless')
+    location = os.environ.get('VERTEX_LOCATION', 'global')
     return genai.Client(
         vertexai=True,
         project=project_id,
-        location="global",
+        location=location,
         http_options={'httpx_client': httpx.Client(timeout=600.0)}
     )
 

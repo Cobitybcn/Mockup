@@ -3,8 +3,9 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
-if (Auth::user()) {
-    header('Location: artwork_new.php');
+$authenticatedUser = Auth::user();
+if ($authenticatedUser) {
+    header('Location: ' . (Auth::isAdmin($authenticatedUser) ? 'artwork_new.php' : 'create_scenes.php'));
     exit;
 }
 
@@ -15,7 +16,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $password = (string)($_POST['password'] ?? '');
 
     if (Auth::login($email, $password)) {
-        header('Location: artwork_new.php');
+        $authenticatedUser = Auth::user();
+        header('Location: ' . ($authenticatedUser && Auth::isAdmin($authenticatedUser) ? 'artwork_new.php' : 'create_scenes.php'));
         exit;
     }
 
@@ -85,7 +87,7 @@ $authOpacities = [
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login - Artwork Mockups</title>
-    <link rel="stylesheet" href="style.css?v=auth-gallery-5">
+    <link rel="stylesheet" href="style.css?v=auth-gallery-6">
 </head>
 <body class="auth-page">
 
@@ -145,6 +147,8 @@ $authOpacities = [
 
         <p class="auth-links-v2">
             Don't have an account? <a href="register.php">Register</a>
+            <br>
+            <a href="forgot_password.php">Forgot password?</a>
         </p>
 
         <div class="auth-footer-v2">

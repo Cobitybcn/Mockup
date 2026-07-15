@@ -369,14 +369,17 @@ TEXT);
         if ($longestSideCm <= 0) {
             return 'unknown';
         }
-        if ($longestSideCm <= 70.0) {
+        if ($longestSideCm <= 40.0) {
             return 'M';
         }
-        if ($longestSideCm <= 130.0) {
+        if ($longestSideCm <= 80.0) {
             return 'L';
         }
-        if ($longestSideCm <= 180.0) {
+        if ($longestSideCm <= 150.0) {
             return 'XL';
+        }
+        if ($longestSideCm <= 250.0) {
+            return 'Monumental';
         }
 
         return 'Monumental_or_XXL';

@@ -23,6 +23,12 @@ class StorageService
 
         self::$bucketName = $bucket;
         $projectId = app_env('GCP_PROJECT_ID', '');
+
+        if (!class_exists(StorageClient::class)) {
+            Logger::log('GCS_BUCKET_NAME is configured, but google/cloud-storage is not installed or autoloaded. Falling back to local storage.', 'warning');
+            self::$bucketName = '';
+            return false;
+        }
         
         self::$storageClient = new StorageClient([
             'projectId' => $projectId ?: null,
@@ -158,6 +164,10 @@ class StorageService
                 $bucket = self::$storageClient->bucket(self::$bucketName);
                 $object = $bucket->object(self::normalizePath($targetPath));
                 if ($object->exists()) {
+                    $dir = dirname($destFilePath);
+                    if (!is_dir($dir)) {
+                        mkdir($dir, 0775, true);
+                    }
                     $object->downloadToFile($destFilePath);
                     return true;
                 }
