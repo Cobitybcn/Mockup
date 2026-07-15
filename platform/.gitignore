@@ -1,0 +1,40 @@
+/jobs/
+/results/
+/uploads/
+/logs/
+/analysis/
+# Ignore storage except for the index.json metadata
+!/storage/
+/storage/*
+!/storage/world_mothers/
+/storage/world_mothers/*
+!/storage/world_mothers/index.json
+/backups/
+/scratch/
+/mockup-prompts/*
+!/mockup-prompts/.htaccess
+*.log
+.env
+.agents/
+.claude/
+.codex/
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+app/Services/__pycache__/
+
+# Runtime video generations and exports
+/video/
+
+# Local diagnostic endpoints (may expose environment or database data)
+/test_smoke.php
+/view_last_msg.php
+
+# Temp files
+wmi_outer_err.txt
+test.txt
+dump_output.txt

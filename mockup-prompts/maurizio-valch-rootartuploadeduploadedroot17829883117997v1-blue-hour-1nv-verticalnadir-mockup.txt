@@ -1,9 +1,0 @@
-Create an art mockup using the three references.
-
-Reference 1 defines the exact perspective, position, scale, and projected shape of the artwork. Follow this green silhouette precisely.
-Reference 2 is the artwork. Place this artwork into the perspective shape from Reference 1, preserving its visual identity.
-Reference 3 is only the environment mood reference. Use its architectural atmosphere, materials, lighting, and color temperature, but do not copy its exact layout.
-
-Generate a realistic interior art mockup.
-Do not change the artwork composition.
-Do not regularize, straighten, or reinterpret the perspective from Reference 1.
