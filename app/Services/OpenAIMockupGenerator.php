@@ -3,6 +3,23 @@ declare(strict_types=1);
 
 class OpenAIMockupGenerator implements MockupGeneratorInterface
 {
+    private string $apiKey;
+    private string $model;
+    private string $size;
+    private string $quality;
+
+    public function __construct(string $apiKey = '', string $model = '', string $size = '', string $quality = '')
+    {
+        $this->apiKey = trim($apiKey !== '' ? $apiKey : ProviderSettings::openAIAPIKey());
+        $configuredModel = trim($model !== '' ? $model : ProviderSettings::openAIImageModel());
+        $this->model = str_starts_with($configuredModel, 'gpt-image-') ? $configuredModel : 'gpt-image-2';
+        $this->size = trim($size !== '' ? $size : ProviderSettings::openAIImageSize());
+        $configuredQuality = strtolower(trim($quality !== '' ? $quality : ProviderSettings::openAIImageQuality()));
+        $this->quality = in_array($configuredQuality, ['low', 'medium', 'high', 'auto'], true)
+            ? $configuredQuality
+            : 'medium';
+    }
+
     public function generate(string $imagePath, string $contextId, string $prompt, array $metadata = []): array
     {
         if (!is_file($imagePath)) {
@@ -23,14 +40,21 @@ class OpenAIMockupGenerator implements MockupGeneratorInterface
         Logger::log("Iniciando generacion de mockup OpenAI. Contexto: {$contextId}, Obra: " . basename($imagePath), 'openai');
 
         $finalPrompt = $this->finalPrompt($contextId, $prompt, $metadata);
+        $worldMotherReferencePath = (string)($metadata['world_mother_reference_path'] ?? '');
+        if ($worldMotherReferencePath !== '' && is_file($worldMotherReferencePath)) {
+            $cameraSlotId = trim((string)($metadata['mockup_combination']['selected_camera_slot_id'] ?? ''));
+            $finalPrompt = WorldMotherCameraAuthorityPolicy::applyToPrompt($finalPrompt, $cameraSlotId);
+        }
+
+        $referenceImages = $this->referenceImages(
+            $imagePath,
+            (string)($metadata['root_reference_path'] ?? ''),
+            $worldMotherReferencePath
+        );
+        $finalPrompt = $this->referenceContract($finalPrompt, $referenceImages);
         
         try {
-            $b64 = $this->callImageEdit(
-                $imagePath,
-                $finalPrompt,
-                (string)($metadata['root_reference_path'] ?? ''),
-                (string)($metadata['world_mother_reference_path'] ?? '')
-            );
+            $b64 = $this->callImageEdit($referenceImages, $finalPrompt);
             $imageData = base64_decode($b64);
 
             if ($imageData === false) {
@@ -87,36 +111,31 @@ class OpenAIMockupGenerator implements MockupGeneratorInterface
         return (new MockupWorldVisualPromptEnhancer())->enhancePromptForContextId($contextPrompt, $contextId);
     }
 
-    private function callImageEdit(string $imagePath, string $prompt, string $rootReferencePath = '', string $worldMotherReferencePath = ''): string
+    /** @param array<int,array{path:string,role:string}> $referenceImages */
+    private function callImageEdit(array $referenceImages, string $prompt): string
     {
-        $fields = [
-            'model' => ProviderSettings::openAIImageModel(),
-            'prompt' => $prompt,
-            'size' => ProviderSettings::openAIImageSize(),
-            'quality' => ProviderSettings::openAIImageQuality(),
-            'n' => '1',
-            'image[0]' => new CURLFile($imagePath, $this->mime($imagePath), basename($imagePath)),
-        ];
+        if ($this->apiKey === '') {
+            throw new RuntimeException('Falta OPENAI_API_KEY para generar el mockup.');
+        }
 
-        if ($rootReferencePath !== '' && is_file($rootReferencePath) && realpath($rootReferencePath) !== realpath($imagePath)) {
-            $fields['image[1]'] = new CURLFile($rootReferencePath, $this->mime($rootReferencePath), basename($rootReferencePath));
-        }
-        if ($worldMotherReferencePath !== '' && is_file($worldMotherReferencePath)) {
-            $fields['image[' . count(array_filter(array_keys($fields), static fn($key): bool => str_starts_with((string)$key, 'image['))) . ']'] = new CURLFile(
-                $worldMotherReferencePath,
-                $this->mime($worldMotherReferencePath),
-                basename($worldMotherReferencePath)
-            );
-        }
+        [$body, $contentType] = $this->multipartBody([
+            'model' => $this->model,
+            'prompt' => $prompt,
+            'size' => $this->size,
+            'quality' => $this->quality,
+            'n' => '1',
+        ], $referenceImages);
 
         $ch = curl_init('https://api.openai.com/v1/images/edits');
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
             CURLOPT_HTTPHEADER => [
-                'Authorization: Bearer ' . ProviderSettings::openAIAPIKey(),
+                'Authorization: Bearer ' . $this->apiKey,
+                'Content-Type: ' . $contentType,
+                'Accept: application/json',
             ],
-            CURLOPT_POSTFIELDS => $fields,
+            CURLOPT_POSTFIELDS => $body,
             CURLOPT_TIMEOUT => 900,
             CURLOPT_CONNECTTIMEOUT => 60,
         ]);
@@ -142,6 +161,97 @@ class OpenAIMockupGenerator implements MockupGeneratorInterface
         }
 
         return $b64;
+    }
+
+    /** @return array<int,array{path:string,role:string}> */
+    private function referenceImages(string $imagePath, string $rootReferencePath, string $worldMotherReferencePath): array
+    {
+        $images = [];
+        $seen = [];
+        $append = function (string $path, string $role) use (&$images, &$seen): void {
+            if ($path === '' || !is_file($path)) {
+                return;
+            }
+            $identity = realpath($path) ?: $path;
+            if (isset($seen[$identity])) {
+                return;
+            }
+            $seen[$identity] = true;
+            $images[] = ['path' => $path, 'role' => $role];
+        };
+
+        $append($imagePath, 'root_artwork');
+        $append($rootReferencePath, 'root_artwork');
+        $append($worldMotherReferencePath, 'world_mother');
+
+        return $images;
+    }
+
+    /** @param array<int,array{path:string,role:string}> $referenceImages */
+    private function referenceContract(string $prompt, array $referenceImages): string
+    {
+        $rootIndexes = [];
+        $worldIndex = 0;
+        foreach ($referenceImages as $index => $referenceImage) {
+            $humanIndex = $index + 1;
+            if ($referenceImage['role'] === 'world_mother') {
+                $worldIndex = $humanIndex;
+            } else {
+                $rootIndexes[] = $humanIndex;
+            }
+        }
+
+        $rootLabel = implode(' and IMAGE ', $rootIndexes);
+        $contract = "OPENAI REFERENCE IMAGE CONTRACT:\n"
+            . "- IMAGE {$rootLabel} contain the ROOT ARTWORK and are the only authority for artwork identity. Preserve the exact visible artwork, colors, marks, texture, orientation, proportions and composition.\n"
+            . "- Generate a new photographic mockup around the ROOT ARTWORK. Never repaint, reinterpret, mirror, replace or borrow artwork content from another reference.\n";
+        if ($worldIndex > 0) {
+            $contract .= "- IMAGE {$worldIndex} is the WORLD MOTHER: environmental inspiration only. Use its materiality, light, palette and architectural mood, but do not copy its camera, crop, layout, geometry, furniture or object positions.\n";
+        }
+        $contract .= "- The selected camera slot in the prompt is the composition authority.\n"
+            . "- Output exactly a 4:5 portrait image. Keep the complete scene inside that frame unless the selected camera explicitly requests an artwork detail crop.";
+
+        return $contract . "\n\n" . trim($prompt);
+    }
+
+    /**
+     * OpenAI documents multiple edit references as repeated image[] parts.
+     * Building the multipart body explicitly preserves those duplicate field names.
+     *
+     * @param array<string,string> $fields
+     * @param array<int,array{path:string,role:string}> $referenceImages
+     * @return array{0:string,1:string}
+     */
+    private function multipartBody(array $fields, array $referenceImages): array
+    {
+        $boundary = '----ArtworkMockups' . bin2hex(random_bytes(12));
+        $body = '';
+        foreach ($fields as $name => $value) {
+            $body .= '--' . $boundary . "\r\n";
+            $body .= 'Content-Disposition: form-data; name="' . $this->multipartToken($name) . "\"\r\n\r\n";
+            $body .= $value . "\r\n";
+        }
+
+        foreach ($referenceImages as $referenceImage) {
+            $path = $referenceImage['path'];
+            $content = file_get_contents($path);
+            if ($content === false) {
+                throw new RuntimeException('No se pudo leer una imagen de referencia OpenAI: ' . basename($path));
+            }
+            $body .= '--' . $boundary . "\r\n";
+            $body .= 'Content-Disposition: form-data; name="image[]"; filename="'
+                . $this->multipartToken(basename($path)) . "\"\r\n";
+            $body .= 'Content-Type: ' . $this->mime($path) . "\r\n\r\n";
+            $body .= $content . "\r\n";
+        }
+        $body .= '--' . $boundary . "--\r\n";
+
+        return [$body, 'multipart/form-data; boundary=' . $boundary];
+    }
+
+    private function multipartToken(string $value): string
+    {
+        return str_replace(["\r", "\n", '"'], ['', '', '%22'], $value);
     }
 
     private function mime(string $path): string

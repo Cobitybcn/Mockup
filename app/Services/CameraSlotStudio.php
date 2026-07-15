@@ -374,7 +374,7 @@ final class CameraSlotStudio
     {
         $slotId = $this->safeSlug((string)($input['slot_id'] ?? ''));
         if ($slotId === '') {
-            throw new RuntimeException('La Scene seleccionada no existe.');
+            throw new RuntimeException('La cámara seleccionada no existe.');
         }
 
         $slot = $this->slotForEdit($slotId);

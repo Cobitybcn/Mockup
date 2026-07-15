@@ -87,6 +87,9 @@ try {
         $count = $pdo->prepare('SELECT COUNT(*) FROM mockups WHERE mockup_file = :file');
         $count->execute(['file' => $mockupFile]);
         if ((int)$count->fetchColumn() === 0) {
+            if (StorageService::isGcsActive()) {
+                StorageService::delete('results/' . $mockupFile);
+            }
             $path = RESULTS_DIR . DIRECTORY_SEPARATOR . $mockupFile;
             if (is_file($path)) {
                 @unlink($path);
@@ -98,6 +101,9 @@ try {
         $count = $pdo->prepare('SELECT COUNT(*) FROM mockups WHERE prompt_file = :file');
         $count->execute(['file' => $promptFile]);
         if ((int)$count->fetchColumn() === 0) {
+            if (StorageService::isGcsActive()) {
+                StorageService::delete('mockup-prompts/' . $promptFile);
+            }
             $path = PROMPTS_DIR . DIRECTORY_SEPARATOR . $promptFile;
             if (is_file($path)) {
                 @unlink($path);

@@ -204,7 +204,7 @@ $step5Active = ($currentPage === 'report.php' || $currentPage === 'curated_mocku
 
 // Menu active states
 $dashboardActive = ($currentPage === 'dashboard.php');
-$mockupsActive = ($currentPage === 'mockups.php' || $currentPage === 'viewer.php');
+$mockupsActive = ($currentPage === 'mockups.php' || $currentPage === 'viewer.php' || $currentPage === 'mockup_upload.php');
 $worldMotherActive = ($currentPage === 'world_mother_studio.php');
 $cameraStudioActive = ($currentPage === 'camera_studio.php');
 $variationLabActive = ($currentPage === 'mockup_variation_lab.php');
@@ -214,6 +214,8 @@ $seriesActive = ($currentPage === 'series.php');
 $profileActive = ($currentPage === 'artist_profile.php');
 $websiteActive = in_array($currentPage, ['website_board.php', 'website_catalog.php', 'website_studio_notes.php'], true);
 $socialMediaCatalogActive = in_array($currentPage, ['social_media_catalog.php', 'social_media_board.php'], true);
+$videosActive = ($currentPage === 'videos.php');
+$videoStudioActive = ($currentPage === 'video.php');
 $usersActive = ($currentPage === 'admin_users.php');
 $accountActive = ($currentPage === 'account.php');
 $pinterestActive = str_contains(str_replace('\\', '/', (string)($_SERVER['PHP_SELF'] ?? '')), '/integrations/pinterest/');
@@ -490,6 +492,17 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
     .sidebar-mobile-section.sidebar-studios-mobile {
         border-top: 3px double var(--line);
     }
+    .sidebar-mobile-section.sidebar-publishing-mobile {
+        border-top: 3px double var(--line);
+        background: #E6F2E7;
+    }
+    .sidebar-library-divider {
+        align-self: stretch;
+        width: 0;
+        min-height: 32px;
+        margin: 0 0 0 14px;
+        border-left: 3px double var(--line);
+    }
     .sidebar-studios {
         flex: 0 0 auto;
         display: flex;
@@ -744,16 +757,22 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 </div>
                 <div class="sidebar-mobile-section">
                     <span>Library</span>
-                    <a class="<?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
                     <a class="<?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
                     <a class="<?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
+                    <a class="<?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
+                    <a class="<?= $videosActive ? 'active' : '' ?>" href="videos.php">Videos</a>
+                </div>
+                <div class="sidebar-mobile-section sidebar-publishing-mobile">
+                    <span>Publish</span>
                     <a class="<?= $websiteActive ? 'active' : '' ?>" href="website_board.php">Website</a>
                     <?php if ($sidebarCanUseSocialCatalog): ?><a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="social_media_board.php">Social Media</a><?php endif; ?>
                     <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
                 </div>
                 <div class="sidebar-mobile-section sidebar-studios-mobile">
+                    <span>Studios</span>
                     <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
                     <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
+                    <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="video.php">Video Studio</a>
                 </div>
                 <?php if ($sidebarIsAdmin): ?>
                     <div class="sidebar-mobile-section">
@@ -813,9 +832,13 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <a class="sidebar-tab <?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
                 <a class="sidebar-tab <?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
                 <a class="sidebar-tab <?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
-                <a class="sidebar-tab <?= $websiteActive ? 'active' : '' ?>" href="website_board.php">Website</a>
-                <?php if ($sidebarCanUseSocialCatalog): ?><a class="sidebar-tab <?= $socialMediaCatalogActive ? 'active' : '' ?>" href="social_media_board.php">Social Media</a><?php endif; ?>
-                <a class="sidebar-tab <?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
+                <a class="sidebar-tab <?= $videosActive ? 'active' : '' ?>" href="videos.php">Videos</a>
+                <span class="sidebar-library-divider" aria-hidden="true"></span>
+                <div class="sidebar-publishing-tabs">
+                    <a class="sidebar-tab <?= $websiteActive ? 'active' : '' ?>" href="website_board.php">Website</a>
+                    <?php if ($sidebarCanUseSocialCatalog): ?><a class="sidebar-tab <?= $socialMediaCatalogActive ? 'active' : '' ?>" href="social_media_board.php">Social Media</a><?php endif; ?>
+                    <a class="sidebar-tab <?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
+                </div>
             </div>
         </section>
 
@@ -823,6 +846,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
             <div class="sidebar-tab-row">
                 <a class="sidebar-tab <?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
                 <a class="sidebar-tab <?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
+                <a class="sidebar-tab <?= $videoStudioActive ? 'active' : '' ?>" href="video.php">Video Studio</a>
             </div>
         </section>
 
@@ -846,16 +870,23 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
         <summary aria-label="Open menu"><span></span><span></span><span></span></summary>
         <div class="sidebar-mobile-panel">
             <div class="sidebar-mobile-section">
-                <a class="<?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
+                <span>Library</span>
                 <a class="<?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
                 <a class="<?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
+                <a class="<?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
+                <a class="<?= $videosActive ? 'active' : '' ?>" href="videos.php">Videos</a>
+            </div>
+            <div class="sidebar-mobile-section sidebar-publishing-mobile">
+                <span>Publish</span>
                 <a class="<?= $websiteActive ? 'active' : '' ?>" href="website_board.php">Website</a>
                 <?php if ($sidebarCanUseSocialCatalog): ?><a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="social_media_board.php">Social Media</a><?php endif; ?>
                 <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
             </div>
             <div class="sidebar-mobile-section sidebar-studios-mobile">
+                <span>Studios</span>
                 <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
                 <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
+                <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="video.php">Video Studio</a>
             </div>
             <?php if ($sidebarIsAdmin): ?>
                 <div class="sidebar-mobile-section">

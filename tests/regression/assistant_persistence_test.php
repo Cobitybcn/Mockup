@@ -4,6 +4,28 @@ declare(strict_types=1);
 function run_assistant_persistence_tests(): void
 {
     TestHarness::group('Assistant persistent identity, memory and audit');
+    global $APP_ENV_VALUES;
+    $originalEnvValues = $APP_ENV_VALUES;
+    try {
+        $APP_ENV_VALUES['ASSISTANT_ENABLED'] = 'true';
+        $APP_ENV_VALUES['ASSISTANT_ADMIN_ENABLED'] = 'true';
+        $APP_ENV_VALUES['ASSISTANT_APP_ENABLED'] = 'false';
+        $APP_ENV_VALUES['ASSISTANT_ALLOWED_EMAILS'] = ' mauriziovalch@gmail.com, SECOND@example.test ';
+        $config = new AssistantConfig();
+        TestHarness::assertTrue($config->enabledFor(['email' => 'admin@example.test', 'is_admin' => 1]), 'administrators can use the assistant');
+        TestHarness::assertTrue($config->enabledFor(['email' => 'MaurizioValch@gmail.com', 'is_admin' => 0]), 'allowlisted artist can use the assistant');
+        TestHarness::assertTrue(!$config->enabledFor(['email' => 'other@example.test', 'is_admin' => 0]), 'non-allowlisted artist cannot use the assistant');
+        $APP_ENV_VALUES['ASSISTANT_PROVIDER'] = 'GEMINI';
+        TestHarness::assertSame('gemini', $config->provider(), 'assistant provider names are normalized');
+        $APP_ENV_VALUES['ASSISTANT_PROVIDER'] = 'unsupported';
+        TestHarness::assertSame('openai', $config->provider(), 'unsupported assistant providers fail closed to OpenAI');
+        $APP_ENV_VALUES['ASSISTANT_ENABLED'] = 'false';
+        TestHarness::assertTrue(!$config->enabledFor(['email' => 'admin@example.test', 'is_admin' => 1]), 'global switch disables the assistant for administrators');
+        TestHarness::assertTrue(!$config->enabledFor(['email' => 'mauriziovalch@gmail.com', 'is_admin' => 0]), 'global switch disables the assistant for allowlisted artists');
+    } finally {
+        $APP_ENV_VALUES = $originalEnvValues;
+    }
+
     $pdo = Database::connection();
     Database::beginWriteTransaction($pdo);
 
@@ -45,6 +67,13 @@ function run_assistant_persistence_tests(): void
         TestHarness::assertSame(2, count((array)$state['messages']), 'conversation messages survive account switching');
         TestHarness::assertSame(1, count((array)$state['actions']), 'performed assistant actions are audited');
         TestHarness::assertSame(1, count((array)$state['technical_tasks']), 'pending technical tasks are recovered');
+
+        $workspace = $repository->workspaceOverview($user);
+        TestHarness::assertSame(1, count((array)$workspace['tasks']), 'workspace navigation recovers pending tasks across both logins');
+        TestHarness::assertSame(1, count((array)$workspace['memories']), 'workspace navigation recovers durable decisions');
+        TestHarness::assertSame(1, count((array)$workspace['actions']), 'workspace navigation recovers audited activity');
+        TestHarness::assertSame(1, (int)$workspace['usage_today']['requests'], 'workspace consumption summary uses persistent usage events');
+        TestHarness::assertSame(1, count($repository->recentConversations($user, 20)), 'workspace conversation list is shared by the linked identity');
 
         $durable = $repository->durableContext((int)$conversation['id'], $userId);
         TestHarness::assertTrue(count((array)$durable['relevant_memories']) >= 1, 'relevant decisions are available as durable memory');

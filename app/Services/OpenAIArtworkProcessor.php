@@ -3,6 +3,21 @@ declare(strict_types=1);
 
 class OpenAIArtworkProcessor implements ArtworkProcessorInterface
 {
+    private string $apiKey;
+    private string $model;
+    private string $quality;
+
+    public function __construct(string $apiKey = '', string $model = '', string $quality = '')
+    {
+        $this->apiKey = trim($apiKey !== '' ? $apiKey : ProviderSettings::openAIAPIKey());
+        $configuredModel = trim($model !== '' ? $model : ProviderSettings::openAIImageModel());
+        $this->model = str_starts_with($configuredModel, 'gpt-image-') ? $configuredModel : 'gpt-image-2';
+        $configuredQuality = strtolower(trim($quality !== '' ? $quality : ProviderSettings::openAIImageQuality()));
+        $this->quality = in_array($configuredQuality, ['low', 'medium', 'high', 'auto'], true)
+            ? $configuredQuality
+            : 'medium';
+    }
+
     public function createRootImage(string $jobDir, array $status): array
     {
         $mainFile = basename((string)($status['main_file'] ?? ''));
@@ -83,12 +98,11 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
         $mainApiPath = $this->prepareApiImage($source, $apiDir, 'main');
 
         $fields = [
-            'model' => ProviderSettings::openAIImageModel(),
+            'model' => $this->model,
             'prompt' => $prompt,
             'size' => $targetSize,
-            'quality' => ProviderSettings::openAIImageQuality(),
+            'quality' => $this->quality,
             'n' => (string)$rootCount,
-            'response_format' => 'b64_json',
             'image' => new CURLFile($mainApiPath, $this->mime($mainApiPath), basename($mainApiPath)),
         ];
 
@@ -158,12 +172,16 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
 
     private function postImageEdit(array $fields): array
     {
+        if ($this->apiKey === '') {
+            throw new RuntimeException('Falta OPENAI_API_KEY para preparar la obra raiz.');
+        }
+
         $ch = curl_init('https://api.openai.com/v1/images/edits');
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
             CURLOPT_HTTPHEADER => [
-                'Authorization: Bearer ' . ProviderSettings::openAIAPIKey(),
+                'Authorization: Bearer ' . $this->apiKey,
             ],
             CURLOPT_POSTFIELDS => $fields,
             CURLOPT_TIMEOUT => 900,
@@ -235,12 +253,6 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
 
     private function targetSize(array $status, string $source): string
     {
-        $configuredSize = ProviderSettings::openAIImageSize();
-
-        if ($configuredSize !== '') {
-            return $configuredSize;
-        }
-
         $m = $status['measurements'] ?? [];
         $width = (float)str_replace(',', '.', (string)($m['width'] ?? '0'));
         $height = (float)str_replace(',', '.', (string)($m['height'] ?? '0'));

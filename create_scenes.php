@@ -132,6 +132,16 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
             text-transform: uppercase;
             color: var(--accent);
         }
+        .scene-stage-toolbar {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 12px;
+        }
+        .scene-stage-toolbar .step-label {
+            margin: 0;
+        }
         .capture-grid {
             display: grid;
             grid-template-columns: 1.1fr 0.9fr;
@@ -842,6 +852,10 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
             .submit-row .secondary-capture {
                 width: 100%;
             }
+            .scene-stage-toolbar {
+                align-items: stretch;
+                flex-direction: column;
+            }
         }
         @media (min-width: 761px) {
             .scene-flow-shell {
@@ -902,7 +916,8 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
                 width: min(620px, 100%);
                 margin: 12px auto 0;
                 display: grid;
-                grid-template-columns: repeat(3, minmax(0, 1fr));
+                grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) minmax(0, 1fr);
+                align-items: end;
                 gap: 10px;
             }
             .desktop-dimension-field {
@@ -938,6 +953,43 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
                 color: var(--muted);
                 font-size: 10px;
                 text-transform: lowercase;
+            }
+            .desktop-orientation-toggle {
+                align-self: end;
+                width: 28px;
+                height: 42px;
+                min-height: 42px;
+                margin: 0;
+                padding: 0;
+                border: 0;
+                border-radius: 0;
+                background: transparent;
+                color: var(--accent);
+                box-shadow: none;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                line-height: 0;
+                cursor: pointer;
+                transition: color .18s ease, opacity .18s ease, transform .18s ease;
+            }
+            .desktop-orientation-toggle:hover,
+            .desktop-orientation-toggle:focus-visible {
+                color: var(--ink);
+                background: transparent;
+                box-shadow: none;
+                opacity: .8;
+            }
+            .desktop-orientation-toggle:focus-visible {
+                outline: 1px solid currentColor;
+                outline-offset: 2px;
+            }
+            .desktop-orientation-toggle:active {
+                transform: scale(.95);
+            }
+            .desktop-orientation-toggle svg {
+                width: 20px;
+                height: 20px;
             }
             #artworkStage .artwork-confirm-button {
                 margin-top: 12px;
@@ -982,6 +1034,7 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
         <input type="hidden" name="user_scene_flow" value="1">
         <input type="hidden" name="scene_board" value="1">
         <input type="hidden" name="scene_limit" value="4">
+        <input type="hidden" name="generation_provider" value="gemini">
         <input type="hidden" name="unit" id="measureUnitInput" value="cm">
         <input type="hidden" name="real_dimensions_enabled" value="1">
 
@@ -1020,39 +1073,44 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
                                 <button type="button" class="capture-orientation-option" data-orientation="square" role="menuitemradio">Square</button>
                             </div>
                         </div>
-                        <button type="button" class="capture-measure-scrubber capture-measure-height" data-measure-target="height" role="slider" aria-label="Artwork height in centimeters. Swipe up to increase and down to decrease." aria-valuemin="1" aria-valuemax="300" aria-valuenow="80">
+                        <button type="button" class="capture-measure-scrubber capture-measure-height" data-measure-target="height" role="slider" aria-label="Artwork height in centimeters. Swipe up to increase and down to decrease." aria-valuemin="1" aria-valuemax="300" aria-valuenow="120">
                             <span class="capture-measure-axis">H</span>
-                            <strong class="capture-measure-number" data-measure-output="height">80</strong>
+                            <strong class="capture-measure-number" data-measure-output="height">120</strong>
                             <span data-measure-unit>cm</span>
                         </button>
-                        <input type="hidden" name="height" id="realHeightInput" value="80">
-                        <button type="button" class="capture-measure-scrubber capture-measure-width" data-measure-target="width" role="slider" aria-label="Artwork width in centimeters. Swipe up to increase and down to decrease." aria-valuemin="1" aria-valuemax="300" aria-valuenow="60">
+                        <input type="hidden" name="height" id="realHeightInput" value="120">
+                        <button type="button" class="capture-measure-scrubber capture-measure-width" data-measure-target="width" role="slider" aria-label="Artwork width in centimeters. Swipe up to increase and down to decrease." aria-valuemin="1" aria-valuemax="300" aria-valuenow="80">
                             <span class="capture-measure-axis">W</span>
-                            <strong class="capture-measure-number" data-measure-output="width">60</strong>
+                            <strong class="capture-measure-number" data-measure-output="width">80</strong>
                             <span data-measure-unit>cm</span>
                         </button>
-                        <input type="hidden" name="width" id="realWidthInput" value="60">
+                        <input type="hidden" name="width" id="realWidthInput" value="80">
                             <input id="cameraInput" type="file" name="main_artwork" accept="image/*" capture="environment" required>
                         </div>
                         <div class="desktop-dimension-controls" aria-label="Artwork dimensions">
                             <label class="desktop-dimension-field" for="desktopWidthInput">
                                 <span>Width</span>
                                 <span class="desktop-dimension-input">
-                                    <input type="number" id="desktopWidthInput" value="60" min="1" max="300" step="1" inputmode="decimal">
+                                    <input type="number" id="desktopWidthInput" value="80" min="1" max="300" step="1" inputmode="decimal">
                                     <span data-measure-unit>cm</span>
                                 </span>
                             </label>
+                            <button type="button" class="desktop-orientation-toggle" id="desktopOrientationToggle" aria-label="Switch to horizontal orientation" title="Switch to horizontal orientation">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M7 7h11m0 0-3-3m3 3-3 3M17 17H6m0 0 3 3m-3-3 3-3"/>
+                                </svg>
+                            </button>
                             <label class="desktop-dimension-field" for="desktopHeightInput">
                                 <span>Height</span>
                                 <span class="desktop-dimension-input">
-                                    <input type="number" id="desktopHeightInput" value="80" min="1" max="300" step="1" inputmode="decimal">
+                                    <input type="number" id="desktopHeightInput" value="120" min="1" max="300" step="1" inputmode="decimal">
                                     <span data-measure-unit>cm</span>
                                 </span>
                             </label>
                             <label class="desktop-dimension-field" for="desktopDepthInput">
                                 <span>Depth (optional)</span>
                                 <span class="desktop-dimension-input">
-                                    <input type="number" id="desktopDepthInput" name="depth" value="" min="0" max="300" step="1" inputmode="decimal" placeholder="Optional" disabled>
+                                    <input type="number" id="desktopDepthInput" name="depth" value="3" min="0" max="300" step="1" inputmode="decimal" placeholder="Optional" disabled>
                                     <span data-measure-unit>cm</span>
                                 </span>
                             </label>
@@ -1080,7 +1138,9 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
 
         <div class="flow-stage" id="sceneStage" hidden>
             <section class="scene-panel">
-                <p class="step-label">Scene style<span class="mobile-selected-scene">: <span id="selectedSceneTitle"><?= h($defaultSceneName) ?></span></span><span class="scene-style-count"> - <?= count($sceneCategories) ?> styles</span></p>
+                <div class="scene-stage-toolbar">
+                    <p class="step-label">Scene style<span class="mobile-selected-scene">: <span id="selectedSceneTitle"><?= h($defaultSceneName) ?></span></span><span class="scene-style-count"> - <?= count($sceneCategories) ?> styles</span></p>
+                </div>
                 <div class="mobile-scene-viewer" id="mobileSceneViewer">
                     <div class="mobile-scene-viewer-carousel" id="mobileSceneCarousel" aria-live="polite">
                         <?php foreach ($defaultScenePreviews as $previewIndex => $preview): ?>
@@ -1154,6 +1214,7 @@ const realHeightInput = document.getElementById('realHeightInput');
 const desktopWidthInput = document.getElementById('desktopWidthInput');
 const desktopHeightInput = document.getElementById('desktopHeightInput');
 const desktopDepthInput = document.getElementById('desktopDepthInput');
+const desktopOrientationToggle = document.getElementById('desktopOrientationToggle');
 const measureScrubbers = Array.from(document.querySelectorAll('.capture-measure-scrubber[data-measure-target]'));
 const measureOutputs = {
     width: document.querySelector('[data-measure-output="width"]'),
@@ -1179,6 +1240,9 @@ measureScrubbers.forEach(bindMeasureScrubber);
         input.value = formatMeasure(readMeasure(target));
     });
 });
+if (desktopOrientationToggle) {
+    desktopOrientationToggle.addEventListener('click', toggleDesktopOrientation);
+}
 const syncDesktopDepthAvailability = () => {
     if (desktopDepthInput) {
         desktopDepthInput.disabled = !desktopLayoutQuery.matches;
@@ -1493,6 +1557,20 @@ function applyDesktopDimension(input) {
     updateSizeHint();
 }
 
+function toggleDesktopOrientation() {
+    const width = readMeasure('width');
+    const height = readMeasure('height');
+
+    if (width === height) {
+        applyOrientation('vertical');
+        return;
+    }
+
+    realWidthInput.value = roundMeasure(normalizeMeasure(height, 80));
+    realHeightInput.value = roundMeasure(normalizeMeasure(width, 120));
+    updateSizeHint();
+}
+
 function detectMeasureUnit() {
     const locale = (navigator.languages && navigator.languages[0]) || navigator.language || '';
     let region = '';
@@ -1531,8 +1609,8 @@ function setOrientationMenuOpen(open, focusSelected = false) {
 }
 
 function applyOrientation(orientation) {
-    let width = Number.parseFloat(String(realWidthInput.value).replace(',', '.')) || 60;
-    let height = Number.parseFloat(String(realHeightInput.value).replace(',', '.')) || 80;
+    let width = Number.parseFloat(String(realWidthInput.value).replace(',', '.')) || 80;
+    let height = Number.parseFloat(String(realHeightInput.value).replace(',', '.')) || 120;
 
     if (orientation === 'square') {
         const side = Math.max(width, height);
@@ -1556,8 +1634,8 @@ function applyOrientation(orientation) {
         }
     }
 
-    width = roundMeasure(normalizeMeasure(width, 60));
-    height = roundMeasure(normalizeMeasure(height, 80));
+    width = roundMeasure(normalizeMeasure(width, 80));
+    height = roundMeasure(normalizeMeasure(height, 120));
     realWidthInput.value = width;
     realHeightInput.value = height;
     updateSizeHint();
@@ -1573,6 +1651,12 @@ function updateSizeHint() {
         orientation = 'vertical';
     }
     shapePillText.textContent = orientation.charAt(0).toUpperCase() + orientation.slice(1);
+    if (desktopOrientationToggle) {
+        const nextOrientation = orientation === 'horizontal' ? 'vertical' : 'horizontal';
+        const toggleLabel = `Switch to ${nextOrientation} orientation`;
+        desktopOrientationToggle.setAttribute('aria-label', toggleLabel);
+        desktopOrientationToggle.title = toggleLabel;
+    }
     orientationOptions.forEach(option => {
         const isActive = option.dataset.orientation === orientation;
         option.classList.toggle('is-active', isActive);

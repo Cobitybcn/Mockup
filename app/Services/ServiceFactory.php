@@ -31,9 +31,14 @@ class ServiceFactory
         }
     }
 
-    private static function imageProvider(): string
+    public static function generationProvider(string $requestedProvider = ''): string
     {
-        return strtolower(ProviderSettings::imageProvider());
+        $requestedProvider = strtolower(trim($requestedProvider));
+        if (in_array($requestedProvider, ['gemini', 'openai'], true)) {
+            return $requestedProvider;
+        }
+
+        return strtolower(ProviderSettings::imageProvider()) === 'openai' ? 'openai' : 'gemini';
     }
 
     private static function assertGeminiProvider(): void
@@ -50,32 +55,45 @@ class ServiceFactory
         // Se omite la validación de GEMINI_API_KEY ya que se utiliza Vertex AI + ADC Local.
     }
 
-    public static function artworkProcessor(): ArtworkProcessorInterface
+    public static function artworkProcessor(string $requestedProvider = ''): ArtworkProcessorInterface
     {
+        $generationProvider = self::generationProvider($requestedProvider);
+
         if (ProviderSettings::isRealMode()) {
-            if (self::imageProvider() === 'gemini') {
+            if ($generationProvider === 'gemini') {
                 self::assertGeminiProvider();
                 return new GeminiArtworkProcessor();
             }
 
             self::assertOpenAIMode();
-            return new OpenAIArtworkProcessor();
+            return new OpenAIArtworkProcessor(
+                ProviderSettings::openAIAPIKey(),
+                'gpt-image-2',
+                'medium'
+            );
         }
 
         self::assertMockMode();
         return new MockArtworkProcessor();
     }
 
-    public static function mockupGenerator(): MockupGeneratorInterface
+    public static function mockupGenerator(string $requestedProvider = ''): MockupGeneratorInterface
     {
+        $generationProvider = self::generationProvider($requestedProvider);
+
         if (ProviderSettings::isRealMode()) {
-            if (self::imageProvider() === 'gemini') {
+            if ($generationProvider === 'gemini') {
                 self::assertGeminiProvider();
-                return new FidelityValidatingMockupGenerator(new GeminiMockupGenerator());
+                return new GeminiMockupGenerator();
             }
 
             self::assertOpenAIMode();
-            return new OpenAIMockupGenerator();
+            return new FidelityValidatingMockupGenerator(new OpenAIMockupGenerator(
+                ProviderSettings::openAIAPIKey(),
+                'gpt-image-2',
+                '1024x1280',
+                'medium'
+            ));
         }
 
         self::assertMockMode();

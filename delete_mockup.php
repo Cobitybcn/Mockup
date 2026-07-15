@@ -51,6 +51,9 @@ if (!$mockup) {
 
 $resultsDir = RESULTS_DIR;
 if (!empty($mockup['mockup_file'])) {
+    if (StorageService::isGcsActive()) {
+        StorageService::delete('results/' . basename((string)$mockup['mockup_file']));
+    }
     $mPath = $resultsDir . DIRECTORY_SEPARATOR . basename((string)$mockup['mockup_file']);
     if (is_file($mPath)) {
         @unlink($mPath);
@@ -58,6 +61,9 @@ if (!empty($mockup['mockup_file'])) {
 }
 
 if (!empty($mockup['prompt_file'])) {
+    if (StorageService::isGcsActive()) {
+        StorageService::delete('mockup-prompts/' . basename((string)$mockup['prompt_file']));
+    }
     $pPath = $resultsDir . DIRECTORY_SEPARATOR . basename((string)$mockup['prompt_file']);
     if (is_file($pPath)) {
         @unlink($pPath);

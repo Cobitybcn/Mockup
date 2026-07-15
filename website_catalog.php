@@ -21,7 +21,7 @@ function wc_favorites(int $userId): array
 }
 function wc_public_url(string $slug = ''): string
 {
-    $base = rtrim(app_env('ARTIST_WEBSITE_CATALOG_URL', 'http://localhost/artwork-platform-next/apps/artist-site-faithful/artworks'), '/');
+    $base = rtrim(app_env('ARTIST_WEBSITE_CATALOG_URL', 'http://localhost/artworkmockups/artist-site/artworks'), '/');
     return $slug === '' ? $base : $base . '/' . rawurlencode($slug);
 }
 function wc_result_url(string $file, int $width = 0): string

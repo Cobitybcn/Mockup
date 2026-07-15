@@ -10,6 +10,7 @@ require_once __DIR__ . '/app/Services/ArtworkAnalysisV2Service.php';
 $user = Auth::requireUser();
 $isAdmin = Auth::isAdmin($user);
 $pdo = Database::connection();
+ArtworkSeries::ensureSchema($pdo);
 $id = max(0, (int)($_GET['id'] ?? 0));
 $metadataErrorMessage = trim((string)($_GET['metadata_error'] ?? ''));
 
@@ -538,6 +539,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'assig
     exit;
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'set_creation_number') {
+    try {
+        ArtworkSeries::setCreationNumber($pdo, $artworkOwnerId, $id, (int)($_POST['creation_number'] ?? 0));
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&creation_id_updated=1');
+    } catch (Throwable $e) {
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&creation_id_error=' . rawurlencode($e->getMessage()));
+    }
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_sheet') {
     $update = $pdo->prepare('
         UPDATE artworks
@@ -1010,7 +1021,10 @@ $favoriteMockupLookup = MockupFavorites::lookupForUser($artworkOwnerId);
 $relatedMockups = [];
 foreach ($mockups ?: [] as $relatedMockup) {
     $relatedFile = basename((string)($relatedMockup['mockup_file'] ?? ''));
-    if ($relatedFile === '' || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $relatedFile)) {
+    if ($relatedFile === '') {
+        continue;
+    }
+    if (!is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $relatedFile) && !StorageService::isGcsActive()) {
         continue;
     }
     $relatedState = json_decode((string)($relatedMockup['selector_state_json'] ?? ''), true);
@@ -1077,7 +1091,11 @@ $displayTitle = trim((string)($artworkSheet['title'] ?? '')) !== '' ? trim((stri
 $displaySubtitle = trim((string)($artworkSheet['subtitle'] ?? '')) !== '' ? trim((string)$artworkSheet['subtitle']) : $selectedSubtitle;
 $displayDescription = trim((string)($artworkSheet['description'] ?? ''));
 $artworkSeriesRows = ArtworkSeries::seriesList($pdo, $artworkOwnerId);
+$creationNumberStmt = $pdo->prepare('SELECT series_creation_number FROM artworks WHERE id = ? AND user_id = ? LIMIT 1');
+$creationNumberStmt->execute([$id, $artworkOwnerId]);
+$artwork['series_creation_number'] = $creationNumberStmt->fetchColumn() ?: null;
 $artworkSeriesName = ArtworkSeries::display((string)($artwork['series'] ?? ''));
+$artworkCreationIdentifier = ArtworkSeries::creationIdentifier($artworkSeriesName, $artwork['series_creation_number'] ?? null);
 $publicationCopy = trim($selectedTitle . ($selectedSubtitle !== '' ? "\n" . $selectedSubtitle : '') . "\n\n" . $selectedPublicationDescription);
 
 $copyIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
@@ -1093,6 +1111,13 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
     <style>
         .artwork-series-form { flex-shrink:0; margin:0; }
         .artwork-series-form select { width:auto; min-width:180px; min-height:auto; padding:8px 12px; }
+        .artwork-series-controls { display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:flex-end; gap:8px; }
+        .artwork-creation-form { display:flex; align-items:flex-end; gap:6px; margin:0; }
+        .artwork-creation-form label { margin:0; color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+        .artwork-creation-form label span { display:block; margin-bottom:3px; }
+        .artwork-creation-form input { width:76px; min-height:auto; padding:8px; }
+        .artwork-creation-form button { min-height:35px; margin:0; padding:8px 11px; }
+        .artwork-creation-code { align-self:center; color:var(--ink); font-size:12px; font-weight:700; letter-spacing:.04em; }
         .artwork-page-header h1 { display:inline-block; border-bottom:4px solid #b77f86; padding-bottom:10px; }
         .v2-admin-panel { border-color:var(--accent); }
         .v2-admin-head { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; }
@@ -1886,6 +1911,36 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             text-transform: uppercase;
         }
 
+        .related-mockups-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .related-mockups-title-row h3 {
+            margin: 0;
+        }
+
+        .related-mockups-upload-link {
+            flex: 0 0 auto;
+            padding: 4px 7px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            color: var(--accent);
+            background: var(--surface);
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-decoration: none;
+            text-transform: uppercase;
+        }
+
+        .related-mockups-upload-link:hover {
+            border-color: var(--accent);
+        }
+
         .related-mockups-count {
             text-transform: none;
             font-weight: 400;
@@ -2575,6 +2630,12 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             <?php if (isset($_GET['series_updated'])): ?>
                 <div class="notice">Artwork series updated.</div>
             <?php endif; ?>
+            <?php if (isset($_GET['creation_id_updated'])): ?>
+                <div class="notice">Artwork Creation ID updated.</div>
+            <?php endif; ?>
+            <?php if (isset($_GET['creation_id_error'])): ?>
+                <div class="notice error"><?= h((string)$_GET['creation_id_error']) ?></div>
+            <?php endif; ?>
             <?php if (isset($_GET['saved'])): ?>
                 <div class="notice">Artwork sheet saved.</div>
             <?php endif; ?>
@@ -2728,15 +2789,30 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                         <h2><?= $artworkSeriesName !== '' ? h($artworkSeriesName) . ' Series' : 'NO SERIE' ?></h2>
                         <p>Root views, basic information, and direct access to the mockup workflow.</p>
                     </div>
-                    <form method="post" class="artwork-series-form">
-                        <input type="hidden" name="action" value="assign_series">
-                        <select name="series_id" onchange="this.form.submit()">
-                            <option value="">NO SERIE</option>
-                            <?php foreach ($artworkSeriesRows as $seriesRow): ?>
-                                <option value="<?= (int)$seriesRow['id'] ?>" <?= (int)($artwork['series_id'] ?? 0) === (int)$seriesRow['id'] ? 'selected' : '' ?>><?= h($seriesRow['title']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </form>
+                    <div class="artwork-series-controls">
+                        <?php if ($artworkCreationIdentifier !== ''): ?>
+                            <span class="artwork-creation-code"><?= h($artworkCreationIdentifier) ?></span>
+                        <?php endif; ?>
+                        <form method="post" class="artwork-series-form">
+                            <input type="hidden" name="action" value="assign_series">
+                            <select name="series_id" aria-label="Artwork series" onchange="this.form.submit()">
+                                <option value="">NO SERIE</option>
+                                <?php foreach ($artworkSeriesRows as $seriesRow): ?>
+                                    <option value="<?= (int)$seriesRow['id'] ?>" <?= (int)($artwork['series_id'] ?? 0) === (int)$seriesRow['id'] ? 'selected' : '' ?>><?= h($seriesRow['title']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </form>
+                        <?php if ($artworkSeriesName !== ''): ?>
+                            <form method="post" class="artwork-creation-form">
+                                <input type="hidden" name="action" value="set_creation_number">
+                                <label>
+                                    <span>Creation ID · <?= h(ArtworkSeries::creationPrefix($artworkSeriesName)) ?></span>
+                                    <input type="number" name="creation_number" min="1" step="1" value="<?= (int)($artwork['series_creation_number'] ?? 0) ?>" required>
+                                </label>
+                                <button type="submit">Save</button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
                 </div>
                 <?php if ($rootFile && is_file($rootPath)): ?>
                     <form id="artwork-generate-metadata-form" class="artwork-metadata-action-form" method="post">
@@ -2917,7 +2993,10 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                             </details>
 
                             <aside class="favorite-mockups-panel <?= $artworkMetadataValidated ? '' : 'mobile-defer-until-metadata' ?>">
-                                <h3>Related Mockups <span class="related-mockups-count">· <?= count($relatedMockups) ?></span></h3>
+                                <div class="related-mockups-title-row">
+                                    <h3>Related Mockups <span class="related-mockups-count">· <?= count($relatedMockups) ?></span></h3>
+                                    <a class="related-mockups-upload-link" href="mockup_upload.php?id=<?= (int)$id ?>">+ Import</a>
+                                </div>
                                 <?php if ($relatedMockups): ?>
                                     <div class="related-mockups-sidebar-grid">
                                         <?php foreach ($relatedMockups as $sidebarMockup): ?>

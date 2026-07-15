@@ -103,6 +103,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $rawSeriesId = trim((string)($_POST['series_id'] ?? ''));
             ArtworkSeries::assignArtwork($pdo, $userId, (int)($_POST['artwork_id'] ?? 0), $rawSeriesId === '' ? null : (int)$rawSeriesId);
             $notice = 'Artwork series updated.';
+        } elseif ($action === 'set_creation_number') {
+            ArtworkSeries::setCreationNumber(
+                $pdo,
+                $userId,
+                (int)($_POST['artwork_id'] ?? 0),
+                (int)($_POST['creation_number'] ?? 0)
+            );
+            $notice = 'Artwork Creation ID updated.';
         }
 
         ArtworkSeries::syncUser($pdo, $userId);
@@ -114,7 +122,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $seriesRows = ArtworkSeries::seriesList($pdo, $userId);
 
 $artworkStmt = $pdo->prepare('
-    SELECT a.id, a.final_title, sh.title AS sheet_title, a.subtitle, a.root_file, a.main_file, a.width, a.height, a.unit, a.series_id, a.series,
+    SELECT a.id, a.final_title, sh.title AS sheet_title, a.subtitle, a.root_file, a.main_file, a.width, a.height, a.unit,
+           a.series_id, a.series, a.series_creation_number,
            s.title AS series_title,
            (
                SELECT COUNT(DISTINCT m.id)
@@ -126,7 +135,17 @@ $artworkStmt = $pdo->prepare('
     LEFT JOIN artwork_series s ON s.id = a.series_id AND s.user_id = a.user_id
     LEFT JOIN artwork_sheets sh ON sh.canonical_artwork_id = a.id AND sh.user_id = a.user_id
     WHERE a.user_id = ? AND a.status = ?
-    ORDER BY s.title ASC, a.updated_at DESC, a.id DESC
+    ORDER BY
+        CASE WHEN a.series_id IS NULL THEN 1 ELSE 0 END ASC,
+        CASE WHEN s.year_start IS NULL AND s.year_end IS NULL THEN 1 ELSE 0 END ASC,
+        COALESCE(s.year_start, s.year_end) DESC,
+        COALESCE(s.year_end, s.year_start) DESC,
+        s.created_at DESC,
+        s.id DESC,
+        CASE WHEN a.series_creation_number IS NULL THEN 1 ELSE 0 END ASC,
+        a.series_creation_number ASC,
+        a.created_at ASC,
+        a.id ASC
 ');
 $artworkStmt->execute([$userId, 'done']);
 $artworks = $artworkStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -407,6 +426,7 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
                             <?php
                             $title = series_artwork_title($artwork);
                             $seriesTitle = ArtworkSeries::display((string)($artwork['series_title'] ?: $artwork['series']));
+                            $creationIdentifier = ArtworkSeries::creationIdentifier($seriesTitle, $artwork['series_creation_number'] ?? null);
                             $file = (string)($artwork['root_file'] ?: $artwork['main_file']);
                             $size = trim((string)($artwork['width'] ?? '')) !== '' && trim((string)($artwork['height'] ?? '')) !== ''
                                 ? trim((string)$artwork['width']) . ' x ' . trim((string)$artwork['height']) . ' ' . (trim((string)($artwork['unit'] ?? 'cm')) ?: 'cm')
@@ -418,19 +438,34 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
                                 </a>
                                 <div class="series-artwork-main">
                                     <h3><?= series_h($title) ?><?php if ($seriesTitle !== ''): ?> <span class="title-series-soft">(<?= series_h($seriesTitle) ?>)</span><?php endif; ?></h3>
-                                    <p><?= $size !== '' ? series_h($size) . ' · ' : '' ?><?= (int)$artwork['mockup_count'] ?> mockups</p>
+                                    <p><?php if ($creationIdentifier !== ''): ?><strong class="creation-identifier"><?= series_h($creationIdentifier) ?></strong> · <?php endif; ?><?= $size !== '' ? series_h($size) . ' · ' : '' ?><?= (int)$artwork['mockup_count'] ?> mockups</p>
                                 </div>
-                                <form class="series-assign-form" method="post">
-                                    <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
-                                    <input type="hidden" name="action" value="assign_artwork">
-                                    <input type="hidden" name="artwork_id" value="<?= (int)$artwork['id'] ?>">
-                                    <select name="series_id" onchange="this.form.submit()">
-                                        <option value="">NO SERIE</option>
-                                        <?php foreach ($seriesRows as $series): ?>
-                                            <option value="<?= (int)$series['id'] ?>" <?= (int)($artwork['series_id'] ?? 0) === (int)$series['id'] ? 'selected' : '' ?>><?= series_h($series['title']) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </form>
+                                <div class="series-artwork-controls">
+                                    <form class="series-assign-form" method="post">
+                                        <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
+                                        <input type="hidden" name="action" value="assign_artwork">
+                                        <input type="hidden" name="artwork_id" value="<?= (int)$artwork['id'] ?>">
+                                        <select name="series_id" aria-label="Artwork series" onchange="this.form.submit()">
+                                            <option value="">NO SERIE</option>
+                                            <?php foreach ($seriesRows as $series): ?>
+                                                <option value="<?= (int)$series['id'] ?>" <?= (int)($artwork['series_id'] ?? 0) === (int)$series['id'] ? 'selected' : '' ?>><?= series_h($series['title']) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </form>
+                                    <?php if ($seriesTitle !== ''): ?>
+                                        <form class="creation-number-form" method="post">
+                                            <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
+                                            <input type="hidden" name="action" value="set_creation_number">
+                                            <input type="hidden" name="artwork_id" value="<?= (int)$artwork['id'] ?>">
+                                            <label for="creation-number-<?= (int)$artwork['id'] ?>">Creation ID</label>
+                                            <div class="creation-number-control">
+                                                <span><?= series_h(ArtworkSeries::creationPrefix($seriesTitle)) ?></span>
+                                                <input id="creation-number-<?= (int)$artwork['id'] ?>" type="number" name="creation_number" min="1" step="1" value="<?= (int)($artwork['series_creation_number'] ?? 0) ?>" required>
+                                                <button type="submit">Save</button>
+                                            </div>
+                                        </form>
+                                    <?php endif; ?>
+                                </div>
                             </article>
                         <?php endforeach; ?>
                     </div>

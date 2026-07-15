@@ -61,7 +61,7 @@ def call_with_retry(client_call_fn, max_retries=5):
                 is_rate_limit = True
             elif "429" in str(e) or "exhausted" in str(e).lower():
                 is_rate_limit = True
-                
+
             if is_rate_limit:
                 if attempt < max_retries - 1:
                     # Para error 429, usar backoff más corto: 3s, 6s, 12s, 24s máximo
@@ -173,7 +173,7 @@ def normalize_camera_text(prompt_text: str) -> str:
 
 def detect_perspective_side(prompt_text: str) -> str | None:
     normalized = normalize_camera_text(prompt_text)
-    
+
     left_patterns = [
         "three_quarter_left",
         "three-quarter-left",
@@ -190,7 +190,7 @@ def detect_perspective_side(prompt_text: str) -> str | None:
         "low angle seven eighths left",
         "subtle low-angle seven-eighths left view"
     ]
-    
+
     right_patterns = [
         "three_quarter_right",
         "three-quarter-right",
@@ -207,7 +207,7 @@ def detect_perspective_side(prompt_text: str) -> str | None:
         "low angle seven eighths right",
         "subtle low-angle seven-eighths right view"
     ]
-    
+
     if any(pattern in normalized for pattern in left_patterns):
         return "left"
     if any(pattern in normalized for pattern in right_patterns):
@@ -217,28 +217,209 @@ def detect_perspective_side(prompt_text: str) -> str | None:
 def handle_generate_text(args):
     client = get_client()
     contents = []
-    
+
     if args.prompt:
         contents.append(args.prompt)
-        
+
     if args.image:
         for img_path in args.image:
             if not os.path.isfile(img_path):
                 raise FileNotFoundError(f"Image not found at: {img_path}")
             contents.append(Image.open(img_path))
-        
+
     if not contents:
         raise ValueError("Must provide either --prompt or --image.")
-        
+
     response = call_with_retry(
         lambda: client.models.generate_content(
             model=args.model,
             contents=contents
         )
     )
-    
+
     # Output only the generated text to stdout
     print(response.text)
+
+
+def handle_assistant_chat(args):
+    import json
+    if not os.path.isfile(args.payload_file):
+        raise FileNotFoundError(f"Payload file not found at: {args.payload_file}")
+
+    with open(args.payload_file, 'r', encoding='utf-8') as f:
+        payload = json.load(f)
+
+    client = get_client()
+
+    # OpenAI Responses uses a flat function-tool shape. Accept the older nested
+    # shape as well so the bridge remains compatible with existing callers.
+    function_declarations = []
+    for tool_payload in payload.get('tools', []):
+        if tool_payload.get('type') == 'function':
+            fn = tool_payload.get('function')
+            if not isinstance(fn, dict):
+                fn = tool_payload
+            if not fn.get('name') or not fn.get('parameters'):
+                continue
+            function_declarations.append(
+                types.FunctionDeclaration(
+                    name=fn['name'],
+                    description=fn.get('description', ''),
+                    parameters_json_schema=fn['parameters']
+                )
+            )
+    tools = [types.Tool(function_declarations=function_declarations)] if function_declarations else None
+
+    # Track function names by call_id for resolving response names
+    call_id_to_name = {}
+    for m in payload.get('input', []):
+        if m.get('type') == 'function_call':
+            call_id_to_name[m.get('call_id')] = m.get('name')
+
+    # 2. Map contents / history
+    contents = []
+    for msg in payload.get('input', []):
+        role = msg.get('role')
+        if role == 'assistant':
+            role = 'model'
+
+        raw_content = msg.get('content')
+        parts = []
+
+        # Check for function call outputs or direct text
+        if msg.get('type') == 'function_call':
+            call_id = msg.get('call_id')
+            name = msg.get('name')
+            args_str = msg.get('arguments', '{}')
+            try:
+                fn_args = json.loads(args_str)
+            except (TypeError, ValueError, json.JSONDecodeError):
+                fn_args = {}
+            parts.append(
+                types.Part.from_function_call(
+                    name=name,
+                    args=fn_args
+                )
+            )
+            contents.append(types.Content(role='model', parts=parts))
+            continue
+
+        elif msg.get('type') == 'function_call_output':
+            call_id = msg.get('call_id')
+            output_str = msg.get('output', '{}')
+            try:
+                output = json.loads(output_str)
+            except (TypeError, ValueError, json.JSONDecodeError):
+                output = {'result': output_str}
+            name = call_id_to_name.get(call_id, 'remember_note')
+            parts.append(
+                types.Part.from_function_response(
+                    name=name,
+                    response=output
+                )
+            )
+            contents.append(types.Content(role='user', parts=parts))
+            continue
+
+        if isinstance(raw_content, str):
+            parts.append(types.Part.from_text(text=raw_content))
+        elif isinstance(raw_content, list):
+            for part in raw_content:
+                part_type = part.get('type')
+                if part_type == 'input_text' or part_type == 'text':
+                    parts.append(types.Part.from_text(text=part.get('text', '')))
+                elif part_type == 'input_image':
+                    data_url = part.get('image_url', '')
+                    if data_url.startswith('data:'):
+                        import base64
+                        from PIL import Image
+                        import io
+                        try:
+                            header, encoded = data_url.split(',', 1)
+                            mime_type = header.split(';')[0].split(':')[1]
+                            image_data = base64.b64decode(encoded)
+                            Image.open(io.BytesIO(image_data)).verify()
+                            parts.append(types.Part.from_bytes(data=image_data, mime_type=mime_type))
+                        except Exception as e:
+                            print(f"[WARN] Error decoding image in payload: {e}", file=sys.stderr)
+
+        if parts:
+            contents.append(types.Content(role=role, parts=parts))
+
+    # 3. Build config
+    model = payload.get('model', 'gemini-2.5-flash')
+    max_output_tokens = payload.get('max_output_tokens', 1200)
+    instructions = payload.get('instructions')
+
+    config = types.GenerateContentConfig(
+        system_instruction=instructions,
+        tools=tools,
+        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+        max_output_tokens=max_output_tokens,
+    )
+
+    # 4. Generate content
+    response = call_with_retry(
+        lambda: client.models.generate_content(
+            model=model,
+            contents=contents,
+            config=config
+        )
+    )
+
+    # 5. Format response to OpenAI-like JSON structure
+    output_parts = []
+
+    # Add text message if present
+    text_content = ""
+    if response.text:
+        text_content = response.text
+    elif response.candidates and response.candidates[0].content.parts:
+        for part in response.candidates[0].content.parts:
+            if part.text:
+                text_content += part.text
+
+    if text_content:
+        output_parts.append({
+            "type": "message",
+            "content": [
+                {
+                    "type": "output_text",
+                    "text": text_content
+                }
+            ]
+        })
+
+    # Add function calls if present
+    if getattr(response, 'function_calls', None):
+        for idx, call in enumerate(response.function_calls):
+            # Generate a call ID if not present
+            call_id = getattr(call, 'id', None) or f"call_{idx}_{int(time.time())}"
+            output_parts.append({
+                "type": "function_call",
+                "name": call.name,
+                "call_id": call_id,
+                "arguments": json.dumps(call.args, ensure_ascii=False)
+            })
+
+    input_tokens = response.usage_metadata.prompt_token_count if response.usage_metadata else 0
+    output_tokens = response.usage_metadata.candidates_token_count if response.usage_metadata else 0
+    cached_input_tokens = getattr(response.usage_metadata, 'cached_content_token_count', 0) if response.usage_metadata else 0
+
+    result = {
+        "id": f"gemini-{int(time.time())}",
+        "usage": {
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "input_tokens_details": {
+                "cached_tokens": cached_input_tokens
+            }
+        },
+        "output": output_parts
+    }
+
+    print(json.dumps(result, ensure_ascii=False))
+
 
 def solve_linear_system(A, b):
     n = len(A)
@@ -252,20 +433,20 @@ def solve_linear_system(A, b):
         for k in range(i, n):
             A[max_row][k], A[i][k] = A[i][k], A[max_row][k]
         b[max_row], b[i] = b[i], b[max_row]
-        
+
         pivot = A[i][i]
         if abs(pivot) < 1e-10:
             continue
         for k in range(i, n):
             A[i][k] /= pivot
         b[i] /= pivot
-        
+
         for k in range(i + 1, n):
             factor = A[k][i]
             for j in range(i, n):
                 A[k][j] -= factor * A[i][j]
             b[k] -= factor * b[i]
-            
+
     x = [0.0] * n
     for i in range(n - 1, -1, -1):
         x[i] = b[i]
@@ -278,12 +459,12 @@ def find_coeffs(pa, pb):
     for p1, p2 in zip(pa, pb):
         matrix.append([p1[0], p1[1], 1, 0, 0, 0, -p2[0]*p1[0], -p2[0]*p1[1]])
         matrix.append([0, 0, 0, p1[0], p1[1], 1, -p2[1]*p1[0], -p2[1]*p1[1]])
-    
+
     y = []
     for p in pb:
         y.append(p[0])
         y.append(p[1])
-        
+
     return solve_linear_system(matrix, y)
 
 def detect_artwork_orientation(w, h):
@@ -499,17 +680,17 @@ def build_graphic_perspective_precomposition(art_img, plate_path):
 
 def handle_generate_image(args):
     client = get_client()
-    
+
     if not args.output:
         raise ValueError("Must provide --output path for image generation.")
-        
+
     is_mockup = "mockup" in args.prompt.lower()
 
     # Check if the model is a Gemini multimodal image generation model
     model_name = args.model if args.model else ""
     model_lower = model_name.lower()
     is_gemini_image = "gemini" in model_lower and "image" in model_lower
-    
+
     pil_img = None
     gemini_reference_images = []
     mask_bytes = None
@@ -536,11 +717,11 @@ def handle_generate_image(args):
             base_image_path = args.image[0]
             if not os.path.isfile(base_image_path):
                 raise FileNotFoundError(f"Base image not found at: {base_image_path}")
-                
+
             # Open and align image dimensions to prevent 1-pixel rounding errors in Vertex AI backend
             pil_img = Image.open(base_image_path).convert("RGBA")
             w, h = pil_img.size
-        
+
         w, h = pil_img.size
 
         use_nadir_polygon = (
@@ -588,7 +769,7 @@ def handle_generate_image(args):
         elif not gemini_reference_images and is_mockup and MOCKUP_USE_PRECOMPOSITION:
             # Check camera perspective direction
             warp_dir = detect_perspective_side(args.prompt)
-                
+
             if warp_dir:
                 # Apply 3/4 perspective skew
                 pb = [(0, 0), (0, h), (w, h), (w, 0)]
@@ -610,19 +791,19 @@ def handle_generate_image(args):
                         (w, 0)
                     ]
                     target_size = (w, h)
-                
+
                 coeffs = find_coeffs(pa, pb)
                 pil_img = pil_img.transform(target_size, Image.Transform.PERSPECTIVE, coeffs, Image.Resampling.BICUBIC)
                 w, h = pil_img.size
-            
+
             # Create a composite canvas (neutral gray wall) representing the room
             canvas_size = 1024
             canvas = Image.new("RGB", (canvas_size, canvas_size), color=(240, 240, 240))
-            
+
             # Calculate target size for the artwork on the wall based on real size
             import re
             match = re.search(r"(\d+(?:\.\d+)?)\s*cm\s+wide\s*x\s*(\d+(?:\.\d+)?)\s*cm\s+high", args.prompt)
-            
+
             width_cm = None
             height_cm = None
             long_side_cm = None
@@ -632,7 +813,7 @@ def handle_generate_image(args):
                     width_cm = float(match.group(1))
                     height_cm = float(match.group(2))
                     long_side_cm = max(width_cm, height_cm)
-                    
+
                     if long_side_cm <= 45:
                         fill_ratio = prompt_float_control(args.prompt, "mockup_fill_long_side_le_45", 0.18)
                     elif long_side_cm <= 80:
@@ -647,7 +828,7 @@ def handle_generate_image(args):
                         fill_ratio = prompt_float_control(args.prompt, "mockup_fill_long_side_gt_220", 0.58)
                 except Exception:
                     pass
-            
+
             # Apply mathematical scale correction if size_override is present in the prompt
             size_match = re.search(r"ARTWORK SIZE CORRECTION FOR THIS REGENERATION:\s*-\s*Make the artwork appear (\d+)%\s+(larger|smaller)", args.prompt)
             if size_match:
@@ -658,7 +839,7 @@ def handle_generate_image(args):
                     fill_ratio *= correction_factor
                 except Exception as e:
                     print(f"[WARN] Failed to apply scale correction: {e}", file=sys.stderr)
-            
+
             # Apply Camera 15 scale multiplier if specified in the process environment
             camera_15_multiplier = os.environ.get("MOCKUP_SCALE_CAMARA_15")
             if camera_15_multiplier:
@@ -666,7 +847,7 @@ def handle_generate_image(args):
                     fill_ratio *= float(camera_15_multiplier)
                 except ValueError:
                     pass
-            
+
             # Keep human scale useful without turning the mockup into a distant room shot.
             prompt_lower = args.prompt.lower()
             # Punto #11: detección robusta de figura humana con múltiples keywords
@@ -684,24 +865,24 @@ def handle_generate_image(args):
             has_human = human_text != "" and "do not include" not in human_text and "none" not in human_text
             if has_human:
                 fill_ratio *= prompt_float_control(args.prompt, "mockup_human_scale_multiplier", 0.50)
-                
+
             # Internal safety limits keep the pre-composed reference valid even when ADMIN leaves renderer fields empty.
             fill_min = prompt_float_control(args.prompt, "mockup_fill_min", 0.05)
             fill_max = prompt_float_control(args.prompt, "mockup_fill_max", 0.95)
             if fill_min > fill_max:
                 fill_min, fill_max = fill_max, fill_min
             fill_ratio = max(fill_min, min(fill_max, fill_ratio))
-            
+
             max_art_dim = int(canvas_size * fill_ratio)
-            
+
             ratio = min(max_art_dim / w, max_art_dim / h)
             new_w = int(w * ratio)
             new_h = int(h * ratio)
-            
+
             # Enforce multiples of 8 for dimensions
             new_w = (new_w // 8) * 8
             new_h = (new_h // 8) * 8
-            
+
             # Logging the scale parameters
             try:
                 log_lines = []
@@ -711,26 +892,26 @@ def handle_generate_image(args):
                     log_lines.append(f"Long Side: {long_side_cm} cm")
                 else:
                     log_lines.append("Real Artwork Dimensions: Not provided/parsed in prompt")
-                
+
                 log_lines.append(f"Human Presence Detected: {has_human}")
                 if has_human:
                     multiplier = prompt_float_control(args.prompt, "mockup_human_scale_multiplier", 0.50)
                     log_lines.append(f"Human Scale Multiplier Applied: {multiplier}")
-                
+
                 log_lines.append(f"Final fill_ratio for Canvas: {fill_ratio:.4f}")
                 log_lines.append(f"Final Artwork size in 1024x1024 canvas: {new_w} px x {new_h} px")
                 log_lines.append(f"Position (x, y) on canvas: {((canvas_size - new_w) // 2)}, {int((canvas_size - new_h) * 0.35)}")
                 log_lines.append("---------------------------------")
-                
+
                 # Write to sys.stderr
                 for line in log_lines:
                     print(f"[SCALE-AUDIT] {line}", file=sys.stderr)
-                
+
                 # Write to logs/vertex_bridge.log
                 log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'logs')
                 if not os.path.exists(log_dir):
                     os.makedirs(log_dir, exist_ok=True)
-                
+
                 import datetime
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 with open(os.path.join(log_dir, 'vertex_bridge.log'), 'a', encoding='utf-8') as f:
@@ -739,19 +920,19 @@ def handle_generate_image(args):
                         f.write(f"  {line}\n")
             except Exception as le:
                 print(f"[WARN] Failed to write scale audit log: {le}", file=sys.stderr)
-            
+
             art_resized = pil_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
-            
+
             # Position: center horizontally, slightly above center vertically (classic gallery hang)
             x = (canvas_size - new_w) // 2
             y = int((canvas_size - new_h) * 0.35)
-            
+
             # Use alpha mask for pasting if image has alpha
             canvas.paste(art_resized, (x, y), art_resized if art_resized.mode == "RGBA" else None)
-            
+
             # Use the composite canvas as our reference image
             pil_img = canvas
-            
+
             # Create user-provided mask image:
             # Grayscale ("L") mode
             # 255 = White (the area to be edited/replaced by the model)
@@ -763,11 +944,11 @@ def handle_generate_image(args):
                 mask_img.paste(art_mask_part, (x, y), mask=alpha)
             else:
                 mask_img.paste(art_mask_part, (x, y))
-                
+
             mask_byte_arr = io.BytesIO()
             mask_img.save(mask_byte_arr, format='PNG')
             mask_bytes = mask_byte_arr.getvalue()
-            
+
             # Append critical harmonization directives to the prompt
             args.prompt += (
                 "\n\nHARMONIZATION AND INTEGRATION DIRECTIVES:\n"
@@ -781,7 +962,7 @@ def handle_generate_image(args):
             # Form 1: root artwork enhancement (keep full frame, just align to multiples of 8)
             new_w = (w // 8) * 8
             new_h = (h // 8) * 8
-            
+
             # Downscale if image is too large to save bandwidth and improve latency
             max_dim = 1024
             if new_w > max_dim or new_h > max_dim:
@@ -791,7 +972,7 @@ def handle_generate_image(args):
                 # Re-enforce multiples of 8
                 new_w = (new_w // 8) * 8
                 new_h = (new_h // 8) * 8
-                
+
             if (new_w, new_h) != (w, h):
                 pil_img = pil_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
 
@@ -804,7 +985,7 @@ def handle_generate_image(args):
             "gemini-2.5-flash-image": "publishers/google/models/gemini-2.5-flash-image",
         }
         selected_model = model_lower if model_lower in gemini_image_models else "gemini-3.1-flash-image"
-            
+
         gemini_prompt = args.prompt
         contents = []
         if gemini_reference_images:
@@ -819,7 +1000,7 @@ def handle_generate_image(args):
             img_rgb = pil_img
             if img_rgb.mode != "RGB":
                 img_rgb = img_rgb.convert("RGB")
-            
+
             # Prepend physical scaling/placement instructions for mockups
             if is_mockup and MOCKUP_USE_PRECOMPOSITION:
                 gemini_prompt = (
@@ -830,7 +1011,7 @@ def handle_generate_image(args):
                 )
             contents.append(img_rgb)
             print(f"[DEBUG] Image details: size={img_rgb.size}, mode={img_rgb.mode}", file=sys.stderr)
-            
+
         contents.insert(0, gemini_prompt)
         output_aspect_ratio = os.environ.get("GEMINI_OUTPUT_ASPECT_RATIO", args.aspect_ratio or "1:1")
         skip_output_frame_contract = os.environ.get("GEMINI_SKIP_OUTPUT_FRAME_CONTRACT", "false").lower() == "true"
@@ -880,10 +1061,10 @@ def handle_generate_image(args):
             raise last_error or RuntimeError(
                 "No Gemini Image model could produce a response."
             )
-        
+
         if not response.candidates:
             raise RuntimeError("No candidates in Gemini response.")
-            
+
         img_found = False
         for part in response.candidates[0].content.parts:
             if part.inline_data:
@@ -892,7 +1073,7 @@ def handle_generate_image(args):
                 out_dir = os.path.dirname(args.output)
                 if out_dir and not os.path.exists(out_dir):
                     os.makedirs(out_dir, exist_ok=True)
-                
+
                 if hasattr(img, 'image_bytes') and img.image_bytes:
                     saved_img = Image.open(io.BytesIO(img.image_bytes))
                     if is_mockup:
@@ -911,23 +1092,23 @@ def handle_generate_image(args):
                     saved_img.save(args.output)
                 else:
                     raise RuntimeError("Unknown image object type returned from SDK.")
-                    
+
                 print(f"SUCCESS: Image saved to {args.output}")
                 img_found = True
                 break
-                
+
         if not img_found:
             raise RuntimeError("No image was returned in the Gemini response parts.")
-            
+
         return
-        
+
     elif args.image and (MOCKUP_PROMPT_FIRST_NO_MASK_MODE or not (is_mockup and not MOCKUP_USE_PRECOMPOSITION and not MOCKUP_USE_BACKGROUND_EDIT)):
         # Image-to-image or background replacement using edit_image (Imagen models)
         img_byte_arr = io.BytesIO()
         pil_img.save(img_byte_arr, format='PNG')
         image_bytes = img_byte_arr.getvalue()
         mime_type = "image/png"
-            
+
         raw_ref = types.RawReferenceImage(
             reference_id=1,
             reference_image=types.Image(
@@ -935,7 +1116,7 @@ def handle_generate_image(args):
                 mime_type=mime_type
             )
         )
-        
+
         reference_images_list = []
         if is_mockup and MOCKUP_PROMPT_FIRST_NO_MASK_MODE:
             subject_ref = types.SubjectReferenceImage(
@@ -950,7 +1131,7 @@ def handle_generate_image(args):
             )
             reference_images_list = [subject_ref]
             edit_mode = None
-            
+
             # Text-based preservation directives
             if "ARTWORK PRESERVATION DIRECTIVES" not in args.prompt:
                 args.prompt += (
@@ -1035,10 +1216,10 @@ def handle_generate_image(args):
                 )
                 reference_images_list.append(mask_ref)
                 edit_mode = None
-            
+
         # Use capability model by default for editing
         model = args.model if args.model else "imagen-3.0-capability-001"
-        
+
         config_args = {
             "number_of_images": 1,
             "output_mime_type": "image/png",
@@ -1046,7 +1227,7 @@ def handle_generate_image(args):
         }
         if edit_mode:
             config_args["edit_mode"] = edit_mode
-            
+
         response = call_with_retry(
             lambda: client.models.edit_image(
                 model=model,
@@ -1058,7 +1239,7 @@ def handle_generate_image(args):
     else:
         # Text-to-image generation (Imagen models)
         model = args.model if args.model else "imagen-3.0-generate-002"
-        
+
         response = call_with_retry(
             lambda: client.models.generate_images(
                 model=model,
@@ -1070,10 +1251,10 @@ def handle_generate_image(args):
                 )
             )
         )
-        
+
     if not response.generated_images:
         raise RuntimeError("No image was generated by the model.")
-        
+
     # Save the first generated image to the output path
     image_bytes = response.generated_images[0].image.image_bytes
 
@@ -1081,7 +1262,7 @@ def handle_generate_image(args):
     out_dir = os.path.dirname(args.output)
     if out_dir and not os.path.exists(out_dir):
         os.makedirs(out_dir, exist_ok=True)
-        
+
     if is_mockup:
         output_aspect_ratio = os.environ.get("GEMINI_OUTPUT_ASPECT_RATIO", args.aspect_ratio or "4:5")
         saved_img = Image.open(io.BytesIO(image_bytes))
@@ -1093,7 +1274,7 @@ def handle_generate_image(args):
     else:
         with open(args.output, "wb") as f:
             f.write(image_bytes)
-        
+
     print(f"SUCCESS: Image saved to {args.output}")
 
     # Write execution log
@@ -1102,15 +1283,15 @@ def handle_generate_image(args):
         os.makedirs(log_dir, exist_ok=True)
         import datetime
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
+
         # Read dimensions
         input_size_str = "N/A"
         if pil_img:
             input_size_str = f"{pil_img.width}x{pil_img.height}"
-            
+
         output_size = Image.open(args.output).size
         output_size_str = f"{output_size[0]}x{output_size[1]}"
-        
+
         with open(os.path.join(log_dir, 'vertex_bridge.log'), 'a', encoding='utf-8') as f:
             f.write(f"[{timestamp}] JOB: {os.path.basename(args.output) if args.output else 'unknown'}\n")
             if is_mockup and MOCKUP_PROMPT_FIRST_MODE and MOCKUP_PROMPT_FIRST_NO_MASK_MODE:
@@ -1284,14 +1465,14 @@ def handle_embed_image(args):
 def main():
     parser = argparse.ArgumentParser(description="Vertex AI CLI Bridge")
     subparsers = parser.add_subparsers(dest="command", required=True)
-    
+
     # Subcommand: generate-text
     text_parser = subparsers.add_parser("generate-text", help="Generate text / analysis using Gemini")
     text_parser.add_argument("--prompt", type=str, help="Text prompt")
     text_parser.add_argument("--prompt-file", type=str, help="Path to file containing the prompt")
     text_parser.add_argument("--image", type=str, action="append", help="Path to the input image(s)")
     text_parser.add_argument("--model", type=str, default="gemini-2.5-flash", help="Gemini model name")
-    
+
     # Subcommand: generate-image
     image_parser = subparsers.add_parser("generate-image", help="Generate/Edit images using Imagen or Gemini")
     image_parser.add_argument("--prompt", type=str, help="Text prompt")
@@ -1300,6 +1481,10 @@ def main():
     image_parser.add_argument("--model", type=str, help="Imagen or Gemini model name")
     image_parser.add_argument("--aspect_ratio", type=str, default="1:1", help="Aspect ratio (e.g. 1:1, 4:3, 16:9)")
     image_parser.add_argument("--output", type=str, required=True, help="Output file path where image will be saved")
+
+    # Subcommand: assistant-chat
+    assistant_parser = subparsers.add_parser("assistant-chat", help="Generate a contextual assistant response using Gemini")
+    assistant_parser.add_argument("--payload-file", type=str, required=True, help="OpenAI-compatible assistant payload JSON")
 
     # Subcommand: embed-image
     embed_parser = subparsers.add_parser("embed-image", help="Compute multimodal embeddings for images")
@@ -1310,7 +1495,7 @@ def main():
     embed_parser.add_argument("--crop-debug", dest="crop_debug", type=str, help="Save the auto-cropped image to this path and exit (no API call)")
 
     args = parser.parse_args()
-    
+
     try:
         if hasattr(args, 'prompt_file') and args.prompt_file:
             with open(args.prompt_file, 'r', encoding='utf-8') as f:
@@ -1318,7 +1503,7 @@ def main():
         elif hasattr(args, 'prompt') and args.prompt == "-":
             # Read prompt from stdin
             args.prompt = sys.stdin.read()
-            
+
         if args.command in ("generate-text", "generate-image") and not getattr(args, 'prompt', None):
             raise ValueError("Must provide either --prompt or --prompt-file.")
 
@@ -1326,6 +1511,8 @@ def main():
             handle_generate_text(args)
         elif args.command == "generate-image":
             handle_generate_image(args)
+        elif args.command == "assistant-chat":
+            handle_assistant_chat(args)
         elif args.command == "embed-image":
             if not args.image and not args.list:
                 raise ValueError("Must provide --image or --list.")
@@ -1333,11 +1520,11 @@ def main():
     except Exception as e:
         error_msg = str(e)
         is_rate_limit = "429" in error_msg or "resource has been exhausted" in error_msg.lower()
-        
+
         if is_rate_limit:
             print(f"FATAL: API rate limit (429 RESOURCE_EXHAUSTED). Cannot continue.", file=sys.stderr)
             print(f"This usually means the quota has been exceeded. Check Google Cloud console.", file=sys.stderr)
-        
+
         import traceback
         traceback.print_exc(file=sys.stderr)
         sys.exit(1)

@@ -37,6 +37,7 @@ Cloud Run se considera completamente stateless. El asistente no escribe memoria 
 - Todas las consultas de negocio se limitan mediante el `user_id` de la cuenta activa.
 - La Responses API se llama con `store: false`; la memoria durable vive exclusivamente en MySQL.
 - Hay límites por minuto, límite diario y tamaño máximo de mensaje.
+- El editor permite adjuntar PNG, JPG o WEBP y pegar una captura directamente con `Ctrl+V`; la imagen se redimensiona y comprime en el navegador antes de enviarse.
 - Los errores públicos no exponen respuestas del proveedor, claves ni detalles internos.
 
 ## Configuración
@@ -49,6 +50,11 @@ OPENAI_API_BASE=https://api.openai.com/v1
 ASSISTANT_ENABLED=true
 ASSISTANT_ADMIN_ENABLED=true
 ASSISTANT_APP_ENABLED=true
+ASSISTANT_PROVIDER=openai
+# Para Gemini, se pueden omitir estos valores y reutilizar VERTEX_PROJECT_ID / VERTEX_LOCATION.
+ASSISTANT_VERTEX_PROJECT_ID=
+ASSISTANT_VERTEX_LOCATION=
+ASSISTANT_GOOGLE_APPLICATION_CREDENTIALS=
 ASSISTANT_MAX_OUTPUT_TOKENS=1200
 ASSISTANT_HISTORY_MESSAGES=12
 ASSISTANT_RATE_LIMIT_PER_MINUTE=12
@@ -71,7 +77,7 @@ Prueba de persistencia sin usar OpenAI:
 php tests/run_assistant_tests.php
 ```
 
-Prueba real de OpenAI con rollback de escrituras de prueba:
+Prueba real del proveedor configurado con rollback de escrituras de prueba:
 
 ```powershell
 php scripts/assistant_smoke.php "chiappero@gmail.com"

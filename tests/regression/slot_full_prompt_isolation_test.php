@@ -67,12 +67,10 @@ function run_slot_full_prompt_isolation_tests(): void
         'IMAGE ROLE CONTRACT',
         'MOCKUP CONTEXT PROPOSAL',
         'ROOT ARTWORK VISUAL FIDELITY POLICY',
-        'WORLD MOTHER CAMERA AUTHORITY',
         'INHERITED_NEGATIVE_SHOULD_NOT_APPEAR',
         '{{ARTWORK_TITLE}}',
         '{{ARTWORK_SIZE_CLASS}}',
         '{{NEGATIVE_PROMPT}}',
-        'atmospheric family',
     ];
 
     foreach ($slots as $slotId => $slotSpec) {
@@ -111,6 +109,16 @@ function run_slot_full_prompt_isolation_tests(): void
             'IMAGE 1 is the only artwork content allowed',
             $prompt,
             "{$slotId}: el prompt aislado prohibe copiar contenido artistico de IMAGE 2"
+        );
+        TestHarness::assertContains(
+            'WORLD MOTHER AUTHORITY POLICY',
+            $prompt,
+            "{$slotId}: IMAGE 2 se limita a inspiracion ambiental y no controla la composicion"
+        );
+        TestHarness::assertContains(
+            'WORLD MOTHER ROLE: ENVIRONMENTAL INSPIRATION ONLY',
+            $prompt,
+            "{$slotId}: el resultado debe ser una escena nueva y no una copia de IMAGE 2"
         );
 
         foreach ($forbiddenFragments as $fragment) {

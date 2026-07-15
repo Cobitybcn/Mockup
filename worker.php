@@ -81,6 +81,11 @@ try {
     if (!is_array($selectorState)) {
         $selectorState = [];
     }
+    $generationProvider = ServiceFactory::generationProvider((string)($selectorState['generation_provider'] ?? ''));
+    $payloadProvider = strtolower(trim((string)($payload['generation_provider'] ?? '')));
+    if ($payloadProvider !== '' && ServiceFactory::generationProvider($payloadProvider) !== $generationProvider) {
+        throw new RuntimeException('Generation provider mismatch between queued job and worker payload.');
+    }
 
     $combination = $selectorState['combination'] ?? [];
     $worldMotherPath = (string)($combination['world_mother_image_absolute_path'] ?? '');
@@ -137,7 +142,7 @@ try {
         'seo_params' => $seoParams,
         'root_reference_path' => $localArtworkPath,
         'world_mother_reference_path' => $containerWorldMotherPath,
-        'world_mother_reference_mode' => (string)($selectorState['world_mother_reference_mode'] ?? 'literal_scene_view'),
+        'world_mother_reference_mode' => (string)($selectorState['world_mother_reference_mode'] ?? 'reconstructed_view'),
         'world_mother_reference_path_original' => $containerWorldMotherPath,
         'world_mother_scale' => (string)($selectorState['world_mother_scale'] ?? ''),
         'prompt_passthrough_mode' => $job['prompt'],
@@ -149,7 +154,7 @@ try {
     ];
 
     // 8. Execute generation
-    $generator = ServiceFactory::mockupGenerator();
+    $generator = ServiceFactory::mockupGenerator($generationProvider);
     $result = $generator->generate($localArtworkPath, $job['context_id'], $job['prompt'], $options);
 
     if (array_key_exists('fidelity_review', $result)) {

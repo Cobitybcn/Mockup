@@ -668,7 +668,7 @@ try {
               <div class="generated-root-scroll">
                 <div class="generated-root-grid" id="generatedRootGrid">
                   <?php foreach ($generatedRootItems as $rootItem): ?>
-                    <a class="generated-root-card" href="mockup_combinations_review.php?id=<?= (int)$rootItem['artwork_id'] ?>" data-search="<?= h($rootItem['search']) ?>">
+                    <a class="generated-root-card" href="mockup_combinations_review.php?id=<?= (int)$rootItem['artwork_id'] ?>&amp;scene_select=1&amp;scene_limit=4" data-search="<?= h($rootItem['search']) ?>">
                       <img src="<?= h(artwork_new_media_url((string)$rootItem['file'])) ?>" alt="<?= h($rootItem['title']) ?>" loading="lazy">
                       <strong><?= h($rootItem['title']) ?></strong>
                       <span><?= h($rootItem['meta']) ?></span>

@@ -23,7 +23,30 @@ final class AssistantContext
         if ($selected) {
             $page['selected_mockup_ids'] = array_slice($selected, 0, 12);
         }
+        $uiTarget = self::uiTarget($input['ui_target'] ?? null);
+        if ($uiTarget !== []) {
+            $page['ui_target'] = $uiTarget;
+        }
         return $page;
+    }
+
+    public static function label(string $pageType): string
+    {
+        return match ($pageType) {
+            'artwork_detail' => 'Obra abierta',
+            'series' => 'Serie',
+            'mockup_album' => 'Álbum de mockups',
+            'mockup_results' => 'Resultados de mockups',
+            'mockup_lab' => 'Laboratorio de mockups',
+            'website_publisher' => 'Website',
+            'social_publishing' => 'Publicación social',
+            'scene_studio' => 'Estudio de escenas',
+            'scene_creation' => 'Creación de escenas',
+            'camera_boards' => 'Cámaras',
+            'prompt_admin' => 'Prompts',
+            'user_admin' => 'Usuarios',
+            default => 'Área privada',
+        };
     }
 
     public function build(array $user, array $page): array
@@ -65,6 +88,9 @@ final class AssistantContext
         }
         if (!empty($page['selected_mockup_ids'])) {
             $context['selected_mockups'] = $this->selectedMockups($userId, (array)$page['selected_mockup_ids']);
+        }
+        if (!empty($page['ui_target'])) {
+            $context['ui_target'] = ['source' => 'user_selected_visible_element'] + (array)$page['ui_target'];
         }
         return $context;
     }
@@ -183,11 +209,56 @@ final class AssistantContext
             'mockup_variation_lab.php' => 'mockup_lab',
             'website_board.php', 'website_catalog.php', 'website_studio_notes.php' => 'website_publisher',
             'social_media_board.php', 'social_media_catalog.php' => 'social_publishing',
+            'create_scenes.php' => 'scene_creation',
             'world_mother_studio.php' => 'scene_studio',
             'camera_studio.php' => 'camera_boards',
             'admin_prompts.php' => 'prompt_admin',
             'admin_users.php' => 'user_admin',
             default => 'private_page',
         };
+    }
+
+    private static function uiTarget(mixed $input): array
+    {
+        if (!is_array($input)) {
+            return [];
+        }
+        $target = [];
+        $limits = [
+            'tag' => 24,
+            'role' => 40,
+            'type' => 40,
+            'text' => 500,
+            'aria_label' => 300,
+            'title' => 300,
+            'element_id' => 120,
+            'nearby_text' => 600,
+        ];
+        foreach ($limits as $key => $limit) {
+            $value = trim(preg_replace('/\s+/u', ' ', (string)($input[$key] ?? '')) ?? '');
+            if ($value !== '') {
+                $target[$key] = mb_substr($value, 0, $limit);
+            }
+        }
+        $bounds = [];
+        foreach (['x','y','width','height','viewport_width','viewport_height'] as $key) {
+            if (isset($input['bounds'][$key]) && is_numeric($input['bounds'][$key])) {
+                $bounds[$key] = max(-10000, min(10000, (int)round((float)$input['bounds'][$key])));
+            }
+        }
+        if ($bounds !== []) {
+            $target['bounds'] = $bounds;
+        }
+        $styles = [];
+        foreach (['background_color','color','font_size','font_weight','padding','border_radius','border'] as $key) {
+            $value = trim(preg_replace('/\s+/u', ' ', (string)($input['styles'][$key] ?? '')) ?? '');
+            if ($value !== '') {
+                $styles[$key] = mb_substr($value, 0, 160);
+            }
+        }
+        if ($styles !== []) {
+            $target['styles'] = $styles;
+        }
+        return $target;
     }
 }

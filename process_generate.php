@@ -137,7 +137,8 @@ try {
         'Creating root image candidates...'
     );
 
-    $processor = ServiceFactory::artworkProcessor();
+    $generationProvider = ServiceFactory::generationProvider((string)($status['generation_provider'] ?? ''));
+    $processor = ServiceFactory::artworkProcessor($generationProvider);
     $result = $processor->createRootImage($jobDir, $status);
 
     // Update status.json with candidates
@@ -176,7 +177,7 @@ try {
 
         update_artwork_record($diskStatus, 'done', $selectedRootFile);
 
-        if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && ProviderSettings::imageProvider() === 'gemini') {
+        if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && $generationProvider === 'gemini') {
             try {
                 $v2Stmt=Database::connection()->prepare('SELECT * FROM artworks WHERE job_id=? LIMIT 1');$v2Stmt->execute([(string)$diskStatus['job_id']]);$v2Artwork=$v2Stmt->fetch(PDO::FETCH_ASSOC);
                 if(is_array($v2Artwork)){
@@ -198,6 +199,7 @@ try {
                 'measurements' => $diskStatus['measurements'] ?? [],
                 'artist_notes' => $diskStatus['artist_notes'] ?? '',
                 'provider_settings' => $diskStatus['provider_settings'] ?? ProviderSettings::all(),
+                'generation_provider' => $generationProvider,
                 'scale_text' => build_scale_text_for_meta((array)($diskStatus['measurements'] ?? [])),
                 'root_source' => 'auto_selected_user_scene_flow',
                 'user_scene_flow' => true,

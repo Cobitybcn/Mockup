@@ -511,6 +511,15 @@ foreach (($_GET['world_variant'] ?? []) as $index => $offset) {
 }
 $selectedWorldMotherCategory = trim(str_replace(['\\', '/'], '', (string)($_GET['world_mother_category'] ?? '')));
 $sceneBoardIndex = max(1, min(3, (int)($_GET['board'] ?? 1)));
+$canSelectGenerationProvider = ProviderSettings::canSelectGenerationProvider(
+    $isAdmin,
+    (string)($_SERVER['HTTP_HOST'] ?? '')
+);
+$selectedGenerationProvider = $canSelectGenerationProvider
+    ? ServiceFactory::generationProvider((string)($_GET['generation_provider'] ?? ''))
+    : ServiceFactory::generationProvider();
+$generationProviderQuery = $canSelectGenerationProvider ? '&generation_provider=' . rawurlencode($selectedGenerationProvider) : '';
+$sceneSelectionFlow = !empty($_GET['scene_select']);
 $compactSceneFlow = !empty($_GET['compact']);
 $autoGenerateSceneFlow = !empty($_GET['auto_generate']);
 $compactSceneLimit = max(1, min(4, (int)($_GET['scene_limit'] ?? 4)));
@@ -1788,6 +1797,31 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
             flex: 0 0 150px;
             align-self: flex-start;
             padding-top: 2px;
+            display: grid;
+            gap: 8px;
+        }
+        .scene-provider-control {
+            display: grid;
+            gap: 4px;
+            width: 150px;
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+        .scene-provider-control select {
+            width: 150px;
+            height: 34px;
+            padding: 0 28px 0 10px;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            background: var(--surface);
+            color: var(--text);
+            font: inherit;
+            font-size: 11px;
+            letter-spacing: 0;
+            text-transform: none;
         }
         .scene-primary-action #generate-all-btn {
             display: inline-flex !important;
@@ -2138,7 +2172,7 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
                     </div>
                 </div>
                 <div class="scene-primary-action">
-                    <button class="button-link" type="button" id="generate-all-btn" onclick="generateAllCombinations(this)"><?= $compactSceneFlow ? 'Create 4 scenes' : 'Generate All Combinations' ?></button>
+                    <button class="button-link" type="button" id="generate-all-btn" onclick="<?= $sceneSelectionFlow ? 'startCompactSceneFlow(this)' : 'generateAllCombinations(this)' ?>"><?= ($compactSceneFlow || $sceneSelectionFlow) ? 'Create 4 scenes' : 'Generate All Combinations' ?></button>
                 </div>
             </div>
 
@@ -2149,7 +2183,11 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
                         <?php foreach ($sceneDirectionOptions as $sceneOption): ?>
                             <?php
                             $slug = (string)$sceneOption['slug'];
-                            $sceneUrl = 'mockup_combinations_review.php?id=' . (int)$id . '&board=' . (int)$sceneBoardIndex . '&world_mother_category=' . rawurlencode($slug);
+                            $sceneUrl = 'mockup_combinations_review.php?id=' . (int)$id
+                                . '&board=' . (int)$sceneBoardIndex
+                                . '&world_mother_category=' . rawurlencode($slug)
+                                . $generationProviderQuery
+                                . ($sceneSelectionFlow ? '&scene_select=1&scene_limit=' . (int)$compactSceneLimit : '');
                             ?>
                             <a class="scene-direction-card <?= $slug === $selectedWorldMotherCategory ? 'active' : '' ?>" href="<?= h($sceneUrl) ?>">
                                 <?php if ((string)$sceneOption['preview_url'] !== ''): ?>
@@ -2433,6 +2471,10 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
 <script>
 const ACTIVE_ARTWORK_ROOT_FILE = <?= json_encode(basename((string)$artwork['root_file'])) ?>;
 const MOCKUP_BATCH_WORKER_COUNT = <?= (int)ProviderSettings::mockupWorkerCount() ?>;
+const GENERATION_PROVIDER = <?= json_encode($selectedGenerationProvider) ?>;
+const GENERATION_PROVIDER_LABEL = GENERATION_PROVIDER === 'openai' ? 'OpenAI' : 'Vertex';
+const SCENE_SELECTION_FLOW = <?= $sceneSelectionFlow ? 'true' : 'false' ?>;
+const SELECTED_SCENE_CATEGORY = <?= json_encode($selectedWorldMotherCategory, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
 const USER_SCENE_FLOW = <?= $compactSceneFlow ? 'true' : 'false' ?>;
 const USER_SCENE_AUTO_GENERATE = <?= $autoGenerateSceneFlow ? 'true' : 'false' ?>;
 const USER_SCENE_LIMIT = <?= (int)$compactSceneLimit ?>;
@@ -2515,6 +2557,7 @@ function runCombinationGeneration(btn) {
     formData.append('world_mother_category', btn.getAttribute('data-world-mother-category'));
     formData.append('world_mother_variant_offset', btn.getAttribute('data-world-mother-variant') || '0');
     formData.append('board', btn.getAttribute('data-scene-board') || '1');
+    formData.append('generation_provider', GENERATION_PROVIDER);
     const scaleInput = document.getElementById('world-mother-scale-' + index);
     if (scaleInput && scaleInput.value) {
         formData.append('world_mother_scale', scaleInput.value);
@@ -2524,7 +2567,7 @@ function runCombinationGeneration(btn) {
     const originalText = btn.textContent;
     btn.textContent = 'Generating...';
     status.textContent = 'Generating image from root artwork, world mother reference, selected camera, and ADMIN prompt.';
-    console.info('[scene-generation] request start', { index: index, camera: btn.getAttribute('data-camera-name') || '' });
+    console.info('[scene-generation] request start', { index: index, camera: btn.getAttribute('data-camera-name') || '', provider: GENERATION_PROVIDER });
 
     return fetch('generate_mockup_combination.php', { method: 'POST', body: formData })
         .then(response => response.text().then(text => {
@@ -2611,6 +2654,20 @@ function waitForRetry(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function startCompactSceneFlow(btn) {
+    const slug = SELECTED_SCENE_CATEGORY || '';
+    if (slug === '') {
+        alert('Choose a scene style before creating the mockups.');
+        return;
+    }
+
+    if (btn) btn.disabled = true;
+    window.location.href = 'mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$sceneBoardIndex ?>'
+        + '&world_mother_category=' + encodeURIComponent(slug)
+        + '&generation_provider=' + encodeURIComponent(GENERATION_PROVIDER)
+        + '&auto_generate=1&compact=1&scene_limit=' + USER_SCENE_LIMIT;
+}
+
 function setCompactViewState(index, state, label) {
     if (!USER_SCENE_FLOW) return;
     const row = document.querySelector('[data-compact-view-row="' + index + '"]');
@@ -2654,8 +2711,8 @@ async function generateAllCombinations(btn) {
         return;
     }
     const confirmText = USER_SCENE_FLOW
-        ? 'Create ' + buttons.length + ' scenes now?'
-        : 'Generate all ' + buttons.length + ' combinations now? This may consume one real API credit per combination when real API mode is enabled.';
+        ? 'Create ' + buttons.length + ' scenes with ' + GENERATION_PROVIDER_LABEL + ' now?'
+        : 'Generate all ' + buttons.length + ' combinations with ' + GENERATION_PROVIDER_LABEL + '? This may consume one real API credit per combination when real API mode is enabled.';
     const shouldConfirmBatch = btn.getAttribute('data-skip-batch-confirm') !== '1';
     if (shouldConfirmBatch && !confirm(confirmText)) {
         return;
@@ -2707,7 +2764,7 @@ async function generateAllCombinations(btn) {
                     const cameraName = comboBtn.getAttribute('data-camera-name') || 'selected camera';
                     showGenerationOverlay(
                         'Retrying one scene',
-                        'Vertex quota pushed back on ' + cameraName + '. Waiting ' + Math.round(retryDelay / 1000) + 's before retry.'
+                        GENERATION_PROVIDER_LABEL + ' quota pushed back on ' + cameraName + '. Waiting ' + Math.round(retryDelay / 1000) + 's before retry.'
                     );
                     setCompactViewState(compactViewIndex, 'retrying', 'Retrying');
                     await waitForRetry(retryDelay);
@@ -2744,7 +2801,7 @@ async function generateAllCombinations(btn) {
     hideGenerationOverlay();
 
     if (successCount > 0) {
-        const resultsUrl = 'mockup_combination_results.php?id=<?= (int)$id ?>&board=<?= (int)$sceneBoardIndex ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?><?= $compactSceneFlow ? '&compact=1&scene_limit=' . (int)$compactSceneLimit : '' ?>';
+        const resultsUrl = 'mockup_combination_results.php?id=<?= (int)$id ?>&board=<?= (int)$sceneBoardIndex ?>&generation_provider=<?= rawurlencode($selectedGenerationProvider) ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?><?= $compactSceneFlow ? '&compact=1&scene_limit=' . (int)$compactSceneLimit : '' ?>';
         if (USER_SCENE_FLOW && failCount === 0) {
             window.location.href = resultsUrl;
             return;
@@ -2794,7 +2851,10 @@ if (sceneSelect) {
     sceneSelect.addEventListener('change', () => {
         const slug = sceneSelect.value || '';
         if (slug !== '') {
-            window.location.href = 'mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$sceneBoardIndex ?>&world_mother_category=' + encodeURIComponent(slug);
+            window.location.href = 'mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$sceneBoardIndex ?>&world_mother_category='
+                + encodeURIComponent(slug)
+                + '&generation_provider=' + encodeURIComponent(GENERATION_PROVIDER)
+                + (SCENE_SELECTION_FLOW ? '&scene_select=1&scene_limit=' + USER_SCENE_LIMIT : '');
         }
     });
 }

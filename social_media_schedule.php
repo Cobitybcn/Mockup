@@ -6,11 +6,17 @@ require_once __DIR__ . '/app/bootstrap.php';
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: private, no-store');
 
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+    http_response_code(405);
+    header('Allow: POST');
+    echo json_encode([
+        'ok' => false,
+        'error' => 'Use POST to schedule publications.',
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
 try {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        http_response_code(405);
-        throw new RuntimeException('Use POST to schedule publications.');
-    }
     $user = Auth::requireUser();
     Auth::start();
     $input = json_decode((string)file_get_contents('php://input'), true);

@@ -16,7 +16,27 @@ final class AssistantConfig
         if (Auth::isAdmin($user)) {
             return filter_var(app_env('ASSISTANT_ADMIN_ENABLED', 'true'), FILTER_VALIDATE_BOOLEAN);
         }
-        return filter_var(app_env('ASSISTANT_APP_ENABLED', 'true'), FILTER_VALIDATE_BOOLEAN);
+        if (filter_var(app_env('ASSISTANT_APP_ENABLED', 'true'), FILTER_VALIDATE_BOOLEAN)) {
+            return true;
+        }
+        $email = strtolower(trim((string)($user['email'] ?? '')));
+        return $email !== '' && in_array($email, $this->allowedEmails(), true);
+    }
+
+    public function provider(): string
+    {
+        $provider = strtolower(trim(app_env('ASSISTANT_PROVIDER', '')));
+        if ($provider === '') {
+            $mode = defined('APP_MODE') ? APP_MODE : app_env('APP_MODE', 'mock');
+            $provider = ($mode === 'gemini') ? 'gemini' : 'openai';
+        }
+        return in_array($provider, ['gemini', 'openai'], true) ? $provider : 'openai';
+    }
+
+    public function allowedEmails(): array
+    {
+        $emails = preg_split('/[\s,;]+/', strtolower(app_env('ASSISTANT_ALLOWED_EMAILS', ''))) ?: [];
+        return array_values(array_unique(array_filter(array_map('trim', $emails))));
     }
 
     public function apiKey(): string

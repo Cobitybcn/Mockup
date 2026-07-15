@@ -220,20 +220,7 @@ $geminiImagePlans = [
                 </div>
 
                 <section class="form-section">
-                    <h2>Social Video (beta)</h2>
-                    <p>This is an isolated queue. It never consumes mockup workers.</p>
-                    <label class="checkbox-line">
-                        <input type="checkbox" name="social_video_veo_enabled" value="1" <?= !empty($settings['social_video_veo_enabled']) ? 'checked' : '' ?>>
-                        Enable Vertex/Veo video jobs
-                    </label>
-                    <label for="social_video_veo_model">Veo model</label>
-                    <input id="social_video_veo_model" name="social_video_veo_model" type="text" value="<?= h($settings['social_video_veo_model'] ?? '') ?>" placeholder="Set after confirming the available Vertex Veo model">
-                    <label for="social_video_veo_region">Veo region</label>
-                    <input id="social_video_veo_region" name="social_video_veo_region" type="text" value="<?= h($settings['social_video_veo_region'] ?? '') ?>" placeholder="us-central1">
-                    <label for="social_video_veo_resolution">Veo resolution</label>
-                    <input id="social_video_veo_resolution" name="social_video_veo_resolution" type="text" value="<?= h($settings['social_video_veo_resolution'] ?? '') ?>" placeholder="1080p">
-                    <label for="social_video_veo_storage_uri">Veo output storage URI</label>
-                    <input id="social_video_veo_storage_uri" name="social_video_veo_storage_uri" type="text" value="<?= h($settings['social_video_veo_storage_uri'] ?? '') ?>" placeholder="gs://artwork-curator-veo-output">
+                    <h2>Media Processing</h2>
                     <label for="ffmpeg_binary_path">FFmpeg binary path</label>
                     <input id="ffmpeg_binary_path" name="ffmpeg_binary_path" type="text" value="<?= h($settings['ffmpeg_binary_path'] ?? '') ?>" placeholder="Leave empty to use ffmpeg from PATH">
                 </section>

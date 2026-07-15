@@ -16,7 +16,7 @@ final class PublicPage
             $base = '/' . trim($configured, '/');
         } else {
             $script = str_replace('\\', '/', (string)($_SERVER['SCRIPT_NAME'] ?? ''));
-            if (preg_match('#^(.*/artworkmockups-faithful)(?:/|$)#', $script, $matches) === 1) {
+            if (preg_match('#^(.*/artworkmockups/platform)(?:/|$)#', $script, $matches) === 1) {
                 $base = rtrim($matches[1], '/');
             } else {
                 $base = preg_match('#^/mockups(?:/|$)#', $script) === 1 ? '/mockups' : '';

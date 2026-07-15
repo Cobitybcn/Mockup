@@ -78,6 +78,15 @@ function build_combination_adjustment_prompt(array $controls): string
 
 try {
     $user = Auth::requireUser();
+    $isAdmin = Auth::isAdmin($user);
+    $canSelectGenerationProvider = ProviderSettings::canSelectGenerationProvider(
+        $isAdmin,
+        (string)($_SERVER['HTTP_HOST'] ?? '')
+    );
+    $requestedGenerationProvider = strtolower(trim((string)($_POST['generation_provider'] ?? $_GET['generation_provider'] ?? '')));
+    $generationProvider = $canSelectGenerationProvider
+        ? ServiceFactory::generationProvider($requestedGenerationProvider)
+        : ServiceFactory::generationProvider();
     if (session_status() === PHP_SESSION_ACTIVE) {
         session_write_close();
     }
@@ -211,6 +220,7 @@ try {
     $audit = [
         'schema' => 'mockup_combination_generation.v1',
         'generation_mode' => 'mockup_combination_full_generation',
+        'generation_provider' => $generationProvider,
         'started_at' => date(DATE_ATOM),
         'requested_by_user_id' => (int)$user['id'],
         'combination' => $combination,
@@ -221,17 +231,6 @@ try {
         'error' => '',
     ];
     file_put_contents($auditPath, json_encode($audit, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-
-    if (ProviderSettings::allowRealApi()) {
-        if (!Database::deductCredit((int)$user['id'], 'mockup_combination_generation:' . $artworkId . ':' . $combinationIndex)) {
-            $audit['status'] = 'failed';
-            $audit['error'] = 'Insufficient credits.';
-            file_put_contents($auditPath, json_encode($audit, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-            http_response_code(400);
-            echo json_encode(['ok' => false, 'error' => 'You do not have enough credits to generate a mockup.'], JSON_UNESCAPED_UNICODE);
-            exit;
-        }
-    }
 
     $rootPath = (string)($combination['root_artwork_path'] ?? '');
     $worldMotherPath = (string)($combination['world_mother_image_absolute_path'] ?? '');
@@ -262,7 +261,7 @@ try {
     ];
 
     $contextId = 'combination_' . $combinationIndex;
-    $worldMotherReferenceMode = (string)($combination['world_mother_reference_mode'] ?? 'literal_scene_view');
+    $worldMotherReferenceMode = (string)($combination['world_mother_reference_mode'] ?? 'reconstructed_view');
     $slotFullPromptMode = AdminPromptComposerPreview::hasSlotFullPromptTemplate(
         (string)($combination['selected_camera_slot_id'] ?? '')
     );
@@ -280,6 +279,7 @@ try {
     // Prepare UI Selector State to save in the job
     $selectorState = [
         'generation_source' => 'mockup_combination_review',
+        'generation_provider' => $generationProvider,
         'audit_file' => 'analysis/mockup-combination-audit/' . $artworkId . '/' . $auditFile,
         'combination' => $combinationForStorage,
         'world_mother_reference_mode' => $worldMotherReferenceMode,
@@ -311,16 +311,16 @@ try {
 
     // 2. Dispatch the Task to Cloud Tasks (Async)
     try {
-        if (ProviderSettings::allowRealApi() && class_exists('Google\Cloud\Tasks\V2\CloudTasksClient')) {
+        if (ProviderSettings::allowRealApi() && $generationProvider === 'gemini' && class_exists('Google\Cloud\Tasks\V2\CloudTasksClient')) {
             // Real environment: Enqueue job to Cloud Tasks queue targeting the worker
-            CloudTasksService::enqueueGeneration($jobId, (int)$user['id'], (int)$artworkId, $contextId);
+            CloudTasksService::enqueueGeneration($jobId, (int)$user['id'], (int)$artworkId, $contextId, $generationProvider);
             Database::updateJobStatus($jobId, 'queued');
         } elseif (ProviderSettings::allowRealApi()) {
             Database::updateJobStatus($jobId, 'processing');
 
             ProviderSettings::set(ProviderSettings::readForRoot($rootPath));
 
-            $generator = ServiceFactory::mockupGenerator();
+            $generator = ServiceFactory::mockupGenerator($generationProvider);
             $mockResult = $generator->generate($rootPath, $contextId, $finalPrompt, [
                 'seo_params' => $seoParams,
                 'root_reference_path' => $rootPath,
@@ -430,7 +430,7 @@ try {
             });
         }
 
-        if (isset($mockupId) && ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && ProviderSettings::imageProvider() === 'gemini') {
+        if (isset($mockupId) && ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && $generationProvider === 'gemini') {
             try {
                 $v2Sheets=new ArtworkSheetService(Database::connection());$v2ArtworkSheet=$v2Sheets->sheetForArtwork((int)$artwork['id'],(int)$user['id']);
                 $v2Sheets->generateMockupSheet((int)$v2ArtworkSheet['id'],(int)$artwork['id'],basename((string)$mockResult['file']),(int)$user['id'],'Automatic mockup analysis v2 during batch creation.');
@@ -456,8 +456,9 @@ try {
                 ? 'Generation enqueued in Cloud Tasks.'
                 : (ProviderSettings::allowRealApi() ? 'Mockup generated locally with real API.' : 'Mockup generated (mock mode).'),
             'audit_file' => 'analysis/mockup-combination-audit/' . $artworkId . '/' . $auditFile,
-            'results_url' => 'mockup_combination_results.php?id=' . $artworkId . '&board=' . $sceneBoardIndex . ($worldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($worldMotherCategory) : ''),
+            'results_url' => 'mockup_combination_results.php?id=' . $artworkId . '&board=' . $sceneBoardIndex . '&generation_provider=' . rawurlencode($generationProvider) . ($worldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($worldMotherCategory) : ''),
             'generation_mode' => 'mockup_combination_full_generation',
+            'generation_provider' => $generationProvider,
         ], JSON_UNESCAPED_UNICODE);
 
     } catch (Exception $e) {

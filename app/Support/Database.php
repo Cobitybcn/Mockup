@@ -377,45 +377,6 @@ class Database
         self::addColumnIfMissing($pdo, 'mockup_generation_jobs', 'source_artwork_id', "INTEGER");
         self::addColumnIfMissing($pdo, 'mockup_generation_jobs', 'selector_state_json', "TEXT NULL");
 
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS social_video_workflows (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                artwork_id INTEGER NOT NULL UNIQUE,
-                setup_suggestion_json TEXT NOT NULL DEFAULT '',
-                setup_edited_json TEXT NOT NULL DEFAULT '',
-                final_concept_json TEXT NOT NULL DEFAULT '',
-                status TEXT NOT NULL DEFAULT 'not_started',
-                video_status TEXT NOT NULL DEFAULT 'not_started',
-                video_url TEXT NOT NULL DEFAULT '',
-                error TEXT NOT NULL DEFAULT '',
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-                FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
-            )
-        ");
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS social_video_jobs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                artwork_id INTEGER NOT NULL,
-                workflow_id INTEGER NOT NULL,
-                provider TEXT NOT NULL DEFAULT 'vertex_veo',
-                model TEXT NOT NULL DEFAULT '',
-                concept_json TEXT NOT NULL,
-                external_job_id TEXT NOT NULL DEFAULT '',
-                status TEXT NOT NULL DEFAULT 'created',
-                video_url TEXT NOT NULL DEFAULT '',
-                error TEXT NOT NULL DEFAULT '',
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-                FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE,
-                FOREIGN KEY (workflow_id) REFERENCES social_video_workflows(id) ON DELETE CASCADE
-            )
-        ");
-        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_social_video_jobs_workflow ON social_video_jobs (workflow_id, status)");
         $pdo->exec("CREATE INDEX IF NOT EXISTS idx_mockup_generation_jobs_context ON mockup_generation_jobs (artwork_id, context_id)");
 
         $pdo->exec("
@@ -738,52 +699,6 @@ class Database
         self::addColumnIfMissing($pdo, 'mockup_generation_jobs', 'artwork_group_id', "INT UNSIGNED NULL");
         self::addColumnIfMissing($pdo, 'mockup_generation_jobs', 'source_artwork_id', "INT UNSIGNED NULL");
         self::addColumnIfMissing($pdo, 'mockup_generation_jobs', 'selector_state_json', "MEDIUMTEXT NULL");
-
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS social_video_workflows (
-                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                user_id INT UNSIGNED NOT NULL,
-                artwork_id INT UNSIGNED NOT NULL,
-                setup_suggestion_json MEDIUMTEXT NOT NULL,
-                setup_edited_json MEDIUMTEXT NOT NULL,
-                final_concept_json MEDIUMTEXT NOT NULL,
-                status VARCHAR(40) NOT NULL DEFAULT 'not_started',
-                video_status VARCHAR(40) NOT NULL DEFAULT 'not_started',
-                video_url TEXT NOT NULL,
-                error TEXT NOT NULL,
-                created_at VARCHAR(40) NOT NULL,
-                updated_at VARCHAR(40) NOT NULL,
-                PRIMARY KEY (id),
-                UNIQUE KEY social_video_workflows_artwork_unique (artwork_id),
-                CONSTRAINT social_video_workflows_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-                CONSTRAINT social_video_workflows_artwork_fk FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-        ");
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS social_video_jobs (
-                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                user_id INT UNSIGNED NOT NULL,
-                artwork_id INT UNSIGNED NOT NULL,
-                workflow_id INT UNSIGNED NOT NULL,
-                provider VARCHAR(80) NOT NULL DEFAULT 'vertex_veo',
-                model VARCHAR(120) NOT NULL DEFAULT '',
-                concept_json MEDIUMTEXT NOT NULL,
-                external_job_id VARCHAR(255) NOT NULL DEFAULT '',
-                status VARCHAR(40) NOT NULL DEFAULT 'created',
-                video_url TEXT NOT NULL,
-                error TEXT NOT NULL,
-                created_at VARCHAR(40) NOT NULL,
-                updated_at VARCHAR(40) NOT NULL,
-                PRIMARY KEY (id),
-                KEY idx_social_video_jobs_workflow (workflow_id, status),
-                CONSTRAINT social_video_jobs_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-                CONSTRAINT social_video_jobs_artwork_fk FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE,
-                CONSTRAINT social_video_jobs_workflow_fk FOREIGN KEY (workflow_id) REFERENCES social_video_workflows(id) ON DELETE CASCADE
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-        ");
-        self::expandMysqlVarcharIfNeeded($pdo, 'social_video_workflows', 'video_status', 255);
-        self::expandMysqlVarcharIfNeeded($pdo, 'social_video_workflows', 'status', 100);
-        self::expandMysqlVarcharIfNeeded($pdo, 'social_video_jobs', 'status', 100);
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS artwork_sheets (

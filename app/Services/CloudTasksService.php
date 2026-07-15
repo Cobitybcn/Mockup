@@ -11,13 +11,14 @@ use Google\Protobuf\Timestamp;
 
 class CloudTasksService
 {
-    public static function enqueueGeneration(int $jobId, int $userId, int $artworkId, string $contextId): string
+    public static function enqueueGeneration(int $jobId, int $userId, int $artworkId, string $contextId, string $generationProvider = ''): string
     {
         return self::enqueue('worker.php', [
             'job_id' => $jobId,
             'user_id' => $userId,
             'artwork_id' => $artworkId,
             'context_id' => $contextId,
+            'generation_provider' => ServiceFactory::generationProvider($generationProvider),
             'timestamp' => date('c'),
         ]);
     }

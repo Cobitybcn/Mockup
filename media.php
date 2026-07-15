@@ -5,11 +5,7 @@ require_once __DIR__ . '/app/bootstrap.php';
 
 $user = Auth::requireUser();
 $file = str_replace('\\', '/', trim((string)($_GET['file'] ?? '')));
-$file = ltrim($file, '/');
-$isSocialVideo = preg_match('#^social-video/[A-Za-z0-9._-]+\.mp4$#', $file) === 1;
-if (!$isSocialVideo) {
-    $file = basename($file);
-}
+$file = basename(ltrim($file, '/'));
 $download = isset($_GET['download']) && $_GET['download'] === '1';
 $thumbWidth = 0;
 if (!$download && isset($_GET['thumb'])) {
@@ -69,7 +65,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 }
 
 $isImage = preg_match('/\.(jpe?g|png|webp|gif)$/i', $file) === 1;
-if ($thumbWidth > 0 && $isImage && !$isSocialVideo) {
+if ($thumbWidth > 0 && $isImage) {
     $thumbPath = media_thumbnail_path($file, $thumbWidth);
     $thumbKey = media_thumbnail_key($file, $thumbWidth);
 
@@ -136,12 +132,6 @@ exit;
 function user_can_access_result_file(int $userId, string $file): bool
 {
     $pdo = Database::connection();
-
-    if (preg_match('#^social-video/[A-Za-z0-9._-]+\.mp4$#', $file) === 1) {
-        $stmt = $pdo->prepare('SELECT 1 FROM social_video_workflows WHERE user_id = :user_id AND video_url = :video_url LIMIT 1');
-        $stmt->execute(['user_id' => $userId, 'video_url' => $file]);
-        return (bool)$stmt->fetchColumn();
-    }
 
     $file = basename($file);
 

@@ -118,9 +118,13 @@ if (!empty($status['user_scene_flow']) && (string)($status['status'] ?? '') === 
             $sceneCategory = trim(str_replace(['\\', '/'], '', (string)($status['scene_category'] ?? 'selected')));
             $sceneBoard = max(1, min(3, (int)($status['scene_board'] ?? 1)));
             $sceneLimit = max(1, min(4, (int)($status['scene_limit'] ?? 4)));
+            $generationProvider = ServiceFactory::generationProvider(
+                (string)($status['generation_provider'] ?? 'gemini')
+            );
             $status['scene_redirect'] = 'mockup_combinations_review.php?id=' . $artworkId
                 . '&board=' . $sceneBoard
                 . '&world_mother_category=' . rawurlencode($sceneCategory)
+                . '&generation_provider=' . rawurlencode($generationProvider)
                 . '&auto_generate=1&compact=1&scene_limit=' . $sceneLimit;
         }
     } catch (Throwable $e) {

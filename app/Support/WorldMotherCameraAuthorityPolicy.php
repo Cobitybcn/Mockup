@@ -34,6 +34,16 @@ final class WorldMotherCameraAuthorityPolicy
         return self::balancedCameraPromptBlock();
     }
 
+    public static function applyToPrompt(string $prompt, string $cameraSlotId): string
+    {
+        $prompt = trim($prompt);
+        if ($prompt === '' || str_contains($prompt, 'WORLD MOTHER AUTHORITY POLICY')) {
+            return $prompt;
+        }
+
+        return self::promptBlock($cameraSlotId) . "\n\n" . $prompt;
+    }
+
     private static function detailCameraPromptBlock(string $cameraSlotId): string
     {
         $rasanteRule = $cameraSlotId === 'rasante_superficie_pintura'
@@ -42,6 +52,8 @@ final class WorldMotherCameraAuthorityPolicy
 
         return trim(<<<TEXT
 WORLD MOTHER AUTHORITY POLICY - DETAIL CAMERA
+
+WORLD MOTHER ROLE: ENVIRONMENTAL INSPIRATION ONLY. The output must be a newly composed scene, not a recreation or edit of the source photo.
 
 The selected camera slot remains the highest authority for composition, crop, lens behavior, camera height, tilt, distance, and perspective.
 
@@ -58,6 +70,8 @@ TEXT);
         return trim(<<<TEXT
 WORLD MOTHER AUTHORITY POLICY - ENVIRONMENT CAMERA
 
+WORLD MOTHER ROLE: ENVIRONMENTAL INSPIRATION ONLY. The output must be a newly composed scene, not a recreation or edit of the source photo.
+
 The selected camera slot remains the highest authority for viewpoint, crop, lens behavior, camera height, tilt, distance, and perspective.
 
 This is an environment/architectural camera. The world mother image is not the environment to reproduce and not the camera reference. It is visual evidence for building a new environment in the same environmental family: materiality, surface texture, palette, light temperature, light direction, atmospheric density, architectural mood, and premium spatial character.
@@ -70,6 +84,8 @@ TEXT);
     {
         return trim(<<<TEXT
 WORLD MOTHER AUTHORITY POLICY - BALANCED CAMERA
+
+WORLD MOTHER ROLE: ENVIRONMENTAL INSPIRATION ONLY. The output must be a newly composed scene, not a recreation or edit of the source photo.
 
 The selected camera slot remains the highest authority for viewpoint, crop, lens behavior, camera height, tilt, distance, and perspective.
 

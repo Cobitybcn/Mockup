@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../app/Services/PinterestPublisher.php';
 require_once __DIR__ . '/../../app/Services/PinterestIntegrationService.php';
 
@@ -17,4 +18,17 @@ $checks=[
     ($service->connection(2,'artist')['pinterest_account_id']??'')==='another_artist',
 ];
 $blocked=false;try{$service->disconnect(2,'platform');}catch(RuntimeException){$blocked=true;}$checks[]=$blocked;
-if(in_array(false,$checks,true)){fwrite(STDERR,"FAIL: Pinterest connection purposes.\n");exit(1);}echo "PASS: platform and artist Pinterest connections remain separate; platform is admin-only.\n";
+
+$APP_ENV_VALUES['PINTEREST_API_ENVIRONMENT']='sandbox';
+$APP_ENV_VALUES['PINTEREST_SANDBOX_TOKEN']='sandbox-token';
+$APP_ENV_VALUES['PINTEREST_PRODUCTION_READ_TOKEN']='production-read-token';
+$APP_ENV_VALUES['PINTEREST_PRODUCTION_READ_USER_ID']='1';
+$readCredentials=new ReflectionMethod(PinterestIntegrationService::class,'boardReadCredentials');
+$adminArtist=$readCredentials->invoke($service,1,'artist');
+$otherArtist=$readCredentials->invoke($service,2,'artist');
+$adminPlatform=$readCredentials->invoke($service,1,'platform');
+$checks[]=$adminArtist===['production-read-token','https://api.pinterest.com/v5'];
+$checks[]=$otherArtist===['sandbox-token','https://api-sandbox.pinterest.com/v5'];
+$checks[]=$adminPlatform===['sandbox-token','https://api-sandbox.pinterest.com/v5'];
+
+if(in_array(false,$checks,true)){fwrite(STDERR,"FAIL: Pinterest connection purposes.\n");exit(1);}echo "PASS: platform and artist Pinterest connections remain separate; production-limited board reads are scoped to one artist admin and cannot replace publishing credentials.\n";

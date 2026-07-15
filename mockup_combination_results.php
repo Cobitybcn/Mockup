@@ -3,6 +3,13 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
+// Esta vista contiene recursos privados y puede quedar inconsistente si la obra
+// se elimina desde otra pestaña. Evita restaurar desde caché tarjetas cuyos
+// archivos ya no están autorizados.
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
+
 $user = Auth::requireUser();
 $isAdmin = Auth::isAdmin($user);
 $pdo = Database::connection();
@@ -10,6 +17,13 @@ AdminSceneEditor::handlePost($user);
 $id = max(0, (int)($_GET['id'] ?? 0));
 $selectedWorldMotherCategory = trim(str_replace(['\\', '/'], '', (string)($_GET['world_mother_category'] ?? '')));
 $sceneBoardIndex = max(1, min(3, (int)($_GET['board'] ?? 1)));
+$requestedGenerationProvider = strtolower(trim((string)($_GET['generation_provider'] ?? '')));
+$generationProviderFilter = in_array($requestedGenerationProvider, ['gemini', 'openai'], true)
+    ? $requestedGenerationProvider
+    : '';
+$generationProviderQuery = $generationProviderFilter !== ''
+    ? '&generation_provider=' . rawurlencode($generationProviderFilter)
+    : '';
 $compactSceneFlow = !empty($_GET['compact']);
 $compactSceneLimit = max(1, min(4, (int)($_GET['scene_limit'] ?? 4)));
 if ($id <= 0) {
@@ -117,6 +131,12 @@ foreach ($stmt->fetchAll() ?: [] as $row) {
     if (!is_array($state) || ($state['generation_source'] ?? '') !== 'mockup_combination_review') {
         continue;
     }
+    $rowGenerationProvider = strtolower(trim((string)($state['generation_provider'] ?? 'gemini')));
+    $rowGenerationProvider = in_array($rowGenerationProvider, ['gemini', 'openai'], true) ? $rowGenerationProvider : 'gemini';
+    if ($generationProviderFilter !== '' && $rowGenerationProvider !== $generationProviderFilter) {
+        continue;
+    }
+    $state['generation_provider'] = $rowGenerationProvider;
     $combo = (array)($state['combination'] ?? []);
     $rowSceneBoardIndex = max(1, min(3, (int)($combo['camera_slot_scene_board_index'] ?? 1)));
     $combo['camera_slot_scene_board_index'] = $rowSceneBoardIndex;
@@ -169,6 +189,12 @@ foreach ($jobStmt->fetchAll() ?: [] as $jobRow) {
     if (!is_array($state) || ($state['generation_source'] ?? '') !== 'mockup_combination_review') {
         continue;
     }
+    $rowGenerationProvider = strtolower(trim((string)($state['generation_provider'] ?? 'gemini')));
+    $rowGenerationProvider = in_array($rowGenerationProvider, ['gemini', 'openai'], true) ? $rowGenerationProvider : 'gemini';
+    if ($generationProviderFilter !== '' && $rowGenerationProvider !== $generationProviderFilter) {
+        continue;
+    }
+    $state['generation_provider'] = $rowGenerationProvider;
 
     $combo = (array)($state['combination'] ?? []);
     $rowSceneBoardIndex = max(1, min(3, (int)($combo['camera_slot_scene_board_index'] ?? $state['scene_board_index'] ?? 1)));
@@ -244,6 +270,11 @@ foreach (glob($auditDir . '/combination-*.generation.json') ?: [] as $auditFile)
     if (!is_array($decoded)) {
         continue;
     }
+    $auditGenerationProvider = strtolower(trim((string)($decoded['generation_provider'] ?? 'gemini')));
+    $auditGenerationProvider = in_array($auditGenerationProvider, ['gemini', 'openai'], true) ? $auditGenerationProvider : 'gemini';
+    if ($generationProviderFilter !== '' && $auditGenerationProvider !== $generationProviderFilter) {
+        continue;
+    }
     if (max(1, min(3, (int)($decoded['combination']['camera_slot_scene_board_index'] ?? 1))) !== $sceneBoardIndex) {
         continue;
     }
@@ -308,7 +339,7 @@ $visibleCameraReport = array_values(array_filter($cameraReport, static fn (array
 
 $resultGroups = [[
     'group_id' => 'scene_board',
-    'group_name' => 'Scene Boards Results',
+    'group_name' => 'Scene Boards Results' . ($generationProviderFilter !== '' ? ' · ' . ($generationProviderFilter === 'openai' ? 'OpenAI' : 'Vertex') : ''),
     'group_order' => 1,
     'items' => [],
 ]];
@@ -1001,10 +1032,10 @@ if (is_file($evalPath)) {
                     <div class="next-batch-prompt">
                         <?php if ($compactSceneFlow): ?>
                             <span>Create 4 more views<br><small>Explore different angles and scene compositions.</small></span>
-                            <a href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$nextSceneBoardIndex ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>&auto_generate=1&compact=1&scene_limit=<?= (int)$compactSceneLimit ?>">Create 4 more views</a>
+                            <a href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$nextSceneBoardIndex ?><?= $generationProviderQuery ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>&auto_generate=1&compact=1&scene_limit=<?= (int)$compactSceneLimit ?>">Create 4 more views</a>
                         <?php else: ?>
                             <span>Would you like to generate a <?= $nextSceneBoardIndex === 2 ? 'second' : 'third' ?> mockup board?</span>
-                            <a href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$nextSceneBoardIndex ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Generate Batch <?= (int)$nextSceneBoardIndex ?></a>
+                            <a href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$nextSceneBoardIndex ?><?= $generationProviderQuery ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Generate Batch <?= (int)$nextSceneBoardIndex ?></a>
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>
@@ -1052,10 +1083,11 @@ if (is_file($evalPath)) {
                         $rowCameraSlotsById
                     );
                     $sceneTitle = (string)($combo['world_mother_category'] ?? 'Scene');
+                    $resultGenerationProvider = strtolower(trim((string)($state['generation_provider'] ?? 'gemini'))) === 'openai' ? 'openai' : 'gemini';
                     ?>
                     <section class="result-card batch-<?= (int)$resultSceneBoardIndex ?>" id="result-card-<?= $mockupId ?>" data-result-batch="<?= (int)$resultSceneBoardIndex ?>">
                         <div class="result-image-wrap">
-                            <a class="result-image-link" href="viewer.php?id=<?= $mockupId ?>&back=<?= rawurlencode('mockup_combination_results.php?id=' . (int)$id . ($selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '')) ?>" aria-label="Open in Mockup Album">
+                            <a class="result-image-link" href="viewer.php?id=<?= $mockupId ?>&back=<?= rawurlencode('mockup_combination_results.php?id=' . (int)$id . $generationProviderQuery . ($selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '')) ?>" aria-label="Open in Mockup Album">
                                 <img src="media.php?file=<?= rawurlencode(basename((string)$row['mockup_file'])) ?>&thumb=1&w=640&v=<?= $mockupId ?>" alt="" loading="lazy" decoding="async">
                             </a>
                             <button
@@ -1080,6 +1112,7 @@ if (is_file($evalPath)) {
                                     data-scene-board="<?= (int)$resultSceneBoardIndex ?>"
                                     data-world-mother-category="<?= h((string)($combo['world_mother_category'] ?? $selectedWorldMotherCategory)) ?>"
                                     data-world-mother-variant="<?= (int)($combo['world_mother_variant_offset'] ?? 0) ?>"
+                                    data-generation-provider="<?= h($resultGenerationProvider) ?>"
                                 >↻</button>
                                 <button
                                     class="result-icon-action danger"
@@ -1160,6 +1193,7 @@ if (is_file($evalPath)) {
                                 data-scene-board="<?= (int)$resultSceneBoardIndex ?>"
                                 data-world-mother-category="<?= h((string)($combo['world_mother_category'] ?? $selectedWorldMotherCategory)) ?>"
                                 data-world-mother-variant="<?= (int)($combo['world_mother_variant_offset'] ?? 0) ?>"
+                                data-generation-provider="<?= h($resultGenerationProvider) ?>"
                                 style="margin-top: 15px;"
                             >Create Variation</button>
                         </div>
@@ -1320,6 +1354,7 @@ function redoResult(button) {
     formData.append('board', button.getAttribute('data-scene-board') || '1');
     formData.append('world_mother_category', button.getAttribute('data-world-mother-category') || '');
     formData.append('world_mother_variant_offset', button.getAttribute('data-world-mother-variant') || '0');
+    formData.append('generation_provider', button.getAttribute('data-generation-provider') || 'gemini');
     formData.append('world_mother_scale', '1.0');
     if (panel) {
         const human = panel.querySelector('input[name^="human_presence_"]:checked');
@@ -1583,6 +1618,15 @@ function updateScaleLabel(range, id) {
     }
 }
 
+</script>
+<script>
+// Chrome puede restaurar una página completa desde su back/forward cache aun
+// después de eliminar la obra. Fuerza la validación del servidor en ese caso.
+window.addEventListener('pageshow', function (event) {
+    if (event.persisted) {
+        window.location.reload();
+    }
+});
 </script>
 </body>
 </html>

@@ -195,6 +195,14 @@ a {
   align-items: stretch;
 }
 
+.sidebar-publishing-tabs {
+  display: flex;
+  align-items: stretch;
+  margin-right: -16px;
+  padding: 0 16px 0 14px;
+  background: #E6F2E7;
+}
+
 .sidebar-tab {
   min-height: 48px;
   display: inline-flex;
@@ -237,6 +245,10 @@ a {
 .sidebar-tab:hover {
   color: var(--ink);
   background: transparent;
+}
+
+.sidebar-publishing-tabs .sidebar-tab:hover {
+  background: rgba(76, 120, 82, 0.08);
 }
 
 .sidebar-tab.active {

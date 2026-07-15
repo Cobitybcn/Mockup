@@ -24,7 +24,7 @@ assets/showcase/*
 !assets/showcase/34-right-view-attic-studio-3-4-right-view-medium-test-piece-mockup-02.jpg
 !assets/showcase/floor-leaning.jpg
 !assets/showcase/nadir.jpg
-vendor
+/vendor
 *.log
 __pycache__/
 *.pyc

@@ -90,7 +90,7 @@ final class AssistantRepository
     {
         $identityId = $this->identityIdForUser((int)$user['id']);
         if ($key !== null && $key !== '') {
-            $statement = $this->pdo->prepare("SELECT * FROM assistant_conversations WHERE conversation_key=? AND identity_id=? AND area=? AND status='active' LIMIT 1");
+            $statement = $this->pdo->prepare("SELECT * FROM assistant_conversations WHERE conversation_key=? AND identity_id=? AND area=? AND status IN ('active','archived') LIMIT 1");
             $statement->execute([$key, $identityId, self::AREA]);
             $conversation = $statement->fetch();
             if (!$conversation) {
@@ -138,6 +138,81 @@ final class AssistantRepository
         $statement->bindValue(2, max(2, min(50, $limit)), PDO::PARAM_INT);
         $statement->execute();
         return $statement->fetchAll();
+    }
+
+    public function recentConversations(array $user, int $limit = 8): array
+    {
+        $identityId = $this->identityIdForUser((int)$user['id']);
+        $statement = $this->pdo->prepare("SELECT conversation_key,title,page_type,status,last_message_at,updated_at FROM assistant_conversations WHERE identity_id=? AND area=? AND status IN ('active','archived') AND last_message_at IS NOT NULL ORDER BY last_message_at DESC,id DESC LIMIT ?");
+        $statement->bindValue(1, $identityId, PDO::PARAM_INT);
+        $statement->bindValue(2, self::AREA, PDO::PARAM_STR);
+        $statement->bindValue(3, max(1, min(20, $limit)), PDO::PARAM_INT);
+        $statement->execute();
+        return array_map(static fn (array $conversation): array => [
+            'conversation_key' => (string)$conversation['conversation_key'],
+            'title' => (string)($conversation['title'] ?: 'Chat sin título'),
+            'page_type' => (string)$conversation['page_type'],
+            'status' => (string)$conversation['status'],
+            'updated_at' => (string)($conversation['last_message_at'] ?: $conversation['updated_at']),
+        ], $statement->fetchAll());
+    }
+
+    public function workspaceOverview(array $user): array
+    {
+        $identityId = $this->identityIdForUser((int)$user['id']);
+
+        $tasks = $this->pdo->prepare("SELECT t.task_key,t.title,t.current_route,t.component,t.description,t.expected_behavior,t.status,t.updated_at,c.conversation_key,c.title conversation_title FROM assistant_technical_tasks t JOIN assistant_conversations c ON c.id=t.conversation_id WHERE c.identity_id=? AND c.area=? AND c.status IN ('active','archived') AND t.status IN ('pending','in_progress') ORDER BY t.updated_at DESC,t.id DESC LIMIT 20");
+        $tasks->execute([$identityId, self::AREA]);
+
+        $memories = $this->pdo->prepare("SELECT m.memory_key,m.memory_type,m.content,m.importance,m.updated_at,c.conversation_key,c.title conversation_title FROM assistant_memories m JOIN assistant_conversations c ON c.id=m.conversation_id WHERE c.identity_id=? AND c.area=? AND c.status IN ('active','archived') AND m.status='active' AND m.memory_type IN ('decision','preference','fact','note') ORDER BY m.updated_at DESC,m.id DESC LIMIT 20");
+        $memories->execute([$identityId, self::AREA]);
+
+        $actions = $this->pdo->prepare("SELECT a.action_key,a.action_type,a.target_type,a.target_key,a.status,a.created_at,c.conversation_key,c.title conversation_title FROM assistant_actions a JOIN assistant_conversations c ON c.id=a.conversation_id WHERE c.identity_id=? AND c.area=? AND c.status IN ('active','archived') ORDER BY a.created_at DESC,a.id DESC LIMIT 20");
+        $actions->execute([$identityId, self::AREA]);
+
+        $usage = $this->pdo->prepare("SELECT COUNT(*) requests,COALESCE(SUM(u.input_tokens),0) input_tokens,COALESCE(SUM(u.output_tokens),0) output_tokens,COALESCE(SUM(u.cached_input_tokens),0) cached_input_tokens FROM assistant_usage_events u JOIN assistant_conversations c ON c.id=u.conversation_id WHERE c.identity_id=? AND c.area=? AND u.created_at>=?");
+        $usage->execute([$identityId, self::AREA, date('Y-m-d') . 'T00:00:00']);
+        $usageToday = $usage->fetch() ?: [];
+
+        return [
+            'tasks' => array_map(static fn (array $task): array => [
+                'task_key' => (string)$task['task_key'],
+                'title' => (string)$task['title'],
+                'route' => (string)$task['current_route'],
+                'component' => (string)$task['component'],
+                'description' => (string)$task['description'],
+                'expected_behavior' => (string)$task['expected_behavior'],
+                'status' => (string)$task['status'],
+                'updated_at' => (string)$task['updated_at'],
+                'conversation_key' => (string)$task['conversation_key'],
+                'conversation_title' => (string)($task['conversation_title'] ?: 'Chat sin título'),
+            ], $tasks->fetchAll()),
+            'memories' => array_map(static fn (array $memory): array => [
+                'memory_key' => (string)$memory['memory_key'],
+                'memory_type' => (string)$memory['memory_type'],
+                'content' => (string)$memory['content'],
+                'importance' => (int)$memory['importance'],
+                'updated_at' => (string)$memory['updated_at'],
+                'conversation_key' => (string)$memory['conversation_key'],
+                'conversation_title' => (string)($memory['conversation_title'] ?: 'Chat sin título'),
+            ], $memories->fetchAll()),
+            'actions' => array_map(static fn (array $action): array => [
+                'action_key' => (string)$action['action_key'],
+                'action_type' => (string)$action['action_type'],
+                'target_type' => (string)$action['target_type'],
+                'target_key' => (string)$action['target_key'],
+                'status' => (string)$action['status'],
+                'created_at' => (string)$action['created_at'],
+                'conversation_key' => (string)$action['conversation_key'],
+                'conversation_title' => (string)($action['conversation_title'] ?: 'Chat sin título'),
+            ], $actions->fetchAll()),
+            'usage_today' => [
+                'requests' => (int)($usageToday['requests'] ?? 0),
+                'input_tokens' => (int)($usageToday['input_tokens'] ?? 0),
+                'output_tokens' => (int)($usageToday['output_tokens'] ?? 0),
+                'cached_input_tokens' => (int)($usageToday['cached_input_tokens'] ?? 0),
+            ],
+        ];
     }
 
     public function addMessage(int $conversationId, string $role, string $content, ?int $actorUserId = null, array $context = [], string $model = '', string $providerId = '', array $usage = [], string $errorCode = ''): int
@@ -217,8 +292,12 @@ final class AssistantRepository
 
     public function recordUsage(int $conversationId, int $actorUserId, string $model, array $usage, string $providerId = '', string $status = 'success', string $errorCode = '', array $context = []): void
     {
+        $providerHint = strtolower(trim((string)($context['provider'] ?? '')));
+        $provider = in_array($providerHint, ['gemini', 'openai'], true)
+            ? $providerHint
+            : ((str_contains(strtolower($providerId), 'gemini') || str_contains(strtolower($model), 'gemini')) ? 'gemini' : 'openai');
         $this->pdo->prepare('INSERT INTO assistant_usage_events(conversation_id,actor_user_id,provider,provider_response_id,model,input_tokens,output_tokens,cached_input_tokens,status,error_code,context_json,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)')
-            ->execute([$conversationId, $actorUserId, 'openai', $providerId, $model, (int)($usage['input_tokens'] ?? 0), (int)($usage['output_tokens'] ?? 0), (int)($usage['cached_input_tokens'] ?? $usage['input_tokens_details']['cached_tokens'] ?? 0), $status, $errorCode, $context ? json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) : null, date('c')]);
+            ->execute([$conversationId, $actorUserId, $provider, $providerId, $model, (int)($usage['input_tokens'] ?? 0), (int)($usage['output_tokens'] ?? 0), (int)($usage['cached_input_tokens'] ?? $usage['input_tokens_details']['cached_tokens'] ?? 0), $status, $errorCode, $context ? json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) : null, date('c')]);
     }
 
     public function recordAction(int $conversationId, int $actorUserId, string $actionType, string $targetType, string $targetKey, string $status, array $request = [], array $result = []): array
@@ -269,6 +348,7 @@ final class AssistantRepository
         $actions->execute([(int)$conversation['id']]);
         return [
             'conversation_key' => (string)$conversation['conversation_key'],
+            'title' => (string)($conversation['title'] ?? ''),
             'messages' => $this->recentMessages((int)$conversation['id'], 30),
             'summary' => (string)($conversation['summary_text'] ?? ''),
             'actions' => array_reverse($actions->fetchAll()),
@@ -305,7 +385,7 @@ final class AssistantRepository
 
     private function touchConversation(int $conversationId, int $actorUserId, array $page): void
     {
-        $this->pdo->prepare('UPDATE assistant_conversations SET page_type=?,updated_at=? WHERE id=?')->execute([(string)$page['page_type'], date('c'), $conversationId]);
+        $this->pdo->prepare("UPDATE assistant_conversations SET page_type=?,status='active',updated_at=? WHERE id=?")->execute([(string)$page['page_type'], date('c'), $conversationId]);
         $this->syncEntities($conversationId, $actorUserId, $page);
     }
 

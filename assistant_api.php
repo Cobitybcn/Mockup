@@ -24,7 +24,7 @@ try {
         header('Allow: POST');
         assistant_respond(['ok' => false, 'error' => 'method_not_allowed'], 405);
     }
-    if ((int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 120000) {
+    if ((int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 2500000) {
         throw new AssistantException('La solicitud es demasiado grande.', 'request_too_large');
     }
     $request = json_decode((string)file_get_contents('php://input'), true);
@@ -45,6 +45,8 @@ try {
     $result = match ($action) {
         'chat' => $service->chat($user, $request),
         'history' => $service->history($user, $request),
+        'conversations' => $service->conversations($user),
+        'workspace' => $service->workspace($user),
         'new_conversation' => $service->newConversation($user, $request),
         default => throw new AssistantException('La operación solicitada no está permitida.', 'invalid_operation'),
     };
@@ -54,8 +56,8 @@ try {
     $status = match (true) {
         $code === 'assistant_disabled' => 404,
         $code === 'invalid_csrf' => 403,
-        str_starts_with($code, 'rate_limit_') => 429,
-        str_starts_with($code, 'openai_') => 502,
+        str_starts_with($code, 'rate_limit_') || $code === 'gemini_rate_limit' => 429,
+        str_starts_with($code, 'openai_') || str_starts_with($code, 'gemini_') => 502,
         default => 400,
     };
     assistant_respond(['ok' => false, 'error' => $code, 'message' => $exception->getMessage()], $status);

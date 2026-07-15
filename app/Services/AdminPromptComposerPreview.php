@@ -163,7 +163,8 @@ class AdminPromptComposerPreview
                     $orientation,
                     $fields['camera_slot_id']
                 )
-                . "\n\n" . self::slotFullPromptWorldMotherArtworkQuarantine();
+                . "\n\n" . self::slotFullPromptWorldMotherArtworkQuarantine()
+                . "\n\n" . WorldMotherCameraAuthorityPolicy::promptBlock($fields['camera_slot_id']);
             return $this->sanitizeRenderableMeasurementLabels(str_replace(
                 array_keys($replacements),
                 array_values($replacements),

@@ -205,7 +205,7 @@ $openMockups = $openDraft ? wsn_campaign_mockups($pdo, $userId, (array)($openPay
                     <h1>Website Studio Notes</h1>
                     <p>Prepare essays, reflections and study notes for the artist website.</p>
                 </div>
-                <a class="button-link secondary" href="../artist-site-faithful/blog" target="_blank" rel="noopener">Open Website Blog</a>
+                <a class="button-link secondary" href="../artist-site/blog" target="_blank" rel="noopener">Open Website Blog</a>
             </div>
 
             <?php if ($notice): ?>

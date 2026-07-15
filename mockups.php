@@ -21,19 +21,36 @@ $where = 'WHERE m.user_id = :user_id';
 $params = ['user_id' => (int)$user['id']];
 
 if ($query !== '') {
-    $where .= ' AND (m.context_id LIKE :query OR m.mockup_file LIKE :query OR m.artwork_file LIKE :query OR s.title LIKE :query)';
+    $where .= ' AND (
+        m.context_id LIKE :query
+        OR m.mockup_file LIKE :query
+        OR m.artwork_file LIKE :query
+        OR m.selector_state_json LIKE :query
+        OR s.title LIKE :query
+        OR a.final_title LIKE :query
+        OR ag.title LIKE :query
+    )';
     $params['query'] = '%' . $query . '%';
 }
 
-$countStmt = $pdo->prepare("SELECT COUNT(*) FROM mockups m LEFT JOIN artwork_series s ON s.id = m.series_id AND s.user_id = m.user_id {$where}");
+$countStmt = $pdo->prepare("
+    SELECT COUNT(*)
+    FROM mockups m
+    LEFT JOIN artworks a ON a.id = m.source_artwork_id AND a.user_id = m.user_id
+    LEFT JOIN artwork_groups ag ON ag.id = a.artwork_group_id AND ag.user_id = m.user_id AND ag.status = 'active'
+    LEFT JOIN artwork_series s ON s.id = COALESCE(m.series_id, a.series_id) AND s.user_id = m.user_id
+    {$where}
+");
 $countStmt->execute($params);
 $total = (int)$countStmt->fetchColumn();
 $totalPages = max(1, (int)ceil($total / $perPage));
 
 $stmt = $pdo->prepare("
-    SELECT m.*, s.title AS series_title
+    SELECT m.*, s.title AS series_title, a.final_title AS artwork_title, ag.title AS artwork_group_title
     FROM mockups m
-    LEFT JOIN artwork_series s ON s.id = m.series_id AND s.user_id = m.user_id
+    LEFT JOIN artworks a ON a.id = m.source_artwork_id AND a.user_id = m.user_id
+    LEFT JOIN artwork_groups ag ON ag.id = a.artwork_group_id AND ag.user_id = m.user_id AND ag.status = 'active'
+    LEFT JOIN artwork_series s ON s.id = COALESCE(m.series_id, a.series_id) AND s.user_id = m.user_id
     {$where}
     ORDER BY m.created_at DESC
     LIMIT :limit OFFSET :offset
@@ -61,9 +78,11 @@ if ($favoriteIds) {
     }
 
     $favoriteStmt = $pdo->prepare('
-        SELECT m.*, s.title AS series_title
+        SELECT m.*, s.title AS series_title, a.final_title AS artwork_title, ag.title AS artwork_group_title
         FROM mockups m
-        LEFT JOIN artwork_series s ON s.id = m.series_id AND s.user_id = m.user_id
+        LEFT JOIN artworks a ON a.id = m.source_artwork_id AND a.user_id = m.user_id
+        LEFT JOIN artwork_groups ag ON ag.id = a.artwork_group_id AND ag.user_id = m.user_id AND ag.status = \'active\'
+        LEFT JOIN artwork_series s ON s.id = COALESCE(m.series_id, a.series_id) AND s.user_id = m.user_id
         WHERE m.user_id = :user_id
         AND m.id IN (' . implode(',', $favoritePlaceholders) . ')
     ');
@@ -129,6 +148,17 @@ function pagination_pages(int $current, int $total): array
 function mockup_album_label(array $mockup): string
 {
     $state = json_decode((string)($mockup['selector_state_json'] ?? ''), true);
+    if (is_array($state) && (string)($state['generation_source'] ?? '') === 'external_upload') {
+        $artworkTitle = trim((string)($mockup['artwork_group_title'] ?? ''));
+        if ($artworkTitle === '') {
+            $artworkTitle = trim((string)($mockup['artwork_title'] ?? ''));
+        }
+        if ($artworkTitle !== '') {
+            return $artworkTitle . ' · Imported';
+        }
+        $originalName = trim((string)($state['import']['original_filename'] ?? ''));
+        return $originalName !== '' ? $originalName : 'Imported Mockup';
+    }
     $combo = is_array($state) ? (array)($state['combination'] ?? []) : [];
     $label = trim((string)($combo['camera_slot_name'] ?? ''));
     if ($label !== '') {
@@ -624,7 +654,8 @@ function mockup_album_label(array $mockup): string
                     <p><?= h($total) ?> images saved in your private archive.</p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link" href="artwork_new.php">Upload Artwork</a>
+                    <a class="button-link secondary" href="artwork_new.php">Upload Artwork</a>
+                    <a class="button-link" href="mockup_upload.php">Import Mockups</a>
                 </div>
             </div>
 
@@ -723,7 +754,7 @@ function mockup_album_label(array $mockup): string
                                     </button>
                                 </div>
                                 <?php $mockupSeriesTitle = ArtworkSeries::display((string)($mockup['series_title'] ?? '')); ?>
-                                <h3><?= h(Display::contextTitle($mockup['context_id'])) ?><?php if ($mockupSeriesTitle !== ''): ?> <span class="title-series-soft">(<?= h($mockupSeriesTitle) ?>)</span><?php endif; ?></h3>
+                                <h3><?= h(mockup_album_label($mockup)) ?><?php if ($mockupSeriesTitle !== ''): ?> <span class="title-series-soft">(<?= h($mockupSeriesTitle) ?>)</span><?php endif; ?></h3>
                                 <p class="meta-line"><?= h(date('m/d/Y H:i', strtotime((string)$mockup['created_at']))) ?></p>
                                 <div class="card-actions">
                                     <a href="<?= h(download_url($mockup['mockup_file'])) ?>" aria-label="Download mockup" title="Download">

@@ -64,8 +64,6 @@ require_once __DIR__ . '/Services/ArtworkGroupService.php';
 require_once __DIR__ . '/Services/MockArtworkProcessor.php';
 require_once __DIR__ . '/Services/MockMockupGenerator.php';
 require_once __DIR__ . '/Services/MockupBatchQueue.php';
-require_once __DIR__ . '/Services/SocialVideoService.php';
-require_once __DIR__ . '/Services/VeoVideoClient.php';
 require_once __DIR__ . '/Services/GeminiImageClient.php';
 require_once __DIR__ . '/Services/GeminiArtworkProcessor.php';
 require_once __DIR__ . '/Services/GeminiMockupGenerator.php';

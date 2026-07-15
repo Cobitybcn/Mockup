@@ -13,6 +13,20 @@ ignore_user_abort(true);
 require_once __DIR__ . '/app/bootstrap.php';
 
 $currentUser = Auth::requireUser();
+$canSelectGenerationProvider = ProviderSettings::canSelectGenerationProvider(
+    Auth::isAdmin($currentUser),
+    (string)($_SERVER['HTTP_HOST'] ?? '')
+);
+$requestedGenerationProvider = strtolower(trim((string)($_POST['generation_provider'] ?? '')));
+$allowedGenerationProviders = ['gemini', 'openai'];
+if ($canSelectGenerationProvider && !in_array($requestedGenerationProvider, $allowedGenerationProviders, true)) {
+    http_response_code(400);
+    echo 'Choose Vertex or OpenAI before starting generation.';
+    exit;
+}
+$generationProvider = $canSelectGenerationProvider
+    ? ServiceFactory::generationProvider($requestedGenerationProvider)
+    : ServiceFactory::generationProvider();
 
 function fail(string $msg): void
 {
@@ -183,6 +197,7 @@ $status = [
     'provider_settings' => $providerSettings,
     'user_id' => (int)$currentUser['id'],
     'user_scene_flow' => $isUserSceneFlow,
+    'generation_provider' => $generationProvider,
     'scene_category' => $sceneCategory,
     'scene_board' => $sceneBoard,
     'scene_limit' => $sceneLimit,

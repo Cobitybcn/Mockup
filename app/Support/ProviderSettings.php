@@ -30,11 +30,6 @@ class ProviderSettings
             'openai_image_quality' => $input['openai_image_quality'] ?? '',
             'openai_image_size' => $input['openai_image_size'] ?? '',
             'mockup_worker_count' => $input['mockup_worker_count'] ?? '',
-            'social_video_veo_enabled' => isset($input['social_video_veo_enabled']) ? '1' : '0',
-            'social_video_veo_model' => $input['social_video_veo_model'] ?? '',
-            'social_video_veo_region' => $input['social_video_veo_region'] ?? '',
-            'social_video_veo_resolution' => $input['social_video_veo_resolution'] ?? '',
-            'social_video_veo_storage_uri' => $input['social_video_veo_storage_uri'] ?? '',
             'ffmpeg_binary_path' => $input['ffmpeg_binary_path'] ?? '',
         ]);
 
@@ -75,11 +70,6 @@ class ProviderSettings
             'openai_image_quality' => self::openAIImageQuality(),
             'openai_image_size' => self::openAIImageSize(),
             'mockup_worker_count' => (string)self::mockupWorkerCount(),
-            'social_video_veo_enabled' => self::socialVideoVeoEnabled() ? '1' : '0',
-            'social_video_veo_model' => self::socialVideoVeoModel(),
-            'social_video_veo_region' => self::socialVideoVeoRegion(),
-            'social_video_veo_resolution' => self::socialVideoVeoResolution(),
-            'social_video_veo_storage_uri' => self::socialVideoVeoStorageUri(),
             'ffmpeg_binary_path' => self::ffmpegBinaryPath(),
         ];
     }
@@ -116,7 +106,33 @@ class ProviderSettings
 
     public static function openAIAPIKey(): string
     {
-        return self::value('openai_api_key', defined('OPENAI_API_KEY') ? (string)OPENAI_API_KEY : '');
+        $configured = self::value('openai_api_key', defined('OPENAI_API_KEY') ? (string)OPENAI_API_KEY : '');
+        if ($configured !== '') {
+            return $configured;
+        }
+
+        // A blank OPENAI_API_KEY entry in .env must not hide a securely stored
+        // process/user environment variable (the assistant config follows the
+        // same fallback rule).
+        $environment = getenv('OPENAI_API_KEY');
+        return $environment === false ? '' : trim((string)$environment);
+    }
+
+    public static function canSelectGenerationProvider(bool $isAdmin, string $httpHost = ''): bool
+    {
+        if ($isAdmin) {
+            return true;
+        }
+
+        $host = strtolower(trim(explode(',', $httpHost)[0] ?? ''));
+        if (str_starts_with($host, '[')) {
+            $closingBracket = strpos($host, ']');
+            $host = $closingBracket === false ? trim($host, '[]') : substr($host, 1, $closingBracket - 1);
+        } elseif (substr_count($host, ':') === 1) {
+            $host = explode(':', $host, 2)[0];
+        }
+
+        return in_array($host, ['localhost', '127.0.0.1', '::1'], true);
     }
 
     public static function geminiAPIKey(): string
@@ -156,31 +172,6 @@ class ProviderSettings
         return self::normalizeWorkerCount(
             self::value('mockup_worker_count', defined('MOCKUP_WORKER_COUNT') ? (string)MOCKUP_WORKER_COUNT : '4')
         );
-    }
-
-    public static function socialVideoVeoEnabled(): bool
-    {
-        return self::truthy(self::value('social_video_veo_enabled', '0'));
-    }
-
-    public static function socialVideoVeoModel(): string
-    {
-        return self::value('social_video_veo_model', 'veo-3.1-lite-generate-001');
-    }
-
-    public static function socialVideoVeoRegion(): string
-    {
-        return self::value('social_video_veo_region', 'us-central1');
-    }
-
-    public static function socialVideoVeoResolution(): string
-    {
-        return self::value('social_video_veo_resolution', '1080p');
-    }
-
-    public static function socialVideoVeoStorageUri(): string
-    {
-        return self::value('social_video_veo_storage_uri', 'gs://artwork-curator-veo-output');
     }
 
     public static function ffmpegBinaryPath(): string
@@ -255,10 +246,6 @@ class ProviderSettings
             $clean['mockup_worker_count'] = (string)self::normalizeWorkerCount($clean['mockup_worker_count']);
         }
 
-        if (isset($clean['social_video_veo_enabled'])) {
-            $clean['social_video_veo_enabled'] = self::truthy($clean['social_video_veo_enabled']) ? '1' : '0';
-        }
-
         return $clean;
     }
 
@@ -276,11 +263,6 @@ class ProviderSettings
             'openai_image_quality',
             'openai_image_size',
             'mockup_worker_count',
-            'social_video_veo_enabled',
-            'social_video_veo_model',
-            'social_video_veo_region',
-            'social_video_veo_resolution',
-            'social_video_veo_storage_uri',
             'ffmpeg_binary_path',
         ];
     }

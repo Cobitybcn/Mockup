@@ -51,10 +51,10 @@ final class PinterestIntegrationService
     public function boards(int $userId, string $purpose = 'artist'): array
     {
         $this->assertPurposeAllowed($userId,$purpose);
-        $token=$this->accessToken($userId,$purpose); $items=[]; $bookmark=null;
+        [$token,$apiBase]=$this->boardReadCredentials($userId,$purpose); $items=[]; $bookmark=null;
         do {
             $path='/boards?page_size=100' . ($bookmark ? '&bookmark='.rawurlencode($bookmark) : '');
-            $page=$this->api('GET',$path,$token); $items=array_merge($items,(array)($page['items']??[]));
+            $page=$this->api('GET',$path,$token,null,$apiBase); $items=array_merge($items,(array)($page['items']??[]));
             $bookmark=is_string($page['bookmark']??null)?$page['bookmark']:null;
         } while ($bookmark !== null && count($items) < 500);
         usort($items,fn($a,$b)=>strcasecmp((string)($a['name']??''),(string)($b['name']??'')));
@@ -63,8 +63,8 @@ final class PinterestIntegrationService
 
     public function sections(int $userId,string $purpose,string $boardId): array
     {
-        $this->assertPurposeAllowed($userId,$purpose);if($boardId==='')return [];$token=$this->accessToken($userId,$purpose);$items=[];$bookmark=null;
-        do{$path='/boards/'.rawurlencode($boardId).'/sections?page_size=100'.($bookmark?'&bookmark='.rawurlencode($bookmark):'');$page=$this->api('GET',$path,$token);$items=array_merge($items,(array)($page['items']??[]));$bookmark=is_string($page['bookmark']??null)?$page['bookmark']:null;}while($bookmark!==null&&count($items)<500);
+        $this->assertPurposeAllowed($userId,$purpose);if($boardId==='')return [];[$token,$apiBase]=$this->boardReadCredentials($userId,$purpose);$items=[];$bookmark=null;
+        do{$path='/boards/'.rawurlencode($boardId).'/sections?page_size=100'.($bookmark?'&bookmark='.rawurlencode($bookmark):'');$page=$this->api('GET',$path,$token,null,$apiBase);$items=array_merge($items,(array)($page['items']??[]));$bookmark=is_string($page['bookmark']??null)?$page['bookmark']:null;}while($bookmark!==null&&count($items)<500);
         usort($items,fn($a,$b)=>strcasecmp((string)($a['name']??''),(string)($b['name']??'')));return $items;
     }
 
@@ -128,11 +128,29 @@ final class PinterestIntegrationService
         return $this->decodeResponse($curl,'Pinterest OAuth');
     }
 
-    private function api(string $method,string $path,string $token,?array $payload=null): array
+    private function api(string $method,string $path,string $token,?array $payload=null,?string $apiBase=null): array
     {
-        $curl=curl_init($this->apiBase().$path); $opts=[CURLOPT_RETURNTRANSFER=>true,CURLOPT_CUSTOMREQUEST=>$method,CURLOPT_HTTPHEADER=>['Authorization: Bearer '.$token,'Content-Type: application/json'],CURLOPT_TIMEOUT=>30];
+        $curl=curl_init(($apiBase??$this->apiBase()).$path); $opts=[CURLOPT_RETURNTRANSFER=>true,CURLOPT_CUSTOMREQUEST=>$method,CURLOPT_HTTPHEADER=>['Authorization: Bearer '.$token,'Content-Type: application/json'],CURLOPT_TIMEOUT=>30];
         if($payload!==null)$opts[CURLOPT_POSTFIELDS]=json_encode($payload,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
         curl_setopt_array($curl,$opts); return $this->decodeResponse($curl,'Pinterest API');
+    }
+
+    /**
+     * Trial-pending apps may use Pinterest's production-limited token to read
+     * the app owner's real boards. Keep this bridge scoped to one local admin
+     * user and never reuse the token for creating Pins.
+     *
+     * @return array{0:string,1:string}
+     */
+    private function boardReadCredentials(int $userId,string $purpose): array
+    {
+        $purpose=$this->purpose($purpose);
+        $readToken=trim(app_env('PINTEREST_PRODUCTION_READ_TOKEN'));
+        $readUserId=(int)app_env('PINTEREST_PRODUCTION_READ_USER_ID','0');
+        if($purpose==='artist'&&$readToken!==''&&$readUserId>0&&$userId===$readUserId){
+            return [$readToken,'https://api.pinterest.com/v5'];
+        }
+        return [$this->accessToken($userId,$purpose),$this->apiBase()];
     }
 
     private function decodeResponse(CurlHandle $curl,string $label): array

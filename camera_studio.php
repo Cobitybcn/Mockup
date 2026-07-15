@@ -116,32 +116,61 @@ function camera_board_label(array $slot): string
     return $name !== '' ? $name : (string)($slot['slot_id'] ?? '');
 }
 
+function camera_origin_label(string $slotId, array $baseSlots, array $customSlots): string
+{
+    if (isset($customSlots[$slotId])) {
+        return isset($baseSlots[$slotId]) ? 'Base con override custom' : 'Custom';
+    }
+    return isset($baseSlots[$slotId]) ? 'Base' : 'Nueva';
+}
+
+function render_camera_board_card(string $slotId, array $slot, bool $selected = false): void
+{
+    $name = camera_board_label($slot);
+    $classes = 'cmb-camera-card cmb-sortable-item' . ($selected ? ' is-selected' : '');
+    echo '<article class="' . h($classes) . '" data-camera-card data-camera-id="' . h($slotId) . '" tabindex="0">';
+    echo '<button class="cmb-card-drag" type="button" data-drag-handle aria-label="Arrastrar cámara" title="Arrastrar cámara">⋮⋮</button>';
+    echo '<button class="cmb-card-edit" type="button" data-edit-camera aria-label="Editar ' . h($name) . '" title="Editar cámara">Editar</button>';
+    echo '<div class="cmb-card-visual" aria-hidden="true">';
+    echo '<span class="cmb-viewfinder"><span></span></span>';
+    echo '<span class="cmb-camera-mark">CAM</span>';
+    echo '</div>';
+    echo '<div class="cmb-card-copy"><strong>' . h($name) . '</strong><code>' . h($slotId) . '</code></div>';
+    echo '</article>';
+}
+
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $action = (string)($_POST['action'] ?? '');
         if ($action === 'save_slot') {
             $saved = $studio->saveSlotFromForm($_POST);
             $selectedSlotId = (string)$saved['slot_id'];
-            $notice = 'Scene guardada: ' . $selectedSlotId . '.';
+            if (isset($_POST['board_slots_by_board']) && is_array($_POST['board_slots_by_board'])) {
+                $studio->saveSceneBoards((array)$_POST['board_slots_by_board']);
+            }
+            $notice = 'Cámara guardada: ' . $selectedSlotId . '.';
         } elseif ($action === 'save_scene_quick') {
             $saved = $studio->saveSceneQuick($_POST);
             $selectedSlotId = (string)$saved['slot_id'];
-            $notice = 'Scene guardada: ' . $selectedSlotId . '.';
+            if (isset($_POST['board_slots_by_board']) && is_array($_POST['board_slots_by_board'])) {
+                $studio->saveSceneBoards((array)$_POST['board_slots_by_board']);
+            }
+            $notice = 'Cámara guardada: ' . $selectedSlotId . '.';
         } elseif ($action === 'disable_slot') {
             $result = $studio->disableSlot((string)($_POST['slot_id'] ?? ''));
             $selectedSlotId = (string)$result['slot_id'];
-            $notice = 'Scene desactivada por override: ' . $selectedSlotId . '.';
+            $notice = 'Cámara desactivada por override: ' . $selectedSlotId . '.';
         } elseif ($action === 'set_slot_enabled') {
             $enabled = !empty($_POST['enabled']);
             $result = $studio->setSlotEnabled((string)($_POST['slot_id'] ?? ''), $enabled);
             $selectedSlotId = (string)$result['slot_id'];
-            $notice = ($enabled ? 'Scene activada: ' : 'Scene desactivada: ') . $selectedSlotId . '.';
+            $notice = ($enabled ? 'Cámara activada: ' : 'Cámara desactivada: ') . $selectedSlotId . '.';
         } elseif ($action === 'delete_slot') {
             $result = $studio->deleteSlot((string)($_POST['slot_id'] ?? ''));
             $selectedSlotId = '';
             $notice = $result['mode'] === 'deleted'
-                ? 'Scene custom eliminada: ' . (string)$result['slot_id'] . '.'
-                : 'La Scene base no se borra físicamente; quedó desactivada por override: ' . (string)$result['slot_id'] . '.';
+                ? 'Cámara custom eliminada: ' . (string)$result['slot_id'] . '.'
+                : 'La cámara base no se borra físicamente; quedó desactivada por override: ' . (string)$result['slot_id'] . '.';
         } elseif ($action === 'save_scene_board') {
             $result = $studio->saveSceneBoards((array)($_POST['board_slots_by_board'] ?? []));
             $selectedSlotId = trim((string)($_POST['selected_slot_id'] ?? $selectedSlotId));
@@ -149,18 +178,18 @@ try {
         } elseif ($action === 'purge_inactive_slots') {
             $result = $studio->purgeInactiveSlots();
             $selectedSlotId = '';
-            $notice = 'Scenes inactivas eliminadas/ocultas: ' . (int)$result['total'] . '.';
+            $notice = 'Cámaras inactivas eliminadas/ocultas: ' . (int)$result['total'] . '.';
         } elseif ($action === 'test_prompt') {
             $saved = $studio->saveSlotFromForm($_POST);
             $selectedSlotId = (string)$saved['slot_id'];
             $testPrompt = $studio->quickTestPrompt($selectedSlotId, (int)($_POST['test_artwork_id'] ?? 0));
-            $notice = 'Scene guardada y test rápido de prompt listo.';
+            $notice = 'Cámara guardada y test rápido de prompt listo.';
         } elseif ($action === 'test_image') {
             $saved = $studio->saveSlotFromForm($_POST);
             $selectedSlotId = (string)$saved['slot_id'];
             $testImage = $studio->generateQuickTestImage($selectedSlotId, (int)($_POST['test_artwork_id'] ?? 0));
             $testPrompt = (string)($testImage['prompt'] ?? '');
-            $notice = 'Scene guardada e imagen de prueba generada.';
+            $notice = 'Cámara guardada e imagen de prueba generada.';
         } elseif (in_array($action, ['draft', 'draft_publish'], true)) {
             $brief = trim((string)($_POST['brief'] ?? ''));
             $draft = $studio->draftSlot($brief, [
@@ -264,12 +293,31 @@ foreach ($studioSlots as $slotId => $_listedSlot) {
         $availablePoolCount++;
     }
 }
+$cameraEditorPayload = [];
+foreach ($studioSlots as $editorSlotId => $editorSlot) {
+    $editorSlotId = (string)$editorSlotId;
+    $cameraEditorPayload[$editorSlotId] = [
+        'id' => $editorSlotId,
+        'name' => camera_board_label($editorSlot),
+        'prompt' => $studio->scenePromptForEdit($editorSlot),
+        'origin' => camera_origin_label($editorSlotId, $baseSlots, $customSlots),
+        'enabled' => !empty($editorSlot['enabled']),
+    ];
+}
+$cameraBoardClientConfig = [
+    'selectedCameraId' => $selectedSlotId,
+    'mode' => $mode,
+    'maxPerBoard' => 12,
+];
+define('CAMERA_STUDIO_VIEW', true);
+require __DIR__ . '/camera_studio_view.php';
+exit;
 ?>
 <!doctype html>
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Scenes - Artwork Mockups</title>
+    <title>Cámaras - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -461,18 +509,18 @@ foreach ($studioSlots as $slotId => $_listedSlot) {
         <header class="app-header">
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
-        <div class="alert-strip">Scenes: tablero, nombres visibles, activación y prompt completo.</div>
+        <div class="alert-strip">Cámaras: tableros, nombres visibles, activación y prompt completo.</div>
         <div class="workspace">
             <div class="workspace-header">
                 <div>
-                    <h1>Scenes</h1>
-                    <p>Tablero 4 x 3 para ordenar, activar y revisar prompts sin abrir fichas gigantes.</p>
+                    <h1>Cámaras</h1>
+                    <p>Tableros 4 × 3 para ordenar, activar y revisar cámaras sin abrir fichas gigantes.</p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link secondary" href="camera_studio.php?mode=new">Nueva Scene</a>
+                    <a class="button-link secondary" href="camera_studio.php?mode=new">Nueva cámara</a>
                     <form method="post">
                         <input type="hidden" name="action" value="purge_inactive_slots">
-                        <button class="button-link secondary" type="submit" onclick="return confirm('¿Eliminar/ocultar todas las Scenes inactivas?');">Eliminar inactivas</button>
+                        <button class="button-link secondary" type="submit" onclick="return confirm('¿Eliminar u ocultar todas las cámaras inactivas?');">Eliminar inactivas</button>
                     </form>
                     <a class="button-link secondary" href="world_mother_studio.php">Scene Studio</a>
                 </div>
@@ -484,19 +532,19 @@ foreach ($studioSlots as $slotId => $_listedSlot) {
             <section class="panel-box camera-admin-toolbar">
                 <div class="camera-admin-toolbar-row">
                     <div>
-                        <h2>Tablero de Scenes</h2>
-                        <p>Arrastrá entre tableros o hacia espera. Click para editar nombre y prompt.</p>
+                        <h2>Tableros de cámaras</h2>
+                        <p>Arrastrá cámaras entre tableros o hacia la biblioteca. Hacé clic para editar el nombre y el prompt.</p>
                     </div>
                     <div class="board-actions">
-                        <span class="status-pill is-enabled"><?= $boardSlotCount ?> en tableros</span>
-                        <button class="button-link" type="submit" form="scene-board-form">Guardar tableros</button>
+                        <span class="status-pill is-enabled" data-board-total-count><?= $boardSlotCount ?> en tableros</span>
+                        <button class="button-link" type="submit" form="camera-board-form">Guardar tableros</button>
                     </div>
                 </div>
 
                 <aside class="board-pool <?= $availablePoolCount === 0 ? 'is-empty' : '' ?>" data-board-pool>
                     <div class="board-pool-head">
-                        <h3>Biblioteca disponible</h3>
-                        <span class="status-pill is-enabled"><?= $availablePoolCount ?> en espera</span>
+                        <h3>Biblioteca de cámaras</h3>
+                        <span class="status-pill is-enabled" data-pool-count><?= $availablePoolCount ?> en espera</span>
                     </div>
                     <div class="board-pool-list">
                         <?php $poolCount = 0; ?>
@@ -508,13 +556,13 @@ foreach ($studioSlots as $slotId => $_listedSlot) {
                                 draggable="true"
                                 data-camera-token
                                 data-slot-id="<?= h((string)$slotId) ?>"
-                                title="Click para editar. Arrastrar para ordenar."
+                                title="Hacé clic para editar. Arrastrá para ordenar."
                             >
                                 <strong><?= h(camera_board_label($listedSlot)) ?></strong>
                             </div>
                         <?php endforeach; ?>
                         <?php if ($poolCount === 0): ?>
-                            <div class="board-pool-empty">Todas las Scenes activas están ubicadas en el tablero.</div>
+                            <div class="board-pool-empty">Todas las cámaras activas están ubicadas en los tableros.</div>
                         <?php endif; ?>
                     </div>
                 </aside>
@@ -522,7 +570,7 @@ foreach ($studioSlots as $slotId => $_listedSlot) {
 
             <div class="camera-workbench">
                 <section class="panel-box camera-board">
-                    <form method="post" id="scene-board-form">
+                    <form method="post" id="camera-board-form">
                         <input type="hidden" name="action" value="save_scene_board">
                         <input type="hidden" name="selected_slot_id" value="<?= h((string)$slot['slot_id']) ?>">
 
@@ -532,7 +580,7 @@ foreach ($studioSlots as $slotId => $_listedSlot) {
                                     <section class="board-column">
                                         <div class="board-column-head">
                                             <h3>Tablero <?= $boardNumber ?></h3>
-                                            <span class="status-pill is-enabled"><?= count($boardSlotsByBoard[$boardNumber] ?? []) ?>/12</span>
+                                            <span class="status-pill is-enabled" data-board-count><?= count($boardSlotsByBoard[$boardNumber] ?? []) ?>/12</span>
                                         </div>
                                         <div class="camera-board-grid">
                                             <?php for ($position = 1; $position <= 12; $position++): ?>
@@ -554,7 +602,7 @@ foreach ($studioSlots as $slotId => $_listedSlot) {
                                                             draggable="true"
                                                             data-camera-token
                                                             data-slot-id="<?= h($assignedSlotId) ?>"
-                                                            title="Click para editar. Arrastrar para ordenar."
+                                                            title="Hacé clic para editar. Arrastrá para ordenar."
                                                         >
                                                             <strong><?= h(camera_board_label($assignedSlot)) ?></strong>
                                                         </div>
@@ -572,12 +620,12 @@ foreach ($studioSlots as $slotId => $_listedSlot) {
                 </section>
 
                 <section class="panel-box instruction-panel">
-                    <h2>Editor de Scene</h2>
+                    <h2>Editor de cámara</h2>
                     <p style="color:var(--muted);">Editá solo lo que importa. Origen: <strong><?= h($origin) ?></strong></p>
                     <?php if ((string)$slot['slot_id'] === ''): ?>
-                        <p class="empty-editor-note">Seleccioná una Scene del tablero para editarla.</p>
+                        <p class="empty-editor-note">Seleccioná una cámara de un tablero para editarla.</p>
                     <?php else: ?>
-                        <form method="post" class="scene-quick-form">
+                        <form method="post" class="camera-quick-form">
                             <input type="hidden" name="action" value="save_scene_quick">
                             <input type="hidden" name="board_index" value="<?= (int)$activeBoardIndex ?>">
                             <input type="hidden" name="slot_id" value="<?= h((string)$slot['slot_id']) ?>">
@@ -585,7 +633,7 @@ foreach ($studioSlots as $slotId => $_listedSlot) {
                                 <div class="field">
                                     <label>Nombre visible</label>
                                     <input type="text" name="slot_name" value="<?= h((string)$slot['slot_name']) ?>">
-                                    <small>La disponibilidad se controla moviendo esta Scene dentro o fuera del tablero.</small>
+                                    <small>La disponibilidad se controla moviendo esta cámara dentro o fuera de los tableros.</small>
                                 </div>
                             </div>
 
@@ -595,9 +643,9 @@ foreach ($studioSlots as $slotId => $_listedSlot) {
                             </details>
 
                             <div class="actions">
-                                <button class="button-link" type="submit">Guardar Scene</button>
-                                <button class="button-link secondary" type="submit" form="scene-board-form">Guardar tablero</button>
-                                <button class="button-link danger" type="submit" name="action" value="delete_slot" onclick="return confirm('¿Eliminar o desactivar esta Scene? Las Scenes base se desactivan por override.');">Eliminar</button>
+                                <button class="button-link" type="submit">Guardar cámara</button>
+                                <button class="button-link secondary" type="submit" form="camera-board-form">Guardar tableros</button>
+                                <button class="button-link danger" type="submit" name="action" value="delete_slot" onclick="return confirm('¿Eliminar o desactivar esta cámara? Las cámaras base se desactivan por override.');">Eliminar</button>
                             </div>
                         </form>
                     <?php endif; ?>
@@ -605,7 +653,7 @@ foreach ($studioSlots as $slotId => $_listedSlot) {
                     <?php if ($testImage && is_file((string)($testImage['path'] ?? ''))): ?>
                         <hr style="border:0; border-top:1px dashed var(--line); margin:24px 0;">
                         <h2>Imagen de prueba</h2>
-                        <img class="test-image" src="<?= h('results/' . basename((string)$testImage['path'])) ?>" alt="Imagen de prueba de Scene">
+                        <img class="test-image" src="<?= h('results/' . basename((string)$testImage['path'])) ?>" alt="Imagen de prueba de cámara">
                         <p style="color:var(--muted);"><code><?= h((string)$testImage['path']) ?></code></p>
                     <?php endif; ?>
 
@@ -624,12 +672,39 @@ foreach ($studioSlots as $slotId => $_listedSlot) {
 let draggedCameraToken = null;
 let suppressTokenClick = false;
 
-function updateBoardPoolState() {
+function updateBoardState() {
     const pool = document.querySelector('[data-board-pool]');
-    if (!pool) return;
-    const list = pool.querySelector('.board-pool-list');
-    const hasTokens = !!(list && list.querySelector('[data-camera-token]'));
-    pool.classList.toggle('is-empty', !hasTokens);
+    if (pool) {
+        const list = pool.querySelector('.board-pool-list');
+        const poolTokens = list ? list.querySelectorAll('[data-camera-token]') : [];
+        const poolCount = poolTokens.length;
+        pool.classList.toggle('is-empty', poolCount === 0);
+
+        const emptyMessage = list ? list.querySelector('.board-pool-empty') : null;
+        if (poolCount > 0 && emptyMessage) {
+            emptyMessage.remove();
+        }
+
+        const poolCounter = pool.querySelector('[data-pool-count]');
+        if (poolCounter) {
+            poolCounter.textContent = poolCount + ' en espera';
+        }
+    }
+
+    let assignedCount = 0;
+    document.querySelectorAll('.board-column').forEach(board => {
+        const count = board.querySelectorAll('[data-board-cell] [data-camera-token]').length;
+        assignedCount += count;
+        const counter = board.querySelector('[data-board-count]');
+        if (counter) {
+            counter.textContent = count + '/12';
+        }
+    });
+
+    const totalCounter = document.querySelector('[data-board-total-count]');
+    if (totalCounter) {
+        totalCounter.textContent = assignedCount + ' en tableros';
+    }
 }
 
 function clearBoardCell(cell) {
@@ -641,7 +716,7 @@ function clearBoardCell(cell) {
         const placeholder = document.createElement('div');
         placeholder.className = 'camera-token-placeholder';
         placeholder.setAttribute('data-empty-placeholder', '');
-        placeholder.textContent = 'Soltar Scene';
+        placeholder.textContent = 'Soltar';
         cell.appendChild(placeholder);
     }
 }
@@ -661,7 +736,7 @@ function setCellToken(cell, token) {
     cell.appendChild(token);
     const input = cell.querySelector('[data-board-input]');
     if (input) input.value = token.getAttribute('data-slot-id') || '';
-    updateBoardPoolState();
+    updateBoardState();
 }
 
 document.querySelectorAll('[data-camera-token]').forEach(token => {
@@ -720,9 +795,11 @@ if (boardPool) {
         if (sourceCell) {
             clearBoardCell(sourceCell);
         }
-        updateBoardPoolState();
+        updateBoardState();
     });
 }
+
+updateBoardState();
 </script>
 </body>
 </html>

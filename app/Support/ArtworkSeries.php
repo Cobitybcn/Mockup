@@ -21,6 +21,7 @@ class ArtworkSeries
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             ");
             self::addColumnIfMissing($pdo, 'artworks', 'series_id', 'INT UNSIGNED NULL');
+            self::addColumnIfMissing($pdo, 'artworks', 'series_creation_number', 'INT UNSIGNED NULL');
             self::addColumnIfMissing($pdo, 'mockups', 'series_id', 'INT UNSIGNED NULL');
             self::addColumnIfMissing($pdo, 'artwork_series', 'subtitle', 'VARCHAR(255) NOT NULL DEFAULT \'\'');
             self::addColumnIfMissing($pdo, 'artwork_series', 'long_description', 'MEDIUMTEXT NULL');
@@ -53,6 +54,7 @@ class ArtworkSeries
             )
         ");
         self::addColumnIfMissing($pdo, 'artworks', 'series_id', 'INTEGER NULL');
+        self::addColumnIfMissing($pdo, 'artworks', 'series_creation_number', 'INTEGER NULL');
         self::addColumnIfMissing($pdo, 'mockups', 'series_id', 'INTEGER NULL');
         self::addColumnIfMissing($pdo, 'artwork_series', 'subtitle', "TEXT NOT NULL DEFAULT ''");
         self::addColumnIfMissing($pdo, 'artwork_series', 'long_description', 'TEXT');
@@ -87,6 +89,23 @@ class ArtworkSeries
     public static function display(?string $title): string
     {
         return self::normalizeTitle((string)$title);
+    }
+
+    public static function creationPrefix(string $seriesTitle): string
+    {
+        $prefix = self::normalizeTitle($seriesTitle);
+        $prefix = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $prefix) ?: $prefix;
+        return strtoupper(preg_replace('/[^a-zA-Z0-9]+/', '', $prefix) ?? '');
+    }
+
+    public static function creationIdentifier(string $seriesTitle, mixed $creationNumber): string
+    {
+        $number = (int)$creationNumber;
+        $prefix = self::creationPrefix($seriesTitle);
+        if ($prefix === '' || $number <= 0) {
+            return '';
+        }
+        return $prefix . str_pad((string)$number, 3, '0', STR_PAD_LEFT);
     }
 
     public static function getOrCreate(PDO $pdo, int $userId, string $title, string $description = ''): ?int
@@ -178,10 +197,49 @@ class ArtworkSeries
             $stmt->execute([(int)$series['id'], (string)$series['title'], $userId, (string)$series['title'], (int)$series['id']]);
         }
 
-        $stmt = $pdo->prepare("UPDATE artworks SET series_id = NULL, series = '' WHERE user_id = ? AND UPPER(TRIM(series)) = 'NO SERIE'");
+        $stmt = $pdo->prepare("UPDATE artworks SET series_id = NULL, series = '', series_creation_number = NULL WHERE user_id = ? AND UPPER(TRIM(series)) = 'NO SERIE'");
         $stmt->execute([$userId]);
 
+        self::backfillCreationNumbers($pdo, $userId);
         self::syncMockups($pdo, $userId);
+    }
+
+    private static function backfillCreationNumbers(PDO $pdo, int $userId): void
+    {
+        $stmt = $pdo->prepare('
+            SELECT id, series_id, series_creation_number
+            FROM artworks
+            WHERE user_id = ? AND series_id IS NOT NULL
+            ORDER BY series_id ASC, created_at ASC, id ASC
+        ');
+        $stmt->execute([$userId]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $usedBySeries = [];
+        foreach ($rows as $row) {
+            $seriesId = (int)$row['series_id'];
+            $number = (int)($row['series_creation_number'] ?? 0);
+            if ($number > 0) {
+                $usedBySeries[$seriesId][$number] = true;
+            }
+        }
+
+        $nextBySeries = [];
+        $update = $pdo->prepare('UPDATE artworks SET series_creation_number = ? WHERE id = ? AND user_id = ?');
+        foreach ($rows as $row) {
+            $seriesId = (int)$row['series_id'];
+            $number = (int)($row['series_creation_number'] ?? 0);
+            $next = $nextBySeries[$seriesId] ?? 10;
+            if ($number > 0) {
+                $nextBySeries[$seriesId] = max($next, ((int)floor($number / 10) + 1) * 10);
+                continue;
+            }
+            while (isset($usedBySeries[$seriesId][$next])) {
+                $next += 10;
+            }
+            $update->execute([$next, (int)$row['id'], $userId]);
+            $usedBySeries[$seriesId][$next] = true;
+            $nextBySeries[$seriesId] = $next + 10;
+        }
     }
 
     public static function syncMockups(PDO $pdo, int $userId): void
@@ -370,7 +428,12 @@ class ArtworkSeries
                    (SELECT COUNT(*) FROM mockups m WHERE m.user_id = s.user_id AND m.series_id = s.id) AS mockup_count
             FROM artwork_series s
             WHERE s.user_id = ? AND s.status = ?
-            ORDER BY s.title ASC
+            ORDER BY
+                CASE WHEN s.year_start IS NULL AND s.year_end IS NULL THEN 1 ELSE 0 END ASC,
+                COALESCE(s.year_start, s.year_end) DESC,
+                COALESCE(s.year_end, s.year_start) DESC,
+                s.created_at DESC,
+                s.id DESC
         ');
         $stmt->execute([$userId, 'active']);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -437,6 +500,18 @@ class ArtworkSeries
 
     public static function assignArtwork(PDO $pdo, int $userId, int $artworkId, ?int $seriesId, bool $syncMockups = true): void
     {
+        self::ensureSchema($pdo);
+        $stmt = $pdo->prepare('SELECT series_id, series_creation_number FROM artworks WHERE id = ? AND user_id = ? LIMIT 1');
+        $stmt->execute([$artworkId, $userId]);
+        $currentArtwork = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$currentArtwork) {
+            throw new RuntimeException('Artwork not found.');
+        }
+
+        $currentSeriesId = $currentArtwork['series_id'] !== null && $currentArtwork['series_id'] !== ''
+            ? (int)$currentArtwork['series_id']
+            : null;
+        $creationNumber = (int)($currentArtwork['series_creation_number'] ?? 0);
         $title = '';
         if ($seriesId !== null) {
             $stmt = $pdo->prepare('SELECT title FROM artwork_series WHERE id = ? AND user_id = ? AND status = ? LIMIT 1');
@@ -445,14 +520,20 @@ class ArtworkSeries
             if ($title === '') {
                 throw new RuntimeException('Series not found.');
             }
+            if ($currentSeriesId !== $seriesId || $creationNumber <= 0) {
+                $creationNumber = self::nextCreationNumber($pdo, $userId, $seriesId);
+            }
+        } else {
+            $creationNumber = 0;
         }
 
-        $stmt = $pdo->prepare('UPDATE artworks SET series_id = ?, series = ?, updated_at = ? WHERE id = ? AND user_id = ?');
+        $stmt = $pdo->prepare('UPDATE artworks SET series_id = ?, series = ?, series_creation_number = ?, updated_at = ? WHERE id = ? AND user_id = ?');
         $stmt->bindValue(1, $seriesId, $seriesId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         $stmt->bindValue(2, $title);
-        $stmt->bindValue(3, date('c'));
-        $stmt->bindValue(4, $artworkId, PDO::PARAM_INT);
-        $stmt->bindValue(5, $userId, PDO::PARAM_INT);
+        $stmt->bindValue(3, $creationNumber > 0 ? $creationNumber : null, $creationNumber > 0 ? PDO::PARAM_INT : PDO::PARAM_NULL);
+        $stmt->bindValue(4, date('c'));
+        $stmt->bindValue(5, $artworkId, PDO::PARAM_INT);
+        $stmt->bindValue(6, $userId, PDO::PARAM_INT);
         $stmt->execute();
 
         if ($syncMockups) {
@@ -460,9 +541,56 @@ class ArtworkSeries
         }
     }
 
+    public static function setCreationNumber(PDO $pdo, int $userId, int $artworkId, int $creationNumber): void
+    {
+        self::ensureSchema($pdo);
+        if ($creationNumber <= 0) {
+            throw new RuntimeException('Creation ID must be a positive number.');
+        }
+
+        $stmt = $pdo->prepare('
+            SELECT a.series_id, s.title AS series_title
+            FROM artworks a
+            LEFT JOIN artwork_series s ON s.id = a.series_id AND s.user_id = a.user_id
+            WHERE a.id = ? AND a.user_id = ?
+            LIMIT 1
+        ');
+        $stmt->execute([$artworkId, $userId]);
+        $artwork = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$artwork) {
+            throw new RuntimeException('Artwork not found.');
+        }
+        $seriesId = (int)($artwork['series_id'] ?? 0);
+        if ($seriesId <= 0) {
+            throw new RuntimeException('Assign the artwork to a series before setting its Creation ID.');
+        }
+
+        $duplicate = $pdo->prepare('
+            SELECT id FROM artworks
+            WHERE user_id = ? AND series_id = ? AND series_creation_number = ? AND id <> ?
+            LIMIT 1
+        ');
+        $duplicate->execute([$userId, $seriesId, $creationNumber, $artworkId]);
+        if ($duplicate->fetchColumn()) {
+            $identifier = self::creationIdentifier((string)$artwork['series_title'], $creationNumber);
+            throw new RuntimeException('Creation ID ' . $identifier . ' is already assigned to another artwork.');
+        }
+
+        $pdo->prepare('UPDATE artworks SET series_creation_number = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+            ->execute([$creationNumber, date('c'), $artworkId, $userId]);
+    }
+
+    private static function nextCreationNumber(PDO $pdo, int $userId, int $seriesId): int
+    {
+        $stmt = $pdo->prepare('SELECT MAX(series_creation_number) FROM artworks WHERE user_id = ? AND series_id = ?');
+        $stmt->execute([$userId, $seriesId]);
+        $maximum = max(0, (int)$stmt->fetchColumn());
+        return $maximum === 0 ? 10 : ((int)floor($maximum / 10) + 1) * 10;
+    }
+
     public static function deleteSeries(PDO $pdo, int $userId, int $seriesId): void
     {
-        $stmt = $pdo->prepare("UPDATE artworks SET series_id = NULL, series = '', updated_at = ? WHERE user_id = ? AND series_id = ?");
+        $stmt = $pdo->prepare("UPDATE artworks SET series_id = NULL, series = '', series_creation_number = NULL, updated_at = ? WHERE user_id = ? AND series_id = ?");
         $stmt->execute([date('c'), $userId, $seriesId]);
         $stmt = $pdo->prepare('UPDATE mockups SET series_id = NULL WHERE user_id = ? AND series_id = ?');
         $stmt->execute([$userId, $seriesId]);

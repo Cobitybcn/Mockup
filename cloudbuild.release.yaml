@@ -1,0 +1,27 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --pull
+      - -t
+      - ${_WEB_IMAGE}
+      - -f
+      - Dockerfile.web
+      - .
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --pull
+      - -t
+      - ${_WORKER_IMAGE}
+      - -f
+      - Dockerfile.worker
+      - .
+
+images:
+  - ${_WEB_IMAGE}
+  - ${_WORKER_IMAGE}
+
+options:
+  logging: CLOUD_LOGGING_ONLY

@@ -910,18 +910,37 @@ La obra de arte es de {{ARTWORK_WIDTH_CM}} x {{ARTWORK_HEIGHT_CM}} cm, clase de 
         11 => 'no crowds',
         12 => 'no children',
       ),
-      'full_prompt_template' => 'Usa IMAGEN 1 como única fuente de verdad para la obra de arte. Usa IMAGEN 2 solo como referencia de materiales, luz, paleta y atmósfera.
+      'full_prompt_template' => 'Generar un mockup fotográfico premium a partir de IMAGEN 1 e IMAGEN 2.
 
-Genera un mockup fotográfico en contrapicado extremo casi nadir, como si la cámara estuviera colocada en el suelo, muy cerca de la base de la obra, con la lente apuntando fuertemente hacia arriba.
+ROLES DE ENTRADA:
+IMAGEN 1: primera imagen de referencia adjunta. Es la obra de arte. Preservar su identidad visual — colores, formas, proporciones internas, texturas, marcas, superficie — Esta preservación se refiere únicamente al CONTENIDO de la obra, no a su perspectiva o ángulo de cámara, que se define exclusivamente en la sección CAMARA de este prompt.
 
-La cámara no mira de frente a la pared.
-La cámara mira hacia arriba, casi hacia el techo o cielo del espacio.
+IMAGEN 2: referencia de entorno. Mantener su estilo, familia de materiales, lógica de luz, carácter de superficie e identidad espacial. No reemplazarla con un pasillo genérico, un vestíbulo, un pasaje de galería o un entorno inventado alternativo.
 
-La obra debe estar muy cerca de la cámara, entrando desde el primer plano inferior. El borde inferior del lienzo debe sentirse enorme, cercano y dominante. La parte superior de la obra debe alejarse hacia arriba con una fuga vertical muy marcada.
+Si la IMAGEN 2 contiene pinturas, lienzos, caballetes, marcos, dibujos, carteles u otras obras de arte, tratarlas solo como objetos ambientales. IMAGEN 1 es la obra de arte más importante en la nueva imagen.
 
-La obra está de pie y apoyada, pero no debe verse como una imagen frontal contra la pared. El muro queda atrás como plano secundario. La obra debe proyectarse hacia cámara, separándose claramente del plano de pared, para que la cámara pueda mirar hacia arriba desde casi debajo del lienzo.
+ARTWORK PHYSICAL DATA:
+Artwork title: {{ARTWORK_TITLE}}
+Artwork width: {{ARTWORK_WIDTH_CM}} cm
+Artwork height: {{ARTWORK_HEIGHT_CM}} cm
+Artwork orientation: {{ARTWORK_ORIENTATION}}
+Artwork size class: {{ARTWORK_SIZE_CLASS}}
+
+
+Genera un mockup fotográfico en contrapicado extremo casi nadir desde un lateral de la obra de arte, como si la cámara estuviera colocada en el suelo en el vértice de la obra de arte. Esta imagen busca la perspectiva artística de la fotografia de la obra de arte.
+
+La obra debe estar muy cerca de la cámara, entrando desde el primer plano inferior. El borde inferior del lienzo debe sentirse cercano y dominante. La parte superior de la obra desenfoca levemente.
 
 Usa un lente ultra gran angular rectilíneo, sin ojo de pez. La perspectiva debe sentirse dramática y arquitectónica, similar a una fotografía tomada desde el suelo mirando hacia una torre, una fachada alta o una persona vista desde abajo.
+
+ENFOQUE:
+Establecer el plano de enfoque en la obra de arte. Mantener la superficie de la obra, los bordes del lienzo, el grosor, la textura y el área inmediata de la pared nítidos. Los planos de pared lejanos, columnas remotas, ventanas de fondo, puertas lejanas, profundidad del techo y del suelo pueden desenfocarse naturalmente. El desenfoque debe sentirse óptico, no artificial.
+
+DETERMINISMO DE LA OBRA DE ARTE (contenido, no perspectiva):
+La superficie pintada final debe ser la misma imagen que IMAGEN 1 en cuanto a contenido: no redibujar, repintar, simplificar, embellecer, completar, estilizar, intercambiar, fusionar ni reinterpretar rostros, figuras, símbolos, marcas texturales, áreas en blanco dispersas, bloques de color o proporciones internas. Esto no implica preservar el ángulo o la perspectiva de IMAGEN 1 — la perspectiva final la determina exclusivamente la sección CAMARA.
+
+ESCALA:
+La obra de arte es de {{ARTWORK_WIDTH_CM}} x {{ARTWORK_HEIGHT_CM}} cm, clase de tamaño {{ARTWORK_SIZE_CLASS}}. No ampliarla para que domine la habitación o llene la pared disponible. Usar otros objetos de la escena (ventanas, sillones, muebles, lámparas, mesas) como referencia de escala real. Prestar especial atención en sitios de doble altura. Nunca sobredimensionar la obra de arte para darle protagonismo.
 
 IMAGEN 1 debe conservarse fiel: composición, colores, marcas, proporciones internas y superficie pictórica. La pintura no debe rediseñarse. La deformación permitida es solo perspectiva óptica causada por la cercanía y el ángulo de cámara.
 
@@ -1434,7 +1453,7 @@ La obra de arte es de {{ARTWORK_WIDTH_CM}} x {{ARTWORK_HEIGHT_CM}} cm, clase de 
       2 => 'borgona_recovecos_3_4_loft_hormigon',
       3 => 'detalle_textura_lienzo',
     ),
-    'updated_at' => '2026-07-11T21:02:21+00:00',
+    'updated_at' => '2026-07-15T07:47:35+00:00',
   ),
   'scene_boards' =>
   array (
@@ -1448,7 +1467,7 @@ La obra de arte es de {{ARTWORK_WIDTH_CM}} x {{ARTWORK_HEIGHT_CM}} cm, clase de 
         2 => 'borgona_recovecos_3_4_loft_hormigon',
         3 => 'detalle_textura_lienzo',
       ),
-      'updated_at' => '2026-07-11T21:02:21+00:00',
+      'updated_at' => '2026-07-15T07:47:35+00:00',
     ),
     2 =>
     array (
@@ -1460,7 +1479,7 @@ La obra de arte es de {{ARTWORK_WIDTH_CM}} x {{ARTWORK_HEIGHT_CM}} cm, clase de 
         2 => 'pasillo_obra_descentrada_proxima',
         3 => 'borde_canvas_closeup',
       ),
-      'updated_at' => '2026-07-11T21:02:21+00:00',
+      'updated_at' => '2026-07-15T07:47:35+00:00',
     ),
     3 =>
     array (
@@ -1472,7 +1491,7 @@ La obra de arte es de {{ARTWORK_WIDTH_CM}} x {{ARTWORK_HEIGHT_CM}} cm, clase de 
         2 => 'obra_apoyada_suelo_7_8',
         3 => 'esquina_obra_perspectiva_extrema',
       ),
-      'updated_at' => '2026-07-11T21:02:21+00:00',
+      'updated_at' => '2026-07-15T07:47:35+00:00',
     ),
   ),
 );

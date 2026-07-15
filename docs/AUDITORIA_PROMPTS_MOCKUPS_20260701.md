@@ -427,7 +427,7 @@ Nota aparte: `MockPromptBuilder` tambien se usa, via `MockContextSelector`, dent
 
 **Fase 2.9** — ambos ya mergeados y activos en flujo actual: `MockupContextIdentity.php` (`MockupContextEngine.php:6`, resuelve linea 2097), `MockupVitalPresenceResolver.php` (`MockupContextEngine.php:7`, resuelve lineas 445, 2108).
 
-**Adicionales encontrados fuera de la lista original** (activos en flujo actual salvo lo indicado): `WorldMotherLibrary.php`, `MockupBatchQueue.php`, `MockupBranchContextBuilder.php`, `MockupBranchPromptDraftBuilder.php`, `GeminiImageClient.php`, `ServiceFactory.php`. Activos solo en fallback/test: `MockArtworkProcessor.php`, `MockArtworkAnalyzer.php`, `MockMockupGenerator.php`. Activos en fallback opcional (si `imageProvider()` esta configurado en OpenAI): `OpenAIArtworkProcessor.php`, `OpenAIArtworkAnalyzer.php`, `OpenAIMockupGenerator.php`. Fuera de alcance de esta auditoria (paralelo, no mockups): `SocialVideoService.php`, `VeoVideoClient.php`.
+**Adicionales encontrados fuera de la lista original** (activos en flujo actual salvo lo indicado): `WorldMotherLibrary.php`, `MockupBatchQueue.php`, `MockupBranchContextBuilder.php`, `MockupBranchPromptDraftBuilder.php`, `GeminiImageClient.php`, `ServiceFactory.php`. Activos solo en fallback/test: `MockArtworkProcessor.php`, `MockArtworkAnalyzer.php`, `MockMockupGenerator.php`. Activos en fallback opcional (si `imageProvider()` esta configurado en OpenAI): `OpenAIArtworkProcessor.php`, `OpenAIArtworkAnalyzer.php`, `OpenAIMockupGenerator.php`.
 
 Scripts de diagnostico ya existentes en la raiz del proyecto, no listados en el mapa original, que pueden ser reutiles para la Fase 2 (trazabilidad) en vez de construir uno nuevo desde cero: `compare_mockup_prompt_composition.php`, `audit_recent_mockup_generation.php`, `generate_one_mockup_from_composed_admin_prompt.php`, `verify_scale_rules.php`.
 
@@ -751,11 +751,9 @@ Verificacion: los 6 archivos pasan `php -l`. Se confirmo con `php -r` que `LEGAC
 
 ### Aplicado: Nivel 2 — borrado real de las clases huerfanas (2026-07-01, con confirmacion del usuario)
 
-Antes de borrar se investigo el grafo de dependencias completo con `grep` dirigido (no solo el listado original), lo que encontro dos cosas que cambiaron el alcance:
+Antes de borrar se investigo el grafo de dependencias completo con `grep` dirigido (no solo el listado original), lo que encontro un punto de entrada adicional que cambio el alcance:
 
 1. **`mockup_branches_review.php`** era un sexto punto de entrada sin gatear (se me habia pasado en el Nivel 1): pagina que muestra `analysis/{id}.branches.json`, generandolo on-demand via `MockupBranchContextBuilder::buildForArtwork()` si no existe. Esa clase requiere `analysis/{id}.core.json` — el archivo que generaba `CoreArtworkJsonBuilder`, ya eliminado y sin llamadores desde antes de esta auditoria (Fase 3). Es decir, esta pagina ya estaba rota para cualquier obra nueva. Se agrego a la lista de borrado.
-2. **`social_video.php`, `social_video_timeline.php` y `artwork.php`** tambien leen la tabla `artwork_analysis` (la que llenaba `analyze.php`). Se investigo el detalle: `social_video.php` tiene un `require .../social_video_simple.php'; exit;` en la linea 4-5 — toda su logica real vive en `social_video_simple.php`, que **no** referencia `artwork_analysis` en absoluto (la consulta que se veia en `social_video.php` es codigo muerto inalcanzable). `social_video_timeline.php` si hace una consulta real a `artwork_analysis`, pero el resultado solo enriquece el contexto de un prompt de IA (`SocialVideoService::conceptFromTimeline()`) con degradacion graceful si viene vacio — no es un requisito duro. Ninguna de las tres paginas llama a ninguna de las clases que se estaban por borrar (solo hacen `SELECT` directo contra la tabla). Conclusion: seguro borrar las clases; el unico efecto colateral (que la tabla `artwork_analysis` no reciba filas nuevas) ya era consecuencia del Nivel 1, no de este paso.
-
 Se verifico ademas que `ServiceFactory::artworkAnalyzer()` era el unico punto que instanciaba los 3 analizadores, y que su unico llamador era el ya-gateado `analyze.php`; y que `ArtworkAnalyzerInterface`/`ContextSelectorInterface` solo las implementaban las clases que se iban a borrar.
 
 **Archivos eliminados (16):**
@@ -785,4 +783,3 @@ Se verifico ademas que `ServiceFactory::artworkAnalyzer()` era el unico punto qu
 ### Resumen final del estado del sistema post-auditoria
 
 Un solo flujo de generacion de mockup activo (combinacion directa con mundo madre), con un solo compositor de prompt (`AdminPromptComposerPreview`), sin compatibilidades legacy activas por accidente, sin precomposicion fisica alcanzable, sin analisis curatorial corriendo de fondo, y sin ~2500 lineas de codigo huerfano repartidas en 17 archivos que ya no le servian a nadie. Lo que queda pendiente para una decision futura (no urgente): si tambien se quiere apagar `MockupWorldVisualPromptEnhancer`/`MockupContextWorldRegistry`, que quedo sin ningun llamador que lo active de verdad tras el Nivel 1.
-

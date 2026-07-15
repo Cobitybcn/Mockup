@@ -863,17 +863,10 @@ final class MockupCombinationEngine
 
     private function cameraReferenceMode(string $slotId): string
     {
-        return in_array($slotId, [
-            'camara_15_contrapicado_inpainting',
-            'nadir_extremo_arquitectonico',
-            'contrapicado_raton_puro',
-            'contrapicado_7_8',
-            'vista_aerea_contexto_ventanas',
-            'borde_canvas_closeup',
-            'esquina_obra_perspectiva_extrema',
-            'rasante_superficie_pintura',
-            'detalle_textura_lienzo',
-        ], true) ? 'reconstructed_view' : 'literal_scene_view';
+        // A world mother is environmental inspiration for every camera slot.
+        // The selected camera must always rebuild the scene composition instead
+        // of inheriting the reference photo literally.
+        return 'reconstructed_view';
     }
 
     private function usesAggressivePerspectiveOverride(string $slotId): bool

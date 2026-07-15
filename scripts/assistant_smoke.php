@@ -24,8 +24,9 @@ if (!is_array($user)) {
 }
 
 $config = new AssistantConfig();
-if (!$config->enabledFor($user) || $config->apiKey() === '') {
-    fwrite(STDERR, "The assistant or OpenAI credential is not enabled in this environment.\n");
+$provider = $config->provider();
+if (!$config->enabledFor($user) || ($provider === 'openai' && $config->apiKey() === '')) {
+    fwrite(STDERR, "The assistant is disabled or OpenAI credential is not enabled in this environment.\n");
     exit(1);
 }
 
@@ -36,10 +37,11 @@ try {
     $result = $service->chat($user, [
         'message' => 'Prueba de conexión: responde únicamente "Conexión correcta" y no uses herramientas.',
         'page_context' => ['current_route' => 'dashboard.php'],
+        'provider' => $provider,
     ]);
     $usage = $pdo->query('SELECT model,input_tokens,output_tokens,status FROM assistant_usage_events ORDER BY id DESC LIMIT 1')->fetch();
     if (!is_array($usage) || (string)$usage['status'] !== 'success') {
-        throw new RuntimeException('The OpenAI call did not produce a successful usage record.');
+        throw new RuntimeException('The AI call did not produce a successful usage record.');
     }
     echo 'OPENAI_SMOKE_OK' . PHP_EOL;
     echo 'model=' . (string)$usage['model'] . PHP_EOL;

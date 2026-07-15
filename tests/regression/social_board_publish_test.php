@@ -52,10 +52,13 @@ if (count((array)($facebook['attached_media'] ?? [])) !== 3
 
 $boardJs = (string)file_get_contents(__DIR__ . '/../../social_media_board.js');
 $worker = (string)file_get_contents(__DIR__ . '/../../social_publish_worker.php');
+$workerDockerfile = (string)file_get_contents(__DIR__ . '/../../Dockerfile.worker');
 if (!str_contains($boardJs, "fetch('social_media_schedule.php'")
     || !str_contains($boardJs, 'data-pin-destination-url')
     || !str_contains($boardJs, 'data-group-link-url')
-    || !str_contains($worker, 'publishGroup')) {
+    || !str_contains($worker, 'publishGroup')
+    || !str_contains($workerDockerfile, 'libcurl4-openssl-dev')
+    || !preg_match('/docker-php-ext-install\s+curl\b/', $workerDockerfile)) {
     fwrite(STDERR, "FAIL: the board is not connected to the guarded scheduled publisher.\n");
     exit(1);
 }

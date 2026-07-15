@@ -58,6 +58,10 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
             . "- Keep the artwork fully inside the {$outputAspectRatio} composition unless the selected close-up camera explicitly requires a detail crop.";
         $submittedPrompt = ($slotFullPromptMode || $usesGraphicPerspectiveGeminiDirect) ? $finalPrompt : $roleContract . "\n\n" . $finalPrompt;
         $submittedPrompt = $outputFrameContract . "\n\n" . $submittedPrompt;
+        $worldMotherReferencePath = (string)($metadata['world_mother_reference_path'] ?? '');
+        if ($worldMotherReferencePath !== '' && is_file($worldMotherReferencePath)) {
+            $submittedPrompt = WorldMotherCameraAuthorityPolicy::applyToPrompt($submittedPrompt, $cameraSlotId);
+        }
         $parts = [$this->client->textPart($submittedPrompt)];
         if ($usesGraphicPerspectiveGeminiDirect) {
             $platePath = $this->graphicPerspectivePlatePath($cameraSlotId);
@@ -89,14 +93,13 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
             }
             $parts[] = $this->client->imagePart($rootReferencePath);
         }
-        $worldMotherReferencePath = (string)($metadata['world_mother_reference_path'] ?? '');
         if ($worldMotherReferencePath !== '' && is_file($worldMotherReferencePath)) {
             if ($usesGraphicPerspectiveGeminiDirect) {
                 $parts[] = $this->client->textPart("IMAGE 3 - STYLE REFERENCE: atmosphere, materials, lighting, and color temperature only.");
             } elseif ($usesGraphicPerspectiveSlot) {
                 $parts[] = $this->client->textPart("WORLD MOTHER: environment mood reference only.");
-            } elseif (!$slotFullPromptMode) {
-                $parts[] = $this->client->textPart("IMAGE 2 - WORLD MOTHER: visual evidence for material, light, palette, architectural mood, and atmosphere only. Build a new environment through the selected camera slot. Do not copy this image's layout, camera angle, crop, room geometry, wall choice, window placement, object positions, or furniture placement. Do not use this image as the artwork content.");
+            } else {
+                $parts[] = $this->client->textPart("IMAGE 2 - WORLD MOTHER: environmental inspiration only. Use materiality, light, palette, surface language, architectural mood, and atmosphere to build a new environment through the selected camera slot. Do not copy this image's layout, camera angle, crop, room geometry, wall choice, window placement, object positions, or furniture placement. Do not use this image as artwork content.");
             }
             $parts[] = $this->client->imagePart($worldMotherReferencePath);
         }

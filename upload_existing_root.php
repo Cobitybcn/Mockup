@@ -217,5 +217,5 @@ if ($isUserSceneFlow) {
     exit;
 }
 
-header('Location: mockup_combinations_review.php?id=' . $artworkId);
+header('Location: mockup_combinations_review.php?id=' . $artworkId . '&scene_select=1&scene_limit=4');
 exit;

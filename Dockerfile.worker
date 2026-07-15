@@ -4,9 +4,11 @@ FROM php:8.2-apache
 # Install system dependencies and PHP mysql extensions
 RUN apt-get update && apt-get install -y \
     libzip-dev \
+    libcurl4-openssl-dev \
     zip \
     unzip \
     git \
+    ffmpeg \
     python3 \
     python3-pip \
     libpng-dev \
@@ -14,7 +16,7 @@ RUN apt-get update && apt-get install -y \
     libwebp-dev \
     libfreetype6-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
-    && docker-php-ext-install zip pdo_mysql bcmath gd
+    && docker-php-ext-install curl zip pdo_mysql bcmath gd
 
 # Install python dependencies for Vertex AI bridge
 RUN pip3 install --no-cache-dir --break-system-packages google-genai Pillow
