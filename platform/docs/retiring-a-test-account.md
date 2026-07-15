@@ -36,13 +36,37 @@ The archive contains password hashes and may contain integration metadata. Keep 
 
 ## 3. Disable, observe, and remove later
 
-Only after the archive is complete:
+Only after the archive is complete, first preview the reversible status change:
 
-1. Add account status support and disable authentication for the test account.
-2. Keep shared files active.
-3. Smoke-test the platform and the active Maurizio Valch tenant.
-4. Observe for an agreed retention period.
-5. Remove exclusive active copies with a separate, reviewed command.
-6. Hard-delete database rows only after a restore test and an explicit approval.
+```powershell
+php scripts/set_user_status.php `
+  --email=chiappero@gmail.com `
+  --status=disabled `
+  --archive-manifest=C:\laragon\archives\artworkmockups\retired-users\user-1-20260715\manifest.json
+```
+
+Apply it only after the preview identifies the expected user and archive:
+
+```powershell
+php scripts/set_user_status.php `
+  --email=chiappero@gmail.com `
+  --status=disabled `
+  --archive-manifest=C:\laragon\archives\artworkmockups\retired-users\user-1-20260715\manifest.json `
+  --execute
+```
+
+Disabled accounts cannot log in, use existing sessions, or request/reset a password. Their rows and files remain intact. Reactivation is explicit and does not require restoring the archive:
+
+```powershell
+php scripts/set_user_status.php --email=chiappero@gmail.com --status=active --execute
+```
+
+Then:
+
+1. Keep shared files active.
+2. Smoke-test the platform and the active Maurizio Valch tenant.
+3. Observe for an agreed retention period.
+4. Remove exclusive active copies with a separate, reviewed command.
+5. Hard-delete database rows only after a restore test and an explicit approval.
 
 Archiving and deletion intentionally are not combined in one command.

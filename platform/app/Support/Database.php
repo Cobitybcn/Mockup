@@ -220,11 +220,15 @@ class Database
                 name TEXT NOT NULL DEFAULT '',
                 credits INTEGER NOT NULL DEFAULT 10,
                 is_admin INTEGER NOT NULL DEFAULT 0,
+                status TEXT NOT NULL DEFAULT 'active',
+                disabled_at TEXT NULL,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             )
         ");
         self::addColumnIfMissing($pdo, 'users', 'is_admin', 'INTEGER NOT NULL DEFAULT 0');
+        self::addColumnIfMissing($pdo, 'users', 'status', "TEXT NOT NULL DEFAULT 'active'");
+        self::addColumnIfMissing($pdo, 'users', 'disabled_at', 'TEXT NULL');
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS artworks (
@@ -521,6 +525,8 @@ class Database
                 name VARCHAR(255) NOT NULL DEFAULT '',
                 credits INT NOT NULL DEFAULT 10,
                 is_admin TINYINT(1) NOT NULL DEFAULT 0,
+                status VARCHAR(20) NOT NULL DEFAULT 'active',
+                disabled_at VARCHAR(40) NULL,
                 created_at VARCHAR(40) NOT NULL,
                 updated_at VARCHAR(40) NOT NULL,
                 PRIMARY KEY (id),
@@ -528,6 +534,8 @@ class Database
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
         self::addColumnIfMissing($pdo, 'users', 'is_admin', 'TINYINT(1) NOT NULL DEFAULT 0');
+        self::addColumnIfMissing($pdo, 'users', 'status', "VARCHAR(20) NOT NULL DEFAULT 'active'");
+        self::addColumnIfMissing($pdo, 'users', 'disabled_at', 'VARCHAR(40) NULL');
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS artworks (

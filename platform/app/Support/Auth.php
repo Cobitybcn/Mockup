@@ -32,11 +32,16 @@ class Auth
             return null;
         }
 
-        $stmt = Database::connection()->prepare('SELECT id, email, name, credits, is_admin, created_at FROM users WHERE id = :id');
+        $stmt = Database::connection()->prepare("SELECT id, email, name, credits, is_admin, status, created_at FROM users WHERE id = :id AND status = 'active'");
         $stmt->execute(['id' => $id]);
         $user = $stmt->fetch();
 
-        return is_array($user) ? $user : null;
+        if (!is_array($user)) {
+            unset($_SESSION['user_id']);
+            return null;
+        }
+
+        return $user;
     }
 
     public static function requireUser(): array
@@ -72,7 +77,7 @@ class Auth
     {
         self::start();
 
-        $stmt = Database::connection()->prepare('SELECT * FROM users WHERE email = :email');
+        $stmt = Database::connection()->prepare("SELECT * FROM users WHERE email = :email AND status = 'active'");
         $stmt->execute(['email' => strtolower(trim($email))]);
         $user = $stmt->fetch();
 
@@ -131,7 +136,7 @@ class Auth
             return ['ok' => true, 'sent' => false, 'debug_link' => ''];
         }
 
-        $stmt = Database::connection()->prepare('SELECT id, email, name FROM users WHERE email = :email LIMIT 1');
+        $stmt = Database::connection()->prepare("SELECT id, email, name FROM users WHERE email = :email AND status = 'active' LIMIT 1");
         $stmt->execute(['email' => $email]);
         $user = $stmt->fetch();
 
@@ -192,13 +197,13 @@ class Auth
         }
 
         $tokenHash = hash('sha256', $token);
-        $stmt = Database::connection()->prepare('
+        $stmt = Database::connection()->prepare("
             SELECT pr.*, u.id AS resolved_user_id
             FROM password_resets pr
             INNER JOIN users u ON u.id = pr.user_id
-            WHERE pr.token_hash = :token_hash AND pr.used_at IS NULL
+            WHERE pr.token_hash = :token_hash AND pr.used_at IS NULL AND u.status = 'active'
             LIMIT 1
-        ');
+        ");
         $stmt->execute(['token_hash' => $tokenHash]);
         $row = $stmt->fetch();
 
@@ -238,7 +243,7 @@ class Auth
         }
 
         $pdo = Database::connection();
-        $stmt = $pdo->prepare('SELECT password_hash FROM users WHERE id = :id LIMIT 1');
+        $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE id = :id AND status = 'active' LIMIT 1");
         $stmt->execute(['id' => $userId]);
         $passwordHash = $stmt->fetchColumn();
 
