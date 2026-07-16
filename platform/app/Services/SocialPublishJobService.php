@@ -144,6 +144,150 @@ final class SocialPublishJobService
         return $row;
     }
 
+    /** @return array<int,array> */
+    public function manageableForUser(int $userId, int $limit = 50): array
+    {
+        $limit = max(1, min(100, $limit));
+        $stmt = $this->pdo->prepare(
+            "SELECT * FROM social_publish_jobs
+             WHERE user_id=? AND status IN ('queued','enqueue_failed','rescheduling','cancelling','retrying')
+             ORDER BY scheduled_at ASC,id ASC LIMIT {$limit}"
+        );
+        $stmt->execute([$userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /** @return array<int,array> */
+    public function recentForUser(int $userId, int $limit = 60): array
+    {
+        $limit = max(1, min(100, $limit));
+        $stmt = $this->pdo->prepare(
+            "SELECT * FROM social_publish_jobs
+             WHERE user_id=?
+             ORDER BY updated_at DESC,id DESC LIMIT {$limit}"
+        );
+        $stmt->execute([$userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function beginManagement(int $jobId, int $userId, string $transientStatus): array
+    {
+        if (!in_array($transientStatus, ['rescheduling', 'cancelling'], true)) {
+            throw new InvalidArgumentException('Invalid publication management state.');
+        }
+        $stmt = $this->pdo->prepare(
+            "UPDATE social_publish_jobs SET status=?,error='',updated_at=?
+             WHERE id=? AND user_id=? AND status IN ('queued','enqueue_failed')"
+        );
+        $stmt->execute([$transientStatus, date('c'), $jobId, $userId]);
+        if ($stmt->rowCount() !== 1) {
+            $job = $this->job($jobId, $userId);
+            throw new RuntimeException('This publication can no longer be changed because its status is ' . (string)$job['status'] . '.');
+        }
+        return $this->job($jobId, $userId);
+    }
+
+    public function restoreManagement(int $jobId, int $userId, string $status, string $error): void
+    {
+        if (!in_array($status, ['queued', 'enqueue_failed'], true)) {
+            $status = 'queued';
+        }
+        $this->pdo->prepare(
+            "UPDATE social_publish_jobs SET status=?,error=?,updated_at=?
+             WHERE id=? AND user_id=? AND status IN ('rescheduling','cancelling')"
+        )->execute([$status, mb_substr(trim($error), 0, 1500), date('c'), $jobId, $userId]);
+    }
+
+    public function finishReschedule(int $jobId, int $userId, DateTimeImmutable $scheduledAt, string $taskName): void
+    {
+        $stmt = $this->pdo->prepare(
+            "UPDATE social_publish_jobs
+             SET status='queued',scheduled_at=?,task_name=?,error='',publish_attempt_id='',updated_at=?
+             WHERE id=? AND user_id=? AND status='rescheduling'"
+        );
+        $stmt->execute([
+            $scheduledAt->setTimezone(new DateTimeZone('UTC'))->format(DateTimeInterface::ATOM),
+            mb_substr(trim($taskName), 0, 512),
+            date('c'),
+            $jobId,
+            $userId,
+        ]);
+        if ($stmt->rowCount() !== 1) {
+            throw new RuntimeException('The publication reschedule no longer owns this job.');
+        }
+    }
+
+    public function failReschedule(int $jobId, int $userId, DateTimeImmutable $scheduledAt, string $error): void
+    {
+        $this->pdo->prepare(
+            "UPDATE social_publish_jobs
+             SET status='enqueue_failed',scheduled_at=?,task_name='',error=?,publish_attempt_id='',updated_at=?
+             WHERE id=? AND user_id=? AND status='rescheduling'"
+        )->execute([
+            $scheduledAt->setTimezone(new DateTimeZone('UTC'))->format(DateTimeInterface::ATOM),
+            mb_substr(trim($error), 0, 1500),
+            date('c'),
+            $jobId,
+            $userId,
+        ]);
+    }
+
+    public function finishCancellation(int $jobId, int $userId): void
+    {
+        $stmt = $this->pdo->prepare(
+            "UPDATE social_publish_jobs
+             SET status='cancelled',task_name='',error='',publish_attempt_id='',updated_at=?
+             WHERE id=? AND user_id=? AND status='cancelling'"
+        );
+        $stmt->execute([date('c'), $jobId, $userId]);
+        if ($stmt->rowCount() !== 1) {
+            throw new RuntimeException('The publication cancellation no longer owns this job.');
+        }
+    }
+
+    public function beginRetry(int $jobId, int $userId): array
+    {
+        $stmt = $this->pdo->prepare(
+            "UPDATE social_publish_jobs
+             SET status='retrying',task_name='',publish_attempt_id='',error='',updated_at=?
+             WHERE id=? AND user_id=? AND status IN ('failed','enqueue_failed')"
+        );
+        $stmt->execute([date('c'), $jobId, $userId]);
+        if ($stmt->rowCount() !== 1) {
+            $job = $this->job($jobId, $userId);
+            throw new RuntimeException('This publication cannot be retried because its status is ' . (string)$job['status'] . '.');
+        }
+        return $this->job($jobId, $userId);
+    }
+
+    public function finishRetry(int $jobId, int $userId, DateTimeImmutable $scheduledAt, string $taskName): void
+    {
+        $stmt = $this->pdo->prepare(
+            "UPDATE social_publish_jobs
+             SET status='queued',scheduled_at=?,task_name=?,publish_attempt_id='',error='',updated_at=?
+             WHERE id=? AND user_id=? AND status='retrying'"
+        );
+        $stmt->execute([
+            $scheduledAt->setTimezone(new DateTimeZone('UTC'))->format(DateTimeInterface::ATOM),
+            mb_substr(trim($taskName), 0, 512),
+            date('c'),
+            $jobId,
+            $userId,
+        ]);
+        if ($stmt->rowCount() !== 1) {
+            throw new RuntimeException('The publication retry no longer owns this job.');
+        }
+    }
+
+    public function failRetry(int $jobId, int $userId, string $error): void
+    {
+        $this->pdo->prepare(
+            "UPDATE social_publish_jobs
+             SET status='failed',task_name='',publish_attempt_id='',error=?,updated_at=?
+             WHERE id=? AND user_id=? AND status='retrying'"
+        )->execute([mb_substr(trim($error), 0, 1500), date('c'), $jobId, $userId]);
+    }
+
     public function attachTask(int $jobId, int $userId, string $taskName): void
     {
         $this->pdo->prepare("UPDATE social_publish_jobs SET task_name=?,status='queued',error='',updated_at=? WHERE id=? AND user_id=? AND status<>'published'")

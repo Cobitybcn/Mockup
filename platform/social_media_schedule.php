@@ -25,7 +25,9 @@ try {
     if ($csrf === '' || !hash_equals($csrf, (string)($input['csrf'] ?? ''))) {
         throw new RuntimeException('The publication session expired. Reload the board and try again.');
     }
-    if ((string)($input['confirmation'] ?? '') !== 'PROGRAMAR') {
+    $deliveryMode = strtolower(trim((string)($input['schedule']['mode'] ?? 'scheduled'))) === 'now' ? 'now' : 'scheduled';
+    $expectedConfirmation = $deliveryMode === 'now' ? 'PUBLICAR_AHORA' : 'PROGRAMAR';
+    if ((string)($input['confirmation'] ?? '') !== $expectedConfirmation) {
         throw new RuntimeException('Explicit publication confirmation is required.');
     }
 
@@ -36,7 +38,10 @@ try {
         'ok' => true,
         'publication_count' => $result['publication_count'],
         'jobs' => $result['jobs'],
-        'message' => $result['publication_count'] . ' publicaciones fueron validadas y programadas.',
+        'delivery_mode' => $result['delivery_mode'],
+        'message' => $result['delivery_mode'] === 'now'
+            ? $result['publication_count'] . ' publicaciones entraron en la cola para publicarse ahora.'
+            : $result['publication_count'] . ' publicaciones fueron validadas y programadas.',
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (InvalidArgumentException $e) {
     http_response_code(422);

@@ -17,6 +17,7 @@ $studio = new VideoStudioService($studioRepository);
 $jobs = new VideoJobRepository($pdo);
 $projectId = 0;
 $objectKeys = [];
+$uploadedReferenceAssetIds = [];
 $working = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'video-export-test-' . bin2hex(random_bytes(5));
 VideoFfmpeg::ensureDirectory($working);
 
@@ -42,6 +43,29 @@ try {
         $key = sprintf('video/test/%d/%d/source_%d.mp4', $userId,$projectId,$index);
         StorageService::uploadFile($key,$source);
         $objectKeys[] = $key;
+        if ($index === 0) {
+            $continuityFrame = (new VideoMediaStorage())->prepareContinuityFrame($key);
+            TestHarness::assertTrue(is_file($continuityFrame['path']) && filesize($continuityFrame['path']) > 0, 'the previous clip final frame can be prepared for continuity');
+            foreach ($continuityFrame['temporaryPaths'] as $temporaryPath) @unlink($temporaryPath);
+
+            $referenceFrame = (new VideoMediaStorage())->prepareReferenceVideoFrame($key);
+            TestHarness::assertTrue(is_file($referenceFrame['path']) && filesize($referenceFrame['path']) > 0, 'an uploaded video final frame can become a provider image input');
+            foreach ($referenceFrame['temporaryPaths'] as $temporaryPath) @unlink($temporaryPath);
+
+            $scenePayload = (new VideoReferenceUploadService($studioRepository))->upload($userId, $sceneId, $version, [[
+                'name' => 'referencia-local.mp4',
+                'type' => 'video/mp4',
+                'tmp_name' => $source,
+                'error' => UPLOAD_ERR_OK,
+                'size' => filesize($source),
+            ]], 'source_video');
+            $version = (int)$scenePayload['project']['version'];
+            $uploadedVideo = $scenePayload['assets']['uploadedReferences'][0] ?? [];
+            $uploadedReferenceAssetIds[] = (int)($uploadedVideo['id'] ?? 0);
+            $uploadedVideoRow = $studioRepository->findReferenceAsset($userId, (int)($uploadedVideo['id'] ?? 0));
+            if (is_array($uploadedVideoRow)) $objectKeys[] = (string)$uploadedVideoRow['file_path'];
+            TestHarness::assertSame('video', (string)($uploadedVideo['mediaType'] ?? ''), 'a local MP4 can be uploaded as the editable source video');
+        }
         $jobId = $jobs->createGeneration([
             'user_id'=>$userId,'project_id'=>$projectId,'scene_id'=>$sceneId,'provider'=>'test_provider','model'=>'synthetic',
             'mode'=>'image_to_video','idempotency_key'=>bin2hex(random_bytes(32)),'scene_version'=>$version,
@@ -87,6 +111,9 @@ try {
     TestHarness::assertSame(2,count($preservedClips),'deleting a project preserves its generated videos in the library');
 } finally {
     if ($projectId > 0) $pdo->prepare('DELETE FROM video_projects WHERE id=? AND user_id=?')->execute([$projectId,$userId]);
+    foreach (array_filter($uploadedReferenceAssetIds) as $assetId) {
+        $pdo->prepare('DELETE FROM video_reference_assets WHERE id=? AND user_id=?')->execute([$assetId,$userId]);
+    }
     foreach ($objectKeys as $key) StorageService::delete($key);
     foreach (glob($working . DIRECTORY_SEPARATOR . '*') ?: [] as $file) if (is_file($file)) @unlink($file);
     @rmdir($working);

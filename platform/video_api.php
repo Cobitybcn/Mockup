@@ -74,6 +74,12 @@ VideoHttp::handle(function (): array {
             (int)($input['referenceId'] ?? 0),
             (int)($input['version'] ?? 0)
         ),
+        'reference_update' => $service->updateReferenceInstruction(
+            $userId,
+            (int)($input['referenceId'] ?? 0),
+            (int)($input['version'] ?? 0),
+            $input['instruction'] ?? ''
+        ),
         'library_list' => ['assets' => $service->library($userId)],
         default => throw new InvalidArgumentException('Unknown Video Studio action.'),
     };

@@ -131,6 +131,7 @@ $workerSa = Ensure-ServiceAccount -ProjectId $ProjectId -AccountName $WorkerServ
 $tasksInvokerSa = Ensure-ServiceAccount -ProjectId $ProjectId -AccountName $TasksInvokerServiceAccountName -DisplayName "Mockups Cloud Tasks Invoker"
 
 Ensure-ProjectRole -ProjectId $ProjectId -Member "serviceAccount:$webSa" -Role "roles/cloudtasks.enqueuer"
+Ensure-ProjectRole -ProjectId $ProjectId -Member "serviceAccount:$webSa" -Role "roles/cloudtasks.taskDeleter"
 Ensure-ProjectRole -ProjectId $ProjectId -Member "serviceAccount:$webSa" -Role "roles/storage.objectAdmin"
 Ensure-ProjectRole -ProjectId $ProjectId -Member "serviceAccount:$webSa" -Role "roles/cloudsql.client"
 Ensure-ProjectRole -ProjectId $ProjectId -Member "serviceAccount:$workerSa" -Role "roles/storage.objectAdmin"

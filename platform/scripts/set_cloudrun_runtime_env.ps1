@@ -17,7 +17,10 @@ param(
     [string]$DbUsername,
     [Parameter(Mandatory = $true)]
     [string]$DbPassword,
-    [string]$GeminiImageModel = "gemini-3.1-flash-image"
+    [string]$GeminiImageModel = "gemini-3.1-flash-image",
+    [string]$VideoGenerationProvider = "vertex_gemini_omni",
+    [string]$VideoOmniModel = "gemini-omni-flash-preview",
+    [string]$VideoVeoModel = "veo-3.1-fast-generate-001"
 )
 
 $ErrorActionPreference = "Stop"
@@ -59,6 +62,10 @@ $sharedEnv = @{
     VERTEX_PROJECT_ID    = $VertexProjectId
     VERTEX_LOCATION      = $VertexLocation
     GEMINI_IMAGE_MODEL   = $GeminiImageModel
+    VIDEO_GENERATION_PROVIDER = $VideoGenerationProvider
+    VIDEO_OMNI_MODEL     = $VideoOmniModel
+    VIDEO_VEO_MODEL      = $VideoVeoModel
+    VIDEO_VERTEX_PROJECT_ID = $VertexProjectId
     DB_CONNECTION        = "mysql"
     DB_SOCKET            = "/cloudsql/$CloudSqlInstance"
     DB_DATABASE          = $DbDatabase

@@ -1,0 +1,28 @@
+steps:
+  - id: pull-previous-image
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - docker pull "${_IMAGE}:latest" || true
+
+  - id: build-with-remote-cache
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --cache-from
+      - ${_IMAGE}:latest
+      - --file
+      - ${_DOCKERFILE}
+      - --tag
+      - ${_IMAGE}:$BUILD_ID
+      - --tag
+      - ${_IMAGE}:latest
+      - .
+
+images:
+  - ${_IMAGE}:$BUILD_ID
+  - ${_IMAGE}:latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY

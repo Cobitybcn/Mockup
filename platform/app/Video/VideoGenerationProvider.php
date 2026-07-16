@@ -16,6 +16,12 @@ interface VideoGenerationProvider
     /** @return array{jobId:string,status:string,response:array} */
     public function extendVideo(array $payload): array;
 
+    /** @return array{jobId:string,status:string,response:array} */
+    public function editVideo(array $payload): array;
+
+    /** @return array{jobId:string,status:string,response:array} */
+    public function editInteraction(array $payload): array;
+
     /** @return array{status:string,output?:array,error?:string,response:array} */
     public function getJobStatus(string $jobId): array;
 }

@@ -41,6 +41,18 @@ final class VideoFfmpeg
         }
     }
 
+    public static function lastFrame(string $videoPath, string $targetPath): bool
+    {
+        try {
+            self::ensureDirectory(dirname($targetPath));
+            self::run([self::binary(), '-y', '-sseof', '-0.12', '-i', $videoPath, '-frames:v', '1', '-vf', 'scale=1280:-2', '-q:v', '2', $targetPath]);
+            return is_file($targetPath) && filesize($targetPath) > 0;
+        } catch (Throwable $e) {
+            Logger::log('Video last-frame extraction failed: ' . $e->getMessage(), 'warning');
+            return false;
+        }
+    }
+
     public static function duration(string $videoPath): float
     {
         try {

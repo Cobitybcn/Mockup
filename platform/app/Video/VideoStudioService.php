@@ -13,7 +13,6 @@ final class VideoStudioService
     private const MOTION_INTENSITIES = ['very_low','low','medium','high'];
     private const TRANSITIONS = ['cut','fade','cross_dissolve','dip_black','dip_white','ai_transition'];
     private const AUDIO_MODES = ['silence','ambient_sound','generated_audio','uploaded_audio','continue_previous'];
-    private const REFERENCE_ROLES = ['main','artwork_fidelity','environment','cinematic_style','start_frame','end_frame','source_video'];
 
     public function __construct(private VideoStudioRepository $repository)
     {
@@ -47,28 +46,42 @@ final class VideoStudioService
 
     public function capabilities(): array
     {
+        $provider = VideoProviderRegistry::configuredName();
+        $omni = $provider === VideoProviderRegistry::OMNI;
         return [
             'aspectRatios' => self::ASPECT_RATIOS,
-            'durations' => [4,6,8],
+            'generationAspectRatios' => ['9:16','16:9'],
+            'durations' => VideoProviderRegistry::durations($provider),
+            'defaultDuration' => VideoProviderRegistry::defaultDuration($provider),
+            'defaultMode' => VideoProviderRegistry::defaultMode($provider),
             'modes' => [
                 ['id' => 'image_to_video', 'label' => 'Animate Mockup', 'available' => true],
-                ['id' => 'first_last_frame', 'label' => 'Start Frame → End Frame', 'available' => true],
+                ['id' => 'first_last_frame', 'label' => 'Start Frame → End Frame', 'available' => !$omni],
                 ['id' => 'extend_video', 'label' => 'Continue Previous Clip', 'available' => false],
             ],
-            'referenceRoles' => self::REFERENCE_ROLES,
+            'referenceRoles' => VideoReferencePolicy::roles(),
+            'referenceLimits' => [
+                'images' => VideoReferencePolicy::MAX_IMAGES,
+                'videos' => VideoReferencePolicy::MAX_VIDEOS,
+                'videoSeconds' => VideoReferencePolicy::MAX_VIDEO_SECONDS,
+            ],
             'audioModes' => [
                 ['id' => 'silence', 'label' => 'Silence', 'available' => true],
                 ['id' => 'ambient_sound', 'label' => 'Ambient Sound', 'available' => false],
             ],
-            'cameraMovements' => self::CAMERA_MOVEMENTS,
-            'motionIntensities' => self::MOTION_INTENSITIES,
+            'continuity' => [
+                'automatic' => true,
+                'strategy' => 'previous_last_frame',
+                'temporalExtension' => false,
+                'note' => 'The previous result is handed off through its last frame. This improves continuity but does not guarantee it.',
+            ],
             'artworkMotion' => self::ARTWORK_MOTION,
             'transitions' => self::TRANSITIONS,
             'projectTypes' => self::PROJECT_TYPES,
             'purposes' => self::PURPOSES,
             'sceneStatuses' => ['draft','ready','approved'],
-            'generationProvider' => 'vertex_veo',
-            'generationModel' => app_env('VIDEO_VEO_MODEL', 'veo-3.1-fast-generate-001'),
+            'generationProvider' => $provider,
+            'generationModel' => VideoProviderRegistry::configuredModel(),
         ];
     }
 
@@ -97,14 +110,14 @@ final class VideoStudioService
         ];
         return $this->transaction(function () use ($userId, $values): array {
             $projectId = $this->repository->createProject($userId, $values);
+            $defaultMode = VideoProviderRegistry::defaultMode();
+            $defaultDuration = VideoProviderRegistry::defaultDuration();
             for ($number = 1; $number <= 3; $number++) {
                 $position = $number * 10;
                 $this->repository->createScene($projectId, $position, $this->sceneValues([
                     'title' => 'Sequence ' . $number,
-                    'durationSeconds' => 8,
-                    'generationMode' => 'first_last_frame',
-                    'cameraMovement' => 'static',
-                    'motionIntensity' => 'low',
+                    'durationSeconds' => $defaultDuration,
+                    'generationMode' => $defaultMode,
                 ], $number));
             }
             return $this->studioPayload($userId, $projectId);
@@ -163,8 +176,8 @@ final class VideoStudioService
             $sceneId = $this->repository->createScene($projectId, $position, $values);
             if (isset($input['sourceType'], $input['sourceId'])) {
                 $source = $this->resolveSource($userId, (string)$input['sourceType'], (int)$input['sourceId']);
-                $role = (string)($input['role'] ?? ($source['source_type'] === 'generation_job' ? 'source_video' : 'main'));
-                $role = $this->choice($role, self::REFERENCE_ROLES, 'reference role');
+                $role = (string)($input['role'] ?? 'reference');
+                $role = $this->choice($role, VideoReferencePolicy::roles(), 'reference role');
                 $this->repository->replaceReference($sceneId, $role, $source);
             }
             $this->repository->touchProject($userId, $projectId, $version);
@@ -253,15 +266,29 @@ final class VideoStudioService
         $scene = $this->requireScene($userId, $sceneId);
         if ($scene['editingLocked']) throw new DomainException('Unlock this scene before changing references.');
         $source = $this->resolveSource($userId, (string)($input['sourceType'] ?? ''), (int)($input['sourceId'] ?? 0));
-        $role = $this->choice($input['role'] ?? ($source['source_type'] === 'generation_job' ? 'source_video' : 'main'), self::REFERENCE_ROLES, 'reference role');
+        $role = $this->choice($input['role'] ?? 'reference', VideoReferencePolicy::roles(), 'reference role');
+        $metadata = json_decode((string)($source['metadata_json'] ?? ''), true);
+        if (!is_array($metadata)) $metadata = [];
+        $mediaType = (string)($metadata['mediaType'] ?? 'image');
+        if ($mediaType === 'video') {
+            $generatedContinuation = ($source['source_type'] ?? '') === 'generation_job' && $role === 'start_frame';
+            if (!$generatedContinuation && $role !== 'source_video') {
+                throw new InvalidArgumentException('Los videos deben colocarse en Video base para editar.');
+            }
+        } elseif (!VideoReferencePolicy::isImageRole($role)) {
+            throw new InvalidArgumentException('Esta área admite únicamente un video.');
+        }
+        if (($source['source_type'] ?? '') === 'generation_job' && (int)($metadata['sceneId'] ?? 0) === $sceneId) {
+            throw new InvalidArgumentException('A generated result cannot be used as a reference by its own scene.');
+        }
+        $this->assertReferenceCapacity($sceneId, $role, $mediaType);
+        $instruction = $this->longText($input['instruction'] ?? VideoReferencePolicy::defaultInstruction($role), 1000);
+        $metadata['instruction'] = $instruction;
+        $source['metadata_json'] = json_encode($metadata, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}';
         $projectId = (int)$scene['projectId'];
         return $this->transaction(function () use ($userId, $projectId, $version, $sceneId, $role, $source): array {
             $this->repository->replaceReference($sceneId, $role, $source);
-            $changes = ['status' => 'draft'];
-            if (in_array($role, ['start_frame','end_frame'], true)) $changes['generation_mode'] = 'first_last_frame';
-            if ($role === 'source_video') $changes['generation_mode'] = 'extend_video';
-            if ($role === 'main') $changes['generation_mode'] = 'image_to_video';
-            $this->repository->updateScene($sceneId, $changes);
+            $this->repository->updateScene($sceneId, ['status' => 'draft']);
             $this->repository->touchProject($userId, $projectId, $version);
             return $this->studioPayload($userId, $projectId) + ['selectedSceneId' => $sceneId];
         });
@@ -276,6 +303,32 @@ final class VideoStudioService
         });
     }
 
+    public function updateReferenceInstruction(int $userId, int $referenceId, int $version, mixed $instruction): array
+    {
+        $instruction = $this->longText($instruction, 1000);
+        return $this->transaction(function () use ($userId, $referenceId, $version, $instruction): array {
+            $projectId = $this->repository->updateReferenceInstruction($userId, $referenceId, $instruction);
+            $this->repository->touchProject($userId, $projectId, $version);
+            return $this->studioPayload($userId, $projectId);
+        });
+    }
+
+    private function assertReferenceCapacity(int $sceneId, string $incomingRole, string $incomingMediaType): void
+    {
+        $references = $this->repository->referencesForScene($sceneId);
+        if ($incomingMediaType === 'video') return;
+
+        $count = 0;
+        foreach ($references as $reference) {
+            if (($reference['mediaType'] ?? 'image') !== 'image') continue;
+            if (VideoReferencePolicy::isSingle($incomingRole) && (string)$reference['role'] === $incomingRole) continue;
+            $count++;
+        }
+        if ($count + 1 > VideoReferencePolicy::MAX_IMAGES) {
+            throw new InvalidArgumentException('Omni admite un máximo de 10 imágenes por secuencia.');
+        }
+    }
+
     private function sceneValues(array $input, float $number): array
     {
         $title = $this->text($input['title'] ?? '', 255);
@@ -284,8 +337,8 @@ final class VideoStudioService
             'title' => $title,
             'purpose' => $this->choice($input['purpose'] ?? 'custom', self::PURPOSES, 'scene purpose'),
             'prompt' => $this->longText($input['prompt'] ?? '', 20000),
-            'duration_seconds' => $this->number($input['durationSeconds'] ?? 6, 1, 180, 'scene duration'),
-            'generation_mode' => $this->choice($input['generationMode'] ?? 'image_to_video', self::GENERATION_MODES, 'generation mode'),
+            'duration_seconds' => $this->number($input['durationSeconds'] ?? VideoProviderRegistry::defaultDuration(), 1, 180, 'scene duration'),
+            'generation_mode' => $this->choice($input['generationMode'] ?? VideoProviderRegistry::defaultMode(), self::GENERATION_MODES, 'generation mode'),
             'artwork_motion' => $this->choice($input['artworkMotion'] ?? 'locked', self::ARTWORK_MOTION, 'artwork motion'),
             'camera_movement' => $this->choice($input['cameraMovement'] ?? 'static', self::CAMERA_MOVEMENTS, 'camera movement'),
             'custom_camera_movement' => $this->text($input['customCameraMovement'] ?? '', 255),
@@ -314,7 +367,7 @@ final class VideoStudioService
 
     private function resolveSource(int $userId, string $type, int $id): array
     {
-        if (!in_array($type, ['mockup','artwork','generation_job'], true) || $id <= 0) {
+        if (!in_array($type, ['mockup','artwork','generation_job','reference_asset'], true) || $id <= 0) {
             throw new InvalidArgumentException('Invalid scene reference.');
         }
         $source = $this->repository->referenceSource($userId, $type, $id);

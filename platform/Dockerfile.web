@@ -24,8 +24,8 @@ RUN pip3 install --no-cache-dir --break-system-packages google-genai Pillow
 RUN a2enmod rewrite
 
 # Configure PHP settings
-RUN echo "upload_max_filesize = 64M" > /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "post_max_size = 72M" >> /usr/local/etc/php/conf.d/uploads.ini \
+RUN echo "upload_max_filesize = 200M" > /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "post_max_size = 512M" >> /usr/local/etc/php/conf.d/uploads.ini \
     && echo "memory_limit = 768M" >> /usr/local/etc/php/conf.d/uploads.ini
 
 # Copy composer

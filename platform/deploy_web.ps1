@@ -34,20 +34,58 @@ function Invoke-Gcloud {
     }
 }
 
+function Get-GcloudValue {
+    param(
+        [Parameter(ValueFromRemainingArguments = $true)]
+        [string[]]$Arguments
+    )
+
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $rawLines = @(& $Gcloud @Arguments)
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+
+    if ($exitCode -ne 0) {
+        throw "gcloud failed with exit code ${exitCode}: gcloud $($Arguments -join ' ')"
+    }
+
+    $lines = @(@($rawLines) | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+    if ($lines.Count -eq 0) {
+        throw "gcloud returned no value: gcloud $($Arguments -join ' ')"
+    }
+
+    return ([string]$lines[-1]).Trim()
+}
+
 Write-Host "Deploying mockups-web only..." -ForegroundColor Cyan
 
-Copy-Item Dockerfile.web Dockerfile -Force
-try {
-    Invoke-Gcloud builds submit --project=$ProjectId --tag="$imageBase/${WebService}:latest" .
-} finally {
-    if (Test-Path Dockerfile) {
-        Remove-Item Dockerfile -Force
-    }
+# Cloud Build workers are ephemeral. Pull the previous Artifact Registry image
+# and use its layers as a remote Docker cache so PHP, Python and Composer are
+# rebuilt only when their inputs change.
+Invoke-Gcloud builds submit `
+    --project=$ProjectId `
+    --config=cloudbuild.cached-image.yaml `
+    "--substitutions=_IMAGE=$imageBase/$WebService,_DOCKERFILE=Dockerfile.web" `
+    .
+
+$digest = Get-GcloudValue artifacts docker images describe "$imageBase/${WebService}:latest" `
+    --project=$ProjectId `
+    "--format=value(image_summary.digest)"
+if (-not $digest.StartsWith("sha256:")) {
+    throw "Could not resolve the immutable image digest for ${WebService}:latest. Received: $digest"
 }
+$imageRef = "$imageBase/${WebService}@$digest"
+$revisionSuffix = "d" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss")
+$revision = "$WebService-$revisionSuffix"
 
 Invoke-Gcloud run deploy $WebService `
     --project=$ProjectId `
-    --image="$imageBase/${WebService}:latest" `
+    --image=$imageRef `
+    --revision-suffix=$revisionSuffix `
     --allow-unauthenticated `
     --service-account="mockups-web-sa@$ProjectId.iam.gserviceaccount.com" `
     --min-instances=0 `
@@ -55,11 +93,26 @@ Invoke-Gcloud run deploy $WebService `
     --memory=2Gi `
     --region=$Region
 
-# The service can retain revision-pinned traffic from a previous rollback.
-# Explicitly route traffic to the newest healthy revision after deployment.
+# A service may retain revision-pinned traffic after a rollback. Verify and
+# route the exact named revision created by this deployment instead of relying
+# on Cloud Run's latestReady traffic pointer.
+$revisionReady = Get-GcloudValue run revisions describe $revision `
+    --project=$ProjectId `
+    --region=$Region `
+    "--format=value(status.conditions[0].status)"
+if ($revisionReady -ne "True") {
+    throw "Revision $revision is not ready. Ready status: $revisionReady"
+}
+$revisionImage = Get-GcloudValue run revisions describe $revision `
+    --project=$ProjectId `
+    --region=$Region `
+    "--format=value(spec.containers[0].image)"
+if (-not $revisionImage.EndsWith("@$digest")) {
+    throw "Latest ready revision $revision does not use the image built by this deployment. Expected digest: $digest; image: $revisionImage"
+}
 Invoke-Gcloud run services update-traffic $WebService `
     --project=$ProjectId `
     --region=$Region `
-    --to-latest
+    --to-revisions="${revision}=100"
 
-Write-Host "SUCCESS: mockups-web deployed." -ForegroundColor Green
+Write-Host "SUCCESS: mockups-web deployed as $revision ($digest)." -ForegroundColor Green

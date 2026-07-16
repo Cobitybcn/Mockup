@@ -10,7 +10,7 @@ final class SocialBoardPublishService
         private readonly SocialPublishJobService $jobs
     ) {}
 
-    /** @return array{jobs:array<int,array>,publication_count:int,scheduled_at:array<int,string>} */
+    /** @return array{jobs:array<int,array>,publication_count:int,scheduled_at:array<int,string>,delivery_mode:string} */
     public function schedule(array $user, array $input): array
     {
         $userId = (int)($user['id'] ?? 0);
@@ -21,12 +21,13 @@ final class SocialBoardPublishService
         $pinterestItems = array_values((array)($input['pinterest'] ?? []));
         $instagramGroups = array_values((array)($input['instagram'] ?? []));
         $facebookGroups = array_values((array)($input['facebook'] ?? []));
+        $pinterestPurpose = $this->pinterestPurpose($user, (string)($input['pinterest_purpose'] ?? 'artist'));
         $publicationCount = count($pinterestItems) + count($instagramGroups) + count($facebookGroups);
         if ($publicationCount === 0) throw new InvalidArgumentException('Add at least one publication before confirming.');
         if ($publicationCount > 80) throw new InvalidArgumentException('Schedule at most 80 publications at a time.');
 
         $this->assertPublicRuntime($pinterestItems, $instagramGroups, $facebookGroups);
-        $pinterestBoards = $pinterestItems ? $this->pinterestBoards($userId) : [];
+        $pinterestBoards = $pinterestItems ? $this->pinterestBoards($userId, $pinterestPurpose) : [];
         $this->assertMetaConnections($userId, $instagramGroups, $facebookGroups);
 
         $created = [];
@@ -34,7 +35,7 @@ final class SocialBoardPublishService
         foreach ($pinterestItems as $position => $item) {
             if (!is_array($item)) throw new InvalidArgumentException('Invalid Pinterest publication.');
             $when = $this->scheduledAt((array)($item['schedule'] ?? $defaultSchedule), $timezone);
-            $job = $this->preparePinterest($user, $item, $pinterestBoards, $when, $position);
+            $job = $this->preparePinterest($user, $item, $pinterestBoards, $pinterestPurpose, $when, $position);
             $created[] = $this->enqueueIfNeeded($job, $when);
             $scheduled[] = $when->format(DateTimeInterface::ATOM);
         }
@@ -48,10 +49,11 @@ final class SocialBoardPublishService
             }
         }
 
-        return ['jobs' => $created, 'publication_count' => $publicationCount, 'scheduled_at' => $scheduled];
+        $deliveryMode = strtolower(trim((string)($defaultSchedule['mode'] ?? 'scheduled'))) === 'now' ? 'now' : 'scheduled';
+        return ['jobs' => $created, 'publication_count' => $publicationCount, 'scheduled_at' => $scheduled, 'delivery_mode' => $deliveryMode];
     }
 
-    private function preparePinterest(array $user, array $item, array $boards, DateTimeImmutable $when, int $position): array
+    private function preparePinterest(array $user, array $item, array $boards, string $purpose, DateTimeImmutable $when, int $position): array
     {
         $userId = (int)$user['id'];
         $mockupId = max(0, (int)($item['mockup_id'] ?? 0));
@@ -71,6 +73,7 @@ final class SocialBoardPublishService
             'title' => mb_substr($title, 0, 100),
             'description' => mb_substr($description, 0, 500),
             'destination_url' => $destinationUrl,
+            'purpose' => $purpose,
             'scheduled_at' => $when->setTimezone(new DateTimeZone('UTC'))->format(DateTimeInterface::ATOM),
         ];
         $key = $this->idempotencyKey($userId, 'pinterest', $normalized);
@@ -78,13 +81,13 @@ final class SocialBoardPublishService
         if ($existing) return $existing;
 
         $drafts = new MockupPinterestDraftService($this->pdo);
-        $draft = $drafts->create($mockupId, $user, 'artist', $destinationUrl);
+        $draft = $drafts->create($mockupId, $user, $purpose, $destinationUrl);
         $draftId = (int)$draft['id'];
         $drafts->updateContent($draftId, $userId, $title, $description, (string)($item['alt_text'] ?? ''));
         $drafts->selectBoard($draftId, $userId, $boardId, $boards);
         $drafts->saveCrop($draftId, $userId, 0.5, 0.5, 1.0);
 
-        return $this->jobs->create($userId, 'pinterest', 'artist', $when, [
+        return $this->jobs->create($userId, 'pinterest', $purpose, $when, [
             'schema_version' => 'social-board-job.v1',
             'draft_ids' => [$draftId],
             'client_key' => $normalized['client_key'],
@@ -148,7 +151,14 @@ final class SocialBoardPublishService
 
     private function enqueueIfNeeded(array $job, DateTimeImmutable $when): array
     {
-        if ((string)($job['status'] ?? '') === 'published' || trim((string)($job['task_name'] ?? '')) !== '') {
+        $status = (string)($job['status'] ?? '');
+        if ($status === 'failed') {
+            throw new RuntimeException('Esta publicación falló anteriormente. Usa la acción Reintentar para no crear un duplicado incierto.');
+        }
+        if ($status === 'needs_verification') {
+            throw new RuntimeException('Verifica primero la cuenta social real antes de intentar esta publicación nuevamente.');
+        }
+        if ($status === 'published' || trim((string)($job['task_name'] ?? '')) !== '') {
             return $this->summary($job);
         }
         try {
@@ -200,9 +210,21 @@ final class SocialBoardPublishService
         if ($instagram) (new InstagramIntegrationService($this->pdo))->publishingContext($userId, 'artist');
     }
 
-    private function pinterestBoards(int $userId): array
+    private function pinterestBoards(int $userId, string $purpose): array
     {
-        return (new PinterestIntegrationService($this->pdo))->boards($userId, 'artist');
+        return (new PinterestIntegrationService($this->pdo))->boards($userId, $purpose);
+    }
+
+    private function pinterestPurpose(array $user, string $purpose): string
+    {
+        $purpose = strtolower(trim($purpose));
+        if (!in_array($purpose, ['artist', 'platform'], true)) {
+            throw new InvalidArgumentException('Invalid Pinterest identity.');
+        }
+        if ($purpose === 'platform' && (int)($user['is_admin'] ?? 0) !== 1) {
+            throw new RuntimeException('The Artworks Mockups Pinterest identity is available to administrators only.');
+        }
+        return $purpose;
     }
 
     private function assertMockupsOwned(int $userId, array $mockupIds): void
@@ -221,6 +243,9 @@ final class SocialBoardPublishService
 
     private function scheduledAt(array $schedule, DateTimeZone $timezone): DateTimeImmutable
     {
+        if (strtolower(trim((string)($schedule['mode'] ?? 'scheduled'))) === 'now') {
+            return new DateTimeImmutable('now', new DateTimeZone('UTC'));
+        }
         $date = trim((string)($schedule['date'] ?? ''));
         $time = trim((string)($schedule['time'] ?? ''));
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !preg_match('/^\d{2}:\d{2}$/', $time)) {

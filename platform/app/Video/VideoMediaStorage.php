@@ -5,12 +5,15 @@ final class VideoMediaStorage
 {
     public function prepareReferenceImage(string $storedFile): array
     {
-        $file = basename(str_replace('\\', '/', $storedFile));
-        if ($file === '') throw new InvalidArgumentException('The scene reference has no file.');
-        $path = RESULTS_DIR . DIRECTORY_SEPARATOR . $file;
-        if (!is_file($path)) StorageService::downloadFile('results/' . $file, $path);
+        $storedFile = ltrim(str_replace('\\', '/', trim($storedFile)), '/');
+        if ($storedFile === '') throw new InvalidArgumentException('The scene reference has no file.');
+        $isStorageKey = str_contains($storedFile, '/');
+        $file = basename($storedFile);
+        $storageKey = $isStorageKey ? $storedFile : 'results/' . $file;
+        $path = $isStorageKey ? $this->localObjectPath($storageKey) : RESULTS_DIR . DIRECTORY_SEPARATOR . $file;
+        if (!is_file($path)) StorageService::downloadFile($storageKey, $path);
         if (!is_file($path)) throw new RuntimeException('The selected scene reference could not be loaded.');
-        if (filesize($path) > 20 * 1024 * 1024) throw new InvalidArgumentException('The scene reference exceeds the 20 MB Veo limit.');
+        if (filesize($path) > 20 * 1024 * 1024) throw new InvalidArgumentException('The scene image reference exceeds the 20 MB provider limit.');
 
         $mime = @mime_content_type($path) ?: '';
         if (in_array($mime, ['image/jpeg','image/png'], true)) return ['path' => $path, 'mimeType' => $mime, 'temporary' => false];
@@ -29,6 +32,74 @@ final class VideoMediaStorage
         }
         imagedestroy($source);
         return ['path' => $target, 'mimeType' => 'image/png', 'temporary' => true];
+    }
+
+    /** @return array{path:string,mimeType:string,temporaryPaths:list<string>} */
+    public function prepareContinuityFrame(string $storedVideo): array
+    {
+        return $this->prepareVideoFrame(
+            $storedVideo,
+            'Could not extract the previous scene final frame.',
+            'continuity'
+        );
+    }
+
+    /** @return array{path:string,mimeType:string,temporaryPaths:list<string>} */
+    public function prepareReferenceVideoFrame(string $storedVideo): array
+    {
+        return $this->prepareVideoFrame(
+            $storedVideo,
+            'Could not extract the uploaded video final frame.',
+            'reference'
+        );
+    }
+
+    /** @return array{path:string,mimeType:string,temporaryPaths:list<string>} */
+    public function prepareReferenceVideo(string $storedVideo): array
+    {
+        $extension = strtolower(pathinfo($storedVideo, PATHINFO_EXTENSION));
+        $mime = match ($extension) {
+            'mov' => 'video/quicktime',
+            'webm' => 'video/webm',
+            default => 'video/mp4',
+        };
+        if (!in_array($extension, ['mp4','mov','webm'], true)) $extension = 'mp4';
+        $video = $this->temporaryFile('edit_video_', '.' . $extension);
+        try {
+            $this->materializeObject($storedVideo, $video);
+            $duration = VideoFfmpeg::duration($video);
+            if ($duration <= 0 || $duration > VideoReferencePolicy::MAX_VIDEO_SECONDS + 0.05) {
+                throw new InvalidArgumentException('El video base debe durar entre 0 y 10 segundos.');
+            }
+            return ['path' => $video, 'mimeType' => $mime, 'temporaryPaths' => [$video]];
+        } catch (Throwable $e) {
+            @unlink($video);
+            throw $e;
+        }
+    }
+
+    /** @return array{path:string,mimeType:string,temporaryPaths:list<string>} */
+    private function prepareVideoFrame(string $storedVideo, string $failureMessage, string $prefix): array
+    {
+        $extension = strtolower(pathinfo($storedVideo, PATHINFO_EXTENSION));
+        if (!in_array($extension, ['mp4','mov','webm'], true)) $extension = 'mp4';
+        $video = $this->temporaryFile($prefix . '_video_', '.' . $extension);
+        $frame = $this->temporaryFile($prefix . '_frame_', '.jpg');
+        try {
+            $this->materializeObject($storedVideo, $video);
+            if (!VideoFfmpeg::lastFrame($video, $frame)) {
+                throw new RuntimeException($failureMessage);
+            }
+            return [
+                'path' => $frame,
+                'mimeType' => 'image/jpeg',
+                'temporaryPaths' => [$video, $frame],
+            ];
+        } catch (Throwable $e) {
+            @unlink($video);
+            @unlink($frame);
+            throw $e;
+        }
     }
 
     public function storeGeneratedOutput(array $output, array $job): array

@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 final class VideoJobRepository
 {
+    private const MAX_STORED_RESPONSE_BYTES = 2 * 1024 * 1024;
+    private const MAX_STORED_RESPONSE_STRING_BYTES = 64 * 1024;
+
     public function __construct(private PDO $pdo) {}
 
     public function generationContext(int $userId, int $sceneId): ?array
@@ -18,22 +21,33 @@ final class VideoJobRepository
         $row = $stmt->fetch();
         if (!is_array($row)) return null;
 
-        $refStmt = $this->pdo->prepare('SELECT id,role,source_type,source_id,file_path,metadata_json
+        $refStmt = $this->pdo->prepare('SELECT id,role,source_type,source_id,position,file_path,metadata_json
             FROM video_scene_references WHERE video_scene_id=? ORDER BY position,id');
         $refStmt->execute([$sceneId]);
         $references = [];
+        $referenceList = [];
         foreach ($refStmt->fetchAll() as $reference) {
             $normalized = [
                 'id' => (int)$reference['id'],
                 'role' => (string)$reference['role'],
                 'sourceType' => (string)$reference['source_type'],
                 'sourceId' => (int)$reference['source_id'],
+                'position' => (int)$reference['position'],
                 'filePath' => (string)$reference['file_path'],
                 'metadata' => json_decode((string)$reference['metadata_json'], true) ?: [],
             ];
+            $referenceList[] = $normalized;
             $references[(string)$reference['role']] ??= $normalized;
         }
         $primaryReference = $references['main'] ?? $references['start_frame'] ?? null;
+        if ($primaryReference === null) {
+            foreach ($referenceList as $candidate) {
+                if (($candidate['metadata']['mediaType'] ?? 'image') === 'image') {
+                    $primaryReference = $candidate;
+                    break;
+                }
+            }
+        }
 
         return [
             'project' => [
@@ -60,7 +74,41 @@ final class VideoJobRepository
             ],
             'reference' => $primaryReference,
             'references' => $references,
+            'referenceList' => $referenceList,
         ];
+    }
+
+    public function previousSuccessfulGeneration(int $userId, int $sceneId): ?array
+    {
+        $sceneStmt = $this->pdo->prepare('SELECT previous.id
+            FROM video_scenes current
+            INNER JOIN video_projects p ON p.id=current.video_project_id
+            INNER JOIN video_scenes previous ON previous.video_project_id=current.video_project_id AND previous.position<current.position
+            WHERE current.id=? AND p.user_id=?
+            ORDER BY previous.position DESC,previous.id DESC LIMIT 1');
+        $sceneStmt->execute([$sceneId, $userId]);
+        $previousSceneId = (int)$sceneStmt->fetchColumn();
+        if ($previousSceneId <= 0) return null;
+
+        $jobStmt = $this->pdo->prepare("SELECT * FROM video_generation_jobs
+            WHERE video_scene_id=? AND user_id=? AND status='succeeded' AND active_slot=1
+            ORDER BY id DESC LIMIT 1");
+        $jobStmt->execute([$previousSceneId, $userId]);
+        $job = $jobStmt->fetch();
+        if (!is_array($job)) return null;
+        $job['previous_scene_id'] = $previousSceneId;
+        return $job;
+    }
+
+    public function activeGenerationForScene(int $userId, int $sceneId): ?array
+    {
+        $stmt = $this->pdo->prepare("SELECT j.* FROM video_generation_jobs j
+            INNER JOIN video_projects p ON p.id=j.video_project_id AND p.user_id=j.user_id
+            WHERE j.user_id=? AND j.video_scene_id=? AND j.status='succeeded' AND j.active_slot=1 AND p.user_id=?
+            ORDER BY j.id DESC LIMIT 1");
+        $stmt->execute([$userId, $sceneId, $userId]);
+        $row = $stmt->fetch();
+        return is_array($row) ? $row : null;
     }
 
     public function pendingGeneration(int $userId, int $sceneId, string $inputHash): ?array
@@ -142,13 +190,13 @@ final class VideoJobRepository
     public function markGenerationPolling(int $jobId, string $externalId, array $response, string $nextPollAt): void
     {
         $stmt = $this->pdo->prepare("UPDATE video_generation_jobs SET status='polling',external_job_id=?,response_json=?,next_poll_at=?,error='',updated_at=? WHERE id=? AND status IN ('submitting','polling')");
-        $stmt->execute([$externalId,self::encode($response),$nextPollAt,date('c'),$jobId]);
+        $stmt->execute([$externalId,self::encodeProviderResponse($response),$nextPollAt,date('c'),$jobId]);
     }
 
     public function markGenerationProcessing(int $jobId, array $response, string $nextPollAt): void
     {
         $stmt = $this->pdo->prepare("UPDATE video_generation_jobs SET status='polling',response_json=?,next_poll_at=?,updated_at=? WHERE id=? AND status IN ('polling','processing')");
-        $stmt->execute([self::encode($response),$nextPollAt,date('c'),$jobId]);
+        $stmt->execute([self::encodeProviderResponse($response),$nextPollAt,date('c'),$jobId]);
     }
 
     public function markGenerationSucceeded(int $jobId, string $outputPath, string $thumbnailPath, float $duration, array $response): void
@@ -162,7 +210,7 @@ final class VideoJobRepository
             }
             $stmt = $this->pdo->prepare("UPDATE video_generation_jobs SET status='succeeded',active_slot=1,output_path=?,thumbnail_path=?,generated_duration_seconds=?,response_json=?,next_poll_at=NULL,error='',completed_at=?,updated_at=? WHERE id=?");
             $now = date('c');
-            $stmt->execute([$outputPath,$thumbnailPath,$duration,self::encode($response),$now,$now,$jobId]);
+            $stmt->execute([$outputPath,$thumbnailPath,$duration,self::encodeProviderResponse($response),$now,$now,$jobId]);
             $this->pdo->commit();
         } catch (Throwable $e) {
             if ($this->pdo->inTransaction()) $this->pdo->rollBack();
@@ -174,7 +222,7 @@ final class VideoJobRepository
     {
         $stmt = $this->pdo->prepare("UPDATE video_generation_jobs SET status='failed',active_slot=NULL,response_json=?,error=?,next_poll_at=NULL,completed_at=?,updated_at=? WHERE id=?");
         $now = date('c');
-        $stmt->execute([self::encode($response),mb_substr($error,0,4000),$now,$now,$jobId]);
+        $stmt->execute([self::encodeProviderResponse($response),mb_substr($error,0,4000),$now,$now,$jobId]);
     }
 
     public function updateGenerationTask(int $jobId, string $taskName): void
@@ -267,5 +315,41 @@ final class VideoJobRepository
     private static function encode(array $value): string
     {
         return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}';
+    }
+
+    private static function encodeProviderResponse(array $value): string
+    {
+        $compacted = self::compactProviderResponse($value);
+        $encoded = self::encode(is_array($compacted) ? $compacted : []);
+        if (strlen($encoded) <= self::MAX_STORED_RESPONSE_BYTES) return $encoded;
+
+        $summary = [];
+        foreach (['id','status','model','name','create_time','update_time','error'] as $key) {
+            if (array_key_exists($key, $value)) $summary[$key] = self::compactProviderResponse($value[$key], $key);
+        }
+        return self::encode([
+            '_storage_notice' => 'Provider response metadata exceeded the diagnostic storage limit and was summarized.',
+            'compacted_bytes' => strlen($encoded),
+            'summary' => $summary,
+        ]);
+    }
+
+    private static function compactProviderResponse(mixed $value, string $field = ''): mixed
+    {
+        if (is_string($value) && strlen($value) > self::MAX_STORED_RESPONSE_STRING_BYTES) {
+            return [
+                '_omitted' => 'Large provider payload stored separately from the database.',
+                'field' => $field,
+                'bytes' => strlen($value),
+                'sha256' => hash('sha256', $value),
+            ];
+        }
+        if (!is_array($value)) return $value;
+
+        $result = [];
+        foreach ($value as $key => $item) {
+            $result[$key] = self::compactProviderResponse($item, (string)$key);
+        }
+        return $result;
     }
 }

@@ -59,6 +59,7 @@ require_once __DIR__ . '/Services/SocialCampaignPinterestBridge.php';
 require_once __DIR__ . '/Services/SocialCampaignMetaBridge.php';
 require_once __DIR__ . '/Services/SocialPublishJobService.php';
 require_once __DIR__ . '/Services/SocialBoardPublishService.php';
+require_once __DIR__ . '/Services/SocialScheduledPublicationService.php';
 require_once __DIR__ . '/Services/ArtworkEmbeddingService.php';
 require_once __DIR__ . '/Services/ArtworkGroupService.php';
 require_once __DIR__ . '/Services/MockArtworkProcessor.php';

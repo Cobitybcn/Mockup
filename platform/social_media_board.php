@@ -14,8 +14,33 @@ $pdo = Database::connection();
 $userId = (int)$user['id'];
 Auth::start();
 $_SESSION['social_media_board_csrf'] ??= bin2hex(random_bytes(32));
+$pinterestIntegration = new PinterestIntegrationService($pdo);
+$pinterestPurposes = [];
+foreach ($isAdmin ? ['platform', 'artist'] : ['artist'] as $purpose) {
+    $connection = $pinterestIntegration->connection($userId, $purpose);
+    $pinterestPurposes[] = [
+        'value' => $purpose,
+        'label' => $purpose === 'platform' ? 'Artworks Mockups · @artworkmockups' : 'Cuenta Pinterest del artista',
+        'connected' => is_array($connection) && (string)($connection['status'] ?? '') === 'connected',
+    ];
+}
+$defaultPinterestPurpose = 'artist';
+if ($isAdmin) {
+    foreach ($pinterestPurposes as $purposeOption) {
+        if ($purposeOption['value'] === 'platform' && $purposeOption['connected']) {
+            $defaultPinterestPurpose = 'platform';
+            break;
+        }
+    }
+}
+$pinterestSandbox = strtolower(trim(app_env('PINTEREST_API_ENVIRONMENT', 'production'))) === 'sandbox';
 $socialBoardConfig = [
     'csrf' => (string)$_SESSION['social_media_board_csrf'],
+    'pinterest' => [
+        'purpose' => $defaultPinterestPurpose,
+        'purposes' => $pinterestPurposes,
+        'environment' => $pinterestSandbox ? 'sandbox' : 'production',
+    ],
     'destinations' => [
         'website' => rtrim(app_env('ARTIST_WEBSITE_CATALOG_URL', 'https://mauriziovalch.com/artworks'), '/'),
         'saatchi' => rtrim(app_env('SAATCHI_ARTIST_URL', 'https://www.saatchiart.com/mauriziovalch'), '/'),
@@ -170,7 +195,7 @@ foreach ($mockups as $mockup) {
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Social Media Board - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="social_media_board.css?v=10">
+    <link rel="stylesheet" href="social_media_board.css?v=13">
 </head>
 <body data-social-board-user="<?= $userId ?>">
 <div class="app-shell">
@@ -245,9 +270,24 @@ foreach ($mockups as $mockup) {
                 <article class="smb-board smb-board--pinterest" data-board="pinterest">
                     <header class="smb-board-head">
                         <button class="smb-board-title" type="button" data-focus-network="pinterest" aria-label="Abrir el tablero de Pinterest en modo enfocado"><span class="smb-network-icon smb-network-icon--pinterest" aria-hidden="true"></span><h2>Pinterest</h2></button>
-                        <div class="smb-board-head-actions"><span class="smb-board-count" data-board-count="pinterest">0 publicaciones</span></div>
+                        <div class="smb-board-head-actions">
+                            <?php if (count($pinterestPurposes) > 1): ?>
+                                <label class="smb-pinterest-purpose">
+                                    <span class="sr-only">Identidad de Pinterest</span>
+                                    <select data-pinterest-purpose aria-label="Identidad de Pinterest">
+                                        <?php foreach ($pinterestPurposes as $purposeOption): ?>
+                                            <option value="<?= smb_h($purposeOption['value']) ?>" <?= $purposeOption['value'] === $defaultPinterestPurpose ? 'selected' : '' ?>><?= smb_h($purposeOption['label']) ?><?= $purposeOption['connected'] ? '' : ' · no conectada' ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </label>
+                            <?php endif; ?>
+                            <span class="smb-board-count" data-board-count="pinterest">0 publicaciones</span>
+                        </div>
                     </header>
                     <p>Cada mockup será un Pin individual.</p>
+                    <?php if ($pinterestSandbox): ?>
+                        <div class="smb-pinterest-runtime-note"><strong>Modo de prueba de Pinterest</strong><span>Mientras la app tenga acceso Trial, los Pines solo pueden publicarse en el tablero Sandbox y son visibles como prueba.</span></div>
+                    <?php endif; ?>
                     <div class="smb-pinterest-items" data-board-items="pinterest"></div>
                 </article>
 
@@ -270,26 +310,55 @@ foreach ($mockups as $mockup) {
                 </article>
             </section>
 
-            <footer class="smb-schedule">
-                <div class="smb-schedule-controls">
-                    <span class="smb-calendar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg></span>
-                    <strong>Programar para</strong>
-                    <input type="date" data-schedule-date>
-                    <input type="time" data-schedule-time value="10:00">
-                    <button type="button" class="smb-schedule-network" data-schedule-by-network aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg> Programar por red</button>
+            <section class="smb-scheduled" aria-labelledby="smb-scheduled-title" data-scheduled-panel>
+                <header class="smb-scheduled-head">
+                    <div>
+                        <span>Control de publicación</span>
+                        <h2 id="smb-scheduled-title">Estado de publicaciones</h2>
+                        <p>Comprueba qué se publicó, qué sigue en cola y qué puede reintentarse sin duplicar resultados.</p>
+                    </div>
+                    <button type="button" data-refresh-scheduled>Actualizar</button>
+                </header>
+                <div class="smb-scheduled-list" data-scheduled-list aria-live="polite">
+                    <div class="smb-scheduled-empty">Cargando el estado de las publicaciones…</div>
                 </div>
-                <button type="button" class="smb-confirm" data-confirm-schedule><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 3-7.6 18-3.2-7.2L3 10.6 21 3Z"/><path d="m10.2 13.8 4.2-4.2"/></svg><span data-confirm-label>Confirmar y programar todo</span></button>
+            </section>
+
+            <footer class="smb-schedule">
+                <div class="smb-delivery">
+                    <div class="smb-delivery-heading">
+                        <span>Momento de publicación</span>
+                        <strong>Elige explícitamente cuándo debe salir</strong>
+                    </div>
+                    <div class="smb-delivery-options" role="radiogroup" aria-label="Momento de publicación">
+                        <button type="button" class="smb-delivery-option is-active" data-delivery-mode="now" role="radio" aria-checked="true">
+                            <span class="smb-delivery-radio" aria-hidden="true"></span>
+                            <span><strong>Publicar ahora</strong><small>Entra inmediatamente en la cola real.</small></span>
+                        </button>
+                        <button type="button" class="smb-delivery-option" data-delivery-mode="scheduled" role="radio" aria-checked="false">
+                            <span class="smb-delivery-radio" aria-hidden="true"></span>
+                            <span><strong>Programar para después</strong><small>Requiere fecha, hora y una segunda confirmación visible.</small></span>
+                        </button>
+                    </div>
+                    <div class="smb-schedule-controls" data-schedule-fields hidden>
+                        <label><span>Fecha</span><input type="date" data-schedule-date></label>
+                        <label><span>Hora</span><input type="time" data-schedule-time value="10:00"></label>
+                        <button type="button" class="smb-schedule-network" data-schedule-by-network aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg> Usar horarios distintos por publicación</button>
+                    </div>
+                </div>
+                <button type="button" class="smb-confirm" data-confirm-schedule><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 3-7.6 18-3.2-7.2L3 10.6 21 3Z"/><path d="m10.2 13.8 4.2-4.2"/></svg><span data-confirm-label>Revisar y publicar ahora</span></button>
             </footer>
             <div class="smb-toast" data-social-toast role="status" aria-live="polite"></div>
             <div class="smb-confirm-backdrop" data-confirm-backdrop hidden>
                 <section class="smb-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="smb-confirm-title">
-                    <span class="smb-confirm-kicker">Publicación real</span>
-                    <h2 id="smb-confirm-title">Confirmar programación</h2>
+                    <span class="smb-confirm-kicker">Acción real</span>
+                    <h2 id="smb-confirm-title" data-confirm-title>Confirmar publicación inmediata</h2>
+                    <div class="smb-confirm-delivery smb-confirm-delivery--now" data-confirm-delivery>Se publicará ahora</div>
                     <div class="smb-confirm-summary" data-confirm-summary></div>
-                    <p class="smb-confirm-warning">Al confirmar, estas publicaciones entrarán en la cola real y saldrán en las fechas indicadas.</p>
+                    <p class="smb-confirm-warning" data-confirm-warning>Al confirmar, estas publicaciones entrarán inmediatamente en la cola real.</p>
                     <div class="smb-confirm-actions">
                         <button type="button" class="smb-confirm-cancel" data-cancel-publish>Volver al tablero</button>
-                        <button type="button" class="smb-confirm-submit" data-submit-publish>Confirmar y programar</button>
+                        <button type="button" class="smb-confirm-submit" data-submit-publish data-submit-publish-label>Publicar ahora</button>
                     </div>
                 </section>
             </div>
@@ -308,6 +377,6 @@ foreach ($mockups as $mockup) {
 <script type="application/json" id="social-board-mockups"><?= json_encode($mockupPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <script type="application/json" id="social-board-config"><?= json_encode($socialBoardConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="social_media_board.js?v=10"></script>
+<script src="social_media_board.js?v=13"></script>
 </body>
 </html>

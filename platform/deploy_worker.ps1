@@ -36,20 +36,57 @@ function Invoke-Gcloud {
     }
 }
 
+function Get-GcloudValue {
+    param(
+        [Parameter(ValueFromRemainingArguments = $true)]
+        [string[]]$Arguments
+    )
+
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $rawLines = @(& $Gcloud @Arguments)
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+
+    if ($exitCode -ne 0) {
+        throw "gcloud failed with exit code ${exitCode}: gcloud $($Arguments -join ' ')"
+    }
+
+    $lines = @(@($rawLines) | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+    if ($lines.Count -eq 0) {
+        throw "gcloud returned no value: gcloud $($Arguments -join ' ')"
+    }
+
+    return ([string]$lines[-1]).Trim()
+}
+
 Write-Host "Deploying mockups-worker only..." -ForegroundColor Cyan
 
-Copy-Item Dockerfile.worker Dockerfile -Force
-try {
-    Invoke-Gcloud builds submit --project=$ProjectId --tag="$imageBase/${WorkerService}:latest" .
-} finally {
-    if (Test-Path Dockerfile) {
-        Remove-Item Dockerfile -Force
-    }
+# Reuse the previous Artifact Registry image as a remote Docker cache. This is
+# especially valuable for the worker's FFmpeg, PHP extension and Python layers.
+Invoke-Gcloud builds submit `
+    --project=$ProjectId `
+    --config=cloudbuild.cached-image.yaml `
+    "--substitutions=_IMAGE=$imageBase/$WorkerService,_DOCKERFILE=Dockerfile.worker" `
+    .
+
+$digest = Get-GcloudValue artifacts docker images describe "$imageBase/${WorkerService}:latest" `
+    --project=$ProjectId `
+    "--format=value(image_summary.digest)"
+if (-not $digest.StartsWith("sha256:")) {
+    throw "Could not resolve the immutable image digest for ${WorkerService}:latest. Received: $digest"
 }
+$imageRef = "$imageBase/${WorkerService}@$digest"
+$revisionSuffix = "d" + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss")
+$revision = "$WorkerService-$revisionSuffix"
 
 Invoke-Gcloud run deploy $WorkerService `
     --project=$ProjectId `
-    --image="$imageBase/${WorkerService}:latest" `
+    --image=$imageRef `
+    --revision-suffix=$revisionSuffix `
     --no-allow-unauthenticated `
     --service-account="mockups-worker-sa@$ProjectId.iam.gserviceaccount.com" `
     --min-instances=0 `
@@ -63,4 +100,23 @@ Invoke-Gcloud run services add-iam-policy-binding $WorkerService `
     --member="serviceAccount:$TasksInvokerServiceAccountName@$ProjectId.iam.gserviceaccount.com" `
     --role="roles/run.invoker"
 
-Write-Host "SUCCESS: mockups-worker deployed." -ForegroundColor Green
+$revisionReady = Get-GcloudValue run revisions describe $revision `
+    --project=$ProjectId `
+    --region=$Region `
+    "--format=value(status.conditions[0].status)"
+if ($revisionReady -ne "True") {
+    throw "Revision $revision is not ready. Ready status: $revisionReady"
+}
+$revisionImage = Get-GcloudValue run revisions describe $revision `
+    --project=$ProjectId `
+    --region=$Region `
+    "--format=value(spec.containers[0].image)"
+if (-not $revisionImage.EndsWith("@$digest")) {
+    throw "Latest ready revision $revision does not use the image built by this deployment. Expected digest: $digest; image: $revisionImage"
+}
+Invoke-Gcloud run services update-traffic $WorkerService `
+    --project=$ProjectId `
+    --region=$Region `
+    --to-revisions="${revision}=100"
+
+Write-Host "SUCCESS: mockups-worker deployed as $revision ($digest)." -ForegroundColor Green

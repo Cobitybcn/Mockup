@@ -674,6 +674,9 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
         .sidebar-mobile-menu {
             display: none !important;
         }
+        .sidebar-studios {
+            padding-right: 84px;
+        }
     }
     @media (max-width: 980px) {
         .sidebar-head {
@@ -970,6 +973,30 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
     document.querySelector('.sidebar-tabs')?.addEventListener('scroll', function () {
         if (panel.classList.contains('is-open')) positionPanel();
     });
+})();
+</script>
+<script>
+(function () {
+    const navigation = document.querySelector('.sidebar-tabs');
+    const activeTab = navigation ? navigation.querySelector('.sidebar-tab.active') : null;
+    if (!navigation || !activeTab) return;
+
+    function keepActiveTabVisible() {
+        if (window.innerWidth <= 980) return;
+        const navigationRect = navigation.getBoundingClientRect();
+        const activeRect = activeTab.getBoundingClientRect();
+        if (activeRect.left < navigationRect.left || activeRect.right > navigationRect.right) {
+            activeTab.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' });
+        }
+    }
+
+    requestAnimationFrame(function () {
+        requestAnimationFrame(keepActiveTabVisible);
+    });
+    window.addEventListener('resize', keepActiveTabVisible);
+    new MutationObserver(function () {
+        requestAnimationFrame(keepActiveTabVisible);
+    }).observe(document.body, { attributes: true, attributeFilter: ['data-sidebar-flow-mode'] });
 })();
 </script>
 <?php if ($sidebarIsAdmin): ?>

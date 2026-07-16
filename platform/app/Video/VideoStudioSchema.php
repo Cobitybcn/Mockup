@@ -83,6 +83,21 @@ final class VideoStudioSchema
             CONSTRAINT fk_video_scene_refs_scene FOREIGN KEY(video_scene_id) REFERENCES video_scenes(id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
+        $pdo->exec("CREATE TABLE IF NOT EXISTS video_reference_assets (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            user_id INT UNSIGNED NOT NULL,
+            file_path VARCHAR(500) NOT NULL,
+            original_name VARCHAR(255) NOT NULL,
+            mime_type VARCHAR(120) NOT NULL,
+            media_type VARCHAR(20) NOT NULL,
+            byte_size BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            width INT UNSIGNED NULL,
+            height INT UNSIGNED NULL,
+            created_at VARCHAR(40) NOT NULL,
+            KEY idx_video_reference_assets_user_created(user_id,created_at),
+            CONSTRAINT fk_video_reference_assets_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
         $pdo->exec("CREATE TABLE IF NOT EXISTS video_generation_jobs (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             user_id INT UNSIGNED NOT NULL,
@@ -167,6 +182,8 @@ final class VideoStudioSchema
             "CREATE TABLE IF NOT EXISTS video_scene_references (id INTEGER PRIMARY KEY AUTOINCREMENT,video_scene_id INTEGER NOT NULL,role TEXT NOT NULL DEFAULT 'main',source_type TEXT NOT NULL,source_id INTEGER NOT NULL,position INTEGER NOT NULL DEFAULT 1,file_path TEXT NOT NULL DEFAULT '',metadata_json TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL,updated_at TEXT NOT NULL,FOREIGN KEY(video_scene_id) REFERENCES video_scenes(id) ON DELETE CASCADE)",
             "CREATE INDEX IF NOT EXISTS idx_video_scene_refs_scene_role ON video_scene_references(video_scene_id,role,position)",
             "CREATE INDEX IF NOT EXISTS idx_video_scene_refs_source ON video_scene_references(source_type,source_id)",
+            "CREATE TABLE IF NOT EXISTS video_reference_assets (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,file_path TEXT NOT NULL,original_name TEXT NOT NULL,mime_type TEXT NOT NULL,media_type TEXT NOT NULL,byte_size INTEGER NOT NULL DEFAULT 0,width INTEGER,height INTEGER,created_at TEXT NOT NULL,FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE)",
+            "CREATE INDEX IF NOT EXISTS idx_video_reference_assets_user_created ON video_reference_assets(user_id,created_at)",
             "CREATE TABLE IF NOT EXISTS video_generation_jobs (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,video_project_id INTEGER NOT NULL,video_scene_id INTEGER,artwork_id INTEGER,series_id INTEGER,provider TEXT NOT NULL,model TEXT NOT NULL DEFAULT '',generation_mode TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'queued',external_job_id TEXT NOT NULL DEFAULT '',task_name TEXT NOT NULL DEFAULT '',idempotency_key TEXT NOT NULL,scene_version INTEGER NOT NULL DEFAULT 1,input_hash TEXT NOT NULL DEFAULT '',active_slot INTEGER,requested_duration_seconds REAL NOT NULL,generated_duration_seconds REAL NOT NULL DEFAULT 0,aspect_ratio TEXT NOT NULL,prompt_text TEXT NOT NULL,request_json TEXT NOT NULL DEFAULT '',response_json TEXT NOT NULL DEFAULT '',output_path TEXT NOT NULL DEFAULT '',thumbnail_path TEXT NOT NULL DEFAULT '',error TEXT NOT NULL DEFAULT '',cost_estimate REAL,cost_currency TEXT NOT NULL DEFAULT '',attempts INTEGER NOT NULL DEFAULT 0,next_poll_at TEXT,started_at TEXT,completed_at TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,UNIQUE(user_id,idempotency_key),UNIQUE(video_scene_id,active_slot),FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,FOREIGN KEY(video_project_id) REFERENCES video_projects(id) ON DELETE CASCADE,FOREIGN KEY(video_scene_id) REFERENCES video_scenes(id) ON DELETE SET NULL,FOREIGN KEY(artwork_id) REFERENCES artworks(id) ON DELETE SET NULL,FOREIGN KEY(series_id) REFERENCES artwork_series(id) ON DELETE SET NULL)",
             "CREATE INDEX IF NOT EXISTS idx_video_jobs_scene_status ON video_generation_jobs(video_scene_id,status,id)",
             "CREATE INDEX IF NOT EXISTS idx_video_jobs_project_status ON video_generation_jobs(video_project_id,status,updated_at)",

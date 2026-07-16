@@ -244,7 +244,7 @@ final class VideoStudioRepository
 
     public function replaceReference(int $sceneId, string $role, array $source): int
     {
-        if (in_array($role, ['main','start_frame','end_frame','source_video'], true)) {
+        if (VideoReferencePolicy::isSingle($role)) {
             $this->pdo->prepare('DELETE FROM video_scene_references WHERE video_scene_id=? AND role=?')->execute([$sceneId, $role]);
         }
         $positionStmt = $this->pdo->prepare('SELECT COALESCE(MAX(position),0)+1 FROM video_scene_references WHERE video_scene_id=? AND role=?');
@@ -256,6 +256,60 @@ final class VideoStudioRepository
             VALUES (?,?,?,?,?,?,?,?,?)');
         $stmt->execute([$sceneId,$role,$source['source_type'],$source['source_id'],$position,$source['file_path'],$source['metadata_json'],$now,$now]);
         return (int)$this->pdo->lastInsertId();
+    }
+
+    public function referencesForScene(int $sceneId): array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM video_scene_references WHERE video_scene_id=? ORDER BY position,id');
+        $stmt->execute([$sceneId]);
+        return array_map([$this, 'normalizeReference'], $stmt->fetchAll());
+    }
+
+    public function updateReferenceInstruction(int $userId, int $referenceId, string $instruction): int
+    {
+        $stmt = $this->pdo->prepare('SELECT r.metadata_json,r.video_scene_id,s.video_project_id
+            FROM video_scene_references r
+            INNER JOIN video_scenes s ON s.id=r.video_scene_id
+            INNER JOIN video_projects p ON p.id=s.video_project_id
+            WHERE r.id=? AND p.user_id=? LIMIT 1');
+        $stmt->execute([$referenceId, $userId]);
+        $row = $stmt->fetch();
+        if (!is_array($row)) throw new OutOfBoundsException('Reference not found.');
+
+        $metadata = json_decode((string)$row['metadata_json'], true);
+        if (!is_array($metadata)) $metadata = [];
+        $metadata['instruction'] = $instruction;
+        $update = $this->pdo->prepare('UPDATE video_scene_references SET metadata_json=?,updated_at=? WHERE id=?');
+        $update->execute([self::encode($metadata), date('c'), $referenceId]);
+        $this->updateScene((int)$row['video_scene_id'], ['status' => 'draft']);
+        return (int)$row['video_project_id'];
+    }
+
+    public function createReferenceAsset(int $userId, array $asset): int
+    {
+        $stmt = $this->pdo->prepare('INSERT INTO video_reference_assets
+            (user_id,file_path,original_name,mime_type,media_type,byte_size,width,height,created_at)
+            VALUES (?,?,?,?,?,?,?,?,?)');
+        $stmt->execute([
+            $userId,
+            (string)$asset['filePath'],
+            (string)$asset['originalName'],
+            (string)$asset['mimeType'],
+            (string)$asset['mediaType'],
+            (int)$asset['byteSize'],
+            $asset['width'] ?? null,
+            $asset['height'] ?? null,
+            date('c'),
+        ]);
+        return (int)$this->pdo->lastInsertId();
+    }
+
+    public function findReferenceAsset(int $userId, int $assetId): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM video_reference_assets WHERE id=? AND user_id=? LIMIT 1');
+        $stmt->execute([$assetId, $userId]);
+        $row = $stmt->fetch();
+        return is_array($row) ? $row : null;
     }
 
     public function removeReference(int $userId, int $referenceId): int
@@ -338,6 +392,24 @@ final class VideoStudioRepository
                     'artworkId' => (int)($row['artwork_id'] ?? 0),
                     'seriesId' => (int)($row['series_id'] ?? 0),
                     'mediaType' => 'video',
+                ]),
+            ];
+        }
+        if ($sourceType === 'reference_asset') {
+            $row = $this->findReferenceAsset($userId, $sourceId);
+            if (!is_array($row)) return null;
+            return [
+                'source_type' => 'reference_asset',
+                'source_id' => (int)$row['id'],
+                'file_path' => (string)$row['file_path'],
+                'metadata_json' => self::encode([
+                    'label' => (string)$row['original_name'],
+                    'mediaType' => (string)$row['media_type'],
+                    'mimeType' => (string)$row['mime_type'],
+                    'width' => $row['width'] === null ? null : (int)$row['width'],
+                    'height' => $row['height'] === null ? null : (int)$row['height'],
+                    'byteSize' => (int)$row['byte_size'],
+                    'uploaded' => true,
                 ]),
             ];
         }
@@ -467,7 +539,37 @@ final class VideoStudioRepository
             ];
         }
 
-        return ['mockups' => $mockups, 'rootArtworks' => $artworks, 'generatedClips' => $clips];
+        $uploadedStmt = $this->pdo->prepare('SELECT * FROM video_reference_assets WHERE user_id=? ORDER BY created_at DESC,id DESC LIMIT 200');
+        $uploadedStmt->execute([$userId]);
+        $uploadedReferences = [];
+        foreach ($uploadedStmt->fetchAll() as $row) {
+            $assetId = (int)$row['id'];
+            $mediaType = (string)$row['media_type'];
+            $previewUrl = 'video_reference_media.php?asset_id=' . $assetId;
+            $uploadedReferences[] = [
+                'assetKey' => 'reference_asset:' . $assetId,
+                'type' => 'reference_asset',
+                'id' => $assetId,
+                'mediaType' => $mediaType,
+                'label' => (string)$row['original_name'],
+                'contextTitle' => (string)$row['original_name'],
+                'artworkId' => 0,
+                'artworkTitle' => '',
+                'seriesId' => 0,
+                'seriesTitle' => '',
+                'thumbnailUrl' => $mediaType === 'image' ? $previewUrl : '',
+                'previewUrl' => $previewUrl,
+                'orientation' => self::orientationFromDimensions($row['width'], $row['height']),
+                'width' => $row['width'] === null ? null : (int)$row['width'],
+                'height' => $row['height'] === null ? null : (int)$row['height'],
+                'status' => 'available',
+                'mimeType' => (string)$row['mime_type'],
+                'byteSize' => (int)$row['byte_size'],
+                'createdAt' => (string)$row['created_at'],
+            ];
+        }
+
+        return ['mockups' => $mockups, 'rootArtworks' => $artworks, 'generatedClips' => $clips, 'uploadedReferences' => $uploadedReferences];
     }
 
     public function latestExport(int $userId, int $projectId): ?array
@@ -580,9 +682,11 @@ final class VideoStudioRepository
         $type = (string)$row['source_type'];
         $sourceId = (int)$row['source_id'];
         $mediaType = (string)($metadata['mediaType'] ?? ($type === 'generation_job' ? 'video' : 'image'));
-        $previewUrl = $type === 'generation_job'
-            ? 'video_media.php?generation_id=' . $sourceId
-            : 'media.php?file=' . rawurlencode(basename((string)$row['file_path']));
+        $previewUrl = match ($type) {
+            'generation_job' => 'video_media.php?generation_id=' . $sourceId,
+            'reference_asset' => 'video_reference_media.php?asset_id=' . $sourceId,
+            default => 'media.php?file=' . rawurlencode(basename((string)$row['file_path'])),
+        };
         return [
             'id' => (int)$row['id'],
             'role' => (string)$row['role'],
@@ -592,7 +696,7 @@ final class VideoStudioRepository
             'label' => (string)($metadata['label'] ?? ucfirst(str_replace('_', ' ', $type)) . ' #' . $sourceId),
             'mediaType' => $mediaType,
             'previewUrl' => $previewUrl,
-            'thumbnailUrl' => $mediaType === 'image' ? $previewUrl . '&thumb=1&w=560' : '',
+            'thumbnailUrl' => $mediaType === 'image' ? ($type === 'reference_asset' ? $previewUrl : $previewUrl . '&thumb=1&w=560') : '',
             'metadata' => $metadata,
         ];
     }
@@ -642,6 +746,15 @@ final class VideoStudioRepository
             '1:1' => 'square',
             default => 'unknown',
         };
+    }
+
+    private static function orientationFromDimensions(mixed $width, mixed $height): string
+    {
+        $width = is_numeric($width) ? (int)$width : 0;
+        $height = is_numeric($height) ? (int)$height : 0;
+        if ($width <= 0 || $height <= 0) return 'unknown';
+        if ($width === $height) return 'square';
+        return $width > $height ? 'landscape' : 'portrait';
     }
 
     private static function encode(array $value): string

@@ -12,17 +12,18 @@
         csrf: String(initial.csrf || ''),
         projects: Array.isArray(initial.projects) ? initial.projects : [],
         studio: initial.studio || null,
-        assets: initial.assets || { mockups: [], rootArtworks: [] },
+        assets: initial.assets || { mockups: [], rootArtworks: [], generatedClips: [], uploadedReferences: [] },
         capabilities: initial.capabilities || {},
         endpoints: initial.endpoints || {},
         artworkFilter: String(initial.studio?.project?.artworkId || ''),
         seriesFilter: '',
-        selectedAssetId: null,
-        openContexts: new Set(),
+        selectedAssetKey: null,
         pendingGenerationSceneId: null,
         mutation: Promise.resolve(),
         saving: false,
         seeding: false,
+        uploadingSlots: new Set(),
+        openContexts: new Set(),
         sortables: [],
         generationTimer: null,
     };
@@ -48,21 +49,6 @@
     };
 
     const labels = {
-        static: 'Cámara estática',
-        slow_push_in: 'Acercamiento lento',
-        slow_pull_back: 'Alejamiento lento',
-        pan_left: 'Paneo a la izquierda',
-        pan_right: 'Paneo a la derecha',
-        tilt_up: 'Inclinación hacia arriba',
-        tilt_down: 'Inclinación hacia abajo',
-        orbit_left: 'Órbita a la izquierda',
-        orbit_right: 'Órbita a la derecha',
-        handheld_subtle: 'Cámara en mano sutil',
-        custom: 'Movimiento personalizado',
-        very_low: 'Muy baja',
-        low: 'Baja',
-        medium: 'Media',
-        high: 'Alta',
         queued: 'En cola',
         submitting: 'Enviando',
         polling: 'Generando',
@@ -70,7 +56,6 @@
         succeeded: 'Video listo',
         failed: 'Error',
         ready: 'Lista para generar',
-        incomplete: 'Faltan fotogramas',
         draft: 'Sin preparar',
     };
 
@@ -81,8 +66,15 @@
     function currentProject() { return state.studio?.project || null; }
     function scenes() { return Array.isArray(state.studio?.scenes) ? state.studio.scenes : []; }
     function sceneById(id) { return scenes().find(scene => Number(scene.id) === Number(id)) || null; }
-    function mockupById(id) { return (state.assets.mockups || []).find(asset => Number(asset.id) === Number(id)) || null; }
-    function referenceFor(scene, role) { return scene?.references?.find(reference => reference.role === role) || null; }
+    function referenceAssets() {
+        return [
+            ...(state.assets.mockups || []),
+            ...(state.assets.rootArtworks || []),
+            ...(state.assets.generatedClips || []),
+            ...(state.assets.uploadedReferences || []),
+        ];
+    }
+    function assetByKey(key) { return referenceAssets().find(asset => String(asset.assetKey) === String(key)) || null; }
 
     function toast(message, isError = false) {
         dom.toast.textContent = String(message || '');
@@ -143,6 +135,7 @@
 
     function applyStudio(payload, projectChanged = false) {
         const previousId = Number(currentProject()?.id || 0);
+        if (payload.assets && typeof payload.assets === 'object') state.assets = payload.assets;
         state.studio = {
             project: payload.project,
             scenes: Array.isArray(payload.scenes) ? payload.scenes : [],
@@ -153,8 +146,7 @@
         if (isDifferentProject) {
             state.artworkFilter = String(payload.project.artworkId || '');
             state.seriesFilter = '';
-            state.selectedAssetId = null;
-            state.openContexts.clear();
+            state.selectedAssetKey = null;
         }
         const summary = { ...payload.project, sceneCount: state.studio.scenes.length };
         const index = state.projects.findIndex(project => Number(project.id) === Number(payload.project.id));
@@ -211,10 +203,10 @@
         ).join('');
     }
 
-    function visibleMockups() {
-        return [...(state.assets.mockups || [])]
-            .filter(asset => !state.artworkFilter || Number(asset.artworkId) === Number(state.artworkFilter))
-            .filter(asset => !state.seriesFilter
+    function visibleReferenceAssets() {
+        return referenceAssets()
+            .filter(asset => asset.type === 'reference_asset' || !state.artworkFilter || Number(asset.artworkId) === Number(state.artworkFilter))
+            .filter(asset => asset.type === 'reference_asset' || !state.seriesFilter
                 || (state.seriesFilter === 'none' ? Number(asset.seriesId || 0) === 0 : Number(asset.seriesId) === Number(state.seriesFilter)))
             .sort((left, right) => {
                 if (Boolean(left.favorite) !== Boolean(right.favorite)) return left.favorite ? -1 : 1;
@@ -224,80 +216,259 @@
     }
 
     function renderCatalog() {
-        const assets = visibleMockups();
+        const assets = visibleReferenceAssets();
         dom.catalogRail.innerHTML = assets.length ? assets.map(asset => `
-            <article class="vds-catalog-card${asset.favorite ? ' is-favorite' : ''}${Number(asset.id) === Number(state.selectedAssetId) ? ' is-selected' : ''}"
-                data-catalog-card data-asset-id="${asset.id}" data-asset-type="mockup" tabindex="0" aria-label="${escapeHtml(asset.label)}">
-                <img src="${escapeHtml(asset.thumbnailUrl || asset.previewUrl)}" alt="${escapeHtml(asset.artworkTitle)}" loading="lazy" draggable="false">
-                <button class="vds-favorite" type="button" data-toggle-favorite aria-pressed="${asset.favorite ? 'true' : 'false'}" aria-label="${asset.favorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}">${asset.favorite ? '♥' : '♡'}</button>
-                <div class="vds-catalog-card-copy"><strong>${escapeHtml(asset.contextTitle || asset.label)}</strong><span>${escapeHtml(asset.artworkTitle)}</span></div>
-            </article>`).join('') : '<div class="vds-catalog-empty">No hay mockups para esta selección.</div>';
-        dom.catalogHelp.textContent = state.selectedAssetId
-            ? 'Mockup seleccionado. Haz clic en un Start Frame o End Frame para colocarlo, o arrástralo.'
-            : 'Arrastra un mockup hacia el inicio o el final de una secuencia.';
+            <article class="vds-catalog-card${asset.favorite ? ' is-favorite' : ''}${String(asset.assetKey) === String(state.selectedAssetKey) ? ' is-selected' : ''}${asset.mediaType === 'video' ? ' is-video' : ''}"
+                data-catalog-card data-asset-key="${escapeHtml(asset.assetKey)}" data-asset-id="${asset.id}" data-asset-type="${escapeHtml(asset.type)}" data-media-type="${escapeHtml(asset.mediaType || 'image')}" tabindex="0" aria-label="${escapeHtml(asset.label)}">
+                ${asset.thumbnailUrl
+                    ? `<img src="${escapeHtml(asset.thumbnailUrl)}" alt="${escapeHtml(asset.artworkTitle || asset.label)}" loading="lazy" draggable="false">`
+                    : `<div class="vds-catalog-video-placeholder" aria-hidden="true"><span>▶</span><small>Video</small></div>`}
+                ${asset.type === 'mockup' ? `<button class="vds-favorite" type="button" data-toggle-favorite aria-pressed="${asset.favorite ? 'true' : 'false'}" aria-label="${asset.favorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}">${asset.favorite ? '♥' : '♡'}</button>` : ''}
+                <div class="vds-catalog-card-copy"><strong>${escapeHtml(asset.contextTitle || asset.label)}</strong><span>${escapeHtml(asset.type === 'reference_asset' ? 'Desde tu ordenador' : (asset.mediaType === 'video' ? (asset.projectTitle || 'Video generado') : (asset.artworkTitle || 'Imagen de referencia')))}</span></div>
+            </article>`).join('') : '<div class="vds-catalog-empty">No hay referencias para esta selección.</div>';
+        dom.catalogHelp.textContent = state.selectedAssetKey
+            ? 'Referencia seleccionada. Haz clic en el destino donde quieras utilizarla, o arrástrala.'
+            : 'Arrastra imágenes a sus referencias y videos a Video base. También puedes cargar desde tu ordenador.';
     }
 
-    function optionMarkup(values, selected) {
-        return (values || []).map(value => `<option value="${escapeHtml(value)}"${String(value) === String(selected) ? ' selected' : ''}>${escapeHtml(labels[value] || String(value).replaceAll('_', ' '))}</option>`).join('');
+    function defaultGenerationMode() {
+        return String(state.capabilities.defaultMode || 'image_to_video');
+    }
+
+    function defaultGenerationDuration() {
+        return Number(state.capabilities.defaultDuration || 4);
+    }
+
+    function referenceFor(scene, role) {
+        const references = Array.isArray(scene.references) ? scene.references : [];
+        return references.find(reference => String(reference.role) === String(role)) || null;
+    }
+
+    function referencesFor(scene, role) {
+        return (scene.references || []).filter(reference => String(reference.role) === String(role));
+    }
+
+    function sourceVideoReference(scene) {
+        return referenceFor(scene, 'source_video')
+            || (scene.references || []).find(reference => reference.mediaType === 'video' && reference.sourceType === 'reference_asset')
+            || null;
+    }
+
+    function attachedImageCount(scene) {
+        return (scene.references || []).filter(reference => reference.mediaType === 'image').length;
+    }
+
+    function omniImageUsage(scene, index) {
+        const explicitStart = explicitStartReference(scene);
+        const generatedStart = explicitStart?.mediaType === 'video' && explicitStart?.sourceType === 'generation_job';
+        const automaticContinuity = index > 0 && !explicitStart && !sourceVideoReference(scene);
+        return attachedImageCount(scene) + (generatedStart || automaticContinuity ? 1 : 0);
+    }
+
+    function sceneHasUpload(sceneId) {
+        const prefix = `${Number(sceneId)}:`;
+        return [...state.uploadingSlots].some(key => String(key).startsWith(prefix));
+    }
+
+    function explicitStartReference(scene) {
+        return (scene.references || []).find(reference => String(reference.role) === 'start_frame') || null;
+    }
+
+    function generatedContinuation(scene) {
+        const reference = explicitStartReference(scene);
+        return reference?.sourceType === 'generation_job' ? reference : null;
+    }
+
+    function uploadSlotKey(sceneId, role) {
+        return `${Number(sceneId)}:${String(role)}`;
     }
 
     function frameSlot(scene, role, label) {
-        const reference = referenceFor(scene, role);
-        const media = reference ? `
-            <img src="${escapeHtml(reference.thumbnailUrl || reference.previewUrl)}" alt="${escapeHtml(reference.label)}">
-            <button class="vds-remove-frame" type="button" data-remove-reference="${reference.id}" aria-label="Quitar ${escapeHtml(label)}">×</button>
-            <span class="vds-frame-caption">${escapeHtml(reference.label)}</span>` : `
-            <div class="vds-frame-placeholder"><span class="vds-frame-plus">＋</span><strong>Arrastra aquí</strong><span>o selecciona un mockup del catálogo</span></div>`;
+        const candidate = referenceFor(scene, role);
+        const reference = candidate?.mediaType === 'image'
+            || (role === 'start_frame' && candidate?.sourceType === 'generation_job')
+            ? candidate
+            : null;
+        const uploading = state.uploadingSlots.has(uploadSlotKey(scene.id, role));
+        const media = reference
+            ? (reference.mediaType === 'video'
+                ? `<video src="${escapeHtml(reference.previewUrl)}" muted preload="metadata" playsinline></video><span class="vds-frame-play" aria-hidden="true">▶</span>`
+                : `<img src="${escapeHtml(reference.thumbnailUrl || reference.previewUrl)}" alt="${escapeHtml(reference.label)}">`)
+                + `<button class="vds-remove-frame" type="button" data-remove-reference="${reference.id}" aria-label="Quitar ${escapeHtml(label)}">×</button><span class="vds-frame-caption">${escapeHtml(reference.label)}</span>`
+            : `<div class="vds-frame-placeholder"><span class="vds-frame-plus">${uploading ? '◌' : '＋'}</span><strong>${uploading ? 'Subiendo archivo…' : 'Arrastra aquí'}</strong><button class="vds-frame-upload-button" type="button" data-upload-reference="${scene.id}" data-role="${role}"${uploading ? ' disabled' : ''}>Desde ordenador</button><span>o selecciona una referencia del catálogo</span></div>`;
         return `<div class="vds-frame-column">
             <span class="vds-frame-label">${escapeHtml(label)}</span>
-            <div class="vds-frame-slot${reference ? ' has-media' : ''}" data-frame-drop data-scene-id="${scene.id}" data-role="${role}" tabindex="0">${media}</div>
+            <div class="vds-frame-slot${reference ? ' has-media' : ''}${uploading ? ' is-uploading' : ''}" data-frame-drop data-scene-id="${scene.id}" data-role="${role}" tabindex="0">
+                ${media}
+                <input type="file" data-reference-file-input data-scene-id="${scene.id}" data-role="${role}" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+            </div>
         </div>`;
     }
 
-    function generationState(scene) {
+    function referenceInstruction(reference, label) {
+        if (!reference) return '';
+        const instruction = String(reference.metadata?.instruction || '');
+        return `<label class="vds-reference-instruction"><span>${escapeHtml(label)}</span><input type="text" data-reference-instruction="${reference.id}" value="${escapeHtml(instruction)}" placeholder="Cómo debe utilizar Omni esta imagen"></label>`;
+    }
+
+    function compactReferenceSlot(scene, role, label, description) {
+        const reference = referenceFor(scene, role);
+        const uploading = state.uploadingSlots.has(uploadSlotKey(scene.id, role));
+        const body = reference
+            ? `<div class="vds-compact-reference-media"><img src="${escapeHtml(reference.thumbnailUrl || reference.previewUrl)}" alt="${escapeHtml(reference.label)}"><button type="button" data-remove-reference="${reference.id}" aria-label="Quitar ${escapeHtml(label)}">×</button></div>${referenceInstruction(reference, 'Propósito')}`
+            : `<div class="vds-compact-reference-empty"><span>${uploading ? '◌' : '＋'}</span><strong>${uploading ? 'Subiendo…' : 'Añadir imagen'}</strong><small>${escapeHtml(description)}</small></div>`;
+        return `<div class="vds-priority-reference${reference ? ' has-media' : ''}" data-reference-drop data-scene-id="${scene.id}" data-role="${role}" tabindex="0">
+            <header><strong>${escapeHtml(label)}</strong></header>
+            ${body}
+            <input type="file" data-reference-file-input data-scene-id="${scene.id}" data-role="${role}" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+        </div>`;
+    }
+
+    function additionalReferences(scene) {
+        const excluded = ['start_frame','end_frame','artwork_fidelity','character_identity','wardrobe_identity','source_video'];
+        return (scene.references || []).filter(reference => reference.mediaType === 'image' && !excluded.includes(String(reference.role)));
+    }
+
+    function additionalReferenceCard(reference) {
+        return `<article class="vds-additional-reference">
+            <div><img src="${escapeHtml(reference.thumbnailUrl || reference.previewUrl)}" alt="${escapeHtml(reference.label)}"><button type="button" data-remove-reference="${reference.id}" aria-label="Quitar referencia">×</button></div>
+            ${referenceInstruction(reference, 'Propósito')}
+        </article>`;
+    }
+
+    function referenceManager(scene, index) {
+        const usedImages = omniImageUsage(scene, index);
+        const maxImages = Number(state.capabilities.referenceLimits?.images || 10);
+        const available = Math.max(0, maxImages - usedImages);
+        const extras = additionalReferences(scene);
+        const sourceVideo = sourceVideoReference(scene);
+        const uploadingReferences = state.uploadingSlots.has(uploadSlotKey(scene.id, 'reference'));
+        const uploadingVideo = state.uploadingSlots.has(uploadSlotKey(scene.id, 'source_video'));
+        const framePurpose = [
+            referenceFor(scene, 'start_frame')?.mediaType === 'image' ? referenceInstruction(referenceFor(scene, 'start_frame'), 'Imagen inicial') : '',
+            referenceFor(scene, 'end_frame')?.mediaType === 'image' ? referenceInstruction(referenceFor(scene, 'end_frame'), 'Imagen final objetivo') : '',
+        ].filter(Boolean).join('');
+
+        return `<section class="vds-reference-manager">
+            <div class="vds-reference-section-head"><div><strong>Referencias visuales</strong><small>Prioridad: obra, personaje y vestuario.</small></div><span>${usedImages}/${maxImages}</span></div>
+            ${framePurpose ? `<div class="vds-frame-purpose-list">${framePurpose}</div>` : ''}
+            <div class="vds-priority-grid">
+                ${compactReferenceSlot(scene, 'artwork_fidelity', '1 · Obra de arte', 'Identidad y fidelidad de la obra')}
+                ${compactReferenceSlot(scene, 'character_identity', '2 · Personaje', 'Rostro, cuerpo y rasgos')}
+                ${compactReferenceSlot(scene, 'wardrobe_identity', '3 · Vestuario', 'Prendas, colores y accesorios')}
+            </div>
+            <div class="vds-additional-drop${available <= 0 ? ' is-full' : ''}" data-reference-drop data-scene-id="${scene.id}" data-role="reference" tabindex="0">
+                <div><span>${uploadingReferences ? '◌' : '＋'}</span><strong>${available > 0 ? `Añadir referencias adicionales · ${available} disponibles` : 'Límite de imágenes alcanzado'}</strong><small>Arrastra varias imágenes o selecciónalas desde tu ordenador.</small></div>
+                <button class="vds-frame-upload-button" type="button" data-upload-reference="${scene.id}" data-role="reference"${available <= 0 || uploadingReferences ? ' disabled' : ''}>Desde ordenador</button>
+                <input type="file" data-reference-file-input data-scene-id="${scene.id}" data-role="reference" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
+            </div>
+            ${extras.length ? `<div class="vds-additional-reference-list">${extras.map(additionalReferenceCard).join('')}</div>` : ''}
+        </section>
+        <section class="vds-video-reference-section">
+            <div class="vds-reference-section-head"><div><strong>Video base para editar</strong><small>Un video de hasta 10 segundos. No se mezcla con las imágenes.</small></div><span>${sourceVideo ? '1/1' : '0/1'}</span></div>
+            <div class="vds-source-video${sourceVideo ? ' has-media' : ''}" data-reference-drop data-scene-id="${scene.id}" data-role="source_video" tabindex="0">
+                ${sourceVideo
+                    ? `<video src="${escapeHtml(sourceVideo.previewUrl)}" muted controls preload="metadata" playsinline></video><div><strong>${escapeHtml(sourceVideo.label)}</strong><small>Omni editará este video; no lo extenderá.</small></div><button type="button" data-remove-reference="${sourceVideo.id}" aria-label="Quitar video base">×</button>`
+                    : `<div><span>${uploadingVideo ? '◌' : '▶'}</span><strong>${uploadingVideo ? 'Subiendo video…' : 'Añadir video base'}</strong><small>MP4, MOV o WebM · máximo 10 segundos</small></div><button class="vds-frame-upload-button" type="button" data-upload-reference="${scene.id}" data-role="source_video"${uploadingVideo ? ' disabled' : ''}>Desde ordenador</button>`}
+                <input type="file" data-reference-file-input data-scene-id="${scene.id}" data-role="source_video" accept="video/mp4,video/quicktime,video/webm" hidden>
+            </div>
+        </section>`;
+    }
+
+    function resultPreview(scene, index) {
+        const result = scene.active_generation;
+        if (result?.previewUrl) {
+            const nextScene = scenes()[index + 1] || null;
+            const assetKey = `generation_job:${Number(result.id)}`;
+            const nextAction = nextScene
+                ? `<button class="vds-use-next" type="button" data-use-clip-next="${nextScene.id}" data-asset-key="${escapeHtml(assetKey)}">Usar al inicio de Secuencia ${index + 2}</button>`
+                : '';
+            return `<div class="vds-generated-clip" data-generated-clip data-asset-key="${escapeHtml(assetKey)}" data-asset-type="generation_job" data-media-type="video">
+                <video class="vds-result-video" src="${escapeHtml(result.previewUrl)}"${result.thumbnailUrl ? ` poster="${escapeHtml(result.thumbnailUrl)}"` : ''} controls preload="metadata" playsinline></video>
+                <div class="vds-generated-continuation">
+                    <button class="vds-generated-drag" type="button" draggable="true" data-generated-drag data-asset-key="${escapeHtml(assetKey)}" aria-label="Arrastrar este resultado al inicio de otra secuencia">
+                        <span class="vds-generated-grip" aria-hidden="true">⋮⋮</span>
+                        <span><strong>Arrastra para continuar</strong><small>Su último fotograma será la imagen inicial de otra secuencia.</small></span>
+                    </button>
+                    ${nextAction}
+                </div>
+                <details class="vds-adjust-result" data-adjust-panel="${scene.id}">
+                    <summary>Ajustar este resultado con Omni</summary>
+                    <div><textarea data-adjust-prompt="${scene.id}" placeholder="Describe solo el cambio. Omni conservará lo demás."></textarea><button type="button" data-adjust-result="${scene.id}">Generar ajuste</button></div>
+                </details>
+            </div>`;
+        }
+        const pending = ['queued','submitting','polling','processing'].includes(String(scene.generation?.status || ''));
+        return `<div class="vds-result-placeholder"><span aria-hidden="true">${pending ? '◌' : '▶'}</span><strong>${pending ? 'Generando resultado' : 'Sin resultado generado'}</strong><small>${pending ? 'La vista previa aparecerá al finalizar.' : 'Genera esta secuencia para verla aquí.'}</small></div>`;
+    }
+
+    function generationState(scene, previousScene = null) {
         const jobStatus = String(scene.generation?.status || '');
         if (jobStatus) return { id: jobStatus, label: labels[jobStatus] || jobStatus };
-        const start = referenceFor(scene, 'start_frame');
-        const end = referenceFor(scene, 'end_frame');
-        if (start && end) return { id: 'ready', label: labels.ready };
-        if (start || end) return { id: 'incomplete', label: labels.incomplete };
+        if (String(scene.prompt || '').trim() || scene.references?.length || previousScene?.active_generation) return { id: 'ready', label: labels.ready };
         return { id: 'draft', label: labels.draft };
     }
 
     function renderBoards() {
-        const cameraValues = state.capabilities.cameraMovements || ['static','slow_push_in','slow_pull_back','pan_left','pan_right'];
-        const intensityValues = state.capabilities.motionIntensities || ['very_low','low','medium','high'];
+        const durationValues = state.capabilities.durations || [4,6,8];
         dom.boardGrid.innerHTML = scenes().map((scene, index) => {
-            const start = referenceFor(scene, 'start_frame');
-            const end = referenceFor(scene, 'end_frame');
-            const status = generationState(scene);
-            const pending = ['queued','submitting','polling','processing'].includes(status.id);
+            const previousScene = index > 0 ? scenes()[index - 1] : null;
+            const status = generationState(scene, previousScene);
+            const pending = ['queued','submitting','polling','processing'].includes(status.id)
+                || sceneHasUpload(scene.id);
+            const previousReady = Boolean(previousScene?.active_generation?.previewUrl);
+            const chosenContinuation = generatedContinuation(scene);
+            const baseVideo = sourceVideoReference(scene);
+            const usedImages = omniImageUsage(scene, index);
+            const maxImages = Number(state.capabilities.referenceLimits?.images || 10);
             const expanded = state.openContexts.has(Number(scene.id));
             const download = scene.active_generation?.previewUrl
                 ? `<a class="vds-download-clip" href="${escapeHtml(scene.active_generation.previewUrl)}&download=1">Descargar MP4</a>` : '';
+            const resultActions = scene.active_generation?.previewUrl
+                ? `<button class="vds-secondary" type="button" data-open-adjust-result="${scene.id}"${pending ? ' disabled' : ''}>Editar resultado</button>`
+                : '';
+            const generateLabel = scene.active_generation?.previewUrl
+                ? 'Regenerar'
+                : (baseVideo ? 'Editar video' : 'Generar');
+            const generationError = status.id === 'failed' && String(scene.generation?.error || '').trim()
+                ? `<p class="vds-generation-error" role="alert"><strong>No se pudo generar el video.</strong><span>${escapeHtml(String(scene.generation.error).trim())}</span></p>`
+                : '';
+            const continuityText = baseVideo
+                ? `Omni editará ${baseVideo.label}; las imágenes se utilizarán como referencias visuales.`
+                : index === 0
+                ? (chosenContinuation
+                    ? `Continuación elegida desde ${chosenContinuation.label}; se usará su último fotograma.`
+                    : 'Añade una imagen o un video desde el catálogo o desde tu ordenador.')
+                : chosenContinuation
+                    ? `Continuación elegida desde ${chosenContinuation.label}; reemplaza la continuidad automática.`
+                : previousReady
+                    ? `Continuidad automática desde el último fotograma de la Secuencia ${index}.`
+                    : `Genera primero la Secuencia ${index} para enlazar la continuidad.`;
             return `<article class="vds-sequence-board" data-sequence-board data-scene-id="${scene.id}" data-accent="${(index % 4) + 1}">
                 <header class="vds-board-head">
                     <div class="vds-board-title"><span class="vds-sequence-number">${index + 1}</span><h3>Secuencia ${index + 1}</h3></div>
                     <div class="vds-board-actions">
                         <button class="vds-board-drag" type="button" aria-label="Reordenar secuencia">⋮⋮</button>
+                        <button class="vds-board-menu" type="button" data-duplicate-sequence="${scene.id}" aria-label="Duplicar secuencia">⧉</button>
                         <button class="vds-board-menu" type="button" data-delete-sequence="${scene.id}" aria-label="Eliminar secuencia">×</button>
                     </div>
                 </header>
-                <p class="vds-board-subtitle">Define el primer y el último fotograma del clip.</p>
-                <div class="vds-frame-flow">${frameSlot(scene, 'start_frame', 'Start Frame')}<span class="vds-frame-arrow" aria-hidden="true">→</span>${frameSlot(scene, 'end_frame', 'End Frame')}</div>
-                <button class="vds-context-toggle" type="button" data-toggle-context="${scene.id}" aria-expanded="${expanded ? 'true' : 'false'}"><span>＋ Añadir data para la generación</span><span>${expanded ? '−' : '+'}</span></button>
+                <p class="vds-board-subtitle">${escapeHtml(continuityText)}</p>
+                <div class="vds-frame-flow">${frameSlot(scene, 'start_frame', 'Imagen inicial')}<span class="vds-frame-arrow" aria-hidden="true">→</span>${frameSlot(scene, 'end_frame', 'Imagen final objetivo')}</div>
+                <button class="vds-context-toggle" type="button" data-toggle-context="${scene.id}" aria-expanded="${expanded ? 'true' : 'false'}"><span>＋ Prompt, referencias y duración · ${usedImages}/${maxImages}</span><span>${expanded ? '−' : '+'}</span></button>
                 <div class="vds-context-panel" data-context-panel${expanded ? '' : ' hidden'}>
-                    <label><span>Instrucciones y contexto</span><textarea data-scene-field="prompt" data-scene-id="${scene.id}" placeholder="Describe acción, ambiente, luz, cámara, sonido o cualquier dato útil para esta secuencia.">${escapeHtml(scene.prompt || '')}</textarea></label>
+                    <label><span>Prompt</span><textarea data-scene-field="prompt" data-scene-id="${scene.id}" placeholder="Describe aquí cámara, movimiento, ritmo, luz, ambiente, acción y transición.">${escapeHtml(scene.prompt || '')}</textarea></label>
+                    ${referenceManager(scene, index)}
                     <div class="vds-context-grid">
-                        <label><span>Duración</span><select data-scene-field="durationSeconds" data-scene-id="${scene.id}">${[4,6,8].map(value => `<option value="${value}"${Number(scene.durationSeconds) === value ? ' selected' : ''}>${value} segundos</option>`).join('')}</select></label>
-                        <label><span>Movimiento</span><select data-scene-field="cameraMovement" data-scene-id="${scene.id}">${optionMarkup(cameraValues, scene.cameraMovement)}</select></label>
-                        <label><span>Intensidad</span><select data-scene-field="motionIntensity" data-scene-id="${scene.id}">${optionMarkup(intensityValues, scene.motionIntensity)}</select></label>
+                        <label><span>${baseVideo ? 'Duración · la conserva el video base' : 'Duración'}</span><select data-scene-field="durationSeconds" data-scene-id="${scene.id}"${baseVideo ? ' disabled title="Omni conserva la duración real del video base al editarlo."' : ''}>${durationValues.map(value => `<option value="${value}"${Number(scene.durationSeconds) === Number(value) ? ' selected' : ''}>${value} segundos</option>`).join('')}</select></label>
                     </div>
                 </div>
+                ${scene.active_generation?.previewUrl ? `<div class="vds-inline-result"><span>Resultado generado</span>${resultPreview(scene, index)}</div>` : ''}
                 <footer class="vds-board-footer">
                     <span class="vds-generation-state is-${escapeHtml(status.id)}">${escapeHtml(status.label)}</span>
-                    ${download || `<button type="button" data-generate-sequence="${scene.id}"${!start || !end || pending ? ' disabled' : ''}>${scene.generation ? 'Regenerar' : 'Generar'}</button>`}
+                    <div class="vds-board-footer-actions">${download}${resultActions}<button type="button" data-generate-sequence="${scene.id}"${pending ? ' disabled' : ''}>${generateLabel}</button></div>
                 </footer>
+                ${generationError}
             </article>`;
         }).join('');
     }
@@ -312,7 +483,7 @@
         if (typeof window.Sortable !== 'function') return;
         if (dom.catalogRail.querySelector('[data-catalog-card]')) {
             state.sortables.push(window.Sortable.create(dom.catalogRail, {
-                group: { name: 'video-mockups', pull: 'clone', put: false, revertClone: true },
+                group: { name: 'video-references', pull: 'clone', put: false, revertClone: true },
                 sort: false,
                 draggable: '[data-catalog-card]',
                 filter: '[data-toggle-favorite]',
@@ -325,18 +496,29 @@
                 dragClass: 'vds-sortable-drag',
             }));
         }
-        $$('[data-frame-drop]').forEach(slot => {
+        $$('[data-frame-drop],[data-reference-drop]').forEach(slot => {
             state.sortables.push(window.Sortable.create(slot, {
-                group: { name: 'video-mockups', pull: false, put: ['video-mockups'] },
+                group: { name: 'video-references', pull: false, put: ['video-references'] },
                 sort: false,
                 draggable: '[data-catalog-card]',
                 animation: 120,
-                onMove: event => Boolean(event.dragged?.dataset?.assetId),
+                onMove: event => {
+                    const asset = assetByKey(String(event.dragged?.dataset?.assetKey || ''));
+                    if (!asset) return false;
+                    const role = String(slot.dataset.role || 'reference');
+                    if (asset.mediaType === 'video') {
+                        if (role === 'start_frame' && asset.type !== 'generation_job') return false;
+                        if (!['start_frame','source_video'].includes(role)) return false;
+                    } else if (role === 'source_video') return false;
+                    if (asset.type === 'generation_job' && Number(asset.sceneId) === Number(slot.dataset.sceneId)) return false;
+                    return true;
+                },
                 onAdd: event => {
-                    const assetId = Number(event.item?.dataset?.assetId || 0);
+                    const assetKey = String(event.item?.dataset?.assetKey || '');
                     event.item?.remove();
+                    root.classList.remove('is-dragging-generated');
                     slot.classList.remove('is-drop-target');
-                    if (assetId > 0) assignReference(Number(slot.dataset.sceneId), String(slot.dataset.role), assetId);
+                    if (assetKey) assignReference(Number(slot.dataset.sceneId), String(slot.dataset.role), assetKey);
                 },
             }));
         });
@@ -371,16 +553,114 @@
         updateGenerationPolling();
     }
 
-    function assignReference(sceneId, role, assetId) {
-        const asset = mockupById(assetId);
+    function assignReference(sceneId, role, assetKey) {
+        const asset = assetByKey(assetKey);
         const scene = sceneById(sceneId);
         if (!asset || !scene) return;
+        if (asset.mediaType === 'video') {
+            if (role === 'start_frame' && asset.type !== 'generation_job') {
+                return toast('Los videos subidos deben colocarse en Video base para editar.', true);
+            }
+            if (!['start_frame','source_video'].includes(role)) {
+                return toast('Los videos deben colocarse en Video base para editar.', true);
+            }
+        } else if (role === 'source_video') {
+            return toast('Video base admite únicamente un video.', true);
+        }
+        if (asset.type === 'generation_job' && Number(asset.sceneId) === Number(sceneId)) {
+            return toast('El resultado debe continuar en otra secuencia, no en la misma.', true);
+        }
+        const alreadyAttached = (scene.references || []).some(reference => reference.role === role && reference.sourceType === asset.type && Number(reference.sourceId) === Number(asset.id));
+        if (alreadyAttached) return toast('Esta referencia ya está añadida en este bloque.');
+        if (asset.mediaType === 'image') {
+            const sceneIndex = scenes().findIndex(item => Number(item.id) === Number(sceneId));
+            if (availableImagesForRole(scene, sceneIndex, role) < 1) {
+                return toast('Omni admite un máximo de 10 imágenes por secuencia.', true);
+            }
+        }
+        const targetIndex = scenes().findIndex(item => Number(item.id) === Number(sceneId)) + 1;
+        const sourceIndex = scenes().findIndex(item => Number(item.id) === Number(asset.sceneId)) + 1;
+        const message = asset.type === 'generation_job'
+            ? `Secuencia ${targetIndex} enlazada${sourceIndex > 0 ? ` al resultado de Secuencia ${sourceIndex}` : ' al video elegido'}`
+            : `${referenceRoleLabel(role)} actualizado`;
         queueMutation(() => api({
             action: 'reference_add',
             sceneId,
             version: currentProject().version,
-            reference: { sourceType: 'mockup', sourceId: asset.id, role },
-        }), `${role === 'start_frame' ? 'Start Frame' : 'End Frame'} actualizado`);
+            reference: { sourceType: asset.type, sourceId: asset.id, role },
+        }), message);
+    }
+
+    async function uploadReferenceFiles(sceneId, role, fileList) {
+        const files = Array.from(fileList || []);
+        const scene = sceneById(sceneId);
+        if (!scene || files.length === 0) return;
+        const multiRole = role === 'reference';
+        if (!multiRole && files.length > 1) return toast('Esta referencia admite un solo archivo.', true);
+        if (role === 'source_video') {
+            if (files.some(file => !String(file.type || '').startsWith('video/'))) return toast('Video base admite únicamente un video.', true);
+        } else {
+            if (files.some(file => !String(file.type || '').startsWith('image/'))) return toast('Las referencias visuales admiten únicamente imágenes.', true);
+            const sceneIndex = scenes().findIndex(item => Number(item.id) === Number(sceneId));
+            if (files.length > availableImagesForRole(scene, sceneIndex, role)) {
+                return toast('La selección supera el máximo de 10 imágenes de Omni.', true);
+            }
+        }
+        const slotKey = uploadSlotKey(sceneId, role);
+        if (state.uploadingSlots.has(slotKey)) return;
+
+        state.uploadingSlots.add(slotKey);
+        renderBoards();
+        setupSortables();
+        try {
+            await queueMutation(async () => {
+                const form = new FormData();
+                form.set('csrf', state.csrf);
+                form.set('sceneId', String(sceneId));
+                form.set('version', String(currentProject().version));
+                form.set('role', role);
+                files.forEach(file => form.append('references[]', file, file.name));
+                const response = await fetch(state.endpoints.referenceUpload || 'video_reference_upload.php', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json' },
+                    body: form,
+                });
+                let result;
+                try { result = await response.json(); }
+                catch (_) { result = { ok: false, error: `La carga falló (${response.status}).` }; }
+                if (!response.ok || !result.ok) {
+                    const error = new Error(result.error || `La carga falló (${response.status}).`);
+                    error.status = response.status;
+                    throw error;
+                }
+                return result;
+            }, `${referenceRoleLabel(role)} actualizado desde el ordenador`);
+        } finally {
+            state.uploadingSlots.delete(slotKey);
+            renderAll();
+        }
+    }
+
+    function referenceRoleLabel(role) {
+        return ({
+            start_frame: 'Imagen inicial',
+            end_frame: 'Imagen final objetivo',
+            artwork_fidelity: 'Obra de arte',
+            character_identity: 'Personaje',
+            wardrobe_identity: 'Vestuario',
+            source_video: 'Video base',
+            reference: 'Referencias adicionales',
+        })[String(role)] || 'Referencia';
+    }
+
+    function availableImagesForRole(scene, sceneIndex, role) {
+        const maxImages = Number(state.capabilities.referenceLimits?.images || 10);
+        let used = omniImageUsage(scene, sceneIndex);
+        const current = referenceFor(scene, role);
+        if (current?.mediaType === 'image' && ['start_frame','end_frame','artwork_fidelity','character_identity','wardrobe_identity','main'].includes(String(role))) used--;
+        if (role === 'start_frame' && sceneIndex > 0 && !explicitStartReference(scene) && !sourceVideoReference(scene)) used--;
+        return Math.max(0, maxImages - used);
     }
 
     function addSequence() {
@@ -390,7 +670,7 @@
             action: 'scene_create',
             projectId: currentProject().id,
             version: currentProject().version,
-            scene: { title: `Sequence ${number}`, generationMode: 'first_last_frame', durationSeconds: 8, cameraMovement: 'static', motionIntensity: 'low' },
+            scene: { title: `Sequence ${number}`, generationMode: defaultGenerationMode(), durationSeconds: defaultGenerationDuration() },
         }), `Secuencia ${number} agregada`);
     }
 
@@ -402,7 +682,7 @@
                 const number = scenes().length + 1;
                 await queueMutation(() => api({
                     action: 'scene_create', projectId: currentProject().id, version: currentProject().version,
-                    scene: { title: `Sequence ${number}`, generationMode: 'first_last_frame', durationSeconds: 8 },
+                    scene: { title: `Sequence ${number}`, generationMode: defaultGenerationMode(), durationSeconds: defaultGenerationDuration() },
                 }));
             }
         } catch (_) { /* the mutation already reported the problem */ }
@@ -412,23 +692,30 @@
     function showGenerationModal(sceneId) {
         const scene = sceneById(sceneId);
         if (!scene) return;
-        const start = referenceFor(scene, 'start_frame');
-        const end = referenceFor(scene, 'end_frame');
-        if (!start || !end) return toast('Completa Start Frame y End Frame antes de generar.', true);
         const index = scenes().findIndex(item => Number(item.id) === Number(scene.id));
+        const previousScene = index > 0 ? scenes()[index - 1] : null;
+        const startReference = explicitStartReference(scene);
+        const baseVideo = sourceVideoReference(scene);
+        const continuityLabel = baseVideo
+            ? `Editar video: ${baseVideo.label}`
+            : startReference
+            ? (startReference.mediaType === 'video' ? `Último fotograma de ${startReference.label}` : `Start Frame: ${startReference.label}`)
+            : (index === 0 ? 'Primera secuencia' : (previousScene?.active_generation ? `Automática desde Secuencia ${index}` : 'Aún sin resultado anterior'));
+        const referenceCount = Array.isArray(scene.references) ? scene.references.length : 0;
         state.pendingGenerationSceneId = scene.id;
         dom.generationSummary.innerHTML = `<div class="vds-generation-facts">
             <div><span>Secuencia</span><strong>${index + 1}</strong></div>
-            <div><span>Start Frame</span><strong>${escapeHtml(start.label)}</strong></div>
-            <div><span>End Frame</span><strong>${escapeHtml(end.label)}</strong></div>
-            <div><span>Duración</span><strong>${Number(scene.durationSeconds)} segundos</strong></div>
-            <div><span>Modelo</span><strong>${escapeHtml(state.capabilities.generationModel || 'Veo 3.1')}</strong></div>
+            <div><span>Referencias adjuntas</span><strong>${referenceCount}</strong></div>
+            <div><span>Continuidad</span><strong>${escapeHtml(continuityLabel)}</strong></div>
+            <div><span>Duración</span><strong>${baseVideo ? 'La conserva el video base' : `${Number(scene.durationSeconds)} segundos`}</strong></div>
+            <div><span>Modelo</span><strong>${escapeHtml(state.capabilities.generationModel || 'Gemini Omni Flash')}</strong></div>
         </div>`;
         dom.generationModal.hidden = false;
     }
 
-    async function toggleFavorite(assetId, button) {
-        const asset = mockupById(assetId);
+    async function toggleFavorite(assetKey, button) {
+        const asset = assetByKey(assetKey);
+        const assetId = Number(asset?.id || 0);
         if (!asset || button.disabled) return;
         button.disabled = true;
         try {
@@ -475,7 +762,7 @@
         if (favorite) {
             event.stopPropagation();
             const card = favorite.closest('[data-catalog-card]');
-            if (card) toggleFavorite(Number(card.dataset.assetId), favorite);
+            if (card) toggleFavorite(String(card.dataset.assetKey || ''), favorite);
             return;
         }
 
@@ -523,6 +810,16 @@
         if (event.target.closest('[data-close-project-modal]')) { dom.projectModal.hidden = true; return; }
         if (event.target.closest('[data-add-sequence]')) { addSequence(); return; }
 
+        const uploadReference = event.target.closest('[data-upload-reference]');
+        if (uploadReference) {
+            event.stopPropagation();
+            const sceneId = Number(uploadReference.dataset.uploadReference);
+            const role = String(uploadReference.dataset.role || 'start_frame');
+            const input = $(`[data-reference-file-input][data-scene-id="${sceneId}"][data-role="${role}"]`);
+            if (input && !uploadReference.disabled) input.click();
+            return;
+        }
+
         const scroll = event.target.closest('[data-scroll-catalog]');
         if (scroll) {
             dom.catalogRail.scrollBy({ left: Number(scroll.dataset.scrollCatalog) * Math.max(320, dom.catalogRail.clientWidth * .72), behavior: 'smooth' });
@@ -531,7 +828,7 @@
 
         const catalogCard = event.target.closest('[data-catalog-card]');
         if (catalogCard) {
-            state.selectedAssetId = Number(catalogCard.dataset.assetId);
+            state.selectedAssetKey = String(catalogCard.dataset.assetKey || '');
             renderCatalog();
             setupSortables();
             return;
@@ -540,14 +837,16 @@
         const remove = event.target.closest('[data-remove-reference]');
         if (remove) {
             event.stopPropagation();
-            queueMutation(() => api({ action: 'reference_remove', referenceId: Number(remove.dataset.removeReference), version: currentProject().version }), 'Fotograma eliminado');
+            queueMutation(() => api({ action: 'reference_remove', referenceId: Number(remove.dataset.removeReference), version: currentProject().version }), 'Referencia eliminada');
             return;
         }
 
-        const frame = event.target.closest('[data-frame-drop]');
-        if (frame) {
-            if (!state.selectedAssetId) return toast('Selecciona primero un mockup del catálogo o arrástralo hasta aquí.');
-            assignReference(Number(frame.dataset.sceneId), String(frame.dataset.role), Number(state.selectedAssetId));
+        const referenceTarget = event.target.closest('[data-frame-drop],[data-reference-drop]');
+        if (referenceTarget && !event.target.closest('[data-remove-reference]') && !event.target.closest('video') && !event.target.closest('input')) {
+            const sceneId = Number(referenceTarget.dataset.sceneId);
+            const role = String(referenceTarget.dataset.role);
+            if (state.selectedAssetKey) assignReference(sceneId, role, state.selectedAssetKey);
+            else if (!referenceTarget.classList.contains('has-media')) referenceTarget.querySelector('[data-reference-file-input]')?.click();
             return;
         }
 
@@ -560,6 +859,13 @@
             return;
         }
 
+        const duplicateScene = event.target.closest('[data-duplicate-sequence]');
+        if (duplicateScene) {
+            const id = Number(duplicateScene.dataset.duplicateSequence);
+            queueMutation(() => api({ action: 'scene_duplicate', sceneId: id, version: currentProject().version }), 'Secuencia duplicada');
+            return;
+        }
+
         const removeScene = event.target.closest('[data-delete-sequence]');
         if (removeScene) {
             const id = Number(removeScene.dataset.deleteSequence);
@@ -569,6 +875,41 @@
                 state.openContexts.delete(id);
                 queueMutation(() => api({ action: 'scene_delete', sceneId: id, version: currentProject().version }), 'Secuencia eliminada');
             }
+            return;
+        }
+
+        const useClipNext = event.target.closest('[data-use-clip-next]');
+        if (useClipNext) {
+            assignReference(Number(useClipNext.dataset.useClipNext), 'start_frame', String(useClipNext.dataset.assetKey || ''));
+            return;
+        }
+
+        const adjustResult = event.target.closest('[data-adjust-result]');
+        if (adjustResult) {
+            const sceneId = Number(adjustResult.dataset.adjustResult);
+            const prompt = String($(`[data-adjust-prompt="${sceneId}"]`)?.value || '').trim();
+            if (!prompt) return toast('Describe el ajuste que quieres aplicar.', true);
+            adjustResult.disabled = true;
+            queueMutation(() => request(state.endpoints.generationStart || 'video_generation_start.php', {
+                sceneId,
+                version: currentProject().version,
+                intent: 'adjust',
+                adjustPrompt: prompt,
+            }), 'Ajuste iniciado').finally(() => {
+                adjustResult.disabled = false;
+                updateGenerationPolling();
+            });
+            return;
+        }
+
+        const openAdjustResult = event.target.closest('[data-open-adjust-result]');
+        if (openAdjustResult) {
+            const sceneId = Number(openAdjustResult.dataset.openAdjustResult);
+            const panel = $(`[data-adjust-panel="${sceneId}"]`);
+            if (!panel) return;
+            panel.open = true;
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            requestAnimationFrame(() => $(`[data-adjust-prompt="${sceneId}"]`)?.focus());
             return;
         }
 
@@ -590,6 +931,25 @@
     });
 
     root.addEventListener('change', event => {
+        const instruction = event.target.closest('[data-reference-instruction]');
+        if (instruction) {
+            queueMutation(() => api({
+                action: 'reference_update',
+                referenceId: Number(instruction.dataset.referenceInstruction),
+                version: currentProject().version,
+                instruction: String(instruction.value || '').trim(),
+            }));
+            return;
+        }
+        const referenceInput = event.target.closest('[data-reference-file-input]');
+        if (referenceInput) {
+            const sceneId = Number(referenceInput.dataset.sceneId);
+            const role = String(referenceInput.dataset.role || 'start_frame');
+            const files = Array.from(referenceInput.files || []);
+            referenceInput.value = '';
+            uploadReferenceFiles(sceneId, role, files).catch(() => undefined);
+            return;
+        }
         if (event.target === dom.projectTitle) {
             const project = currentProject();
             const title = String(event.target.value || '').trim();
@@ -605,7 +965,7 @@
         }
         if (event.target === dom.artworkFilter) {
             state.artworkFilter = String(event.target.value || '');
-            state.selectedAssetId = null;
+            state.selectedAssetKey = null;
             renderCatalog();
             setupSortables();
             if (currentProject()) queueMutation(() => api({ action: 'project_update', projectId: currentProject().id, version: currentProject().version, changes: { artworkId: state.artworkFilter || null } }));
@@ -613,7 +973,7 @@
         }
         if (event.target === dom.seriesFilter) {
             state.seriesFilter = String(event.target.value || '');
-            state.selectedAssetId = null;
+            state.selectedAssetKey = null;
             renderCatalog();
             setupSortables();
             return;
@@ -652,16 +1012,70 @@
         }
         if (!['Enter', ' '].includes(event.key)) return;
         const card = event.target.closest('[data-catalog-card]');
-        const frame = event.target.closest('[data-frame-drop]');
+        const frame = event.target.closest('[data-frame-drop],[data-reference-drop]');
         if (!card && !frame) return;
         event.preventDefault();
         if (card) {
-            state.selectedAssetId = Number(card.dataset.assetId);
+            state.selectedAssetKey = String(card.dataset.assetKey || '');
             renderCatalog();
             setupSortables();
-        } else if (state.selectedAssetId) {
-            assignReference(Number(frame.dataset.sceneId), String(frame.dataset.role), Number(state.selectedAssetId));
+        } else if (state.selectedAssetKey) {
+            assignReference(Number(frame.dataset.sceneId), String(frame.dataset.role), state.selectedAssetKey);
+        } else if (!frame.classList.contains('has-media')) {
+            frame.querySelector('[data-reference-file-input]')?.click();
         }
+    });
+
+    root.addEventListener('dragover', event => {
+        const frame = event.target.closest('[data-frame-drop],[data-reference-drop]');
+        if (!frame) return;
+        const types = Array.from(event.dataTransfer?.types || []);
+        const generatedVideo = types.includes('application/x-artwork-generated-video');
+        const uploadedFiles = types.includes('Files');
+        if (!generatedVideo && !uploadedFiles) return;
+        if (generatedVideo && !['start_frame','source_video'].includes(String(frame.dataset.role))) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+        frame.classList.add('is-drop-target');
+    });
+    root.addEventListener('dragleave', event => {
+        const frame = event.target.closest('[data-frame-drop],[data-reference-drop]');
+        if (frame && !frame.contains(event.relatedTarget)) frame.classList.remove('is-drop-target');
+    });
+    root.addEventListener('drop', event => {
+        const frame = event.target.closest('[data-frame-drop],[data-reference-drop]');
+        if (!frame) return;
+        const assetKey = String(event.dataTransfer?.getData('application/x-artwork-generated-video') || '');
+        if (assetKey) {
+            event.preventDefault();
+            frame.classList.remove('is-drop-target');
+            root.classList.remove('is-dragging-generated');
+            assignReference(Number(frame.dataset.sceneId), String(frame.dataset.role), assetKey);
+            return;
+        }
+        const files = event.dataTransfer?.files;
+        if (!files?.length) return;
+        event.preventDefault();
+        frame.classList.remove('is-drop-target');
+        uploadReferenceFiles(Number(frame.dataset.sceneId), String(frame.dataset.role), files).catch(() => undefined);
+    });
+    root.addEventListener('dragstart', event => {
+        const handle = event.target.closest('[data-generated-drag]');
+        if (!handle || !event.dataTransfer) return;
+        const assetKey = String(handle.dataset.assetKey || '');
+        if (!assetKey) return;
+        event.dataTransfer.effectAllowed = 'copy';
+        event.dataTransfer.setData('application/x-artwork-generated-video', assetKey);
+        event.dataTransfer.setData('text/plain', assetKey);
+        root.classList.add('is-dragging-generated');
+        handle.closest('[data-generated-clip]')?.classList.add('is-dragging');
+    });
+    root.addEventListener('dragend', event => {
+        const handle = event.target.closest('[data-generated-drag]');
+        if (!handle) return;
+        root.classList.remove('is-dragging-generated');
+        handle.closest('[data-generated-clip]')?.classList.remove('is-dragging');
+        $$('[data-frame-drop].is-drop-target,[data-reference-drop].is-drop-target').forEach(frame => frame.classList.remove('is-drop-target'));
     });
 
     dom.projectForm.addEventListener('submit', event => {

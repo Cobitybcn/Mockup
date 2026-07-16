@@ -21,6 +21,15 @@
         website: String(boardConfig?.destinations?.website || ''),
         saatchi: String(boardConfig?.destinations?.saatchi || ''),
     };
+    const configuredPinterestPurposes = Array.isArray(boardConfig?.pinterest?.purposes)
+        ? boardConfig.pinterest.purposes
+            .map((item) => String(item?.value || ''))
+            .filter((value) => ['artist', 'platform'].includes(value))
+        : ['artist'];
+    const defaultPinterestPurpose = configuredPinterestPurposes.includes(String(boardConfig?.pinterest?.purpose || ''))
+        ? String(boardConfig.pinterest.purpose)
+        : configuredPinterestPurposes[0] || 'artist';
+    const pinterestEnvironment = String(boardConfig?.pinterest?.environment || 'production');
 
     const mockupById = new Map(mockups.map((mockup) => [String(mockup.id), mockup]));
     const userId = document.body.dataset.socialBoardUser || 'guest';
@@ -38,6 +47,9 @@
     let pinterestBoards = [];
     let pinterestBoardsStatus = 'loading';
     let pendingPublishPayload = null;
+    let scheduledJobs = [];
+    let publicationHistoryReady = false;
+    let scheduledReloadTimer = 0;
     let focusedNetwork = networkPlatforms.includes(history.state?.socialMediaFocus)
         ? history.state.socialMediaFocus
         : '';
@@ -52,8 +64,9 @@
         pinterest: [],
         publications: { instagram: [], facebook: [] },
         pinData: {},
+        pinterestPurpose: defaultPinterestPurpose,
         scheduled: { pinterest: {}, instagram: {}, facebook: {} },
-        schedule: { date: '', time: '10:00', perPublication: false },
+        schedule: { mode: 'now', date: '', time: '', perPublication: false },
     });
 
     const normalizeGroup = (group, platform) => ({
@@ -78,12 +91,16 @@
 
         fresh.pinterest = validIds(saved.pinterest);
         fresh.pinData = saved.pinData && typeof saved.pinData === 'object' ? saved.pinData : {};
+        fresh.pinterestPurpose = configuredPinterestPurposes.includes(String(saved.pinterestPurpose || ''))
+            ? String(saved.pinterestPurpose)
+            : defaultPinterestPurpose;
         networkPlatforms.forEach((platform) => {
             fresh.scheduled[platform] = saved.scheduled?.[platform] && typeof saved.scheduled[platform] === 'object'
                 ? saved.scheduled[platform]
                 : {};
         });
         fresh.schedule = { ...fresh.schedule, ...(saved.schedule || {}) };
+        fresh.schedule.mode = saved.schedule?.mode === 'scheduled' ? 'scheduled' : 'now';
 
         publicationPlatforms.forEach((platform) => {
             const grouped = saved.publications?.[platform];
@@ -193,6 +210,193 @@
         toastTimer = window.setTimeout(() => toast.classList.remove('is-visible'), duration);
     };
 
+    const localScheduleParts = (value) => {
+        const instant = new Date(String(value || ''));
+        if (Number.isNaN(instant.getTime())) return { date: '', time: '' };
+        const local = new Date(instant.getTime() - instant.getTimezoneOffset() * 60000);
+        return { date: local.toISOString().slice(0, 10), time: local.toISOString().slice(11, 16) };
+    };
+
+    const scheduledStatusLabel = (job) => {
+        const status = String(job?.status || '');
+        if (status === 'queued') {
+            const scheduledAt = new Date(String(job?.scheduled_at || '')).getTime();
+            return Number.isFinite(scheduledAt) && scheduledAt <= Date.now() + 2 * 60 * 1000
+                ? 'En cola para publicar ahora'
+                : 'Programada';
+        }
+        return ({
+            published: 'Publicada',
+            publishing: 'Publicando',
+            failed: 'Falló',
+            needs_verification: 'Requiere verificación',
+            enqueue_failed: 'No entró en la cola',
+            rescheduling: 'Reprogramando',
+            retrying: 'Preparando reintento',
+            cancelling: 'Cancelando',
+            cancelled: 'Cancelada',
+        })[status] || status;
+    };
+
+    const scheduledChip = (job) => {
+        if (!job) return '';
+        const status = String(job.status || '');
+        const label = status === 'published' ? 'Publicado'
+            : status === 'failed' ? 'Falló'
+                : status === 'needs_verification' ? 'Verificar'
+                    : status === 'publishing' ? 'Publicando'
+                        : status === 'queued' ? (scheduledStatusLabel(job).includes('ahora') ? 'En cola' : 'Programado')
+                            : scheduledStatusLabel(job);
+        return `<span class="smb-scheduled-chip smb-scheduled-chip--${escapeHtml(status)}" title="${escapeHtml(job.error || job.scheduled_at || '')}">${escapeHtml(label)}</span>`;
+    };
+
+    const syncScheduledState = (jobs) => {
+        state.scheduled = { pinterest: {}, instagram: {}, facebook: {} };
+        jobs.forEach((job) => {
+            const platform = String(job.channel || '');
+            const key = String(job.client_key || '');
+            if (networkPlatforms.includes(platform) && key && !state.scheduled[platform][key]) state.scheduled[platform][key] = job;
+        });
+        saveState();
+        renderAll();
+    };
+
+    const renderScheduledJobs = () => {
+        const list = document.querySelector('[data-scheduled-list]');
+        if (!list) return;
+        if (!scheduledJobs.length) {
+            list.innerHTML = '<div class="smb-scheduled-empty">No hay actividad de publicación todavía.</div>';
+            return;
+        }
+        list.innerHTML = scheduledJobs.map((job) => {
+            const parts = localScheduleParts(job.scheduled_at);
+            const count = Math.max(1, Number(job.item_count || 1));
+            const countLabel = job.channel === 'pinterest'
+                ? plural(count, 'Pin', 'Pines')
+                : plural(count, 'imagen', 'imágenes');
+            const status = String(job.status || '');
+            const sandboxDestinationPending = job.channel === 'pinterest'
+                && pinterestEnvironment === 'sandbox'
+                && pinterestBoardsStatus !== 'ready';
+            const sandboxDestinationMismatch = job.channel === 'pinterest'
+                && pinterestEnvironment === 'sandbox'
+                && pinterestBoardsStatus === 'ready'
+                && Boolean(job.board_id)
+                && !pinterestBoards.some((board) => board.id === String(job.board_id));
+            const destinationReady = !sandboxDestinationPending && !sandboxDestinationMismatch;
+            const canReschedule = Boolean(job.can_reschedule) && status === 'queued' && destinationReady;
+            const when = canReschedule ? `
+                    <div class="smb-scheduled-when">
+                        <label><span>Fecha</span><input type="date" value="${escapeHtml(parts.date)}" data-scheduled-date aria-label="Nueva fecha de publicación"></label>
+                        <label><span>Hora</span><input type="time" value="${escapeHtml(parts.time)}" data-scheduled-time aria-label="Nueva hora de publicación"></label>
+                    </div>` : '<div class="smb-scheduled-when smb-scheduled-when--empty"></div>';
+            const actions = [];
+            if (canReschedule) {
+                actions.push('<button type="button" class="smb-scheduled-action" data-scheduled-action="reschedule">Guardar nueva fecha</button>');
+                actions.push('<button type="button" class="smb-scheduled-action smb-scheduled-action--now" data-scheduled-action="publish_now">Publicar ahora</button>');
+                actions.push('<button type="button" class="smb-scheduled-action smb-scheduled-action--cancel" data-scheduled-action="cancel">Cancelar</button>');
+            } else if (status === 'queued' && !destinationReady) {
+                actions.push('<button type="button" class="smb-scheduled-action smb-scheduled-action--cancel" data-scheduled-action="cancel">Cancelar programación</button>');
+                actions.push(`<span class="smb-scheduled-note">${sandboxDestinationMismatch
+                    ? `El tablero “${escapeHtml(job.board_name || 'anterior')}” no existe en Sandbox. Cancela esta programación y crea el Pin con “Artwork Mockups Sandbox Test”.`
+                    : 'Validando el tablero de Pinterest antes de habilitar acciones…'}</span>`);
+            } else if (job.can_retry) {
+                actions.push('<button type="button" class="smb-scheduled-action smb-scheduled-action--retry" data-scheduled-action="retry">Reintentar solo esta</button>');
+            }
+            if (status === 'published' && job.external_url) {
+                actions.push(`<a class="smb-scheduled-link" href="${escapeHtml(job.external_url)}" target="_blank" rel="noopener">Ver publicación</a>`);
+            }
+            if (status === 'needs_verification') {
+                actions.push('<span class="smb-scheduled-note">Verifica la red antes de reintentar para evitar duplicados.</span>');
+            }
+            if (status === 'failed' && !job.can_retry) {
+                actions.push(`<span class="smb-scheduled-note">${escapeHtml(job.retry_hint || 'Corrige la causa indicada antes de volver a publicar.')}</span>`);
+            }
+            return `
+                <article class="smb-scheduled-card smb-scheduled-card--${escapeHtml(status)}" data-scheduled-job="${escapeHtml(job.id)}" data-destination-ready="${destinationReady ? 'true' : 'false'}">
+                    <div class="smb-scheduled-copy">
+                        <span class="smb-scheduled-network smb-scheduled-network--${escapeHtml(job.channel)}">${escapeHtml(platformLabels[job.channel] || job.channel)}</span>
+                        <strong title="${escapeHtml(job.label)}">${escapeHtml(job.label)}</strong>
+                        <small><b class="smb-status smb-status--${escapeHtml(status)}">${escapeHtml(scheduledStatusLabel(job))}</b> · ${escapeHtml(countLabel)} · ${escapeHtml(new Date(job.scheduled_at).toLocaleString())}</small>
+                        ${job.error ? `<p class="smb-scheduled-error">${escapeHtml(job.error)}</p>` : ''}
+                    </div>
+                    ${when}
+                    <div class="smb-scheduled-actions">${actions.join('')}</div>
+                </article>`;
+        }).join('');
+    };
+
+    const loadScheduledJobs = async (quiet = false) => {
+        const refresh = document.querySelector('[data-refresh-scheduled]');
+        if (refresh) refresh.disabled = true;
+        try {
+            const response = await fetch('social_media_scheduled_jobs.php', {
+                credentials: 'same-origin',
+                headers: { Accept: 'application/json' },
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.ok || !Array.isArray(result.jobs)) throw new Error(result.error || 'No se pudo cargar la cola de publicación.');
+            scheduledJobs = result.jobs;
+            publicationHistoryReady = true;
+            renderScheduledJobs();
+            syncScheduledState(scheduledJobs);
+        } catch (error) {
+            publicationHistoryReady = false;
+            if (!quiet) showToast(error.message || 'No se pudo cargar la cola de publicación.');
+            const list = document.querySelector('[data-scheduled-list]');
+            if (list && !scheduledJobs.length) list.innerHTML = '<div class="smb-scheduled-empty">No se pudo cargar el estado. Pulsa Actualizar para intentarlo nuevamente.</div>';
+        } finally {
+            if (refresh) refresh.disabled = false;
+        }
+    };
+
+    const manageScheduledJob = async (action, card) => {
+        const jobId = Number(card?.dataset.scheduledJob || 0);
+        if (!jobId || !['reschedule', 'publish_now', 'retry', 'cancel'].includes(action)) return;
+        if (['reschedule', 'publish_now', 'retry'].includes(action) && card?.dataset.destinationReady === 'false') {
+            showToast('Este Pin usa un tablero que no existe en Pinterest Sandbox. Cancélalo y créalo nuevamente con el tablero de prueba.');
+            return;
+        }
+        if (action === 'publish_now' && !window.confirm('¿Publicar esta publicación ahora? La acción entrará inmediatamente en la cola real.')) return;
+        if (action === 'retry' && !window.confirm('¿Reintentar solo esta publicación fallida? Las publicaciones que ya salieron no se repetirán.')) return;
+        if (action === 'cancel' && !window.confirm('¿Cancelar esta publicación programada?')) return;
+        const payload = {
+            csrf: String(boardConfig.csrf || ''),
+            job_id: jobId,
+            action,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+            date: card.querySelector('[data-scheduled-date]')?.value || '',
+            time: card.querySelector('[data-scheduled-time]')?.value || '',
+            confirmation: action === 'reschedule' ? 'REPROGRAMAR' : action === 'publish_now' ? 'PUBLICAR_AHORA' : action === 'retry' ? 'REINTENTAR' : 'CANCELAR',
+        };
+        if (action === 'reschedule' && (!payload.date || !payload.time)) {
+            showToast('Elige una fecha y una hora para reprogramar.');
+            return;
+        }
+        card.classList.add('is-busy');
+        card.querySelectorAll('button, input').forEach((control) => { control.disabled = true; });
+        try {
+            const response = await fetch('social_media_scheduled_jobs.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo cambiar la publicación programada.');
+            scheduledJobs = Array.isArray(result.jobs) ? result.jobs : [];
+            renderScheduledJobs();
+            syncScheduledState(scheduledJobs);
+            showToast(result.message || 'Publicación programada actualizada.', 7000);
+            window.clearTimeout(scheduledReloadTimer);
+            scheduledReloadTimer = window.setTimeout(() => loadScheduledJobs(true), ['publish_now', 'retry'].includes(action) ? 5000 : 1500);
+        } catch (error) {
+            showToast(error.message || 'No se pudo cambiar la publicación programada.', 7000);
+            card.classList.remove('is-busy');
+            card.querySelectorAll('button, input').forEach((control) => { control.disabled = false; });
+        }
+    };
+
     const publicationCountFor = (platform = '') => {
         if (platform === 'pinterest') return state.pinterest.length;
         if (publicationPlatforms.includes(platform)) {
@@ -205,6 +409,7 @@
     };
 
     const scheduleFor = (entry = {}) => ({
+        mode: state.schedule.mode === 'scheduled' ? 'scheduled' : 'now',
         date: String(state.schedule.perPublication ? (entry.date || state.schedule.date) : state.schedule.date),
         time: String(state.schedule.perPublication ? (entry.time || state.schedule.time) : state.schedule.time),
     });
@@ -216,8 +421,9 @@
         const include = (platform) => !scope || scope === platform;
         return {
             csrf: String(boardConfig.csrf || ''),
+            pinterest_purpose: state.pinterestPurpose,
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-            schedule: { date: state.schedule.date, time: state.schedule.time },
+            schedule: { mode: state.schedule.mode, date: state.schedule.date, time: state.schedule.time },
             pinterest: include('pinterest') ? state.pinterest.map((id, index) => {
                 const mockup = mockupById.get(String(id));
                 const pin = state.pinData[String(id)] || {};
@@ -264,9 +470,18 @@
     const validatePublishPayload = (payload) => {
         const errors = [];
         const checkSchedule = (schedule, label) => {
+            if (schedule?.mode === 'now') return;
             if (!/^\d{4}-\d{2}-\d{2}$/.test(schedule?.date || '') || !/^\d{2}:\d{2}$/.test(schedule?.time || '')) {
                 errors.push(`${label}: elige fecha y hora.`);
             }
+        };
+        const checkPreviousJob = (platform, clientKey, label) => {
+            const previous = state.scheduled?.[platform]?.[String(clientKey)] || null;
+            const status = String(previous?.status || '');
+            if (status === 'published') errors.push(`${label}: ya figura como publicada. Modifica la publicación antes de crear una nueva.`);
+            else if (['queued', 'publishing', 'rescheduling', 'retrying'].includes(status)) errors.push(`${label}: ya está en cola o publicándose.`);
+            else if (['failed', 'enqueue_failed'].includes(status)) errors.push(`${label}: falló anteriormente. Usa “Reintentar solo esta” en Estado de publicaciones.`);
+            else if (status === 'needs_verification') errors.push(`${label}: primero verifica la red para evitar una publicación duplicada.`);
         };
         payload.pinterest.forEach((pin, index) => {
             const label = `Pin ${index + 1}`;
@@ -274,6 +489,7 @@
             if (!pin.board_id) errors.push(`${label}: falta seleccionar el tablero.`);
             if (!isPublicHttpsUrl(pin.destination_url)) errors.push(`${label}: revisa el enlace HTTPS.`);
             checkSchedule(pin.schedule, label);
+            checkPreviousJob('pinterest', pin.client_key, label);
         });
         ['instagram', 'facebook'].forEach((platform) => {
             payload[platform].forEach((group, index) => {
@@ -282,6 +498,7 @@
                 if (!group.copy.trim()) errors.push(`${label}: falta el texto.`);
                 if (!isPublicHttpsUrl(group.destination_url)) errors.push(`${label}: revisa el enlace HTTPS.`);
                 checkSchedule(group.schedule, label);
+                checkPreviousJob(platform, group.client_key, label);
             });
         });
         return errors;
@@ -297,16 +514,37 @@
     const openPublishConfirmation = (payload) => {
         const backdrop = document.querySelector('[data-confirm-backdrop]');
         const summary = document.querySelector('[data-confirm-summary]');
-        if (!backdrop || !summary) return;
+        const title = document.querySelector('[data-confirm-title]');
+        const delivery = document.querySelector('[data-confirm-delivery]');
+        const warning = document.querySelector('[data-confirm-warning]');
+        const submit = document.querySelector('[data-submit-publish-label]');
+        if (!backdrop || !summary || !title || !delivery || !warning || !submit) return;
         const rows = [];
         if (payload.pinterest.length) rows.push(`<li><strong>Pinterest</strong><span>${plural(payload.pinterest.length, 'Pin', 'Pines')}</span></li>`);
-        if (payload.instagram.length) rows.push(`<li><strong>Instagram</strong><span>${plural(payload.instagram.length, 'publicación', 'publicaciones')}</span></li>`);
-        if (payload.facebook.length) rows.push(`<li><strong>Facebook</strong><span>${plural(payload.facebook.length, 'publicación', 'publicaciones')}</span></li>`);
-        const allSchedules = [...payload.pinterest, ...payload.instagram, ...payload.facebook].map((entry) => `${entry.schedule.date} ${entry.schedule.time}`);
-        const scheduleText = new Set(allSchedules).size === 1
-            ? `Fecha y hora: ${allSchedules[0]}`
-            : `${new Set(allSchedules).size} fechas u horarios configurados`;
-        summary.innerHTML = `<ul>${rows.join('')}</ul><p>${escapeHtml(scheduleText)} · ${escapeHtml(payload.timezone)}</p>`;
+        if (payload.instagram.length) {
+            const images = payload.instagram.reduce((total, group) => total + group.mockup_ids.length, 0);
+            rows.push(`<li><strong>Instagram</strong><span>${plural(payload.instagram.length, 'carrusel/publicación', 'carruseles/publicaciones')} · ${plural(images, 'imagen', 'imágenes')}</span></li>`);
+        }
+        if (payload.facebook.length) {
+            const images = payload.facebook.reduce((total, group) => total + group.mockup_ids.length, 0);
+            rows.push(`<li><strong>Facebook</strong><span>${plural(payload.facebook.length, 'publicación', 'publicaciones')} · ${plural(images, 'imagen', 'imágenes')}</span></li>`);
+        }
+        const isNow = payload.schedule?.mode === 'now';
+        let scheduleText = 'Momento: ahora, al confirmar';
+        if (!isNow) {
+            const allSchedules = [...payload.pinterest, ...payload.instagram, ...payload.facebook].map((entry) => `${entry.schedule.date} ${entry.schedule.time}`);
+            scheduleText = new Set(allSchedules).size === 1
+                ? `Fecha y hora: ${allSchedules[0]}`
+                : `${new Set(allSchedules).size} fechas u horarios configurados`;
+        }
+        title.textContent = isNow ? 'Confirmar publicación inmediata' : 'Confirmar programación';
+        delivery.textContent = isNow ? 'Se publicará ahora' : 'Se publicará más adelante';
+        delivery.className = `smb-confirm-delivery smb-confirm-delivery--${isNow ? 'now' : 'scheduled'}`;
+        warning.textContent = isNow
+            ? 'Al confirmar, estas publicaciones entrarán inmediatamente en la cola real.'
+            : 'Al confirmar, no se publicará ahora: cada elemento saldrá en la fecha y hora indicadas.';
+        submit.textContent = isNow ? 'Publicar ahora' : 'Confirmar programación';
+        summary.innerHTML = `<ul>${rows.join('')}</ul><p>${escapeHtml(scheduleText)}${isNow ? '' : ` · ${escapeHtml(payload.timezone)}`}</p>`;
         pendingPublishPayload = payload;
         backdrop.hidden = false;
         document.body.classList.add('smb-confirm-open');
@@ -315,10 +553,11 @@
     const submitPublishPayload = async () => {
         if (!pendingPublishPayload) return;
         const button = document.querySelector('[data-submit-publish]');
-        const payload = { ...pendingPublishPayload, confirmation: 'PROGRAMAR' };
+        const isNow = pendingPublishPayload.schedule?.mode === 'now';
+        const payload = { ...pendingPublishPayload, confirmation: isNow ? 'PUBLICAR_AHORA' : 'PROGRAMAR' };
         if (button) {
             button.disabled = true;
-            button.textContent = 'Programando…';
+            button.textContent = isNow ? 'Publicando…' : 'Programando…';
         }
         try {
             const response = await fetch('social_media_schedule.php', {
@@ -336,13 +575,14 @@
             });
             closePublishConfirmation();
             renderAll();
-            showToast(result.message || `${result.publication_count} publicaciones programadas.`, 8000);
+            showToast(result.message || (isNow ? `${result.publication_count} publicaciones entraron en la cola.` : `${result.publication_count} publicaciones programadas.`), 8000);
+            await loadScheduledJobs(true);
         } catch (error) {
             showToast(error.message || 'No se pudo programar la publicación.');
         } finally {
             if (button) {
                 button.disabled = false;
-                button.textContent = 'Confirmar y programar';
+                button.textContent = isNow ? 'Publicar ahora' : 'Confirmar programación';
             }
         }
     };
@@ -365,9 +605,10 @@
 
         const confirmLabel = document.querySelector('[data-confirm-label]');
         if (confirmLabel) {
+            const action = state.schedule.mode === 'scheduled' ? 'Revisar programación de' : 'Revisar y publicar ahora';
             confirmLabel.textContent = hasFocus
-                ? `Confirmar y programar ${platformLabels[focusedNetwork]}`
-                : 'Confirmar y programar todo';
+                ? `${action} ${platformLabels[focusedNetwork]}`
+                : state.schedule.mode === 'scheduled' ? 'Revisar y programar todo' : 'Revisar y publicar ahora';
         }
     };
 
@@ -511,15 +752,15 @@
         const destinationUrl = String(pin.destinationUrl || configuredDestinations[destination] || '');
         const board = selectedPinBoard(mockup, pin);
         const scheduled = state.scheduled.pinterest[`pinterest-${id}`] || null;
-        const scheduleFields = state.schedule.perPublication ? `
+        const scheduleFields = state.schedule.mode === 'scheduled' && state.schedule.perPublication ? `
             <div class="smb-item-schedule">
                 <input type="date" value="${escapeHtml(pin.date || state.schedule.date)}" data-pin-date aria-label="Fecha del Pin">
                 <input type="time" value="${escapeHtml(pin.time || state.schedule.time)}" data-pin-time aria-label="Hora del Pin">
             </div>` : '';
         return `
-            <article class="smb-pin-card smb-sortable-item${state.schedule.perPublication ? ' has-schedule' : ''}" data-board-item data-platform="pinterest" data-mockup-id="${escapeHtml(id)}" data-id="${escapeHtml(id)}" data-index="${index}">
+            <article class="smb-pin-card smb-sortable-item${state.schedule.mode === 'scheduled' && state.schedule.perPublication ? ' has-schedule' : ''}" data-board-item data-platform="pinterest" data-mockup-id="${escapeHtml(id)}" data-id="${escapeHtml(id)}" data-index="${index}">
                 <span class="smb-pin-drag" data-drag-handle aria-label="Mover Pin" role="button">⋮⋮</span>
-                ${scheduled ? `<span class="smb-scheduled-chip" title="${escapeHtml(scheduled.scheduled_at || '')}">Programado</span>` : ''}
+                ${scheduledChip(scheduled)}
                 <button class="smb-remove-media" type="button" data-remove-media aria-label="Quitar de Pinterest">×</button>
                 <img src="${escapeHtml(mockup.image)}" alt="${escapeHtml(mockup.artworkTitle)}" data-inspect-mockup draggable="false">
                 <label class="smb-pin-field smb-pin-field--title"><span>Título</span><input type="text" value="${escapeHtml(title)}" data-pin-title placeholder="Título del Pin"></label>
@@ -549,7 +790,7 @@
         const saatchiLabel = isInstagram ? 'Saatchi Art · enlace en bio' : 'Saatchi Art';
         const linkUrl = String(group.linkUrl || configuredDestinations[group.link] || '');
         const scheduled = state.scheduled[platform][group.id] || null;
-        const scheduleFields = state.schedule.perPublication ? `
+        const scheduleFields = state.schedule.mode === 'scheduled' && state.schedule.perPublication ? `
             <div class="smb-item-schedule">
                 <input type="date" value="${escapeHtml(group.date || state.schedule.date)}" data-group-date aria-label="Fecha de publicación">
                 <input type="time" value="${escapeHtml(group.time || state.schedule.time)}" data-group-time aria-label="Hora de publicación">
@@ -559,9 +800,10 @@
             : '<div class="smb-publication-empty">Arrastra mockups dentro de esta publicación.</div>';
 
         return `
-            <article class="smb-publication-card${state.schedule.perPublication ? ' has-schedule' : ''}" data-publication-group="${platform}" data-group-id="${escapeHtml(group.id)}">
+            <article class="smb-publication-card${state.schedule.mode === 'scheduled' && state.schedule.perPublication ? ' has-schedule' : ''}" data-publication-group="${platform}" data-group-id="${escapeHtml(group.id)}">
                 <header class="smb-publication-head">
-                    <div class="smb-publication-label"><strong>Publicación ${index + 1}</strong><span title="${escapeHtml(displayTitle)}">${escapeHtml(displayTitle)}</span><small>${plural(group.items.length, 'imagen', 'imágenes')}${scheduled ? ` · <em title="${escapeHtml(scheduled.scheduled_at || '')}">Programada</em>` : ''}</small></div>
+                    <div class="smb-publication-label"><strong>Publicación ${index + 1}</strong><span title="${escapeHtml(displayTitle)}">${escapeHtml(displayTitle)}</span><small>${plural(group.items.length, 'imagen', 'imágenes')}</small></div>
+                    ${scheduledChip(scheduled)}
                     <button type="button" data-remove-publication aria-label="Eliminar publicación">×</button>
                 </header>
                 <div class="smb-group-carousel-wrap">
@@ -628,6 +870,18 @@
         const scheduleModeButton = document.querySelector('[data-schedule-by-network]');
         scheduleModeButton?.classList.toggle('is-active', Boolean(state.schedule.perPublication));
         scheduleModeButton?.setAttribute('aria-pressed', state.schedule.perPublication ? 'true' : 'false');
+        const scheduleFields = document.querySelector('[data-schedule-fields]');
+        if (scheduleFields) scheduleFields.hidden = state.schedule.mode !== 'scheduled';
+        document.querySelectorAll('[data-delivery-mode]').forEach((button) => {
+            const active = button.dataset.deliveryMode === state.schedule.mode;
+            button.classList.toggle('is-active', active);
+            button.setAttribute('aria-checked', active ? 'true' : 'false');
+        });
+        const confirmButton = document.querySelector('[data-confirm-schedule]');
+        if (confirmButton) {
+            confirmButton.disabled = !publicationHistoryReady;
+            confirmButton.title = publicationHistoryReady ? '' : 'Cargando el estado anterior para evitar duplicados…';
+        }
         applyFocusMode();
         saveState();
         initializeBoardSortables();
@@ -898,6 +1152,20 @@
             return;
         }
 
+        if (event.target.closest('[data-refresh-scheduled]')) {
+            await loadScheduledJobs();
+            return;
+        }
+
+        const scheduledAction = event.target.closest('[data-scheduled-action]');
+        if (scheduledAction) {
+            await manageScheduledJob(
+                String(scheduledAction.dataset.scheduledAction || ''),
+                scheduledAction.closest('[data-scheduled-job]')
+            );
+            return;
+        }
+
         const exitFocus = event.target.closest('[data-exit-network-focus]');
         if (exitFocus) {
             exitFocusedNetwork();
@@ -977,14 +1245,30 @@
             return;
         }
 
+        const deliveryMode = event.target.closest('[data-delivery-mode]');
+        if (deliveryMode) {
+            const mode = deliveryMode.dataset.deliveryMode === 'scheduled' ? 'scheduled' : 'now';
+            state.schedule.mode = mode;
+            if (mode === 'now') state.schedule.perPublication = false;
+            renderAll();
+            showToast(mode === 'now'
+                ? 'Publicación inmediata seleccionada. La fecha no intervendrá.'
+                : 'Programación activada. Revisa fecha y hora antes de confirmar.');
+            return;
+        }
+
         if (event.target.closest('[data-schedule-by-network]')) {
+            state.schedule.mode = 'scheduled';
             state.schedule.perPublication = !state.schedule.perPublication;
-            state.scheduled = { pinterest: {}, instagram: {}, facebook: {} };
             renderAll();
             return;
         }
 
         if (event.target.closest('[data-confirm-schedule]')) {
+            if (!publicationHistoryReady) {
+                showToast('Espera a que termine de cargar el estado de publicaciones para evitar duplicados.');
+                return;
+            }
             const publicationCount = publicationCountFor(focusedNetwork);
             if (!publicationCount) {
                 showToast(focusedNetwork
@@ -1127,7 +1411,7 @@
         if (date) state.schedule.date = date.value;
         if (time) state.schedule.time = time.value;
         if (date || time) {
-            if (!state.schedule.perPublication) state.scheduled = { pinterest: {}, instagram: {}, facebook: {} };
+            state.schedule.mode = 'scheduled';
             if (state.schedule.perPublication) renderAll();
             else saveState();
         }
@@ -1147,8 +1431,11 @@
     }
 
     const loadPinterestBoards = async () => {
+        pinterestBoardsStatus = 'loading';
+        renderAll();
         try {
-            const response = await fetch('social_media_pinterest_boards.php', {
+            const query = new URLSearchParams({ purpose: state.pinterestPurpose });
+            const response = await fetch(`social_media_pinterest_boards.php?${query.toString()}`, {
                 headers: { Accept: 'application/json' },
                 credentials: 'same-origin',
             });
@@ -1163,20 +1450,46 @@
             pinterestBoardsStatus = 'error';
         }
         renderAll();
+        renderScheduledJobs();
     };
 
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const defaultDate = tomorrow.toISOString().slice(0, 10);
+    const pinterestPurposeSelect = document.querySelector('[data-pinterest-purpose]');
+    if (pinterestPurposeSelect) {
+        pinterestPurposeSelect.value = state.pinterestPurpose;
+        pinterestPurposeSelect.addEventListener('change', () => {
+            const purpose = String(pinterestPurposeSelect.value || '');
+            if (!configuredPinterestPurposes.includes(purpose) || purpose === state.pinterestPurpose) return;
+            state.pinterestPurpose = purpose;
+            Object.values(state.pinData).forEach((pin) => {
+                if (pin && typeof pin === 'object') {
+                    pin.board = '';
+                    pin.boardName = '';
+                }
+            });
+            state.scheduled.pinterest = {};
+            saveState();
+            loadPinterestBoards();
+        });
+    }
+
+    const defaultMoment = new Date(Date.now() + 5 * 60 * 1000);
+    const defaultSchedule = localScheduleParts(defaultMoment.toISOString());
+    const defaultDate = defaultSchedule.date;
+    const defaultTime = defaultSchedule.time;
     const dateInput = document.querySelector('[data-schedule-date]');
     const timeInput = document.querySelector('[data-schedule-time]');
     if (dateInput) dateInput.value = state.schedule.date || defaultDate;
-    if (timeInput) timeInput.value = state.schedule.time || '10:00';
+    if (timeInput) timeInput.value = state.schedule.time || defaultTime;
     state.schedule.date = dateInput?.value || defaultDate;
-    state.schedule.time = timeInput?.value || '10:00';
+    state.schedule.time = timeInput?.value || defaultTime;
+    if (state.schedule.mode !== 'scheduled') {
+        state.schedule.mode = 'now';
+        state.schedule.perPublication = false;
+    }
 
     sortCatalog();
     renderAll();
     initializeCatalogSortable();
     loadPinterestBoards();
+    loadScheduledJobs();
 })();

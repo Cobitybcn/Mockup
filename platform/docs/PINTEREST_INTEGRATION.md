@@ -6,6 +6,25 @@ Required environment variables are `PINTEREST_APP_ID`, `PINTEREST_APP_SECRET`, a
 
 OAuth state is random, session-bound, single-use, and expires after ten minutes. Tokens use authenticated encryption and refresh automatically. Every Pin requires a fresh explicit confirmation. `artist` connections are used for artwork content; `platform` is reserved for administrator-led promotion of Artwork Mockups.
 
+## Artwork Mockups production identity
+
+The platform Pinterest identity is **Artworks Mockups (`@artworkmockups`)**. The deployed Pinterest app ID is `1589233`. Do not use app `1589266`, which belongs to the separate Maurizio Valch developer/account flow.
+
+The Social Media Board lets administrators choose between the platform and artist Pinterest identities. When the platform connection is available, it is the administrator default; the selected purpose is preserved in the draft, scheduled job, and worker publication. Non-administrators can only use their own `artist` connection.
+
+App `1589233` was verified while signed into `@artworkmockups` on 2026-07-15. Its current level is **Trial access active**. The exact callback `https://artworkmockups.com/integrations/pinterest/callback` is registered, the backend secret belongs to the same app, and the `platform` identity has been reconnected through production OAuth. The real account boards load through the Social Media Board.
+
+Both Cloud Run services use `PINTEREST_API_ENVIRONMENT=production`, `PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED=true`, and `PINTEREST_LIVE_PUBLISH_ENABLED=true`. This enables the explicitly confirmed publishing path; it does not publish automatically. Under Trial access, Pinterest states that a Pin created by the app is visible only to the user who creates it. Public distribution requires the app's access upgrade.
+
+For the first controlled Pin:
+
+1. Select one reviewed mockup and the controlled `Artwork Mockups Sandbox Test` board.
+2. Review the exact title, description, destination URL, image crop, and alt text.
+3. Obtain explicit confirmation immediately before publication.
+4. Publish one Pin and verify its external ID/link while signed into `@artworkmockups`.
+5. Do not enable normal batches or scheduled Pinterest publication until that result is verified.
+6. After Pinterest grants the public access tier, repeat one controlled public Pin before normal publishing.
+
 ## Safe production migration
 
 1. Run `php scripts/audit_pinterest_connection_purposes.php` and save the count-only output.

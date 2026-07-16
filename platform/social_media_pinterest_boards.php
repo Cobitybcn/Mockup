@@ -9,8 +9,15 @@ header('Cache-Control: private, no-store');
 try {
     $user = Auth::requireUser();
     $userId = (int)$user['id'];
+    $purpose = strtolower(trim((string)($_GET['purpose'] ?? 'artist')));
+    if (!in_array($purpose, ['artist', 'platform'], true)) {
+        throw new InvalidArgumentException('La identidad de Pinterest no es válida.');
+    }
+    if ($purpose === 'platform' && !Auth::isAdmin($user)) {
+        throw new RuntimeException('La cuenta de Artworks Mockups está disponible solo para administradores.');
+    }
     $service = new PinterestIntegrationService(Database::connection());
-    $connection = $service->connection($userId, 'artist');
+    $connection = $service->connection($userId, $purpose);
 
     if (!is_array($connection) || (string)($connection['status'] ?? '') !== 'connected') {
         echo json_encode([
@@ -22,7 +29,7 @@ try {
     }
 
     $boards = [];
-    foreach ($service->boards($userId, 'artist') as $board) {
+    foreach ($service->boards($userId, $purpose) as $board) {
         $id = trim((string)($board['id'] ?? ''));
         $name = trim((string)($board['name'] ?? ''));
         if ($id === '' || $name === '') continue;
@@ -31,6 +38,7 @@ try {
 
     echo json_encode([
         'ok' => true,
+        'purpose' => $purpose,
         'boards' => $boards,
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (Throwable $e) {

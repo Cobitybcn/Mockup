@@ -13,5 +13,11 @@ VideoHttp::handle(function (): array {
     $pdo = Database::connection();
     $studio = new VideoStudioRepository($pdo);
     $service = new VideoGenerationService($studio, new VideoJobRepository($pdo), new VideoTaskDispatcher(), new VideoMediaStorage());
-    return $service->start((int)$user['id'], (int)($input['sceneId'] ?? 0), (int)($input['version'] ?? 0));
+    return $service->start(
+        (int)$user['id'],
+        (int)($input['sceneId'] ?? 0),
+        (int)($input['version'] ?? 0),
+        (string)($input['intent'] ?? 'generate'),
+        (string)($input['adjustPrompt'] ?? '')
+    );
 });

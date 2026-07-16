@@ -96,7 +96,12 @@ PublicPage::start('Pinterest Integration | Artwork Mockups','Connect Pinterest a
                                 <span>Pinterest account</span>
                                 <p><strong><?=PublicPage::h($connection['pinterest_account_id']??'Pinterest')?></strong></p>
                             </div>
-                            <form class="pinterest-controls" method="post"><input type="hidden" name="csrf" value="<?=PublicPage::h($_SESSION['pinterest_csrf'])?>"><input type="hidden" name="purpose" value="<?=PublicPage::h($purpose)?>"><button class="button-link secondary" name="action" value="disconnect">Disconnect</button></form>
+                            <form class="pinterest-controls" method="post">
+                                <input type="hidden" name="csrf" value="<?=PublicPage::h($_SESSION['pinterest_csrf'])?>">
+                                <input type="hidden" name="purpose" value="<?=PublicPage::h($purpose)?>">
+                                <button class="button-link primary" name="action" value="connect">Reconnect</button>
+                                <button class="button-link secondary" name="action" value="disconnect">Disconnect</button>
+                            </form>
                         <?php else:?>
                             <p><?=PublicPage::h($purpose==='artist'?'Used for artwork mockups and traffic to the artist website or marketplaces.':'Used only for promotion of the Artwork Mockups platform.')?></p>
                             <form class="pinterest-controls" method="post"><input type="hidden" name="csrf" value="<?=PublicPage::h($_SESSION['pinterest_csrf'])?>"><input type="hidden" name="purpose" value="<?=PublicPage::h($purpose)?>"><button class="button-link primary" name="action" value="connect">Connect <?=PublicPage::h($label)?></button></form>

@@ -273,6 +273,18 @@
 }
 
 .smb-board-head-actions { display: flex; align-items: center; gap: 9px; }
+.smb-pinterest-purpose select {
+    max-width: 210px;
+    min-height: 32px;
+    padding: 0 28px 0 10px;
+    border: 1px solid #e8c9c4;
+    border-radius: 999px;
+    color: #81463f;
+    background: #fff8f6;
+    font: inherit;
+    font-size: 10px;
+    font-weight: 700;
+}
 .smb-focus-exit {
     display: none;
     align-items: center;
@@ -347,6 +359,9 @@
 
 .smb-board--pinterest .smb-board-count { border-color: #e8c9c4; color: #9d4a42; background: #fff2ef; }
 .smb-board--instagram .smb-board-count { border-color: #ead2e8; color: #98508f; background: #fbf1fb; }
+.smb-pinterest-runtime-note { display: grid; gap: 4px; margin: 0 14px 12px; padding: 10px 12px; border: 1px solid #e2c6a0; border-radius: 8px; color: #745b35; background: #fff6e8; }
+.smb-pinterest-runtime-note strong { font-size: 10px; }
+.smb-pinterest-runtime-note span { font-size: 9px; line-height: 1.45; }
 .smb-board--facebook .smb-board-count { border-color: #cad9ee; color: #416899; background: #edf4ff; }
 .smb-board > p { margin: 13px 0 15px; color: var(--smb-muted); font-size: 11px; }
 
@@ -834,17 +849,46 @@
 }
 
 .smb-schedule {
-    display: flex;
-    align-items: center;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
     justify-content: space-between;
-    gap: 18px;
+    gap: 26px;
     margin-top: 18px;
-    padding: 17px 22px;
+    padding: 22px;
 }
 
-.smb-schedule-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.smb-schedule-controls strong { font-size: 12px; font-weight: 500; }
-.smb-calendar-icon { display: grid; place-items: center; }
+.smb-delivery { display: grid; gap: 14px; min-width: 0; }
+.smb-delivery-heading { display: grid; gap: 4px; }
+.smb-delivery-heading span { color: #8b765f; font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.smb-delivery-heading strong { font-size: 15px; font-weight: 600; }
+.smb-delivery-options { display: grid; grid-template-columns: repeat(2, minmax(230px, 1fr)); gap: 10px; }
+.smb-delivery-option {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    min-height: 74px;
+    padding: 14px;
+    border: 1px solid var(--smb-line);
+    border-radius: 10px;
+    color: var(--smb-ink);
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+}
+.smb-delivery-option:hover { border-color: #aaa097; }
+.smb-delivery-option.is-active { border-color: #849a7f; background: #f2f7f0; box-shadow: inset 0 0 0 1px #849a7f; }
+.smb-delivery-radio { box-sizing: border-box; width: 17px; height: 17px; margin-top: 1px; border: 1px solid #aaa097; border-radius: 50%; background: #fff; }
+.smb-delivery-option.is-active .smb-delivery-radio { border: 5px solid var(--smb-sage); }
+.smb-delivery-option strong,
+.smb-delivery-option small { display: block; }
+.smb-delivery-option strong { font-size: 12px; }
+.smb-delivery-option small { margin-top: 5px; color: var(--smb-muted); font-size: 10px; line-height: 1.4; }
+.smb-schedule-controls { display: flex; align-items: end; gap: 10px; flex-wrap: wrap; padding: 14px; border: 1px solid #e3d9ca; border-radius: 10px; background: #fff9ef; }
+.smb-schedule-controls[hidden] { display: none; }
+.smb-schedule-controls label { display: grid; gap: 5px; }
+.smb-schedule-controls label span { color: #766652; font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .smb-schedule input { box-sizing: border-box; padding: 0 12px; }
 .smb-schedule-network {
     display: inline-flex;
@@ -876,6 +920,7 @@
     cursor: pointer;
 }
 .smb-confirm:hover { background: #768e70; }
+.smb-confirm:disabled { cursor: wait; opacity: .55; }
 
 .smb-confirm-backdrop[hidden] { display: none; }
 .smb-confirm-backdrop {
@@ -908,6 +953,19 @@
     text-transform: uppercase;
 }
 .smb-confirm-dialog h2 { margin: 0 0 20px; font-size: 26px; font-weight: 500; }
+.smb-confirm-delivery {
+    margin: -8px 0 16px;
+    padding: 12px 14px;
+    border: 1px solid;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-align: center;
+    text-transform: uppercase;
+}
+.smb-confirm-delivery--now { border-color: #9bad96; color: #42543e; background: #edf5ea; }
+.smb-confirm-delivery--scheduled { border-color: #d6b77f; color: #765d30; background: #fff5df; }
 .smb-confirm-summary {
     padding: 15px;
     border: 1px solid var(--smb-line);
@@ -1089,6 +1147,136 @@
     font-size: 9px;
 }
 
+.smb-scheduled {
+    margin-top: 18px;
+    overflow: hidden;
+    border: 1px solid var(--smb-line);
+    border-radius: 12px;
+    background: #fff;
+}
+
+.smb-scheduled-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 20px 22px;
+    border-bottom: 1px solid var(--smb-line);
+    background: #faf8f5;
+}
+
+.smb-scheduled-head span {
+    color: #947d65;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.smb-scheduled-head h2 { margin: 4px 0 0; font-family: inherit; font-size: 18px; font-weight: 600; }
+.smb-scheduled-head p { margin: 7px 0 0; color: var(--smb-muted); font-size: 11px; }
+.smb-scheduled-head button,
+.smb-scheduled-action {
+    min-height: 36px;
+    padding: 0 13px;
+    border: 1px solid var(--smb-line);
+    border-radius: 7px;
+    color: #5f5852;
+    background: #fff;
+    font: inherit;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.smb-scheduled-head button:hover,
+.smb-scheduled-action:hover { border-color: #aaa097; }
+.smb-scheduled-head button:disabled,
+.smb-scheduled-action:disabled { cursor: wait; opacity: .55; }
+.smb-scheduled-list { display: grid; }
+.smb-scheduled-empty { padding: 24px 22px; color: var(--smb-muted); font-size: 11px; }
+.smb-scheduled-card {
+    display: grid;
+    grid-template-columns: minmax(190px, 1fr) minmax(255px, auto) auto;
+    align-items: center;
+    gap: 18px;
+    padding: 17px 22px;
+    border-top: 1px solid #eee9e4;
+}
+.smb-scheduled-card--published { background: #fbfdfb; }
+.smb-scheduled-card--failed,
+.smb-scheduled-card--needs_verification { background: #fffafa; }
+.smb-scheduled-card:first-child { border-top: 0; }
+.smb-scheduled-card.is-busy { opacity: .65; }
+.smb-scheduled-copy { min-width: 0; }
+.smb-scheduled-network {
+    display: inline-flex;
+    margin-bottom: 5px;
+    padding: 3px 7px;
+    border-radius: 999px;
+    color: #fff;
+    background: #8b837c;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.smb-scheduled-network--pinterest { background: var(--smb-pinterest); }
+.smb-scheduled-network--instagram { background: var(--smb-instagram); }
+.smb-scheduled-network--facebook { background: var(--smb-facebook); }
+.smb-scheduled-copy strong { display: block; overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.smb-scheduled-copy small { display: block; margin-top: 5px; color: var(--smb-muted); font-size: 9px; }
+.smb-status { font-weight: 800; }
+.smb-status--published { color: #4e7148; }
+.smb-status--failed,
+.smb-status--needs_verification,
+.smb-status--enqueue_failed { color: #a04d47; }
+.smb-status--queued,
+.smb-status--publishing,
+.smb-status--retrying { color: #786036; }
+.smb-scheduled-error { margin: 6px 0 0; color: #a04d47; font-size: 9px; line-height: 1.4; }
+.smb-scheduled-when { display: grid; grid-template-columns: 1fr 100px; gap: 8px; }
+.smb-scheduled-when label { display: grid; gap: 4px; }
+.smb-scheduled-when label span { color: var(--smb-muted); font-size: 8px; font-weight: 700; text-transform: uppercase; }
+.smb-scheduled-when--empty { min-height: 1px; }
+.smb-scheduled-when input {
+    box-sizing: border-box;
+    min-height: 38px;
+    padding: 0 10px;
+    border: 1px solid var(--smb-line);
+    border-radius: 7px;
+    color: var(--smb-ink);
+    background: var(--smb-surface);
+    font: inherit;
+    font-size: 10px;
+}
+.smb-scheduled-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+.smb-scheduled-action--now { border-color: #849a7f; color: #fff; background: var(--smb-sage); }
+.smb-scheduled-action--now:hover { border-color: #768e70; background: #768e70; }
+.smb-scheduled-action--retry { border-color: #b18a4b; color: #6d542d; background: #fff7e8; }
+.smb-scheduled-action--cancel { color: #9b4e49; }
+.smb-scheduled-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 13px;
+    border: 1px solid #91aa8b;
+    border-radius: 7px;
+    color: #456040;
+    background: #f2f7f0;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+.smb-scheduled-note { max-width: 240px; color: #8a4d49; font-size: 9px; line-height: 1.4; }
+.smb-scheduled-chip--published { background: #5e8158; }
+.smb-scheduled-chip--failed,
+.smb-scheduled-chip--needs_verification { background: #a4534d; }
+
 .smb-toast {
     position: fixed;
     z-index: 20;
@@ -1120,11 +1308,16 @@
     .smb-catalog-head { align-items: flex-start; }
     .smb-catalog-rail-wrap { padding: 0 28px; }
     .smb-catalog-rail { grid-auto-columns: 72vw; }
-    .smb-schedule { align-items: stretch; flex-direction: column; }
+    .smb-schedule { grid-template-columns: 1fr; align-items: stretch; }
+    .smb-delivery-options { grid-template-columns: 1fr; }
     .smb-confirm { min-width: 0; width: 100%; }
     .smb-publication-stack { grid-template-columns: 1fr; }
     .smb-boards.is-focused .smb-board--instagram .smb-publication-stack,
     .smb-boards.is-focused .smb-board--facebook .smb-publication-stack { grid-template-columns: minmax(0, 1fr); }
     .smb-inspector-identity { grid-template-columns: 1fr; }
     .smb-inspector-identity dd { white-space: normal; }
+    .smb-scheduled-head { align-items: stretch; flex-direction: column; }
+    .smb-scheduled-card { grid-template-columns: 1fr; }
+    .smb-scheduled-actions { justify-content: flex-start; }
+    .smb-scheduled-when { grid-template-columns: 1fr 110px; }
 }

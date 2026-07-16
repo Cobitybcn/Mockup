@@ -7,7 +7,7 @@ final class VideoPromptComposer
 Preserve the artwork exactly. Do not redraw, reinterpret, animate, crop, deform or modify its internal composition. Do not change its colors, marks, texture, aspect ratio or orientation. Only animate the camera, environment, light and explicitly permitted secondary elements.
 TEXT;
 
-    public static function compose(array $project, array $scene): string
+    public static function compose(array $project, array $scene, bool $continuesPreviousScene = false): string
     {
         $sections = [];
         $global = trim((string)($project['globalPrompt'] ?? ''));
@@ -16,25 +16,20 @@ TEXT;
         $scenePrompt = trim((string)($scene['prompt'] ?? ''));
         if ($scenePrompt !== '') $sections[] = "SCENE PROMPT\n" . $scenePrompt;
 
-        $camera = (string)($scene['cameraMovement'] ?? 'static');
-        if ($camera === 'custom') $camera = trim((string)($scene['customCameraMovement'] ?? '')) ?: 'static';
-        $sections[] = "CURATORIAL CONTROLS\nCamera movement: " . self::words($camera)
-            . ". Motion intensity: " . self::words((string)($scene['motionIntensity'] ?? 'low')) . '.';
+        if ($continuesPreviousScene) {
+            $sections[] = <<<'TEXT'
+CONTINUITY WITH THE PREVIOUS SCENE
+Continue directly from the supplied final frame. Unless the scene prompt explicitly requests a deliberate change, preserve the exact artwork and character identities, environment, lighting, rhythm, direction of motion, spatial relationships and narrative tone. The next scene must not feel like a new or unrelated story.
+TEXT;
+        }
 
-        $artworkMotion = (string)($scene['artworkMotion'] ?? 'locked');
-        $motionDirection = match ($artworkMotion) {
-            'minimal' => 'Allow only imperceptible physical light or surface variations; the composition itself remains unchanged.',
-            'creative' => 'Creative freedom applies only to the surrounding environment and secondary elements; the artwork composition remains visually exact.',
-            default => 'The artwork is locked. No movement may occur inside the artwork.',
-        };
-        $sections[] = "ARTWORK FIDELITY — " . strtoupper($artworkMotion) . "\n" . self::INTEGRITY . "\n" . $motionDirection;
-        $sections[] = 'Maintain a restrained, contemplative, cinematic tone. Avoid advertising gestures, rapid motion and gratuitous spectacle.';
+        $sections[] = <<<'TEXT'
+REFERENCE PRIORITY
+Apply visual references in this strict priority order: 1) artwork identity and fidelity, 2) character identity, 3) wardrobe identity, 4) all other visual references. Lower-priority references must never alter a higher-priority identity unless the scene prompt explicitly requests that change.
+TEXT;
+
+        $sections[] = "ARTWORK FIDELITY\n" . self::INTEGRITY;
 
         return implode("\n\n", $sections);
-    }
-
-    private static function words(string $value): string
-    {
-        return trim(str_replace('_', ' ', $value));
     }
 }

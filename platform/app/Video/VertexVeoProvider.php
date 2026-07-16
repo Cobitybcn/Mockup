@@ -27,16 +27,6 @@ final class VertexVeoProvider implements VideoGenerationProvider
     public function generateFromImage(array $payload): array
     {
         $this->assertConfigured();
-        $path = (string)($payload['imagePath'] ?? '');
-        if ($path === '' || !is_file($path)) throw new InvalidArgumentException('The scene reference image is unavailable.');
-        $bytes = file_get_contents($path);
-        if ($bytes === false) throw new RuntimeException('Could not read the scene reference image.');
-        if (strlen($bytes) > 20 * 1024 * 1024) throw new InvalidArgumentException('Veo image references must be 20 MB or smaller.');
-        $mime = (string)($payload['mimeType'] ?? (@mime_content_type($path) ?: ''));
-        if (!in_array($mime, ['image/jpeg','image/png'], true)) {
-            throw new InvalidArgumentException('Veo accepts JPEG or PNG scene references in this phase.');
-        }
-
         $parameters = [
             'sampleCount' => 1,
             'durationSeconds' => (int)$payload['durationSeconds'],
@@ -47,14 +37,35 @@ final class VertexVeoProvider implements VideoGenerationProvider
         $storageUri = trim((string)($payload['storageUri'] ?? ''));
         if ($storageUri !== '') $parameters['storageUri'] = rtrim($storageUri, '/') . '/';
 
+        $instance = ['prompt' => (string)$payload['prompt']];
+        $firstFrame = is_array($payload['firstFrame'] ?? null) ? $payload['firstFrame'] : null;
+        if ($firstFrame === null && !empty($payload['imagePath'])) {
+            $firstFrame = ['path' => $payload['imagePath'], 'mimeType' => $payload['mimeType'] ?? ''];
+        }
+        if ($firstFrame !== null) {
+            $instance['image'] = $this->encodedImage(
+                (string)($firstFrame['path'] ?? ''),
+                (string)($firstFrame['mimeType'] ?? ''),
+                'First Frame'
+            );
+        } else {
+            $referenceImages = [];
+            foreach (array_slice((array)($payload['referenceImages'] ?? []), 0, 3) as $referenceImage) {
+                if (!is_array($referenceImage)) continue;
+                $referenceImages[] = [
+                    'image' => $this->encodedImage(
+                        (string)($referenceImage['path'] ?? ''),
+                        (string)($referenceImage['mimeType'] ?? ''),
+                        'Reference Image'
+                    ),
+                    'referenceType' => 'asset',
+                ];
+            }
+            if ($referenceImages !== []) $instance['referenceImages'] = $referenceImages;
+        }
+
         $response = $this->request($this->modelEndpoint('predictLongRunning'), [
-            'instances' => [[
-                'prompt' => (string)$payload['prompt'],
-                'image' => [
-                    'bytesBase64Encoded' => base64_encode($bytes),
-                    'mimeType' => $mime,
-                ],
-            ]],
+            'instances' => [$instance],
             'parameters' => $parameters,
         ]);
         $operation = trim((string)($response['name'] ?? ''));
@@ -101,6 +112,16 @@ final class VertexVeoProvider implements VideoGenerationProvider
     public function extendVideo(array $payload): array
     {
         throw new DomainException('Video extension is prepared but not connected in this phase.');
+    }
+
+    public function editVideo(array $payload): array
+    {
+        throw new DomainException('Video editing is not supported by the configured Veo provider.');
+    }
+
+    public function editInteraction(array $payload): array
+    {
+        throw new DomainException('Conversational video editing is not supported by the configured Veo provider.');
     }
 
     public function getJobStatus(string $jobId): array

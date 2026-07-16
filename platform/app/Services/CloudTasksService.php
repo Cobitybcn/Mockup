@@ -8,6 +8,7 @@ use Google\Cloud\Tasks\V2\HttpRequest;
 use Google\Cloud\Tasks\V2\HttpMethod;
 use Google\Cloud\Tasks\V2\OidcToken;
 use Google\Protobuf\Timestamp;
+use Google\ApiCore\ApiException;
 
 class CloudTasksService
 {
@@ -38,6 +39,30 @@ class CloudTasksService
             'job_id' => $jobId,
             'timestamp' => date('c'),
         ], $scheduledAt, app_env('GCP_SOCIAL_QUEUE_NAME', app_env('GCP_QUEUE_NAME', 'mockups-generation-queue')));
+    }
+
+    public static function deleteTask(string $taskName): void
+    {
+        $taskName = trim($taskName);
+        if ($taskName === '') {
+            return;
+        }
+
+        $client = new CloudTasksClient();
+        try {
+            // google/cloud-tasks 1.x uses the flattened task-name argument.
+            $client->deleteTask($taskName);
+        } catch (ApiException $e) {
+            $status = method_exists($e, 'getStatus') ? strtoupper((string)$e->getStatus()) : '';
+            if ((int)$e->getCode() === 5 || $status === 'NOT_FOUND') {
+                return;
+            }
+            throw $e;
+        } finally {
+            if (method_exists($client, 'close')) {
+                $client->close();
+            }
+        }
     }
 
     private static function enqueue(

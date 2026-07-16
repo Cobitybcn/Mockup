@@ -642,6 +642,25 @@ a {
   .sidebar-mobile-menu {
     display: none !important;
   }
+
+  .sidebar-tabs {
+    gap: 10px;
+    padding-right: 28px;
+  }
+
+  .sidebar-tab {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .sidebar-tab::after {
+    left: 12px;
+    right: 12px;
+  }
+
+  .sidebar-tab.active {
+    scroll-margin-inline: 18px;
+  }
 }
 
 .nav-section {
