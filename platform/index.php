@@ -6,7 +6,7 @@ require_once __DIR__ . '/app/bootstrap.php';
 // Redirect if already logged in
 $authenticatedUser = Auth::user();
 if ($authenticatedUser) {
-    header('Location: ' . (Auth::isAdmin($authenticatedUser) ? 'artwork_new.php' : 'create_scenes.php'));
+    header('Location: create_scenes.php');
     exit;
 }
 
@@ -18,8 +18,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $password = (string)($_POST['password'] ?? '');
 
     if (Auth::login($email, $password)) {
-        $authenticatedUser = Auth::user();
-        header('Location: ' . ($authenticatedUser && Auth::isAdmin($authenticatedUser) ? 'artwork_new.php' : 'create_scenes.php'));
+        header('Location: create_scenes.php');
         exit;
     }
 
@@ -37,6 +36,7 @@ function h($v): string
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Artwork Mockups — AI Art Mockup Generator for Artists & Galleries</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">

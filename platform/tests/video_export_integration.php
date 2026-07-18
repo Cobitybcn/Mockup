@@ -12,6 +12,9 @@ if (!VideoFfmpeg::available()) {
 
 $pdo = Database::connection();
 $userId = (int)$pdo->query('SELECT id FROM users ORDER BY id LIMIT 1')->fetchColumn();
+$artworkStmt = $pdo->prepare('SELECT id FROM artworks WHERE user_id=? ORDER BY id LIMIT 1');
+$artworkStmt->execute([$userId]);
+$testArtworkId = (int)$artworkStmt->fetchColumn();
 $studioRepository = new VideoStudioRepository($pdo);
 $studio = new VideoStudioService($studioRepository);
 $jobs = new VideoJobRepository($pdo);
@@ -22,7 +25,11 @@ $working = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'video-export-test-' . bin
 VideoFfmpeg::ensureDirectory($working);
 
 try {
-    $payload = $studio->createProject($userId, ['title' => 'Video Export Integration ' . bin2hex(random_bytes(3)), 'aspectRatio' => '16:9']);
+    $payload = $studio->createProject($userId, [
+        'title' => 'Video Export Integration ' . bin2hex(random_bytes(3)),
+        'aspectRatio' => '16:9',
+        'artworkId' => $testArtworkId,
+    ]);
     $projectId = (int)$payload['project']['id'];
     $version = (int)$payload['project']['version'];
     foreach ($payload['scenes'] as $defaultScene) {
@@ -97,6 +104,26 @@ try {
     TestHarness::assertTrue((int)$export['bytes'] > 1024,'the export records its real byte size');
     TestHarness::assertTrue((float)$export['duration_seconds'] > 1.5,'the montage contains both scene clips');
     $objectKeys[] = (string)$export['output_path'];
+
+    $finalUpload = (new VideoFinalUploadService($studioRepository, $jobs))->upload($userId, $projectId, [
+        'name' => 'montaje-final.mp4','type' => 'video/mp4','tmp_name' => $source,
+        'error' => UPLOAD_ERR_OK,'size' => filesize($source),
+    ]);
+    $finalId = (int)($finalUpload['final']['id'] ?? 0);
+    $finalRow = $jobs->findExport($finalId);
+    TestHarness::assertTrue($finalId > 0 && is_array($finalRow), 'a complete desktop video can be registered as a final master');
+    $snapshot = json_decode((string)($finalRow['timeline_snapshot_json'] ?? ''), true);
+    TestHarness::assertSame('uploaded_final', (string)($snapshot['kind'] ?? ''), 'uploaded final masters remain distinct from generated previews');
+    $uploadedFinals = array_values(array_filter($studioRepository->finalVideos($userId), static fn(array $final): bool => (int)$final['id'] === $finalId));
+    TestHarness::assertSame(1, count($uploadedFinals), 'uploaded final masters appear in the Videos library');
+    TestHarness::assertTrue((int)($uploadedFinals[0]['canonicalArtworkId'] ?? 0) > 0, 'a final master keeps its explicit artwork association');
+    TestHarness::assertTrue(str_ends_with((string)($uploadedFinals[0]['seoFileBase'] ?? ''), '-art-video'), 'a final master receives an SEO-ready filename');
+    TestHarness::assertSame(1, count(array_filter(
+        $studioRepository->finalVideosForArtwork($userId, $testArtworkId),
+        static fn(array $final): bool => (int)$final['id'] === $finalId
+    )), 'the artwork sheet resolves its associated final video');
+    $objectKeys[] = (string)($finalRow['output_path'] ?? '');
+    if (!empty($snapshot['thumbnailPath'])) $objectKeys[] = (string)$snapshot['thumbnailPath'];
 
     $deleted = $studio->deleteProject($userId,$projectId,$version);
     TestHarness::assertTrue(

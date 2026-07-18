@@ -39,6 +39,124 @@
     letter-spacing: .01em;
 }
 
+.videos-panel-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.videos-panel-actions .button-link { min-height: 38px; margin: 0; }
+
+.videos-final-panel { margin-bottom: 20px; }
+
+.videos-final-empty {
+    min-height: 92px;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+}
+
+.videos-final-empty p { margin: 0; color: var(--muted); text-align: center; }
+
+.videos-final-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 12px;
+}
+
+.videos-final-card {
+    display: grid;
+    grid-template-columns: 136px minmax(0,1fr);
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+}
+
+.videos-final-media {
+    position: relative;
+    grid-row: 1 / span 2;
+    min-height: 158px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    background: #191714;
+    box-shadow: none;
+}
+
+.videos-final-media:hover { background: #191714; transform: none; }
+.videos-final-media img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.videos-final-media .videos-play { width: 40px; height: 40px; }
+
+.videos-final-copy { min-width: 0; padding: 16px; }
+.videos-final-copy > span { color: var(--accent); font-size: 8px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.videos-final-copy h3 { margin: 7px 0; overflow: hidden; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
+.videos-final-copy p { margin: 0; color: var(--muted); font-size: 10px; }
+
+.videos-final-assignment { margin-top: 10px; }
+.videos-final-assignment > summary {
+    overflow: hidden;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 9px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.videos-final-assignment form {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) auto;
+    gap: 6px;
+    margin-top: 7px;
+}
+.videos-final-assignment select,
+.videos-final-assignment button {
+    width: 100%;
+    min-height: 30px;
+    margin: 0;
+    padding: 4px 7px;
+    font-size: 9px;
+}
+.videos-final-assignment button { width: auto; }
+.videos-final-assignment small {
+    grid-column: 1 / -1;
+    color: #944d44;
+    font-size: 9px;
+}
+
+.videos-final-actions {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    border-top: 1px solid var(--line);
+}
+
+.videos-final-actions button,
+.videos-final-actions a {
+    min-height: 38px;
+    display: grid;
+    place-items: center;
+    padding: 0 5px;
+    border: 0;
+    border-right: 1px solid var(--line);
+    border-radius: 0;
+    color: var(--muted);
+    background: transparent;
+    box-shadow: none;
+    font: inherit;
+    font-size: 8px;
+    font-weight: 800;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+.videos-final-actions > :last-child { border-right: 0; }
+.videos-final-actions button:hover,
+.videos-final-actions a:hover { color: var(--accent); background: rgba(168,129,86,.08); transform: none; }
+
 .videos-filters {
     display: flex;
     flex-wrap: wrap;
@@ -260,7 +378,7 @@
 
 .videos-card-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     border-top: 1px solid var(--line);
 }
 
@@ -285,7 +403,7 @@
     cursor: pointer;
 }
 
-.videos-card-actions > :first-child {
+.videos-card-actions > :not(:last-child) {
     border-right: 1px solid var(--line);
 }
 
@@ -427,6 +545,48 @@
 
 body.has-video-modal { overflow: hidden; }
 
+.videos-upload-dialog {
+    position: relative;
+    z-index: 1;
+    width: min(540px, 94vw);
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: #fffdfb;
+    box-shadow: 0 25px 70px rgba(42,32,25,.24);
+}
+
+.videos-upload-dialog header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--line);
+}
+
+.videos-upload-dialog header span,
+.videos-upload-dialog form label > span {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--accent);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+}
+
+.videos-upload-dialog h2 { margin: 0; font-family: Georgia,'Times New Roman',serif; font-weight: 500; }
+.videos-upload-dialog header button { width: 34px; height: 34px; padding: 0; border: 1px solid var(--line); border-radius: 50%; color: var(--muted); background: #fff; box-shadow: none; font-size: 21px; }
+.videos-upload-dialog form { display: grid; gap: 14px; padding: 20px; }
+.videos-upload-dialog select,
+.videos-upload-dialog input[type="file"] { width: 100%; min-height: 42px; }
+.videos-upload-file { padding: 14px; border: 1px dashed var(--line); border-radius: 8px; background: var(--surface-soft); }
+.videos-upload-file small { display: block; margin-top: 6px; color: var(--muted); font-size: 9px; }
+.videos-upload-dialog form > p { margin: 0; padding: 9px 10px; border: 1px solid #e1b4ad; border-radius: 6px; color: #944d44; background: #fff2f0; font-size: 10px; }
+.videos-upload-dialog form > footer { display: flex; justify-content: flex-end; gap: 9px; }
+.videos-upload-dialog form > footer .button-link { min-height: 40px; margin: 0; }
+
 @media (max-width: 760px) {
     .videos-catalog { padding: 16px 12px 24px; }
     .videos-heading { align-items: flex-start; }
@@ -434,6 +594,10 @@ body.has-video-modal { overflow: hidden; }
     .videos-panel { padding: 14px; }
     .videos-card { flex-basis: min(78vw, 258px); }
     .videos-card-media { height: 310px; }
+    .videos-panel-actions { width: 100%; justify-content: space-between; }
+    .videos-panel-heading { flex-wrap: wrap; }
+    .videos-final-grid { grid-template-columns: 1fr; }
+    .videos-final-card { grid-template-columns: 112px minmax(0,1fr); }
     .videos-carousel-arrow { display: none; }
     .videos-modal { padding: 10px; }
     .videos-modal-dialog { width: 100%; }

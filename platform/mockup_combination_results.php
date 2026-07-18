@@ -43,6 +43,33 @@ if ((int)$artwork['user_id'] !== (int)$user['id'] && !Auth::isAdmin($user)) {
     die('Access denied.');
 }
 
+$highlightJobId = max(0, (int)($_GET['highlight_job'] ?? 0));
+$highlightMockupId = 0;
+$highlightLabel = 'New result';
+if ($highlightJobId > 0) {
+    $highlightStmt = $pdo->prepare('
+        SELECT mockup_id, selector_state_json
+        FROM mockup_generation_jobs
+        WHERE id = :id AND user_id = :user_id AND artwork_id = :artwork_id AND status = "done"
+        LIMIT 1
+    ');
+    $highlightStmt->execute([
+        'id' => $highlightJobId,
+        'user_id' => (int)$user['id'],
+        'artwork_id' => $id,
+    ]);
+    $highlightJob = $highlightStmt->fetch();
+    if ($highlightJob) {
+        $highlightMockupId = max(0, (int)($highlightJob['mockup_id'] ?? 0));
+        $highlightState = json_decode((string)($highlightJob['selector_state_json'] ?? ''), true);
+        $highlightCombination = is_array($highlightState) ? (array)($highlightState['combination'] ?? []) : [];
+        $highlightControls = (array)($highlightCombination['improvement_controls'] ?? []);
+        if ((int)($highlightControls['existing_mockup_id'] ?? 0) > 0) {
+            $highlightLabel = 'Recently regenerated';
+        }
+    }
+}
+
 if (!function_exists('h')) {
     function h($value): string
     {
@@ -231,6 +258,7 @@ for ($boardIndex = 2; $boardIndex <= 3; $boardIndex++) {
     }
 }
 $nextSceneBoardHasScenes = $nextSceneBoardIndex > 0;
+$reviewSceneBoardIndex = $nextSceneBoardHasScenes ? $nextSceneBoardIndex : 1;
 
 $review = $combinationEngine->buildForArtwork($id, [], [
     'selected_world_mother_category' => $selectedWorldMotherCategory,
@@ -536,10 +564,31 @@ if (is_file($evalPath)) {
             background: #a86f77;
             color: #fffaf7;
         }
-        .result-card { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid rgba(154, 123, 86, .28); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; }
+        .result-card { position: relative; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid rgba(154, 123, 86, .28); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; }
         .result-card.batch-1 { border-left-color: rgba(174, 136, 91, .42); }
         .result-card.batch-2 { border-left-color: rgba(225, 151, 166, .46); }
         .result-card.batch-3 { border-left-color: rgba(132, 154, 178, .46); }
+        .result-card.is-new-generation {
+            border-color: #91aa8a;
+            border-left-color: #6f8b68;
+            background: #fbfdf9;
+            box-shadow: 0 0 0 3px rgba(111, 139, 104, .17), var(--shadow);
+        }
+        .new-generation-badge {
+            display: inline-flex;
+            align-items: center;
+            min-height: 24px;
+            margin-top: 10px;
+            padding: 5px 9px;
+            border: 1px solid #b9ccb5;
+            border-radius: 999px;
+            background: #e4eee1;
+            color: #486245;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+        }
         .result-image-wrap { position: relative; }
         .result-image-link { display: block; text-decoration: none; position: relative; z-index: 1; }
         .result-card > img { width: 100%; aspect-ratio: 4 / 3; height: auto; object-fit: cover; background: var(--surface-soft); border: 1px solid var(--line); display: block; }
@@ -1028,14 +1077,14 @@ if (is_file($evalPath)) {
                         <span class="desc-instructions">Regenerate individual mockups, delete weak results, or mark your best options as favorites. Use the controls on each image card to refine the board.</span>
                     </p>
                 </div>
-                <?php if ($rows && ($isAdmin || $compactSceneFlow) && $nextSceneBoardHasScenes): ?>
+                <?php if ($rows): ?>
                     <div class="next-batch-prompt">
-                        <?php if ($compactSceneFlow): ?>
+                        <?php if ($compactSceneFlow && $nextSceneBoardHasScenes): ?>
                             <span>Create 4 more views<br><small>Explore different angles and scene compositions.</small></span>
                             <a href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$nextSceneBoardIndex ?><?= $generationProviderQuery ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>&auto_generate=1&compact=1&scene_limit=<?= (int)$compactSceneLimit ?>">Create 4 more views</a>
                         <?php else: ?>
-                            <span>Would you like to generate a <?= $nextSceneBoardIndex === 2 ? 'second' : 'third' ?> mockup board?</span>
-                            <a href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$nextSceneBoardIndex ?><?= $generationProviderQuery ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Generate Batch <?= (int)$nextSceneBoardIndex ?></a>
+                            <span>Explore another visual direction, camera set, or scene composition.</span>
+                            <a href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$reviewSceneBoardIndex ?><?= $generationProviderQuery ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Explore more combinations</a>
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>
@@ -1085,7 +1134,7 @@ if (is_file($evalPath)) {
                     $sceneTitle = (string)($combo['world_mother_category'] ?? 'Scene');
                     $resultGenerationProvider = strtolower(trim((string)($state['generation_provider'] ?? 'gemini'))) === 'openai' ? 'openai' : 'gemini';
                     ?>
-                    <section class="result-card batch-<?= (int)$resultSceneBoardIndex ?>" id="result-card-<?= $mockupId ?>" data-result-batch="<?= (int)$resultSceneBoardIndex ?>">
+                    <section class="result-card batch-<?= (int)$resultSceneBoardIndex ?><?= $mockupId === $highlightMockupId ? ' is-new-generation' : '' ?>" id="result-card-<?= $mockupId ?>" data-result-batch="<?= (int)$resultSceneBoardIndex ?>">
                         <div class="result-image-wrap">
                             <a class="result-image-link" href="viewer.php?id=<?= $mockupId ?>&back=<?= rawurlencode('mockup_combination_results.php?id=' . (int)$id . $generationProviderQuery . ($selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '')) ?>" aria-label="Open in Mockup Album">
                                 <img src="media.php?file=<?= rawurlencode(basename((string)$row['mockup_file'])) ?>&thumb=1&w=640&v=<?= $mockupId ?>" alt="" loading="lazy" decoding="async">
@@ -1124,6 +1173,9 @@ if (is_file($evalPath)) {
                                 >×</button>
                             </div>
                         </div>
+                        <?php if ($mockupId === $highlightMockupId): ?>
+                            <span class="new-generation-badge"><?= h($highlightLabel) ?></span>
+                        <?php endif; ?>
                         <?php if ($variantLabel !== ''): ?>
                             <span class="result-variant-badge batch-<?= (int)$resultSceneBoardIndex ?>"><?= h($variantLabel) ?></span>
                         <?php endif; ?>
@@ -1387,41 +1439,9 @@ function redoResult(button) {
             }
             if (result.body.enqueued) {
                 const jobId = result.body.job_id;
-                const checkInterval = 2500;
-                button.textContent = 'Enqueued...';
-                
-                return new Promise((resolve, reject) => {
-                    const poll = () => {
-                        fetch('mockup_batch_status.php?image=' + encodeURIComponent(ACTIVE_ARTWORK_ROOT_FILE))
-                            .then(res => res.json())
-                            .then(data => {
-                                if (data.ok && data.jobs) {
-                                    const job = data.jobs.find(j => parseInt(j.id, 10) === parseInt(jobId, 10));
-                                    if (job) {
-                                        if (job.status === 'done') {
-                                            button.textContent = 'Regenerated';
-                                            window.location.href = result.body.results_url || window.location.href;
-                                            resolve(result.body);
-                                        } else if (job.status === 'error') {
-                                            button.textContent = 'Failed';
-                                            reject(new Error(job.error));
-                                        } else {
-                                            button.textContent = 'Processing (' + job.status + ')...';
-                                            setTimeout(poll, checkInterval);
-                                        }
-                                    } else {
-                                        setTimeout(poll, checkInterval);
-                                    }
-                                } else {
-                                    setTimeout(poll, checkInterval);
-                                }
-                            })
-                            .catch(() => {
-                                setTimeout(poll, checkInterval);
-                            });
-                    };
-                    poll();
-                });
+                button.textContent = 'In background';
+                window.artworkGenerationTracker?.trackJobs([jobId]);
+                return result.body;
             } else {
                 window.location.href = result.body.results_url || window.location.href;
             }
@@ -1535,6 +1555,13 @@ function initMobileResultsSliders() {
     });
 }
 initMobileResultsSliders();
+
+const highlightedResult = document.querySelector('.result-card.is-new-generation');
+if (highlightedResult) {
+    window.requestAnimationFrame(() => {
+        highlightedResult.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    });
+}
 
 document.addEventListener('click', event => {
     const target = actionTarget(event);

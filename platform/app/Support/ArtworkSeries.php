@@ -246,10 +246,10 @@ class ArtworkSeries
     {
         self::ensureSchema($pdo);
 
-        $stmt = $pdo->prepare('SELECT id, root_file, main_file, series_id FROM artworks WHERE user_id = ?');
+        $stmt = $pdo->prepare("\n            SELECT a.id, a.root_file, a.main_file,\n                   CASE WHEN g.id IS NOT NULL THEN canonical.series_id ELSE a.series_id END AS effective_series_id\n            FROM artworks a\n            LEFT JOIN artwork_groups g\n                ON g.id = a.artwork_group_id\n                AND g.user_id = a.user_id\n                AND g.status = 'active'\n            LEFT JOIN artworks canonical\n                ON canonical.id = g.canonical_artwork_id\n                AND canonical.user_id = g.user_id\n            WHERE a.user_id = ?\n        ");
         $stmt->execute([$userId]);
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $artwork) {
-            $seriesId = $artwork['series_id'] !== null && $artwork['series_id'] !== '' ? (int)$artwork['series_id'] : null;
+            $seriesId = $artwork['effective_series_id'] !== null && $artwork['effective_series_id'] !== '' ? (int)$artwork['effective_series_id'] : null;
             $params = ['user_id' => $userId, 'source_artwork_id' => (int)$artwork['id']];
             $conditions = ['source_artwork_id = :source_artwork_id'];
 
@@ -272,6 +272,17 @@ class ArtworkSeries
                 $update->bindValue(':' . $key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
             }
             $update->execute();
+        }
+
+        $stmt = $pdo->prepare("\n            SELECT g.id AS artwork_group_id, canonical.series_id\n            FROM artwork_groups g\n            INNER JOIN artworks canonical\n                ON canonical.id = g.canonical_artwork_id\n                AND canonical.user_id = g.user_id\n            WHERE g.user_id = ?\n            AND g.status = 'active'\n        ");
+        $stmt->execute([$userId]);
+        $updateGroup = $pdo->prepare('UPDATE mockups SET series_id = :series_id WHERE user_id = :user_id AND artwork_group_id = :artwork_group_id');
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $group) {
+            $seriesId = $group['series_id'] !== null && $group['series_id'] !== '' ? (int)$group['series_id'] : null;
+            $updateGroup->bindValue(':series_id', $seriesId, $seriesId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+            $updateGroup->bindValue(':user_id', $userId, PDO::PARAM_INT);
+            $updateGroup->bindValue(':artwork_group_id', (int)$group['artwork_group_id'], PDO::PARAM_INT);
+            $updateGroup->execute();
         }
     }
 
@@ -424,7 +435,23 @@ class ArtworkSeries
         self::syncUser($pdo, $userId);
         $stmt = $pdo->prepare('
             SELECT s.*,
-                   (SELECT COUNT(*) FROM artworks a WHERE a.user_id = s.user_id AND a.series_id = s.id) AS artwork_count,
+                   (
+                       SELECT COUNT(*)
+                       FROM artworks a
+                       WHERE a.user_id = s.user_id
+                       AND a.series_id = s.id
+                       AND (
+                           a.artwork_group_id IS NULL
+                           OR EXISTS (
+                               SELECT 1
+                               FROM artwork_groups g
+                               WHERE g.id = a.artwork_group_id
+                               AND g.user_id = a.user_id
+                               AND g.canonical_artwork_id = a.id
+                               AND g.status = \'active\'
+                           )
+                       )
+                   ) AS artwork_count,
                    (SELECT COUNT(*) FROM mockups m WHERE m.user_id = s.user_id AND m.series_id = s.id) AS mockup_count
             FROM artwork_series s
             WHERE s.user_id = ? AND s.status = ?

@@ -15,7 +15,7 @@
         assets: initial.assets || { mockups: [], rootArtworks: [], generatedClips: [], uploadedReferences: [] },
         capabilities: initial.capabilities || {},
         endpoints: initial.endpoints || {},
-        artworkFilter: String(initial.studio?.project?.artworkId || ''),
+        artworkFilter: String(initial.initialArtworkFilter || ''),
         seriesFilter: '',
         selectedAssetKey: null,
         pendingGenerationSceneId: null,
@@ -31,18 +31,14 @@
     const $ = (selector, context = root) => context.querySelector(selector);
     const $$ = (selector, context = root) => Array.from(context.querySelectorAll(selector));
     const dom = {
-        editor: $('[data-editor]'),
-        empty: $('[data-empty-project]'),
-        projectPicker: $('[data-project-picker]'),
         projectTitle: $('[data-project-title]'),
+        aspectButtons: $$('[data-project-aspect-ratio]'),
         saveState: $('[data-save-state]'),
         artworkFilter: $('[data-artwork-filter]'),
         seriesFilter: $('[data-series-filter]'),
         catalogRail: $('[data-catalog-rail]'),
         catalogHelp: $('[data-catalog-help]'),
         boardGrid: $('[data-sequence-boards]'),
-        projectModal: $('[data-project-modal]'),
-        projectForm: $('[data-create-project-form]'),
         generationModal: $('[data-generation-modal]'),
         generationSummary: $('[data-generation-summary]'),
         toast: $('[data-video-toast]'),
@@ -75,6 +71,19 @@
         ];
     }
     function assetByKey(key) { return referenceAssets().find(asset => String(asset.assetKey) === String(key)) || null; }
+    function artworkFilterKey(asset) {
+        const groupId = Number(asset?.artworkGroupId || 0);
+        const artworkId = Number(asset?.artworkId || 0);
+        return groupId > 0 ? `group:${groupId}` : (artworkId > 0 ? `artwork:${artworkId}` : '');
+    }
+    function artworkFilterForArtworkId(artworkId) {
+        artworkId = Number(artworkId || 0);
+        if (artworkId <= 0) return '';
+        const asset = [...(state.assets.rootArtworks || []), ...(state.assets.mockups || [])].find(candidate =>
+            Number(candidate.artworkId || 0) === artworkId || Number(candidate.canonicalArtworkId || 0) === artworkId
+        );
+        return artworkFilterKey(asset);
+    }
 
     function toast(message, isError = false) {
         dom.toast.textContent = String(message || '');
@@ -110,6 +119,26 @@
 
     function api(payload) { return request(state.endpoints.api || 'video_api.php', payload); }
 
+    function refreshLibrary() {
+        if (refreshLibrary.pending) return refreshLibrary.pending;
+        refreshLibrary.pending = api({ action: 'library_list' })
+            .then(result => {
+                if (!result.assets || typeof result.assets !== 'object') return;
+                state.assets = result.assets;
+                if (state.artworkFilter && !artworkMap().has(state.artworkFilter)) {
+                    state.artworkFilter = artworkFilterForArtworkId(currentProject()?.artworkId);
+                    state.selectedAssetKey = null;
+                }
+                renderProjectControls();
+                renderCatalog();
+                setupSortables();
+            })
+            .catch(() => undefined)
+            .finally(() => { refreshLibrary.pending = null; });
+        return refreshLibrary.pending;
+    }
+    refreshLibrary.pending = null;
+
     function queueMutation(work, successMessage = '') {
         const operation = state.mutation.catch(() => undefined).then(async () => {
             state.saving = true;
@@ -144,7 +173,7 @@
         };
         const isDifferentProject = projectChanged || previousId !== Number(payload.project.id);
         if (isDifferentProject) {
-            state.artworkFilter = String(payload.project.artworkId || '');
+            state.artworkFilter = artworkFilterForArtworkId(payload.project.artworkId);
             state.seriesFilter = '';
             state.selectedAssetKey = null;
         }
@@ -156,15 +185,40 @@
         renderAll();
     }
 
+    function createProjectNow() {
+        const aspectRatio = String(currentProject()?.aspectRatio || '9:16');
+        return queueMutation(() => api({
+            action: 'project_create',
+            project: {
+                title: '',
+                artworkId: null,
+                aspectRatio,
+                targetDurationSeconds: 24,
+                projectType: 'social_clip',
+            },
+        }), 'Proyecto creado').then(result => {
+            applyStudio(result, true);
+            window.history.replaceState({}, '', `video.php?project=${result.project.id}`);
+            ensureMinimumSequences();
+            dom.projectTitle?.focus();
+            dom.projectTitle?.select();
+            return result;
+        });
+    }
+
     function artworkMap() {
         const values = new Map();
         [...(state.assets.rootArtworks || []), ...(state.assets.mockups || [])].forEach(asset => {
-            const id = Number(asset.artworkId || 0);
-            if (id <= 0) return;
-            const title = String(asset.artworkTitle || '').trim() || `Artwork #${id}`;
-            if (!values.has(id) || values.get(id).startsWith('Artwork #')) values.set(id, title);
+            const key = artworkFilterKey(asset);
+            const artworkId = Number(asset.artworkId || 0);
+            if (!key || artworkId <= 0) return;
+            const title = String(asset.groupTitle || asset.artworkTitle || '').trim() || `Artwork #${artworkId}`;
+            const canonicalArtworkId = Number(asset.canonicalArtworkId || artworkId);
+            if (!values.has(key) || String(values.get(key).title).startsWith('Artwork #')) {
+                values.set(key, { title, canonicalArtworkId });
+            }
         });
-        return new Map([...values.entries()].sort((left, right) => left[1].localeCompare(right[1], 'es', { sensitivity: 'base' })));
+        return new Map([...values.entries()].sort((left, right) => left[1].title.localeCompare(right[1].title, 'es', { sensitivity: 'base' })));
     }
 
     function seriesMap() {
@@ -179,24 +233,19 @@
 
     function renderProjectControls() {
         const project = currentProject();
-        dom.empty.hidden = Boolean(project);
-        dom.editor.hidden = !project;
-        dom.projectPicker.innerHTML = state.projects.length
-            ? state.projects.map(item => `<option value="${item.id}"${Number(item.id) === Number(project?.id) ? ' selected' : ''}>${escapeHtml(item.title)}</option>`).join('')
-            : '<option value="">Sin proyectos</option>';
         if (dom.projectTitle && document.activeElement !== dom.projectTitle) {
             dom.projectTitle.value = String(project?.title || '');
         }
+        dom.aspectButtons.forEach(button => {
+            const selected = String(button.dataset.projectAspectRatio || '') === String(project?.aspectRatio || '9:16');
+            button.classList.toggle('is-selected', selected);
+            button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+        });
 
         const artworks = artworkMap();
-        dom.artworkFilter.innerHTML = '<option value="">Filtrar por obra</option>' + [...artworks.entries()].map(([id, title]) =>
-            `<option value="${id}"${String(id) === state.artworkFilter ? ' selected' : ''}>${escapeHtml(title)}</option>`
+        dom.artworkFilter.innerHTML = '<option value="">Filtrar por obra</option>' + [...artworks.entries()].map(([key, artwork]) =>
+            `<option value="${escapeHtml(key)}"${String(key) === state.artworkFilter ? ' selected' : ''}>${escapeHtml(artwork.title)}</option>`
         ).join('');
-        const artworkSelect = dom.projectForm.elements.artworkId;
-        artworkSelect.innerHTML = '<option value="">Sin obra por ahora</option>' + [...artworks.entries()].map(([id, title]) =>
-            `<option value="${id}">${escapeHtml(title)}</option>`
-        ).join('');
-
         const series = seriesMap();
         dom.seriesFilter.innerHTML = '<option value="">Filtrar por serie</option><option value="none">Sin serie</option>' + [...series.entries()].map(([id, title]) =>
             `<option value="${id}"${String(id) === state.seriesFilter ? ' selected' : ''}>${escapeHtml(title)}</option>`
@@ -205,7 +254,7 @@
 
     function visibleReferenceAssets() {
         return referenceAssets()
-            .filter(asset => asset.type === 'reference_asset' || !state.artworkFilter || Number(asset.artworkId) === Number(state.artworkFilter))
+            .filter(asset => asset.type === 'reference_asset' || !state.artworkFilter || artworkFilterKey(asset) === state.artworkFilter)
             .filter(asset => asset.type === 'reference_asset' || !state.seriesFilter
                 || (state.seriesFilter === 'none' ? Number(asset.seriesId || 0) === 0 : Number(asset.seriesId) === Number(state.seriesFilter)))
             .sort((left, right) => {
@@ -228,7 +277,7 @@
             </article>`).join('') : '<div class="vds-catalog-empty">No hay referencias para esta selección.</div>';
         dom.catalogHelp.textContent = state.selectedAssetKey
             ? 'Referencia seleccionada. Haz clic en el destino donde quieras utilizarla, o arrástrala.'
-            : 'Arrastra imágenes a sus referencias y videos a Video base. También puedes cargar desde tu ordenador.';
+            : 'Arrastra imágenes a sus referencias. Un video generado puede continuar otra secuencia desde su último fotograma.';
     }
 
     function defaultGenerationMode() {
@@ -292,7 +341,7 @@
         const uploading = state.uploadingSlots.has(uploadSlotKey(scene.id, role));
         const media = reference
             ? (reference.mediaType === 'video'
-                ? `<video src="${escapeHtml(reference.previewUrl)}" muted preload="metadata" playsinline></video><span class="vds-frame-play" aria-hidden="true">▶</span>`
+                ? `<video src="${escapeHtml(reference.previewUrl)}" data-continuation-frame-preview muted preload="metadata" playsinline aria-label="Último fotograma de ${escapeHtml(reference.label)}"></video><span class="vds-continuation-frame-badge">Último fotograma</span>`
                 : `<img src="${escapeHtml(reference.thumbnailUrl || reference.previewUrl)}" alt="${escapeHtml(reference.label)}">`)
                 + `<button class="vds-remove-frame" type="button" data-remove-reference="${reference.id}" aria-label="Quitar ${escapeHtml(label)}">×</button><span class="vds-frame-caption">${escapeHtml(reference.label)}</span>`
             : `<div class="vds-frame-placeholder"><span class="vds-frame-plus">${uploading ? '◌' : '＋'}</span><strong>${uploading ? 'Subiendo archivo…' : 'Arrastra aquí'}</strong><button class="vds-frame-upload-button" type="button" data-upload-reference="${scene.id}" data-role="${role}"${uploading ? ' disabled' : ''}>Desde ordenador</button><span>o selecciona una referencia del catálogo</span></div>`;
@@ -305,20 +354,29 @@
         </div>`;
     }
 
-    function referenceInstruction(reference, label) {
-        if (!reference) return '';
-        const instruction = String(reference.metadata?.instruction || '');
-        return `<label class="vds-reference-instruction"><span>${escapeHtml(label)}</span><input type="text" data-reference-instruction="${reference.id}" value="${escapeHtml(instruction)}" placeholder="Cómo debe utilizar Omni esta imagen"></label>`;
+    function prepareContinuationFramePreviews() {
+        $$('video[data-continuation-frame-preview]', dom.boardGrid).forEach(video => {
+            const showLastFrame = () => {
+                const duration = Number(video.duration);
+                if (!Number.isFinite(duration) || duration <= 0) return;
+                video.pause();
+                // Keep the preview aligned with VideoFfmpeg::lastFrame(), which
+                // extracts the actual provider input 0.12 seconds before the end.
+                video.currentTime = Math.max(0, duration - 0.12);
+            };
+            if (video.readyState >= 1) showLastFrame();
+            else video.addEventListener('loadedmetadata', showLastFrame, { once: true });
+        });
     }
 
-    function compactReferenceSlot(scene, role, label, description) {
-        const reference = referenceFor(scene, role);
+    function compactReferenceSlot(scene, role, number, label, reference = null, optional = false) {
+        if (!reference && role !== 'reference') reference = referenceFor(scene, role);
         const uploading = state.uploadingSlots.has(uploadSlotKey(scene.id, role));
         const body = reference
-            ? `<div class="vds-compact-reference-media"><img src="${escapeHtml(reference.thumbnailUrl || reference.previewUrl)}" alt="${escapeHtml(reference.label)}"><button type="button" data-remove-reference="${reference.id}" aria-label="Quitar ${escapeHtml(label)}">×</button></div>${referenceInstruction(reference, 'Propósito')}`
-            : `<div class="vds-compact-reference-empty"><span>${uploading ? '◌' : '＋'}</span><strong>${uploading ? 'Subiendo…' : 'Añadir imagen'}</strong><small>${escapeHtml(description)}</small></div>`;
+            ? `<div class="vds-compact-reference-media"><img src="${escapeHtml(reference.thumbnailUrl || reference.previewUrl)}" alt="${escapeHtml(reference.label)}"><button type="button" data-remove-reference="${reference.id}" aria-label="Quitar ${escapeHtml(label)}">×</button></div>`
+            : `<div class="vds-compact-reference-empty"><span>${uploading ? '◌' : '＋'}</span><strong>${uploading ? 'Subiendo…' : 'Añadir'}</strong>${optional ? '<small>Opcional</small>' : ''}</div>`;
         return `<div class="vds-priority-reference${reference ? ' has-media' : ''}" data-reference-drop data-scene-id="${scene.id}" data-role="${role}" tabindex="0">
-            <header><strong>${escapeHtml(label)}</strong></header>
+            <header><span>${number}</span><strong>${escapeHtml(label)}</strong></header>
             ${body}
             <input type="file" data-reference-file-input data-scene-id="${scene.id}" data-role="${role}" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
         </div>`;
@@ -329,49 +387,33 @@
         return (scene.references || []).filter(reference => reference.mediaType === 'image' && !excluded.includes(String(reference.role)));
     }
 
-    function additionalReferenceCard(reference) {
-        return `<article class="vds-additional-reference">
-            <div><img src="${escapeHtml(reference.thumbnailUrl || reference.previewUrl)}" alt="${escapeHtml(reference.label)}"><button type="button" data-remove-reference="${reference.id}" aria-label="Quitar referencia">×</button></div>
-            ${referenceInstruction(reference, 'Propósito')}
-        </article>`;
-    }
-
     function referenceManager(scene, index) {
         const usedImages = omniImageUsage(scene, index);
         const maxImages = Number(state.capabilities.referenceLimits?.images || 10);
-        const available = Math.max(0, maxImages - usedImages);
-        const extras = additionalReferences(scene);
+        const extras = additionalReferences(scene).slice(0, 5);
         const sourceVideo = sourceVideoReference(scene);
-        const uploadingReferences = state.uploadingSlots.has(uploadSlotKey(scene.id, 'reference'));
-        const uploadingVideo = state.uploadingSlots.has(uploadSlotKey(scene.id, 'source_video'));
-        const framePurpose = [
-            referenceFor(scene, 'start_frame')?.mediaType === 'image' ? referenceInstruction(referenceFor(scene, 'start_frame'), 'Imagen inicial') : '',
-            referenceFor(scene, 'end_frame')?.mediaType === 'image' ? referenceInstruction(referenceFor(scene, 'end_frame'), 'Imagen final objetivo') : '',
-        ].filter(Boolean).join('');
+        const extraSlots = Array.from({ length: 5 }, (_, slot) => compactReferenceSlot(
+            scene,
+            'reference',
+            slot + 6,
+            'Referencia',
+            extras[slot] || null,
+            true
+        )).join('');
+        const legacyEditorUrl = sourceVideo?.sourceType === 'generation_job'
+            ? `video_editor.php?generation_id=${Number(sourceVideo.sourceId)}`
+            : `video_editor.php?reference_asset_id=${Number(sourceVideo?.sourceId || 0)}`;
 
         return `<section class="vds-reference-manager">
-            <div class="vds-reference-section-head"><div><strong>Referencias visuales</strong><small>Prioridad: obra, personaje y vestuario.</small></div><span>${usedImages}/${maxImages}</span></div>
-            ${framePurpose ? `<div class="vds-frame-purpose-list">${framePurpose}</div>` : ''}
+            <div class="vds-reference-section-head"><div><strong>Referencias visuales</strong><small>Escribe “Imagen 3”, “Imagen 4”… en el prompt para indicar cómo usar cada una.</small></div><span>${usedImages}/${maxImages}</span></div>
             <div class="vds-priority-grid">
-                ${compactReferenceSlot(scene, 'artwork_fidelity', '1 · Obra de arte', 'Identidad y fidelidad de la obra')}
-                ${compactReferenceSlot(scene, 'character_identity', '2 · Personaje', 'Rostro, cuerpo y rasgos')}
-                ${compactReferenceSlot(scene, 'wardrobe_identity', '3 · Vestuario', 'Prendas, colores y accesorios')}
+                ${compactReferenceSlot(scene, 'artwork_fidelity', 3, 'Obra de arte')}
+                ${compactReferenceSlot(scene, 'character_identity', 4, 'Personaje', null, true)}
+                ${compactReferenceSlot(scene, 'wardrobe_identity', 5, 'Vestuario', null, true)}
+                ${extraSlots}
             </div>
-            <div class="vds-additional-drop${available <= 0 ? ' is-full' : ''}" data-reference-drop data-scene-id="${scene.id}" data-role="reference" tabindex="0">
-                <div><span>${uploadingReferences ? '◌' : '＋'}</span><strong>${available > 0 ? `Añadir referencias adicionales · ${available} disponibles` : 'Límite de imágenes alcanzado'}</strong><small>Arrastra varias imágenes o selecciónalas desde tu ordenador.</small></div>
-                <button class="vds-frame-upload-button" type="button" data-upload-reference="${scene.id}" data-role="reference"${available <= 0 || uploadingReferences ? ' disabled' : ''}>Desde ordenador</button>
-                <input type="file" data-reference-file-input data-scene-id="${scene.id}" data-role="reference" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
-            </div>
-            ${extras.length ? `<div class="vds-additional-reference-list">${extras.map(additionalReferenceCard).join('')}</div>` : ''}
-        </section>
-        <section class="vds-video-reference-section">
-            <div class="vds-reference-section-head"><div><strong>Video base para editar</strong><small>Un video de hasta 10 segundos. No se mezcla con las imágenes.</small></div><span>${sourceVideo ? '1/1' : '0/1'}</span></div>
-            <div class="vds-source-video${sourceVideo ? ' has-media' : ''}" data-reference-drop data-scene-id="${scene.id}" data-role="source_video" tabindex="0">
-                ${sourceVideo
-                    ? `<video src="${escapeHtml(sourceVideo.previewUrl)}" muted controls preload="metadata" playsinline></video><div><strong>${escapeHtml(sourceVideo.label)}</strong><small>Omni editará este video; no lo extenderá.</small></div><button type="button" data-remove-reference="${sourceVideo.id}" aria-label="Quitar video base">×</button>`
-                    : `<div><span>${uploadingVideo ? '◌' : '▶'}</span><strong>${uploadingVideo ? 'Subiendo video…' : 'Añadir video base'}</strong><small>MP4, MOV o WebM · máximo 10 segundos</small></div><button class="vds-frame-upload-button" type="button" data-upload-reference="${scene.id}" data-role="source_video"${uploadingVideo ? ' disabled' : ''}>Desde ordenador</button>`}
-                <input type="file" data-reference-file-input data-scene-id="${scene.id}" data-role="source_video" accept="video/mp4,video/quicktime,video/webm" hidden>
-            </div>
+            <p class="vds-reference-empty-note">Los espacios vacíos no se envían a Omni.</p>
+            ${sourceVideo ? `<div class="vds-legacy-edit-reference"><span>Este video base pertenece al flujo anterior.</span><a href="${escapeHtml(legacyEditorUrl)}">Abrir en Editor de video</a><button type="button" data-remove-reference="${sourceVideo.id}">Quitar</button></div>` : ''}
         </section>`;
     }
 
@@ -392,10 +434,6 @@
                     </button>
                     ${nextAction}
                 </div>
-                <details class="vds-adjust-result" data-adjust-panel="${scene.id}">
-                    <summary>Ajustar este resultado con Omni</summary>
-                    <div><textarea data-adjust-prompt="${scene.id}" placeholder="Describe solo el cambio. Omni conservará lo demás."></textarea><button type="button" data-adjust-result="${scene.id}">Generar ajuste</button></div>
-                </details>
             </div>`;
         }
         const pending = ['queued','submitting','polling','processing'].includes(String(scene.generation?.status || ''));
@@ -425,20 +463,18 @@
             const download = scene.active_generation?.previewUrl
                 ? `<a class="vds-download-clip" href="${escapeHtml(scene.active_generation.previewUrl)}&download=1">Descargar MP4</a>` : '';
             const resultActions = scene.active_generation?.previewUrl
-                ? `<button class="vds-secondary" type="button" data-open-adjust-result="${scene.id}"${pending ? ' disabled' : ''}>Editar resultado</button>`
+                ? `<a class="vds-secondary" href="video_editor.php?generation_id=${Number(scene.active_generation.id)}">Editar video</a>`
                 : '';
             const generateLabel = scene.active_generation?.previewUrl
                 ? 'Regenerar'
-                : (baseVideo ? 'Editar video' : 'Generar');
+                : 'Generar';
             const generationError = status.id === 'failed' && String(scene.generation?.error || '').trim()
                 ? `<p class="vds-generation-error" role="alert"><strong>No se pudo generar el video.</strong><span>${escapeHtml(String(scene.generation.error).trim())}</span></p>`
                 : '';
-            const continuityText = baseVideo
-                ? `Omni editará ${baseVideo.label}; las imágenes se utilizarán como referencias visuales.`
-                : index === 0
+            const continuityText = index === 0
                 ? (chosenContinuation
                     ? `Continuación elegida desde ${chosenContinuation.label}; se usará su último fotograma.`
-                    : 'Añade una imagen o un video desde el catálogo o desde tu ordenador.')
+                    : 'Añade una imagen desde el catálogo o desde tu ordenador.')
                 : chosenContinuation
                     ? `Continuación elegida desde ${chosenContinuation.label}; reemplaza la continuidad automática.`
                 : previousReady
@@ -454,23 +490,24 @@
                     </div>
                 </header>
                 <p class="vds-board-subtitle">${escapeHtml(continuityText)}</p>
-                <div class="vds-frame-flow">${frameSlot(scene, 'start_frame', 'Imagen inicial')}<span class="vds-frame-arrow" aria-hidden="true">→</span>${frameSlot(scene, 'end_frame', 'Imagen final objetivo')}</div>
+                <div class="vds-frame-flow">${frameSlot(scene, 'start_frame', '1 · Imagen inicial')}<span class="vds-frame-arrow" aria-hidden="true">→</span>${frameSlot(scene, 'end_frame', '2 · Imagen final objetivo')}</div>
                 <button class="vds-context-toggle" type="button" data-toggle-context="${scene.id}" aria-expanded="${expanded ? 'true' : 'false'}"><span>＋ Prompt, referencias y duración · ${usedImages}/${maxImages}</span><span>${expanded ? '−' : '+'}</span></button>
                 <div class="vds-context-panel" data-context-panel${expanded ? '' : ' hidden'}>
                     <label><span>Prompt</span><textarea data-scene-field="prompt" data-scene-id="${scene.id}" placeholder="Describe aquí cámara, movimiento, ritmo, luz, ambiente, acción y transición.">${escapeHtml(scene.prompt || '')}</textarea></label>
                     ${referenceManager(scene, index)}
                     <div class="vds-context-grid">
-                        <label><span>${baseVideo ? 'Duración · la conserva el video base' : 'Duración'}</span><select data-scene-field="durationSeconds" data-scene-id="${scene.id}"${baseVideo ? ' disabled title="Omni conserva la duración real del video base al editarlo."' : ''}>${durationValues.map(value => `<option value="${value}"${Number(scene.durationSeconds) === Number(value) ? ' selected' : ''}>${value} segundos</option>`).join('')}</select></label>
+                        <label><span>Duración</span><select data-scene-field="durationSeconds" data-scene-id="${scene.id}">${durationValues.map(value => `<option value="${value}"${Number(scene.durationSeconds) === Number(value) ? ' selected' : ''}>${value} segundos</option>`).join('')}</select></label>
                     </div>
                 </div>
                 ${scene.active_generation?.previewUrl ? `<div class="vds-inline-result"><span>Resultado generado</span>${resultPreview(scene, index)}</div>` : ''}
                 <footer class="vds-board-footer">
                     <span class="vds-generation-state is-${escapeHtml(status.id)}">${escapeHtml(status.label)}</span>
-                    <div class="vds-board-footer-actions">${download}${resultActions}<button type="button" data-generate-sequence="${scene.id}"${pending ? ' disabled' : ''}>${generateLabel}</button></div>
+                    <div class="vds-board-footer-actions">${download}${resultActions}<button type="button" data-generate-sequence="${scene.id}"${pending || baseVideo ? ' disabled' : ''}>${generateLabel}</button></div>
                 </footer>
                 ${generationError}
             </article>`;
         }).join('');
+        prepareContinuationFramePreviews();
     }
 
     function destroySortables() {
@@ -559,10 +596,10 @@
         if (!asset || !scene) return;
         if (asset.mediaType === 'video') {
             if (role === 'start_frame' && asset.type !== 'generation_job') {
-                return toast('Los videos subidos deben colocarse en Video base para editar.', true);
+                return toast('Los videos subidos se editan desde la sección Videos.', true);
             }
             if (!['start_frame','source_video'].includes(role)) {
-                return toast('Los videos deben colocarse en Video base para editar.', true);
+                return toast('Un video generado solo puede continuar otra secuencia.', true);
             }
         } else if (role === 'source_video') {
             return toast('Video base admite únicamente un video.', true);
@@ -758,6 +795,23 @@
     }
 
     root.addEventListener('click', event => {
+        const aspectButton = event.target.closest('[data-project-aspect-ratio]');
+        if (aspectButton) {
+            const project = currentProject();
+            const aspectRatio = String(aspectButton.dataset.projectAspectRatio || '');
+            if (!project || !aspectRatio || aspectRatio === String(project.aspectRatio || '')) return;
+            queueMutation(() => {
+                const latestProject = currentProject();
+                return api({
+                    action: 'project_update',
+                    projectId: latestProject.id,
+                    version: latestProject.version,
+                    changes: { aspectRatio },
+                });
+            }, 'Formato actualizado');
+            return;
+        }
+
         const favorite = event.target.closest('[data-toggle-favorite]');
         if (favorite) {
             event.stopPropagation();
@@ -768,9 +822,9 @@
 
         const newProject = event.target.closest('[data-new-project]');
         if (newProject) {
-            dom.projectForm.reset();
-            dom.projectModal.hidden = false;
-            dom.projectForm.elements.title.focus();
+            if (newProject.disabled) return;
+            newProject.disabled = true;
+            createProjectNow().finally(() => { newProject.disabled = false; });
             return;
         }
         if (event.target.closest('[data-save-project]')) {
@@ -798,16 +852,12 @@
                         applyStudio(next, true);
                         window.history.replaceState({}, '', `video.php?project=${nextProject.id}`);
                     } else {
-                        state.studio = null;
-                        root.dataset.projectId = '';
-                        renderAll();
-                        window.history.replaceState({}, '', 'video.php');
+                        await createProjectNow();
                     }
                     toast('Proyecto eliminado del espacio de trabajo');
                 });
             return;
         }
-        if (event.target.closest('[data-close-project-modal]')) { dom.projectModal.hidden = true; return; }
         if (event.target.closest('[data-add-sequence]')) { addSequence(); return; }
 
         const uploadReference = event.target.closest('[data-upload-reference]');
@@ -884,35 +934,6 @@
             return;
         }
 
-        const adjustResult = event.target.closest('[data-adjust-result]');
-        if (adjustResult) {
-            const sceneId = Number(adjustResult.dataset.adjustResult);
-            const prompt = String($(`[data-adjust-prompt="${sceneId}"]`)?.value || '').trim();
-            if (!prompt) return toast('Describe el ajuste que quieres aplicar.', true);
-            adjustResult.disabled = true;
-            queueMutation(() => request(state.endpoints.generationStart || 'video_generation_start.php', {
-                sceneId,
-                version: currentProject().version,
-                intent: 'adjust',
-                adjustPrompt: prompt,
-            }), 'Ajuste iniciado').finally(() => {
-                adjustResult.disabled = false;
-                updateGenerationPolling();
-            });
-            return;
-        }
-
-        const openAdjustResult = event.target.closest('[data-open-adjust-result]');
-        if (openAdjustResult) {
-            const sceneId = Number(openAdjustResult.dataset.openAdjustResult);
-            const panel = $(`[data-adjust-panel="${sceneId}"]`);
-            if (!panel) return;
-            panel.open = true;
-            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            requestAnimationFrame(() => $(`[data-adjust-prompt="${sceneId}"]`)?.focus());
-            return;
-        }
-
         const generate = event.target.closest('[data-generate-sequence]');
         if (generate) { showGenerationModal(Number(generate.dataset.generateSequence)); return; }
         if (event.target.closest('[data-cancel-generation]')) { dom.generationModal.hidden = true; state.pendingGenerationSceneId = null; return; }
@@ -956,7 +977,7 @@
             if (!project) return;
             if (!title) {
                 event.target.value = String(project.title || '');
-                toast('El nombre del video no puede quedar vacío.', true);
+                toast('El nombre del proyecto no puede quedar vacío.', true);
                 return;
             }
             if (title === String(project.title || '')) return;
@@ -968,7 +989,8 @@
             state.selectedAssetKey = null;
             renderCatalog();
             setupSortables();
-            if (currentProject()) queueMutation(() => api({ action: 'project_update', projectId: currentProject().id, version: currentProject().version, changes: { artworkId: state.artworkFilter || null } }));
+            const selectedArtwork = artworkMap().get(state.artworkFilter);
+            if (currentProject()) queueMutation(() => api({ action: 'project_update', projectId: currentProject().id, version: currentProject().version, changes: { artworkId: selectedArtwork?.canonicalArtworkId || null } }));
             return;
         }
         if (event.target === dom.seriesFilter) {
@@ -976,18 +998,6 @@
             state.selectedAssetKey = null;
             renderCatalog();
             setupSortables();
-            return;
-        }
-        if (event.target === dom.projectPicker) {
-            const projectId = Number(event.target.value || 0);
-            if (!projectId || projectId === Number(currentProject()?.id)) return;
-            setSaveState('Cargando…', 'saving');
-            api({ action: 'project_read', projectId }).then(result => {
-                applyStudio(result, true);
-                window.history.replaceState({}, '', `video.php?project=${projectId}`);
-                setSaveState('Guardado');
-                ensureMinimumSequences();
-            }).catch(error => { setSaveState('Error', 'error'); toast(error.message, true); });
             return;
         }
         const field = event.target.closest('[data-scene-field]');
@@ -1078,40 +1088,21 @@
         $$('[data-frame-drop].is-drop-target,[data-reference-drop].is-drop-target').forEach(frame => frame.classList.remove('is-drop-target'));
     });
 
-    dom.projectForm.addEventListener('submit', event => {
-        event.preventDefault();
-        const fields = dom.projectForm.elements;
-        const artworkId = Number(fields.artworkId.value || 0);
-        fields.artworkId.disabled = true;
-        queueMutation(() => api({
-            action: 'project_create',
-            project: {
-                title: String(fields.title.value || '').trim(),
-                artworkId: artworkId || null,
-                aspectRatio: fields.aspectRatio.value,
-                targetDurationSeconds: 24,
-                projectType: 'social_clip',
-            },
-        }), 'Proyecto creado').then(result => {
-            applyStudio(result, true);
-            dom.projectModal.hidden = true;
-            window.history.replaceState({}, '', `video.php?project=${result.project.id}`);
-            dom.projectForm.reset();
-        }).finally(() => { fields.artworkId.disabled = false; });
-    });
-
-    [dom.projectModal, dom.generationModal].forEach(modal => modal.addEventListener('click', event => {
+    [dom.generationModal].forEach(modal => modal.addEventListener('click', event => {
         if (event.target !== modal) return;
         modal.hidden = true;
         if (modal === dom.generationModal) state.pendingGenerationSceneId = null;
     }));
     document.addEventListener('keydown', event => {
         if (event.key !== 'Escape') return;
-        dom.projectModal.hidden = true;
         dom.generationModal.hidden = true;
         state.pendingGenerationSceneId = null;
     });
-    document.addEventListener('visibilitychange', updateGenerationPolling);
+    document.addEventListener('visibilitychange', () => {
+        updateGenerationPolling();
+        if (!document.hidden) refreshLibrary();
+    });
+    window.addEventListener('focus', refreshLibrary);
     window.addEventListener('beforeunload', event => {
         if (!state.saving) return;
         event.preventDefault();

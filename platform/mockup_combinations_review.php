@@ -2462,7 +2462,7 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
         <strong id="generation-overlay-title">Generating scenes</strong>
         <p id="generation-overlay-message">Preparing the selected artwork and scene reference.</p>
         <div class="overlay-actions">
-            <button type="button" id="overlay-minimize-btn" class="button-link secondary" onclick="toggleOverlayMinimize(event)">Trabajar en segundo plano</button>
+            <button type="button" id="overlay-minimize-btn" class="button-link secondary" onclick="toggleOverlayMinimize(event)">Minimizar</button>
             <button type="button" id="overlay-maximize-btn" class="button-link secondary" style="display: none;" onclick="toggleOverlayMaximize(event)">Ver Detalles</button>
         </div>
     </div>
@@ -2478,6 +2478,14 @@ const SELECTED_SCENE_CATEGORY = <?= json_encode($selectedWorldMotherCategory, JS
 const USER_SCENE_FLOW = <?= $compactSceneFlow ? 'true' : 'false' ?>;
 const USER_SCENE_AUTO_GENERATE = <?= $autoGenerateSceneFlow ? 'true' : 'false' ?>;
 const USER_SCENE_LIMIT = <?= (int)$compactSceneLimit ?>;
+const SCENE_RESULTS_URL = <?= json_encode(
+    'mockup_combination_results.php?id=' . (int)$id
+    . '&board=' . (int)$sceneBoardIndex
+    . '&generation_provider=' . rawurlencode($selectedGenerationProvider)
+    . ($selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '')
+    . ($compactSceneFlow ? '&compact=1&scene_limit=' . (int)$compactSceneLimit : ''),
+    JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+) ?>;
 const generationOverlay = document.getElementById('generation-overlay');
 const generationOverlayTitle = document.getElementById('generation-overlay-title');
 const generationOverlayMessage = document.getElementById('generation-overlay-message');
@@ -2487,7 +2495,7 @@ let isGenerationRunning = false;
 window.addEventListener('beforeunload', function (e) {
     if (isGenerationRunning) {
         e.preventDefault();
-        e.returnValue = 'A batch mockup generation is running in the background. If you leave or reload, it will stop. Open links in a new tab to multitask.';
+        e.returnValue = 'The generation requests are still being registered. Wait a moment until they appear in the background activity indicator.';
         return e.returnValue;
     }
 });
@@ -2544,7 +2552,20 @@ function prepareCombination(btn, skipConfirm = false) {
         showGenerationOverlay('Generating scene', 'Working on ' + cameraName + '. This can take a moment.');
         isGenerationRunning = true;
     }
-    return runCombinationGeneration(btn);
+    const generation = runCombinationGeneration(btn);
+    if (skipConfirm) {
+        return generation;
+    }
+
+    return generation.then(result => {
+        const index = btn.getAttribute('data-index');
+        const status = document.getElementById('prepare-result-' + index);
+        btn.textContent = 'Working in background';
+        if (status) {
+            status.textContent = 'Task registered. You can continue through the app; a notice will appear when the result is ready.';
+        }
+        return result;
+    });
 }
 
 function runCombinationGeneration(btn) {
@@ -2579,45 +2600,11 @@ function runCombinationGeneration(btn) {
             if (result.status === 200 && result.body.ok) {
                 if (result.body.enqueued) {
                     const jobId = result.body.job_id;
-                    const checkInterval = 2500;
-                    status.textContent = 'Queued in Cloud Tasks. Processing...';
-                    btn.textContent = 'Queued';
-                    
-                    return new Promise((resolve, reject) => {
-                        const poll = () => {
-                            fetch('mockup_batch_status.php?image=' + encodeURIComponent(ACTIVE_ARTWORK_ROOT_FILE))
-                                .then(res => res.json())
-                                .then(data => {
-                                    if (data.ok && data.jobs) {
-                                        const job = data.jobs.find(j => parseInt(j.id, 10) === parseInt(jobId, 10));
-                                        if (job) {
-                                            if (job.status === 'done') {
-                                                console.info('[scene-generation] request done', { index: index, enqueued: true, jobId: jobId });
-                                                status.innerHTML = 'Image generated. <a href="' + result.body.results_url + '">Evaluate results</a>';
-                                                btn.textContent = 'Generated';
-                                                resolve(result.body);
-                                            } else if (job.status === 'error') {
-                                                status.textContent = 'Generation failed: ' + job.error;
-                                                btn.disabled = false;
-                                                btn.textContent = originalText;
-                                                reject(new Error(job.error));
-                                            } else {
-                                                status.textContent = 'Generation in progress (' + job.status + ')...';
-                                                setTimeout(poll, checkInterval);
-                                            }
-                                        } else {
-                                            setTimeout(poll, checkInterval);
-                                        }
-                                    } else {
-                                        setTimeout(poll, checkInterval);
-                                    }
-                                })
-                                .catch(() => {
-                                    setTimeout(poll, checkInterval);
-                                });
-                        };
-                        poll();
-                    });
+                    status.textContent = 'Queued. It will continue if you leave this page.';
+                    btn.textContent = 'In background';
+                    window.artworkGenerationTracker?.trackJobs([jobId]);
+                    console.info('[scene-generation] request queued', { index: index, jobId: jobId });
+                    return result.body;
                 } else {
                     console.info('[scene-generation] request done', { index: index, enqueued: false });
                     status.innerHTML = (result.body.message || 'Image generated.') + ' <a href="' + result.body.results_url + '">Evaluate results</a>';
@@ -2737,7 +2724,7 @@ async function generateAllCombinations(btn) {
     btn.textContent = 'Generating 0 / ' + buttons.length + '...';
     showGenerationOverlay(
         USER_SCENE_FLOW ? 'Creating 4 scenes' : 'Generating scenes',
-        'Running ' + workerCount + ' parallel worker' + (workerCount === 1 ? '' : 's') + '. Completed 0 of ' + buttons.length + '.'
+        'Registering ' + buttons.length + ' tasks. Queued 0 of ' + buttons.length + '.'
     );
 
     const runNext = async () => {
@@ -2750,7 +2737,7 @@ async function generateAllCombinations(btn) {
             btn.textContent = 'Generating ' + completedCount + ' / ' + buttons.length + '...';
             showGenerationOverlay(
                 USER_SCENE_FLOW ? 'Creating 4 scenes' : 'Generating scenes',
-                'Running ' + workerCount + ' parallel worker' + (workerCount === 1 ? '' : 's') + '. Completed ' + completedCount + ' of ' + buttons.length + '.'
+                'Registering tasks. Queued ' + completedCount + ' of ' + buttons.length + '.'
             );
             try {
                 try {
@@ -2772,7 +2759,7 @@ async function generateAllCombinations(btn) {
                     await prepareCombination(comboBtn, true);
                 }
                 successCount++;
-                setCompactViewState(compactViewIndex, 'ready', 'Ready');
+                setCompactViewState(compactViewIndex, 'queued', 'In background');
             } catch (err) {
                 failCount++;
                 setCompactViewState(compactViewIndex, 'failed', 'Failed');
@@ -2786,7 +2773,7 @@ async function generateAllCombinations(btn) {
                 btn.textContent = 'Generating ' + completedCount + ' / ' + buttons.length + '...';
                 showGenerationOverlay(
                     USER_SCENE_FLOW ? 'Creating 4 scenes' : 'Generating scenes',
-                    'Running ' + workerCount + ' parallel worker' + (workerCount === 1 ? '' : 's') + '. Completed ' + completedCount + ' of ' + buttons.length + '.'
+                    'Registering tasks. Queued ' + completedCount + ' of ' + buttons.length + '.'
                 );
                 delete comboBtn.dataset.batchGeneration;
             }
@@ -2801,26 +2788,24 @@ async function generateAllCombinations(btn) {
     hideGenerationOverlay();
 
     if (successCount > 0) {
-        const resultsUrl = 'mockup_combination_results.php?id=<?= (int)$id ?>&board=<?= (int)$sceneBoardIndex ?>&generation_provider=<?= rawurlencode($selectedGenerationProvider) ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?><?= $compactSceneFlow ? '&compact=1&scene_limit=' . (int)$compactSceneLimit : '' ?>';
-        if (USER_SCENE_FLOW && failCount === 0) {
-            window.location.href = resultsUrl;
-            return;
-        }
-
-        let summary = USER_SCENE_FLOW
-            ? successCount + ' scenes ready. Failed: ' + failCount + '.'
-            : 'Generation complete. Success: ' + successCount + ', failed: ' + failCount + '.';
         if (failures.length > 0) {
-            summary += '\n\nFailed combinations:\n' + failures
+            let summary = (USER_SCENE_FLOW
+                ? successCount + ' scenes registered. Failed to register: ' + failCount + '.'
+                : 'Tasks registered: ' + successCount + ', failed to register: ' + failCount + '.')
+                + '\n\nFailed combinations:\n' + failures
                 .slice(0, 8)
                 .map(item => '- #' + item.index + ' ' + item.camera + ': ' + item.error.substring(0, 600))
-                .join('\n');
+                .join('\n')
+                + '\n\nRegistered tasks will continue in the background.';
+            alert(summary);
         }
-        summary += '\n\nOpen results now?';
-        const go = confirm(summary);
-        if (go) {
-            window.location.href = resultsUrl;
-        }
+        btn.textContent = successCount === 1 ? '1 TASK IN BACKGROUND' : successCount + ' TASKS IN BACKGROUND';
+        window.artworkGenerationTracker?.refresh(100);
+        window.setTimeout(() => {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }, 3200);
+        return;
     } else {
         let summary = 'No combinations were generated.';
         if (failures.length > 0) {

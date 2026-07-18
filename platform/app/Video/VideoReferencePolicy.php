@@ -60,15 +60,28 @@ final class VideoReferencePolicy
     public static function sortWeight(string $role): int
     {
         return match ($role) {
-            'artwork_fidelity' => 10,
-            'character_identity' => 20,
-            'wardrobe_identity' => 30,
-            'end_frame' => 40,
-            'main' => 50,
-            'reference' => 60,
-            'environment' => 70,
-            'cinematic_style' => 80,
+            'start_frame' => 10,
+            'end_frame' => 20,
+            'artwork_fidelity' => 30,
+            'character_identity' => 40,
+            'wardrobe_identity' => 50,
+            'main' => 60,
+            'reference' => 70,
+            'environment' => 80,
+            'cinematic_style' => 90,
             default => 90,
+        };
+    }
+
+    public static function promptNumber(string $role, int $position = 1): int
+    {
+        return match ($role) {
+            'start_frame' => 1,
+            'end_frame' => 2,
+            'artwork_fidelity' => 3,
+            'character_identity' => 4,
+            'wardrobe_identity' => 5,
+            default => min(self::MAX_IMAGES, 5 + max(1, $position)),
         };
     }
 }

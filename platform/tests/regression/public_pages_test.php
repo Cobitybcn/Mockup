@@ -21,6 +21,9 @@ function run_public_pages_regression_tests(): void {
     TestHarness::assertContains("PublicPage::path('integrations/pinterest/')",$home,'home links to Pinterest integration');
     TestHarness::assertContains('does not publish automatically',$home,'home states that Pinterest publishing is manual');
     TestHarness::assertContains("PublicPage::path('contact/')",$home,'home links to public contact page');
+    TestHarness::assertContains('favicon.svg',$home,'the public landing page exposes the Artwork Mockups favicon');
+    TestHarness::assertContains("self::path('favicon.svg?v=1')",(string)file_get_contents($root.'/app/Support/PublicPage.php'),'shared public pages expose the Artwork Mockups favicon');
+    TestHarness::assertContains('favicon.svg?v=1',(string)file_get_contents($root.'/sidebar.php'),'private workspace pages expose the Artwork Mockups favicon');
     $social=(string)file_get_contents($root.'/social_media_catalog.php');
     TestHarness::assertContains('Current Campaign Draft',$social,'social campaigns identify the single current draft');
     TestHarness::assertContains('Active Campaign Drafts',$social,'active drafts are separated from the current campaign');

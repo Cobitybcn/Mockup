@@ -92,6 +92,9 @@ function run_generation_provider_isolation_tests(): void
     $reviewSource = (string)file_get_contents(__DIR__ . '/../../mockup_combinations_review.php');
     $endpointSource = (string)file_get_contents(__DIR__ . '/../../generate_mockup_combination.php');
     $workerSource = (string)file_get_contents(__DIR__ . '/../../worker.php');
+    $workerServiceSource = (string)file_get_contents(__DIR__ . '/../../app/Services/MockupGenerationWorker.php');
+    $dispatcherSource = (string)file_get_contents(__DIR__ . '/../../app/Services/MockupGenerationDispatcher.php');
+    $queueWorkerSource = (string)file_get_contents(__DIR__ . '/../../mockup_queue_worker.php');
     $resultsSource = (string)file_get_contents(__DIR__ . '/../../mockup_combination_results.php');
     $createScenesSource = (string)file_get_contents(__DIR__ . '/../../create_scenes.php');
     $startGenerateSource = (string)file_get_contents(__DIR__ . '/../../start_generate.php');
@@ -107,7 +110,14 @@ function run_generation_provider_isolation_tests(): void
         !str_contains($endpointSource, 'Database::deductCredit('),
         'Cada escena descuenta el credito una sola vez dentro de la transaccion del trabajo'
     );
-    TestHarness::assertContains('mockupGenerator($generationProvider)', $workerSource, 'El worker usa el proveedor del trabajo y no el global');
+    TestHarness::assertContains('new MockupGenerationDispatcher()', $endpointSource, 'El endpoint devuelve el control despues de despachar el trabajo');
+    TestHarness::assertTrue(!str_contains($endpointSource, '$generator->generate('), 'La peticion web ya no ejecuta la generacion pesada');
+    TestHarness::assertContains('mockupGenerator($generationProvider)', $workerServiceSource, 'El worker usa el proveedor del trabajo y no el global');
+    TestHarness::assertContains("['pending_enqueue', 'queued']", $workerServiceSource, 'El reclamo atomico impide volver a ejecutar un trabajo ya tomado');
+    TestHarness::assertContains('Database::failGenerationAndRefund', $workerServiceSource, 'Un fallo terminal devuelve el credito desde el worker');
+    TestHarness::assertContains('CloudTasksService::isAvailable()', $dispatcherSource, 'El despacho usa Cloud Tasks cuando la infraestructura esta disponible');
+    TestHarness::assertContains("PHP_OS_FAMILY === 'Windows'", $dispatcherSource, 'El entorno local dispone de un worker desacoplado en Windows');
+    TestHarness::assertContains('LOCK_EX | LOCK_NB', $queueWorkerSource, 'Cada carril local tiene un unico supervisor activo');
     TestHarness::assertContains("data-generation-provider", $resultsSource, 'Las regeneraciones conservan el proveedor del resultado');
     TestHarness::assertContains('name="generation_provider" value="gemini"', $createScenesSource, 'Create Scenes envia Vertex de forma explicita');
     TestHarness::assertTrue(

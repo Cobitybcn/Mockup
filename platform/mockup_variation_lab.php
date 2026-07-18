@@ -53,6 +53,10 @@ function mockup_variation_lab_register_run(PDO $pdo, array $run, array $selected
     if ($artworkGroupId <= 0 && is_array($selectedMockup['artwork'] ?? null)) {
         $artworkGroupId = (int)($selectedMockup['artwork']['artwork_group_id'] ?? 0);
     }
+    $seriesId = (int)($selectedMockup['series_id'] ?? 0);
+    if ($seriesId <= 0 && is_array($selectedMockup['artwork'] ?? null)) {
+        $seriesId = (int)($selectedMockup['artwork']['series_id'] ?? 0);
+    }
 
     copy($sourcePath, RESULTS_DIR . DIRECTORY_SEPARATOR . $registeredMockupFile);
     if ($promptText !== '') {
@@ -95,19 +99,21 @@ function mockup_variation_lab_register_run(PDO $pdo, array $run, array $selected
         $rootFile,
         $sourceArtworkId,
         $artworkGroupId,
+        $seriesId,
         $registeredMockupFile,
         $registeredPromptFile,
         $promptText,
         $selectorState
     ): int {
         $insert = Database::connection()->prepare("
-            INSERT INTO mockups (user_id, artwork_group_id, source_artwork_id, artwork_file, mockup_file, context_id, prompt_file, selector_state_json, created_at)
-            VALUES (:user_id, :artwork_group_id, :source_artwork_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :selector_state_json, :created_at)
+            INSERT INTO mockups (user_id, artwork_group_id, source_artwork_id, series_id, artwork_file, mockup_file, context_id, prompt_file, selector_state_json, created_at)
+            VALUES (:user_id, :artwork_group_id, :source_artwork_id, :series_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :selector_state_json, :created_at)
         ");
         $insert->execute([
             'user_id' => (int)$selectedMockup['user_id'],
             'artwork_group_id' => $artworkGroupId > 0 ? $artworkGroupId : null,
             'source_artwork_id' => $sourceArtworkId > 0 ? $sourceArtworkId : null,
+            'series_id' => $seriesId > 0 ? $seriesId : null,
             'artwork_file' => $rootFile,
             'mockup_file' => $registeredMockupFile,
             'context_id' => 'variation_lab',

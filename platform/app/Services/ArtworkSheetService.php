@@ -31,11 +31,19 @@ final class ArtworkSheetService
      */
     public function sheetForArtwork(int $artworkId, int $userId): array
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM artwork_sheets WHERE canonical_artwork_id = :artwork_id AND user_id = :user_id ORDER BY id DESC LIMIT 1');
+        $stmt = $this->pdo->prepare("SELECT * FROM artwork_sheets WHERE canonical_artwork_id = :artwork_id AND user_id = :user_id AND COALESCE(status, '') <> 'merged' ORDER BY id DESC LIMIT 1");
         $stmt->execute(['artwork_id' => $artworkId, 'user_id' => $userId]);
         $row = $stmt->fetch();
         if (is_array($row)) {
             return $row;
+        }
+
+        $stmt = $this->pdo->prepare("SELECT * FROM artwork_sheets WHERE user_id = :user_id AND COALESCE(status, '') <> 'merged' ORDER BY id DESC");
+        $stmt->execute(['user_id' => $userId]);
+        foreach ($stmt->fetchAll() as $relatedSheet) {
+            if (in_array($artworkId, $this->relatedIdsFromSheet($relatedSheet), true)) {
+                return $relatedSheet;
+            }
         }
 
         $artwork = $this->artwork($artworkId, $userId);

@@ -12,6 +12,9 @@
     const visibleCount = document.querySelector('[data-video-visible-count]');
     const noResults = document.querySelector('[data-video-no-results]');
     const cards = Array.from(document.querySelectorAll('[data-video-card]'));
+    const uploadModal = document.querySelector('[data-final-upload-modal]');
+    const uploadForm = uploadModal?.querySelector('[data-final-upload-form]');
+    const uploadError = uploadModal?.querySelector('[data-final-upload-error]');
 
     function applyFilters() {
         const artworkId = String(artworkFilter?.value || '');
@@ -75,7 +78,68 @@
         document.body.classList.remove('has-video-modal');
     }
 
+    function openFinalUpload() {
+        if (!uploadModal) return;
+        uploadModal.hidden = false;
+        document.body.classList.add('has-video-modal');
+        uploadModal.querySelector('select')?.focus();
+    }
+
+    function closeFinalUpload() {
+        if (!uploadModal) return;
+        uploadModal.hidden = true;
+        document.body.classList.remove('has-video-modal');
+        if (uploadError) uploadError.hidden = true;
+    }
+
+    uploadForm?.addEventListener('submit', async event => {
+        event.preventDefault();
+        const submit = uploadForm.querySelector('[type="submit"]');
+        if (submit) { submit.disabled = true; submit.textContent = 'Subiendo…'; }
+        if (uploadError) uploadError.hidden = true;
+        try {
+            const response = await fetch('video_final_upload.php', { method: 'POST', body: new FormData(uploadForm), credentials: 'same-origin' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.ok) throw new Error(payload.error || 'No se pudo subir el video final.');
+            window.location.reload();
+        } catch (error) {
+            if (uploadError) {
+                uploadError.textContent = error instanceof Error ? error.message : 'No se pudo subir el video final.';
+                uploadError.hidden = false;
+            }
+        } finally {
+            if (submit) { submit.disabled = false; submit.textContent = 'Subir video'; }
+        }
+    });
+
+    document.querySelectorAll('[data-final-artwork-form]').forEach(form => {
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+            const submit = form.querySelector('[type="submit"]');
+            const error = form.querySelector('[data-final-artwork-error]');
+            if (submit) { submit.disabled = true; submit.textContent = 'Guardando…'; }
+            if (error) error.hidden = true;
+            try {
+                const response = await fetch('video_final_artwork.php', {
+                    method: 'POST', body: new FormData(form), credentials: 'same-origin'
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok || !payload.ok) throw new Error(payload.error || 'No se pudo asociar la obra.');
+                window.location.reload();
+            } catch (cause) {
+                if (error) {
+                    error.textContent = cause instanceof Error ? cause.message : 'No se pudo asociar la obra.';
+                    error.hidden = false;
+                }
+            } finally {
+                if (submit) { submit.disabled = false; submit.textContent = 'Guardar'; }
+            }
+        });
+    });
+
     document.addEventListener('click', event => {
+        if (event.target.closest('[data-open-final-upload]')) { openFinalUpload(); return; }
+        if (event.target.closest('[data-close-final-upload]')) { closeFinalUpload(); return; }
         const preview = event.target.closest('[data-video-preview]');
         if (preview) {
             event.preventDefault();
@@ -86,6 +150,8 @@
     });
 
     document.addEventListener('keydown', event => {
-        if (event.key === 'Escape' && modal && !modal.hidden) closePreview();
+        if (event.key !== 'Escape') return;
+        if (modal && !modal.hidden) closePreview();
+        if (uploadModal && !uploadModal.hidden) closeFinalUpload();
     });
 })();

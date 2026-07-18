@@ -272,8 +272,8 @@ if (!$image) {
         header('Location: report.php?image=' . urlencode(basename($latestArtwork['root_file'])));
         exit;
     } else {
-        // No root artwork selected yet, redirect to upload page (artwork_new.php)
-        header('Location: artwork_new.php');
+        // No root artwork selected yet, redirect to the unified creation flow.
+        header('Location: create_scenes.php');
         exit;
     }
 }
@@ -2643,7 +2643,7 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                     <a href="artwork_details.php?id=<?= (int)$artworkId ?>">Back to step 4 (Artwork Details)</a>
                     &nbsp;·&nbsp;
                 <?php endif; ?>
-                <a href="artwork_new.php">Back to step 1</a>
+                <a href="create_scenes.php">Back to step 1</a>
                 &nbsp;·&nbsp;
                 <a href="root_album.php">ArtWorks</a>
             </div>

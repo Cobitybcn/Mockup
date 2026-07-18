@@ -18,13 +18,39 @@ if ($projectId > 0) {
         http_response_code(404);
         exit('Video project not found.');
     }
+} else {
+    $studio = $service->createProject($userId, [
+        'aspectRatio' => '9:16',
+        'targetDurationSeconds' => 24,
+        'projectType' => 'social_clip',
+    ]);
+    $projectId = (int)$studio['project']['id'];
+    $projects = $service->listProjects($userId);
 }
+
+$assets = $service->library($userId);
+$requestedArtworkId = max(0, (int)($_GET['artwork_id'] ?? 0));
+$availableArtworkFilters = [];
+foreach (array_merge((array)($assets['rootArtworks'] ?? []), (array)($assets['mockups'] ?? [])) as $asset) {
+    $assetArtworkId = max(0, (int)($asset['artworkId'] ?? 0));
+    $assetGroupId = max(0, (int)($asset['artworkGroupId'] ?? 0));
+    $assetCanonicalId = max(0, (int)($asset['canonicalArtworkId'] ?? 0));
+    $filterKey = $assetGroupId > 0 ? 'group:' . $assetGroupId : ($assetArtworkId > 0 ? 'artwork:' . $assetArtworkId : '');
+    if ($assetArtworkId > 0 && $filterKey !== '') $availableArtworkFilters[$assetArtworkId] = $filterKey;
+    if ($assetCanonicalId > 0 && $filterKey !== '') $availableArtworkFilters[$assetCanonicalId] = $filterKey;
+}
+$initialArtworkId = $requestedArtworkId > 0 && isset($availableArtworkFilters[$requestedArtworkId])
+    ? $requestedArtworkId
+    : max(0, (int)($studio['project']['artworkId'] ?? 0));
+$initialArtworkFilter = (string)($availableArtworkFilters[$initialArtworkId] ?? '');
 
 $payload = [
     'csrf' => VideoHttp::csrfToken(),
     'projects' => $projects,
     'studio' => $studio,
-    'assets' => $service->library($userId),
+    'assets' => $assets,
+    'initialArtworkId' => $initialArtworkId,
+    'initialArtworkFilter' => $initialArtworkFilter,
     'capabilities' => $service->capabilities(),
     'endpoints' => [
         'api' => 'video_api.php',
@@ -46,7 +72,7 @@ function vds_h(mixed $value): string
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Video Studio - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="video_studio.css?v=11">
+    <link rel="stylesheet" href="video_studio.css?v=15">
 </head>
 <body>
 <div class="app-shell">
@@ -54,14 +80,7 @@ function vds_h(mixed $value): string
     <main class="main-area">
         <header class="app-header"><a class="user-chip" href="account.php"><?= vds_h($user['email']) ?></a></header>
         <div class="vds-page" data-video-studio data-project-id="<?= $projectId ?>">
-            <section class="vds-empty-project" data-empty-project <?= $studio ? 'hidden' : '' ?>>
-                <span class="vds-empty-icon" aria-hidden="true">▶</span>
-                <h1>Crea tu primer proyecto de video</h1>
-                <p>Organiza escenas cortas, añade referencias visuales y enlaza cada resultado con el anterior.</p>
-                <button type="button" data-new-project>Crear proyecto</button>
-            </section>
-
-            <div data-editor <?= $studio ? '' : 'hidden' ?>>
+            <div data-editor>
                 <section class="vds-catalog" aria-labelledby="vds-catalog-title">
                     <div class="vds-catalog-head">
                         <div class="vds-catalog-heading">
@@ -79,18 +98,36 @@ function vds_h(mixed $value): string
                         </div>
                         <div class="vds-project-controls">
                             <label class="vds-project-title">
-                                <span>Nombre del video</span>
-                                <input type="text" maxlength="255" data-project-title aria-label="Nombre del video actual">
+                                <span>Nombre del proyecto</span>
+                                <input type="text" maxlength="255" data-project-title aria-label="Nombre del proyecto actual">
                             </label>
-                            <label class="vds-project-picker">
-                                <span>Proyecto</span>
-                                <select data-project-picker></select>
-                            </label>
+                            <fieldset class="vds-aspect-picker">
+                                <legend>Formato</legend>
+                                <div class="vds-aspect-options" aria-label="Formato del video">
+                                    <button type="button" data-project-aspect-ratio="9:16" aria-pressed="false" aria-label="Formato vertical 9:16" title="Vertical · 9:16">
+                                        <span class="vds-aspect-icon vds-aspect-icon--vertical" aria-hidden="true"></span>
+                                        <span>9:16</span>
+                                    </button>
+                                    <button type="button" data-project-aspect-ratio="16:9" aria-pressed="false" aria-label="Formato horizontal 16:9" title="Horizontal · 16:9">
+                                        <span class="vds-aspect-icon vds-aspect-icon--horizontal" aria-hidden="true"></span>
+                                        <span>16:9</span>
+                                    </button>
+                                </div>
+                            </fieldset>
                             <div class="vds-project-actions">
                                 <span class="vds-save-state" data-save-state>Guardado</span>
-                                <button class="vds-secondary" type="button" data-save-project>Guardar</button>
-                                <button class="vds-secondary" type="button" data-new-project>Nuevo proyecto</button>
-                                <button class="vds-danger" type="button" data-delete-project>Eliminar</button>
+                                <button class="vds-project-action vds-project-action--save" type="button" data-save-project>
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h12l2 2v14H5zM8 4v6h8V4M8 20v-6h8v6"/></svg>
+                                    <span>Guardar</span>
+                                </button>
+                                <button class="vds-project-action vds-project-action--new" type="button" data-new-project>
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                                    <span>Nuevo</span>
+                                </button>
+                                <button class="vds-project-action vds-project-action--delete" type="button" data-delete-project>
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg>
+                                    <span>Eliminar</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -116,26 +153,6 @@ function vds_h(mixed $value): string
                 </section>
             </div>
 
-            <div class="vds-modal-backdrop" data-project-modal hidden>
-                <section class="vds-modal" role="dialog" aria-modal="true" aria-labelledby="vds-new-project-title">
-                    <span class="vds-modal-kicker">Nuevo video</span>
-                    <h2 id="vds-new-project-title">Crear proyecto</h2>
-                    <form data-create-project-form>
-                        <label>
-                            <span>Nombre del video</span>
-                            <input name="title" maxlength="255" placeholder="Opcional: se generará desde la obra">
-                            <small>Si no eliges una obra se guardará como “Video 01”. Podrás asociarla después.</small>
-                        </label>
-                        <label><span>Obra (opcional)</span><select name="artworkId"><option value="">Sin obra por ahora</option></select></label>
-                        <label><span>Formato</span><select name="aspectRatio"><option value="9:16">9:16 · Vertical</option><option value="16:9">16:9 · Horizontal</option></select></label>
-                        <div class="vds-modal-actions">
-                            <button class="vds-secondary" type="button" data-close-project-modal>Cancelar</button>
-                            <button type="submit">Crear con 3 secuencias</button>
-                        </div>
-                    </form>
-                </section>
-            </div>
-
             <div class="vds-modal-backdrop" data-generation-modal hidden>
                 <section class="vds-modal" role="dialog" aria-modal="true" aria-labelledby="vds-generation-title">
                     <span class="vds-modal-kicker">Generación externa</span>
@@ -155,6 +172,6 @@ function vds_h(mixed $value): string
 </div>
 <script type="application/json" id="video-studio-data"><?= json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="video_studio.js?v=14"></script>
+<script src="video_studio.js?v=20"></script>
 </body>
 </html>

@@ -889,6 +889,7 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
             }
             #artworkStage .capture-grid {
                 width: min(820px, 100%);
+                margin-inline: auto;
                 justify-self: center;
                 grid-template-columns: minmax(0, 1fr);
                 gap: 14px;

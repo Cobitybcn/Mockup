@@ -21,7 +21,7 @@ http_response_code(410);
             no debe generar imagenes ni consumir creditos.
         </p>
         <p>
-            Usa <a href="artwork_new.php">artwork_new.php</a> para probar el flujo local.
+            Usa <a href="create_scenes.php">create_scenes.php</a> para probar el flujo local.
         </p>
     </main>
 </body>

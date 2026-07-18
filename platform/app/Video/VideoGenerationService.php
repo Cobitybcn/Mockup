@@ -78,8 +78,7 @@ final class VideoGenerationService
         if ($mode === 'first_last_frame') {
             $startAssociation = $this->jobs->associationForReference($userId, $references['start_frame']);
             $endAssociation = $this->jobs->associationForReference($userId, $references['end_frame']);
-            if ($startAssociation['artworkId'] !== null && $endAssociation['artworkId'] !== null
-                && $startAssociation['artworkId'] !== $endAssociation['artworkId']) {
+            if (!self::sameUnifiedArtwork($startAssociation, $endAssociation)) {
                 throw new InvalidArgumentException('Start Frame and End Frame must belong to the same artwork.');
             }
             $association = $startAssociation;
@@ -87,7 +86,7 @@ final class VideoGenerationService
         } elseif ($associationReference !== null) {
             $association = $this->jobs->associationForReference($userId, $associationReference);
         } else {
-            $association = ['artworkId' => null, 'seriesId' => null];
+            $association = ['artworkId' => null, 'artworkGroupId' => null, 'canonicalArtworkId' => null, 'seriesId' => null];
         }
         $artworkId = $association['artworkId'] ?? $project['artworkId'] ?? null;
         $seriesId = $association['seriesId'] ?? $project['seriesId'] ?? null;
@@ -112,6 +111,7 @@ final class VideoGenerationService
                     'sourceType' => (string)$item['sourceType'],
                     'sourceId' => (int)$item['sourceId'],
                     'position' => (int)($item['position'] ?? 0),
+                    'promptNumber' => VideoReferencePolicy::promptNumber((string)$item['role'], (int)($item['position'] ?? 1)),
                     'file' => (string)$item['filePath'],
                     'mediaType' => (string)($item['metadata']['mediaType'] ?? ($item['sourceType'] === 'generation_job' ? 'video' : 'image')),
                     'mimeType' => (string)($item['metadata']['mimeType'] ?? ''),
@@ -170,6 +170,21 @@ final class VideoGenerationService
             throw $e;
         }
         return $this->payload($userId, (int)$project['id'], $sceneId, $jobId);
+    }
+
+    private static function sameUnifiedArtwork(array $left, array $right): bool
+    {
+        $leftArtworkId = (int)($left['artworkId'] ?? 0);
+        $rightArtworkId = (int)($right['artworkId'] ?? 0);
+        if ($leftArtworkId <= 0 || $rightArtworkId <= 0) return true;
+
+        $leftGroupId = (int)($left['artworkGroupId'] ?? 0);
+        $rightGroupId = (int)($right['artworkGroupId'] ?? 0);
+        if ($leftGroupId > 0 || $rightGroupId > 0) {
+            return $leftGroupId > 0 && $leftGroupId === $rightGroupId;
+        }
+
+        return $leftArtworkId === $rightArtworkId;
     }
 
     public function status(int $userId, int $projectId): array
@@ -402,6 +417,7 @@ final class VideoGenerationService
                 'path' => $prepared['path'],
                 'mimeType' => $prepared['mimeType'],
                 'role' => (string)($record['role'] ?? 'reference'),
+                'promptNumber' => (int)($record['promptNumber'] ?? VideoReferencePolicy::promptNumber((string)($record['role'] ?? 'reference'), (int)($record['position'] ?? 1))),
                 'instruction' => trim((string)($record['instruction'] ?? VideoReferencePolicy::defaultInstruction((string)($record['role'] ?? 'reference')))),
             ];
             if (!empty($prepared['temporary'])) $cleanup[] = (string)$prepared['path'];
@@ -423,7 +439,7 @@ final class VideoGenerationService
         $prompt = trim(mb_substr($adjustPrompt, 0, 20000));
         if ($prompt === '') throw new InvalidArgumentException('Describe el ajuste que quieres aplicar.');
         $active = $this->jobs->activeGenerationForScene($userId, $sceneId);
-        if (!is_array($active) || trim((string)($active['external_job_id'] ?? '')) === '') {
+        if (!is_array($active) || trim((string)($active['output_path'] ?? '')) === '') {
             throw new DomainException('Esta secuencia todavía no tiene un resultado Omni editable.');
         }
         if ((string)$active['provider'] !== VideoProviderRegistry::OMNI || (string)$active['model'] !== $provider->model()) {
@@ -448,7 +464,17 @@ final class VideoGenerationService
             'aspectRatio' => (string)$project['aspectRatio'],
             'resolution' => app_env('VIDEO_VEO_RESOLUTION', '720p'),
             'parentGenerationId' => (int)$active['id'],
-            'previousInteractionId' => (string)$active['external_job_id'],
+            'references' => [[
+                'id' => (int)$active['id'],
+                'role' => 'source_video',
+                'sourceType' => 'generation_job',
+                'sourceId' => (int)$active['id'],
+                'position' => 0,
+                'file' => (string)$active['output_path'],
+                'mediaType' => 'video',
+                'mimeType' => 'video/mp4',
+                'instruction' => 'Editar este video conservando lo no solicitado.',
+            ]],
         ];
         $inputHash = hash('sha256', json_encode([$snapshot,$prompt,$provider->model()], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         $pending = $this->jobs->pendingGeneration($userId, $sceneId, $inputHash);

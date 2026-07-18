@@ -80,6 +80,8 @@ require_once __DIR__ . '/Support/DatabaseSessionHandler.php';
 require_once __DIR__ . '/Support/NextPlatformSync.php';
 require_once __DIR__ . '/Services/CloudTasksService.php';
 require_once __DIR__ . '/Services/StorageService.php';
+require_once __DIR__ . '/Services/MockupGenerationWorker.php';
+require_once __DIR__ . '/Services/MockupGenerationDispatcher.php';
 require_once __DIR__ . '/Assistant/AssistantSchema.php';
 require_once __DIR__ . '/Assistant/AssistantException.php';
 require_once __DIR__ . '/Assistant/AssistantConfig.php';

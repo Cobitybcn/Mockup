@@ -9,6 +9,7 @@ Auth::start();
 $userId = (int)$user['id'];
 
 ArtworkSeries::ensureSchema($pdo);
+(new ArtworkGroupService($pdo))->syncUser($userId);
 ArtworkSeries::syncUser($pdo, $userId);
 
 if (empty($_SESSION['series_csrf'])) {
@@ -121,20 +122,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $seriesRows = ArtworkSeries::seriesList($pdo, $userId);
 
-$artworkStmt = $pdo->prepare('
-    SELECT a.id, a.final_title, sh.title AS sheet_title, a.subtitle, a.root_file, a.main_file, a.width, a.height, a.unit,
+$artworkStmt = $pdo->prepare("
+    SELECT a.id, g.id AS artwork_group_id, a.final_title, sh.title AS sheet_title, a.subtitle, a.root_file, a.main_file, a.width, a.height, a.unit,
            a.series_id, a.series, a.series_creation_number,
            s.title AS series_title,
            (
                SELECT COUNT(DISTINCT m.id)
                FROM mockups m
-               WHERE m.user_id = a.user_id
-               AND (m.source_artwork_id = a.id OR m.artwork_file = a.root_file OR m.artwork_file = a.main_file)
+               WHERE m.user_id = g.user_id
+               AND m.artwork_group_id = g.id
            ) AS mockup_count
-    FROM artworks a
+    FROM artwork_groups g
+    INNER JOIN artworks a ON a.id = g.canonical_artwork_id AND a.user_id = g.user_id
     LEFT JOIN artwork_series s ON s.id = a.series_id AND s.user_id = a.user_id
-    LEFT JOIN artwork_sheets sh ON sh.canonical_artwork_id = a.id AND sh.user_id = a.user_id
-    WHERE a.user_id = ? AND a.status = ?
+    LEFT JOIN artwork_sheets sh ON sh.id = (
+        SELECT sh2.id
+        FROM artwork_sheets sh2
+        WHERE sh2.canonical_artwork_id = a.id
+        AND sh2.user_id = a.user_id
+        AND COALESCE(sh2.status, '') <> 'merged'
+        ORDER BY sh2.id DESC
+        LIMIT 1
+    )
+    WHERE g.user_id = ? AND g.status = 'active' AND a.status = ?
     ORDER BY
         CASE WHEN a.series_id IS NULL THEN 1 ELSE 0 END ASC,
         CASE WHEN s.year_start IS NULL AND s.year_end IS NULL THEN 1 ELSE 0 END ASC,
@@ -144,9 +154,9 @@ $artworkStmt = $pdo->prepare('
         s.id DESC,
         CASE WHEN a.series_creation_number IS NULL THEN 1 ELSE 0 END ASC,
         a.series_creation_number ASC,
-        a.created_at ASC,
+        g.created_at ASC,
         a.id ASC
-');
+");
 $artworkStmt->execute([$userId, 'done']);
 $artworks = $artworkStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -415,7 +425,7 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
                 <div class="detail-heading">
                     <div>
                         <h2>Artwork Assignment</h2>
-                        <p>Every artwork and its mockups inherit this series identifier. Changing the series saves right away.</p>
+                        <p>Each canonical artwork and all its root views and mockups inherit this series identifier. Changing the series saves right away.</p>
                     </div>
                 </div>
                 <?php if (!$artworks): ?>

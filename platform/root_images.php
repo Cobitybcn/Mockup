@@ -103,7 +103,7 @@ function page_url(int $page, string $query): string
                     <p><?= h($total) ?> verified art pieces in your collection.</p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link" href="artwork_new.php">Upload Artwork</a>
+                    <a class="button-link" href="create_scenes.php">Create Art</a>
                     <a class="button-link secondary" href="root_album.php">ArtWorks</a>
                 </div>
             </div>

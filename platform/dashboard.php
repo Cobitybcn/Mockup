@@ -251,7 +251,7 @@ function dashboard_page_url(int $page, string $query): string
                     <p>Private archive of artworks, root images and mockups.</p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link" href="artwork_new.php">Upload Artwork</a>
+                    <a class="button-link" href="create_scenes.php">Create Art</a>
                     <a class="button-link secondary" href="account.php">Account</a>
                 </div>
             </div>

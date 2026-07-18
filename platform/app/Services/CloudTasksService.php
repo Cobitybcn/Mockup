@@ -12,6 +12,14 @@ use Google\ApiCore\ApiException;
 
 class CloudTasksService
 {
+    public static function isAvailable(): bool
+    {
+        return class_exists(CloudTasksClient::class)
+            && app_env('GCP_PROJECT_ID', '') !== ''
+            && app_env('GCP_WORKER_URL', '') !== ''
+            && app_env('GCP_TASKS_INVOKER_SA', '') !== '';
+    }
+
     public static function enqueueGeneration(int $jobId, int $userId, int $artworkId, string $contextId, string $generationProvider = ''): string
     {
         return self::enqueue('worker.php', [

@@ -47,6 +47,7 @@ final class VertexGeminiOmniProvider implements VideoGenerationProvider
         $input = [];
         $declarations = [];
         $guidance = [];
+        $referenceDirections = [];
         $imageNumber = 1;
 
         $firstFrame = is_array($payload['firstFrame'] ?? null) ? $payload['firstFrame'] : null;
@@ -57,11 +58,14 @@ final class VertexGeminiOmniProvider implements VideoGenerationProvider
             $input[] = $this->encodedImageInput($firstFrame, 'Gemini Omni first frame');
             $declarations[] = '[# Sources <FIRST_FRAME>@Image' . $imageNumber . ']';
             $guidance[] = 'Use Image' . $imageNumber . ' as the exact starting frame.';
+            $referenceDirections[] = 'Imagen 1 = <FIRST_FRAME> (imagen inicial): usar como fotograma inicial exacto.';
+            $prompt = $this->bindPromptImageNumber((string)($payload['prompt'] ?? ''), 1, '<FIRST_FRAME>');
             $imageNumber++;
+        } else {
+            $prompt = (string)($payload['prompt'] ?? '');
         }
 
         $referenceTags = [];
-        $referenceDirections = [];
         $referenceIndex = 0;
         foreach ((array)($payload['referenceImages'] ?? []) as $referenceImage) {
             if (!is_array($referenceImage)) continue;
@@ -70,15 +74,16 @@ final class VertexGeminiOmniProvider implements VideoGenerationProvider
             }
             $input[] = $this->encodedImageInput($referenceImage, 'Gemini Omni visual reference');
             $referenceTags[] = '<IMAGE_REF_' . $referenceIndex . '>@Image' . $imageNumber;
+            $promptNumber = max(1, (int)($referenceImage['promptNumber'] ?? $imageNumber));
+            $prompt = $this->bindPromptImageNumber($prompt, $promptNumber, '<IMAGE_REF_' . $referenceIndex . '>');
             $instruction = trim((string)($referenceImage['instruction'] ?? ''));
-            if ($instruction !== '') {
-                $referenceDirections[] = sprintf(
-                    '<IMAGE_REF_%d> (%s): %s',
-                    $referenceIndex,
-                    $this->roleLabel((string)($referenceImage['role'] ?? 'reference')),
-                    $instruction
-                );
-            }
+            $referenceDirections[] = sprintf(
+                'Imagen %d = <IMAGE_REF_%d> (%s)%s',
+                $promptNumber,
+                $referenceIndex,
+                $this->roleLabel((string)($referenceImage['role'] ?? 'reference')),
+                $instruction !== '' ? ': ' . $instruction : ''
+            );
             $referenceIndex++;
             $imageNumber++;
         }
@@ -87,9 +92,9 @@ final class VertexGeminiOmniProvider implements VideoGenerationProvider
             $guidance[] = 'Use the remaining images as visual references according to the prompt, not as mandatory initial frames.';
         }
 
-        $prompt = trim((string)($payload['prompt'] ?? ''));
+        $prompt = trim($prompt);
         if ($declarations !== []) $prompt = implode(' ', $declarations) . "\n" . $prompt;
-        if ($referenceDirections !== []) $prompt .= "\n\nREFERENCE PURPOSES IN PRIORITY ORDER\n" . implode("\n", $referenceDirections);
+        if ($referenceDirections !== []) $prompt .= "\n\nREFERENCE IMAGE MAP (VISIBLE NUMBER TO API TAG)\n" . implode("\n", $referenceDirections);
         if ($guidance !== []) $prompt .= "\n\n" . implode(' ', $guidance);
         $prompt .= "\nGenerate one continuous shot with no scene cuts unless the prompt explicitly requests them.";
         $input[] = ['type' => 'text', 'text' => trim($prompt)];
@@ -153,18 +158,24 @@ final class VertexGeminiOmniProvider implements VideoGenerationProvider
             }
             $input[] = $this->encodedImageInput($referenceImage, 'Gemini Omni visual reference');
             $tags[] = '<IMAGE_REF_' . $referenceIndex . '>@Image' . $imageNumber;
+            $promptNumber = max(1, (int)($referenceImage['promptNumber'] ?? $imageNumber));
             $instruction = trim((string)($referenceImage['instruction'] ?? ''));
-            if ($instruction !== '') {
-                $directions[] = sprintf('<IMAGE_REF_%d> (%s): %s', $referenceIndex, $this->roleLabel((string)($referenceImage['role'] ?? 'reference')), $instruction);
-            }
+            $directions[] = sprintf(
+                'Imagen %d = <IMAGE_REF_%d> (%s)%s',
+                $promptNumber,
+                $referenceIndex,
+                $this->roleLabel((string)($referenceImage['role'] ?? 'reference')),
+                $instruction !== '' ? ': ' . $instruction : ''
+            );
+            $prompt = $this->bindPromptImageNumber((string)($prompt ?? $payload['prompt'] ?? ''), $promptNumber, '<IMAGE_REF_' . $referenceIndex . '>');
             $referenceIndex++;
             $imageNumber++;
         }
         if ($tags !== []) $declarations[] = '[# References ' . implode(' ', $tags) . ']';
 
-        $prompt = trim((string)($payload['prompt'] ?? ''));
+        $prompt = trim((string)($prompt ?? $payload['prompt'] ?? ''));
         if ($declarations !== []) $prompt = implode(' ', $declarations) . "\n" . $prompt;
-        if ($directions !== []) $prompt .= "\n\nREFERENCE PURPOSES IN PRIORITY ORDER\n" . implode("\n", $directions);
+        if ($directions !== []) $prompt .= "\n\nREFERENCE IMAGE MAP (VISIBLE NUMBER TO API TAG)\n" . implode("\n", $directions);
         $prompt .= "\n\nKeep everything else in the source video the same unless the prompt explicitly requests a change.";
         $input[] = ['type' => 'text', 'text' => trim($prompt)];
 
@@ -304,6 +315,12 @@ final class VertexGeminiOmniProvider implements VideoGenerationProvider
             'end_frame' => 'target closing composition',
             default => 'additional visual reference',
         };
+    }
+
+    private function bindPromptImageNumber(string $prompt, int $number, string $tag): string
+    {
+        $pattern = '/\b(?:imagen|image)\s*' . preg_quote((string)$number, '/') . '\b/iu';
+        return (string)(preg_replace($pattern, '$0 ' . $tag, $prompt) ?? $prompt);
     }
 
     private function interactionsEndpoint(): string

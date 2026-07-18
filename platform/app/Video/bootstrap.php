@@ -17,7 +17,9 @@ require_once __DIR__ . '/VideoTaskDispatcher.php';
 require_once __DIR__ . '/VideoFfmpeg.php';
 require_once __DIR__ . '/VideoMediaStorage.php';
 require_once __DIR__ . '/VideoReferenceUploadService.php';
+require_once __DIR__ . '/VideoFinalUploadService.php';
 require_once __DIR__ . '/VideoGenerationService.php';
+require_once __DIR__ . '/VideoEditorService.php';
 require_once __DIR__ . '/VideoExportBuilder.php';
 require_once __DIR__ . '/VideoExportService.php';
 

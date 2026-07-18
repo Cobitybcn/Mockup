@@ -283,6 +283,13 @@ $rootTotal = 0;
 $mockupTotal = 0;
 $variantRootTotal = 0;
 $pendingArtworks = [];
+$artworkMergeCsrf = '';
+if ($id <= 0) {
+    if (empty($_SESSION['artwork_merge_csrf'])) {
+        $_SESSION['artwork_merge_csrf'] = bin2hex(random_bytes(24));
+    }
+    $artworkMergeCsrf = (string)$_SESSION['artwork_merge_csrf'];
+}
 
 if ($id <= 0) {
     try {
@@ -584,6 +591,96 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
             cursor: wait;
             opacity: .5;
         }
+        .artwork-merge-btn {
+            position: absolute;
+            top: 20px;
+            right: 62px;
+            z-index: 6;
+            width: 36px !important;
+            height: 36px !important;
+            min-width: 36px !important;
+            min-height: 36px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 1px solid rgba(255, 255, 255, .7);
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(89, 113, 87, .76);
+            color: #fff;
+            box-shadow: 0 8px 22px rgba(22, 19, 18, .17);
+            backdrop-filter: blur(9px) saturate(115%);
+            cursor: pointer;
+            transition: background .16s ease, transform .16s ease;
+        }
+        .artwork-merge-btn:hover,
+        .artwork-merge-btn:focus-visible { background: rgba(70, 96, 68, .94); outline: none; }
+        .artwork-merge-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+        .artwork-merge-btn[disabled] { cursor: wait; opacity: .5; }
+        .merge-artwork-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 1500;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            background: rgba(32, 28, 25, .48);
+            backdrop-filter: blur(3px);
+        }
+        .merge-artwork-backdrop[hidden] { display: none; }
+        .merge-artwork-dialog {
+            width: min(980px, 100%);
+            max-height: min(880px, 92vh);
+            overflow: auto;
+            padding: 26px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--surface);
+            box-shadow: 0 28px 90px rgba(26, 22, 19, .24);
+        }
+        .merge-artwork-kicker { display: block; margin-bottom: 7px; color: var(--accent); font-size: 9px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase; }
+        .merge-artwork-dialog h2 { margin: 0; font-family: var(--font-serif); font-size: 34px; font-weight: 400; }
+        .merge-artwork-intro { max-width: 720px; margin: 8px 0 20px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+        .merge-artwork-search { width: 100%; min-height: 48px; margin-bottom: 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface-soft); color: var(--ink); font-size: 15px; }
+        .merge-artwork-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 10px; max-height: 330px; overflow: auto; padding: 3px; }
+        .merge-candidate {
+            position: relative;
+            width: 100%;
+            margin: 0;
+            padding: 8px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: var(--surface-soft);
+            color: var(--ink);
+            text-align: left;
+            cursor: pointer;
+        }
+        .merge-candidate:hover,
+        .merge-candidate.is-selected { border-color: #9a7b56; box-shadow: 0 0 0 2px rgba(154, 123, 86, .12); }
+        .merge-candidate.is-likely { order: -1; background: #f1f6ef; border-color: #b9ccb5; }
+        .merge-candidate[hidden] { display: none; }
+        .merge-candidate img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border: 1px solid var(--line); border-radius: 4px; }
+        .merge-candidate strong { display: block; margin-top: 7px; font-family: var(--font-serif); font-size: 16px; font-weight: 400; line-height: 1.15; }
+        .merge-candidate small { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; }
+        .merge-likely-badge { display: none; position: absolute; top: 14px; left: 14px; padding: 4px 6px; border-radius: 3px; background: #e4eee1; color: #486245; font-size: 8px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+        .merge-candidate.is-likely .merge-likely-badge { display: block; }
+        .merge-primary-panel { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
+        .merge-primary-panel[hidden] { display: none; }
+        .merge-primary-panel > strong { display: block; margin-bottom: 10px; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; }
+        .merge-primary-options { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .merge-primary-option { position: relative; display: grid; grid-template-columns: 90px 1fr; gap: 13px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 7px; background: #fff; cursor: pointer; }
+        .merge-primary-option:has(input:checked) { border-color: #9a7b56; background: #fbf7ef; box-shadow: 0 0 0 2px rgba(154, 123, 86, .11); }
+        .merge-primary-option input { position: absolute; top: 12px; right: 12px; }
+        .merge-primary-option img { width: 90px; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 4px; }
+        .merge-primary-option strong { display: block; font-family: var(--font-serif); font-size: 19px; font-weight: 400; }
+        .merge-primary-option span { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; }
+        .merge-preserves { margin: 16px 0 0; padding: 13px 15px; border: 1px solid #c8d7c3; border-radius: 6px; background: #f1f6ef; color: #486245; font-size: 12px; line-height: 1.45; }
+        .merge-dialog-actions { display: grid; grid-template-columns: minmax(160px, .55fr) minmax(260px, 1fr); gap: 12px; margin-top: 20px; }
+        .merge-dialog-actions button { min-height: 58px; margin: 0; }
+        .merge-confirm { border-color: #c0a7aa !important; background: #e6cfd1 !important; color: #68464b !important; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+        .merge-confirm[disabled] { opacity: .45; cursor: not-allowed; }
+        .merge-dialog-error { min-height: 18px; margin-top: 10px; color: var(--danger); font-size: 12px; }
         .root-album-title {
             margin: 10px 0 0;
             font-family: var(--font-serif);
@@ -685,6 +782,15 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                 min-height: 34px !important;
                 opacity: .9;
             }
+            .mobile-root-slide .artwork-merge-btn,
+            .root-album-card .artwork-merge-btn {
+                top: 18px;
+                right: 58px;
+                width: 34px !important;
+                height: 34px !important;
+                min-width: 34px !important;
+                min-height: 34px !important;
+            }
             .mobile-root-slide img {
                 width: 100%;
                 aspect-ratio: 3 / 4;
@@ -733,6 +839,12 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
             .root-album-card .button-link {
                 display: none;
             }
+            .merge-artwork-backdrop { padding: 10px; }
+            .merge-artwork-dialog { max-height: 94vh; padding: 19px; }
+            .merge-artwork-dialog h2 { font-size: 28px; }
+            .merge-artwork-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .merge-primary-options { grid-template-columns: 1fr; }
+            .merge-dialog-actions { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -756,7 +868,7 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                         <p>Canonical artworks with official root views and attached mockups.</p>
                     </div>
                     <div class="topbar-actions">
-                        <a class="button-link" href="artwork_new.php">Upload Artwork</a>
+                        <a class="button-link" href="create_scenes.php">Create Art</a>
                         <a class="button-link secondary" href="account.php">Account</a>
                     </div>
                 </div>
@@ -864,6 +976,9 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
             <?php if (isset($_GET['selected'])): ?>
                 <div class="notice">Official root view updated.</div>
             <?php endif; ?>
+            <?php if (isset($_GET['merged'])): ?>
+                <div class="notice">The duplicate was resolved. All root images and mockups are now grouped under one artwork.</div>
+            <?php endif; ?>
 
             <?php if ($id > 0 && !empty($missing)): ?>
                 <div class="notice">Missing root views: <?= h(implode(', ', $missing)) ?>.</div>
@@ -902,6 +1017,19 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                                             <?= $size !== '' ? h($size) . ' · ' : '' ?><?= h((string)$rootCount) ?> roots<?= $mockupCount > 0 ? ' · ' . h((string)$mockupCount) . ' mockups' : '' ?>
                                         </p>
                                     </a>
+                                    <?php if (count($albumArtworks) > 1): ?>
+                                        <button class="artwork-merge-btn" type="button" title="Fusionar con otra obra" aria-label="Fusionar con otra obra"
+                                            data-merge-source
+                                            data-group-id="<?= (int)$albumArtwork['group_id'] ?>"
+                                            data-artwork-id="<?= (int)$albumArtwork['id'] ?>"
+                                            data-title="<?= h($title) ?>"
+                                            data-image="<?= h(root_album_media_url((string)$albumArtwork['root_file'])) ?>"
+                                            data-mockups="<?= $mockupCount ?>"
+                                            data-roots="<?= $rootCount ?>"
+                                            data-width="<?= h($width) ?>" data-height="<?= h($height) ?>" data-unit="<?= h($unit) ?>">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 7.5H7a4 4 0 0 0 0 8h2.5M14.5 7.5H17a4 4 0 0 1 0 8h-2.5M8.5 11.5h7"/></svg>
+                                        </button>
+                                    <?php endif; ?>
                                     <button class="artwork-delete-btn" type="button" title="Delete artwork" aria-label="Delete artwork" data-delete-artwork data-artwork-id="<?= (int)$albumArtwork['id'] ?>">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 8.5h7l-.55 9h-5.9l-.55-9Z"/><path d="M7.5 6.5h9M10 6.5V5h4v1.5M10.5 11v4.2M13.5 11v4.2"/></svg>
                                     </button>
@@ -933,6 +1061,19 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                                     <a href="<?= h($targetUrl) ?>">
                                         <img src="<?= h(root_album_media_url((string)$albumArtwork['root_file'])) ?>" alt="<?= h($title) ?>" loading="lazy">
                                     </a>
+                                    <?php if (count($albumArtworks) > 1): ?>
+                                        <button class="artwork-merge-btn" type="button" title="Fusionar con otra obra" aria-label="Fusionar con otra obra"
+                                            data-merge-source
+                                            data-group-id="<?= (int)$albumArtwork['group_id'] ?>"
+                                            data-artwork-id="<?= (int)$albumArtwork['id'] ?>"
+                                            data-title="<?= h($title) ?>"
+                                            data-image="<?= h(root_album_media_url((string)$albumArtwork['root_file'])) ?>"
+                                            data-mockups="<?= $mockupCount ?>"
+                                            data-roots="<?= $rootCount ?>"
+                                            data-width="<?= h($width) ?>" data-height="<?= h($height) ?>" data-unit="<?= h($unit) ?>">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 7.5H7a4 4 0 0 0 0 8h2.5M14.5 7.5H17a4 4 0 0 1 0 8h-2.5M8.5 11.5h7"/></svg>
+                                        </button>
+                                    <?php endif; ?>
                                     <button class="artwork-delete-btn" type="button" title="Delete artwork" aria-label="Delete artwork" data-delete-artwork data-artwork-id="<?= (int)$albumArtwork['id'] ?>">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 8.5h7l-.55 9h-5.9l-.55-9Z"/><path d="M7.5 6.5h9M10 6.5V5h4v1.5M10.5 11v4.2M13.5 11v4.2"/></svg>
                                     </button>
@@ -982,12 +1123,204 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
         </div>
     </main>
 </div>
+<?php if ($id <= 0 && count($albumArtworks) > 1): ?>
+<div class="merge-artwork-backdrop" data-merge-dialog hidden>
+    <section class="merge-artwork-dialog" role="dialog" aria-modal="true" aria-labelledby="merge-artwork-title">
+        <span class="merge-artwork-kicker">Resolver duplicado</span>
+        <h2 id="merge-artwork-title">Fusionar con otra obra</h2>
+        <p class="merge-artwork-intro">Elige la otra referencia y después cuál debe permanecer como obra principal. No se eliminarán imágenes raíz ni mockups.</p>
+        <input class="merge-artwork-search" type="search" data-merge-search placeholder="Buscar por título de obra…" autocomplete="off">
+        <div class="merge-artwork-picker" data-merge-picker aria-label="Elegir obra duplicada">
+            <?php foreach ($albumArtworks as $mergeCandidate): ?>
+                <?php
+                $mergeTitle = trim((string)($mergeCandidate['group_title'] ?? ''));
+                if ($mergeTitle === '') $mergeTitle = trim((string)($mergeCandidate['final_title'] ?? ''));
+                if ($mergeTitle === '') $mergeTitle = 'Untitled';
+                $mergeWidth = trim((string)($mergeCandidate['width'] ?? ''));
+                $mergeHeight = trim((string)($mergeCandidate['height'] ?? ''));
+                $mergeUnit = trim((string)($mergeCandidate['unit'] ?? 'cm'));
+                ?>
+                <button type="button" class="merge-candidate"
+                    data-merge-candidate
+                    data-group-id="<?= (int)$mergeCandidate['group_id'] ?>"
+                    data-artwork-id="<?= (int)$mergeCandidate['id'] ?>"
+                    data-title="<?= h($mergeTitle) ?>"
+                    data-image="<?= h(root_album_media_url((string)$mergeCandidate['root_file'])) ?>"
+                    data-mockups="<?= (int)$mergeCandidate['mockup_count'] ?>"
+                    data-roots="<?= (int)$mergeCandidate['root_count'] ?>"
+                    data-width="<?= h($mergeWidth) ?>" data-height="<?= h($mergeHeight) ?>" data-unit="<?= h($mergeUnit) ?>">
+                    <span class="merge-likely-badge">Posible duplicado</span>
+                    <img src="<?= h(root_album_media_url((string)$mergeCandidate['root_file'])) ?>" alt="" loading="lazy">
+                    <strong><?= h($mergeTitle) ?></strong>
+                    <small><?= (int)$mergeCandidate['root_count'] ?> raíces · <?= (int)$mergeCandidate['mockup_count'] ?> mockups</small>
+                </button>
+            <?php endforeach; ?>
+        </div>
+
+        <div class="merge-primary-panel" data-merge-primary-panel hidden>
+            <strong>¿Cuál debe quedar como obra principal?</strong>
+            <div class="merge-primary-options">
+                <label class="merge-primary-option">
+                    <input type="radio" name="merge_primary" value="source" checked>
+                    <img src="" alt="" data-merge-primary-image="source">
+                    <span><strong data-merge-primary-title="source"></strong><span data-merge-primary-meta="source"></span></span>
+                </label>
+                <label class="merge-primary-option">
+                    <input type="radio" name="merge_primary" value="candidate">
+                    <img src="" alt="" data-merge-primary-image="candidate">
+                    <span><strong data-merge-primary-title="candidate"></strong><span data-merge-primary-meta="candidate"></span></span>
+                </label>
+            </div>
+            <p class="merge-preserves" data-merge-preserves></p>
+        </div>
+
+        <div class="merge-dialog-error" data-merge-error role="alert"></div>
+        <div class="merge-dialog-actions">
+            <button class="button-link secondary" type="button" data-merge-cancel>Cancelar</button>
+            <button class="button-link merge-confirm" type="button" data-merge-confirm disabled>Fusionar obras</button>
+        </div>
+    </section>
+</div>
+<?php endif; ?>
 <script>
 function parseArtworkDeleteJson(response) {
     return response.text().then(text => {
         try { return JSON.parse(text); } catch (err) { throw new Error(text.substring(0, 220)); }
     });
 }
+
+const mergeDialog = document.querySelector('[data-merge-dialog]');
+const mergeState = { source: null, candidate: null };
+
+function mergeArtworkData(element) {
+    return {
+        groupId: Number(element?.dataset.groupId || 0),
+        artworkId: Number(element?.dataset.artworkId || 0),
+        title: element?.dataset.title || 'Untitled',
+        image: element?.dataset.image || '',
+        mockups: Number(element?.dataset.mockups || 0),
+        roots: Number(element?.dataset.roots || 0),
+        width: Number(element?.dataset.width || 0),
+        height: Number(element?.dataset.height || 0),
+        unit: (element?.dataset.unit || '').toLowerCase(),
+    };
+}
+
+function likelyDuplicate(source, candidate) {
+    if (!source || !candidate || !source.width || !source.height || !candidate.width || !candidate.height || source.unit !== candidate.unit) return false;
+    const direct = Math.abs(source.width - candidate.width) <= 1 && Math.abs(source.height - candidate.height) <= 1;
+    const rotated = Math.abs(source.width - candidate.height) <= 1 && Math.abs(source.height - candidate.width) <= 1;
+    return direct || rotated;
+}
+
+function fillPrimaryOption(role, artwork) {
+    const image = mergeDialog?.querySelector('[data-merge-primary-image="' + role + '"]');
+    const title = mergeDialog?.querySelector('[data-merge-primary-title="' + role + '"]');
+    const meta = mergeDialog?.querySelector('[data-merge-primary-meta="' + role + '"]');
+    if (image) image.src = artwork.image;
+    if (title) title.textContent = artwork.title;
+    if (meta) meta.textContent = artwork.roots + ' raíces · ' + artwork.mockups + ' mockups';
+}
+
+function closeMergeDialog() {
+    if (!mergeDialog) return;
+    mergeDialog.hidden = true;
+    document.body.style.overflow = '';
+    mergeState.source = null;
+    mergeState.candidate = null;
+}
+
+function openMergeDialog(button) {
+    if (!mergeDialog) return;
+    mergeState.source = mergeArtworkData(button);
+    mergeState.candidate = null;
+    mergeDialog.querySelector('[data-merge-error]').textContent = '';
+    mergeDialog.querySelector('[data-merge-primary-panel]').hidden = true;
+    mergeDialog.querySelector('[data-merge-confirm]').disabled = true;
+    mergeDialog.querySelector('input[name="merge_primary"][value="source"]').checked = true;
+    const search = mergeDialog.querySelector('[data-merge-search]');
+    search.value = '';
+    mergeDialog.querySelectorAll('[data-merge-candidate]').forEach(candidateButton => {
+        const candidate = mergeArtworkData(candidateButton);
+        const isSource = candidate.groupId === mergeState.source.groupId;
+        candidateButton.hidden = isSource;
+        candidateButton.classList.remove('is-selected');
+        candidateButton.classList.toggle('is-likely', !isSource && likelyDuplicate(mergeState.source, candidate));
+    });
+    mergeDialog.hidden = false;
+    document.body.style.overflow = 'hidden';
+    window.setTimeout(() => search.focus(), 30);
+}
+
+function selectMergeCandidate(button) {
+    mergeState.candidate = mergeArtworkData(button);
+    mergeDialog.querySelectorAll('[data-merge-candidate]').forEach(item => item.classList.toggle('is-selected', item === button));
+    fillPrimaryOption('source', mergeState.source);
+    fillPrimaryOption('candidate', mergeState.candidate);
+    const totalRoots = mergeState.source.roots + mergeState.candidate.roots;
+    const totalMockups = mergeState.source.mockups + mergeState.candidate.mockups;
+    mergeDialog.querySelector('[data-merge-preserves]').textContent = 'Se conservarán ' + totalRoots + ' imágenes raíz y ' + totalMockups + ' mockups. La referencia secundaria permanecerá internamente para conservar su procedencia.';
+    mergeDialog.querySelector('[data-merge-primary-panel]').hidden = false;
+    mergeDialog.querySelector('[data-merge-confirm]').disabled = false;
+}
+
+mergeDialog?.querySelector('[data-merge-search]')?.addEventListener('input', event => {
+    const term = event.target.value.trim().toLowerCase();
+    mergeDialog.querySelectorAll('[data-merge-candidate]').forEach(button => {
+        const isSource = Number(button.dataset.groupId || 0) === mergeState.source?.groupId;
+        button.hidden = isSource || (term !== '' && !(button.dataset.title || '').toLowerCase().includes(term));
+    });
+});
+
+mergeDialog?.addEventListener('click', event => {
+    const candidate = event.target.closest('[data-merge-candidate]');
+    if (candidate) {
+        selectMergeCandidate(candidate);
+        return;
+    }
+    if (event.target.closest('[data-merge-cancel]') || event.target === mergeDialog) {
+        closeMergeDialog();
+        return;
+    }
+    const confirmButton = event.target.closest('[data-merge-confirm]');
+    if (!confirmButton || !mergeState.source || !mergeState.candidate) return;
+
+    const selectedPrimary = mergeDialog.querySelector('input[name="merge_primary"]:checked')?.value || 'source';
+    const primary = selectedPrimary === 'candidate' ? mergeState.candidate : mergeState.source;
+    const error = mergeDialog.querySelector('[data-merge-error]');
+    const form = new FormData();
+    form.append('csrf', <?= json_encode($artworkMergeCsrf) ?>);
+    form.append('first_group_id', String(mergeState.source.groupId));
+    form.append('second_group_id', String(mergeState.candidate.groupId));
+    form.append('primary_group_id', String(primary.groupId));
+    confirmButton.disabled = true;
+    confirmButton.textContent = 'Fusionando…';
+    error.textContent = '';
+
+    fetch('merge_artwork_groups.php', { method: 'POST', body: form })
+        .then(parseArtworkDeleteJson)
+        .then(result => {
+            if (!result.ok) throw new Error(result.error || 'No se pudieron fusionar las obras.');
+            window.location.href = result.redirect_url || 'root_album.php?merged=1';
+        })
+        .catch(err => {
+            error.textContent = err.message;
+            confirmButton.disabled = false;
+            confirmButton.textContent = 'Fusionar obras';
+        });
+});
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && mergeDialog && !mergeDialog.hidden) closeMergeDialog();
+});
+
+document.addEventListener('click', event => {
+    const mergeButton = event.target.closest('[data-merge-source]');
+    if (!mergeButton) return;
+    event.preventDefault();
+    event.stopPropagation();
+    openMergeDialog(mergeButton);
+});
 
 document.addEventListener('click', event => {
     const button = event.target.closest('[data-delete-artwork]');

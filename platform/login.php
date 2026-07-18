@@ -5,7 +5,7 @@ require_once __DIR__ . '/app/bootstrap.php';
 
 $authenticatedUser = Auth::user();
 if ($authenticatedUser) {
-    header('Location: ' . (Auth::isAdmin($authenticatedUser) ? 'artwork_new.php' : 'create_scenes.php'));
+    header('Location: create_scenes.php');
     exit;
 }
 
@@ -16,8 +16,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $password = (string)($_POST['password'] ?? '');
 
     if (Auth::login($email, $password)) {
-        $authenticatedUser = Auth::user();
-        header('Location: ' . ($authenticatedUser && Auth::isAdmin($authenticatedUser) ? 'artwork_new.php' : 'create_scenes.php'));
+        header('Location: create_scenes.php');
         exit;
     }
 
@@ -87,6 +86,7 @@ $authOpacities = [
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login - Artwork Mockups</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1">
     <link rel="stylesheet" href="style.css?v=auth-gallery-6">
 </head>
 <body class="auth-page">

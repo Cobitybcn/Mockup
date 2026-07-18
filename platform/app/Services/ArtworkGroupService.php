@@ -99,6 +99,14 @@ final class ArtworkGroupService
         Database::withBusyRetry(function () use ($userId, $primaryGroupId, $secondaryGroupId, $primary): void {
             Database::beginWriteTransaction($this->pdo);
             try {
+                $primaryArtworkIds = $this->artworkIdsForGroup($userId, $primaryGroupId);
+                $secondaryArtworkIds = $this->artworkIdsForGroup($userId, $secondaryGroupId);
+                $this->mergeArtworkSheets(
+                    $userId,
+                    (int)$primary['canonical_artwork_id'],
+                    array_merge($primaryArtworkIds, $secondaryArtworkIds)
+                );
+
                 $this->pdo->prepare('
                     UPDATE artworks
                     SET artwork_group_id = :primary_group_id,
@@ -158,9 +166,84 @@ final class ArtworkGroupService
 
     private function sheets(int $userId): array
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM artwork_sheets WHERE user_id = :user_id ORDER BY id');
+        $stmt = $this->pdo->prepare("SELECT * FROM artwork_sheets WHERE user_id = :user_id AND COALESCE(status, '') <> 'merged' ORDER BY id");
         $stmt->execute(['user_id' => $userId]);
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Keep the primary editorial sheet as the single active reference while
+     * preserving the former sheets for audit and existing foreign keys.
+     *
+     * @param array<int|string> $artworkIds
+     */
+    private function mergeArtworkSheets(int $userId, int $primaryArtworkId, array $artworkIds): void
+    {
+        $artworkIds = array_values(array_unique(array_filter(array_map('intval', $artworkIds))));
+        if ($primaryArtworkId <= 0 || !$artworkIds) {
+            return;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($artworkIds), '?'));
+        $stmt = $this->pdo->prepare("
+            SELECT *
+            FROM artwork_sheets
+            WHERE user_id = ?
+            AND canonical_artwork_id IN ({$placeholders})
+            ORDER BY id ASC
+        ");
+        $stmt->execute(array_merge([$userId], $artworkIds));
+        $sheets = $stmt->fetchAll();
+
+        $primarySheet = null;
+        $relatedArtworkIds = $artworkIds;
+        foreach ($sheets as $sheet) {
+            if ((int)($sheet['canonical_artwork_id'] ?? 0) === $primaryArtworkId) {
+                $primarySheet = $sheet;
+            }
+            $related = json_decode((string)($sheet['related_artwork_ids'] ?? ''), true);
+            if (is_array($related)) {
+                $relatedArtworkIds = array_merge($relatedArtworkIds, $related);
+            }
+        }
+
+        if (!is_array($primarySheet)) {
+            return;
+        }
+
+        $relatedArtworkIds = array_values(array_unique(array_filter(array_map('intval', $relatedArtworkIds))));
+        sort($relatedArtworkIds);
+        $now = date('c');
+        $this->pdo->prepare('
+            UPDATE artwork_sheets
+            SET related_artwork_ids = :related_artwork_ids,
+                updated_at = :updated_at
+            WHERE id = :id
+            AND user_id = :user_id
+        ')->execute([
+            'related_artwork_ids' => json_encode($relatedArtworkIds, JSON_UNESCAPED_SLASHES),
+            'updated_at' => $now,
+            'id' => (int)$primarySheet['id'],
+            'user_id' => $userId,
+        ]);
+
+        $secondarySheetIds = array_values(array_filter(array_map(
+            static fn (array $sheet): int => (int)$sheet['id'],
+            $sheets
+        ), static fn (int $sheetId): bool => $sheetId !== (int)$primarySheet['id']));
+        if (!$secondarySheetIds) {
+            return;
+        }
+
+        $sheetPlaceholders = implode(',', array_fill(0, count($secondarySheetIds), '?'));
+        $stmt = $this->pdo->prepare("
+            UPDATE artwork_sheets
+            SET status = 'merged',
+                updated_at = ?
+            WHERE user_id = ?
+            AND id IN ({$sheetPlaceholders})
+        ");
+        $stmt->execute(array_merge([$now, $userId], $secondarySheetIds));
     }
 
     private function sheetMemberIds(array $sheet): array

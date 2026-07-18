@@ -84,6 +84,7 @@ $authOpacities = [
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Register - Artwork Mockups</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1">
     <link rel="stylesheet" href="style.css?v=auth-gallery-6">
 </head>
 <body class="auth-page">

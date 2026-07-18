@@ -654,7 +654,7 @@ function mockup_album_label(array $mockup): string
                     <p><?= h($total) ?> images saved in your private archive.</p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link secondary" href="artwork_new.php">Upload Artwork</a>
+                    <a class="button-link secondary" href="create_scenes.php">Create Art</a>
                     <a class="button-link" href="mockup_upload.php">Import Mockups</a>
                 </div>
             </div>

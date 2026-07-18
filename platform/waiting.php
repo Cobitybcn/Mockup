@@ -38,7 +38,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'cancel') {
     } catch (Throwable $e) {
         // Fallback silently
     }
-    header('Location: artwork_new.php');
+    header('Location: create_scenes.php');
     exit;
 }
 
@@ -506,7 +506,7 @@ function h($v): string {
                             Proceed to Step 2 · Curatorial Direction
                         </a>
 
-                        <a class="button-link secondary" href="artwork_new.php">
+                        <a class="button-link secondary" href="create_scenes.php">
                             Upload another artwork
                         </a>
                     </div>
@@ -521,7 +521,7 @@ function h($v): string {
 
                     <p>Job ID: <code><?= h($job) ?></code></p>
 
-                    <a class="button-link" href="artwork_new.php">Go back</a>
+                    <a class="button-link" href="create_scenes.php">Go back</a>
 
                 <?php else: ?>
 

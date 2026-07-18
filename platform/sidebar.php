@@ -8,7 +8,7 @@ $sidebarIsAdmin = $sidebarUser ? Auth::isAdmin($sidebarUser) : false;
 $currentPage = basename($_SERVER['PHP_SELF']);
 $queryString = $_SERVER['QUERY_STRING'] ?? '';
 $currentImageParam = basename((string)($_GET['image'] ?? $_POST['image'] ?? ''));
-$currentArtworkIdParam = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
+$currentArtworkIdParam = (int)($_GET['id'] ?? $_GET['artwork_id'] ?? $_POST['id'] ?? $_POST['artwork_id'] ?? 0);
 $currentMockupIdParam = (int)($_GET['mockup_id'] ?? $_POST['mockup_id'] ?? ($selectedMockupId ?? 0));
 $sidebarContextArtworkId = 0;
 $sidebarContextRootFile = '';
@@ -196,7 +196,7 @@ if ($sidebarUser) {
 
 // Step active states
 $createScenesActive = ($currentPage === 'create_scenes.php');
-$step1Active = ($currentPage === 'artwork_new.php' || $currentPage === 'root_select.php' || $currentPage === 'waiting.php');
+$step1Active = ($currentPage === 'create_scenes.php' || $currentPage === 'root_select.php' || $currentPage === 'waiting.php');
 $step2Active = ($currentPage === 'root_select.php' || $currentPage === 'waiting.php');
 $step3Active = ($currentPage === 'core_review.php');
 $step4Active = ($currentPage === 'artwork.php' || $currentPage === 'publish.php' || $currentPage === 'artwork_details.php');
@@ -337,6 +337,9 @@ if (!$sidebarIsAdmin) {
 }
 
 $rootAlbumUrl = 'root_album.php';
+$videoStudioUrl = $sidebarContextArtworkId > 0
+    ? 'video.php?artwork_id=' . urlencode((string)$sidebarContextArtworkId)
+    : 'video.php';
 
 $generatedResultsUrl = $sidebarContextArtworkId > 0
     ? 'mockup_combination_results.php?id=' . urlencode((string)$sidebarContextArtworkId)
@@ -380,6 +383,17 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
 }
 
 ?>
+<script>
+(function () {
+    if (document.head.querySelector('link[data-artwork-mockups-favicon]')) return;
+    var favicon = document.createElement('link');
+    favicon.rel = 'icon';
+    favicon.type = 'image/svg+xml';
+    favicon.href = 'favicon.svg?v=1';
+    favicon.dataset.artworkMockupsFavicon = '1';
+    document.head.appendChild(favicon);
+})();
+</script>
 <?php if ($sidebarIsAdmin): ?>
 <script>
 (function () {
@@ -733,7 +747,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
 </style>
 <aside class="sidebar">
     <div class="sidebar-head">
-        <a class="brand" href="<?= $sidebarIsAdmin ? 'artwork_new.php' : 'create_scenes.php' ?>" data-admin-href="artwork_new.php" data-normal-href="create_scenes.php">
+        <a class="brand" href="create_scenes.php" data-admin-href="create_scenes.php" data-normal-href="create_scenes.php">
             <span class="brand-kicker">ArtworkMockups.com</span>
             <span class="brand-title">ARTWORK MOCKUPS <span class="brand-mark"></span></span>
         </a>
@@ -753,7 +767,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                     <span>Create</span>
                     <a class="normal-flow-only <?= $createScenesActive ? 'active' : '' ?>" href="create_scenes.php">Create Art</a>
                     <?php if ($sidebarIsAdmin): ?>
-                        <a class="admin-flow-only <?= $step1Active ? 'active' : '' ?>" href="artwork_new.php">Upload Artwork</a>
+                        <a class="admin-flow-only <?= $step1Active ? 'active' : '' ?>" href="create_scenes.php">Create Art</a>
                     <?php endif; ?>
                     <a class="<?= $generatedResultsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($generatedResultsUrl, ENT_QUOTES, 'UTF-8') ?>">Art Mockups</a>
                     <a class="<?= $variationLabActive ? 'active' : '' ?>" href="<?= htmlspecialchars($variationLabUrl, ENT_QUOTES, 'UTF-8') ?>">Mockup Lab</a>
@@ -775,7 +789,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                     <span>Studios</span>
                     <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
                     <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
-                    <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="video.php">Video Studio</a>
+                    <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($videoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Studio</a>
                 </div>
                 <?php if ($sidebarIsAdmin): ?>
                     <div class="sidebar-mobile-section">
@@ -810,7 +824,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                     <span>Create Art</span>
                 </a>
                 <?php if ($sidebarIsAdmin): ?>
-                    <a class="sidebar-tab mobile-hide-upload admin-flow-only <?= $step1Active ? 'active' : '' ?>" href="artwork_new.php">Upload Artwork</a>
+                    <a class="sidebar-tab mobile-hide-upload admin-flow-only <?= $step1Active ? 'active' : '' ?>" href="create_scenes.php">Create Art</a>
                 <?php endif; ?>
                 <?php if ($sidebarIsAdmin && (!$step5Disabled || $step5Active)): ?>
                     <a class="sidebar-tab admin-flow-only <?= $step5Active && !$variationLabActive && !$generatedResultsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($step5Url, ENT_QUOTES, 'UTF-8') ?>">Scenes</a>
@@ -849,7 +863,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
             <div class="sidebar-tab-row">
                 <a class="sidebar-tab <?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
                 <a class="sidebar-tab <?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
-                <a class="sidebar-tab <?= $videoStudioActive ? 'active' : '' ?>" href="video.php">Video Studio</a>
+                <a class="sidebar-tab <?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($videoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Studio</a>
             </div>
         </section>
 
@@ -889,7 +903,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <span>Studios</span>
                 <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
                 <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
-                <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="video.php">Video Studio</a>
+                <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($videoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Studio</a>
             </div>
             <?php if ($sidebarIsAdmin): ?>
                 <div class="sidebar-mobile-section">
@@ -912,6 +926,210 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
         </div>
     </details>
 </aside>
+<?php if ($sidebarUser): ?>
+<style>
+    .global-generation-activity,
+    .global-generation-ready {
+        position: fixed;
+        right: 88px;
+        bottom: 24px;
+        z-index: 1450;
+        border: 1px solid #c8d7c3;
+        border-radius: 8px;
+        background: #e4eee1;
+        color: #3f593c;
+        box-shadow: 0 14px 38px rgba(38, 45, 35, .16);
+        font-family: var(--font-sans, Arial, sans-serif);
+    }
+    .global-generation-activity[hidden],
+    .global-generation-ready[hidden] { display: none !important; }
+    .global-generation-activity {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        padding: 10px 15px;
+        font-size: 12px;
+    }
+    .global-generation-spinner {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+        border: 2px solid rgba(63, 89, 60, .2);
+        border-top-color: #6f8b68;
+        border-radius: 50%;
+        animation: global-generation-spin .9s linear infinite;
+    }
+    @keyframes global-generation-spin { to { transform: rotate(360deg); } }
+    .global-generation-ready {
+        display: grid;
+        grid-template-columns: auto 1fr auto auto;
+        align-items: center;
+        gap: 12px;
+        width: min(470px, calc(100vw - 32px));
+        padding: 14px 15px;
+        background: #f1f6ef;
+    }
+    .global-generation-ready-mark {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #d5e5d0;
+        font-size: 17px;
+    }
+    .global-generation-ready strong { display: block; font-size: 13px; }
+    .global-generation-ready span { display: block; margin-top: 2px; color: #657061; font-size: 11px; }
+    .global-generation-ready a {
+        min-height: 38px;
+        padding: 11px 15px;
+        border: 1px solid #a9bfa3;
+        border-radius: 5px;
+        background: #dcead8;
+        color: #3f593c;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-decoration: none;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    .global-generation-ready button {
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: #657061;
+        font-size: 20px;
+        cursor: pointer;
+    }
+    .global-generation-ready.is-error { border-color: #dfbbb5; background: #f8e9e6; color: #8e4b43; }
+    @media (max-width: 760px) {
+        .global-generation-activity { right: 16px; bottom: 76px; }
+        .global-generation-ready {
+            right: 16px;
+            bottom: 76px;
+            grid-template-columns: auto 1fr auto;
+        }
+        .global-generation-ready a { grid-column: 1 / -1; text-align: center; }
+    }
+</style>
+<div class="global-generation-activity" data-global-generation-activity role="status" aria-live="polite" hidden>
+    <span class="global-generation-spinner" aria-hidden="true"></span>
+    <span data-global-generation-active-text>Creating mockups in the background…</span>
+</div>
+<div class="global-generation-ready" data-global-generation-ready role="status" aria-live="polite" hidden>
+    <span class="global-generation-ready-mark" aria-hidden="true">✓</span>
+    <div>
+        <strong data-global-generation-ready-title>Mockups ready</strong>
+        <span data-global-generation-ready-text>Your results are available.</span>
+    </div>
+    <a href="mockups.php" data-global-generation-ready-link>View results</a>
+    <button type="button" data-global-generation-dismiss aria-label="Dismiss">×</button>
+</div>
+<script>
+(function () {
+    const userKey = <?= json_encode((string)$sidebarUser['id']) ?>;
+    const trackedKey = 'artworkMockupsGenerationTracked:' + userKey;
+    const pendingKey = 'artworkMockupsGenerationNotices:' + userKey;
+    const activity = document.querySelector('[data-global-generation-activity]');
+    const activeText = document.querySelector('[data-global-generation-active-text]');
+    const ready = document.querySelector('[data-global-generation-ready]');
+    const readyTitle = document.querySelector('[data-global-generation-ready-title]');
+    const readyText = document.querySelector('[data-global-generation-ready-text]');
+    const readyLink = document.querySelector('[data-global-generation-ready-link]');
+    const dismiss = document.querySelector('[data-global-generation-dismiss]');
+    const brand = document.querySelector('.brand');
+    const endpoint = new URL('mockup_generation_activity.php', brand ? brand.href : window.location.href).href;
+    let pollTimer = 0;
+
+    function ids(key) {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+            return Array.isArray(parsed) ? parsed.map(Number).filter(Number.isFinite) : [];
+        } catch (error) { return []; }
+    }
+    function save(key, values) {
+        localStorage.setItem(key, JSON.stringify(Array.from(new Set(values.map(Number).filter(Number.isFinite)))));
+    }
+    function trackJobs(values) {
+        save(trackedKey, ids(trackedKey).concat((values || []).map(Number)));
+        refresh(150);
+    }
+    function clearNotices() {
+        save(pendingKey, []);
+        if (ready) ready.hidden = true;
+    }
+    function render(data) {
+        const active = Array.isArray(data.active) ? data.active : [];
+        if (activity && activeText) {
+            activity.hidden = active.length === 0;
+            activeText.textContent = active.length === 1
+                ? '1 mockup is being created in the background'
+                : active.length + ' mockups are being created in the background';
+        }
+
+        const activeIds = active.map(item => Number(item.id));
+        if (activeIds.length) save(trackedKey, ids(trackedKey).concat(activeIds));
+        const tracked = ids(trackedKey);
+        const allItems = Array.isArray(data.items) ? data.items : [];
+        const completed = allItems.filter(item => tracked.includes(Number(item.id)) && !item.active);
+        if (completed.length) {
+            save(trackedKey, tracked.filter(id => !completed.some(item => Number(item.id) === id)));
+            save(pendingKey, ids(pendingKey).concat(completed.map(item => Number(item.id))));
+        }
+
+        const pendingIds = ids(pendingKey);
+        const notices = allItems.filter(item => pendingIds.includes(Number(item.id)));
+        if (!ready || !notices.length) {
+            if (ready) ready.hidden = true;
+            return;
+        }
+        const successful = notices.filter(item => item.status === 'done');
+        const failed = notices.filter(item => item.status === 'error' || item.status === 'failed_enqueue');
+        ready.hidden = false;
+        ready.classList.toggle('is-error', successful.length === 0 && failed.length > 0);
+        if (successful.length) {
+            const regenerations = successful.filter(item => item.kind === 'regeneration').length;
+            readyTitle.textContent = successful.length === 1
+                ? (regenerations ? 'Regeneration ready' : 'Mockup ready')
+                : successful.length + ' mockups ready';
+            readyText.textContent = 'The task finished without interrupting your work.';
+            readyLink.hidden = false;
+            readyLink.href = successful[0].results_url || 'mockups.php';
+            readyLink.textContent = 'View results';
+        } else {
+            readyTitle.textContent = failed.length === 1 ? 'Generation could not finish' : 'Some generations could not finish';
+            readyText.textContent = failed[0]?.error || 'The credit was returned and the task can be retried.';
+            readyLink.hidden = true;
+        }
+    }
+    async function poll() {
+        try {
+            const response = await fetch(endpoint, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+            const data = await response.json();
+            if (data.ok) render(data);
+            window.clearTimeout(pollTimer);
+            pollTimer = window.setTimeout(poll, data.active_count > 0 ? 3000 : 10000);
+        } catch (error) {
+            window.clearTimeout(pollTimer);
+            pollTimer = window.setTimeout(poll, 12000);
+        }
+    }
+    function refresh(delay) {
+        window.clearTimeout(pollTimer);
+        pollTimer = window.setTimeout(poll, typeof delay === 'number' ? delay : 0);
+    }
+
+    dismiss?.addEventListener('click', clearNotices);
+    readyLink?.addEventListener('click', clearNotices);
+    window.artworkGenerationTracker = { trackJobs: trackJobs, refresh: refresh };
+    refresh(300);
+})();
+</script>
+<?php endif; ?>
 <script>
 (function () {
     const menu = document.querySelector('[data-sidebar-website-menu]');

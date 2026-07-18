@@ -877,7 +877,7 @@ if (wants_json_response()) {
             Back to Step 2
         </a>
 
-        <a class="button secondary" href="artwork_new.php">
+        <a class="button secondary" href="create_scenes.php">
             Upload another artwork
         </a>
 

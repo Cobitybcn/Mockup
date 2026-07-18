@@ -6,6 +6,7 @@ require_once __DIR__ . '/app/Support/ArtworkAnalysisV2.php';
 require_once __DIR__ . '/app/Support/ArtworkOriginalityChecker.php';
 require_once __DIR__ . '/app/Support/DescriptionDiversityEngine.php';
 require_once __DIR__ . '/app/Services/ArtworkAnalysisV2Service.php';
+require_once __DIR__ . '/app/Video/VideoStudioRepository.php';
 
 $user = Auth::requireUser();
 $isAdmin = Auth::isAdmin($user);
@@ -1029,12 +1030,24 @@ foreach ($mockups ?: [] as $relatedMockup) {
     }
     $relatedState = json_decode((string)($relatedMockup['selector_state_json'] ?? ''), true);
     $relatedMockup['selector_state'] = is_array($relatedState) ? $relatedState : [];
+    $relatedCombination = (array)($relatedMockup['selector_state']['combination'] ?? []);
+    $relatedCameraName = trim((string)($relatedCombination['camera_slot_name'] ?? ''));
+    $relatedMockup['is_close_view'] = preg_match('/\b(?:close[\s-]*(?:up|view)|detail|macro)\b/i', $relatedCameraName) === 1;
     $relatedMockup['variation_lab_available'] = MockupVariationEligibility::canUseVariationLab($relatedMockup);
     $relatedMockup['mockup_file_basename'] = $relatedFile;
     $relatedMockup['is_favorite'] = isset($favoriteMockupLookup[(int)$relatedMockup['id']]);
     $relatedMockups[] = $relatedMockup;
 }
-usort($relatedMockups, static fn (array $a, array $b): int => (!empty($b['is_favorite'])) <=> (!empty($a['is_favorite'])));
+usort($relatedMockups, static function (array $a, array $b): int {
+    $closeViewOrder = (!empty($a['is_close_view']) ? 1 : 0) <=> (!empty($b['is_close_view']) ? 1 : 0);
+    if ($closeViewOrder !== 0) return $closeViewOrder;
+
+    $favoriteOrder = (!empty($b['is_favorite']) ? 1 : 0) <=> (!empty($a['is_favorite']) ? 1 : 0);
+    if ($favoriteOrder !== 0) return $favoriteOrder;
+
+    $dateOrder = strcmp((string)($b['created_at'] ?? ''), (string)($a['created_at'] ?? ''));
+    return $dateOrder !== 0 ? $dateOrder : ((int)($b['id'] ?? 0) <=> (int)($a['id'] ?? 0));
+});
 $favoriteMockups = array_values(array_filter($relatedMockups, static fn (array $mockup): bool => !empty($mockup['is_favorite'])));
 
 $measurement = $meta['measurements'] ?? [];
@@ -1048,6 +1061,12 @@ $sizeText = trim((string)$width) !== '' && trim((string)$height) !== ''
 
 $artistProfile = is_array($profile['_artist_profile'] ?? null) ? $profile['_artist_profile'] : ArtistProfile::findForUser($artworkOwnerId);
 $artistName = trim((string)($artistProfile['artist_name'] ?? ''));
+$artworkFinalVideos = [];
+try {
+    $artworkFinalVideos = (new VideoStudioRepository($pdo))->finalVideosForArtwork($artworkOwnerId, $id);
+} catch (Throwable $videoLibraryError) {
+    $artworkFinalVideos = [];
+}
 $orientation = $analysis['image']['orientation'] ?? '';
 if ($orientation === '' && (float)$width > 0 && (float)$height > 0) {
     $orientation = (float)$width > (float)$height ? 'horizontal' : ((float)$height > (float)$width ? 'vertical' : 'square');
@@ -1143,11 +1162,11 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
         .artwork-metadata-more > summary { cursor:pointer; padding:14px 16px; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
         .artwork-metadata-more-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; padding:4px 16px 16px; }
         .admin-analysis-details { max-width:1180px; margin:14px auto 0; }
-        .artwork-metadata-finished { max-width:980px; margin:22px 0 0; padding:30px 34px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); }
+        .artwork-metadata-finished { width:100%; max-width:none; box-sizing:border-box; margin:22px 0 0; padding:30px 34px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); }
         .artwork-metadata-finished h3 { margin:0; font:500 clamp(28px,3vw,42px)/1.08 var(--font-serif); color:var(--ink); }
         .artwork-metadata-finished .metadata-subtitle { margin:9px 0 0; font:400 20px/1.35 var(--font-serif); color:var(--accent); }
-        .artwork-metadata-finished .metadata-description { margin:24px 0 0; max-width:78ch; color:var(--ink); font-size:16px; line-height:1.75; white-space:pre-line; }
-        .artwork-metadata-edit { max-width:980px; margin:12px 0 0; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-soft); }
+        .artwork-metadata-finished .metadata-description { margin:24px 0 0; width:100%; max-width:none; color:var(--ink); font-size:16px; line-height:1.75; white-space:pre-line; }
+        .artwork-metadata-edit { width:100%; max-width:none; box-sizing:border-box; margin:12px 0 0; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-soft); }
         .artwork-metadata-edit > summary { cursor:pointer; padding:13px 16px; color:var(--accent); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
         .artwork-metadata-edit .artwork-metadata-v2-form { margin:0; max-width:none; border:0; border-top:1px solid var(--line); border-radius:0; box-shadow:none; }
         @media (max-width:800px) { .v2-admin-grid { grid-template-columns:1fr; } }
@@ -1644,7 +1663,14 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             display: grid;
             grid-template-columns: minmax(700px, 1.65fr) minmax(420px, .95fr);
             gap: 14px;
-            align-items: stretch;
+            align-items: start;
+        }
+
+        .artwork-overview-main {
+            display: grid;
+            gap: 14px;
+            min-width: 0;
+            align-content: start;
         }
 
         .artwork-root-views-card {
@@ -1654,9 +1680,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             padding: 14px;
         }
 
-        .artwork-overview-grid > .artwork-root-views-card {
-            grid-column: 1;
-            grid-row: 1;
+        .artwork-overview-main > .artwork-root-views-card {
             align-self: start;
         }
 
@@ -1872,6 +1896,46 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             max-width: 100%;
         }
 
+        .root-version-grid.has-final-video {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-rows: repeat(2, minmax(0, 1fr));
+            overflow: visible;
+        }
+
+        .root-version-grid.has-final-video > .root-version-card:nth-child(1) {
+            grid-column: 1;
+            grid-row: 1 / 3;
+        }
+
+        .root-version-grid.has-final-video > .root-version-card:nth-child(2) {
+            grid-column: 2;
+            grid-row: 1 / 3;
+        }
+
+        .root-version-grid.has-final-video > .root-version-card:nth-child(3) {
+            grid-column: 3;
+            grid-row: 1;
+        }
+
+        .root-version-grid.has-final-video > .root-version-card:nth-child(4) {
+            grid-column: 3;
+            grid-row: 2;
+        }
+
+        .root-version-grid.has-final-video > .root-version-card:nth-child(n + 3) {
+            min-height: 0;
+        }
+
+        .root-version-grid.has-final-video > .root-version-card:nth-child(n + 3).root-version-missing button {
+            gap: 7px;
+            padding: 12px;
+        }
+
+        .root-version-grid.has-final-video > .root-version-card:nth-child(n + 3).root-version-missing svg {
+            width: 30px;
+            height: 30px;
+        }
+
         .root-overview-media-grid {
             min-width: 0;
         }
@@ -1881,14 +1945,12 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
         }
 
         .artwork-metadata-slot {
-            grid-column: 1;
-            grid-row: 2;
             min-width: 0;
         }
 
         .favorite-mockups-panel {
             grid-column: 2;
-            grid-row: 1 / 3;
+            grid-row: 1;
             min-width: 0;
             height: auto;
             box-sizing: border-box;
@@ -1955,23 +2017,42 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
 
         .related-mockups-sidebar-grid .related-mockup-card {
             padding: 5px;
-            grid-template-rows: auto 14px 22px;
-            gap: 4px;
+            grid-template-rows: auto;
+            gap: 0;
         }
 
-        .related-mockups-sidebar-grid .related-mockup-meta {
-            min-height: 12px;
+        .related-mockups-sidebar-grid .related-mockup-card img {
+            aspect-ratio: 4 / 5;
+            object-fit: cover;
         }
 
-        .related-mockups-sidebar-grid .related-mockup-meta strong,
-        .related-mockups-sidebar-grid .related-mockup-meta span {
-            font-size: 8px;
+        .related-mockups-sidebar-grid .related-mockup-actions {
+            position: absolute;
+            z-index: 3;
+            right: 5px;
+            bottom: 5px;
+            left: 5px;
         }
 
         .related-mockups-sidebar-grid .related-mockup-actions a {
             min-height: 22px;
             padding: 0 4px;
+            border: 1px solid rgba(255, 255, 255, .34);
+            background: linear-gradient(180deg, rgba(83, 86, 87, .38), rgba(42, 45, 46, .48));
+            color: rgba(255, 255, 255, .9);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 3px 10px rgba(0, 0, 0, .12);
+            backdrop-filter: blur(9px) saturate(.72);
+            -webkit-backdrop-filter: blur(9px) saturate(.72);
             font-size: 8px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+        }
+
+        .related-mockups-sidebar-grid .related-mockup-actions a:hover,
+        .related-mockups-sidebar-grid .related-mockup-actions a:focus-visible {
+            border-color: rgba(255, 255, 255, .56);
+            background: linear-gradient(180deg, rgba(91, 94, 95, .5), rgba(45, 48, 49, .6));
+            color: #fff;
+            outline: none;
         }
 
         .related-mockups-sidebar-grid .favorite-overlay-btn,
@@ -2167,6 +2248,89 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
         .root-version-card.is-selected img {
             border-color: var(--accent);
             box-shadow: 0 0 0 1px var(--accent);
+        }
+
+        .root-version-video-card {
+            overflow: hidden;
+        }
+
+        .root-version-card .root-version-video-link {
+            position: relative;
+            width: 100%;
+            min-height: 0;
+            margin: 0;
+            padding: 0;
+            display: block;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 3px;
+            background: #191714;
+            box-shadow: none;
+            cursor: pointer;
+        }
+
+        .root-version-video-link img,
+        .root-version-video-link video {
+            width: 100%;
+            height: auto;
+            max-height: none;
+            display: block;
+            object-fit: contain;
+            border: 0;
+            border-radius: 0;
+            background: #191714;
+            transition: opacity .18s ease, transform .22s ease;
+        }
+
+        .root-version-video-link:hover img,
+        .root-version-video-link:hover video {
+            opacity: .86;
+            transform: scale(1.012);
+        }
+
+        .root-version-card .root-version-video-link:hover,
+        .root-version-card .root-version-video-link:focus-visible {
+            background: #191714;
+            box-shadow: none;
+            transform: none;
+            outline: 1px solid var(--accent);
+            outline-offset: 1px;
+        }
+
+        .root-version-card .root-version-video-download {
+            position: absolute;
+            z-index: 3;
+            top: 8px;
+            right: 8px;
+            width: 27px;
+            height: 27px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(255, 255, 255, .56);
+            border-radius: 50%;
+            background: rgba(24, 21, 18, .34);
+            color: rgba(255, 255, 255, .88);
+            box-shadow: 0 5px 14px rgba(0, 0, 0, .12);
+            backdrop-filter: blur(5px);
+            opacity: .72;
+            transition: opacity .16s ease, background .16s ease;
+        }
+
+        .root-version-card .root-version-video-download:hover,
+        .root-version-card .root-version-video-download:focus-visible {
+            background: rgba(154, 123, 86, .78);
+            opacity: 1;
+            outline: none;
+        }
+
+        .root-version-video-download svg {
+            width: 13px;
+            height: 13px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.6;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .root-version-missing {
@@ -2575,6 +2739,17 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                 gap: 8px;
             }
 
+            .root-version-grid.has-final-video {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-rows: none;
+                grid-auto-flow: row;
+            }
+
+            .root-version-grid.has-final-video > .root-version-card:nth-child(n) {
+                grid-column: auto;
+                grid-row: auto;
+            }
+
             .root-version-grid .root-version-card.is-selected {
                 display: none;
             }
@@ -2604,6 +2779,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             .artwork-metadata-form-grid {
                 grid-template-columns: 1fr;
             }
+
         }
     </style>
 </head>
@@ -2819,7 +2995,8 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                         <input type="hidden" name="action" value="generate_v2_artwork_draft">
                     </form>
                     <div class="artwork-overview-grid">
-                        <section class="artwork-root-views-card">
+                        <div class="artwork-overview-main">
+                            <section class="artwork-root-views-card">
                             <h3>Root Views</h3>
                             <div class="root-overview-media-grid">
                                 <div class="mobile-root-artwork">
@@ -2828,42 +3005,73 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                                     </a>
                                     <span class="mobile-root-artwork-label">Selected root artwork</span>
                                 </div>
-                                <?php if (!empty($rootCandidatesList) || !empty($missingRootViews)): ?>
-                                    <div class="root-version-grid">
-                                        <?php
-                                        $viewLabels = [
-                                            'frontal'             => 'Frontal',
-                                            'three-quarter-left'  => '3/4 Left',
-                                            'three-quarter-right' => '3/4 Right',
-                                        ];
-                                        foreach (array_slice($rootCandidatesList, 0, 3) as $rca):
-                                            $rcaFile = basename((string)($rca['file_name'] ?? ''));
-                                            if ($rcaFile === '' || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $rcaFile)) {
-                                                continue;
-                                            }
-                                            $rcaLabel = $viewLabels[$rca['view_type']] ?? $rca['view_type'];
-                                            $rcaIsSelected = !empty($rca['is_selected']) || $rcaFile === $rootFile;
-                                        ?>
-                                            <article class="root-version-card <?= $rcaIsSelected ? 'is-selected' : '' ?>">
-                                                <a href="<?= h('viewer.php?file=' . rawurlencode($rcaFile) . '&back=' . rawurlencode('artwork.php?id=' . (int)$id)) ?>">
-                                                    <img src="<?= h(media_url($rcaFile)) ?>" alt="<?= h($rcaLabel) ?>">
-                                                </a>
-                                                <div class="root-version-overlay">
-                                                    <?php if ($rcaIsSelected): ?>
-                                                        <span class="root-version-selected-pill">Selected</span>
-                                                    <?php else: ?>
-                                                        <form method="post">
-                                                            <input type="hidden" name="action" value="select_root_candidate">
-                                                            <input type="hidden" name="candidate_id" value="<?= (int)$rca['id'] ?>">
-                                                            <input type="hidden" name="candidate_file" value="<?= h($rcaFile) ?>">
-                                                            <button class="root-version-select" type="submit" title="Select root view" aria-label="Select root view">✓</button>
-                                                        </form>
-                                                    <?php endif; ?>
-                                                </div>
-                                                <div class="root-version-label">
-                                                    <span><?= h($rcaLabel) ?></span>
-                                                </div>
-                                            </article>
+                                <?php if (!empty($rootCandidatesList) || !empty($missingRootViews) || !empty($artworkFinalVideos)): ?>
+                                    <?php
+                                    $viewLabels = [
+                                        'frontal'             => 'Frontal',
+                                        'three-quarter-left'  => '3/4 Left',
+                                        'three-quarter-right' => '3/4 Right',
+                                    ];
+                                    $latestArtworkFinalVideo = is_array($artworkFinalVideos[0] ?? null) ? $artworkFinalVideos[0] : null;
+                                    $rootVisualItems = [];
+                                    foreach (array_slice($rootCandidatesList, 0, 3) as $candidate) {
+                                        $candidateFile = basename((string)($candidate['file_name'] ?? ''));
+                                        if ($candidateFile === '' || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $candidateFile)) continue;
+                                        $rootVisualItems[] = ['type' => 'image', 'candidate' => $candidate, 'file' => $candidateFile];
+                                        if (count($rootVisualItems) === 1 && $latestArtworkFinalVideo) {
+                                            $rootVisualItems[] = ['type' => 'video', 'video' => $latestArtworkFinalVideo];
+                                        }
+                                    }
+                                    if ($rootVisualItems === [] && $latestArtworkFinalVideo) {
+                                        $rootVisualItems[] = ['type' => 'video', 'video' => $latestArtworkFinalVideo];
+                                    }
+                                    ?>
+                                    <div class="root-version-grid <?= $latestArtworkFinalVideo ? 'has-final-video' : '' ?>">
+                                        <?php foreach ($rootVisualItems as $visualItem): ?>
+                                            <?php if ($visualItem['type'] === 'video'): ?>
+                                                <?php
+                                                $finalVideo = (array)$visualItem['video'];
+                                                $finalVideoUrl = (string)($finalVideo['previewUrl'] ?? '');
+                                                $finalVideoPoster = (string)($finalVideo['thumbnailUrl'] ?? '');
+                                                ?>
+                                                <article class="root-version-card root-version-video-card">
+                                                    <div class="root-version-video-link">
+                                                        <video src="<?= h($finalVideoUrl) ?>"<?= $finalVideoPoster !== '' ? ' poster="' . h($finalVideoPoster) . '"' : '' ?> controls controlslist="noremoteplayback nodownload" disablepictureinpicture disableremoteplayback playsinline preload="metadata"></video>
+                                                    </div>
+                                                    <a class="root-version-video-download" href="<?= h($finalVideoUrl) ?>&amp;download=1" aria-label="Download final video" title="Download MP4">
+                                                        <svg viewBox="0 0 20 20" aria-hidden="true">
+                                                            <path d="M10 3v9m-3-3 3 3 3-3M4 15.5h12"></path>
+                                                        </svg>
+                                                    </a>
+                                                </article>
+                                            <?php else: ?>
+                                                <?php
+                                                $rca = (array)$visualItem['candidate'];
+                                                $rcaFile = (string)$visualItem['file'];
+                                                $rcaLabel = $viewLabels[$rca['view_type']] ?? $rca['view_type'];
+                                                $rcaIsSelected = !empty($rca['is_selected']) || $rcaFile === $rootFile;
+                                                ?>
+                                                <article class="root-version-card <?= $rcaIsSelected ? 'is-selected' : '' ?>">
+                                                    <a href="<?= h('viewer.php?file=' . rawurlencode($rcaFile) . '&back=' . rawurlencode('artwork.php?id=' . (int)$id)) ?>">
+                                                        <img src="<?= h(media_url($rcaFile)) ?>" alt="<?= h($rcaLabel) ?>">
+                                                    </a>
+                                                    <div class="root-version-overlay">
+                                                        <?php if ($rcaIsSelected): ?>
+                                                            <span class="root-version-selected-pill">Selected</span>
+                                                        <?php else: ?>
+                                                            <form method="post">
+                                                                <input type="hidden" name="action" value="select_root_candidate">
+                                                                <input type="hidden" name="candidate_id" value="<?= (int)$rca['id'] ?>">
+                                                                <input type="hidden" name="candidate_file" value="<?= h($rcaFile) ?>">
+                                                                <button class="root-version-select" type="submit" title="Select root view" aria-label="Select root view">✓</button>
+                                                            </form>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <div class="root-version-label">
+                                                        <span><?= h($rcaLabel) ?></span>
+                                                    </div>
+                                                </article>
+                                            <?php endif; ?>
                                         <?php endforeach; ?>
                                         <?php foreach ($missingRootViews as $missingViewType => $missingViewLabel): ?>
                                             <article class="root-version-card root-version-missing">
@@ -2885,13 +3093,13 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                                     <div class="notice">Only the selected root image is available.</div>
                                 <?php endif; ?>
                             </div>
-                        </section>
+                            </section>
 
-                        <div class="artwork-metadata-slot"><?= $artworkMetadataPanelHtml ?></div>
+                            <div class="artwork-metadata-slot"><?= $artworkMetadataPanelHtml ?></div>
 
-                        <form class="artwork-metadata-layout-form" method="post">
-                            <input type="hidden" name="action" value="save_artwork_metadata">
-                            <section class="artwork-sheet-card artwork-primary-metadata-card <?= $artworkMetadataValidated ? 'metadata-validated' : 'metadata-unvalidated' ?>">
+                            <form class="artwork-metadata-layout-form" method="post">
+                                <input type="hidden" name="action" value="save_artwork_metadata">
+                                <section class="artwork-sheet-card artwork-primary-metadata-card <?= $artworkMetadataValidated ? 'metadata-validated' : 'metadata-unvalidated' ?>">
                                 <div class="artwork-sheet-card-head">
                                     <div>
                                         <h3>Artwork Metadata</h3>
@@ -2924,9 +3132,9 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                                         <button type="submit">Save Metadata</button>
                                     </div>
                                 </div>
-                            </section>
+                                </section>
 
-                            <details class="artwork-metadata-editor artwork-metadata-secondary-row <?= $artworkMetadataValidated ? 'metadata-validated' : 'metadata-unvalidated' ?>">
+                                <details class="artwork-metadata-editor artwork-metadata-secondary-row <?= $artworkMetadataValidated ? 'metadata-validated' : 'metadata-unvalidated' ?>">
                                 <summary>More metadata</summary>
                                 <div class="artwork-metadata-form">
                                     <div class="artwork-metadata-sections">
@@ -2990,9 +3198,11 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                                         <button type="submit">Save Metadata</button>
                                     </div>
                                 </div>
-                            </details>
+                                </details>
+                            </form>
+                        </div>
 
-                            <aside class="favorite-mockups-panel <?= $artworkMetadataValidated ? '' : 'mobile-defer-until-metadata' ?>">
+                        <aside class="favorite-mockups-panel <?= $artworkMetadataValidated ? '' : 'mobile-defer-until-metadata' ?>">
                                 <div class="related-mockups-title-row">
                                     <h3>Related Mockups <span class="related-mockups-count">· <?= count($relatedMockups) ?></span></h3>
                                     <a class="related-mockups-upload-link" href="mockup_upload.php?id=<?= (int)$id ?>">+ Import</a>
@@ -3027,30 +3237,24 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                                                         data-delete-mockup
                                                         data-mockup-id="<?= (int)$sidebarMockup['id'] ?>"
                                                     >×</button>
+                                                    <?php if (!empty($sidebarMockup['variation_lab_available'])): ?>
+                                                        <div class="related-mockup-actions">
+                                                            <a class="button-link" href="mockup_variation_lab.php?mockup_id=<?= (int)$sidebarMockup['id'] ?>">Variation</a>
+                                                        </div>
+                                                    <?php endif; ?>
                                                 </div>
-                                                <div class="related-mockup-meta">
-                                                    <strong title="<?= h($sidebarLabel !== '' ? $sidebarLabel : 'Mockup') ?>"><?= h($sidebarLabel !== '' ? $sidebarLabel : 'Mockup') ?></strong>
-                                                    <span>#<?= (int)$sidebarMockup['id'] ?></span>
-                                                </div>
-                                                <?php if (!empty($sidebarMockup['variation_lab_available'])): ?>
-                                                    <div class="related-mockup-actions">
-                                                        <a class="button-link" href="mockup_variation_lab.php?mockup_id=<?= (int)$sidebarMockup['id'] ?>">Variation</a>
-                                                    </div>
-                                                <?php endif; ?>
                                             </article>
                                         <?php endforeach; ?>
                                     </div>
                                 <?php else: ?>
                                     <div class="favorite-empty">No related mockups have been generated for this selected root yet.</div>
                                 <?php endif; ?>
-                            </aside>
-                        </form>
+                        </aside>
                     </div>
                 <?php else: ?>
                     <div class="notice">No root artwork image is available yet.</div>
                 <?php endif; ?>
             </section>
-
 
             <section class="artwork-sheet beta-hidden-stage">
                 <aside class="root-panel">

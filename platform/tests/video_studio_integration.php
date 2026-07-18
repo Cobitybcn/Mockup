@@ -233,14 +233,55 @@ try {
     }
 
     $studioJavascript = (string)file_get_contents(__DIR__ . '/../video_studio.js');
+    $studioPage = (string)file_get_contents(__DIR__ . '/../video.php');
+    $studioStyles = (string)file_get_contents(__DIR__ . '/../video_studio.css');
+    $editorPage = (string)file_get_contents(__DIR__ . '/../video_editor.php');
+    $editorServiceSource = (string)file_get_contents(__DIR__ . '/../app/Video/VideoEditorService.php');
+    $studioSidebar = (string)file_get_contents(__DIR__ . '/../sidebar.php');
+    TestHarness::assertContains('data-project-aspect-ratio="9:16"', $studioPage, 'the workspace exposes a direct vertical format choice');
+    TestHarness::assertContains('data-project-aspect-ratio="16:9"', $studioPage, 'the workspace exposes a direct horizontal format choice');
+    TestHarness::assertContains('function createProjectNow()', $studioJavascript, 'new projects are created directly from the workspace');
+    TestHarness::assertContains('initialArtworkId', $studioPage, 'Video Studio accepts the active artwork context from Mockup Lab');
+    TestHarness::assertContains('initialArtworkFilter', $studioPage, 'the active artwork is normalized to its unified group');
+    TestHarness::assertContains("'video.php?artwork_id='", $studioSidebar, 'the Video Studio navigation keeps the active artwork context');
+    TestHarness::assertContains("action: 'library_list'", $studioJavascript, 'the reference library can refresh after Mockup Lab creates a variation');
+    TestHarness::assertContains("window.addEventListener('focus', refreshLibrary)", $studioJavascript, 'returning to Video Studio refreshes newly generated variations');
+    TestHarness::assertContains('function artworkFilterKey(asset)', $studioJavascript, 'the catalog uses the unified artwork group as its filter identity');
+    TestHarness::assertContains('selectedArtwork?.canonicalArtworkId', $studioJavascript, 'projects retain the canonical root behind a unified artwork selection');
+    TestHarness::assertContains('!artworkMap().has(state.artworkFilter)', $studioJavascript, 'an open studio adopts a newly merged artwork group after refreshing');
+    $sameArtworkMethod = new ReflectionMethod(VideoGenerationService::class, 'sameUnifiedArtwork');
+    TestHarness::assertTrue($sameArtworkMethod->invoke(null, ['artworkId' => 10, 'artworkGroupId' => 7], ['artworkId' => 11, 'artworkGroupId' => 7]), 'different roots in one unified artwork can form a video sequence');
+    TestHarness::assertTrue(!$sameArtworkMethod->invoke(null, ['artworkId' => 10, 'artworkGroupId' => 7], ['artworkId' => 11, 'artworkGroupId' => 8]), 'roots from different unified artworks remain isolated');
+    $artworkTitleMethod = new ReflectionMethod(VideoStudioRepository::class, 'artworkTitle');
+    TestHarness::assertSame(
+        'Crimson Ascendant Divisions',
+        $artworkTitleMethod->invoke(null, ['group_title' => 'Crimson Markers', 'sheet_title' => 'Crimson Ascendant Divisions'], 'Artwork'),
+        'individual root titles remain available as metadata inside a unified artwork'
+    );
+    TestHarness::assertContains("changes: { aspectRatio }", $studioJavascript, 'format icons persist the selected video ratio');
+    TestHarness::assertContains('.vds-project-action--save', $studioStyles, 'primary project actions use the approved soft-color treatment');
+    TestHarness::assertContains('width: 92px', $studioStyles, 'project actions keep a large square footprint');
     TestHarness::assertContains('data-generated-clip', $studioJavascript, 'generated results expose a direct drag source');
     TestHarness::assertContains('data-use-clip-next', $studioJavascript, 'generated results expose a one-click next-sequence action');
-    TestHarness::assertContains("data-role=\"source_video\"", $studioJavascript, 'source video has a separate interface target');
-    TestHarness::assertContains('data-reference-instruction', $studioJavascript, 'each visual reference exposes its purpose field');
-    TestHarness::assertContains('data-adjust-result', $studioJavascript, 'generated results expose conversational Omni adjustment');
-    TestHarness::assertContains('data-open-adjust-result', $studioJavascript, 'generated results expose a separate edit action');
+    TestHarness::assertContains('data-continuation-frame-preview', $studioJavascript, 'an explicit continuation previews the frame that will actually be sent');
+    TestHarness::assertContains('duration - 0.12', $studioJavascript, 'the continuation preview seeks to the same final-frame offset used by FFmpeg');
+    TestHarness::assertContains('.vds-continuation-frame-badge', $studioStyles, 'the continuation preview is visibly identified as the final frame');
+    TestHarness::assertTrue(!str_contains($studioJavascript, 'Video base para editar'), 'source-video editing no longer competes with sequence generation');
+    TestHarness::assertContains("compactReferenceSlot(scene, 'artwork_fidelity', 3", $studioJavascript, 'image 3 is reserved for artwork fidelity');
+    TestHarness::assertContains("compactReferenceSlot(scene, 'character_identity', 4", $studioJavascript, 'image 4 is reserved for character identity');
+    TestHarness::assertContains("compactReferenceSlot(scene, 'wardrobe_identity', 5", $studioJavascript, 'image 5 is reserved for wardrobe identity');
+    TestHarness::assertContains('Array.from({ length: 5 }', $studioJavascript, 'images 6 through 10 remain available as additional references');
+    TestHarness::assertContains('video_editor.php?generation_id=', $studioJavascript, 'generated results open the standalone video editor');
+    TestHarness::assertTrue(!str_contains($studioJavascript, 'data-adjust-result'), 'inline editing controls are removed from sequence boards');
     TestHarness::assertContains("? 'Regenerar'", $studioJavascript, 'generated results keep an independent regeneration action');
-    TestHarness::assertContains('la conserva el video base', $studioJavascript, 'source-video editing explains that Omni preserves its real duration');
+    TestHarness::assertContains('Cada edición crea una nueva versión', $editorPage, 'the standalone editor preserves the original video');
+    TestHarness::assertContains('Opcional · hasta 10', $editorPage, 'the standalone editor exposes the full Omni image budget without visual clutter');
+    TestHarness::assertContains("'role' => 'source_video'", $editorServiceSource, 'video editing always resubmits the real source clip');
+    TestHarness::assertTrue(!str_contains($editorServiceSource, "snapshot['previousInteractionId']"), 'video editing never combines previous_interaction_id with the Omni edit task');
+    TestHarness::assertSame(1, VideoReferencePolicy::promptNumber('start_frame'), 'the start image has a stable prompt number');
+    TestHarness::assertSame(2, VideoReferencePolicy::promptNumber('end_frame'), 'the target image has a stable prompt number');
+    TestHarness::assertSame(3, VideoReferencePolicy::promptNumber('artwork_fidelity'), 'artwork has a stable prompt number');
+    TestHarness::assertSame(10, VideoReferencePolicy::promptNumber('reference', 5), 'the fifth additional reference maps to image ten');
 
     try {
         (new VertexVeoProvider())->generateFromFrames([]);

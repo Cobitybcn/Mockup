@@ -121,31 +121,48 @@ final class VideoJobRepository
         return is_array($row) ? $row : null;
     }
 
-    /** @return array{artworkId:?int,seriesId:?int} */
+    /** @return array{artworkId:?int,artworkGroupId:?int,canonicalArtworkId:?int,seriesId:?int} */
     public function associationForReference(int $userId, array $reference): array
     {
         $type = (string)($reference['sourceType'] ?? '');
         $sourceId = (int)($reference['sourceId'] ?? 0);
-        if ($sourceId <= 0) return ['artworkId' => null, 'seriesId' => null];
+        if ($sourceId <= 0) return self::emptyArtworkAssociation();
 
         if ($type === 'mockup') {
-            $stmt = $this->pdo->prepare('SELECT m.source_artwork_id AS artwork_id,COALESCE(m.series_id,a.series_id) AS series_id
-                FROM mockups m LEFT JOIN artworks a ON a.id=m.source_artwork_id AND a.user_id=m.user_id
+            $stmt = $this->pdo->prepare('SELECT m.source_artwork_id AS artwork_id,
+                    COALESCE(m.artwork_group_id,a.artwork_group_id) AS artwork_group_id,g.canonical_artwork_id,
+                    COALESCE(m.series_id,canonical.series_id,a.series_id) AS series_id
+                FROM mockups m
+                LEFT JOIN artworks a ON a.id=m.source_artwork_id AND a.user_id=m.user_id
+                LEFT JOIN artwork_groups g ON g.id=COALESCE(m.artwork_group_id,a.artwork_group_id) AND g.user_id=m.user_id AND g.status=\'active\'
+                LEFT JOIN artworks canonical ON canonical.id=g.canonical_artwork_id AND canonical.user_id=m.user_id
                 WHERE m.id=? AND m.user_id=? LIMIT 1');
             $stmt->execute([$sourceId, $userId]);
         } elseif ($type === 'artwork') {
-            $stmt = $this->pdo->prepare('SELECT id AS artwork_id,series_id FROM artworks WHERE id=? AND user_id=? LIMIT 1');
+            $stmt = $this->pdo->prepare('SELECT a.id AS artwork_id,a.artwork_group_id,g.canonical_artwork_id,
+                    COALESCE(canonical.series_id,a.series_id) AS series_id
+                FROM artworks a
+                LEFT JOIN artwork_groups g ON g.id=a.artwork_group_id AND g.user_id=a.user_id AND g.status=\'active\'
+                LEFT JOIN artworks canonical ON canonical.id=g.canonical_artwork_id AND canonical.user_id=a.user_id
+                WHERE a.id=? AND a.user_id=? LIMIT 1');
             $stmt->execute([$sourceId, $userId]);
         } else {
-            return ['artworkId' => null, 'seriesId' => null];
+            return self::emptyArtworkAssociation();
         }
 
         $row = $stmt->fetch();
-        if (!is_array($row)) return ['artworkId' => null, 'seriesId' => null];
+        if (!is_array($row)) return self::emptyArtworkAssociation();
         return [
             'artworkId' => $row['artwork_id'] === null ? null : (int)$row['artwork_id'],
+            'artworkGroupId' => $row['artwork_group_id'] === null ? null : (int)$row['artwork_group_id'],
+            'canonicalArtworkId' => $row['canonical_artwork_id'] === null ? null : (int)$row['canonical_artwork_id'],
             'seriesId' => $row['series_id'] === null ? null : (int)$row['series_id'],
         ];
+    }
+
+    private static function emptyArtworkAssociation(): array
+    {
+        return ['artworkId' => null, 'artworkGroupId' => null, 'canonicalArtworkId' => null, 'seriesId' => null];
     }
 
     public function createGeneration(array $values): int
@@ -245,6 +262,19 @@ final class VideoJobRepository
             (user_id,video_project_id,status,format,video_codec,audio_codec,aspect_ratio,timeline_snapshot_json,error,created_at,updated_at)
             VALUES (?,?,'queued','mp4','h264','aac',?,?,'',?,?)");
         $stmt->execute([$values['user_id'],$values['project_id'],$values['aspect_ratio'],self::encode($values['snapshot']),$now,$now]);
+        return (int)$this->pdo->lastInsertId();
+    }
+
+    public function createUploadedFinal(array $values): int
+    {
+        $now = date('c');
+        $stmt = $this->pdo->prepare("INSERT INTO video_exports
+            (user_id,video_project_id,status,format,video_codec,audio_codec,aspect_ratio,timeline_snapshot_json,output_path,duration_seconds,bytes,error,started_at,completed_at,created_at,updated_at)
+            VALUES (?,?,'succeeded','mp4','h264','aac',?,?,?, ?,?,'',?,?,?,?)");
+        $stmt->execute([
+            $values['user_id'],$values['project_id'],$values['aspect_ratio'],self::encode($values['snapshot']),$values['output_path'],
+            $values['duration_seconds'],$values['bytes'],$now,$now,$now,$now,
+        ]);
         return (int)$this->pdo->lastInsertId();
     }
 

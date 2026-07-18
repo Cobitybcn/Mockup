@@ -332,8 +332,11 @@ final class VideoStudioRepository
     public function referenceSource(int $userId, string $sourceType, int $sourceId): ?array
     {
         if ($sourceType === 'mockup') {
-            $stmt = $this->pdo->prepare('SELECT m.id,m.mockup_file,m.context_id,m.source_artwork_id,a.final_title,a.width,a.height
-                FROM mockups m LEFT JOIN artworks a ON a.id=m.source_artwork_id AND a.user_id=m.user_id
+            $stmt = $this->pdo->prepare('SELECT m.id,m.mockup_file,m.context_id,m.source_artwork_id,a.final_title,a.width,a.height,
+                    COALESCE(m.artwork_group_id,a.artwork_group_id,0) AS artwork_group_id,g.canonical_artwork_id,g.title AS group_title
+                FROM mockups m
+                LEFT JOIN artworks a ON a.id=m.source_artwork_id AND a.user_id=m.user_id
+                LEFT JOIN artwork_groups g ON g.id=COALESCE(m.artwork_group_id,a.artwork_group_id) AND g.user_id=m.user_id AND g.status=\'active\'
                 WHERE m.id=? AND m.user_id=? LIMIT 1');
             $stmt->execute([$sourceId, $userId]);
             $row = $stmt->fetch();
@@ -345,7 +348,9 @@ final class VideoStudioRepository
                 'metadata_json' => self::encode([
                     'label' => Display::contextTitle((string)$row['context_id']),
                     'artworkId' => (int)($row['source_artwork_id'] ?? 0),
-                    'artworkTitle' => trim((string)($row['final_title'] ?? '')),
+                    'artworkTitle' => trim((string)($row['group_title'] ?? '')) ?: trim((string)($row['final_title'] ?? '')),
+                    'artworkGroupId' => (int)($row['artwork_group_id'] ?? 0),
+                    'canonicalArtworkId' => (int)($row['canonical_artwork_id'] ?? $row['source_artwork_id'] ?? 0),
                     'width' => $row['width'] ?? null,
                     'height' => $row['height'] ?? null,
                     'mediaType' => 'image',
@@ -353,7 +358,11 @@ final class VideoStudioRepository
             ];
         }
         if ($sourceType === 'artwork') {
-            $stmt = $this->pdo->prepare('SELECT id,root_file,main_file,final_title,width,height FROM artworks WHERE id=? AND user_id=? AND status=\'done\' LIMIT 1');
+            $stmt = $this->pdo->prepare('SELECT a.id,a.root_file,a.main_file,a.final_title,a.width,a.height,a.artwork_group_id,
+                    g.canonical_artwork_id,g.title AS group_title
+                FROM artworks a
+                LEFT JOIN artwork_groups g ON g.id=a.artwork_group_id AND g.user_id=a.user_id AND g.status=\'active\'
+                WHERE a.id=? AND a.user_id=? AND a.status=\'done\' LIMIT 1');
             $stmt->execute([$sourceId, $userId]);
             $row = $stmt->fetch();
             if (!is_array($row)) return null;
@@ -365,7 +374,9 @@ final class VideoStudioRepository
                 'metadata_json' => self::encode([
                     'label' => trim((string)$row['final_title']) ?: Display::artworkTitle($file),
                     'artworkId' => (int)$row['id'],
-                    'artworkTitle' => trim((string)$row['final_title']),
+                    'artworkTitle' => trim((string)($row['group_title'] ?? '')) ?: trim((string)$row['final_title']),
+                    'artworkGroupId' => (int)($row['artwork_group_id'] ?? 0),
+                    'canonicalArtworkId' => (int)($row['canonical_artwork_id'] ?? $row['id']),
                     'width' => $row['width'] ?? null,
                     'height' => $row['height'] ?? null,
                     'mediaType' => 'image',
@@ -422,26 +433,31 @@ final class VideoStudioRepository
         $favoriteLookup = array_fill_keys($favoriteIds, true);
         $favoritePosition = array_flip($favoriteIds);
 
-        $artworkStmt = $this->pdo->prepare("SELECT a.id,a.root_file,a.main_file,a.final_title,a.width,a.height,a.series_id,a.updated_at,
-                ag.title AS group_title,sh.title AS sheet_title,s.title AS series_title
+        $artworkStmt = $this->pdo->prepare("SELECT a.id,a.root_file,a.main_file,a.final_title,a.width,a.height,a.updated_at,
+                COALESCE(canonical.series_id,a.series_id,0) AS series_id,a.artwork_group_id,
+                ag.canonical_artwork_id,ag.title AS group_title,sh.title AS sheet_title,s.title AS series_title
             FROM artworks a
             LEFT JOIN artwork_groups ag ON ag.id=a.artwork_group_id AND ag.user_id=a.user_id AND ag.status='active'
+            LEFT JOIN artworks canonical ON canonical.id=ag.canonical_artwork_id AND canonical.user_id=a.user_id
             LEFT JOIN artwork_sheets sh ON sh.id=(SELECT MAX(sh2.id) FROM artwork_sheets sh2 WHERE sh2.user_id=a.user_id AND sh2.canonical_artwork_id=a.id)
-            LEFT JOIN artwork_series s ON s.id=a.series_id AND s.user_id=a.user_id
+            LEFT JOIN artwork_series s ON s.id=COALESCE(canonical.series_id,a.series_id) AND s.user_id=a.user_id
             WHERE a.user_id=? AND a.status='done' ORDER BY a.updated_at DESC,a.id DESC LIMIT 300");
         $artworkStmt->execute([$userId]);
         $artworks = [];
         foreach ($artworkStmt->fetchAll() as $row) {
             $file = basename((string)($row['root_file'] ?: $row['main_file']));
             if ($file === '') continue;
-            $artworkTitle = trim((string)($row['group_title'] ?? ''))
-                ?: trim((string)($row['final_title'] ?? ''))
-                ?: trim((string)($row['sheet_title'] ?? ''))
-                ?: 'Artwork #' . (int)$row['id'];
+            $individualTitle = self::artworkTitle($row, 'Artwork #' . (int)$row['id']);
+            $groupTitle = trim((string)($row['group_title'] ?? ''));
+            $artworkTitle = (int)($row['artwork_group_id'] ?? 0) > 0 && $groupTitle !== '' ? $groupTitle : $individualTitle;
             $artworks[] = $this->assetPayload('artwork', (int)$row['id'], $file, [
                 'label' => $artworkTitle,
                 'artworkId' => (int)$row['id'],
                 'artworkTitle' => $artworkTitle,
+                'individualArtworkTitle' => $individualTitle,
+                'artworkGroupId' => (int)($row['artwork_group_id'] ?? 0),
+                'canonicalArtworkId' => (int)($row['canonical_artwork_id'] ?? $row['id']),
+                'groupTitle' => $groupTitle,
                 'seriesId' => (int)($row['series_id'] ?? 0),
                 'seriesTitle' => trim((string)($row['series_title'] ?? '')),
                 'width' => $row['width'] ?? null,
@@ -451,28 +467,36 @@ final class VideoStudioRepository
         }
 
         $mockupStmt = $this->pdo->prepare("SELECT m.id,m.mockup_file,m.context_id,m.source_artwork_id,
-                COALESCE(m.series_id,a.series_id,0) AS series_id,m.created_at,a.final_title,a.width,a.height,
-                ag.title AS group_title,sh.title AS sheet_title,s.title AS series_title
+                COALESCE(m.series_id,canonical.series_id,a.series_id,0) AS series_id,m.created_at,a.final_title,a.width,a.height,
+                COALESCE(m.artwork_group_id,a.artwork_group_id,0) AS artwork_group_id,
+                ag.canonical_artwork_id,ag.title AS group_title,sh.title AS sheet_title,s.title AS series_title
             FROM mockups m
             LEFT JOIN artworks a ON a.id=m.source_artwork_id AND a.user_id=m.user_id
-            LEFT JOIN artwork_groups ag ON ag.id=a.artwork_group_id AND ag.user_id=m.user_id AND ag.status='active'
+            LEFT JOIN artwork_groups ag ON ag.id=COALESCE(m.artwork_group_id,a.artwork_group_id) AND ag.user_id=m.user_id AND ag.status='active'
+            LEFT JOIN artworks canonical ON canonical.id=ag.canonical_artwork_id AND canonical.user_id=m.user_id
             LEFT JOIN artwork_sheets sh ON sh.id=(SELECT MAX(sh2.id) FROM artwork_sheets sh2 WHERE sh2.user_id=m.user_id AND sh2.canonical_artwork_id=a.id)
-            LEFT JOIN artwork_series s ON s.id=COALESCE(m.series_id,a.series_id) AND s.user_id=m.user_id
+            LEFT JOIN artwork_series s ON s.id=COALESCE(m.series_id,canonical.series_id,a.series_id) AND s.user_id=m.user_id
             WHERE m.user_id=? AND m.mockup_file<>'' ORDER BY m.created_at DESC,m.id DESC LIMIT 300");
         $mockupStmt->execute([$userId]);
         $mockups = [];
         foreach ($mockupStmt->fetchAll() as $row) {
             $file = basename((string)$row['mockup_file']);
             if ($file === '') continue;
-            $artworkTitle = trim((string)($row['group_title'] ?? ''))
-                ?: trim((string)($row['final_title'] ?? ''))
-                ?: trim((string)($row['sheet_title'] ?? ''))
-                ?: ((int)($row['source_artwork_id'] ?? 0) > 0 ? 'Artwork #' . (int)$row['source_artwork_id'] : 'Artwork');
+            $individualTitle = self::artworkTitle(
+                $row,
+                (int)($row['source_artwork_id'] ?? 0) > 0 ? 'Artwork #' . (int)$row['source_artwork_id'] : 'Artwork'
+            );
+            $groupTitle = trim((string)($row['group_title'] ?? ''));
+            $artworkTitle = (int)($row['artwork_group_id'] ?? 0) > 0 && $groupTitle !== '' ? $groupTitle : $individualTitle;
             $contextTitle = Display::contextTitle((string)$row['context_id']);
             $asset = $this->assetPayload('mockup', (int)$row['id'], $file, [
                 'label' => trim($artworkTitle . ' — ' . $contextTitle, ' —'),
                 'artworkId' => (int)($row['source_artwork_id'] ?? 0),
                 'artworkTitle' => $artworkTitle,
+                'individualArtworkTitle' => $individualTitle,
+                'artworkGroupId' => (int)($row['artwork_group_id'] ?? 0),
+                'canonicalArtworkId' => (int)($row['canonical_artwork_id'] ?? $row['source_artwork_id'] ?? 0),
+                'groupTitle' => $groupTitle,
                 'seriesId' => (int)($row['series_id'] ?? 0),
                 'seriesTitle' => trim((string)($row['series_title'] ?? '')),
                 'contextTitle' => $contextTitle,
@@ -493,7 +517,8 @@ final class VideoStudioRepository
 
         $clipStmt = $this->pdo->prepare("SELECT j.id,j.video_project_id,j.video_scene_id,j.artwork_id,j.series_id,
                 j.output_path,j.thumbnail_path,j.generated_duration_seconds,j.aspect_ratio,j.model,j.active_slot,j.created_at,
-                sc.title,p.title AS project_title,a.final_title,ag.title AS group_title,sh.title AS sheet_title,ser.title AS series_title,
+                sc.title,p.title AS project_title,a.final_title,a.artwork_group_id,ag.canonical_artwork_id,
+                ag.title AS group_title,sh.title AS sheet_title,ser.title AS series_title,
                 (SELECT COUNT(*) FROM video_generation_jobs jv
                     WHERE jv.video_scene_id=j.video_scene_id AND jv.status='succeeded' AND jv.id<=j.id) AS generation_version
             FROM video_generation_jobs j
@@ -507,10 +532,12 @@ final class VideoStudioRepository
         $clipStmt->execute([$userId]);
         $clips = [];
         foreach ($clipStmt->fetchAll() as $row) {
-            $artworkTitle = trim((string)($row['group_title'] ?? ''))
-                ?: trim((string)($row['final_title'] ?? ''))
-                ?: trim((string)($row['sheet_title'] ?? ''))
-                ?: ((int)($row['artwork_id'] ?? 0) > 0 ? 'Artwork #' . (int)$row['artwork_id'] : '');
+            $individualTitle = self::artworkTitle(
+                $row,
+                (int)($row['artwork_id'] ?? 0) > 0 ? 'Artwork #' . (int)$row['artwork_id'] : ''
+            );
+            $groupTitle = trim((string)($row['group_title'] ?? ''));
+            $artworkTitle = (int)($row['artwork_group_id'] ?? 0) > 0 && $groupTitle !== '' ? $groupTitle : $individualTitle;
             $clips[] = [
                 'assetKey' => 'generation_job:' . (int)$row['id'],
                 'type' => 'generation_job',
@@ -523,6 +550,10 @@ final class VideoStudioRepository
                 'generationVersion' => max(1, (int)($row['generation_version'] ?? 1)),
                 'artworkId' => (int)($row['artwork_id'] ?? 0),
                 'artworkTitle' => $artworkTitle,
+                'individualArtworkTitle' => $individualTitle,
+                'artworkGroupId' => (int)($row['artwork_group_id'] ?? 0),
+                'canonicalArtworkId' => (int)($row['canonical_artwork_id'] ?? $row['artwork_id'] ?? 0),
+                'groupTitle' => $groupTitle,
                 'seriesId' => (int)($row['series_id'] ?? 0),
                 'seriesTitle' => trim((string)($row['series_title'] ?? '')),
                 'thumbnailUrl' => (string)$row['thumbnail_path'] !== '' ? 'video_media.php?generation_id=' . (int)$row['id'] . '&thumbnail=1' : '',
@@ -581,6 +612,113 @@ final class VideoStudioRepository
         return is_array($row) ? $this->normalizeExport($row) : null;
     }
 
+    public function finalVideos(int $userId): array
+    {
+        $stmt = $this->pdo->prepare("SELECT e.*,p.title AS project_title,p.artwork_id AS project_artwork_id FROM video_exports e
+            INNER JOIN video_projects p ON p.id=e.video_project_id AND p.user_id=e.user_id
+            WHERE e.user_id=? AND e.status='succeeded' AND e.output_path<>''
+            ORDER BY e.updated_at DESC,e.id DESC LIMIT 100");
+        $stmt->execute([$userId]);
+        $rows = [];
+        $artworkIds = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $snapshot = json_decode((string)($row['timeline_snapshot_json'] ?? ''), true);
+            if (!is_array($snapshot)) $snapshot = [];
+            $kind = (string)($snapshot['kind'] ?? '');
+            if (!in_array($kind, ['final','uploaded_final'], true)) continue;
+
+            $artworkId = (int)($snapshot['artworkId'] ?? $row['project_artwork_id'] ?? 0);
+            if ($artworkId > 0) $artworkIds[$artworkId] = $artworkId;
+            $rows[] = ['row' => $row, 'snapshot' => $snapshot, 'kind' => $kind, 'artworkId' => $artworkId];
+        }
+
+        $artworks = $this->artworkIdentityMap($userId, array_values($artworkIds));
+        $artistName = trim((string)(ArtistProfile::findForUser($userId)['artist_name'] ?? ''));
+        $finals = [];
+        foreach ($rows as $item) {
+            $row = $item['row'];
+            $snapshot = $item['snapshot'];
+            $kind = (string)$item['kind'];
+            $artworkId = (int)$item['artworkId'];
+            $artwork = $artworks[$artworkId] ?? null;
+            $artworkTitle = is_array($artwork) ? trim((string)$artwork['artworkTitle']) : '';
+            $projectTitle = trim((string)$row['project_title']) ?: 'Video final';
+            $displayTitle = $artworkTitle !== ''
+                ? trim($artworkTitle . ($artistName !== '' ? ' — ' . $artistName : ''))
+                : $projectTitle;
+            $fileTitle = $artworkTitle !== '' ? $artworkTitle : $projectTitle;
+            $seoFileBase = Display::slugify(trim($fileTitle . ($artistName !== '' ? ' ' . $artistName : '') . ' art video'));
+
+            $final = $this->normalizeExport($row);
+            $final['projectId'] = (int)$row['video_project_id'];
+            $final['projectTitle'] = $projectTitle;
+            $final['source'] = $kind === 'uploaded_final' ? 'desktop' : 'studio';
+            $final['originalName'] = (string)($snapshot['originalName'] ?? '');
+            $final['artworkId'] = $artworkId;
+            $final['canonicalArtworkId'] = is_array($artwork) ? (int)$artwork['canonicalArtworkId'] : 0;
+            $final['artworkGroupId'] = is_array($artwork) ? (int)$artwork['artworkGroupId'] : 0;
+            $final['artworkTitle'] = $artworkTitle;
+            $final['artistName'] = $artistName;
+            $final['displayTitle'] = $displayTitle;
+            $final['seoFileBase'] = $seoFileBase !== '' ? $seoFileBase : 'video-final';
+            $final['associationMissing'] = $artworkTitle === '';
+            $finals[] = $final;
+        }
+        return $finals;
+    }
+
+    public function finalVideosForArtwork(int $userId, int $artworkId): array
+    {
+        $target = $this->artworkIdentityMap($userId, [$artworkId])[$artworkId] ?? null;
+        if (!is_array($target)) return [];
+
+        return array_values(array_filter($this->finalVideos($userId), static function (array $final) use ($target): bool {
+            $targetGroupId = (int)$target['artworkGroupId'];
+            $finalGroupId = (int)($final['artworkGroupId'] ?? 0);
+            if ($targetGroupId > 0 && $finalGroupId > 0) return $targetGroupId === $finalGroupId;
+
+            $targetCanonicalId = (int)$target['canonicalArtworkId'];
+            $finalCanonicalId = (int)($final['canonicalArtworkId'] ?? 0);
+            return $targetCanonicalId > 0 && $targetCanonicalId === $finalCanonicalId;
+        }));
+    }
+
+    public function artworkIdentity(int $userId, int $artworkId): ?array
+    {
+        $identity = $this->artworkIdentityMap($userId, [$artworkId])[$artworkId] ?? null;
+        return is_array($identity) ? $identity : null;
+    }
+
+    public function assignFinalArtwork(int $userId, int $exportId, int $artworkId): array
+    {
+        $artwork = $this->artworkIdentityMap($userId, [$artworkId])[$artworkId] ?? null;
+        if (!is_array($artwork)) throw new OutOfBoundsException('Obra no encontrada.');
+
+        $stmt = $this->pdo->prepare("SELECT e.id,e.timeline_snapshot_json FROM video_exports e
+            INNER JOIN video_projects p ON p.id=e.video_project_id AND p.user_id=e.user_id
+            WHERE e.id=? AND e.user_id=? AND e.status='succeeded' LIMIT 1");
+        $stmt->execute([$exportId, $userId]);
+        $row = $stmt->fetch();
+        if (!is_array($row)) throw new OutOfBoundsException('Video final no encontrado.');
+
+        $snapshot = json_decode((string)($row['timeline_snapshot_json'] ?? ''), true);
+        if (!is_array($snapshot)) $snapshot = [];
+        if (!in_array((string)($snapshot['kind'] ?? ''), ['final', 'uploaded_final'], true)) {
+            throw new DomainException('Este archivo no es un video final.');
+        }
+
+        $snapshot['artworkId'] = (int)$artwork['canonicalArtworkId'];
+        $snapshot['artworkGroupId'] = (int)$artwork['artworkGroupId'];
+        $snapshot['artworkTitle'] = (string)$artwork['artworkTitle'];
+        $update = $this->pdo->prepare('UPDATE video_exports SET timeline_snapshot_json=?,updated_at=? WHERE id=? AND user_id=?');
+        $update->execute([self::encode($snapshot), date('c'), $exportId, $userId]);
+
+        foreach ($this->finalVideos($userId) as $final) {
+            if ((int)$final['id'] === $exportId) return $final;
+        }
+        throw new RuntimeException('No se pudo actualizar la asociación del video.');
+    }
+
     public function begin(): void
     {
         Database::beginWriteTransaction($this->pdo);
@@ -614,6 +752,10 @@ final class VideoStudioRepository
             'label' => (string)$metadata['label'],
             'artworkId' => (int)($metadata['artworkId'] ?? 0),
             'artworkTitle' => (string)($metadata['artworkTitle'] ?? ''),
+            'individualArtworkTitle' => (string)($metadata['individualArtworkTitle'] ?? $metadata['artworkTitle'] ?? ''),
+            'artworkGroupId' => (int)($metadata['artworkGroupId'] ?? 0),
+            'canonicalArtworkId' => (int)($metadata['canonicalArtworkId'] ?? $metadata['artworkId'] ?? 0),
+            'groupTitle' => (string)($metadata['groupTitle'] ?? ''),
             'seriesId' => (int)($metadata['seriesId'] ?? 0),
             'seriesTitle' => (string)($metadata['seriesTitle'] ?? ''),
             'contextTitle' => (string)($metadata['contextTitle'] ?? ''),
@@ -725,6 +867,8 @@ final class VideoStudioRepository
 
     private function normalizeExport(array $row): array
     {
+        $snapshot = json_decode((string)($row['timeline_snapshot_json'] ?? ''), true);
+        if (!is_array($snapshot)) $snapshot = [];
         return [
             'id' => (int)$row['id'],
             'status' => (string)$row['status'],
@@ -733,6 +877,7 @@ final class VideoStudioRepository
             'bytes' => (int)$row['bytes'],
             'error' => (string)$row['error'],
             'previewUrl' => (string)$row['output_path'] !== '' ? 'video_media.php?export_id=' . (int)$row['id'] : '',
+            'thumbnailUrl' => trim((string)($snapshot['thumbnailPath'] ?? '')) !== '' ? 'video_media.php?export_id=' . (int)$row['id'] . '&thumbnail=1' : '',
             'createdAt' => (string)$row['created_at'],
             'updatedAt' => (string)$row['updated_at'],
         ];
@@ -746,6 +891,47 @@ final class VideoStudioRepository
             '1:1' => 'square',
             default => 'unknown',
         };
+    }
+
+    private static function artworkTitle(array $row, string $fallback): string
+    {
+        return trim((string)($row['final_title'] ?? ''))
+            ?: trim((string)($row['sheet_title'] ?? ''))
+            ?: trim((string)($row['group_title'] ?? ''))
+            ?: $fallback;
+    }
+
+    private function artworkIdentityMap(int $userId, array $artworkIds): array
+    {
+        $artworkIds = array_values(array_unique(array_filter(array_map('intval', $artworkIds), static fn(int $id): bool => $id > 0)));
+        if ($artworkIds === []) return [];
+
+        $placeholders = implode(',', array_fill(0, count($artworkIds), '?'));
+        $stmt = $this->pdo->prepare("SELECT a.id,a.artwork_group_id,a.final_title,
+                COALESCE(g.canonical_artwork_id,a.id) AS canonical_artwork_id,g.title AS group_title,
+                sh.title AS sheet_title
+            FROM artworks a
+            LEFT JOIN artwork_groups g ON g.id=a.artwork_group_id AND g.user_id=a.user_id AND g.status='active'
+            LEFT JOIN artwork_sheets sh ON sh.id=(SELECT MAX(sh2.id) FROM artwork_sheets sh2
+                WHERE sh2.user_id=a.user_id AND sh2.canonical_artwork_id=COALESCE(g.canonical_artwork_id,a.id))
+            WHERE a.user_id=? AND a.id IN ({$placeholders})");
+        $stmt->execute(array_merge([$userId], $artworkIds));
+
+        $identities = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $groupTitle = trim((string)($row['group_title'] ?? ''));
+            $title = $groupTitle
+                ?: trim((string)($row['sheet_title'] ?? ''))
+                ?: trim((string)($row['final_title'] ?? ''))
+                ?: 'Artwork #' . (int)$row['id'];
+            $identities[(int)$row['id']] = [
+                'artworkId' => (int)$row['id'],
+                'canonicalArtworkId' => (int)($row['canonical_artwork_id'] ?? $row['id']),
+                'artworkGroupId' => (int)($row['artwork_group_id'] ?? 0),
+                'artworkTitle' => $title,
+            ];
+        }
+        return $identities;
     }
 
     private static function orientationFromDimensions(mixed $width, mixed $height): string

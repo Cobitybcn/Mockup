@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Artwork Mockups">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff0bd"/>
+      <stop offset="0.28" stop-color="#e8bd65"/>
+      <stop offset="0.7" stop-color="#b97827"/>
+      <stop offset="1" stop-color="#f3d58c"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="13" fill="#17191d"/>
+  <rect x="13.5" y="10.5" width="37" height="43" rx="1.5" fill="#101215" stroke="#81551f" stroke-width="8"/>
+  <rect x="13.5" y="10.5" width="37" height="43" rx="1.5" fill="none" stroke="url(#gold)" stroke-width="5.5"/>
+  <path d="M17 14h30M17 50h30" fill="none" stroke="#ffe4a0" stroke-width="1.25" opacity=".78"/>
+</svg>

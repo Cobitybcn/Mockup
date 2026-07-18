@@ -1341,10 +1341,10 @@ class Database
 
                 // 4. Create generation job in pending_enqueue status
                 $groupId = null;
-                $stmtGroup = $pdo->prepare('SELECT id FROM artwork_groups WHERE user_id = :user_id AND canonical_artwork_id = :artwork_id LIMIT 1');
+                $stmtGroup = $pdo->prepare('SELECT artwork_group_id FROM artworks WHERE user_id = :user_id AND id = :artwork_id LIMIT 1');
                 $stmtGroup->execute(['user_id' => $userId, 'artwork_id' => $artworkId]);
                 $groupVal = $stmtGroup->fetchColumn();
-                if ($groupVal !== false) {
+                if ($groupVal !== false && (int)$groupVal > 0) {
                     $groupId = (int)$groupVal;
                 }
 
@@ -1433,6 +1433,50 @@ class Database
                 throw $e;
             }
         });
+    }
+
+    public static function failGenerationAndRefund(int $userId, int $jobId, string $reason): bool
+    {
+        return (bool)self::withBusyRetry(function () use ($userId, $jobId, $reason): bool {
+            $pdo = self::connection();
+            self::beginWriteTransaction($pdo);
+            try {
+                $sql = 'SELECT status, user_id FROM mockup_generation_jobs WHERE id = :id LIMIT 1';
+                if (self::isMysql()) {
+                    $sql .= ' FOR UPDATE';
+                }
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute(['id' => $jobId]);
+                $job = $stmt->fetch();
+                if (!$job || (int)$job['user_id'] !== $userId
+                    || !in_array((string)$job['status'], ['pending_enqueue', 'queued', 'processing'], true)) {
+                    $pdo->exec('COMMIT');
+                    return false;
+                }
+
+                $now = date('c');
+                $pdo->prepare('
+                    UPDATE mockup_generation_jobs
+                    SET status = "error", error = :error, updated_at = :updated_at
+                    WHERE id = :id
+                ')->execute(['error' => $reason, 'updated_at' => $now, 'id' => $jobId]);
+                $pdo->prepare('UPDATE users SET credits = credits + 1, updated_at = :updated_at WHERE id = :id')
+                    ->execute(['updated_at' => $now, 'id' => $userId]);
+                $pdo->prepare('
+                    INSERT INTO credit_transactions (user_id, amount, reason, created_at)
+                    VALUES (:user_id, 1, :reason, :created_at)
+                ')->execute([
+                    'user_id' => $userId,
+                    'reason' => 'refund:generation_failed_job_' . $jobId,
+                    'created_at' => $now,
+                ]);
+                $pdo->exec('COMMIT');
+                return true;
+            } catch (Throwable $e) {
+                $pdo->exec('ROLLBACK');
+                throw $e;
+            }
+        }, 12);
     }
 
     public static function updateJobStatus(int $jobId, string $status, ?string $error = null): void

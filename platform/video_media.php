@@ -35,14 +35,23 @@ if ((int)($_GET['generation_id'] ?? 0) > 0) {
     }
 } elseif ((int)($_GET['export_id'] ?? 0) > 0) {
     $exportId = (int)$_GET['export_id'];
-    $stmt = $pdo->prepare("SELECT e.output_path,e.video_project_id,p.title AS project_title FROM video_exports e
+    $stmt = $pdo->prepare("SELECT e.output_path,e.timeline_snapshot_json,e.video_project_id,p.title AS project_title FROM video_exports e
         INNER JOIN video_projects p ON p.id=e.video_project_id AND p.user_id=e.user_id
         WHERE e.id=? AND e.user_id=? AND e.status='succeeded' LIMIT 1");
     $stmt->execute([$exportId,$userId]);
     $row = $stmt->fetch();
     if (is_array($row)) {
-        $key = (string)$row['output_path'];
-        $downloadName = video_download_slug((string)$row['project_title']) . '.mp4';
+        $snapshot = json_decode((string)$row['timeline_snapshot_json'], true);
+        if (!is_array($snapshot)) $snapshot = [];
+        $key = isset($_GET['thumbnail']) ? (string)($snapshot['thumbnailPath'] ?? '') : (string)$row['output_path'];
+        $extension = isset($_GET['thumbnail']) ? 'jpg' : (strtolower(pathinfo($key, PATHINFO_EXTENSION)) ?: 'mp4');
+        $downloadBase = video_download_slug((string)$row['project_title']);
+        foreach ((new VideoStudioRepository($pdo))->finalVideos($userId) as $final) {
+            if ((int)$final['id'] !== $exportId) continue;
+            $downloadBase = (string)($final['seoFileBase'] ?? $downloadBase);
+            break;
+        }
+        $downloadName = $downloadBase . '.' . $extension;
     }
 }
 

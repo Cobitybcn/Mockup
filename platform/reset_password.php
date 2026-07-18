@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/app/bootstrap.php';
 
 if (Auth::user()) {
-    header('Location: artwork_new.php');
+    header('Location: create_scenes.php');
     exit;
 }
 
@@ -39,6 +39,7 @@ function h($v): string
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Choose New Password - Artwork Mockups</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1">
     <link rel="stylesheet" href="style.css?v=auth-gallery-6">
 </head>
 <body class="auth-page">

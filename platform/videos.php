@@ -8,7 +8,11 @@ $userId = (int)$user['id'];
 $repository = new VideoStudioRepository(Database::connection());
 $library = $repository->library($userId);
 $videos = is_array($library['generatedClips'] ?? null) ? $library['generatedClips'] : [];
+$finals = $repository->finalVideos($userId);
+$projects = $repository->listProjects($userId);
+$csrf = VideoHttp::csrfToken();
 $artworkOptions = [];
+$finalArtworkOptions = [];
 $seriesOptions = [];
 foreach ($videos as $video) {
     $artworkId = (int)($video['artworkId'] ?? 0);
@@ -16,7 +20,13 @@ foreach ($videos as $video) {
     if ($artworkId > 0) $artworkOptions[$artworkId] = trim((string)($video['artworkTitle'] ?? '')) ?: 'Artwork #' . $artworkId;
     if ($seriesId > 0) $seriesOptions[$seriesId] = trim((string)($video['seriesTitle'] ?? '')) ?: 'Serie #' . $seriesId;
 }
+foreach ((array)($library['rootArtworks'] ?? []) as $artwork) {
+    $artworkId = (int)($artwork['canonicalArtworkId'] ?? $artwork['artworkId'] ?? 0);
+    $artworkTitle = trim((string)($artwork['artworkTitle'] ?? ''));
+    if ($artworkId > 0 && $artworkTitle !== '') $finalArtworkOptions[$artworkId] = $artworkTitle;
+}
 natcasesort($artworkOptions);
+natcasesort($finalArtworkOptions);
 natcasesort($seriesOptions);
 
 function videos_h(mixed $value): string
@@ -52,7 +62,7 @@ function videos_date(string $value): string
     <title>Videos - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
-    <link rel="stylesheet" href="videos.css?v=3">
+    <link rel="stylesheet" href="videos.css?v=5">
 </head>
 <body>
 <div class="app-shell">
@@ -74,6 +84,68 @@ function videos_date(string $value): string
                 </div>
                 <a class="button-link" href="video.php">Abrir Video Studio</a>
             </header>
+
+            <section class="catalog-panel videos-panel videos-final-panel" aria-labelledby="videos-final-title">
+                <div class="videos-panel-heading">
+                    <div>
+                        <span>Video completo</span>
+                        <h2 id="videos-final-title">Videos finales</h2>
+                    </div>
+                    <div class="videos-panel-actions">
+                        <span class="videos-count"><?= count($finals) ?></span>
+                        <button type="button" class="button-link" data-open-final-upload>Subir video final</button>
+                    </div>
+                </div>
+
+                <?php if (!$finals): ?>
+                    <div class="videos-final-empty">
+                        <p>Guarda aquí el montaje completo exportado desde tu editor de escritorio.</p>
+                    </div>
+                <?php else: ?>
+                    <div class="videos-final-grid">
+                        <?php foreach ($finals as $index => $final): ?>
+                            <?php
+                            $previewUrl = (string)$final['previewUrl'];
+                            $thumbnailUrl = (string)($final['thumbnailUrl'] ?? '');
+                            $projectTitle = trim((string)($final['displayTitle'] ?? '')) ?: 'Video final';
+                            $associatedArtwork = trim((string)($final['artworkTitle'] ?? ''));
+                            $sourceLabel = ($final['source'] ?? '') === 'desktop' ? 'Subido desde ordenador' : 'Creado en Video Studio';
+                            ?>
+                            <article class="videos-final-card">
+                                <button class="videos-final-media" type="button" data-video-preview="<?= videos_h($previewUrl) ?>" data-video-title="<?= videos_h($projectTitle) ?>" data-video-project="Video final">
+                                    <?php if ($thumbnailUrl !== ''): ?><img src="<?= videos_h($thumbnailUrl) ?>" alt="Fotograma de <?= videos_h($projectTitle) ?>" loading="<?= $index < 3 ? 'eager' : 'lazy' ?>"><?php endif; ?>
+                                    <span class="videos-play" aria-hidden="true"><i></i></span>
+                                </button>
+                                <div class="videos-final-copy">
+                                    <span><?= videos_h($sourceLabel) ?></span>
+                                    <h3><?= videos_h($projectTitle) ?></h3>
+                                    <p><?= videos_h(videos_duration((float)$final['durationSeconds'])) ?> · <?= videos_h((string)$final['aspectRatio']) ?></p>
+                                    <details class="videos-final-assignment">
+                                        <summary><?= videos_h($associatedArtwork !== '' ? 'Obra: ' . $associatedArtwork : 'Asignar obra') ?></summary>
+                                        <form data-final-artwork-form>
+                                            <input type="hidden" name="csrf" value="<?= videos_h($csrf) ?>">
+                                            <input type="hidden" name="exportId" value="<?= (int)$final['id'] ?>">
+                                            <select name="artworkId" required aria-label="Obra asociada">
+                                                <option value="">Seleccionar obra</option>
+                                                <?php foreach ($finalArtworkOptions as $artworkId => $artworkTitle): ?>
+                                                    <option value="<?= (int)$artworkId ?>" <?= (int)($final['canonicalArtworkId'] ?? 0) === (int)$artworkId ? 'selected' : '' ?>><?= videos_h($artworkTitle) ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <button type="submit">Guardar</button>
+                                            <small data-final-artwork-error hidden></small>
+                                        </form>
+                                    </details>
+                                </div>
+                                <footer class="videos-final-actions">
+                                    <button type="button" data-video-preview="<?= videos_h($previewUrl) ?>" data-video-title="<?= videos_h($projectTitle) ?>" data-video-project="Video final">Ver</button>
+                                    <a href="video_editor.php?export_id=<?= (int)$final['id'] ?>">Editar</a>
+                                    <a href="<?= videos_h($previewUrl) ?>&download=1">Descargar</a>
+                                </footer>
+                            </article>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </section>
 
             <section class="catalog-panel videos-panel" aria-labelledby="videos-generated-title">
                 <div class="videos-panel-heading">
@@ -160,6 +232,7 @@ function videos_date(string $value): string
                                     </div>
                                     <footer class="videos-card-actions">
                                         <button type="button" data-video-preview="<?= videos_h($previewUrl) ?>" data-video-title="<?= videos_h($projectTitle) ?>" data-video-project="<?= videos_h($clipIdentity) ?>">Ver video</button>
+                                        <a href="video_editor.php?generation_id=<?= $id ?>">Editar</a>
                                         <a href="<?= videos_h($downloadUrl) ?>">Descargar MP4</a>
                                     </footer>
                                 </article>
@@ -188,8 +261,32 @@ function videos_date(string $value): string
                 <video controls playsinline preload="metadata" data-video-modal-player></video>
             </section>
         </div>
+
+        <div class="videos-modal videos-upload-modal" data-final-upload-modal hidden>
+            <div class="videos-modal-backdrop" data-close-final-upload></div>
+            <section class="videos-upload-dialog" role="dialog" aria-modal="true" aria-labelledby="videos-upload-title">
+                <header>
+                    <div><span>Video completo</span><h2 id="videos-upload-title">Subir video final</h2></div>
+                    <button type="button" data-close-final-upload aria-label="Cerrar">×</button>
+                </header>
+                <form data-final-upload-form enctype="multipart/form-data">
+                    <input type="hidden" name="csrf" value="<?= videos_h($csrf) ?>">
+                    <label><span>Obra</span><select name="artworkId" required>
+                        <option value="">Seleccionar obra</option>
+                        <?php foreach ($finalArtworkOptions as $artworkId => $artworkTitle): ?><option value="<?= (int)$artworkId ?>"><?= videos_h($artworkTitle) ?></option><?php endforeach; ?>
+                    </select></label>
+                    <label><span>Proyecto</span><select name="projectId" required>
+                        <option value="">Seleccionar proyecto</option>
+                        <?php foreach ($projects as $project): ?><option value="<?= (int)$project['id'] ?>"><?= videos_h($project['title']) ?></option><?php endforeach; ?>
+                    </select></label>
+                    <label class="videos-upload-file"><span>Archivo</span><input type="file" name="video" accept="video/mp4,video/quicktime,video/webm" required><small>MP4, MOV o WebM · máximo 500 MB</small></label>
+                    <p data-final-upload-error role="alert" hidden></p>
+                    <footer><button type="button" class="button-link secondary" data-close-final-upload>Cancelar</button><button type="submit" class="button-link">Subir video</button></footer>
+                </form>
+            </section>
+        </div>
     </main>
 </div>
-<script src="videos.js?v=3"></script>
+<script src="videos.js?v=6"></script>
 </body>
 </html>

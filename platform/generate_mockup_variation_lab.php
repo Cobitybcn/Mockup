@@ -214,6 +214,7 @@ try {
 
     $registeredMockupFile = $baseName . '-mockup.png';
     $registeredPromptFile = $baseName . '-prompt.txt';
+    $registeredSeriesId = max(0, (int)($mockup['series_id'] ?? 0), (int)($artwork['series_id'] ?? 0));
     $registeredSelectorState = [
         'generation_source' => 'mockup_variation_lab',
         'source_mockup_id' => $mockupId,
@@ -257,16 +258,18 @@ try {
         $rootFile,
         $registeredMockupFile,
         $registeredPromptFile,
-        $registeredSelectorState
+        $registeredSelectorState,
+        $registeredSeriesId
     ): int {
         $insert = Database::connection()->prepare("
-            INSERT INTO mockups (user_id, artwork_group_id, source_artwork_id, artwork_file, mockup_file, context_id, prompt_file, selector_state_json, created_at)
-            VALUES (:user_id, :artwork_group_id, :source_artwork_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :selector_state_json, :created_at)
+            INSERT INTO mockups (user_id, artwork_group_id, source_artwork_id, series_id, artwork_file, mockup_file, context_id, prompt_file, selector_state_json, created_at)
+            VALUES (:user_id, :artwork_group_id, :source_artwork_id, :series_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :selector_state_json, :created_at)
         ");
         $insert->execute([
             'user_id' => $ownerId,
             'artwork_group_id' => !empty($artwork['artwork_group_id']) ? (int)$artwork['artwork_group_id'] : null,
             'source_artwork_id' => !empty($artwork['id']) ? (int)$artwork['id'] : null,
+            'series_id' => $registeredSeriesId > 0 ? $registeredSeriesId : null,
             'artwork_file' => $rootFile,
             'mockup_file' => $registeredMockupFile,
             'context_id' => 'variation_lab',
