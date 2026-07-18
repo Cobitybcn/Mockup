@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/app/Video/bootstrap.php';
 VideoHttp::requirePost();
 $user = Auth::requireUser();
+FeatureAccess::requireJson($user, FeatureAccess::VIDEO_MANAGE, 'Video Studio');
 
 function editor_uploaded_files(array $input): array
 {

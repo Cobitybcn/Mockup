@@ -5,6 +5,7 @@ require_once __DIR__ . '/app/bootstrap.php';
 
 $user = Auth::requireUser();
 $isAdmin = Auth::isAdmin($user);
+$canUseSocial = FeatureAccess::allows($user, FeatureAccess::SOCIAL_MANAGE);
 $pdo = Database::connection();
 ArtworkSeries::ensureSchema($pdo);
 ArtworkSeries::syncUser($pdo, (int)$user['id']);
@@ -666,7 +667,8 @@ function mockup_album_label(array $mockup): string
                     <a class="button-link secondary" href="mockups.php">Clear</a>
                 <?php endif; ?>
             </form>
-            <?php if($pinterestBatchError!==''):?><div class="notice error"><?=h($pinterestBatchError)?></div><?php endif;?>
+            <?php if($canUseSocial && $pinterestBatchError!==''):?><div class="notice error"><?=h($pinterestBatchError)?></div><?php endif;?>
+            <?php if($canUseSocial): ?>
             <style>.pinterest-batch-picker{display:none;margin-bottom:18px}.pinterest-batch-picker.is-active{display:block}.pinterest-batch-fields{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.pinterest-batch-mobile-toggle{display:none}.pinterest-batch-destination{flex:1;min-width:300px}.pinterest-batch-destination strong,.pinterest-batch-destination small{display:block}.pinterest-batch-destination small{margin:5px 0 8px;color:#796457}.pinterest-thumb-select{position:absolute;z-index:4;left:12px;bottom:12px;width:38px;height:38px;border:0;border-radius:50%;display:grid;place-items:center;background:#bd081c!important;box-shadow:0 3px 12px rgba(0,0,0,.2);cursor:pointer;opacity:.78;transition:opacity .18s,transform .18s,box-shadow .18s,background .18s}.pinterest-thumb-select:hover{opacity:.94;transform:scale(1.05);background:#a50718!important}.pinterest-thumb-select input{position:absolute;opacity:0;pointer-events:none}.pinterest-thumb-select svg{display:block;width:19px;height:26px;fill:#fff}.pinterest-thumb-select:has(input:checked){opacity:1;transform:scale(1.06);background:#bd081c!important;box-shadow:0 0 0 3px rgba(189,8,28,.3),0 4px 14px rgba(0,0,0,.22)}@media(max-width:760px){.pinterest-batch-picker.is-active{position:sticky;bottom:8px;z-index:20;padding:10px;margin:0 0 14px;box-shadow:0 8px 28px rgba(0,0,0,.18)}.pinterest-batch-mobile-toggle{display:flex;width:100%;align-items:center;justify-content:space-between;border:0;background:transparent;padding:8px 10px;font-weight:700;color:#342b26}.pinterest-batch-mobile-toggle::after{content:'+';font-size:1.4rem}.pinterest-batch-picker.is-open .pinterest-batch-mobile-toggle::after{content:'−'}.pinterest-batch-fields{display:none;padding:12px 8px 6px}.pinterest-batch-picker.is-open .pinterest-batch-fields{display:flex}.pinterest-batch-destination{min-width:100%}.pinterest-batch-fields label:not(.pinterest-batch-destination),.pinterest-batch-fields button{width:100%}}</style>
             <form id="pinterest-batch-form" class="panel pinterest-batch-picker" method="post" action="pinterest_batch_create.php" aria-hidden="true">
                 <input type="hidden" name="csrf" value="<?=h($_SESSION['pinterest_batch_create_csrf'])?>">
@@ -678,6 +680,7 @@ function mockup_album_label(array $mockup): string
                 <small style="width:100%">Select between 1 and 10 mockups below. Nothing is published during preparation.</small>
                 </div>
             </form>
+            <?php endif; ?>
 
             <section class="favorite-mockups-strip-panel" aria-label="Favorite mockups">
                 <div class="favorite-mockups-strip-head">
@@ -715,7 +718,7 @@ function mockup_album_label(array $mockup): string
                     <div class="mobile-album-slider" aria-label="Featured mockups">
                         <?php foreach ($mockups as $mockup): ?>
                             <div class="mobile-album-slide">
-                                <label class="pinterest-thumb-select" title="Add to Pinterest batch" aria-label="Add to Pinterest batch"><input form="pinterest-batch-form" type="checkbox" name="mockup_ids[]" value="<?=(int)$mockup['id']?>" data-pinterest-batch-item><svg viewBox="0 0 384 512" aria-hidden="true"><path d="M204 6.5C101.4 6.5 0 74.9 0 185.6 0 256 39.6 296 63.6 296c9.9 0 15.6-27.6 15.6-35.4 0-9.3-23.7-29.1-23.7-67.8 0-80.4 61.2-137.4 140.4-137.4 68.1 0 118.5 38.7 118.5 109.8 0 53.1-21.3 152.7-90.3 152.7-24.9 0-46.2-18-46.2-43.8 0-37.8 26.4-74.4 26.4-113.4 0-66.2-93.9-54.2-93.9 25.8 0 16.8 2.1 35.4 9.6 50.7-13.8 59.4-42 147.9-42 209.1 0 18.9 2.7 37.5 4.5 56.4 3.4 3.8 1.7 3.4 6.9 1.5 50.4-69 48.6-82.5 71.4-172.8 12.3 23.4 44.1 36 69.3 36 106.2 0 153.9-103.5 153.9-196.8C384 71.3 298.2 6.5 204 6.5z"/></svg></label>
+                                <?php if($canUseSocial): ?><label class="pinterest-thumb-select" title="Add to Pinterest batch" aria-label="Add to Pinterest batch"><input form="pinterest-batch-form" type="checkbox" name="mockup_ids[]" value="<?=(int)$mockup['id']?>" data-pinterest-batch-item><svg viewBox="0 0 384 512" aria-hidden="true"><path d="M204 6.5C101.4 6.5 0 74.9 0 185.6 0 256 39.6 296 63.6 296c9.9 0 15.6-27.6 15.6-35.4 0-9.3-23.7-29.1-23.7-67.8 0-80.4 61.2-137.4 140.4-137.4 68.1 0 118.5 38.7 118.5 109.8 0 53.1-21.3 152.7-90.3 152.7-24.9 0-46.2-18-46.2-43.8 0-37.8 26.4-74.4 26.4-113.4 0-66.2-93.9-54.2-93.9 25.8 0 16.8 2.1 35.4 9.6 50.7-13.8 59.4-42 147.9-42 209.1 0 18.9 2.7 37.5 4.5 56.4 3.4 3.8 1.7 3.4 6.9 1.5 50.4-69 48.6-82.5 71.4-172.8 12.3 23.4 44.1 36 69.3 36 106.2 0 153.9-103.5 153.9-196.8C384 71.3 298.2 6.5 204 6.5z"/></svg></label><?php endif; ?>
                                 <a href="viewer.php?id=<?= h($mockup['id']) ?>&back=<?= rawurlencode(page_url($page, $query)) ?>" aria-label="Open mockup">
                                     <img src="<?= h(result_url($mockup['mockup_file'], 640)) ?>" alt="" loading="lazy" decoding="async">
                                 </a>
@@ -737,7 +740,7 @@ function mockup_album_label(array $mockup): string
                         <?php foreach ($mockups as $mockup): ?>
                             <article class="item-card">
                                 <div class="mockup-image-wrap">
-                                    <label class="pinterest-thumb-select" title="Add to Pinterest batch" aria-label="Add to Pinterest batch"><input form="pinterest-batch-form" type="checkbox" name="mockup_ids[]" value="<?=(int)$mockup['id']?>" data-pinterest-batch-item><svg viewBox="0 0 384 512" aria-hidden="true"><path d="M204 6.5C101.4 6.5 0 74.9 0 185.6 0 256 39.6 296 63.6 296c9.9 0 15.6-27.6 15.6-35.4 0-9.3-23.7-29.1-23.7-67.8 0-80.4 61.2-137.4 140.4-137.4 68.1 0 118.5 38.7 118.5 109.8 0 53.1-21.3 152.7-90.3 152.7-24.9 0-46.2-18-46.2-43.8 0-37.8 26.4-74.4 26.4-113.4 0-66.2-93.9-54.2-93.9 25.8 0 16.8 2.1 35.4 9.6 50.7-13.8 59.4-42 147.9-42 209.1 0 18.9 2.7 37.5 4.5 56.4 3.4 3.8 1.7 3.4 6.9 1.5 50.4-69 48.6-82.5 71.4-172.8 12.3 23.4 44.1 36 69.3 36 106.2 0 153.9-103.5 153.9-196.8C384 71.3 298.2 6.5 204 6.5z"/></svg></label>
+                                    <?php if($canUseSocial): ?><label class="pinterest-thumb-select" title="Add to Pinterest batch" aria-label="Add to Pinterest batch"><input form="pinterest-batch-form" type="checkbox" name="mockup_ids[]" value="<?=(int)$mockup['id']?>" data-pinterest-batch-item><svg viewBox="0 0 384 512" aria-hidden="true"><path d="M204 6.5C101.4 6.5 0 74.9 0 185.6 0 256 39.6 296 63.6 296c9.9 0 15.6-27.6 15.6-35.4 0-9.3-23.7-29.1-23.7-67.8 0-80.4 61.2-137.4 140.4-137.4 68.1 0 118.5 38.7 118.5 109.8 0 53.1-21.3 152.7-90.3 152.7-24.9 0-46.2-18-46.2-43.8 0-37.8 26.4-74.4 26.4-113.4 0-66.2-93.9-54.2-93.9 25.8 0 16.8 2.1 35.4 9.6 50.7-13.8 59.4-42 147.9-42 209.1 0 18.9 2.7 37.5 4.5 56.4 3.4 3.8 1.7 3.4 6.9 1.5 50.4-69 48.6-82.5 71.4-172.8 12.3 23.4 44.1 36 69.3 36 106.2 0 153.9-103.5 153.9-196.8C384 71.3 298.2 6.5 204 6.5z"/></svg></label><?php endif; ?>
                                     <a href="viewer.php?id=<?= h($mockup['id']) ?>&back=<?= rawurlencode(page_url($page, $query)) ?>" aria-label="Open mockup">
                                         <img src="<?= h(result_url($mockup['mockup_file'], 520)) ?>" alt="Mockup" loading="lazy" decoding="async">
                                     </a>
@@ -875,6 +878,7 @@ document.addEventListener('click', event => {
 <script>
 (()=>{
     const form=document.getElementById('pinterest-batch-form');
+    if(!form)return;
     const boxes=[...document.querySelectorAll('[data-pinterest-batch-item]')];
     const refresh=()=>{
         const checked=boxes.filter(box=>box.checked);

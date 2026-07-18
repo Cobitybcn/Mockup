@@ -4,6 +4,7 @@ require_once dirname(__DIR__,3).'/app/bootstrap.php';
 Auth::start(); $user=Auth::user(); $message=''; $ok=false;
 try{
     if(!$user)throw new RuntimeException('Your Artwork Mockups session expired. Sign in and connect again.');
+    if(!FeatureAccess::allows($user,FeatureAccess::SOCIAL_MANAGE))throw new RuntimeException('Social Media requires Artist Pro.');
     if(isset($_GET['error']))throw new RuntimeException('Pinterest authorization was cancelled.');
     (new PinterestIntegrationService(Database::connection()))->completeAuthorization((int)$user['id'],trim((string)($_GET['code']??'')),trim((string)($_GET['state']??'')));
     $message='Pinterest account connected successfully.'; $ok=true;

@@ -7,6 +7,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 try {
     $user = Auth::requireUser();
+    FeatureAccess::requireJson($user, FeatureAccess::WEBSITE_MANAGE, 'Website');
     Auth::start();
     if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') throw new RuntimeException('Use POST.');
 

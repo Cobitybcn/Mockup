@@ -5,10 +5,7 @@ require_once __DIR__ . '/app/bootstrap.php';
 
 $user = Auth::requireUser();
 $isAdmin = Auth::isAdmin($user);
-if (!$isAdmin && (int)($user['credits'] ?? 0) <= 0) {
-    http_response_code(403);
-    exit('Social Media is available for advanced artist accounts.');
-}
+FeatureAccess::requirePage($user, FeatureAccess::SOCIAL_MANAGE, 'Social Media');
 
 $pdo = Database::connection();
 $userId = (int)$user['id'];

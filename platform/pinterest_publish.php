@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/app/bootstrap.php';
-$user=Auth::requireUser(); Auth::start(); $userId=(int)$user['id']; $pdo=Database::connection();
+$user=Auth::requireUser(); FeatureAccess::requirePage($user,FeatureAccess::SOCIAL_MANAGE,'Social Media'); Auth::start(); $userId=(int)$user['id']; $pdo=Database::connection();
 $publicationId=max(0,(int)($_GET['id']??$_POST['id']??0)); $service=new PublicationService($pdo); $pinterest=new PinterestIntegrationService($pdo);
 $error=''; $notice='';
 try{

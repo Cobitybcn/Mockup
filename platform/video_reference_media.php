@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/app/Video/bootstrap.php';
 
 $user = Auth::requireUser();
+FeatureAccess::requirePage($user, FeatureAccess::VIDEO_MANAGE, 'Video Studio');
 $userId = (int)$user['id'];
 $assetId = (int)($_GET['asset_id'] ?? 0);
 $repository = new VideoStudioRepository(Database::connection());

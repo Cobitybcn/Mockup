@@ -25,6 +25,7 @@ create_mysql_schema($mysql);
 
 $tables = [
     'users',
+    'user_feature_overrides',
     'artworks',
     'mockups',
     'artist_profiles',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/app/bootstrap.php';
 
 $user = Auth::requireUser();
+FeatureAccess::requirePage($user, FeatureAccess::ADMIN_CAMERA_LIBRARY, 'Camera Boards');
 
 if (!function_exists('h')) {
     function h($value): string

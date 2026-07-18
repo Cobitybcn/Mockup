@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/app/bootstrap.php';
-$user=Auth::requireUser();Auth::start();$userId=(int)$user['id'];$id=max(0,(int)($_POST['id']??0));$drafts=new MockupPinterestDraftService(Database::connection());
+$user=Auth::requireUser();FeatureAccess::requirePage($user,FeatureAccess::SOCIAL_MANAGE,'Social Media');Auth::start();$userId=(int)$user['id'];$id=max(0,(int)($_POST['id']??0));$drafts=new MockupPinterestDraftService(Database::connection());
 try{
     if(app_env('PINTEREST_LIVE_PUBLISH_ENABLED','false')!=='true'||app_env('PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED','false')!=='true')throw new RuntimeException('Live Pinterest publication is disabled.');
     $csrf=(string)($_SESSION['pinterest_live_csrf']??'');unset($_SESSION['pinterest_live_csrf']);if(!hash_equals($csrf,(string)($_POST['csrf']??''))||($_POST['confirm']??'')!=='yes')throw new RuntimeException('Explicit publication confirmation is required.');

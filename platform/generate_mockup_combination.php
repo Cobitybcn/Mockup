@@ -78,6 +78,7 @@ function build_combination_adjustment_prompt(array $controls): string
 
 try {
     $user = Auth::requireUser();
+    FeatureAccess::requireJson($user, FeatureAccess::MOCKUPS_GENERATE, 'Mockup generation');
     $isAdmin = Auth::isAdmin($user);
     $canSelectGenerationProvider = ProviderSettings::canSelectGenerationProvider(
         $isAdmin,

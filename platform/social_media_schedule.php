@@ -18,6 +18,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
 
 try {
     $user = Auth::requireUser();
+    FeatureAccess::requireJson($user, FeatureAccess::SOCIAL_MANAGE, 'Social Media');
     Auth::start();
     $input = json_decode((string)file_get_contents('php://input'), true);
     if (!is_array($input)) throw new InvalidArgumentException('Invalid publication request.');

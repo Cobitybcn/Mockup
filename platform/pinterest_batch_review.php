@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/app/bootstrap.php';
-$user=Auth::requireUser();Auth::start();$uid=(int)$user['id'];$id=max(0,(int)($_GET['id']??$_POST['id']??0));$pdo=Database::connection();$drafts=new MockupPinterestDraftService($pdo);$batches=new PinterestBatchService($pdo,$drafts);$pinterest=new PinterestIntegrationService($pdo);
+$user=Auth::requireUser();FeatureAccess::requirePage($user,FeatureAccess::SOCIAL_MANAGE,'Social Media');Auth::start();$uid=(int)$user['id'];$id=max(0,(int)($_GET['id']??$_POST['id']??0));$pdo=Database::connection();$drafts=new MockupPinterestDraftService($pdo);$batches=new PinterestBatchService($pdo,$drafts);$pinterest=new PinterestIntegrationService($pdo);
 $error=(string)($_SESSION['pinterest_batch_error']??'');$notice=(string)($_SESSION['pinterest_batch_notice']??'');unset($_SESSION['pinterest_batch_error'],$_SESSION['pinterest_batch_notice']);
 $linkedCampaign=(new SocialCampaignPinterestBridge($pdo))->linkedCampaign($id,$uid);
 $backHref=$linkedCampaign?'social_media_catalog.php?draft='.(int)$linkedCampaign['id']:'mockups.php';

@@ -5,6 +5,7 @@ Auth::start();
 $user=Auth::user();
 $service=new PinterestIntegrationService(Database::connection());
 $isAdmin=$user?Auth::isAdmin($user):false;
+if($user)FeatureAccess::requirePage($user,FeatureAccess::SOCIAL_MANAGE,'Social Media');
 $purposes=$isAdmin?['artist'=>'Artist account','platform'=>'Artwork Mockups platform account']:['artist'=>'Artist account'];
 $connections=[];if($user)foreach($purposes as $purpose=>$label)$connections[$purpose]=$service->connection((int)$user['id'],$purpose);
 $error='';

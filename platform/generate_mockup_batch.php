@@ -22,6 +22,7 @@ if (!$currentUser) {
     echo json_encode(['ok' => false, 'error' => 'Session expired.'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
+FeatureAccess::requireJson($currentUser, FeatureAccess::MOCKUPS_GENERATE, 'Mockup generation');
 
 $image = basename(trim((string)($_POST['image'] ?? $_GET['image'] ?? '')));
 $contextIds = $_POST['context_ids'] ?? $_GET['context_ids'] ?? [];

@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2).'/app/bootstrap.php';
 Auth::start();
 $user = Auth::user();
+if ($user) FeatureAccess::requirePage($user, FeatureAccess::SOCIAL_MANAGE, 'Social Media');
 $service = new InstagramIntegrationService(Database::connection());
 $error = '';
 $connection = $user ? $service->connection((int)$user['id']) : null;

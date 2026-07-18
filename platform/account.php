@@ -5,6 +5,12 @@ require_once __DIR__ . '/app/bootstrap.php';
 
 $user = Auth::requireUser();
 $isAdmin = Auth::isAdmin($user);
+$planCode = FeatureAccess::planForUser($user);
+$planLabel = $isAdmin ? 'Administrator' : FeatureAccess::planLabel($user);
+$canUseWebsite = FeatureAccess::allows($user, FeatureAccess::WEBSITE_MANAGE);
+$canUseSocial = FeatureAccess::allows($user, FeatureAccess::SOCIAL_MANAGE);
+$canUseVideo = FeatureAccess::allows($user, FeatureAccess::VIDEO_MANAGE);
+$upgradeRequested = isset($_GET['upgrade']) && !$isAdmin && $planCode !== FeatureAccess::PLAN_ARTIST_PRO;
 $pdo = Database::connection();
 $passwordSuccess = '';
 $passwordError = '';
@@ -181,6 +187,79 @@ function h($v): string
                 width: 100%;
             }
         }
+
+        .plan-heading {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+        }
+
+        .plan-badge {
+            display: inline-flex;
+            padding: 7px 11px;
+            border: 1px solid var(--line-dark);
+            border-radius: 999px;
+            background: var(--surface-soft);
+            color: var(--accent);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .plan-feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .plan-feature {
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 16px;
+            background: var(--surface-soft);
+        }
+
+        .plan-feature.is-enabled {
+            border-color: rgba(106, 139, 101, .34);
+            background: rgba(228, 238, 225, .55);
+        }
+
+        .plan-feature span {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+        }
+
+        .plan-feature strong {
+            font-family: var(--font-serif);
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .plan-details {
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid var(--line);
+        }
+
+        .plan-details summary {
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        @media (max-width: 760px) {
+            .plan-heading { display: block; }
+            .plan-badge { margin-top: 10px; }
+            .plan-feature-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body class="account-page">
@@ -203,7 +282,7 @@ function h($v): string
                     <p><?= h($user['email']) ?></p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link secondary" href="integrations/pinterest/">Pinterest Connections</a>
+                    <a class="button-link secondary" href="<?= h($canUseSocial ? 'integrations/pinterest/' : 'account.php?upgrade=artist_pro&feature=social#plan') ?>"><?= $canUseSocial ? 'Pinterest Connections' : 'Artist Pro' ?></a>
                     <a class="button-link secondary" href="root_album.php">ArtWorks</a>
                 </div>
             </div>
@@ -231,6 +310,46 @@ function h($v): string
                         <strong><?= h($pendingArtworkTotal) ?></strong>
                     </a>
                 <?php endif; ?>
+            </section>
+
+            <section class="panel" id="plan">
+                <div class="plan-heading">
+                    <div>
+                        <h2>Your plan</h2>
+                        <p>Plan access and generation credits are managed separately.</p>
+                    </div>
+                    <span class="plan-badge"><?= h($planLabel) ?></span>
+                </div>
+
+                <?php if ($upgradeRequested): ?>
+                    <div class="notice" role="status">Website, Social Media and Video Studio are available with Artist Pro. Your existing artworks and mockups remain unchanged.</div>
+                <?php endif; ?>
+
+                <div class="plan-feature-grid">
+                    <div class="plan-feature <?= $canUseWebsite ? 'is-enabled' : '' ?>">
+                        <span>Website</span>
+                        <strong><?= $canUseWebsite ? 'Available' : 'Artist Pro' ?></strong>
+                    </div>
+                    <div class="plan-feature <?= $canUseSocial ? 'is-enabled' : '' ?>">
+                        <span>Social Media</span>
+                        <strong><?= $canUseSocial ? 'Available' : 'Artist Pro' ?></strong>
+                    </div>
+                    <div class="plan-feature <?= $canUseVideo ? 'is-enabled' : '' ?>">
+                        <span>Video Studio</span>
+                        <strong><?= $canUseVideo ? 'Available' : 'Artist Pro' ?></strong>
+                    </div>
+                </div>
+
+                <?php if (!$isAdmin && $planCode === FeatureAccess::PLAN_ARTIST_STUDIO): ?>
+                    <p style="margin-top:16px;"><a class="button-link" href="contact/">Request Artist Pro access</a></p>
+                <?php endif; ?>
+
+                <details class="plan-details">
+                    <summary>Plan details</summary>
+                    <p><strong>Artist Studio:</strong> artworks, series, mockup generation, Mockup Lab, private albums and downloads.</p>
+                    <p><strong>Artist Pro:</strong> everything in Artist Studio, plus Website, Social Media integrations and Video Studio.</p>
+                    <p>Every Mockup Lab generation or AI variation consumes credits. Browsing or downloading existing files does not.</p>
+                </details>
             </section>
 
             <section class="panel" id="security">
@@ -267,7 +386,7 @@ function h($v): string
 
             <section class="panel" id="credits">
                 <h2>Beta Credits</h2>
-                <p>Each mockup generation uses 1 credit. Root image creation (Step 1) is free in Beta. Credits are refunded automatically if a generation fails.</p>
+                <p>Each mockup generation and every Mockup Lab AI variation uses credits. Root image creation (Step 1) is free in Beta. Credits are refunded automatically if a generation fails.</p>
 
                 <?php if ($creditHistory): ?>
                     <table style="width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px;">

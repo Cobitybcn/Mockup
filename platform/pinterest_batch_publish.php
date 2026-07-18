@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/app/bootstrap.php';
-$user=Auth::requireUser();Auth::start();$uid=(int)$user['id'];$id=max(0,(int)($_POST['id']??0));$pdo=Database::connection();$drafts=new MockupPinterestDraftService($pdo);$batches=new PinterestBatchService($pdo,$drafts);
+$user=Auth::requireUser();FeatureAccess::requirePage($user,FeatureAccess::SOCIAL_MANAGE,'Social Media');Auth::start();$uid=(int)$user['id'];$id=max(0,(int)($_POST['id']??0));$pdo=Database::connection();$drafts=new MockupPinterestDraftService($pdo);$batches=new PinterestBatchService($pdo,$drafts);
 try{
     if(app_env('PINTEREST_LIVE_PUBLISH_ENABLED','false')!=='true'||app_env('PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED','false')!=='true')throw new RuntimeException('Live Pinterest publication is disabled.');
     $csrf=(string)($_SESSION['pinterest_batch_publish_csrf']??'');unset($_SESSION['pinterest_batch_publish_csrf']);

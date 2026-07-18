@@ -10,6 +10,7 @@ VideoHttp::handle(function (): array {
     if (!$user) {
         VideoHttp::respond(['ok' => false, 'error' => 'Authentication required.'], 401);
     }
+    FeatureAccess::requireJson($user, FeatureAccess::VIDEO_MANAGE, 'Video Studio');
 
     $input = VideoHttp::input();
     VideoHttp::verifyCsrf($input);

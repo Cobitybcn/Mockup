@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/app/bootstrap.php';
 
 $user = Auth::requireUser();
+FeatureAccess::requirePage($user, FeatureAccess::MOCKUPS_LAB, 'Mockup Lab');
 $file = basename(str_replace('\\', '/', trim((string)($_GET['file'] ?? ''))));
 
 if ($file === '' || preg_match('/^[A-Za-z0-9._-]+$/', $file) !== 1) {

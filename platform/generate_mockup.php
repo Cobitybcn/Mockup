@@ -78,6 +78,11 @@ if (!$currentUser) {
     header('Location: login.php');
     exit;
 }
+if ($jsonResponseRequested) {
+    FeatureAccess::requireJson($currentUser, FeatureAccess::MOCKUPS_GENERATE, 'Mockup generation');
+} else {
+    FeatureAccess::requirePage($currentUser, FeatureAccess::MOCKUPS_GENERATE, 'Mockup generation');
+}
 
 if (session_status() === PHP_SESSION_ACTIVE) {
     session_write_close();

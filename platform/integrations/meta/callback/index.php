@@ -4,6 +4,7 @@ require_once dirname(__DIR__,3).'/app/bootstrap.php';
 Auth::start();$user=Auth::user();$message='';$ok=false;$purpose=(string)($_GET['purpose']??'artist');
 try{
     if(!$user)throw new RuntimeException('Your Artwork Mockups session expired. Sign in and connect again.');
+    if(!FeatureAccess::allows($user,FeatureAccess::SOCIAL_MANAGE))throw new RuntimeException('Social Media requires Artist Pro.');
     if(isset($_GET['error']))throw new RuntimeException('Meta authorization was cancelled.');
     (new MetaIntegrationService(Database::connection()))->completeAuthorization((int)$user['id'],$purpose,trim((string)($_GET['code']??'')),trim((string)($_GET['state']??'')));
     $message='Meta account authorized. Now select the Facebook Page you want to use.';$ok=true;

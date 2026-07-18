@@ -6,6 +6,7 @@ require_once __DIR__ . '/app/bootstrap.php';
 $user = Auth::requireUser();
 $pdo = Database::connection();
 $isAdmin = Auth::isAdmin($user);
+$canUseSocial = FeatureAccess::allows($user, FeatureAccess::SOCIAL_MANAGE);
 
 $id = (int)($_GET['id'] ?? 0);
 $file = basename((string)($_GET['file'] ?? ''));
@@ -901,10 +902,10 @@ if ($mockupV2) {
     <section class="publication">
         <?php if(isset($_GET['mockup_v2_generated'])):?><div class="notice success">Mockup analysis v2 generated as a draft. Nothing was published.</div><?php endif;?>
         <?php if(isset($_GET['mockup_v2_error'])):?><div class="notice error"><?=h((string)$_GET['mockup_v2_error'])?></div><?php endif;?>
-        <?php if($pinterestDraftNotice!==''):?><div class="notice success"><?=h($pinterestDraftNotice)?></div><?php endif;?>
-        <?php if($pinterestDraftError!==''):?><div class="notice error"><?=h($pinterestDraftError)?></div><?php endif;?>
-        <?php if($metaDraftNotice!==''):?><div class="notice success"><?=h($metaDraftNotice)?></div><?php endif;?>
-        <?php if($metaDraftError!==''):?><div class="notice error"><?=h($metaDraftError)?></div><?php endif;?>
+        <?php if($canUseSocial && $pinterestDraftNotice!==''):?><div class="notice success"><?=h($pinterestDraftNotice)?></div><?php endif;?>
+        <?php if($canUseSocial && $pinterestDraftError!==''):?><div class="notice error"><?=h($pinterestDraftError)?></div><?php endif;?>
+        <?php if($canUseSocial && $metaDraftNotice!==''):?><div class="notice success"><?=h($metaDraftNotice)?></div><?php endif;?>
+        <?php if($canUseSocial && $metaDraftError!==''):?><div class="notice error"><?=h($metaDraftError)?></div><?php endif;?>
         <?php if($viewerMockupId>0): ?>
             <section class="panel">
                 <div class="section-heading">
@@ -917,7 +918,7 @@ if ($mockupV2) {
                         <div class="pin-field"><label>Scene</label><p><?=h($scene['space_type']??'')?> · <?=h($scene['architecture']??'')?></p><p><?=h($scene['lighting']??'')?> · <?=h($scene['camera']??'')?></p></div>
                         <div class="pin-field"><label>Keywords / Long tails / Tags</label><p><?=h(implode(', ',(array)($neutral['keywords']??[])))?></p><p><?=h(implode(', ',(array)($neutral['long_tail_keywords']??[])))?></p><p><?=h(implode(', ',(array)($neutral['tags']??[])))?></p></div>
                     </div>
-                    <div class="social-grid">
+                    <?php if($canUseSocial): ?><div class="social-grid">
                         <?php foreach(['website'=>'Website','instagram'=>'Instagram','facebook'=>'Facebook','tiktok'=>'TikTok · future'] as $key=>$label): $channel=(array)($channels[$key]??[]); ?>
                             <article class="social-card">
                                 <h3><?=h($label)?></h3>
@@ -948,12 +949,12 @@ if ($mockupV2) {
                                 <?php endif; ?>
                             </article>
                         <?php endforeach; ?>
-                    </div>
+                    </div><?php endif; ?>
                     <details style="margin-top:14px;"><summary style="cursor:pointer;font-size:11px;color:var(--muted);">Technical JSON</summary><pre style="white-space:pre-wrap;overflow:auto;max-height:320px;font-size:10px;"><?=h(json_encode($mockupV2,JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES))?></pre></details>
                 <?php else: ?><p>No v2 draft exists for this mockup yet.</p><?php endif; ?>
             </section>
         <?php endif; ?>
-        <?php if($mockupV2): ?><section class="panel pinterest">
+        <?php if($mockupV2 && $canUseSocial): ?><section class="panel pinterest">
             <div class="section-heading">
                 <div>
                     <h2>Pinterest Pin Content</h2>

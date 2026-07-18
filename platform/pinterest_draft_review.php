@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/app/bootstrap.php';
-$user=Auth::requireUser();Auth::start();$userId=(int)$user['id'];$id=max(0,(int)($_GET['id']??$_POST['id']??0));$pdo=Database::connection();$drafts=new MockupPinterestDraftService($pdo);$pinterest=new PinterestIntegrationService($pdo);$error=(string)($_SESSION['pinterest_publish_error']??'');$notice=(string)($_SESSION['pinterest_publish_notice']??'');unset($_SESSION['pinterest_publish_error'],$_SESSION['pinterest_publish_notice']);$boards=[];$sections=[];$preview=[];$blockers=[];$connection=null;
+$user=Auth::requireUser();FeatureAccess::requirePage($user,FeatureAccess::SOCIAL_MANAGE,'Social Media');Auth::start();$userId=(int)$user['id'];$id=max(0,(int)($_GET['id']??$_POST['id']??0));$pdo=Database::connection();$drafts=new MockupPinterestDraftService($pdo);$pinterest=new PinterestIntegrationService($pdo);$error=(string)($_SESSION['pinterest_publish_error']??'');$notice=(string)($_SESSION['pinterest_publish_notice']??'');unset($_SESSION['pinterest_publish_error'],$_SESSION['pinterest_publish_notice']);$boards=[];$sections=[];$preview=[];$blockers=[];$connection=null;
 try{
     $draft=$drafts->draft($id,$userId);$purpose=(string)$draft['purpose'];$connection=$pinterest->connection($userId,$purpose);
     if(($connection['status']??'')==='connected'){$boards=$pinterest->boards($userId,$purpose);if(($draft['board_id']??'')!=='')$sections=$pinterest->sections($userId,$purpose,(string)$draft['board_id']);}

@@ -9,6 +9,9 @@ try {
     if (!$user) {
         throw new RuntimeException('Your Artwork Mockups session expired. Sign in and connect again.');
     }
+    if (!FeatureAccess::allows($user, FeatureAccess::SOCIAL_MANAGE)) {
+        throw new RuntimeException('Social Media requires Artist Pro.');
+    }
     if (isset($_GET['error'])) {
         throw new RuntimeException('Instagram authorization was cancelled.');
     }

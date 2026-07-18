@@ -142,6 +142,8 @@ class Database
         $password = app_env('DB_PASSWORD', '');
         $charset = app_env('DB_CHARSET', 'utf8mb4');
 
+        self::assertEnvironmentDatabaseBoundary($database);
+
         $serverDsn = self::mysqlDsn('', $charset, $host, $port, $socket);
         $server = new PDO($serverDsn, $username, $password, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -156,6 +158,25 @@ class Database
         return new PDO($dsn, $username, $password, [
             PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$charset}",
         ]);
+    }
+
+    private static function assertEnvironmentDatabaseBoundary(string $database): void
+    {
+        $environment = strtolower(trim(app_env('APP_ENV', '')));
+        $normalizedDatabase = strtolower(trim($database));
+
+        if ($environment === 'local' && !str_contains($normalizedDatabase, 'local')) {
+            throw new RuntimeException(
+                "APP_ENV=local requiere una base cuyo nombre contenga 'local'. " .
+                "Se rechazo la conexion a {$database}."
+            );
+        }
+
+        if ($environment === 'production' && str_contains($normalizedDatabase, 'local')) {
+            throw new RuntimeException(
+                "APP_ENV=production no puede usar la base local {$database}."
+            );
+        }
     }
 
     private static function mysqlDsn(string $database, string $charset, string $host, string $port, string $socket): string
@@ -203,6 +224,7 @@ class Database
         } else {
             self::migrateSqlite($pdo);
         }
+        self::migrateAccessControl($pdo);
         self::migratePinterest($pdo);
         self::migrateMeta($pdo);
         self::migrateInstagram($pdo);
@@ -219,6 +241,7 @@ class Database
                 password_hash TEXT NOT NULL,
                 name TEXT NOT NULL DEFAULT '',
                 credits INTEGER NOT NULL DEFAULT 10,
+                plan_code TEXT NOT NULL DEFAULT 'artist_studio',
                 is_admin INTEGER NOT NULL DEFAULT 0,
                 status TEXT NOT NULL DEFAULT 'active',
                 disabled_at TEXT NULL,
@@ -227,6 +250,7 @@ class Database
             )
         ");
         self::addColumnIfMissing($pdo, 'users', 'is_admin', 'INTEGER NOT NULL DEFAULT 0');
+        self::addColumnIfMissing($pdo, 'users', 'plan_code', "TEXT NOT NULL DEFAULT 'artist_studio'");
         self::addColumnIfMissing($pdo, 'users', 'status', "TEXT NOT NULL DEFAULT 'active'");
         self::addColumnIfMissing($pdo, 'users', 'disabled_at', 'TEXT NULL');
 
@@ -524,6 +548,7 @@ class Database
                 password_hash VARCHAR(255) NOT NULL,
                 name VARCHAR(255) NOT NULL DEFAULT '',
                 credits INT NOT NULL DEFAULT 10,
+                plan_code VARCHAR(40) NOT NULL DEFAULT 'artist_studio',
                 is_admin TINYINT(1) NOT NULL DEFAULT 0,
                 status VARCHAR(20) NOT NULL DEFAULT 'active',
                 disabled_at VARCHAR(40) NULL,
@@ -534,6 +559,7 @@ class Database
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
         self::addColumnIfMissing($pdo, 'users', 'is_admin', 'TINYINT(1) NOT NULL DEFAULT 0');
+        self::addColumnIfMissing($pdo, 'users', 'plan_code', "VARCHAR(40) NOT NULL DEFAULT 'artist_studio'");
         self::addColumnIfMissing($pdo, 'users', 'status', "VARCHAR(20) NOT NULL DEFAULT 'active'");
         self::addColumnIfMissing($pdo, 'users', 'disabled_at', 'VARCHAR(40) NULL');
 
@@ -851,6 +877,45 @@ class Database
                 KEY idx_contact_status_created (status, created_at)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
+    }
+
+    private static function migrateAccessControl(PDO $pdo): void
+    {
+        if (self::isMysql()) {
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS user_feature_overrides (
+                    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                    user_id INT UNSIGNED NOT NULL,
+                    feature_key VARCHAR(100) NOT NULL,
+                    allowed TINYINT(1) NOT NULL,
+                    expires_at VARCHAR(40) NULL,
+                    note VARCHAR(255) NOT NULL DEFAULT '',
+                    created_at VARCHAR(40) NOT NULL,
+                    updated_at VARCHAR(40) NOT NULL,
+                    PRIMARY KEY (id),
+                    UNIQUE KEY user_feature_overrides_user_feature_unique (user_id, feature_key),
+                    KEY user_feature_overrides_user_idx (user_id),
+                    CONSTRAINT user_feature_overrides_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ");
+            return;
+        }
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS user_feature_overrides (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                feature_key TEXT NOT NULL,
+                allowed INTEGER NOT NULL,
+                expires_at TEXT NULL,
+                note TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                UNIQUE(user_id, feature_key)
+            )
+        ");
+        $pdo->exec('CREATE INDEX IF NOT EXISTS user_feature_overrides_user_idx ON user_feature_overrides(user_id)');
     }
 
     private static function migratePinterest(PDO $pdo): void

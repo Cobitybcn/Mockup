@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/app/bootstrap.php';
 
 $user = Auth::requireUser();
+FeatureAccess::requirePage($user, FeatureAccess::MOCKUPS_LAB, 'Mockup Lab');
 $isAdmin = Auth::isAdmin($user);
 $labFlowMode = (string)($_COOKIE['sidebar_flow_mode'] ?? '');
 $useSimpleLab = !$isAdmin || $labFlowMode === 'normal';

@@ -8,6 +8,7 @@ header('Cache-Control: private, no-store');
 
 try {
     $user = Auth::requireUser();
+    FeatureAccess::requireJson($user, FeatureAccess::SOCIAL_MANAGE, 'Social Media');
     $userId = (int)$user['id'];
     Auth::start();
     $jobs = new SocialPublishJobService(Database::connection());

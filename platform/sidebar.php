@@ -4,6 +4,9 @@ declare(strict_types=1);
 // Resolve current user and admin role
 $sidebarUser = isset($user) ? $user : (isset($currentUser) ? $currentUser : Auth::user());
 $sidebarIsAdmin = $sidebarUser ? Auth::isAdmin($sidebarUser) : false;
+$sidebarEnvironment = strtolower(trim(app_env('APP_ENV', 'production')));
+$sidebarIsLocalEnvironment = $sidebarEnvironment === 'local';
+$sidebarEnvironmentDatabase = trim(app_env('DB_DATABASE', ''));
 
 $currentPage = basename($_SERVER['PHP_SELF']);
 $queryString = $_SERVER['QUERY_STRING'] ?? '';
@@ -225,7 +228,12 @@ $connectionsActive = $pinterestActive || $metaActive;
 // Admin active states
 $promptsActive = ($currentPage === 'admin_prompts.php');
 $apiActive = ($currentPage === 'admin_api_keys.php');
-$sidebarCanUseSocialCatalog = $sidebarIsAdmin || (int)($sidebarUser['credits'] ?? 0) > 0;
+$sidebarCanUseWebsite = $sidebarUser ? FeatureAccess::allows($sidebarUser, FeatureAccess::WEBSITE_MANAGE) : false;
+$sidebarCanUseSocial = $sidebarUser ? FeatureAccess::allows($sidebarUser, FeatureAccess::SOCIAL_MANAGE) : false;
+$sidebarCanUseVideo = $sidebarUser ? FeatureAccess::allows($sidebarUser, FeatureAccess::VIDEO_MANAGE) : false;
+$sidebarWebsiteUrl = $sidebarCanUseWebsite ? 'website_board.php' : 'account.php?upgrade=artist_pro&feature=website#plan';
+$sidebarSocialUrl = $sidebarCanUseSocial ? 'social_media_board.php' : 'account.php?upgrade=artist_pro&feature=social#plan';
+$sidebarVideosUrl = $sidebarCanUseVideo ? 'videos.php' : 'account.php?upgrade=artist_pro&feature=video#plan';
 
 // Step 2 link determination (Select Root Artwork)
 $step2Url = '#';
@@ -340,6 +348,9 @@ $rootAlbumUrl = 'root_album.php';
 $videoStudioUrl = $sidebarContextArtworkId > 0
     ? 'video.php?artwork_id=' . urlencode((string)$sidebarContextArtworkId)
     : 'video.php';
+$sidebarVideoStudioUrl = $sidebarCanUseVideo
+    ? $videoStudioUrl
+    : 'account.php?upgrade=artist_pro&feature=video#plan';
 
 $generatedResultsUrl = $sidebarContextArtworkId > 0
     ? 'mockup_combination_results.php?id=' . urlencode((string)$sidebarContextArtworkId)
@@ -411,6 +422,42 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
 </style>
 <?php endif; ?>
 <style>
+    .app-environment-badge {
+        position: fixed;
+        left: 12px;
+        bottom: 12px;
+        z-index: 2147482000;
+        max-width: calc(100vw - 24px);
+        padding: 6px 10px;
+        overflow: hidden;
+        border: 1px solid rgba(157, 119, 62, .28);
+        border-radius: 999px;
+        background: rgba(244, 234, 215, .96);
+        box-shadow: 0 8px 22px rgba(55, 42, 25, .10);
+        color: #6f5631;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: .08em;
+        line-height: 1.25;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        pointer-events: none;
+    }
+    .sidebar-tab.is-locked::after,
+    .sidebar-mobile-section a.is-locked::after {
+        content: 'PRO';
+        display: inline-block;
+        margin-left: 6px;
+        padding: 2px 5px;
+        border: 1px solid rgba(183, 127, 134, .32);
+        border-radius: 999px;
+        background: rgba(235, 211, 214, .38);
+        color: #8d6268;
+        font-size: 8px;
+        font-weight: 800;
+        letter-spacing: .08em;
+        vertical-align: middle;
+    }
     .sidebar-mobile-menu {
         display: block;
         position: fixed;
@@ -777,20 +824,30 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                     <a class="<?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
                     <a class="<?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
                     <a class="<?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
-                    <a class="<?= $videosActive ? 'active' : '' ?>" href="videos.php">Videos</a>
+                    <?php if ($sidebarCanUseVideo): ?>
+                        <a class="<?= $videosActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideosUrl, ENT_QUOTES, 'UTF-8') ?>">Videos</a>
+                    <?php endif; ?>
                 </div>
                 <div class="sidebar-mobile-section sidebar-publishing-mobile">
                     <span>Publish</span>
-                    <a class="<?= $websiteActive ? 'active' : '' ?>" href="website_board.php">Website</a>
-                    <?php if ($sidebarCanUseSocialCatalog): ?><a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="social_media_board.php">Social Media</a><?php endif; ?>
+                    <?php if ($sidebarCanUseWebsite): ?>
+                        <a class="<?= $websiteActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarWebsiteUrl, ENT_QUOTES, 'UTF-8') ?>">Website</a>
+                    <?php endif; ?>
+                    <?php if ($sidebarCanUseSocial): ?>
+                        <a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media</a>
+                    <?php endif; ?>
                     <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
                 </div>
-                <div class="sidebar-mobile-section sidebar-studios-mobile">
-                    <span>Studios</span>
-                    <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
-                    <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
-                    <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($videoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Studio</a>
-                </div>
+                <?php if ($sidebarIsAdmin || $sidebarCanUseVideo): ?>
+                    <div class="sidebar-mobile-section sidebar-studios-mobile">
+                        <span>Studios</span>
+                        <?php if ($sidebarIsAdmin): ?>
+                            <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
+                            <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
+                        <?php endif; ?>
+                        <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Studio</a>
+                    </div>
+                <?php endif; ?>
                 <?php if ($sidebarIsAdmin): ?>
                     <div class="sidebar-mobile-section">
                         <span>Admin</span>
@@ -798,14 +855,18 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                         <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a>
                         <a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a>
                         <a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a>
-                        <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
+                        <?php if ($sidebarCanUseSocial): ?>
+                            <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
+                        <?php endif; ?>
                         <a href="logout.php">Logout</a>
                     </div>
                 <?php else: ?>
                     <div class="sidebar-mobile-section">
                         <span>Admin</span>
                         <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
-                        <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
+                        <?php if ($sidebarCanUseSocial): ?>
+                            <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
+                        <?php endif; ?>
                         <a href="logout.php">Logout</a>
                     </div>
                 <?php endif; ?>
@@ -849,23 +910,33 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <a class="sidebar-tab <?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
                 <a class="sidebar-tab <?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
                 <a class="sidebar-tab <?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
-                <a class="sidebar-tab <?= $videosActive ? 'active' : '' ?>" href="videos.php">Videos</a>
+                <?php if ($sidebarCanUseVideo): ?>
+                    <a class="sidebar-tab <?= $videosActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideosUrl, ENT_QUOTES, 'UTF-8') ?>">Videos</a>
+                <?php endif; ?>
                 <span class="sidebar-library-divider" aria-hidden="true"></span>
                 <div class="sidebar-publishing-tabs">
-                    <a class="sidebar-tab <?= $websiteActive ? 'active' : '' ?>" href="website_board.php">Website</a>
-                    <?php if ($sidebarCanUseSocialCatalog): ?><a class="sidebar-tab <?= $socialMediaCatalogActive ? 'active' : '' ?>" href="social_media_board.php">Social Media</a><?php endif; ?>
+                    <?php if ($sidebarCanUseWebsite): ?>
+                        <a class="sidebar-tab <?= $websiteActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarWebsiteUrl, ENT_QUOTES, 'UTF-8') ?>">Website</a>
+                    <?php endif; ?>
+                    <?php if ($sidebarCanUseSocial): ?>
+                        <a class="sidebar-tab <?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media</a>
+                    <?php endif; ?>
                     <a class="sidebar-tab <?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
                 </div>
             </div>
         </section>
 
-        <section class="sidebar-studios" aria-label="Studios">
-            <div class="sidebar-tab-row">
-                <a class="sidebar-tab <?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
-                <a class="sidebar-tab <?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
-                <a class="sidebar-tab <?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($videoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Studio</a>
-            </div>
-        </section>
+        <?php if ($sidebarIsAdmin || $sidebarCanUseVideo): ?>
+            <section class="sidebar-studios" aria-label="Studios">
+                <div class="sidebar-tab-row">
+                    <?php if ($sidebarIsAdmin): ?>
+                        <a class="sidebar-tab <?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
+                        <a class="sidebar-tab <?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
+                    <?php endif; ?>
+                    <a class="sidebar-tab <?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Studio</a>
+                </div>
+            </section>
+        <?php endif; ?>
 
     </nav>
 
@@ -878,7 +949,9 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <li><a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a></li>
                 <li><a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a></li>
             <?php endif; ?>
-            <li><a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a></li>
+            <?php if ($sidebarCanUseSocial): ?>
+                <li><a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a></li>
+            <?php endif; ?>
             <li><a href="logout.php">Logout</a></li>
         </ul>
     </details>
@@ -891,20 +964,30 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <a class="<?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
                 <a class="<?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
                 <a class="<?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
-                <a class="<?= $videosActive ? 'active' : '' ?>" href="videos.php">Videos</a>
+                <?php if ($sidebarCanUseVideo): ?>
+                    <a class="<?= $videosActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideosUrl, ENT_QUOTES, 'UTF-8') ?>">Videos</a>
+                <?php endif; ?>
             </div>
             <div class="sidebar-mobile-section sidebar-publishing-mobile">
                 <span>Publish</span>
-                <a class="<?= $websiteActive ? 'active' : '' ?>" href="website_board.php">Website</a>
-                <?php if ($sidebarCanUseSocialCatalog): ?><a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="social_media_board.php">Social Media</a><?php endif; ?>
+                <?php if ($sidebarCanUseWebsite): ?>
+                    <a class="<?= $websiteActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarWebsiteUrl, ENT_QUOTES, 'UTF-8') ?>">Website</a>
+                <?php endif; ?>
+                <?php if ($sidebarCanUseSocial): ?>
+                    <a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media</a>
+                <?php endif; ?>
                 <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
             </div>
-            <div class="sidebar-mobile-section sidebar-studios-mobile">
-                <span>Studios</span>
-                <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
-                <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
-                <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($videoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Studio</a>
-            </div>
+            <?php if ($sidebarIsAdmin || $sidebarCanUseVideo): ?>
+                <div class="sidebar-mobile-section sidebar-studios-mobile">
+                    <span>Studios</span>
+                    <?php if ($sidebarIsAdmin): ?>
+                        <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
+                        <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
+                    <?php endif; ?>
+                    <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Studio</a>
+                </div>
+            <?php endif; ?>
             <?php if ($sidebarIsAdmin): ?>
                 <div class="sidebar-mobile-section">
                     <span>Admin</span>
@@ -912,19 +995,28 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                     <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a>
                     <a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a>
                     <a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a>
-                    <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
+                    <?php if ($sidebarCanUseSocial): ?>
+                        <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
+                    <?php endif; ?>
                     <a href="logout.php">Logout</a>
                 </div>
             <?php else: ?>
                 <div class="sidebar-mobile-section">
                     <span>Admin</span>
                     <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
-                    <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
+                    <?php if ($sidebarCanUseSocial): ?>
+                        <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
+                    <?php endif; ?>
                     <a href="logout.php">Logout</a>
                 </div>
             <?php endif; ?>
         </div>
     </details>
+    <?php if ($sidebarIsLocalEnvironment): ?>
+        <div class="app-environment-badge" role="status" aria-label="Entorno local">
+            LOCAL · <?= htmlspecialchars($sidebarEnvironmentDatabase, ENT_QUOTES, 'UTF-8') ?>
+        </div>
+    <?php endif; ?>
 </aside>
 <?php if ($sidebarUser): ?>
 <style>

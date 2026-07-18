@@ -32,7 +32,7 @@ class Auth
             return null;
         }
 
-        $stmt = Database::connection()->prepare("SELECT id, email, name, credits, is_admin, status, created_at FROM users WHERE id = :id AND status = 'active'");
+        $stmt = Database::connection()->prepare("SELECT id, email, name, credits, plan_code, is_admin, status, created_at FROM users WHERE id = :id AND status = 'active'");
         $stmt->execute(['id' => $id]);
         $user = $stmt->fetch();
 

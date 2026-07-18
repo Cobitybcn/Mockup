@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/app/bootstrap.php';
 $user=Auth::requireUser();
+FeatureAccess::requirePage($user,FeatureAccess::SOCIAL_MANAGE,'Social Media');
 if($_SERVER['REQUEST_METHOD']!=='POST'){http_response_code(405);exit('Method not allowed.');}
 $mockupId=max(0,(int)($_POST['mockup_id']??0));$channel=(string)($_POST['channel']??'');$destination=trim((string)($_POST['destination_url']??''));
 try{

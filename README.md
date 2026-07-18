@@ -7,6 +7,12 @@ This repository keeps the application and its deployed artist site together:
 
 Runtime data, local credentials, generated media, caches, and recovery bundles are intentionally excluded from Git. Binary artwork assets are stored through Git LFS.
 
+## Local development
+
+The active local environment is identified by `APP_ENV=local` and uses the clean `artwork_mockups_local_v2` database configured in the ignored `platform/.env` file. The application shows a permanent `LOCAL` badge and refuses to connect a local runtime to a database whose name does not contain `local`.
+
+Retired database copies and user archives under `C:\laragon\archives\artworkmockups` are recovery material only; they are not application data sources. Local feature work must stay on a branch other than `main`. Only a push to GitHub's `main` branch can activate the production delivery workflow described below.
+
 ## Production CI/CD
 
 Artwork Mockups uses Google Cloud Build for production delivery. A push to GitHub's `main` branch runs `platform/cloudbuild.ci.yaml`, which:

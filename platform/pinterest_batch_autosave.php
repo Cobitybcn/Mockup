@@ -3,7 +3,7 @@ declare(strict_types=1);
 require_once __DIR__.'/app/bootstrap.php';
 header('Content-Type: application/json; charset=utf-8');
 try{
-    $user=Auth::requireUser();Auth::start();$uid=(int)$user['id'];
+    $user=Auth::requireUser();FeatureAccess::requireJson($user,FeatureAccess::SOCIAL_MANAGE,'Social Media');Auth::start();$uid=(int)$user['id'];
     if(!hash_equals((string)($_SESSION['pinterest_batch_csrf']??''),(string)($_POST['csrf']??'')))throw new RuntimeException('Review session expired. Reload the batch.');
     $batchId=max(0,(int)($_POST['id']??0));$draftId=max(0,(int)($_POST['draft_id']??0));
     $pdo=Database::connection();$drafts=new MockupPinterestDraftService($pdo);$batches=new PinterestBatchService($pdo,$drafts);$pinterest=new PinterestIntegrationService($pdo);

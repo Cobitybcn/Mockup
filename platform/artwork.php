@@ -31,6 +31,23 @@ function media_url(?string $file, bool $download = false): string
     return $download ? $url . '&download=1' : $url;
 }
 
+function artwork_result_file_available(?string $file): bool
+{
+    $file = basename((string)$file);
+    if ($file === '') {
+        return false;
+    }
+
+    $path = RESULTS_DIR . DIRECTORY_SEPARATOR . $file;
+    if (is_file($path)) {
+        return true;
+    }
+
+    return StorageService::isGcsActive()
+        && StorageService::downloadFile('results/' . $file, $path)
+        && is_file($path);
+}
+
 function read_json_file(string $path): array
 {
     if (!is_file($path)) {
@@ -501,7 +518,7 @@ if ($artworkOwnerId <= 0) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'select_root_candidate') {
     $candidateId = max(0, (int)($_POST['candidate_id'] ?? 0));
     $candidateFile = basename((string)($_POST['candidate_file'] ?? ''));
-    if ($candidateFile !== '' && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $candidateFile)) {
+    if (artwork_result_file_available($candidateFile)) {
         Database::withBusyRetry(function () use ($pdo, $id, $artworkOwnerId, $candidateId, $candidateFile): void {
             $pdo->prepare('UPDATE root_artwork_candidates SET is_selected = 0 WHERE artwork_id = :artwork_id')
                 ->execute(['artwork_id' => $id]);
@@ -644,6 +661,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
 
 $rootFile = basename((string)($artwork['root_file'] ?? ''));
 $rootPath = $rootFile ? RESULTS_DIR . DIRECTORY_SEPARATOR . $rootFile : '';
+$rootFileAvailable = artwork_result_file_available($rootFile);
 $rootBase = $rootFile ? pathinfo($rootFile, PATHINFO_FILENAME) : '';
 $meta = $rootBase ? read_json_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $rootBase . '.meta.json') : [];
 $analysis = $rootBase ? read_json_file(ANALYSIS_DIR . DIRECTORY_SEPARATOR . $rootBase . '.analysis.json') : [];
@@ -985,7 +1003,7 @@ $requiredRootViews = [
 $availableRootViews = [];
 foreach ($rootCandidatesList as $candidate) {
     $candidateFile = basename((string)($candidate['file_name'] ?? ''));
-    if ($candidateFile !== '' && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $candidateFile)) {
+    if (artwork_result_file_available($candidateFile)) {
         $availableRootViews[(string)($candidate['view_type'] ?? '')] = true;
     }
 }
@@ -2990,7 +3008,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                         <?php endif; ?>
                     </div>
                 </div>
-                <?php if ($rootFile && is_file($rootPath)): ?>
+                <?php if ($rootFileAvailable): ?>
                     <form id="artwork-generate-metadata-form" class="artwork-metadata-action-form" method="post">
                         <input type="hidden" name="action" value="generate_v2_artwork_draft">
                     </form>
@@ -3016,7 +3034,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                                     $rootVisualItems = [];
                                     foreach (array_slice($rootCandidatesList, 0, 3) as $candidate) {
                                         $candidateFile = basename((string)($candidate['file_name'] ?? ''));
-                                        if ($candidateFile === '' || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $candidateFile)) continue;
+                                        if (!artwork_result_file_available($candidateFile)) continue;
                                         $rootVisualItems[] = ['type' => 'image', 'candidate' => $candidate, 'file' => $candidateFile];
                                         if (count($rootVisualItems) === 1 && $latestArtworkFinalVideo) {
                                             $rootVisualItems[] = ['type' => 'video', 'video' => $latestArtworkFinalVideo];
@@ -3265,7 +3283,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                     </div>
 
                     <div class="root-frame">
-                        <?php if ($rootFile && is_file($rootPath)): ?>
+                        <?php if ($rootFileAvailable): ?>
                             <a href="<?= h('viewer.php?file=' . rawurlencode($rootFile) . '&back=' . rawurlencode('artwork.php?id=' . (int)$id)) ?>" title="Click to open full size">
                                 <img src="<?= h(media_url($rootFile)) ?>" alt="<?= h($package['root_alt']) ?>">
                             </a>
@@ -3288,7 +3306,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                                     <?php
                                         $rcaUrl  = media_url($rca['file_name']);
                                         $rcaFile = $rca['file_name'];
-                                        $rcaFile = $rcaFile !== '' && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $rcaFile) ? $rcaFile : '';
+                                        $rcaFile = artwork_result_file_available($rcaFile) ? $rcaFile : '';
                                         if ($rcaFile === '') continue;
                                         $rcaLabel = $viewLabels[$rca['view_type']] ?? $rca['view_type'];
                                         $rcaIsSelected = $rca['is_selected'];
@@ -3309,7 +3327,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                         </div>
                     <?php endif; ?>
 
-                    <?php if ($rootFile && is_file($rootPath)): ?>
+                    <?php if ($rootFileAvailable): ?>
                         <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; padding: 0 4px;">
                             <a id="download_root_link" data-base-file="<?= h($rootFile) ?>" href="<?= h(media_url($rootFile, true)) ?>" title="Download Root Image" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--accent); text-decoration: none; font-weight: 500;">
                                 <span class="download-icon" aria-hidden="true"></span>
@@ -3396,7 +3414,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                             <article class="pin-card" style="display: grid; grid-template-columns: 180px 1fr; gap: 20px; align-items: start; padding: 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);">
                                 <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
                                     <div class="root-frame" style="padding: 6px; width: 100%; border: 1px solid var(--line); border-radius: 4px; background: var(--surface-soft);">
-                                        <?php if ($rootFile && is_file($rootPath)): ?>
+                                        <?php if ($rootFileAvailable): ?>
                                             <a href="<?= h('viewer.php?file=' . rawurlencode($rootFile) . '&back=' . rawurlencode('artwork.php?id=' . (int)$id)) ?>" title="Click to open full size">
                                                 <img src="<?= h(media_url($rootFile)) ?>" alt="<?= h($package['root_alt']) ?>" style="width: 100%; height: auto; display: block; border-radius: 2px;">
                                             </a>

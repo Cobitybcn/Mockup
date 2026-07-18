@@ -6,6 +6,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 try {
     $user = Auth::requireUser();
+    FeatureAccess::requireJson($user, FeatureAccess::SOCIAL_MANAGE, 'Social Media');
     Auth::start();
     $userId = (int)$user['id'];
     if (!hash_equals(

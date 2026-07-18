@@ -8,6 +8,7 @@ header('Cache-Control: private, no-store');
 
 try {
     $user = Auth::requireUser();
+    FeatureAccess::requireJson($user, FeatureAccess::SOCIAL_MANAGE, 'Social Media');
     $userId = (int)$user['id'];
     $purpose = strtolower(trim((string)($_GET['purpose'] ?? 'artist')));
     if (!in_array($purpose, ['artist', 'platform'], true)) {

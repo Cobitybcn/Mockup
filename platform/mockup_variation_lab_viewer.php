@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/app/bootstrap.php';
 
 $user = Auth::requireUser();
+FeatureAccess::requirePage($user, FeatureAccess::MOCKUPS_LAB, 'Mockup Lab');
 $mockupId = max(0, (int)($_GET['mockup_id'] ?? 0));
 $file = basename(str_replace('\\', '/', trim((string)($_GET['file'] ?? ''))));
 $labDir = __DIR__ . '/storage/experiments/mockup-variation-lab';

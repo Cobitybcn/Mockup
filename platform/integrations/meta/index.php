@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once dirname(__DIR__,2).'/app/bootstrap.php';
 Auth::start();$user=Auth::user();$service=new MetaIntegrationService(Database::connection());
+if($user)FeatureAccess::requirePage($user,FeatureAccess::SOCIAL_MANAGE,'Social Media');
 $oauthEnabled=app_env('META_OAUTH_ENABLED','false')==='true';
 $isAdmin=$user?Auth::isAdmin($user):false;
 $purposes=$isAdmin?['artist'=>'Artist account','platform'=>'Artwork Mockups platform account']:['artist'=>'Artist account'];

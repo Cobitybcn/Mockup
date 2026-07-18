@@ -50,6 +50,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'update_access') {
+    $targetUserId = (int)($_POST['user_id'] ?? 0);
+    $targetUser = admin_user_by_id($pdo, $targetUserId);
+    $planCode = (string)($_POST['plan_code'] ?? FeatureAccess::PLAN_ARTIST_STUDIO);
+    $submittedOverrides = is_array($_POST['feature_overrides'] ?? null) ? $_POST['feature_overrides'] : [];
+    $featureAliases = [
+        'website' => FeatureAccess::WEBSITE_MANAGE,
+        'social' => FeatureAccess::SOCIAL_MANAGE,
+        'video' => FeatureAccess::VIDEO_MANAGE,
+    ];
+    $overrideStates = [];
+    foreach ($featureAliases as $alias => $feature) {
+        $overrideStates[$feature] = (string)($submittedOverrides[$alias] ?? 'inherit');
+    }
+
+    if (!$targetUser) {
+        $error = 'User not found.';
+    } elseif (Auth::isAdmin($targetUser)) {
+        $error = 'Admin accounts already have complete access.';
+    } elseif (!array_key_exists($planCode, FeatureAccess::plans())) {
+        $error = 'Invalid artist plan.';
+    } else {
+        try {
+            FeatureAccess::updateUserAccess(
+                $pdo,
+                $targetUserId,
+                $planCode,
+                $overrideStates,
+                'Updated by admin #' . (int)$currentUser['id']
+            );
+            $notice = 'Artist plan and feature access updated successfully.';
+        } catch (Throwable $e) {
+            $error = 'Error updating access: ' . $e->getMessage();
+        }
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'send_password_reset') {
     $targetUserId = (int)($_POST['user_id'] ?? 0);
     $targetUser = admin_user_by_id($pdo, $targetUserId);
@@ -176,6 +213,9 @@ function h($v): string
 $totalUsers = count($users);
 $totalCredits = array_sum(array_column($users, 'credits'));
 $totalAdmins = count(array_filter($users, fn($u) => !empty($u['is_admin'])));
+$totalProArtists = count(array_filter($users, static fn(array $u): bool =>
+    empty($u['is_admin']) && FeatureAccess::planForUser($u) === FeatureAccess::PLAN_ARTIST_PRO
+));
 
 ?>
 <!doctype html>
@@ -364,6 +404,50 @@ $totalAdmins = count(array_filter($users, fn($u) => !empty($u['is_admin'])));
             color: var(--danger);
             background: #F5E7E7;
         }
+
+        .access-details {
+            min-width: 250px;
+        }
+
+        .access-details summary {
+            cursor: pointer;
+            color: var(--ink);
+            font-weight: 600;
+        }
+
+        .access-form {
+            display: grid;
+            gap: 9px;
+            margin-top: 12px;
+            padding: 12px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: var(--surface-soft);
+        }
+
+        .access-form label {
+            display: grid;
+            gap: 4px;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        .access-form select {
+            min-width: 210px;
+            margin: 0;
+            padding: 7px 8px;
+            font-size: 11px;
+        }
+
+        .access-form button {
+            width: 100%;
+            margin: 2px 0 0;
+            padding: 8px 12px;
+            font-size: 10px;
+        }
     </style>
 </head>
 <body>
@@ -423,8 +507,8 @@ $totalAdmins = count(array_filter($users, fn($u) => !empty($u['is_admin'])));
                     <strong><?= $totalAdmins ?></strong>
                 </div>
                 <div class="stat-card">
-                    <span>Mockups Cost Rate</span>
-                    <strong>1 <span style="font-size: 14px; color: var(--muted); font-family: var(--font-sans);">credit/gen</span></strong>
+                    <span>Artist Pro Accounts</span>
+                    <strong><?= $totalProArtists ?></strong>
                 </div>
             </div>
 
@@ -451,6 +535,7 @@ $totalAdmins = count(array_filter($users, fn($u) => !empty($u['is_admin'])));
                             <th>Name</th>
                             <th>Email Address</th>
                             <th>Role</th>
+                            <th>Plan & Feature Access</th>
                             <th>Credits</th>
                             <th style="width: 420px;">Adjust Credit Balance</th>
                             <th style="width: 260px;">Account Actions</th>
@@ -472,6 +557,40 @@ $totalAdmins = count(array_filter($users, fn($u) => !empty($u['is_admin'])));
                                         <span class="user-role-badge admin">Admin</span>
                                     <?php else: ?>
                                         <span class="user-role-badge">Artist</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if (Auth::isAdmin($u)): ?>
+                                        <span class="user-role-badge admin">Complete access</span>
+                                    <?php else: ?>
+                                        <?php $userOverrides = FeatureAccess::overridesForUser((int)$u['id']); ?>
+                                        <details class="access-details">
+                                            <summary><?= h(FeatureAccess::planLabel($u)) ?></summary>
+                                            <form method="post" class="access-form">
+                                                <input type="hidden" name="action" value="update_access">
+                                                <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
+                                                <label>
+                                                    Artist plan
+                                                    <select name="plan_code">
+                                                        <?php foreach (FeatureAccess::plans() as $planCode => $planLabel): ?>
+                                                            <option value="<?= h($planCode) ?>" <?= FeatureAccess::planForUser($u) === $planCode ? 'selected' : '' ?>><?= h($planLabel) ?></option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </label>
+                                                <?php foreach (['website' => FeatureAccess::WEBSITE_MANAGE, 'social' => FeatureAccess::SOCIAL_MANAGE, 'video' => FeatureAccess::VIDEO_MANAGE] as $featureAlias => $featureKey): ?>
+                                                    <?php $overrideState = array_key_exists($featureKey, $userOverrides) ? ($userOverrides[$featureKey] ? 'allow' : 'deny') : 'inherit'; ?>
+                                                    <label>
+                                                        <?= h(FeatureAccess::overridableFeatures()[$featureKey]) ?> override
+                                                        <select name="feature_overrides[<?= h($featureAlias) ?>]">
+                                                            <option value="inherit" <?= $overrideState === 'inherit' ? 'selected' : '' ?>>According to plan</option>
+                                                            <option value="allow" <?= $overrideState === 'allow' ? 'selected' : '' ?>>Beta access enabled</option>
+                                                            <option value="deny" <?= $overrideState === 'deny' ? 'selected' : '' ?>>Explicitly disabled</option>
+                                                        </select>
+                                                    </label>
+                                                <?php endforeach; ?>
+                                                <button type="submit">Save access</button>
+                                            </form>
+                                        </details>
                                     <?php endif; ?>
                                 </td>
                                 <td>

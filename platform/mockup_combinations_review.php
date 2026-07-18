@@ -21,6 +21,7 @@ require_once __DIR__ . '/app/bootstrap.php';
 })();
 
 $user = Auth::requireUser();
+FeatureAccess::requirePage($user, FeatureAccess::MOCKUPS_GENERATE, 'Mockup generation');
 $isAdmin = Auth::isAdmin($user);
 $pdo = Database::connection();
 (new ArtworkGroupService($pdo))->syncUser((int)$user['id']);

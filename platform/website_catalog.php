@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/app/bootstrap.php';
 
 $user = Auth::requireUser();
+FeatureAccess::requirePage($user, FeatureAccess::WEBSITE_MANAGE, 'Website');
 $pdo = Database::connection();
 $userId = (int)$user['id'];
 $service = new PublicationService($pdo);

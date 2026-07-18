@@ -8,6 +8,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 try {
     $user = Auth::requireUser();
+    FeatureAccess::requireJson($user, FeatureAccess::MOCKUPS_LAB, 'Mockup Lab');
     $isAdmin = Auth::isAdmin($user);
     $pdo = Database::connection();
 
