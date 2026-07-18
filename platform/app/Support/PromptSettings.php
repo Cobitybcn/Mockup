@@ -498,7 +498,15 @@ TEXT,
             'mockup_quality_rules' => '',
             'mockup_camera_rules' => '',
             'mockup_rendering_rules' => '',
-            'mockup_final_request' => '',
+            'mockup_final_request' => <<<'TEXT'
+Generate the final artwork mockup from the approved context proposal below.
+
+Preserve the supplied artwork as the same physical piece: do not redraw, reinterpret, crop, stretch, rotate, recolor, replace, or add pictorial elements. Use the proposal as the authority for the surrounding space, atmosphere, lighting, materials, and camera direction.
+
+SELECTED MOCKUP CONTEXT PROPOSAL
+
+{{MOCKUP_CONTEXT_PROPOSAL}}
+TEXT,
             'mockup_context_count' => '6',
             'root_artwork_count' => '3',
             'root_artwork_rules_frontal' => 'Create a single clean, high-resolution product photograph of ONLY the painting itself, isolated against a plain neutral studio background (light gray or white, no texture, no shadows from walls or floors other than the artwork\'s own contact shadow).

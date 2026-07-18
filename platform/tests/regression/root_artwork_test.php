@@ -39,4 +39,9 @@ function run_root_artwork_regression_tests(): void
         $adminPrompt,
         'mockupFinalRequest() contiene {{MOCKUP_CONTEXT_PROPOSAL}} (AdminPromptComposerPreview.php:21-23 depende de esto)'
     );
+    TestHarness::assertContains(
+        '{{MOCKUP_CONTEXT_PROPOSAL}}',
+        str_replace("\r\n", "\n", (string)(PromptSettings::builtInDirectives()['mockup_final_request'] ?? '')),
+        'el fallback integrado conserva {{MOCKUP_CONTEXT_PROPOSAL}} incluso sin datos locales'
+    );
 }
