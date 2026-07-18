@@ -6,3 +6,25 @@ This repository keeps the application and its deployed artist site together:
 - `artist-site/` contains the Maurizio Valch site deployment and its editorial content.
 
 Runtime data, local credentials, generated media, caches, and recovery bundles are intentionally excluded from Git. Binary artwork assets are stored through Git LFS.
+
+## Production CI/CD
+
+Artwork Mockups uses Google Cloud Build for production delivery. A push to GitHub's `main` branch runs `platform/cloudbuild.ci.yaml`, which:
+
+1. verifies the Google Cloud project, production branch, Artifact Registry repository, Cloud Run services, and runtime service accounts;
+2. builds the existing `platform/Dockerfile.web` and `platform/Dockerfile.worker` images;
+3. runs `platform/tests/run_regression_tests.php` inside the web image;
+4. pushes commit-addressed images to the existing `mockups-repo` Artifact Registry repository;
+5. deploys the worker and then the web service by immutable digest, initially with no traffic, before routing each service to the verified revision.
+
+The deploy commands do not set or clear environment variables, secrets, runtime identities, access policies, or scaling settings. Cloud Run therefore carries the existing service configuration into each new revision. Sensitive values remain in Secret Manager and are never stored in this repository.
+
+The one-time setup is implemented in `platform/scripts/setup_cloud_build_cicd.ps1`. It verifies that GitHub's default branch is `main` and that the destination services are the existing `mockups-web` and `mockups-worker` services in `us-central1`. It then creates a dedicated least-privilege build identity and the `artwork-mockups-main-deploy` trigger. The setup script does not start a build or deploy.
+
+Before the trigger can be created, authorize the Cloud Build GitHub App for the `Cobitybcn/Mockup` repository from the Cloud Build **Connect repository** screen. This is an interactive GitHub authorization and is not stored in the repository. After connecting it, run:
+
+```powershell
+.\platform\scripts\setup_cloud_build_cicd.ps1
+```
+
+The script is safe to rerun: it reuses the dedicated service account and IAM bindings, and stops rather than replacing any trigger with the same name.

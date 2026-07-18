@@ -1,0 +1,219 @@
+steps:
+  - id: verify-production-targets
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        if [[ "$PROJECT_ID" != "${_EXPECTED_PROJECT_ID}" ]]; then
+          echo "Refusing to deploy: expected project ${_EXPECTED_PROJECT_ID}, got $PROJECT_ID." >&2
+          exit 1
+        fi
+        if [[ "$BRANCH_NAME" != "${_PRODUCTION_BRANCH}" ]]; then
+          echo "Refusing to deploy: expected branch ${_PRODUCTION_BRANCH}, got $BRANCH_NAME." >&2
+          exit 1
+        fi
+        if [[ -z "$COMMIT_SHA" ]]; then
+          echo "Refusing to deploy without an immutable commit SHA." >&2
+          exit 1
+        fi
+
+        gcloud artifacts repositories describe "${_REPOSITORY}" \
+          --project="$PROJECT_ID" \
+          --location="${_REGION}" \
+          --format='value(name)' >/dev/null
+
+        verify_service() {
+          local service="$$1"
+          local runtime_account_name="$$2"
+          local expected_account="$${runtime_account_name}@$PROJECT_ID.iam.gserviceaccount.com"
+          local actual_account
+          actual_account="$$(gcloud run services describe "$$service" \
+            --project="$PROJECT_ID" \
+            --region="${_REGION}" \
+            --platform=managed \
+            --format='value(spec.template.spec.serviceAccountName)')"
+          if [[ "$$actual_account" != "$$expected_account" ]]; then
+            echo "Refusing to deploy $$service: expected runtime identity $$expected_account, got $$actual_account." >&2
+            exit 1
+          fi
+        }
+
+        verify_service "${_WEB_SERVICE}" "${_WEB_RUNTIME_SA_NAME}"
+        verify_service "${_WORKER_SERVICE}" "${_WORKER_RUNTIME_SA_NAME}"
+
+  - id: pull-web-cache
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    waitFor: ['-']
+    args:
+      - -c
+      - docker pull "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WEB_SERVICE}:latest" || true
+
+  - id: pull-worker-cache
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    waitFor: ['-']
+    args:
+      - -c
+      - docker pull "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:latest" || true
+
+  - id: build-web
+    name: gcr.io/cloud-builders/docker
+    dir: platform
+    waitFor: [verify-production-targets, pull-web-cache]
+    args:
+      - build
+      - --cache-from
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WEB_SERVICE}:latest
+      - --file
+      - Dockerfile.web
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WEB_SERVICE}:$COMMIT_SHA
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WEB_SERVICE}:latest
+      - .
+
+  - id: build-worker
+    name: gcr.io/cloud-builders/docker
+    dir: platform
+    waitFor: [verify-production-targets, pull-worker-cache]
+    args:
+      - build
+      - --cache-from
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:latest
+      - --file
+      - Dockerfile.worker
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:$COMMIT_SHA
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:latest
+      - .
+
+  - id: regression-tests
+    name: gcr.io/cloud-builders/docker
+    waitFor: [build-web]
+    args:
+      - run
+      - --rm
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WEB_SERVICE}:$COMMIT_SHA
+      - php
+      - tests/run_regression_tests.php
+
+  - id: push-web-images
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    waitFor: [regression-tests]
+    args:
+      - -ceu
+      - |
+        docker push "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WEB_SERVICE}:$COMMIT_SHA"
+        docker push "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WEB_SERVICE}:latest"
+
+  - id: push-worker-images
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    waitFor: [regression-tests, build-worker]
+    args:
+      - -ceu
+      - |
+        docker push "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:$COMMIT_SHA"
+        docker push "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:latest"
+
+  - id: deploy-worker
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    waitFor: [push-web-images, push-worker-images]
+    args:
+      - -ceu
+      - |
+        image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}"
+        digest="$$(gcloud artifacts docker images describe "$${image}:$COMMIT_SHA" \
+          --project="$PROJECT_ID" \
+          --format='value(image_summary.digest)')"
+        if [[ "$$digest" != sha256:* ]]; then
+          echo "Could not resolve the immutable worker image digest." >&2
+          exit 1
+        fi
+
+        revision="${_WORKER_SERVICE}-cb-$SHORT_SHA-$BUILD_ID"
+        gcloud run deploy "${_WORKER_SERVICE}" \
+          --project="$PROJECT_ID" \
+          --region="${_REGION}" \
+          --platform=managed \
+          --image="$${image}@$${digest}" \
+          --revision-suffix="cb-$SHORT_SHA-$BUILD_ID" \
+          --no-traffic \
+          --quiet
+
+        deployed_image="$$(gcloud run revisions describe "$$revision" \
+          --project="$PROJECT_ID" \
+          --region="${_REGION}" \
+          --format='value(spec.containers[0].image)')"
+        if [[ "$$deployed_image" != "$${image}@$${digest}" ]]; then
+          echo "Worker revision does not use the image built by this build." >&2
+          exit 1
+        fi
+
+        gcloud run services update-traffic "${_WORKER_SERVICE}" \
+          --project="$PROJECT_ID" \
+          --region="${_REGION}" \
+          --to-revisions="$$revision=100" \
+          --quiet
+
+  - id: deploy-web
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    waitFor: [deploy-worker]
+    args:
+      - -ceu
+      - |
+        image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WEB_SERVICE}"
+        digest="$$(gcloud artifacts docker images describe "$${image}:$COMMIT_SHA" \
+          --project="$PROJECT_ID" \
+          --format='value(image_summary.digest)')"
+        if [[ "$$digest" != sha256:* ]]; then
+          echo "Could not resolve the immutable web image digest." >&2
+          exit 1
+        fi
+
+        revision="${_WEB_SERVICE}-cb-$SHORT_SHA-$BUILD_ID"
+        gcloud run deploy "${_WEB_SERVICE}" \
+          --project="$PROJECT_ID" \
+          --region="${_REGION}" \
+          --platform=managed \
+          --image="$${image}@$${digest}" \
+          --revision-suffix="cb-$SHORT_SHA-$BUILD_ID" \
+          --no-traffic \
+          --quiet
+
+        deployed_image="$$(gcloud run revisions describe "$$revision" \
+          --project="$PROJECT_ID" \
+          --region="${_REGION}" \
+          --format='value(spec.containers[0].image)')"
+        if [[ "$$deployed_image" != "$${image}@$${digest}" ]]; then
+          echo "Web revision does not use the image built by this build." >&2
+          exit 1
+        fi
+
+        gcloud run services update-traffic "${_WEB_SERVICE}" \
+          --project="$PROJECT_ID" \
+          --region="${_REGION}" \
+          --to-revisions="$$revision=100" \
+          --quiet
+
+substitutions:
+  _EXPECTED_PROJECT_ID: project-ff549db7-4f7f-4b0c-9a5
+  _PRODUCTION_BRANCH: main
+  _REGION: us-central1
+  _REPOSITORY: mockups-repo
+  _WEB_SERVICE: mockups-web
+  _WORKER_SERVICE: mockups-worker
+  _WEB_RUNTIME_SA_NAME: mockups-web-sa
+  _WORKER_RUNTIME_SA_NAME: mockups-worker-sa
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+
+timeout: 3600s
