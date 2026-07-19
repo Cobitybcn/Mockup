@@ -148,18 +148,26 @@ $artworkStmt = $pdo->prepare("
     WHERE g.user_id = ? AND g.status = 'active' AND a.status = ?
     ORDER BY
         CASE WHEN a.series_id IS NULL THEN 1 ELSE 0 END ASC,
-        CASE WHEN s.year_start IS NULL AND s.year_end IS NULL THEN 1 ELSE 0 END ASC,
-        COALESCE(s.year_start, s.year_end) DESC,
-        COALESCE(s.year_end, s.year_start) DESC,
+        CASE WHEN s.display_order IS NULL THEN 1 ELSE 0 END ASC,
+        s.display_order ASC,
+        CASE WHEN s.year_start IS NULL THEN 1 ELSE 0 END ASC,
+        s.year_start DESC,
         s.created_at DESC,
         s.id DESC,
         CASE WHEN a.series_creation_number IS NULL THEN 1 ELSE 0 END ASC,
-        a.series_creation_number ASC,
-        g.created_at ASC,
-        a.id ASC
+        a.series_creation_number DESC,
+        g.created_at DESC,
+        a.id DESC
 ");
 $artworkStmt->execute([$userId, 'done']);
 $artworks = $artworkStmt->fetchAll(PDO::FETCH_ASSOC);
+$seriesArtworkTotals = [];
+foreach ($artworks as $artwork) {
+    $artworkSeriesId = (int)($artwork['series_id'] ?? 0);
+    if ($artworkSeriesId > 0) {
+        $seriesArtworkTotals[$artworkSeriesId] = ($seriesArtworkTotals[$artworkSeriesId] ?? 0) + 1;
+    }
+}
 
 function series_artwork_title(array $artwork): string
 {
@@ -275,9 +283,9 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
                     <?php endif; ?>
                 <?php endif; ?>
                 <?php if (!$selectedSeries): ?>
-                    <div class="social-square-grid">
+                    <div class="social-square-grid" data-series-sort-list data-series-sort-endpoint="reorder_series.php" data-series-sort-csrf="<?= series_h($_SESSION['series_csrf']) ?>">
                         <?php foreach ($seriesRows as $index => $series): ?>
-                            <a class="social-square-button social-square-button--<?= series_tone($index) ?>" href="series.php?series=<?= (int)$series['id'] ?><?= $seriesPreviewActive ? '&amp;design_preview=series-catalog' : '' ?>">
+                            <a class="social-square-button social-square-button--<?= series_tone($index) ?>" href="series.php?series=<?= (int)$series['id'] ?><?= $seriesPreviewActive ? '&amp;design_preview=series-catalog' : '' ?>" data-series-sort-id="<?= (int)$series['id'] ?>" data-series-drag-tile aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight" title="Drag to reorder. Alt + arrow keys also move this series.">
                                 <span><?= series_h($series['title']) ?></span>
                             </a>
                         <?php endforeach; ?>
@@ -447,7 +455,7 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
                     <div class="empty-state">No finished artworks yet.</div>
                 <?php else: ?>
                     <div class="series-artwork-list" data-series-order-list data-series-order-endpoint="reorder_series_artworks.php" data-series-order-csrf="<?= series_h($_SESSION['series_csrf']) ?>">
-                        <?php $seriesOrderCounters = []; ?>
+                        <?php $seriesOrderCounters = $seriesArtworkTotals; ?>
                         <?php foreach ($artworks as $artwork): ?>
                             <?php
                             $title = series_artwork_title($artwork);
@@ -455,8 +463,8 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
                             $cardSeriesId = (int)($artwork['series_id'] ?? 0);
                             $orderPosition = 0;
                             if ($cardSeriesId > 0) {
-                                $seriesOrderCounters[$cardSeriesId] = ($seriesOrderCounters[$cardSeriesId] ?? 0) + 1;
-                                $orderPosition = $seriesOrderCounters[$cardSeriesId];
+                                $orderPosition = $seriesOrderCounters[$cardSeriesId] ?? 0;
+                                $seriesOrderCounters[$cardSeriesId] = max(0, $orderPosition - 1);
                             }
                             $cardSeriesTone = $seriesToneById[$cardSeriesId] ?? '';
                             $file = (string)($artwork['root_file'] ?: $artwork['main_file']);
@@ -498,6 +506,7 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
     </main>
 </div>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="series_artwork_order.js?v=20260719-2"></script>
+<script src="series_order.js?v=20260719-1"></script>
+<script src="series_artwork_order.js?v=20260719-3"></script>
 </body>
 </html>
