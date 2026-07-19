@@ -180,6 +180,7 @@ steps:
           --platform=managed \
           --image="$${image}@$${digest}" \
           --update-env-vars="APP_ENV=production,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true" \
+          --remove-env-vars="DB_PASSWORD" \
           --update-secrets="DB_PASSWORD=${_DB_PASSWORD_SECRET}:latest" \
           --revision-suffix="cb-$SHORT_SHA-$BUILD_ID" \
           --no-traffic \
@@ -223,6 +224,7 @@ steps:
           --platform=managed \
           --image="$${image}@$${digest}" \
           --update-env-vars="APP_ENV=production,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true" \
+          --remove-env-vars="DB_PASSWORD" \
           --update-secrets="DB_PASSWORD=${_DB_PASSWORD_SECRET}:latest" \
           --revision-suffix="cb-$SHORT_SHA-$BUILD_ID" \
           --no-traffic \
