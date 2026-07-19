@@ -7,6 +7,7 @@ if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
     require_once __DIR__ . '/../vendor/autoload.php';
 }
 require_once __DIR__ . '/Support/Database.php';
+require_once __DIR__ . '/Support/SchemaMigrator.php';
 require_once __DIR__ . '/Support/Auth.php';
 require_once __DIR__ . '/Support/FeatureAccess.php';
 require_once __DIR__ . '/Support/ArtistProfile.php';

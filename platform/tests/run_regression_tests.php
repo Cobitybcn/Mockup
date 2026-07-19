@@ -23,6 +23,8 @@ require_once __DIR__ . '/regression/world_mother_library_admin_test.php';
 require_once __DIR__ . '/regression/generation_provider_isolation_test.php';
 require_once __DIR__ . '/regression/external_mockup_upload_test.php';
 require_once __DIR__ . '/regression/feature_access_test.php';
+require_once __DIR__ . '/regression/website_board_grouping_test.php';
+require_once __DIR__ . '/regression/schema_migration_governance_test.php';
 
 run_root_artwork_regression_tests();
 run_seo_filename_regression_tests();
@@ -32,5 +34,7 @@ run_world_mother_library_admin_tests();
 run_generation_provider_isolation_tests();
 run_external_mockup_upload_regression_tests();
 run_feature_access_regression_tests();
+run_website_board_grouping_regression_tests();
+run_schema_migration_governance_tests();
 
 exit(TestHarness::summary());

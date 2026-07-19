@@ -224,7 +224,8 @@ class Database
         } else {
             self::migrateSqlite($pdo);
         }
-        self::migrateAccessControl($pdo);
+        require_once __DIR__ . '/SchemaMigrator.php';
+        SchemaMigrator::migrate($pdo);
         self::migratePinterest($pdo);
         self::migrateMeta($pdo);
         self::migrateInstagram($pdo);
@@ -877,45 +878,6 @@ class Database
                 KEY idx_contact_status_created (status, created_at)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
-    }
-
-    private static function migrateAccessControl(PDO $pdo): void
-    {
-        if (self::isMysql()) {
-            $pdo->exec("
-                CREATE TABLE IF NOT EXISTS user_feature_overrides (
-                    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                    user_id INT UNSIGNED NOT NULL,
-                    feature_key VARCHAR(100) NOT NULL,
-                    allowed TINYINT(1) NOT NULL,
-                    expires_at VARCHAR(40) NULL,
-                    note VARCHAR(255) NOT NULL DEFAULT '',
-                    created_at VARCHAR(40) NOT NULL,
-                    updated_at VARCHAR(40) NOT NULL,
-                    PRIMARY KEY (id),
-                    UNIQUE KEY user_feature_overrides_user_feature_unique (user_id, feature_key),
-                    KEY user_feature_overrides_user_idx (user_id),
-                    CONSTRAINT user_feature_overrides_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-            ");
-            return;
-        }
-
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS user_feature_overrides (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                feature_key TEXT NOT NULL,
-                allowed INTEGER NOT NULL,
-                expires_at TEXT NULL,
-                note TEXT NOT NULL DEFAULT '',
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL,
-                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-                UNIQUE(user_id, feature_key)
-            )
-        ");
-        $pdo->exec('CREATE INDEX IF NOT EXISTS user_feature_overrides_user_idx ON user_feature_overrides(user_id)');
     }
 
     private static function migratePinterest(PDO $pdo): void

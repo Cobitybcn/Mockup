@@ -182,7 +182,15 @@ final class FeatureAccess
     /**
      * @param array<string,string> $overrideStates Values: inherit, allow, deny.
      */
-    public static function updateUserAccess(PDO $pdo, int $userId, string $plan, array $overrideStates, string $note = ''): void
+    public static function updateUserAccess(
+        PDO $pdo,
+        int $userId,
+        string $plan,
+        array $overrideStates,
+        string $note = '',
+        ?int $actorUserId = null,
+        string $actorContext = 'system'
+    ): void
     {
         if ($userId <= 0) {
             throw new InvalidArgumentException('Invalid user ID.');
@@ -191,9 +199,17 @@ final class FeatureAccess
         $managedFeatures = array_keys(self::overridableFeatures());
         $now = date('c');
 
-        Database::withBusyRetry(function () use ($pdo, $userId, $plan, $overrideStates, $note, $managedFeatures, $now): void {
+        Database::withBusyRetry(function () use ($pdo, $userId, $plan, $overrideStates, $note, $managedFeatures, $now, $actorUserId, $actorContext): void {
             Database::beginWriteTransaction($pdo);
             try {
+                $beforeUser = $pdo->prepare('SELECT plan_code FROM users WHERE id = :id');
+                $beforeUser->execute(['id' => $userId]);
+                $beforePlan = $beforeUser->fetchColumn();
+                if ($beforePlan === false) {
+                    throw new RuntimeException('User not found.');
+                }
+                $beforeOverrides = self::loadStoredOverrideStates($pdo, $userId, $managedFeatures);
+
                 $update = $pdo->prepare('UPDATE users SET plan_code = :plan_code, updated_at = :updated_at WHERE id = :id');
                 $update->execute([
                     'plan_code' => $plan,
@@ -233,6 +249,26 @@ final class FeatureAccess
                     ]);
                 }
 
+                $afterOverrides = self::loadStoredOverrideStates($pdo, $userId, $managedFeatures);
+                $audit = $pdo->prepare('INSERT INTO user_access_audit
+                    (target_user_id, actor_user_id, actor_context, before_json, after_json, note, created_at)
+                    VALUES (:target_user_id, :actor_user_id, :actor_context, :before_json, :after_json, :note, :created_at)');
+                $audit->execute([
+                    'target_user_id' => $userId,
+                    'actor_user_id' => $actorUserId && $actorUserId > 0 ? $actorUserId : null,
+                    'actor_context' => substr(trim($actorContext) !== '' ? trim($actorContext) : 'system', 0, 80),
+                    'before_json' => json_encode([
+                        'plan_code' => self::normalizePlan((string)$beforePlan),
+                        'feature_overrides' => $beforeOverrides,
+                    ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
+                    'after_json' => json_encode([
+                        'plan_code' => $plan,
+                        'feature_overrides' => $afterOverrides,
+                    ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
+                    'note' => substr(trim($note), 0, 255),
+                    'created_at' => $now,
+                ]);
+
                 $pdo->exec('COMMIT');
             } catch (Throwable $error) {
                 try {
@@ -244,6 +280,21 @@ final class FeatureAccess
         });
 
         unset(self::$overrideCache[$userId]);
+    }
+
+    /** @param list<string> $managedFeatures @return array<string,string> */
+    private static function loadStoredOverrideStates(PDO $pdo, int $userId, array $managedFeatures): array
+    {
+        $states = array_fill_keys($managedFeatures, 'inherit');
+        $placeholders = implode(',', array_fill(0, count($managedFeatures), '?'));
+        $stmt = $pdo->prepare("SELECT feature_key, allowed FROM user_feature_overrides
+            WHERE user_id = ? AND feature_key IN ({$placeholders}) ORDER BY feature_key");
+        $stmt->execute([$userId, ...$managedFeatures]);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $states[(string)$row['feature_key']] = (int)$row['allowed'] === 1 ? 'allow' : 'deny';
+        }
+        ksort($states);
+        return $states;
     }
 
     private static function globallyEnabled(string $feature): bool

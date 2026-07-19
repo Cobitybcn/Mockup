@@ -21,9 +21,23 @@ Artwork Mockups uses Google Cloud Build for production delivery. A push to GitHu
 2. builds the existing `platform/Dockerfile.web` and `platform/Dockerfile.worker` images;
 3. runs `platform/tests/run_regression_tests.php` inside the web image;
 4. pushes commit-addressed images to the existing `mockups-repo` Artifact Registry repository;
-5. deploys the worker and then the web service by immutable digest, initially with no traffic, before routing each service to the verified revision.
+5. runs the same immutable image as the `mockups-db-migrate` Cloud Run Job and stops the release if the production database cannot reach the exact schema version shipped by that commit;
+6. deploys the worker and then the web service by immutable digest, initially with no traffic, before routing each service to the verified revision.
 
-The deploy commands do not set or clear environment variables, secrets, runtime identities, access policies, or scaling settings. Cloud Run therefore carries the existing service configuration into each new revision. Sensitive values remain in Secret Manager and are never stored in this repository.
+The deploy commands preserve secrets, runtime identities, access policies, and scaling settings. They explicitly enforce `APP_ENV=production` and the public product feature flags on every revision. Sensitive values remain in Secret Manager and are never stored in this repository.
+
+## Database schema governance
+
+Localhost and production use separate data, but they share the same ordered schema history in `platform/migrations/schema/`. `schema_migrations` records the version and SHA-256 checksum of every applied migration. Startup applies pending additive migrations under a database lock; a changed or missing historical migration fails closed.
+
+Use these commands to inspect the local database without comparing user data:
+
+```powershell
+php platform/scripts/database_schema_status.php
+php platform/scripts/database_schema_status.php --assert-current --json
+```
+
+Every future table, column, index, or constraint change must be a new immutable file in `platform/migrations/schema/`. Applied migration files are never edited or deleted. Production delivery performs this check before either Cloud Run service receives traffic.
 
 The one-time setup is implemented in `platform/scripts/setup_cloud_build_cicd.ps1`. It verifies that GitHub's default branch is `main` and that the destination services are the existing `mockups-web` and `mockups-worker` services in `us-central1`. It then creates a dedicated least-privilege build identity and the `artwork-mockups-main-deploy` trigger. The setup script does not start a build or deploy.
 

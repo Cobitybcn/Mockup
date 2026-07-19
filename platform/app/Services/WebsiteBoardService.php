@@ -42,10 +42,14 @@ final class WebsiteBoardService
                 COALESCE(sh.id,0) artwork_sheet_id,
                 CASE WHEN EXISTS(SELECT 1 FROM publications wp WHERE wp.user_id=a.user_id AND wp.artwork_sheet_id=sh.id AND wp.status='published') THEN 1 ELSE 0 END website_published
             FROM artworks a
-            LEFT JOIN artwork_groups ag ON ag.id=a.artwork_group_id AND ag.user_id=a.user_id AND ag.status='active'
+            LEFT JOIN artwork_groups ag ON ag.id=a.artwork_group_id AND ag.user_id=a.user_id
             LEFT JOIN artwork_series s ON s.id=a.series_id AND s.user_id=a.user_id
-            LEFT JOIN artwork_sheets sh ON sh.id=(SELECT MAX(sh2.id) FROM artwork_sheets sh2 WHERE sh2.user_id=a.user_id AND sh2.canonical_artwork_id=a.id)
+            LEFT JOIN artwork_sheets sh ON sh.id=(SELECT MAX(sh2.id) FROM artwork_sheets sh2
+                WHERE sh2.user_id=a.user_id AND sh2.canonical_artwork_id=a.id
+                AND COALESCE(sh2.status,'')<>'merged')
             WHERE a.user_id=? AND a.status='done'
+            AND (COALESCE(a.artwork_group_id,0)=0
+                OR (ag.status='active' AND ag.canonical_artwork_id=a.id))
             ORDER BY label,a.id DESC");
         $artworkStmt->execute([$userId]);
         foreach ($artworkStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
@@ -67,8 +71,14 @@ final class WebsiteBoardService
             if ($file === '') {
                 $fallback = $this->pdo->prepare("SELECT COALESCE(NULLIF(sh.source_image_file,''),NULLIF(a.root_file,''),NULLIF(a.main_file,''),'')
                     FROM artworks a
-                    LEFT JOIN artwork_sheets sh ON sh.id=(SELECT MAX(sh2.id) FROM artwork_sheets sh2 WHERE sh2.user_id=a.user_id AND sh2.canonical_artwork_id=a.id)
-                    WHERE a.user_id=? AND a.series_id=? AND a.status='done' ORDER BY a.id DESC LIMIT 1");
+                    LEFT JOIN artwork_groups ag ON ag.id=a.artwork_group_id AND ag.user_id=a.user_id
+                    LEFT JOIN artwork_sheets sh ON sh.id=(SELECT MAX(sh2.id) FROM artwork_sheets sh2
+                        WHERE sh2.user_id=a.user_id AND sh2.canonical_artwork_id=a.id
+                        AND COALESCE(sh2.status,'')<>'merged')
+                    WHERE a.user_id=? AND a.series_id=? AND a.status='done'
+                    AND (COALESCE(a.artwork_group_id,0)=0
+                        OR (ag.status='active' AND ag.canonical_artwork_id=a.id))
+                    ORDER BY a.id DESC LIMIT 1");
                 $fallback->execute([$userId, (int)$row['id']]);
                 $file = basename((string)($fallback->fetchColumn() ?: ''));
             }
@@ -400,6 +410,17 @@ final class WebsiteBoardService
         if (!isset($this->sourceCache[$userId])) {
             $this->sourceCache[$userId] = [];
             foreach ($this->sources($userId) as $source) $this->sourceCache[$userId][(string)$source['key']] = $source;
+        }
+        if (!isset($this->sourceCache[$userId][$key]) && preg_match('/^artwork:(\d+)$/', $key, $match) === 1) {
+            $stmt = $this->pdo->prepare("SELECT ag.canonical_artwork_id
+                FROM artworks a
+                INNER JOIN artwork_groups ag ON ag.id=a.artwork_group_id AND ag.user_id=a.user_id AND ag.status='active'
+                WHERE a.user_id=? AND a.id=? LIMIT 1");
+            $stmt->execute([$userId, (int)$match[1]]);
+            $canonicalKey = 'artwork:' . (int)($stmt->fetchColumn() ?: 0);
+            if (isset($this->sourceCache[$userId][$canonicalKey])) {
+                return $this->sourceCache[$userId][$canonicalKey];
+            }
         }
         if (!isset($this->sourceCache[$userId][$key])) throw new RuntimeException('La imagen de origen ya no está disponible.');
         return $this->sourceCache[$userId][$key];

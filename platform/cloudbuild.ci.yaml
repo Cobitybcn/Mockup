@@ -120,10 +120,47 @@ steps:
         docker push "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:$COMMIT_SHA"
         docker push "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:latest"
 
-  - id: deploy-worker
+  - id: migrate-production-database
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
     entrypoint: bash
     waitFor: [push-web-images, push-worker-images]
+    args:
+      - -ceu
+      - |
+        image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WEB_SERVICE}"
+        digest="$$(gcloud artifacts docker images describe "$${image}:$COMMIT_SHA" \
+          --project="$PROJECT_ID" \
+          --format='value(image_summary.digest)')"
+        if [[ "$$digest" != sha256:* ]]; then
+          echo "Could not resolve the immutable migration image digest." >&2
+          exit 1
+        fi
+
+        gcloud run jobs deploy "${_MIGRATION_JOB}" \
+          --project="$PROJECT_ID" \
+          --region="${_REGION}" \
+          --image="$${image}@$${digest}" \
+          --service-account="${_WEB_RUNTIME_SA_NAME}@$PROJECT_ID.iam.gserviceaccount.com" \
+          --set-cloudsql-instances="${_DB_INSTANCE_CONNECTION_NAME}" \
+          --set-env-vars="APP_ENV=production,DB_CONNECTION=mysql,DB_DATABASE=${_DB_DATABASE},DB_USERNAME=${_DB_USERNAME},DB_SOCKET=/cloudsql/${_DB_INSTANCE_CONNECTION_NAME},FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true" \
+          --set-secrets="DB_PASSWORD=${_DB_PASSWORD_SECRET}:latest" \
+          --command=php \
+          --args=scripts/run_schema_migrations.php \
+          --tasks=1 \
+          --max-retries=0 \
+          --task-timeout=10m \
+          --quiet
+
+        gcloud run jobs execute "${_MIGRATION_JOB}" \
+          --project="$PROJECT_ID" \
+          --region="${_REGION}" \
+          --wait \
+          --quiet
+
+  - id: deploy-worker
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    waitFor: [migrate-production-database]
     args:
       - -ceu
       - |
@@ -142,6 +179,7 @@ steps:
           --region="${_REGION}" \
           --platform=managed \
           --image="$${image}@$${digest}" \
+          --update-env-vars="APP_ENV=production,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true" \
           --revision-suffix="cb-$SHORT_SHA-$BUILD_ID" \
           --no-traffic \
           --quiet
@@ -183,6 +221,7 @@ steps:
           --region="${_REGION}" \
           --platform=managed \
           --image="$${image}@$${digest}" \
+          --update-env-vars="APP_ENV=production,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true" \
           --revision-suffix="cb-$SHORT_SHA-$BUILD_ID" \
           --no-traffic \
           --quiet
@@ -211,6 +250,11 @@ substitutions:
   _WORKER_SERVICE: mockups-worker
   _WEB_RUNTIME_SA_NAME: mockups-web-sa
   _WORKER_RUNTIME_SA_NAME: mockups-worker-sa
+  _MIGRATION_JOB: mockups-db-migrate
+  _DB_INSTANCE_CONNECTION_NAME: project-ff549db7-4f7f-4b0c-9a5:us-central1:mockups-mysql
+  _DB_DATABASE: mockups
+  _DB_USERNAME: mockups_app
+  _DB_PASSWORD_SECRET: mockups-db-password
 
 options:
   logging: CLOUD_LOGGING_ONLY

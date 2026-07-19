@@ -78,7 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
                 $targetUserId,
                 $planCode,
                 $overrideStates,
-                'Updated by admin #' . (int)$currentUser['id']
+                'Updated by admin #' . (int)$currentUser['id'],
+                (int)$currentUser['id'],
+                'admin_users'
             );
             $notice = 'Artist plan and feature access updated successfully.';
         } catch (Throwable $e) {
