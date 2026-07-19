@@ -57,7 +57,7 @@ final class VideoGenerationService
             $mode = 'edit';
         }
         if ($mode !== 'edit' && !in_array($mode, VideoProviderRegistry::generationModes($provider->name()), true)) {
-            throw new DomainException($provider->model() . ' does not support this generation mode in Video Studio.');
+            throw new DomainException($provider->model() . ' does not support this generation mode in Video Lab.');
         }
         if ($mode === 'first_last_frame') {
             foreach (['start_frame' => 'Start Frame','end_frame' => 'End Frame'] as $role => $label) {

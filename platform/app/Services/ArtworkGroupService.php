@@ -351,9 +351,10 @@ final class ArtworkGroupService
     private function createGroup(int $userId, int $canonicalArtworkId, string $title): int
     {
         $now = date('c');
+        $referenceSetId = $this->referenceSetIdForArtwork($userId, $canonicalArtworkId);
         $stmt = $this->pdo->prepare('
-            INSERT INTO artwork_groups (user_id, canonical_artwork_id, official_root_artwork_ids, title, status, created_at, updated_at)
-            VALUES (:user_id, :canonical_artwork_id, :official_root_artwork_ids, :title, :status, :created_at, :updated_at)
+            INSERT INTO artwork_groups (user_id, canonical_artwork_id, official_root_artwork_ids, title, status, reference_set_id, created_at, updated_at)
+            VALUES (:user_id, :canonical_artwork_id, :official_root_artwork_ids, :title, :status, :reference_set_id, :created_at, :updated_at)
         ');
         $stmt->execute([
             'user_id' => $userId,
@@ -361,6 +362,7 @@ final class ArtworkGroupService
             'official_root_artwork_ids' => json_encode([$canonicalArtworkId], JSON_UNESCAPED_SLASHES),
             'title' => trim($title),
             'status' => 'active',
+            'reference_set_id' => $referenceSetId > 0 ? $referenceSetId : null,
             'created_at' => $now,
             'updated_at' => $now,
         ]);
@@ -369,11 +371,13 @@ final class ArtworkGroupService
 
     private function updateGroup(int $groupId, int $userId, int $canonicalArtworkId, array $officialIds, string $title): void
     {
+        $referenceSetId = $this->referenceSetIdForArtwork($userId, $canonicalArtworkId);
         $stmt = $this->pdo->prepare('
             UPDATE artwork_groups
             SET canonical_artwork_id = :canonical_artwork_id,
                 official_root_artwork_ids = :official_root_artwork_ids,
                 title = :title,
+                reference_set_id = COALESCE(:reference_set_id, reference_set_id),
                 updated_at = :updated_at
             WHERE id = :id AND user_id = :user_id
         ');
@@ -381,6 +385,7 @@ final class ArtworkGroupService
             'canonical_artwork_id' => $canonicalArtworkId,
             'official_root_artwork_ids' => json_encode(array_values(array_unique(array_map('intval', $officialIds))), JSON_UNESCAPED_SLASHES),
             'title' => trim($title),
+            'reference_set_id' => $referenceSetId > 0 ? $referenceSetId : null,
             'updated_at' => date('c'),
             'id' => $groupId,
             'user_id' => $userId,
@@ -390,11 +395,13 @@ final class ArtworkGroupService
     private function assignArtworksToGroup(int $userId, int $groupId, array $memberIds, array $officialIds): void
     {
         $official = array_fill_keys(array_map('intval', $officialIds), true);
+        $referenceSetId = $this->referenceSetIdForGroup($userId, $groupId);
         $stmt = $this->pdo->prepare('
             UPDATE artworks
             SET artwork_group_id = :artwork_group_id,
                 root_view_type = :root_view_type,
                 root_view_status = :root_view_status,
+                reference_set_id = COALESCE(reference_set_id, :reference_set_id),
                 updated_at = :updated_at
             WHERE id = :id AND user_id = :user_id
         ');
@@ -404,11 +411,26 @@ final class ArtworkGroupService
                 'artwork_group_id' => $groupId,
                 'root_view_type' => $this->viewTypeForArtwork((int)$memberId),
                 'root_view_status' => isset($official[(int)$memberId]) ? 'official' : 'variant',
+                'reference_set_id' => $referenceSetId > 0 ? $referenceSetId : null,
                 'updated_at' => date('c'),
                 'id' => (int)$memberId,
                 'user_id' => $userId,
             ]);
         }
+    }
+
+    private function referenceSetIdForArtwork(int $userId, int $artworkId): int
+    {
+        $stmt = $this->pdo->prepare('SELECT reference_set_id FROM artworks WHERE id = :id AND user_id = :user_id LIMIT 1');
+        $stmt->execute(['id' => $artworkId, 'user_id' => $userId]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    private function referenceSetIdForGroup(int $userId, int $groupId): int
+    {
+        $stmt = $this->pdo->prepare('SELECT reference_set_id FROM artwork_groups WHERE id = :id AND user_id = :user_id LIMIT 1');
+        $stmt->execute(['id' => $groupId, 'user_id' => $userId]);
+        return (int)$stmt->fetchColumn();
     }
 
     private function viewTypeForArtwork(int $artworkId): string

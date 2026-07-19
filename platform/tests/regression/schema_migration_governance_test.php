@@ -40,6 +40,14 @@ function run_schema_migration_governance_tests(): void
     $pdo->query('SELECT feature_key FROM user_feature_overrides WHERE 1=0');
     $pdo->query('SELECT before_json, after_json FROM user_access_audit WHERE 1=0');
     TestHarness::assertTrue(true, 'las tablas de permisos y auditoria pertenecen a la misma version');
+    $pdo->query('SELECT featured_score, featured_until, editorial_score FROM scene_ranking_profiles WHERE 1=0');
+    TestHarness::assertTrue(true, 'el ranking editorial de escenas pertenece al esquema versionado');
+    $pdo->query('SELECT content_hash, descriptor_json, similarity_group FROM scene_reference_profiles WHERE 1=0');
+    TestHarness::assertTrue(true, 'las huellas y correcciones de diversidad pertenecen al esquema versionado');
+    $pdo->query('SELECT name, description, thumbnail, identifier_color, categories_json FROM reference_sets WHERE 1=0');
+    $pdo->query('SELECT reference_asset_id, reference_key, category, position FROM reference_set_items WHERE 1=0');
+    $pdo->query('SELECT title, category, storage_path, mime_type FROM reference_assets WHERE 1=0');
+    TestHarness::assertTrue(true, 'Reference Sets y sus referencias ordenadas pertenecen al esquema versionado');
 
     $now = date(DATE_ATOM);
     $insert = $pdo->prepare("INSERT INTO users

@@ -7,6 +7,7 @@ $user = Auth::requireUser();
 $pdo = Database::connection();
 Auth::start();
 $userId = (int)$user['id'];
+$seriesPreviewActive = UiPreview::isActive($user, 'series-catalog');
 
 ArtworkSeries::ensureSchema($pdo);
 (new ArtworkGroupService($pdo))->syncUser($userId);
@@ -171,6 +172,11 @@ function series_tone(int $index): string
     return $tones[$index % count($tones)];
 }
 
+$seriesToneById = [];
+foreach ($seriesRows as $index => $seriesRow) {
+    $seriesToneById[(int)$seriesRow['id']] = series_tone((int)$index);
+}
+
 $selectedSeriesId = max(0, (int)($_GET['series'] ?? 0));
 $selectedSeries = null;
 foreach ($seriesRows as $series) {
@@ -185,14 +191,23 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Series - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="ui-catalog.css">
+    <link rel="stylesheet" href="ui-catalog.css?v=10">
+    <?php if ($seriesPreviewActive): ?>
+        <link rel="stylesheet" href="visual-consistency-preview.css?v=2">
+    <?php endif; ?>
 </head>
-<body>
+<body<?= $seriesPreviewActive ? ' class="ui-visual-consistency-preview" data-ui-preview="series-catalog"' : '' ?>>
 <div class="app-shell">
     <?php include __DIR__ . '/sidebar.php'; ?>
     <main class="main-area">
         <header class="app-header"><a class="user-chip" href="account.php"><?= series_h($user['email']) ?></a></header>
         <div class="series-catalog">
+            <?php if ($seriesPreviewActive): ?>
+                <aside class="ui-preview-notice" aria-label="Visual consistency preview">
+                    <span><strong>Preview</strong> Series workspace</span>
+                    <a href="series.php<?= $selectedSeries ? '?series=' . (int)$selectedSeries['id'] : '' ?>">Exit preview</a>
+                </aside>
+            <?php endif; ?>
             <?php if (!$selectedSeries): ?>
             <div class="catalog-heading">
                 <div>
@@ -238,7 +253,7 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
                             <button class="button-link" name="action" value="publish_series" <?= $seriesMissing ? 'disabled' : '' ?>>Publish</button>
                         </form>
                     <?php endif; ?>
-                    <a class="button-link secondary" href="series.php">Back to series</a>
+                    <a class="button-link secondary" href="series.php<?= $seriesPreviewActive ? '?design_preview=series-catalog' : '' ?>">Back to series</a>
                 </div>
             </div>
             <?php endif; ?>
@@ -246,12 +261,12 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
             <?php if ($notice !== ''): ?><div class="notice-card notice-ok"><?= series_h($notice) ?></div><?php endif; ?>
             <?php if ($error !== ''): ?><div class="notice-card notice-error"><?= series_h($error) ?></div><?php endif; ?>
 
-            <section class="catalog-panel catalog-panel--compact">
+            <section class="catalog-panel catalog-panel--compact catalog-panel--series-picker">
                 <?php if (!$selectedSeries): ?>
                 <div class="detail-heading">
                     <div>
-                        <h2>Series</h2>
-                        <p>Open a series to edit it, or add a new one.</p>
+                        <h2><?= $seriesPreviewActive ? 'Choose a series' : 'Series' ?></h2>
+                        <p><?= $seriesPreviewActive ? 'Open a collection or create the next one.' : 'Open a series to edit it, or add a new one.' ?></p>
                     </div>
                 </div>
                 <?php else: ?>
@@ -262,7 +277,7 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
                 <?php if (!$selectedSeries): ?>
                     <div class="social-square-grid">
                         <?php foreach ($seriesRows as $index => $series): ?>
-                            <a class="social-square-button social-square-button--<?= series_tone($index) ?>" href="series.php?series=<?= (int)$series['id'] ?>">
+                            <a class="social-square-button social-square-button--<?= series_tone($index) ?>" href="series.php?series=<?= (int)$series['id'] ?><?= $seriesPreviewActive ? '&amp;design_preview=series-catalog' : '' ?>">
                                 <span><?= series_h($series['title']) ?></span>
                             </a>
                         <?php endforeach; ?>
@@ -421,7 +436,7 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
                 <?php endif; ?>
             </section>
 
-            <section class="catalog-panel catalog-panel--compact">
+            <section class="catalog-panel catalog-panel--compact catalog-panel--series-artworks">
                 <div class="detail-heading">
                     <div>
                         <h2>Artwork Assignment</h2>
@@ -431,24 +446,35 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
                 <?php if (!$artworks): ?>
                     <div class="empty-state">No finished artworks yet.</div>
                 <?php else: ?>
-                    <div class="series-artwork-list">
+                    <div class="series-artwork-list" data-series-order-list data-series-order-endpoint="reorder_series_artworks.php" data-series-order-csrf="<?= series_h($_SESSION['series_csrf']) ?>">
+                        <?php $seriesOrderCounters = []; ?>
                         <?php foreach ($artworks as $artwork): ?>
                             <?php
                             $title = series_artwork_title($artwork);
                             $seriesTitle = ArtworkSeries::display((string)($artwork['series_title'] ?: $artwork['series']));
-                            $creationIdentifier = ArtworkSeries::creationIdentifier($seriesTitle, $artwork['series_creation_number'] ?? null);
+                            $cardSeriesId = (int)($artwork['series_id'] ?? 0);
+                            $orderPosition = 0;
+                            if ($cardSeriesId > 0) {
+                                $seriesOrderCounters[$cardSeriesId] = ($seriesOrderCounters[$cardSeriesId] ?? 0) + 1;
+                                $orderPosition = $seriesOrderCounters[$cardSeriesId];
+                            }
+                            $cardSeriesTone = $seriesToneById[$cardSeriesId] ?? '';
                             $file = (string)($artwork['root_file'] ?: $artwork['main_file']);
                             $size = trim((string)($artwork['width'] ?? '')) !== '' && trim((string)($artwork['height'] ?? '')) !== ''
                                 ? trim((string)$artwork['width']) . ' x ' . trim((string)$artwork['height']) . ' ' . (trim((string)($artwork['unit'] ?? 'cm')) ?: 'cm')
                                 : '';
                             ?>
-                            <article class="series-artwork-row">
-                                <a class="series-artwork-thumb" href="artwork_details.php?id=<?= (int)$artwork['id'] ?>">
-                                    <img src="<?= series_h(series_media_url($file, 420)) ?>" alt="<?= series_h($title) ?>" loading="lazy">
+                            <article class="series-artwork-row<?= $cardSeriesTone !== '' ? ' series-artwork-row--' . series_h($cardSeriesTone) : '' ?>" data-series-artwork-id="<?= (int)$artwork['id'] ?>" data-series-id="<?= $cardSeriesId ?>">
+                                <a class="series-artwork-thumb" data-series-drag-thumb href="artwork_details.php?id=<?= (int)$artwork['id'] ?>">
+                                    <img src="<?= series_h(series_media_url($file, 420)) ?>" alt="<?= series_h($title) ?>" loading="lazy" draggable="false">
+                                    <?php if ($orderPosition > 0): ?><span class="series-artwork-order" data-series-order-position><?= str_pad((string)$orderPosition, 2, '0', STR_PAD_LEFT) ?></span><?php endif; ?>
                                 </a>
                                 <div class="series-artwork-main">
-                                    <h3><?= series_h($title) ?><?php if ($seriesTitle !== ''): ?> <span class="title-series-soft">(<?= series_h($seriesTitle) ?>)</span><?php endif; ?></h3>
-                                    <p><?php if ($creationIdentifier !== ''): ?><strong class="creation-identifier"><?= series_h($creationIdentifier) ?></strong> · <?php endif; ?><?= $size !== '' ? series_h($size) . ' · ' : '' ?><?= (int)$artwork['mockup_count'] ?> mockups</p>
+                                    <h3><?= series_h($title) ?></h3>
+                                    <?php if ($seriesTitle !== ''): ?><p class="series-artwork-series"><?= series_h($seriesTitle) ?></p><?php endif; ?>
+                                    <p class="series-artwork-meta">
+                                        <span><?= $size !== '' ? series_h($size) . ' · ' : '' ?><?= (int)$artwork['mockup_count'] ?> mockups</span>
+                                    </p>
                                 </div>
                                 <div class="series-artwork-controls">
                                     <form class="series-assign-form" method="post">
@@ -462,19 +488,6 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
                                             <?php endforeach; ?>
                                         </select>
                                     </form>
-                                    <?php if ($seriesTitle !== ''): ?>
-                                        <form class="creation-number-form" method="post">
-                                            <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
-                                            <input type="hidden" name="action" value="set_creation_number">
-                                            <input type="hidden" name="artwork_id" value="<?= (int)$artwork['id'] ?>">
-                                            <label for="creation-number-<?= (int)$artwork['id'] ?>">Creation ID</label>
-                                            <div class="creation-number-control">
-                                                <span><?= series_h(ArtworkSeries::creationPrefix($seriesTitle)) ?></span>
-                                                <input id="creation-number-<?= (int)$artwork['id'] ?>" type="number" name="creation_number" min="1" step="1" value="<?= (int)($artwork['series_creation_number'] ?? 0) ?>" required>
-                                                <button type="submit">Save</button>
-                                            </div>
-                                        </form>
-                                    <?php endif; ?>
                                 </div>
                             </article>
                         <?php endforeach; ?>
@@ -484,5 +497,7 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
         </div>
     </main>
 </div>
+<script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
+<script src="series_artwork_order.js?v=20260719-2"></script>
 </body>
 </html>

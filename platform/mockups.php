@@ -30,6 +30,7 @@ if ($query !== '') {
         OR s.title LIKE :query
         OR a.final_title LIKE :query
         OR ag.title LIKE :query
+        OR rs.name LIKE :query
     )';
     $params['query'] = '%' . $query . '%';
 }
@@ -38,8 +39,9 @@ $countStmt = $pdo->prepare("
     SELECT COUNT(*)
     FROM mockups m
     LEFT JOIN artworks a ON a.id = m.source_artwork_id AND a.user_id = m.user_id
-    LEFT JOIN artwork_groups ag ON ag.id = a.artwork_group_id AND ag.user_id = m.user_id AND ag.status = 'active'
+    LEFT JOIN artwork_groups ag ON ag.id = COALESCE(m.artwork_group_id, a.artwork_group_id) AND ag.user_id = m.user_id AND ag.status = 'active'
     LEFT JOIN artwork_series s ON s.id = COALESCE(m.series_id, a.series_id) AND s.user_id = m.user_id
+    LEFT JOIN reference_sets rs ON rs.id = COALESCE(m.reference_set_id, ag.reference_set_id, a.reference_set_id) AND rs.user_id = m.user_id
     {$where}
 ");
 $countStmt->execute($params);
@@ -47,11 +49,12 @@ $total = (int)$countStmt->fetchColumn();
 $totalPages = max(1, (int)ceil($total / $perPage));
 
 $stmt = $pdo->prepare("
-    SELECT m.*, s.title AS series_title, a.final_title AS artwork_title, ag.title AS artwork_group_title
+    SELECT m.*, s.title AS series_title, a.final_title AS artwork_title, ag.title AS artwork_group_title, rs.name AS reference_set_name
     FROM mockups m
     LEFT JOIN artworks a ON a.id = m.source_artwork_id AND a.user_id = m.user_id
-    LEFT JOIN artwork_groups ag ON ag.id = a.artwork_group_id AND ag.user_id = m.user_id AND ag.status = 'active'
+    LEFT JOIN artwork_groups ag ON ag.id = COALESCE(m.artwork_group_id, a.artwork_group_id) AND ag.user_id = m.user_id AND ag.status = 'active'
     LEFT JOIN artwork_series s ON s.id = COALESCE(m.series_id, a.series_id) AND s.user_id = m.user_id
+    LEFT JOIN reference_sets rs ON rs.id = COALESCE(m.reference_set_id, ag.reference_set_id, a.reference_set_id) AND rs.user_id = m.user_id
     {$where}
     ORDER BY m.created_at DESC
     LIMIT :limit OFFSET :offset
@@ -79,11 +82,12 @@ if ($favoriteIds) {
     }
 
     $favoriteStmt = $pdo->prepare('
-        SELECT m.*, s.title AS series_title, a.final_title AS artwork_title, ag.title AS artwork_group_title
+        SELECT m.*, s.title AS series_title, a.final_title AS artwork_title, ag.title AS artwork_group_title, rs.name AS reference_set_name
         FROM mockups m
         LEFT JOIN artworks a ON a.id = m.source_artwork_id AND a.user_id = m.user_id
-        LEFT JOIN artwork_groups ag ON ag.id = a.artwork_group_id AND ag.user_id = m.user_id AND ag.status = \'active\'
+        LEFT JOIN artwork_groups ag ON ag.id = COALESCE(m.artwork_group_id, a.artwork_group_id) AND ag.user_id = m.user_id AND ag.status = \'active\'
         LEFT JOIN artwork_series s ON s.id = COALESCE(m.series_id, a.series_id) AND s.user_id = m.user_id
+        LEFT JOIN reference_sets rs ON rs.id = COALESCE(m.reference_set_id, ag.reference_set_id, a.reference_set_id) AND rs.user_id = m.user_id
         WHERE m.user_id = :user_id
         AND m.id IN (' . implode(',', $favoritePlaceholders) . ')
     ');
@@ -213,11 +217,31 @@ function mockup_album_label(array $mockup): string
             font-size: 9px;
             white-space: nowrap;
         }
+        .visual-dna-meta {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 10px;
+            line-height: 1.35;
+        }
+        .visual-dna-meta span {
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+        .visual-dna-meta strong {
+            color: inherit;
+            font-size: inherit;
+            font-weight: 500;
+        }
         .favorite-mockups-strip {
             display: grid;
             grid-auto-flow: column;
-            grid-auto-columns: 164px;
-            gap: 8px;
+            grid-auto-columns: 300px;
+            gap: 12px;
             overflow-x: auto;
             overflow-y: hidden;
             padding: 1px 2px 10px;
@@ -265,13 +289,13 @@ function mockup_album_label(array $mockup): string
         .favorite-mockup-card img {
             display: block;
             width: 100%;
-            aspect-ratio: 3 / 4;
+            aspect-ratio: 4 / 5;
             object-fit: cover;
             border: 1px solid var(--line);
             border-radius: 3px;
             background: var(--surface);
         }
-        .favorite-mockup-card strong {
+        .favorite-mockup-card > strong {
             display: block;
             margin-top: 7px;
             overflow: hidden;
@@ -280,7 +304,7 @@ function mockup_album_label(array $mockup): string
             font-size: 11px;
             line-height: 1.2;
         }
-        .favorite-mockup-card small {
+        .favorite-mockup-card > small {
             display: block;
             margin-top: 2px;
             overflow: hidden;
@@ -525,11 +549,11 @@ function mockup_album_label(array $mockup): string
                 background: rgba(255, 250, 247, 0.86);
             }
             .favorite-mockup-card img {
-                aspect-ratio: 3 / 4;
+                aspect-ratio: 4 / 5;
                 object-fit: cover;
             }
-            .favorite-mockup-card strong,
-            .favorite-mockup-card small {
+            .favorite-mockup-card > strong,
+            .favorite-mockup-card > small {
                 display: none;
             }
             .favorite-empty-strip {
@@ -634,6 +658,7 @@ function mockup_album_label(array $mockup): string
             }
         }
     </style>
+    <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body>
 <div class="app-shell">
@@ -698,6 +723,9 @@ function mockup_album_label(array $mockup): string
                                 <img src="<?= h(result_url($favoriteMockup['mockup_file'], 640)) ?>" alt="<?= h($favoriteLabel) ?>" loading="lazy" decoding="async">
                                 <strong><?= h($favoriteLabel) ?><?php $favoriteSeriesTitle = ArtworkSeries::display((string)($favoriteMockup['series_title'] ?? '')); if ($favoriteSeriesTitle !== ''): ?> <span class="title-series-soft">(<?= h($favoriteSeriesTitle) ?>)</span><?php endif; ?></strong>
                                 <small>#<?= (int)$favoriteMockup['id'] ?></small>
+                                <?php if (trim((string)($favoriteMockup['reference_set_name'] ?? '')) !== ''): ?>
+                                    <span class="visual-dna-meta"><span>Visual DNA</span><strong><?= h($favoriteMockup['reference_set_name']) ?></strong></span>
+                                <?php endif; ?>
                             </a>
                         <?php endforeach; ?>
                     </div>
@@ -718,21 +746,26 @@ function mockup_album_label(array $mockup): string
                     <div class="mobile-album-slider" aria-label="Featured mockups">
                         <?php foreach ($mockups as $mockup): ?>
                             <div class="mobile-album-slide">
-                                <?php if($canUseSocial): ?><label class="pinterest-thumb-select" title="Add to Pinterest batch" aria-label="Add to Pinterest batch"><input form="pinterest-batch-form" type="checkbox" name="mockup_ids[]" value="<?=(int)$mockup['id']?>" data-pinterest-batch-item><svg viewBox="0 0 384 512" aria-hidden="true"><path d="M204 6.5C101.4 6.5 0 74.9 0 185.6 0 256 39.6 296 63.6 296c9.9 0 15.6-27.6 15.6-35.4 0-9.3-23.7-29.1-23.7-67.8 0-80.4 61.2-137.4 140.4-137.4 68.1 0 118.5 38.7 118.5 109.8 0 53.1-21.3 152.7-90.3 152.7-24.9 0-46.2-18-46.2-43.8 0-37.8 26.4-74.4 26.4-113.4 0-66.2-93.9-54.2-93.9 25.8 0 16.8 2.1 35.4 9.6 50.7-13.8 59.4-42 147.9-42 209.1 0 18.9 2.7 37.5 4.5 56.4 3.4 3.8 1.7 3.4 6.9 1.5 50.4-69 48.6-82.5 71.4-172.8 12.3 23.4 44.1 36 69.3 36 106.2 0 153.9-103.5 153.9-196.8C384 71.3 298.2 6.5 204 6.5z"/></svg></label><?php endif; ?>
                                 <a href="viewer.php?id=<?= h($mockup['id']) ?>&back=<?= rawurlencode(page_url($page, $query)) ?>" aria-label="Open mockup">
                                     <img src="<?= h(result_url($mockup['mockup_file'], 640)) ?>" alt="" loading="lazy" decoding="async">
                                 </a>
                                 <button
-                                    class="album-favorite-btn <?= isset($favoriteLookup[(int)$mockup['id']]) ? 'active' : '' ?>"
+                                    class="album-favorite-btn media-icon-button media-thumb-action media-thumb-action--left <?= isset($favoriteLookup[(int)$mockup['id']]) ? 'active' : '' ?>"
                                     type="button"
                                     title="<?= isset($favoriteLookup[(int)$mockup['id']]) ? 'Remove favorite' : 'Add favorite' ?>"
                                     aria-label="<?= isset($favoriteLookup[(int)$mockup['id']]) ? 'Remove favorite' : 'Add favorite' ?>"
                                     data-favorite-mockup
                                     data-mockup-id="<?= (int)$mockup['id'] ?>"
-                                >★</button>
-                                <button class="luxury-delete-btn" type="button" title="Delete mockup" aria-label="Delete mockup" data-delete-mockup data-mockup-id="<?= (int)$mockup['id'] ?>">
+                                ><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
+                                <a class="media-icon-button media-thumb-action media-thumb-action--right-secondary" href="<?= h(download_url($mockup['mockup_file'])) ?>" aria-label="Download mockup" title="Download mockup">
+                                    <svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>
+                                </a>
+                                <button class="luxury-delete-btn media-icon-button media-thumb-action media-thumb-action--right is-danger" type="button" title="Delete mockup" aria-label="Delete mockup" data-delete-mockup data-mockup-id="<?= (int)$mockup['id'] ?>">
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 8.5h7l-.55 9h-5.9l-.55-9Z"/><path d="M7.5 6.5h9M10 6.5V5h4v1.5M10.5 11v4.2M13.5 11v4.2"/></svg>
                                 </button>
+                                <?php if (trim((string)($mockup['reference_set_name'] ?? '')) !== ''): ?>
+                                    <p class="visual-dna-meta"><span>Visual DNA</span><strong><?= h($mockup['reference_set_name']) ?></strong></p>
+                                <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -740,30 +773,30 @@ function mockup_album_label(array $mockup): string
                         <?php foreach ($mockups as $mockup): ?>
                             <article class="item-card">
                                 <div class="mockup-image-wrap">
-                                    <?php if($canUseSocial): ?><label class="pinterest-thumb-select" title="Add to Pinterest batch" aria-label="Add to Pinterest batch"><input form="pinterest-batch-form" type="checkbox" name="mockup_ids[]" value="<?=(int)$mockup['id']?>" data-pinterest-batch-item><svg viewBox="0 0 384 512" aria-hidden="true"><path d="M204 6.5C101.4 6.5 0 74.9 0 185.6 0 256 39.6 296 63.6 296c9.9 0 15.6-27.6 15.6-35.4 0-9.3-23.7-29.1-23.7-67.8 0-80.4 61.2-137.4 140.4-137.4 68.1 0 118.5 38.7 118.5 109.8 0 53.1-21.3 152.7-90.3 152.7-24.9 0-46.2-18-46.2-43.8 0-37.8 26.4-74.4 26.4-113.4 0-66.2-93.9-54.2-93.9 25.8 0 16.8 2.1 35.4 9.6 50.7-13.8 59.4-42 147.9-42 209.1 0 18.9 2.7 37.5 4.5 56.4 3.4 3.8 1.7 3.4 6.9 1.5 50.4-69 48.6-82.5 71.4-172.8 12.3 23.4 44.1 36 69.3 36 106.2 0 153.9-103.5 153.9-196.8C384 71.3 298.2 6.5 204 6.5z"/></svg></label><?php endif; ?>
                                     <a href="viewer.php?id=<?= h($mockup['id']) ?>&back=<?= rawurlencode(page_url($page, $query)) ?>" aria-label="Open mockup">
                                         <img src="<?= h(result_url($mockup['mockup_file'], 520)) ?>" alt="Mockup" loading="lazy" decoding="async">
                                     </a>
                                     <button
-                                        class="album-favorite-btn <?= isset($favoriteLookup[(int)$mockup['id']]) ? 'active' : '' ?>"
+                                        class="album-favorite-btn media-icon-button media-thumb-action media-thumb-action--left <?= isset($favoriteLookup[(int)$mockup['id']]) ? 'active' : '' ?>"
                                         type="button"
                                         title="<?= isset($favoriteLookup[(int)$mockup['id']]) ? 'Remove favorite' : 'Add favorite' ?>"
                                         aria-label="<?= isset($favoriteLookup[(int)$mockup['id']]) ? 'Remove favorite' : 'Add favorite' ?>"
                                         data-favorite-mockup
                                         data-mockup-id="<?= (int)$mockup['id'] ?>"
-                                    >★</button>
-                                    <button class="luxury-delete-btn" type="button" title="Delete mockup" aria-label="Delete mockup" data-delete-mockup data-mockup-id="<?= (int)$mockup['id'] ?>">
+                                    ><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
+                                    <a class="media-icon-button media-thumb-action media-thumb-action--right-secondary" href="<?= h(download_url($mockup['mockup_file'])) ?>" aria-label="Download mockup" title="Download mockup">
+                                        <svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>
+                                    </a>
+                                    <button class="luxury-delete-btn media-icon-button media-thumb-action media-thumb-action--right is-danger" type="button" title="Delete mockup" aria-label="Delete mockup" data-delete-mockup data-mockup-id="<?= (int)$mockup['id'] ?>">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 8.5h7l-.55 9h-5.9l-.55-9Z"/><path d="M7.5 6.5h9M10 6.5V5h4v1.5M10.5 11v4.2M13.5 11v4.2"/></svg>
                                     </button>
                                 </div>
                                 <?php $mockupSeriesTitle = ArtworkSeries::display((string)($mockup['series_title'] ?? '')); ?>
                                 <h3><?= h(mockup_album_label($mockup)) ?><?php if ($mockupSeriesTitle !== ''): ?> <span class="title-series-soft">(<?= h($mockupSeriesTitle) ?>)</span><?php endif; ?></h3>
                                 <p class="meta-line"><?= h(date('m/d/Y H:i', strtotime((string)$mockup['created_at']))) ?></p>
-                                <div class="card-actions">
-                                    <a href="<?= h(download_url($mockup['mockup_file'])) ?>" aria-label="Download mockup" title="Download">
-                                        <span class="download-icon" aria-hidden="true"></span>
-                                    </a>
-                                </div>
+                                <?php if (trim((string)($mockup['reference_set_name'] ?? '')) !== ''): ?>
+                                    <p class="visual-dna-meta"><span>Visual DNA</span><strong><?= h($mockup['reference_set_name']) ?></strong></p>
+                                <?php endif; ?>
                             </article>
                         <?php endforeach; ?>
                     </div>

@@ -186,6 +186,7 @@ $viewerImageUrl = (string)($current['registered_mockup_file'] ?? '') !== ''
         .viewer-nav.next { right: 22px; }
         .viewer-nav.disabled { opacity: .18; pointer-events: none; }
     </style>
+    <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body>
     <header class="viewer-top">
@@ -193,15 +194,15 @@ $viewerImageUrl = (string)($current['registered_mockup_file'] ?? '') !== ''
         <div class="viewer-title">Mockup Lab <?= (int)($currentIndex + 1) ?> / <?= count($runs) ?></div>
         <?php if ($favoriteMockupId > 0): ?>
             <button
-                class="viewer-favorite-btn <?= $isFavorite ? 'active' : '' ?>"
+                class="viewer-favorite-btn media-icon-button <?= $isFavorite ? 'active' : '' ?>"
                 type="button"
                 title="<?= $isFavorite ? 'Remove favorite' : 'Add favorite' ?>"
                 aria-label="<?= $isFavorite ? 'Remove favorite' : 'Add favorite' ?>"
                 data-favorite-mockup
                 data-mockup-id="<?= (int)$favoriteMockupId ?>"
-            >★</button>
+            ><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
         <?php endif; ?>
-        <a class="viewer-action" href="mockup_variation_lab_file.php?file=<?= rawurlencode($file) ?>" download title="Download" aria-label="Download">↓</a>
+        <a class="viewer-action media-icon-button" href="mockup_variation_lab_file.php?file=<?= rawurlencode($file) ?>" download title="Download" aria-label="Download"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg></a>
     </header>
     <main class="viewer-stage">
         <img src="<?= h($viewerImageUrl) ?>" alt="">

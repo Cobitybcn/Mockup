@@ -278,6 +278,9 @@ final class WorldMotherLibrary
             $categories = [];
             foreach ($this->indexData['categories'] as $cat) {
                 $cat['absolute_path'] = $this->basePath . DIRECTORY_SEPARATOR . $cat['category_slug'];
+                if (!StorageService::isGcsActive() && !is_dir($cat['absolute_path'])) {
+                    continue;
+                }
                 $cat['image_count'] = count($this->imagesForCategory($cat['category_slug']));
                 $categories[] = $cat;
             }

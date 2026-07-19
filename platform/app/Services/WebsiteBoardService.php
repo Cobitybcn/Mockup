@@ -50,7 +50,7 @@ final class WebsiteBoardService
             WHERE a.user_id=? AND a.status='done'
             AND (COALESCE(a.artwork_group_id,0)=0
                 OR (ag.status='active' AND ag.canonical_artwork_id=a.id))
-            ORDER BY label,a.id DESC");
+            ORDER BY ag.updated_at DESC,ag.created_at DESC,ag.id DESC,a.id DESC");
         $artworkStmt->execute([$userId]);
         foreach ($artworkStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $file = basename((string)$row['file']);
@@ -154,7 +154,8 @@ final class WebsiteBoardService
             JOIN artworks a ON a.id=sh.canonical_artwork_id AND a.user_id=p.user_id
             LEFT JOIN artwork_groups ag ON ag.id=a.artwork_group_id AND ag.user_id=p.user_id AND ag.status='active'
             LEFT JOIN artwork_series s ON s.id=a.series_id AND s.user_id=p.user_id
-            WHERE p.user_id=?" . ($includePublished ? '' : " AND p.status<>'published'") . " ORDER BY p.updated_at DESC,p.id DESC");
+            WHERE p.user_id=?" . ($includePublished ? '' : " AND p.status<>'published'") . "
+            ORDER BY ag.updated_at DESC,ag.created_at DESC,ag.id DESC,a.id DESC,p.id DESC");
         $stmt->execute([$userId]);
         $entries = [];
         $seenSheets = [];

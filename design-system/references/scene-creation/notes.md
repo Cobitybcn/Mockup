@@ -1,100 +1,13 @@
-\# Pantalla de referencia aprobada
+# Approved Visual Reference
 
+## What pattern does this screen define?
 
+This screen defines the primary Artwork Mockups workspace pattern: an editorial section header, a prominent pastel primary action, a horizontal visual picker, broad image-first work panels, restrained controls, and direct visual assignment.
 
-Esta pantalla define el lenguaje visual principal de Artwork Mockups.
+## When should it be reused?
 
+Reuse this pattern for creative workflows that ask the artist to choose visual material, compare image-led options, combine artwork with references, organize camera or scene groups, and commit a production action from the same workspace.
 
+## What must never change?
 
-\## Debe conservarse
-
-
-
-\- La jerarquía visual.
-
-\- La distribución general.
-
-\- El tamaño de las tarjetas.
-
-\- El marco de las tarjetas.
-
-\- El espaciado entre elementos.
-
-\- El estilo de los botones principales de acción.
-
-\- El aspecto de los paneles.
-
-\- El tratamiento de las imágenes.
-
-\- La densidad de información.
-
-\- El aspecto del drag \& drop.
-
-\- Los márgenes y alineaciones.
-
-\- Los sliders.
-
-\- Los Visual Pickers.
-
-
-
-Cuando se creen nuevas secciones, deben parecer una evolución natural de esta pantalla.
-
-
-
-No debe reinterpretarse su diseño.
-
-
-
-No debe modernizarse.
-
-
-
-No debe simplificarse.
-
-
-
-No debe cambiar su lenguaje visual.
-
-
-
-\---
-
-
-
-\## Identidad visual
-
-
-
-\### Acción principal
-
-
-
-El botón principal de cada pantalla forma parte de la identidad visual de Artwork Mockups.
-
-
-
-Debe conservar:
-
-
-
-\- Colores pastel suaves.
-
-\- Apariencia elegante.
-
-\- Mucho aire alrededor.
-
-\- Gran protagonismo visual.
-
-
-
-\---
-
-
-
-\## Reutilización
-
-
-
-Si existe un componente visual equivalente, debe reutilizarse antes de crear uno nuevo.
-
+The artwork-first hierarchy, horizontal composition, generous working space, large image treatment, thin panel framing, quiet information density, contextual controls, drag-and-drop character, editorial title, and prominent soft-pastel primary action must remain recognizable. The pattern must not be reinterpreted as a dashboard, modernized into a generic framework, or simplified into a text-led workflow.

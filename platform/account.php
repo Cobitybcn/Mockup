@@ -322,20 +322,20 @@ function h($v): string
                 </div>
 
                 <?php if ($upgradeRequested): ?>
-                    <div class="notice" role="status">Website, Social Media and Video Studio are available with Artist Pro. Your existing artworks and mockups remain unchanged.</div>
+                    <div class="notice" role="status">Website Catalog Sync, Social Media Board and Video Lab are available with Artist Pro. Your existing artworks and mockups remain unchanged.</div>
                 <?php endif; ?>
 
                 <div class="plan-feature-grid">
                     <div class="plan-feature <?= $canUseWebsite ? 'is-enabled' : '' ?>">
-                        <span>Website</span>
+                        <span>Website Catalog Sync</span>
                         <strong><?= $canUseWebsite ? 'Available' : 'Artist Pro' ?></strong>
                     </div>
                     <div class="plan-feature <?= $canUseSocial ? 'is-enabled' : '' ?>">
-                        <span>Social Media</span>
+                        <span>Social Media Board</span>
                         <strong><?= $canUseSocial ? 'Available' : 'Artist Pro' ?></strong>
                     </div>
                     <div class="plan-feature <?= $canUseVideo ? 'is-enabled' : '' ?>">
-                        <span>Video Studio</span>
+                        <span>Video Lab</span>
                         <strong><?= $canUseVideo ? 'Available' : 'Artist Pro' ?></strong>
                     </div>
                 </div>
@@ -347,7 +347,7 @@ function h($v): string
                 <details class="plan-details">
                     <summary>Plan details</summary>
                     <p><strong>Artist Studio:</strong> artworks, series, mockup generation, Mockup Lab, private albums and downloads.</p>
-                    <p><strong>Artist Pro:</strong> everything in Artist Studio, plus Website, Social Media integrations and Video Studio.</p>
+                    <p><strong>Artist Pro:</strong> everything in Artist Studio, plus Website Catalog Sync, Social Media Board and Video Lab.</p>
                     <p>Every Mockup Lab generation or AI variation consumes credits. Browsing or downloading existing files does not.</p>
                 </details>
             </section>

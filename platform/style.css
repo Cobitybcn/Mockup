@@ -290,6 +290,20 @@ a {
   border-left: 1px solid var(--line);
 }
 
+.sidebar-basic-library {
+  padding: 0 7px;
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+}
+
+.sidebar-basic-profile {
+  background: #E6F2E7;
+}
+
+.sidebar-basic-profile .sidebar-tab:hover {
+  background: rgba(76, 120, 82, 0.08);
+}
+
 .sidebar-artist-photo {
   display: flex;
   align-items: center;
@@ -1421,6 +1435,7 @@ button:disabled,
 
   .sidebar-context,
   .sidebar-account,
+  .sidebar-basic-library,
   .sidebar-more {
     display: none;
   }

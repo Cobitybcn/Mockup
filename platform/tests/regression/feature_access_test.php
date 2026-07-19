@@ -106,6 +106,33 @@ function run_feature_access_regression_tests(): void
     }
 
     TestHarness::assertContains(
+        'FeatureAccess::planForUser($sidebarUser) === FeatureAccess::PLAN_ARTIST_STUDIO',
+        $sidebar,
+        'Artist Studio receives the compact basic navigation'
+    );
+    TestHarness::assertContains(
+        '<section class="sidebar-tab-group sidebar-basic-library" aria-label="Library">',
+        $sidebar,
+        'The basic library tabs form their own group beside the creation tabs'
+    );
+    TestHarness::assertContains(
+        '<section class="sidebar-account sidebar-basic-profile" aria-label="Artist account">',
+        $sidebar,
+        'Artist Profile remains beside the Admin menu for the basic plan'
+    );
+    $sidebarStyles = file_get_contents(__DIR__ . '/../../style.css') ?: '';
+    TestHarness::assertContains(
+        '.sidebar-basic-library',
+        $sidebarStyles,
+        'The basic library menu is contained between its two separators'
+    );
+    TestHarness::assertContains(
+        '.sidebar-basic-profile',
+        $sidebarStyles,
+        'Artist Profile keeps the publishing area pastel green treatment'
+    );
+
+    TestHarness::assertContains(
         'app-environment-badge',
         $sidebar,
         'The local environment is visibly identified in the application'

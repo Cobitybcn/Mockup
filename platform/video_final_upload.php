@@ -5,7 +5,7 @@ require_once __DIR__ . '/app/Video/bootstrap.php';
 
 VideoHttp::requirePost();
 $user = Auth::requireUser();
-FeatureAccess::requireJson($user, FeatureAccess::VIDEO_MANAGE, 'Video Studio');
+FeatureAccess::requireJson($user, FeatureAccess::VIDEO_MANAGE, 'Video Lab');
 
 VideoHttp::handle(static function () use ($user): array {
     VideoHttp::verifyCsrf(['csrf' => (string)($_POST['csrf'] ?? '')]);

@@ -43,6 +43,11 @@ if ((int)$artwork['user_id'] !== (int)$user['id'] && !Auth::isAdmin($user)) {
     die('Access denied.');
 }
 
+$requestedGenerationRunId = strtolower(trim((string)($_GET['generation_run'] ?? '')));
+if ($requestedGenerationRunId !== '' && !preg_match('/^[a-z0-9-]{8,64}$/', $requestedGenerationRunId)) {
+    $requestedGenerationRunId = '';
+}
+$highlightGenerationRunId = '';
 $highlightJobId = max(0, (int)($_GET['highlight_job'] ?? 0));
 $highlightMockupId = 0;
 $highlightLabel = 'New result';
@@ -62,6 +67,12 @@ if ($highlightJobId > 0) {
     if ($highlightJob) {
         $highlightMockupId = max(0, (int)($highlightJob['mockup_id'] ?? 0));
         $highlightState = json_decode((string)($highlightJob['selector_state_json'] ?? ''), true);
+        $highlightGenerationRunId = is_array($highlightState)
+            ? strtolower(trim((string)($highlightState['generation_run_id'] ?? '')))
+            : '';
+        if ($highlightGenerationRunId !== '' && !preg_match('/^[a-z0-9-]{8,64}$/', $highlightGenerationRunId)) {
+            $highlightGenerationRunId = '';
+        }
         $highlightCombination = is_array($highlightState) ? (array)($highlightState['combination'] ?? []) : [];
         $highlightControls = (array)($highlightCombination['improvement_controls'] ?? []);
         if ((int)($highlightControls['existing_mockup_id'] ?? 0) > 0) {
@@ -245,9 +256,46 @@ foreach ($jobStmt->fetchAll() ?: [] as $jobRow) {
     $rowFiles[$mockupFile] = true;
 }
 $favoriteMockupLookup = MockupFavorites::lookupForUser((int)$user['id']);
+$generationRuns = [];
+foreach ($rows as $row) {
+    $rowState = (array)($row['selector_state'] ?? []);
+    $generationRunId = strtolower(trim((string)($rowState['generation_run_id'] ?? '')));
+    if ($generationRunId === '' || !preg_match('/^[a-z0-9-]{8,64}$/', $generationRunId)) {
+        continue;
+    }
+    $createdSort = strtotime((string)($row['created_at'] ?? '')) ?: 0;
+    $rowSort = max($createdSort, (int)($row['id'] ?? 0));
+    if (!isset($generationRuns[$generationRunId])) {
+        $generationRuns[$generationRunId] = ['count' => 0, 'sort' => 0];
+    }
+    $generationRuns[$generationRunId]['count']++;
+    $generationRuns[$generationRunId]['sort'] = max((int)$generationRuns[$generationRunId]['sort'], $rowSort);
+}
+$activeGenerationRunId = $requestedGenerationRunId !== ''
+    ? $requestedGenerationRunId
+    : $highlightGenerationRunId;
+if ($activeGenerationRunId === '' || !isset($generationRuns[$activeGenerationRunId])) {
+    $activeGenerationRunId = '';
+    foreach ($generationRuns as $generationRunId => $generationRunMeta) {
+        if (
+            $activeGenerationRunId === ''
+            || (int)$generationRunMeta['sort'] > (int)$generationRuns[$activeGenerationRunId]['sort']
+        ) {
+            $activeGenerationRunId = $generationRunId;
+        }
+    }
+}
+$activeGenerationCount = $activeGenerationRunId !== ''
+    ? (int)($generationRuns[$activeGenerationRunId]['count'] ?? 0)
+    : 0;
 $generatedBoardIndexes = [];
 foreach ($rows as $row) {
-    $combo = (array)(($row['selector_state'] ?? [])['combination'] ?? []);
+    $rowState = (array)($row['selector_state'] ?? []);
+    $combo = (array)($rowState['combination'] ?? []);
+    $rowWorldMotherCategory = trim((string)($combo['world_mother_category'] ?? $rowState['world_mother_category'] ?? ''));
+    if ($selectedWorldMotherCategory !== '' && strcasecmp($rowWorldMotherCategory, $selectedWorldMotherCategory) !== 0) {
+        continue;
+    }
     $generatedBoardIndexes[max(1, min(3, (int)($combo['camera_slot_scene_board_index'] ?? 1)))] = true;
 }
 $nextSceneBoardIndex = 0;
@@ -383,24 +431,35 @@ foreach ($rows as $row) {
     }
     $resultGroups[0]['items'][] = [
         'row' => $row,
-        'variant_label' => 'Batch ' . $rowSceneBoardIndex . ($boardOrder > 0 ? ' · Posición ' . $boardOrder : ''),
+        'variant_label' => 'Set ' . $rowSceneBoardIndex . ($boardOrder > 0 ? ' · View ' . $boardOrder : ''),
         'scene_board_index' => $rowSceneBoardIndex,
         'board_order' => $boardOrder > 0 ? $boardOrder : 999,
+        'generation_run_id' => strtolower(trim((string)(($row['selector_state'] ?? [])['generation_run_id'] ?? ''))),
     ];
 }
 foreach ($resultGroups as &$resultGroup) {
-    usort($resultGroup['items'], static function (array $a, array $b): int {
-        // Show the newest generated batch first so the mobile slider opens on the
-        // four mockups the user has just requested, not on the previous batch.
-        $batchCompare = ((int)($b['scene_board_index'] ?? 1)) <=> ((int)($a['scene_board_index'] ?? 1));
-        if ($batchCompare !== 0) {
-            return $batchCompare;
+    usort($resultGroup['items'], static function (array $a, array $b) use ($generationRuns): int {
+        $aRunId = (string)($a['generation_run_id'] ?? '');
+        $bRunId = (string)($b['generation_run_id'] ?? '');
+        $aRow = (array)($a['row'] ?? []);
+        $bRow = (array)($b['row'] ?? []);
+        $aSort = $aRunId !== '' && isset($generationRuns[$aRunId])
+            ? (int)$generationRuns[$aRunId]['sort']
+            : max(strtotime((string)($aRow['created_at'] ?? '')) ?: 0, (int)($aRow['id'] ?? 0));
+        $bSort = $bRunId !== '' && isset($generationRuns[$bRunId])
+            ? (int)$generationRuns[$bRunId]['sort']
+            : max(strtotime((string)($bRow['created_at'] ?? '')) ?: 0, (int)($bRow['id'] ?? 0));
+        $generationCompare = $bSort <=> $aSort;
+        if ($generationCompare !== 0) {
+            return $generationCompare;
         }
-        $boardCompare = ((int)$a['board_order']) <=> ((int)$b['board_order']);
-        if ($boardCompare !== 0) {
-            return $boardCompare;
+        if ($aRunId !== '' && $aRunId === $bRunId) {
+            $boardCompare = ((int)$a['board_order']) <=> ((int)$b['board_order']);
+            if ($boardCompare !== 0) {
+                return $boardCompare;
+            }
         }
-        return (int)($b['row']['id'] ?? 0) <=> (int)($a['row']['id'] ?? 0);
+        return (int)($bRow['id'] ?? 0) <=> (int)($aRow['id'] ?? 0);
     });
 }
 unset($resultGroup);
@@ -463,17 +522,29 @@ if (is_file($evalPath)) {
             background: var(--surface-soft);
         }
         .batch-filter button {
-            min-height: 28px;
+            flex: 0 0 auto;
+            width: auto;
+            min-height: 36px;
+            margin: 0;
             border: 0;
             border-right: 1px solid var(--line);
+            border-radius: 0;
             background: transparent;
             color: var(--muted);
-            padding: 0 12px;
+            padding: 0 16px;
             font-size: 10px;
             font-weight: 800;
+            line-height: 1;
             letter-spacing: .06em;
+            white-space: nowrap;
             text-transform: uppercase;
             cursor: pointer;
+            box-shadow: none;
+        }
+        .batch-filter button:hover,
+        .batch-filter button:focus-visible {
+            transform: none;
+            box-shadow: none;
         }
         .batch-filter button:last-child {
             border-right: 0;
@@ -522,25 +593,45 @@ if (is_file($evalPath)) {
             color: var(--accent);
         }
         .next-batch-prompt {
-            display: flex;
-            align-items: center;
+            display: grid;
+            grid-template-columns: repeat(2, 150px);
+            align-items: end;
             justify-content: flex-end;
-            gap: 18px;
+            gap: 12px;
             margin: 0;
             color: var(--accent);
         }
-        .next-batch-prompt span {
-            max-width: 230px;
-            color: var(--accent);
-            font-size: 14px;
-            line-height: 1.45;
-            font-weight: 600;
-            text-align: right;
+        .next-batch-prompt.is-explore-only {
+            grid-template-columns: 150px;
+        }
+        .next-batch-primary-group {
+            display: grid;
+            gap: 9px;
+            width: 150px;
+        }
+        .next-batch-scene-name {
+            width: 150px;
+            overflow: hidden;
+            color: #a3a09b;
+            font-size: 11px;
+            font-weight: 400;
+            line-height: 1.25;
+            letter-spacing: .025em;
+            text-align: center;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .next-batch-prompt a {
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            text-decoration: none;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            text-align: center;
+        }
+        .next-batch-prompt .next-batch-primary {
             width: 150px;
             min-width: 150px;
             height: 150px;
@@ -550,21 +641,42 @@ if (is_file($evalPath)) {
             border-radius: 4px;
             color: #fffaf7;
             background: #b77f86;
-            text-decoration: none;
             font-size: 13px;
             line-height: 1.32;
-            font-weight: 800;
-            letter-spacing: .08em;
-            text-transform: uppercase;
-            text-align: center;
             box-shadow: 0 8px 22px rgba(183, 127, 134, .18);
         }
-        .next-batch-prompt a:hover {
+        .next-batch-prompt .next-batch-primary:hover {
             border-color: #a86f77;
             background: #a86f77;
             color: #fffaf7;
         }
-        .result-card { position: relative; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid rgba(154, 123, 86, .28); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; }
+        .next-batch-prompt .next-batch-secondary {
+            width: 150px;
+            min-width: 150px;
+            height: 150px;
+            min-height: 150px;
+            padding: 20px;
+            border: 1px solid #d2c37f;
+            border-radius: 4px;
+            background: #efe5b8;
+            color: #66592f;
+            font-size: 13px;
+            line-height: 1.32;
+            box-shadow: 0 8px 22px rgba(178, 156, 70, .16);
+        }
+        .next-batch-prompt .next-batch-secondary:hover {
+            border-color: #c5b363;
+            background: #e7d99d;
+            color: #55491f;
+        }
+        .result-card {
+            position: relative;
+            padding: 10px;
+            border: 1px solid rgba(213, 208, 199, .72);
+            border-radius: 6px;
+            background: var(--surface);
+            box-shadow: 0 2px 8px rgba(50, 45, 38, .055);
+        }
         .result-card.batch-1 { border-left-color: rgba(174, 136, 91, .42); }
         .result-card.batch-2 { border-left-color: rgba(225, 151, 166, .46); }
         .result-card.batch-3 { border-left-color: rgba(132, 154, 178, .46); }
@@ -589,120 +701,188 @@ if (is_file($evalPath)) {
             letter-spacing: .07em;
             text-transform: uppercase;
         }
-        .result-image-wrap { position: relative; }
-        .result-image-link { display: block; text-decoration: none; position: relative; z-index: 1; }
-        .result-card > img { width: 100%; aspect-ratio: 4 / 3; height: auto; object-fit: cover; background: var(--surface-soft); border: 1px solid var(--line); display: block; }
-        .result-image-link img { width: 100%; aspect-ratio: 4 / 3; height: auto; object-fit: cover; background: var(--surface-soft); border: 1px solid var(--line); display: block; }
-        .favorite-overlay-btn {
+        .result-image-wrap {
+            position: relative;
+            overflow: hidden;
+            border: 0;
+            border-radius: 3px;
+            background: transparent;
+            box-shadow: none;
+        }
+        .result-image-toolbar {
             position: absolute;
             top: 8px;
+            right: 8px;
             left: 8px;
-            z-index: 4;
-            pointer-events: auto;
-            width: 32px !important;
-            height: 32px !important;
-            min-width: 32px !important;
-            min-height: 32px !important;
-            max-width: 32px !important;
-            max-height: 32px !important;
+            z-index: 3;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            border: 0;
+            background: transparent;
+            box-shadow: none;
+            pointer-events: none;
+        }
+        .result-image-link { display: block; text-decoration: none; position: relative; z-index: 1; }
+        .result-card > img { width: 100%; aspect-ratio: 4 / 3; height: auto; object-fit: cover; background: var(--surface-soft); border: 1px solid var(--line); display: block; }
+        .result-image-link img { width: 100%; aspect-ratio: 4 / 3; height: auto; object-fit: cover; background: var(--surface-soft); border: 0; border-radius: 3px; display: block; }
+        .favorite-overlay-btn,
+        .result-icon-action {
+            position: relative;
+            isolation: isolate;
+            overflow: hidden;
+            width: 34px !important;
+            height: 34px !important;
+            min-width: 34px !important;
+            min-height: 34px !important;
+            max-width: 34px !important;
+            max-height: 34px !important;
             margin: 0 !important;
             padding: 0 !important;
-            border: 1px solid rgba(255, 255, 255, .34);
+            border: 1px solid rgba(255, 255, 255, .43);
             border-radius: 999px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background: rgba(18, 17, 15, .16);
-            color: rgba(255, 255, 255, .68);
-            font-size: 15px;
-            line-height: 1;
+            flex: 0 0 34px;
+            background:
+                radial-gradient(circle at 31% 20%, rgba(255, 255, 255, .39) 0 8%, rgba(255, 255, 255, .09) 35%, rgba(255, 255, 255, 0) 61%),
+                linear-gradient(145deg, rgba(255, 255, 255, .17), rgba(186, 198, 199, .07)),
+                rgba(226, 233, 233, .055);
+            color: rgba(47, 55, 55, .76);
             cursor: pointer;
+            pointer-events: auto;
             box-sizing: border-box;
             appearance: none;
             -webkit-appearance: none;
-            opacity: .36;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, .12);
-            backdrop-filter: blur(8px);
-            transition: opacity .16s ease, background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+            backdrop-filter: blur(9px) saturate(1.18);
+            -webkit-backdrop-filter: blur(9px) saturate(1.18);
+            box-shadow:
+                inset 1px 1px 1px rgba(255, 255, 255, .57),
+                inset -2px -3px 5px rgba(60, 69, 70, .16),
+                0 4px 10px rgba(24, 30, 30, .2),
+                0 0 0 1px rgba(73, 83, 83, .11);
+            transition: background .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
         }
-        .result-image-wrap:hover .favorite-overlay-btn,
-        .result-image-wrap:focus-within .favorite-overlay-btn,
+        .favorite-overlay-btn::before,
+        .result-icon-action::before {
+            content: '';
+            position: absolute;
+            z-index: -1;
+            top: 2px;
+            left: 5px;
+            right: 5px;
+            height: 44%;
+            border-radius: 999px;
+            background: radial-gradient(ellipse at 36% 10%, rgba(255,255,255,.5), rgba(255,255,255,.125) 35%, rgba(255,255,255,0) 72%);
+            pointer-events: none;
+        }
+        .result-action-icon {
+            width: 16px;
+            height: 16px;
+            display: block;
+            overflow: visible;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.65;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            pointer-events: none;
+        }
         .favorite-overlay-btn:hover,
         .favorite-overlay-btn:focus-visible,
-        .favorite-overlay-btn.active {
-            background: rgba(154, 123, 86, .72);
-            border-color: rgba(255, 255, 255, .62);
-            color: #fff;
-            opacity: .94;
+        .result-icon-action:hover,
+        .result-icon-action:focus-visible {
+            border-color: rgba(255, 255, 255, .7);
+            background:
+                radial-gradient(circle at 31% 20%, rgba(255,255,255,.5), rgba(255,255,255,.125) 38%, rgba(255,255,255,0) 64%),
+                linear-gradient(145deg, rgba(255,255,255,.27), rgba(193,202,203,.14)),
+                rgba(225,230,229,.1);
+            color: #3f4747;
+            box-shadow:
+                inset 0 1px 0 #fff,
+                inset 0 -3px 7px rgba(72,82,83,.15),
+                0 7px 15px rgba(54,61,60,.2),
+                0 0 0 1px rgba(104,115,114,.2);
+            transform: translateY(-1.5px);
             outline: none;
+        }
+        .favorite-overlay-btn:active,
+        .result-icon-action:active {
+            transform: translateY(1px);
+            box-shadow:
+                inset 0 3px 7px rgba(77, 87, 88, .18),
+                inset 0 -1px 0 rgba(255,255,255,.82),
+                0 2px 5px rgba(64,70,69,.12);
+        }
+        .favorite-overlay-btn.active {
+            border-color: rgba(255, 250, 218, .96);
+            background:
+                linear-gradient(145deg, rgba(255,251,223,.9), rgba(218,198,119,.62)),
+                rgba(239,226,172,.76);
+            color: #806b24;
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,.98),
+                inset 0 -3px 7px rgba(129,108,37,.13),
+                0 5px 12px rgba(111,94,39,.17),
+                0 0 0 1px rgba(157,133,51,.17);
+        }
+        .favorite-overlay-btn.active .result-action-icon {
+            fill: currentColor;
         }
         .favorite-overlay-btn[disabled] {
             opacity: .55;
             cursor: wait;
         }
         .result-image-actions {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            z-index: 3;
-            pointer-events: auto;
             display: flex;
             align-items: center;
-            gap: 5px;
-            height: 32px;
-            opacity: .36;
-            transform: translateY(0);
-            transition: opacity .16s ease, transform .16s ease;
-        }
-        .result-image-wrap:hover .result-image-actions,
-        .result-image-wrap:focus-within .result-image-actions {
-            opacity: .94;
-            transform: translateY(0);
-        }
-        .result-icon-action {
-            width: 32px !important;
-            height: 32px !important;
-            min-width: 32px !important;
-            min-height: 32px !important;
-            max-width: 32px !important;
-            max-height: 32px !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            border: 1px solid rgba(255, 255, 255, .34);
-            border-radius: 999px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex: 0 0 32px;
-            background: rgba(18, 17, 15, .16);
-            color: rgba(255, 255, 255, .72);
-            font-size: 15px;
-            line-height: 1;
-            cursor: pointer;
-            pointer-events: auto;
-            box-sizing: border-box;
-            appearance: none;
-            -webkit-appearance: none;
-            backdrop-filter: blur(6px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, .12);
-            transition: background .16s ease, border-color .16s ease, color .16s ease;
-        }
-        .result-icon-action:hover,
-        .result-icon-action:focus-visible {
-            background: rgba(18, 17, 15, .62);
-            border-color: rgba(255, 255, 255, .62);
-            color: #fff;
-            outline: none;
+            gap: 7px;
         }
         .result-icon-action.danger:hover,
         .result-icon-action.danger:focus-visible {
-            background: rgba(124, 43, 35, .72);
+            border-color: rgba(255, 238, 234, .98);
+            background:
+                linear-gradient(145deg, rgba(255,247,245,.92), rgba(223,188,181,.62)),
+                rgba(239,216,211,.76);
+            color: #8a443a;
         }
         .result-icon-action[disabled] {
             opacity: .55;
             cursor: wait;
         }
+        .result-icon-action.is-regenerating[disabled] {
+            opacity: 1;
+            cursor: progress;
+        }
+        .result-icon-action.is-regenerating .result-action-icon {
+            animation: result-action-spin 1.15s linear infinite;
+        }
+        @keyframes result-action-spin {
+            to { transform: rotate(360deg); }
+        }
         .result-card h3 { margin: 12px 0 6px; font-family: var(--font-serif); font-size: 18px; }
+        .result-scene-badge {
+            display: inline-flex;
+            align-items: center;
+            max-width: 100%;
+            min-height: 20px;
+            margin: 10px 5px 0 0;
+            padding: 3px 7px;
+            border: 1px solid rgba(117, 139, 105, .28);
+            border-radius: 3px;
+            background: rgba(210, 223, 199, .28);
+            color: #5f7058;
+            font-size: 9px;
+            font-weight: 800;
+            line-height: 1.3;
+            letter-spacing: .05em;
+            overflow-wrap: anywhere;
+            text-transform: uppercase;
+        }
         .result-variant-badge {
             display: inline-flex;
             align-items: center;
@@ -959,18 +1139,22 @@ if (is_file($evalPath)) {
             }
             .results-grid { grid-template-columns: 1fr; }
             .next-batch-prompt {
-                justify-content: flex-start;
-                align-items: stretch;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
                 width: 100%;
                 margin-top: 18px;
             }
-            .next-batch-prompt span {
-                text-align: left;
-                max-width: none;
+            .next-batch-prompt.is-explore-only {
+                grid-template-columns: 1fr;
             }
-            .next-batch-prompt a {
+            .next-batch-primary-group,
+            .next-batch-scene-name,
+            .next-batch-prompt .next-batch-primary,
+            .next-batch-prompt .next-batch-secondary {
                 width: 100%;
                 min-width: 0;
+            }
+            .next-batch-prompt .next-batch-primary,
+            .next-batch-prompt .next-batch-secondary {
                 height: 56px;
                 min-height: 56px;
             }
@@ -1054,11 +1238,12 @@ if (is_file($evalPath)) {
             .next-batch-prompt {
                 margin-top: 8px;
             }
-            .next-batch-prompt span {
-                display: none;
+            .next-batch-prompt {
+                grid-template-columns: 1fr;
             }
         }
     </style>
+    <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body>
 <div class="app-shell">
@@ -1078,13 +1263,17 @@ if (is_file($evalPath)) {
                     </p>
                 </div>
                 <?php if ($rows): ?>
-                    <div class="next-batch-prompt">
-                        <?php if ($compactSceneFlow && $nextSceneBoardHasScenes): ?>
-                            <span>Create 4 more views<br><small>Explore different angles and scene compositions.</small></span>
-                            <a href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$nextSceneBoardIndex ?><?= $generationProviderQuery ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>&auto_generate=1&compact=1&scene_limit=<?= (int)$compactSceneLimit ?>">Create 4 more views</a>
+                    <div class="next-batch-prompt<?= $nextSceneBoardHasScenes ? '' : ' is-explore-only' ?>">
+                        <?php if ($nextSceneBoardHasScenes): ?>
+                            <div class="next-batch-primary-group">
+                                <?php if ($selectedWorldMotherCategory !== ''): ?>
+                                    <span class="next-batch-scene-name" title="<?= h($selectedWorldMotherCategory) ?>"><?= h($selectedWorldMotherCategory) ?></span>
+                                <?php endif; ?>
+                                <a class="next-batch-primary" data-compact-scene-launch href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$nextSceneBoardIndex ?><?= $generationProviderQuery ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>&auto_generate=1&compact=1&scene_limit=<?= (int)$compactSceneLimit ?>">Create 4 more views</a>
+                            </div>
+                            <a class="next-batch-secondary" href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$reviewSceneBoardIndex ?><?= $generationProviderQuery ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Explore new scenes</a>
                         <?php else: ?>
-                            <span>Explore another visual direction, camera set, or scene composition.</span>
-                            <a href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$reviewSceneBoardIndex ?><?= $generationProviderQuery ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Explore more combinations</a>
+                            <a class="next-batch-primary" href="mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$reviewSceneBoardIndex ?><?= $generationProviderQuery ?><?= $selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '' ?>">Explore new scenes</a>
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>
@@ -1098,21 +1287,12 @@ if (is_file($evalPath)) {
                 <section class="results-group">
                     <div class="results-group-head">
                         <span><?= h((string)$resultGroup['group_name']) ?></span>
-                        <span class="results-group-count"><?= count((array)$resultGroup['items']) ?> resultados</span>
+                        <span class="results-group-count"><?= count((array)$resultGroup['items']) ?> results</span>
                     </div>
-                    <?php
-                    $availableResultBoards = array_values(array_unique(array_map(
-                        static fn (array $item): int => (int)($item['scene_board_index'] ?? 1),
-                        (array)$resultGroup['items']
-                    )));
-                    sort($availableResultBoards);
-                    ?>
-                    <?php if (count($availableResultBoards) > 1): ?>
-                        <div class="batch-filter" aria-label="Filter result batches">
-                            <button type="button" class="active" data-batch-filter="all">All</button>
-                            <?php foreach ($availableResultBoards as $availableResultBoard): ?>
-                                <button type="button" data-batch-filter="<?= (int)$availableResultBoard ?>">Batch <?= (int)$availableResultBoard ?></button>
-                            <?php endforeach; ?>
+                    <?php if ($activeGenerationCount > 0): ?>
+                        <div class="batch-filter" aria-label="Filter result sets">
+                            <button type="button" class="active" data-result-filter="run:<?= h($activeGenerationRunId) ?>">Latest generation (<?= (int)$activeGenerationCount ?>)</button>
+                            <button type="button" data-result-filter="all">All (<?= count((array)$resultGroup['items']) ?>)</button>
                         </div>
                     <?php endif; ?>
                     <div class="results-grid">
@@ -1124,6 +1304,7 @@ if (is_file($evalPath)) {
                     $mockupId = (int)$row['id'];
                     $existing = (array)($evaluations[(string)$mockupId] ?? []);
                     $variantLabel = trim((string)($resultItem['variant_label'] ?? ''));
+                    $resultGenerationRunId = strtolower(trim((string)($resultItem['generation_run_id'] ?? '')));
                     $resultSceneBoardIndex = max(1, min(3, (int)($resultItem['scene_board_index'] ?? $combo['camera_slot_scene_board_index'] ?? 1)));
                     $rowCameraSlotsById = $cameraSlotsByBoard[$resultSceneBoardIndex] ?? [];
                     $cameraTitle = current_camera_slot_name(
@@ -1131,51 +1312,71 @@ if (is_file($evalPath)) {
                         (string)($combo['camera_slot_name'] ?? ''),
                         $rowCameraSlotsById
                     );
-                    $sceneTitle = (string)($combo['world_mother_category'] ?? 'Scene');
+                    $sceneTitle = trim((string)($combo['world_mother_category'] ?? $state['world_mother_category'] ?? $selectedWorldMotherCategory));
+                    if ($sceneTitle === '') {
+                        $sceneTitle = 'Scene not recorded';
+                    }
                     $resultGenerationProvider = strtolower(trim((string)($state['generation_provider'] ?? 'gemini'))) === 'openai' ? 'openai' : 'gemini';
                     ?>
-                    <section class="result-card batch-<?= (int)$resultSceneBoardIndex ?><?= $mockupId === $highlightMockupId ? ' is-new-generation' : '' ?>" id="result-card-<?= $mockupId ?>" data-result-batch="<?= (int)$resultSceneBoardIndex ?>">
+                    <section class="result-card batch-<?= (int)$resultSceneBoardIndex ?><?= $mockupId === $highlightMockupId ? ' is-new-generation' : '' ?>" id="result-card-<?= $mockupId ?>" data-result-batch="<?= (int)$resultSceneBoardIndex ?>" data-result-run="<?= h($resultGenerationRunId) ?>"<?= $activeGenerationCount > 0 && $resultGenerationRunId !== $activeGenerationRunId ? ' hidden' : '' ?>>
                         <div class="result-image-wrap">
+                            <div class="result-image-toolbar media-thumb-toolbar" aria-label="Mockup actions">
+                                <button
+                                    class="favorite-overlay-btn media-icon-button <?= isset($favoriteMockupLookup[$mockupId]) ? 'active' : '' ?>"
+                                    type="button"
+                                    title="<?= isset($favoriteMockupLookup[$mockupId]) ? 'Remove favorite' : 'Add favorite' ?>"
+                                    aria-label="<?= isset($favoriteMockupLookup[$mockupId]) ? 'Remove favorite' : 'Add favorite' ?>"
+                                    data-favorite-mockup
+                                    data-mockup-id="<?= $mockupId ?>"
+                                >
+                                    <svg class="result-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"></path>
+                                    </svg>
+                                </button>
+                                <div class="result-image-actions media-thumb-action-group">
+                                    <button
+                                        class="result-icon-action media-icon-button"
+                                        type="button"
+                                        title="Redo mockup"
+                                        aria-label="Redo mockup"
+                                        data-redo-result
+                                        data-artwork-id="<?= (int)$id ?>"
+                                        data-combination-index="<?= (int)($combo['combination_index'] ?? 0) ?>"
+                                        data-camera-slot="<?= h((string)($combo['selected_camera_slot_id'] ?? '')) ?>"
+                                        data-mockup-id="<?= $mockupId ?>"
+                                        data-scene-board="<?= (int)$resultSceneBoardIndex ?>"
+                                        data-world-mother-category="<?= h((string)($combo['world_mother_category'] ?? $selectedWorldMotherCategory)) ?>"
+                                        data-world-mother-variant="<?= (int)($combo['world_mother_variant_offset'] ?? 0) ?>"
+                                        data-generation-provider="<?= h($resultGenerationProvider) ?>"
+                                    >
+                                        <svg class="result-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M19.2 8.2A7.6 7.6 0 1 0 19 16"></path>
+                                            <path d="M19.2 4.7v3.5h-3.5"></path>
+                                        </svg>
+                                    </button>
+                                    <button
+                                        class="result-icon-action danger media-icon-button is-danger"
+                                        type="button"
+                                        title="Delete mockup"
+                                        aria-label="Delete mockup"
+                                        data-delete-result
+                                        data-mockup-id="<?= $mockupId ?>"
+                                    >
+                                        <svg class="result-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M7.5 8.5h9l-.65 10h-7.7l-.65-10Z"></path>
+                                            <path d="M6 5.8h12M9.5 5.8V4h5v1.8M10.2 11.2v4.6M13.8 11.2v4.6"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
                             <a class="result-image-link" href="viewer.php?id=<?= $mockupId ?>&back=<?= rawurlencode('mockup_combination_results.php?id=' . (int)$id . $generationProviderQuery . ($selectedWorldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($selectedWorldMotherCategory) : '')) ?>" aria-label="Open in Mockup Album">
                                 <img src="media.php?file=<?= rawurlencode(basename((string)$row['mockup_file'])) ?>&thumb=1&w=640&v=<?= $mockupId ?>" alt="" loading="lazy" decoding="async">
                             </a>
-                            <button
-                                class="favorite-overlay-btn <?= isset($favoriteMockupLookup[$mockupId]) ? 'active' : '' ?>"
-                                type="button"
-                                title="<?= isset($favoriteMockupLookup[$mockupId]) ? 'Remove favorite' : 'Add favorite' ?>"
-                                aria-label="<?= isset($favoriteMockupLookup[$mockupId]) ? 'Remove favorite' : 'Add favorite' ?>"
-                                data-favorite-mockup
-                                data-mockup-id="<?= $mockupId ?>"
-                            >★</button>
-                            <div class="result-image-actions" aria-label="Mockup actions">
-                                <button
-                                    class="result-icon-action"
-                                    type="button"
-                                    title="Redo mockup"
-                                    aria-label="Redo mockup"
-                                    data-redo-result
-                                    data-artwork-id="<?= (int)$id ?>"
-                                    data-combination-index="<?= (int)($combo['combination_index'] ?? 0) ?>"
-                                    data-camera-slot="<?= h((string)($combo['selected_camera_slot_id'] ?? '')) ?>"
-                                    data-mockup-id="<?= $mockupId ?>"
-                                    data-scene-board="<?= (int)$resultSceneBoardIndex ?>"
-                                    data-world-mother-category="<?= h((string)($combo['world_mother_category'] ?? $selectedWorldMotherCategory)) ?>"
-                                    data-world-mother-variant="<?= (int)($combo['world_mother_variant_offset'] ?? 0) ?>"
-                                    data-generation-provider="<?= h($resultGenerationProvider) ?>"
-                                >↻</button>
-                                <button
-                                    class="result-icon-action danger"
-                                    type="button"
-                                    title="Delete mockup"
-                                    aria-label="Delete mockup"
-                                    data-delete-result
-                                    data-mockup-id="<?= $mockupId ?>"
-                                >×</button>
-                            </div>
                         </div>
                         <?php if ($mockupId === $highlightMockupId): ?>
                             <span class="new-generation-badge"><?= h($highlightLabel) ?></span>
                         <?php endif; ?>
+                        <span class="result-scene-badge" title="Scene used for this result">Scene · <?= h($sceneTitle) ?></span>
                         <?php if ($variantLabel !== ''): ?>
                             <span class="result-variant-badge batch-<?= (int)$resultSceneBoardIndex ?>"><?= h($variantLabel) ?></span>
                         <?php endif; ?>
@@ -1327,8 +1528,126 @@ if (is_file($evalPath)) {
         </div>
     </main>
 </div>
+<?php include __DIR__ . '/compact_scene_progress_layer.php'; ?>
 <script>
+const ACTIVE_ARTWORK_ID = <?= (int)$id ?>;
 const ACTIVE_ARTWORK_ROOT_FILE = <?= json_encode(basename((string)$artwork['root_file'])) ?>;
+const REGENERATION_STORAGE_KEY = 'artworkMockupsPendingRegenerations:' + ACTIVE_ARTWORK_ID;
+let sceneResultsRefreshScheduled = false;
+
+document.querySelectorAll('[data-compact-scene-launch]').forEach(link => {
+    link.addEventListener('click', event => {
+        if (typeof window.openArtworkSceneProgress !== 'function') return;
+        event.preventDefault();
+        window.openArtworkSceneProgress(link.href);
+    });
+});
+
+function pendingRegenerationJobIds() {
+    try {
+        const parsed = JSON.parse(sessionStorage.getItem(REGENERATION_STORAGE_KEY) || '[]');
+        return Array.isArray(parsed) ? parsed.map(Number).filter(Number.isFinite) : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+function savePendingRegenerationJobIds(values) {
+    sessionStorage.setItem(
+        REGENERATION_STORAGE_KEY,
+        JSON.stringify(Array.from(new Set((values || []).map(Number).filter(Number.isFinite))))
+    );
+}
+
+function rememberRegenerationJob(jobId) {
+    savePendingRegenerationJobIds(pendingRegenerationJobIds().concat(Number(jobId)));
+}
+
+function forgetRegenerationJob(jobId) {
+    savePendingRegenerationJobIds(pendingRegenerationJobIds().filter(id => id !== Number(jobId)));
+}
+
+function resetRegenerationButton(jobId) {
+    const button = document.querySelector('[data-regeneration-job-id="' + Number(jobId) + '"]');
+    if (!button) return;
+    button.disabled = false;
+    button.classList.remove('is-regenerating');
+    button.removeAttribute('data-regeneration-job-id');
+    button.title = 'Redo mockup';
+    button.setAttribute('aria-label', 'Redo mockup');
+}
+
+window.addEventListener('artworkmockups:generation-completed', event => {
+    const item = event.detail || {};
+    const jobId = Number(item.id || 0);
+    if (
+        jobId <= 0
+        || Number(item.artwork_id || 0) !== ACTIVE_ARTWORK_ID
+        || !pendingRegenerationJobIds().includes(jobId)
+    ) {
+        return;
+    }
+
+    forgetRegenerationJob(jobId);
+    if (item.status === 'done') {
+        window.artworkGenerationTracker?.dismissJobs([jobId]);
+        const target = item.results_url ? new URL(item.results_url, window.location.href).href : window.location.href;
+        window.location.replace(target);
+        return;
+    }
+
+    resetRegenerationButton(jobId);
+});
+
+window.addEventListener('artworkmockups:generation-ready', event => {
+    const item = event.detail || {};
+    const jobId = Number(item.id || 0);
+    const newMockupId = Number(item.mockup_id || 0);
+    const replacedMockupId = Number(item.replaces_mockup_id || 0);
+    if (
+        jobId <= 0
+        || item.kind !== 'regeneration'
+        || item.status !== 'done'
+        || Number(item.artwork_id || 0) !== ACTIVE_ARTWORK_ID
+        || replacedMockupId <= 0
+        || !document.getElementById('result-card-' + replacedMockupId)
+        || (newMockupId > 0 && document.getElementById('result-card-' + newMockupId))
+    ) {
+        return;
+    }
+
+    forgetRegenerationJob(jobId);
+    window.artworkGenerationTracker?.dismissJobs([jobId]);
+    const target = item.results_url ? new URL(item.results_url, window.location.href).href : window.location.href;
+    window.location.replace(target);
+});
+
+window.addEventListener('artworkmockups:generation-ready', event => {
+    const item = event.detail || {};
+    const jobId = Number(item.id || 0);
+    const newMockupId = Number(item.mockup_id || 0);
+    if (
+        jobId <= 0
+        || item.kind !== 'generation'
+        || item.status !== 'done'
+        || Number(item.artwork_id || 0) !== ACTIVE_ARTWORK_ID
+    ) {
+        return;
+    }
+
+    window.artworkGenerationTracker?.dismissJobs([jobId]);
+    if (newMockupId > 0 && document.getElementById('result-card-' + newMockupId)) {
+        return;
+    }
+    if (sceneResultsRefreshScheduled) {
+        return;
+    }
+
+    sceneResultsRefreshScheduled = true;
+    const target = item.results_url ? new URL(item.results_url, window.location.href).href : window.location.href;
+    window.location.replace(target);
+});
+
 function saveEvaluation(event, form) {
     event.preventDefault();
     const status = form.querySelector('.eval-status');
@@ -1438,8 +1757,12 @@ function redoResult(button) {
                 throw new Error(result.body.error || 'Regeneration failed.');
             }
             if (result.body.enqueued) {
-                const jobId = result.body.job_id;
-                button.textContent = 'In background';
+                const jobId = Number(result.body.job_id || 0);
+                rememberRegenerationJob(jobId);
+                button.dataset.regenerationJobId = String(jobId);
+                button.classList.add('is-regenerating');
+                button.title = 'Regenerating in background';
+                button.setAttribute('aria-label', 'Regenerating in background');
                 window.artworkGenerationTracker?.trackJobs([jobId]);
                 return result.body;
             } else {
@@ -1449,7 +1772,10 @@ function redoResult(button) {
         .catch(err => {
             alert(err.message);
             button.disabled = false;
-            button.textContent = 'Regenerar';
+            button.classList.remove('is-regenerating');
+            button.removeAttribute('data-regeneration-job-id');
+            button.title = 'Redo mockup';
+            button.setAttribute('aria-label', 'Redo mockup');
         });
 }
 
@@ -1569,15 +1895,16 @@ document.addEventListener('click', event => {
         return;
     }
 
-    const batchFilterButton = target.closest('[data-batch-filter]');
-    if (batchFilterButton) {
+    const resultFilterButton = target.closest('[data-result-filter]');
+    if (resultFilterButton) {
         event.preventDefault();
-        const filterValue = batchFilterButton.getAttribute('data-batch-filter') || 'all';
-        document.querySelectorAll('[data-batch-filter]').forEach(button => {
-            button.classList.toggle('active', button === batchFilterButton);
+        const filterValue = resultFilterButton.getAttribute('data-result-filter') || 'all';
+        document.querySelectorAll('[data-result-filter]').forEach(button => {
+            button.classList.toggle('active', button === resultFilterButton);
         });
-        document.querySelectorAll('[data-result-batch]').forEach(card => {
-            const show = filterValue === 'all' || card.getAttribute('data-result-batch') === filterValue;
+        document.querySelectorAll('[data-result-run]').forEach(card => {
+            const show = filterValue === 'all'
+                || (filterValue.startsWith('run:') && card.getAttribute('data-result-run') === filterValue.slice(4));
             card.hidden = !show;
         });
         return;

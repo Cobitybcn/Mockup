@@ -1657,6 +1657,7 @@ $lightingOptions = [
             }
         }
     </style>
+    <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body class="<?= $useSimpleLab ? 'lab-user' : 'lab-admin' ?>">
 <div class="app-shell">
@@ -1940,9 +1941,9 @@ $lightingOptions = [
                                                     <img src="<?= h($latestImageUrl) ?>" alt="">
                                                 </a>
                                                 <?php if ($latestRegisteredId > 0): ?>
-                                                    <div class="lab-result-actions" aria-label="Mockup actions">
-                                                        <button class="lab-result-action js-lab-favorite <?= $latestIsFavorite ? 'is-favorite' : '' ?>" type="button" title="Favorite" aria-label="Favorite">★</button>
-                                                        <button class="lab-result-action js-lab-delete" type="button" title="Delete" aria-label="Delete">×</button>
+                                                    <div class="lab-result-actions media-thumb-action-cluster" aria-label="Mockup actions">
+                                                        <button class="lab-result-action media-icon-button js-lab-favorite <?= $latestIsFavorite ? 'is-favorite' : '' ?>" type="button" title="Favorite" aria-label="Favorite"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
+                                                        <button class="lab-result-action media-icon-button is-danger js-lab-delete" type="button" title="Delete" aria-label="Delete"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 8.5h9l-.65 10h-7.7l-.65-10Z"/><path d="M6 5.8h12M9.5 5.8V4h5v1.8M10.2 11.2v4.6M13.8 11.2v4.6"/></svg></button>
                                                     </div>
                                                 <?php endif; ?>
                                             </div>
@@ -1978,9 +1979,9 @@ $lightingOptions = [
                                                     <img src="<?= h($runImageUrl) ?>" alt="">
                                                 </a>
                                                 <?php if ($registeredId > 0): ?>
-                                                    <div class="lab-result-actions" aria-label="Mockup actions">
-                                                        <button class="lab-result-action js-lab-favorite <?= $isFavorite ? 'is-favorite' : '' ?>" type="button" title="Favorite" aria-label="Favorite">★</button>
-                                                        <button class="lab-result-action js-lab-delete" type="button" title="Delete" aria-label="Delete">×</button>
+                                                    <div class="lab-result-actions media-thumb-action-cluster" aria-label="Mockup actions">
+                                                        <button class="lab-result-action media-icon-button js-lab-favorite <?= $isFavorite ? 'is-favorite' : '' ?>" type="button" title="Favorite" aria-label="Favorite"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
+                                                        <button class="lab-result-action media-icon-button is-danger js-lab-delete" type="button" title="Delete" aria-label="Delete"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 8.5h9l-.65 10h-7.7l-.65-10Z"/><path d="M6 5.8h12M9.5 5.8V4h5v1.8M10.2 11.2v4.6M13.8 11.2v4.6"/></svg></button>
                                                     </div>
                                                 <?php endif; ?>
                                             </div>
@@ -2326,9 +2327,9 @@ function currentVariationSummary() {
 }
 function labActionMarkup(mockupId) {
     if (!mockupId) return '';
-    return '<div class="lab-result-actions" aria-label="Mockup actions">' +
-        '<button class="lab-result-action js-lab-favorite" type="button" title="Favorite" aria-label="Favorite">★</button>' +
-        '<button class="lab-result-action js-lab-delete" type="button" title="Delete" aria-label="Delete">×</button>' +
+    return '<div class="lab-result-actions media-thumb-action-cluster" aria-label="Mockup actions">' +
+        '<button class="lab-result-action media-icon-button js-lab-favorite" type="button" title="Favorite" aria-label="Favorite"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>' +
+        '<button class="lab-result-action media-icon-button is-danger js-lab-delete" type="button" title="Delete" aria-label="Delete"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 8.5h9l-.65 10h-7.7l-.65-10Z"/><path d="M6 5.8h12M9.5 5.8V4h5v1.8M10.2 11.2v4.6M13.8 11.2v4.6"/></svg></button>' +
         '</div>';
 }
 function clearTransientResult() {

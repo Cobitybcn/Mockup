@@ -452,32 +452,7 @@ function artwork_v2_draft_for_image(string $imageFile): ?array
 
 function artwork_apply_v2_metadata(PDO $pdo, int $artworkId, int $userId, array $draft): void
 {
-    $errors = ArtworkAnalysisV2::validate($draft, false);
-    if ($errors) throw new RuntimeException(implode(' ', $errors));
-    $editorial = (array)($draft['canonical_editorial'] ?? []);
-    $search = (array)($draft['search_metadata'] ?? []);
-    $keywords = array_values(array_unique(array_filter(array_map('trim', array_merge(
-        (array)($search['core_keywords'] ?? []),
-        (array)($search['specific_keywords'] ?? [])
-    )))));
-    $sheetService = new ArtworkSheetService($pdo);
-    $sheet = $sheetService->sheetForArtwork($artworkId, $userId);
-    $sheetService->saveArtworkSheet((int)$sheet['id'], $userId, [
-        'related_artwork_ids'=>(string)$sheet['related_artwork_ids'],
-        'source_image_file'=>(string)$sheet['source_image_file'],
-        'title'=>(string)($editorial['title'] ?? ''),
-        'subtitle'=>(string)($editorial['subtitle'] ?? ''),
-        'description'=>(string)($editorial['master_description'] ?? ''),
-        'short_description'=>(string)($editorial['short_description'] ?? ''),
-        'keywords'=>implode(', ', $keywords),
-        'tags'=>(string)$sheet['tags'],
-        'alt_text'=>(string)($editorial['alt_text'] ?? ''),
-        'caption'=>(string)($editorial['caption'] ?? ''),
-        'user_notes'=>(string)$sheet['user_notes'],
-        'status'=>'validated',
-    ]);
-    $pdo->prepare('UPDATE artwork_sheets SET generated_json = ?, updated_at = ? WHERE id = ? AND user_id = ?')
-        ->execute([json_encode($draft, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE), date('c'), (int)$sheet['id'], $userId]);
+    (new ArtworkSheetService($pdo))->applyAnalysisV2Draft($artworkId, $userId, $draft);
 }
 
 if ($isAdmin) {
@@ -563,6 +538,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'set_c
         header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&creation_id_updated=1');
     } catch (Throwable $e) {
         header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&creation_id_error=' . rawurlencode($e->getMessage()));
+    }
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_artwork_title') {
+    try {
+        (new ArtworkSheetService($pdo))->saveArtworkTitle(
+            $id,
+            $artworkOwnerId,
+            (string)($_POST['title'] ?? '')
+        );
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&title_saved=1');
+    } catch (Throwable $e) {
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&title_error=' . rawurlencode($e->getMessage()));
     }
     exit;
 }
@@ -1090,7 +1079,6 @@ if ($orientation === '' && (float)$width > 0 && (float)$height > 0) {
     $orientation = (float)$width > (float)$height ? 'horizontal' : ((float)$height > (float)$width ? 'vertical' : 'square');
 }
 $orientation = $orientation ?: 'Not specified';
-$package = build_artwork_package_v2($artwork, $analysis, $artistProfile);
 $sheetService = new ArtworkSheetService($pdo);
 $artworkSheet = $sheetService->sheetForArtwork($id, $artworkOwnerId);
 $artworkSheetGenerated = json_decode((string)($artworkSheet['generated_json'] ?? ''), true);
@@ -1102,6 +1090,7 @@ $v2Draft = is_array($v2DraftMatch['data'] ?? null)
 if ($v2Draft && !in_array((string)($artworkSheet['status'] ?? ''), ['validated', 'approved'], true)) {
     try {
         artwork_apply_v2_metadata($pdo, $id, $artworkOwnerId, $v2Draft);
+        $artwork = $sheetService->artwork($id, $artworkOwnerId);
         $artworkSheet = $sheetService->sheetForArtwork($id, $artworkOwnerId);
         $artworkSheetGenerated = json_decode((string)($artworkSheet['generated_json'] ?? ''), true);
         $artworkSheetGenerated = is_array($artworkSheetGenerated) ? $artworkSheetGenerated : [];
@@ -1109,6 +1098,27 @@ if ($v2Draft && !in_array((string)($artworkSheet['status'] ?? ''), ['validated',
         // Keep the generated analysis visible and editable even if automatic persistence needs attention.
     }
 }
+$canonicalSheetTitle = trim((string)($artworkSheet['title'] ?? ''));
+if (
+    trim((string)($artwork['final_title'] ?? '')) === ''
+    && $canonicalSheetTitle !== ''
+    && in_array((string)($artworkSheet['status'] ?? ''), ['review', 'validated', 'approved'], true)
+) {
+    $sheetService->saveArtworkTitle($id, $artworkOwnerId, $canonicalSheetTitle);
+    $artwork = $sheetService->artwork($id, $artworkOwnerId);
+}
+$packageAnalysis = $analysis;
+if ($v2Draft && is_array($v2Draft['canonical_editorial'] ?? null)) {
+    $v2CanonicalEditorial = (array)$v2Draft['canonical_editorial'];
+    if (trim((string)($v2CanonicalEditorial['title'] ?? '')) !== '') {
+        $packageAnalysis['suggested_titles'] = [[
+            'title' => (string)$v2CanonicalEditorial['title'],
+            'subtitle' => (string)($v2CanonicalEditorial['subtitle'] ?? ''),
+            'description' => (string)($v2CanonicalEditorial['master_description'] ?? ''),
+        ]];
+    }
+}
+$package = build_artwork_package_v2($artwork, $packageAnalysis, $artistProfile);
 $artworkSheetLongTail = is_array($artworkSheetGenerated['long_tail_terms'] ?? null)
     ? $artworkSheetGenerated['long_tail_terms']
     : (is_array($artworkSheetGenerated['long_tail_keywords'] ?? null) ? $artworkSheetGenerated['long_tail_keywords'] : []);
@@ -1121,7 +1131,10 @@ $artworkMetadataValidated = $artworkSheetHasMetadata
     && in_array((string)($artworkSheet['status'] ?? ''), ['review', 'validated', 'approved'], true);
 $storedTitle = trim((string)($artwork['final_title'] ?? ''));
 $storedSubtitle = trim((string)($artwork['subtitle'] ?? ''));
-$selectedTitle = $storedTitle !== '' ? $storedTitle : 'Untitled';
+$suggestedInitialTitle = trim((string)($package['titles'][0] ?? ''));
+$selectedTitle = $storedTitle !== ''
+    ? $storedTitle
+    : ($suggestedInitialTitle !== '' && strcasecmp($suggestedInitialTitle, 'Untitled') !== 0 ? $suggestedInitialTitle : 'Untitled');
 $selectedSubtitle = $storedSubtitle;
 $selectedPublicationDescription = '';
 $displayTitle = trim((string)($artworkSheet['title'] ?? '')) !== '' ? trim((string)$artworkSheet['title']) : $selectedTitle;
@@ -1137,6 +1150,7 @@ $publicationCopy = trim($selectedTitle . ($selectedSubtitle !== '' ? "\n" . $sel
 
 $copyIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
 $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>';
+$editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"></path></svg>';
 ?>
 <!doctype html>
 <html lang="en">
@@ -1155,7 +1169,56 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
         .artwork-creation-form input { width:76px; min-height:auto; padding:8px; }
         .artwork-creation-form button { min-height:35px; margin:0; padding:8px 11px; }
         .artwork-creation-code { align-self:center; color:var(--ink); font-size:12px; font-weight:700; letter-spacing:.04em; }
+        .artwork-title-block { width:min(920px, 100%); }
+        .artwork-title-heading { display:flex; align-items:center; gap:10px; }
         .artwork-page-header h1 { display:inline-block; border-bottom:4px solid #b77f86; padding-bottom:10px; }
+        .artwork-title-edit-button {
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            flex:0 0 38px;
+            width:38px;
+            height:38px;
+            min-height:38px;
+            margin:0 0 4px;
+            padding:0;
+            border:1px solid transparent;
+            border-radius:50%;
+            background:transparent;
+            color:var(--muted);
+            box-shadow:none;
+        }
+        .artwork-title-edit-button:hover,
+        .artwork-title-edit-button[aria-expanded="true"] {
+            border-color:#d9b7bb;
+            background:#f5e7e8;
+            color:#8f5f66;
+            box-shadow:none;
+            transform:none;
+        }
+        .artwork-title-quick-edit { display:flex; align-items:center; gap:10px; margin-top:14px; }
+        .artwork-title-quick-edit[hidden] { display:none; }
+        .artwork-title-quick-edit input {
+            flex:1 1 auto;
+            min-width:0;
+            padding:13px 15px;
+            font-family:var(--font-serif);
+            font-size:19px;
+            line-height:1.35;
+        }
+        .artwork-title-quick-edit .sr-only {
+            position:absolute;
+            width:1px;
+            height:1px;
+            padding:0;
+            margin:-1px;
+            overflow:hidden;
+            clip:rect(0, 0, 0, 0);
+            white-space:nowrap;
+            border:0;
+        }
+        .artwork-title-quick-edit button { flex:0 0 auto; width:auto; min-width:120px; min-height:48px; margin:0; padding:11px 18px; }
+        .artwork-title-quick-edit .artwork-title-cancel { background:transparent; border-color:var(--line); color:var(--ink); box-shadow:none; }
         .v2-admin-panel { border-color:var(--accent); }
         .v2-admin-head { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; }
         .v2-admin-badge { padding:5px 9px; border-radius:999px; background:var(--surface-soft); font-size:10px; font-weight:700; text-transform:uppercase; white-space:nowrap; }
@@ -2630,6 +2693,8 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                 display: none;
             }
 
+            .artwork-title-quick-edit { align-items:stretch; flex-direction:column; }
+
             .artwork-overview-panel {
                 padding: 14px 10px;
             }
@@ -2800,6 +2865,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
 
         }
     </style>
+    <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body>
 <div class="app-shell">
@@ -2816,8 +2882,26 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
 
         <div class="workspace">
             <div class="workspace-header artwork-page-header">
-                <div>
-                    <h1><?= h($displayTitle) ?></h1>
+                <div class="artwork-title-block">
+                    <div class="artwork-title-heading">
+                        <h1><?= h($displayTitle) ?></h1>
+                        <button
+                            class="artwork-title-edit-button"
+                            type="button"
+                            data-artwork-title-edit
+                            aria-label="Edit artwork title"
+                            title="Edit artwork title"
+                            aria-expanded="false"
+                            aria-controls="artwork-title-quick-edit"
+                        ><?= $editIconSvg ?></button>
+                    </div>
+                    <form method="post" class="artwork-title-quick-edit" id="artwork-title-quick-edit" hidden>
+                        <input type="hidden" name="action" value="save_artwork_title">
+                        <label class="sr-only" for="artwork-title-input">Artwork title</label>
+                        <input id="artwork-title-input" type="text" name="title" value="<?= h($displayTitle) ?>" maxlength="255" required autocomplete="off">
+                        <button type="submit">Save title</button>
+                        <button type="button" class="artwork-title-cancel" data-artwork-title-cancel>Cancel</button>
+                    </form>
                 </div>
             </div>
 
@@ -2832,6 +2916,12 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
             <?php endif; ?>
             <?php if (isset($_GET['saved'])): ?>
                 <div class="notice">Artwork sheet saved.</div>
+            <?php endif; ?>
+            <?php if (isset($_GET['title_saved'])): ?>
+                <div class="notice">Artwork title saved.</div>
+            <?php endif; ?>
+            <?php if (isset($_GET['title_error'])): ?>
+                <div class="notice error"><?= h((string)$_GET['title_error']) ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['metadata_generated'])): ?>
                 <div class="notice">Artwork metadata generated with the admin analysis prompt.</div>
@@ -3240,21 +3330,21 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                                                         <img src="<?= h('media.php?file=' . rawurlencode($sidebarFile)) ?>" alt="<?= h($sidebarLabel) ?>">
                                                     </a>
                                                     <button
-                                                        class="favorite-overlay-btn <?= !empty($sidebarMockup['is_favorite']) ? 'active' : '' ?>"
+                                                        class="favorite-overlay-btn media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--left <?= !empty($sidebarMockup['is_favorite']) ? 'active' : '' ?>"
                                                         type="button"
                                                         title="<?= !empty($sidebarMockup['is_favorite']) ? 'Remove favorite' : 'Add favorite' ?>"
                                                         aria-label="<?= !empty($sidebarMockup['is_favorite']) ? 'Remove favorite' : 'Add favorite' ?>"
                                                         data-favorite-mockup
                                                         data-mockup-id="<?= (int)$sidebarMockup['id'] ?>"
-                                                    >★</button>
+                                                    ><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
                                                     <button
-                                                        class="mockup-delete-overlay-btn"
+                                                        class="mockup-delete-overlay-btn media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--right is-danger"
                                                         type="button"
                                                         title="Delete mockup"
                                                         aria-label="Delete mockup"
                                                         data-delete-mockup
                                                         data-mockup-id="<?= (int)$sidebarMockup['id'] ?>"
-                                                    >×</button>
+                                                    ><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 8.5h9l-.65 10h-7.7l-.65-10Z"/><path d="M6 5.8h12M9.5 5.8V4h5v1.8M10.2 11.2v4.6M13.8 11.2v4.6"/></svg></button>
                                                     <?php if (!empty($sidebarMockup['variation_lab_available'])): ?>
                                                         <div class="related-mockup-actions">
                                                             <a class="button-link" href="mockup_variation_lab.php?mockup_id=<?= (int)$sidebarMockup['id'] ?>">Variation</a>
@@ -3653,6 +3743,30 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
                     <?php endif; ?>
              <script>
     const isAdmin = <?= $isAdmin ? 'true' : 'false' ?>;
+
+    const artworkTitleEditButton = document.querySelector('[data-artwork-title-edit]');
+    const artworkTitleEditForm = document.getElementById('artwork-title-quick-edit');
+    const artworkTitleInput = document.getElementById('artwork-title-input');
+    const closeArtworkTitleEditor = () => {
+        if (!artworkTitleEditButton || !artworkTitleEditForm) return;
+        artworkTitleEditForm.hidden = true;
+        artworkTitleEditButton.setAttribute('aria-expanded', 'false');
+        artworkTitleEditButton.focus();
+    };
+    artworkTitleEditButton?.addEventListener('click', () => {
+        if (!artworkTitleEditForm) return;
+        const willOpen = artworkTitleEditForm.hidden;
+        artworkTitleEditForm.hidden = !willOpen;
+        artworkTitleEditButton.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        if (willOpen && artworkTitleInput) {
+            artworkTitleInput.focus();
+            artworkTitleInput.select();
+        }
+    });
+    document.querySelector('[data-artwork-title-cancel]')?.addEventListener('click', closeArtworkTitleEditor);
+    artworkTitleInput?.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeArtworkTitleEditor();
+    });
 
     const seoInput = document.getElementById('seo_slug_input');
     

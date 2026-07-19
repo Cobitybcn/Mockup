@@ -72,9 +72,32 @@ try {
         $artworkId = (int)$artwork['id'];
     }
 
-    Database::withBusyRetry(function () use ($pdo, $mockupId): void {
-        $delete = $pdo->prepare('DELETE FROM mockups WHERE id = :id');
-        $delete->execute(['id' => $mockupId]);
+    Database::withBusyRetry(function () use ($pdo, $mockupId, $mockupOwnerId): void {
+        Database::beginWriteTransaction($pdo);
+        try {
+            $delete = $pdo->prepare('DELETE FROM mockups WHERE id = :id');
+            $delete->execute(['id' => $mockupId]);
+
+            // Keep the generation audit row, but detach the deleted result so the
+            // results page cannot reconstruct a dead thumbnail from job history.
+            $detachJob = $pdo->prepare('
+                UPDATE mockup_generation_jobs
+                SET mockup_id = NULL, mockup_file = NULL, updated_at = :updated_at
+                WHERE user_id = :user_id AND mockup_id = :mockup_id
+            ');
+            $detachJob->execute([
+                'updated_at' => date('c'),
+                'user_id' => $mockupOwnerId,
+                'mockup_id' => $mockupId,
+            ]);
+
+            $pdo->commit();
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
     }, 12);
 
     MockupFavorites::removeForUser($mockupOwnerId, $mockupId);

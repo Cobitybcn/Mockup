@@ -1,38 +1,13 @@
-\# Artwork Mockups Visual Language
+# Visual Language Entry Point
 
+The official Artwork Mockups Visual Constitution begins in `README.md`.
 
+Before changing an interface:
 
-Artwork Mockups posee un lenguaje visual propio.
+1. Read `00_STUDIO_PROTOCOL.md` and `01_VISUAL_LANGUAGE.md`.
+2. Find the closest approved visual reference in `references/`.
+3. Review its image and notes.
+4. Reuse the relevant component and master pattern.
+5. Check the proposal against `04_FORBIDDEN_PATTERNS.md`.
 
-
-
-Toda nueva interfaz debe sentirse como una evolución natural del sistema existente, nunca como un diseño nuevo.
-
-
-
-Antes de modificar una interfaz:
-
-
-
-1\. Buscar la referencia visual más parecida en `design-system/references/`.
-
-2\. Observar `screenshot.png`.
-
-3\. Leer `notes.md`.
-
-4\. Continuar ese mismo lenguaje visual.
-
-
-
-Principios:
-
-
-
-\- La continuidad tiene prioridad sobre la innovación.
-
-\- Una nueva funcionalidad no justifica un nuevo diseño.
-
-\- Si ya existe un componente visual equivalente, debe reutilizarse.
-
-\- Si existe una referencia similar, debe seguirse antes de crear una solución diferente.
-
+Continuity has priority over novelty. A new capability does not justify a redesign, and an existing equivalent component must be reused before a new one is considered.

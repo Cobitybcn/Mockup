@@ -32,10 +32,12 @@ $sceneCategories = array_values(array_filter(
     $library->categories(),
     static fn(array $category): bool => (int)($category['image_count'] ?? 0) > 0
 ));
+$sceneRanking = new SceneRankingService(Database::connection());
+$sceneCategories = $sceneRanking->sort($sceneRanking->enrich($sceneCategories), 'recommended');
 
-usort($sceneCategories, static function (array $a, array $b): int {
-    return strcmp((string)($a['category_name'] ?? ''), (string)($b['category_name'] ?? ''));
-});
+$referenceSetService = new ReferenceSetService(Database::connection());
+$referenceSetService->ensureStarterSets((int)$user['id']);
+$referenceSets = $referenceSetService->listForUser((int)$user['id']);
 
 $defaultScene = (string)($sceneCategories[0]['category_slug'] ?? 'selected');
 $defaultSceneName = (string)($sceneCategories[0]['category_name'] ?? $defaultScene);
@@ -143,6 +145,29 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
         .scene-stage-toolbar .step-label {
             margin: 0;
         }
+        .scene-order-control {
+            display: grid;
+            grid-template-columns: auto minmax(150px, 190px);
+            align-items: center;
+            gap: 9px;
+        }
+        .scene-order-control span {
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+        .scene-order-control select {
+            min-height: 40px;
+            padding: 0 34px 0 11px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: var(--surface);
+            color: var(--ink);
+            font: inherit;
+            font-size: 12px;
+        }
         .capture-grid {
             display: grid;
             grid-template-columns: 1.1fr 0.9fr;
@@ -229,6 +254,31 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
             background: #b77f86;
             color: #fffaf7;
             box-shadow: 0 8px 20px rgba(183, 127, 134, 0.24);
+        }
+        .visual-dna-control {
+            width: min(620px, 100%);
+            margin: 14px auto 0;
+            display: grid;
+            gap: 6px;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+        .visual-dna-control select {
+            width: 100%;
+            min-height: 42px;
+            padding: 0 34px 0 12px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: var(--surface-soft);
+            color: var(--ink);
+            font: inherit;
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 0;
+            text-transform: none;
         }
         .artwork-confirm-button:hover,
         .artwork-confirm-button:focus-visible {
@@ -857,6 +907,9 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
                 align-items: stretch;
                 flex-direction: column;
             }
+            .scene-order-control {
+                grid-template-columns: auto minmax(0, 1fr);
+            }
         }
         @media (min-width: 761px) {
             .scene-flow-shell {
@@ -1117,6 +1170,15 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
                                 </span>
                             </label>
                         </div>
+                        <label class="visual-dna-control" for="referenceSetId">
+                            <span>Visual DNA</span>
+                            <select id="referenceSetId" name="reference_set_id">
+                                <option value="0">None</option>
+                                <?php foreach ($referenceSets as $referenceSet): ?>
+                                    <option value="<?= (int)$referenceSet['id'] ?>"><?= h($referenceSet['name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </label>
                         <button type="button" class="artwork-confirm-button" id="continueToSceneBtn" hidden disabled>Use this artwork</button>
                         <span id="sizeHint" hidden>Swipe up or down on H and W to adjust the real artwork size.</span>
                     </div>
@@ -1142,6 +1204,17 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
             <section class="scene-panel">
                 <div class="scene-stage-toolbar">
                     <p class="step-label">Scene style<span class="mobile-selected-scene">: <span id="selectedSceneTitle"><?= h($defaultSceneName) ?></span></span><span class="scene-style-count"> - <?= count($sceneCategories) ?> styles</span></p>
+                    <label class="scene-order-control" for="sceneOrder">
+                        <span>Order</span>
+                        <select id="sceneOrder">
+                            <option value="recommended">Recommended</option>
+                            <option value="featured">Featured</option>
+                            <option value="popular">Popular</option>
+                            <option value="versatile">Most versatile</option>
+                            <option value="newest">Newest</option>
+                            <option value="alpha">A–Z</option>
+                        </select>
+                    </label>
                 </div>
                 <div class="mobile-scene-viewer" id="mobileSceneViewer">
                     <div class="mobile-scene-viewer-carousel" id="mobileSceneCarousel" aria-live="polite">
@@ -1160,7 +1233,16 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
                         $mainPreview = $previews[0] ?? null;
                         $imageCount = (int)($category['image_count'] ?? count($images));
                         ?>
-                        <div class="scene-card-item<?= $slug === $defaultScene ? ' is-selected' : '' ?>">
+                        <div
+                            class="scene-card-item<?= $slug === $defaultScene ? ' is-selected' : '' ?>"
+                            data-name="<?= h((string)($category['category_name'] ?? $slug)) ?>"
+                            data-recommended-score="<?= (int)($category['recommended_score'] ?? 0) ?>"
+                            data-featured-score="<?= (int)($category['featured_score_effective'] ?? 0) ?>"
+                            data-popularity-score="<?= (int)($category['popularity_score'] ?? 0) ?>"
+                            data-versatility-score="<?= (int)($category['versatility_score'] ?? 0) ?>"
+                            data-usage-count="<?= (int)($category['usage_count'] ?? 0) ?>"
+                            data-newest-at="<?= h((string)($category['discovered_at'] ?? '')) ?>"
+                        >
                             <label class="choice-card scene-card">
                                 <input type="radio" name="scene_category" value="<?= h($slug) ?>" <?= $slug === $defaultScene ? 'checked' : '' ?>>
                                 <?php if ($mainPreview): ?>
@@ -1179,7 +1261,7 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
                                 <?php endif; ?>
                                 <span class="scene-card-body">
                                     <strong><?= h((string)($category['category_name'] ?? $slug)) ?></strong>
-                                    <span class="scene-card-meta"><?= $imageCount ?> references</span>
+                                    <span class="scene-card-meta"><?= $imageCount ?> references<?= !empty($category['featured_active']) ? ' · Featured' : '' ?></span>
                                 </span>
                             </label>
                         </div>
@@ -1197,8 +1279,10 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
     </div>
 </main>
 </div>
+<?php include __DIR__ . '/compact_scene_progress_layer.php'; ?>
 
 <script>
+const createScenesForm = document.getElementById('createScenesForm');
 const cameraInput = document.getElementById('cameraInput');
 const captureCard = document.getElementById('captureCard');
 const capturePreview = document.getElementById('capturePreview');
@@ -1228,6 +1312,8 @@ const selectedSceneTitle = document.getElementById('selectedSceneTitle');
 const mobileSceneCarousel = document.getElementById('mobileSceneCarousel');
 const sceneCategoryInputs = Array.from(document.querySelectorAll('input[name="scene_category"]'));
 const sceneCards = Array.from(document.querySelectorAll('.scene-card'));
+const sceneOrder = document.getElementById('sceneOrder');
+const sceneGrid = document.querySelector('.scene-grid');
 let artworkReady = false;
 let mobileSceneRenderToken = 0;
 const desktopLayoutQuery = window.matchMedia('(min-width: 761px)');
@@ -1260,7 +1346,14 @@ sceneCards.forEach(card => {
     card.addEventListener('pointerenter', () => hydrateDesktopSceneCard(card), { passive: true });
     card.addEventListener('focusin', () => hydrateDesktopSceneCard(card));
 });
+sceneOrder?.addEventListener('change', () => sortSceneCards(sceneOrder.value));
 updateSelectedSceneTitle(false);
+
+createScenesForm?.addEventListener('submit', event => {
+    if (typeof window.submitArtworkSceneProgress !== 'function') return;
+    event.preventDefault();
+    window.submitArtworkSceneProgress(createScenesForm);
+});
 
 if (window.history && window.history.replaceState) {
     window.history.replaceState({ createScenesStage: 'artwork' }, '', window.location.href);
@@ -1366,6 +1459,25 @@ function updateSelectedSceneTitle(refreshMobileViewer = true) {
     if (refreshMobileViewer && selectedCard) {
         renderMobileSceneViewer(selectedCard);
     }
+}
+
+function sortSceneCards(mode) {
+    if (!sceneGrid) return;
+    const items = Array.from(sceneGrid.querySelectorAll('.scene-card-item'));
+    const numeric = (item, key) => Number(item.dataset[key] || 0);
+    const byName = (a, b) => (a.dataset.name || '').localeCompare(b.dataset.name || '', undefined, { sensitivity: 'base' });
+    const recommended = (a, b) => numeric(b, 'recommendedScore') - numeric(a, 'recommendedScore') || byName(a, b);
+    items.sort((a, b) => {
+        if (mode === 'featured') return numeric(b, 'featuredScore') - numeric(a, 'featuredScore') || recommended(a, b);
+        if (mode === 'popular') return numeric(b, 'popularityScore') - numeric(a, 'popularityScore') || numeric(b, 'usageCount') - numeric(a, 'usageCount') || byName(a, b);
+        if (mode === 'versatile') return numeric(b, 'versatilityScore') - numeric(a, 'versatilityScore') || recommended(a, b);
+        if (mode === 'newest') return Date.parse(b.dataset.newestAt || 0) - Date.parse(a.dataset.newestAt || 0) || byName(a, b);
+        if (mode === 'alpha') return byName(a, b);
+        return recommended(a, b);
+    });
+    const fragment = document.createDocumentFragment();
+    items.forEach(item => fragment.appendChild(item));
+    sceneGrid.appendChild(fragment);
 }
 
 function renderMobileSceneViewer(selectedCard) {

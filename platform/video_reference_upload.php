@@ -26,7 +26,7 @@ function video_uploaded_reference_files(array $input): array
 VideoHttp::handle(function (): array {
     $user = Auth::user();
     if (!$user) VideoHttp::respond(['ok' => false, 'error' => 'Authentication required.'], 401);
-    FeatureAccess::requireJson($user, FeatureAccess::VIDEO_MANAGE, 'Video Studio');
+    FeatureAccess::requireJson($user, FeatureAccess::VIDEO_MANAGE, 'Video Lab');
     VideoHttp::verifyCsrf(['csrf' => (string)($_POST['csrf'] ?? '')]);
     $userId = (int)$user['id'];
     $sceneId = (int)($_POST['sceneId'] ?? 0);

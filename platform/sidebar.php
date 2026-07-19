@@ -228,9 +228,14 @@ $connectionsActive = $pinterestActive || $metaActive;
 // Admin active states
 $promptsActive = ($currentPage === 'admin_prompts.php');
 $apiActive = ($currentPage === 'admin_api_keys.php');
+$studioReferencesLabEnabled = filter_var(app_env('STUDIO_REFERENCES_LAB_ENABLED', 'true'), FILTER_VALIDATE_BOOLEAN);
+$studioReferencesLabActive = $studioReferencesLabEnabled && ($currentPage === 'studio_references_lab.php');
 $sidebarCanUseWebsite = $sidebarUser ? FeatureAccess::allows($sidebarUser, FeatureAccess::WEBSITE_MANAGE) : false;
 $sidebarCanUseSocial = $sidebarUser ? FeatureAccess::allows($sidebarUser, FeatureAccess::SOCIAL_MANAGE) : false;
 $sidebarCanUseVideo = $sidebarUser ? FeatureAccess::allows($sidebarUser, FeatureAccess::VIDEO_MANAGE) : false;
+$sidebarUsesCompactBasicNavigation = $sidebarUser
+    && !$sidebarIsAdmin
+    && FeatureAccess::planForUser($sidebarUser) === FeatureAccess::PLAN_ARTIST_STUDIO;
 $sidebarWebsiteUrl = $sidebarCanUseWebsite ? 'website_board.php' : 'account.php?upgrade=artist_pro&feature=website#plan';
 $sidebarSocialUrl = $sidebarCanUseSocial ? 'social_media_board.php' : 'account.php?upgrade=artist_pro&feature=social#plan';
 $sidebarVideosUrl = $sidebarCanUseVideo ? 'videos.php' : 'account.php?upgrade=artist_pro&feature=video#plan';
@@ -831,10 +836,10 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <div class="sidebar-mobile-section sidebar-publishing-mobile">
                     <span>Publish</span>
                     <?php if ($sidebarCanUseWebsite): ?>
-                        <a class="<?= $websiteActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarWebsiteUrl, ENT_QUOTES, 'UTF-8') ?>">Website</a>
+                        <a class="<?= $websiteActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarWebsiteUrl, ENT_QUOTES, 'UTF-8') ?>">Website Catalog Sync</a>
                     <?php endif; ?>
                     <?php if ($sidebarCanUseSocial): ?>
-                        <a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media</a>
+                        <a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media Board</a>
                     <?php endif; ?>
                     <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
                 </div>
@@ -845,7 +850,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                             <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
                             <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
                         <?php endif; ?>
-                        <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Studio</a>
+                        <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Lab</a>
                     </div>
                 <?php endif; ?>
                 <?php if ($sidebarIsAdmin): ?>
@@ -855,6 +860,9 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                         <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a>
                         <a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a>
                         <a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a>
+                        <?php if ($studioReferencesLabEnabled): ?>
+                            <a class="<?= $studioReferencesLabActive ? 'active' : '' ?>" href="studio_references_lab.php">Visual DNA</a>
+                        <?php endif; ?>
                         <?php if ($sidebarCanUseSocial): ?>
                             <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
                         <?php endif; ?>
@@ -895,6 +903,16 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
             </div>
         </section>
 
+        <?php if ($sidebarUsesCompactBasicNavigation): ?>
+            <section class="sidebar-tab-group sidebar-basic-library" aria-label="Library">
+                <div class="sidebar-tab-row">
+                    <a class="sidebar-tab <?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
+                    <a class="sidebar-tab <?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
+                    <a class="sidebar-tab <?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
+                </div>
+            </section>
+        <?php endif; ?>
+
         <?php if ($sidebarIsAdmin): ?>
             <section class="sidebar-mode-switch-wrap" aria-label="Flow view selector">
                 <label class="sidebar-mode-switch" for="sidebar-flow-mode-toggle">
@@ -905,26 +923,28 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
             </section>
         <?php endif; ?>
 
-        <section class="sidebar-context">
-            <div class="sidebar-tab-row">
-                <a class="sidebar-tab <?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
-                <a class="sidebar-tab <?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
-                <a class="sidebar-tab <?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
-                <?php if ($sidebarCanUseVideo): ?>
-                    <a class="sidebar-tab <?= $videosActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideosUrl, ENT_QUOTES, 'UTF-8') ?>">Videos</a>
-                <?php endif; ?>
-                <span class="sidebar-library-divider" aria-hidden="true"></span>
-                <div class="sidebar-publishing-tabs">
-                    <?php if ($sidebarCanUseWebsite): ?>
-                        <a class="sidebar-tab <?= $websiteActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarWebsiteUrl, ENT_QUOTES, 'UTF-8') ?>">Website</a>
+        <?php if (!$sidebarUsesCompactBasicNavigation): ?>
+            <section class="sidebar-context">
+                <div class="sidebar-tab-row">
+                    <a class="sidebar-tab <?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
+                    <a class="sidebar-tab <?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
+                    <a class="sidebar-tab <?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
+                    <?php if ($sidebarCanUseVideo): ?>
+                        <a class="sidebar-tab <?= $videosActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideosUrl, ENT_QUOTES, 'UTF-8') ?>">Videos</a>
                     <?php endif; ?>
-                    <?php if ($sidebarCanUseSocial): ?>
-                        <a class="sidebar-tab <?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media</a>
-                    <?php endif; ?>
-                    <a class="sidebar-tab <?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
+                    <span class="sidebar-library-divider" aria-hidden="true"></span>
+                    <div class="sidebar-publishing-tabs">
+                        <?php if ($sidebarCanUseWebsite): ?>
+                            <a class="sidebar-tab <?= $websiteActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarWebsiteUrl, ENT_QUOTES, 'UTF-8') ?>">Website Catalog Sync</a>
+                        <?php endif; ?>
+                        <?php if ($sidebarCanUseSocial): ?>
+                            <a class="sidebar-tab <?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media Board</a>
+                        <?php endif; ?>
+                        <a class="sidebar-tab <?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        <?php endif; ?>
 
         <?php if ($sidebarIsAdmin || $sidebarCanUseVideo): ?>
             <section class="sidebar-studios" aria-label="Studios">
@@ -933,12 +953,20 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                         <a class="sidebar-tab <?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
                         <a class="sidebar-tab <?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
                     <?php endif; ?>
-                    <a class="sidebar-tab <?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Studio</a>
+                    <a class="sidebar-tab <?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Lab</a>
                 </div>
             </section>
         <?php endif; ?>
 
     </nav>
+
+    <?php if ($sidebarUsesCompactBasicNavigation): ?>
+        <section class="sidebar-account sidebar-basic-profile" aria-label="Artist account">
+            <div class="sidebar-tab-row">
+                <a class="sidebar-tab <?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
+            </div>
+        </section>
+    <?php endif; ?>
 
     <details class="sidebar-more">
         <summary>Admin</summary>
@@ -948,6 +976,9 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <li><a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a></li>
                 <li><a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a></li>
                 <li><a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a></li>
+                <?php if ($studioReferencesLabEnabled): ?>
+                    <li><a class="<?= $studioReferencesLabActive ? 'active' : '' ?>" href="studio_references_lab.php">Visual DNA</a></li>
+                <?php endif; ?>
             <?php endif; ?>
             <?php if ($sidebarCanUseSocial): ?>
                 <li><a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a></li>
@@ -971,10 +1002,10 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
             <div class="sidebar-mobile-section sidebar-publishing-mobile">
                 <span>Publish</span>
                 <?php if ($sidebarCanUseWebsite): ?>
-                    <a class="<?= $websiteActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarWebsiteUrl, ENT_QUOTES, 'UTF-8') ?>">Website</a>
+                    <a class="<?= $websiteActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarWebsiteUrl, ENT_QUOTES, 'UTF-8') ?>">Website Catalog Sync</a>
                 <?php endif; ?>
                 <?php if ($sidebarCanUseSocial): ?>
-                    <a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media</a>
+                    <a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media Board</a>
                 <?php endif; ?>
                 <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
             </div>
@@ -985,7 +1016,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                         <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
                         <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
                     <?php endif; ?>
-                    <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Studio</a>
+                    <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Lab</a>
                 </div>
             <?php endif; ?>
             <?php if ($sidebarIsAdmin): ?>
@@ -995,6 +1026,9 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                     <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a>
                     <a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a>
                     <a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a>
+                    <?php if ($studioReferencesLabEnabled): ?>
+                        <a class="<?= $studioReferencesLabActive ? 'active' : '' ?>" href="studio_references_lab.php">Visual DNA</a>
+                    <?php endif; ?>
                     <?php if ($sidebarCanUseSocial): ?>
                         <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
                     <?php endif; ?>
@@ -1043,6 +1077,32 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
         padding: 10px 15px;
         font-size: 12px;
     }
+    .global-generation-sound {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        flex: 0 0 auto;
+        padding: 0;
+        border: 1px solid rgba(111, 139, 104, .3);
+        border-radius: 50%;
+        background: rgba(255, 255, 255, .36);
+        color: #657061;
+        cursor: pointer;
+    }
+    .global-generation-sound:hover { background: rgba(255, 255, 255, .68); }
+    .global-generation-sound svg {
+        width: 15px;
+        height: 15px;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 1.8;
+    }
+    .global-generation-sound [data-sound-slash] { display: none; }
+    .global-generation-sound[aria-pressed="true"] [data-sound-wave] { display: none; }
+    .global-generation-sound[aria-pressed="true"] [data-sound-slash] { display: block; }
     .global-generation-spinner {
         width: 18px;
         height: 18px;
@@ -1055,7 +1115,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
     @keyframes global-generation-spin { to { transform: rotate(360deg); } }
     .global-generation-ready {
         display: grid;
-        grid-template-columns: auto 1fr auto auto;
+        grid-template-columns: auto 1fr auto auto auto;
         align-items: center;
         gap: 12px;
         width: min(470px, calc(100vw - 32px));
@@ -1103,7 +1163,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
         .global-generation-ready {
             right: 16px;
             bottom: 76px;
-            grid-template-columns: auto 1fr auto;
+            grid-template-columns: auto 1fr auto auto;
         }
         .global-generation-ready a { grid-column: 1 / -1; text-align: center; }
     }
@@ -1111,6 +1171,14 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
 <div class="global-generation-activity" data-global-generation-activity role="status" aria-live="polite" hidden>
     <span class="global-generation-spinner" aria-hidden="true"></span>
     <span data-global-generation-active-text>Creating mockups in the background…</span>
+    <button class="global-generation-sound" type="button" data-global-generation-sound aria-pressed="false" aria-label="Mute completion sounds" title="Mute completion sounds">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 10v4h3l4 3V7l-4 3H4Z"></path>
+            <path data-sound-wave d="M15 9.5c1.3 1.3 1.3 3.7 0 5"></path>
+            <path data-sound-wave d="M18 7c2.8 2.8 2.8 7.2 0 10"></path>
+            <path data-sound-slash d="M5 5l14 14"></path>
+        </svg>
+    </button>
 </div>
 <div class="global-generation-ready" data-global-generation-ready role="status" aria-live="polite" hidden>
     <span class="global-generation-ready-mark" aria-hidden="true">✓</span>
@@ -1119,6 +1187,14 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
         <span data-global-generation-ready-text>Your results are available.</span>
     </div>
     <a href="mockups.php" data-global-generation-ready-link>View results</a>
+    <button class="global-generation-sound" type="button" data-global-generation-sound aria-pressed="false" aria-label="Mute completion sounds" title="Mute completion sounds">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 10v4h3l4 3V7l-4 3H4Z"></path>
+            <path data-sound-wave d="M15 9.5c1.3 1.3 1.3 3.7 0 5"></path>
+            <path data-sound-wave d="M18 7c2.8 2.8 2.8 7.2 0 10"></path>
+            <path data-sound-slash d="M5 5l14 14"></path>
+        </svg>
+    </button>
     <button type="button" data-global-generation-dismiss aria-label="Dismiss">×</button>
 </div>
 <script>
@@ -1126,6 +1202,8 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
     const userKey = <?= json_encode((string)$sidebarUser['id']) ?>;
     const trackedKey = 'artworkMockupsGenerationTracked:' + userKey;
     const pendingKey = 'artworkMockupsGenerationNotices:' + userKey;
+    const soundPlayedKey = 'artworkMockupsGenerationSoundsPlayed:' + userKey;
+    const soundMutedKey = 'artworkMockupsGenerationSoundMuted:' + userKey;
     const activity = document.querySelector('[data-global-generation-activity]');
     const activeText = document.querySelector('[data-global-generation-active-text]');
     const ready = document.querySelector('[data-global-generation-ready]');
@@ -1133,9 +1211,79 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
     const readyText = document.querySelector('[data-global-generation-ready-text]');
     const readyLink = document.querySelector('[data-global-generation-ready-link]');
     const dismiss = document.querySelector('[data-global-generation-dismiss]');
+    const soundToggles = Array.from(document.querySelectorAll('[data-global-generation-sound]'));
     const brand = document.querySelector('.brand');
     const endpoint = new URL('mockup_generation_activity.php', brand ? brand.href : window.location.href).href;
     let pollTimer = 0;
+    let completionAudioContext = null;
+    let soundMuted = false;
+
+    try {
+        soundMuted = localStorage.getItem(soundMutedKey) === '1';
+    } catch (error) {}
+
+    function syncSoundToggles() {
+        soundToggles.forEach(button => {
+            button.setAttribute('aria-pressed', soundMuted ? 'true' : 'false');
+            button.setAttribute('aria-label', soundMuted ? 'Turn on completion sounds' : 'Mute completion sounds');
+            button.title = soundMuted ? 'Turn on completion sounds' : 'Mute completion sounds';
+        });
+    }
+
+    function audioContext() {
+        if (completionAudioContext) return completionAudioContext;
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return null;
+        try {
+            completionAudioContext = new AudioContextClass();
+        } catch (error) {
+            completionAudioContext = null;
+        }
+        return completionAudioContext;
+    }
+
+    function armCompletionSound() {
+        if (soundMuted) return;
+        const context = audioContext();
+        if (!context || context.state === 'running') return;
+        context.resume().catch(() => {});
+    }
+
+    function scheduleCompletionTone(context, frequency, start, duration, type, volume) {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(volume, start + 0.025);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start(start);
+        oscillator.stop(start + duration + 0.02);
+    }
+
+    function playCompletionSound(kind) {
+        if (soundMuted) return;
+        const context = audioContext();
+        if (!context) return;
+        const play = () => {
+            if (context.state !== 'running') return;
+            const now = context.currentTime + 0.03;
+            if (kind === 'error') {
+                scheduleCompletionTone(context, 330, now, 0.24, 'triangle', 0.035);
+                scheduleCompletionTone(context, 247, now + 0.18, 0.3, 'triangle', 0.03);
+                return;
+            }
+            scheduleCompletionTone(context, 659, now, 0.22, 'sine', 0.035);
+            scheduleCompletionTone(context, 880, now + 0.16, 0.34, 'sine', 0.04);
+        };
+        if (context.state === 'running') {
+            play();
+            return;
+        }
+        context.resume().then(play).catch(() => {});
+    }
 
     function ids(key) {
         try {
@@ -1146,6 +1294,15 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
     function save(key, values) {
         localStorage.setItem(key, JSON.stringify(Array.from(new Set(values.map(Number).filter(Number.isFinite)))));
     }
+    function playNewNoticeSound(notices, kind) {
+        const played = ids(soundPlayedKey);
+        const newIds = (notices || [])
+            .map(item => Number(item.id))
+            .filter(id => Number.isFinite(id) && !played.includes(id));
+        if (!newIds.length) return;
+        save(soundPlayedKey, played.concat(newIds).slice(-120));
+        playCompletionSound(kind);
+    }
     function trackJobs(values) {
         save(trackedKey, ids(trackedKey).concat((values || []).map(Number)));
         refresh(150);
@@ -1153,6 +1310,12 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
     function clearNotices() {
         save(pendingKey, []);
         if (ready) ready.hidden = true;
+    }
+    function dismissJobs(values) {
+        const dismissed = new Set((values || []).map(Number).filter(Number.isFinite));
+        if (!dismissed.size) return;
+        save(pendingKey, ids(pendingKey).filter(id => !dismissed.has(id)));
+        if (ready && ids(pendingKey).length === 0) ready.hidden = true;
     }
     function render(data) {
         const active = Array.isArray(data.active) ? data.active : [];
@@ -1171,30 +1334,57 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
         if (completed.length) {
             save(trackedKey, tracked.filter(id => !completed.some(item => Number(item.id) === id)));
             save(pendingKey, ids(pendingKey).concat(completed.map(item => Number(item.id))));
+            completed.forEach(item => {
+                window.dispatchEvent(new CustomEvent('artworkmockups:generation-completed', { detail: item }));
+            });
         }
 
+        const remainingTracked = ids(trackedKey);
+        const trackedActive = active.filter(item => remainingTracked.includes(Number(item.id)));
         const pendingIds = ids(pendingKey);
         const notices = allItems.filter(item => pendingIds.includes(Number(item.id)));
-        if (!ready || !notices.length) {
+        if (!ready || !notices.length || trackedActive.length > 0) {
             if (ready) ready.hidden = true;
             return;
         }
         const successful = notices.filter(item => item.status === 'done');
         const failed = notices.filter(item => item.status === 'error' || item.status === 'failed_enqueue');
+        playNewNoticeSound(notices, failed.length > 0 ? 'error' : 'success');
+        successful.forEach(item => {
+            window.dispatchEvent(new CustomEvent('artworkmockups:generation-ready', { detail: item }));
+        });
+        const pendingAfterEvents = ids(pendingKey);
+        const visibleSuccessful = successful.filter(item => pendingAfterEvents.includes(Number(item.id)));
+        const visibleFailed = failed.filter(item => pendingAfterEvents.includes(Number(item.id)));
+        if (!visibleSuccessful.length && !visibleFailed.length) {
+            ready.hidden = true;
+            return;
+        }
         ready.hidden = false;
-        ready.classList.toggle('is-error', successful.length === 0 && failed.length > 0);
-        if (successful.length) {
-            const regenerations = successful.filter(item => item.kind === 'regeneration').length;
-            readyTitle.textContent = successful.length === 1
-                ? (regenerations ? 'Regeneration ready' : 'Mockup ready')
-                : successful.length + ' mockups ready';
-            readyText.textContent = 'The task finished without interrupting your work.';
+        ready.classList.toggle('is-error', visibleSuccessful.length === 0 && visibleFailed.length > 0);
+        if (visibleSuccessful.length) {
+            const regenerations = visibleSuccessful.filter(item => item.kind === 'regeneration').length;
+            const newScenes = visibleSuccessful.filter(item => item.kind === 'generation').length;
+            const oneGenerationRun = new Set(visibleSuccessful.map(item => String(item.generation_run_id || '')).filter(Boolean)).size === 1;
+            const sceneCategory = String(visibleSuccessful[0]?.scene_category || '').trim();
+            if (newScenes === visibleSuccessful.length && oneGenerationRun) {
+                readyTitle.textContent = newScenes === 1 ? 'New scene ready' : newScenes + ' new scenes ready';
+                readyText.textContent = sceneCategory !== ''
+                    ? sceneCategory + ' is ready to review.'
+                    : 'Your new scenes are ready to review.';
+                readyLink.textContent = 'View new scenes';
+            } else {
+                readyTitle.textContent = visibleSuccessful.length === 1
+                    ? (regenerations ? 'Regeneration ready' : 'Mockup ready')
+                    : visibleSuccessful.length + ' mockups ready';
+                readyText.textContent = 'The task finished without interrupting your work.';
+                readyLink.textContent = 'View results';
+            }
             readyLink.hidden = false;
-            readyLink.href = successful[0].results_url || 'mockups.php';
-            readyLink.textContent = 'View results';
+            readyLink.href = visibleSuccessful[0].results_url || 'mockups.php';
         } else {
-            readyTitle.textContent = failed.length === 1 ? 'Generation could not finish' : 'Some generations could not finish';
-            readyText.textContent = failed[0]?.error || 'The credit was returned and the task can be retried.';
+            readyTitle.textContent = visibleFailed.length === 1 ? 'Generation could not finish' : 'Some generations could not finish';
+            readyText.textContent = visibleFailed[0]?.error || 'The credit was returned and the task can be retried.';
             readyLink.hidden = true;
         }
     }
@@ -1217,7 +1407,25 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
 
     dismiss?.addEventListener('click', clearNotices);
     readyLink?.addEventListener('click', clearNotices);
-    window.artworkGenerationTracker = { trackJobs: trackJobs, refresh: refresh };
+    soundToggles.forEach(button => {
+        button.addEventListener('click', () => {
+            soundMuted = !soundMuted;
+            try {
+                localStorage.setItem(soundMutedKey, soundMuted ? '1' : '0');
+            } catch (error) {}
+            syncSoundToggles();
+            if (!soundMuted) playCompletionSound('success');
+        });
+    });
+    document.addEventListener('pointerdown', armCompletionSound, { capture: true });
+    document.addEventListener('keydown', armCompletionSound, { capture: true });
+    window.addEventListener('storage', event => {
+        if (event.key !== soundMutedKey) return;
+        soundMuted = event.newValue === '1';
+        syncSoundToggles();
+    });
+    syncSoundToggles();
+    window.artworkGenerationTracker = { trackJobs: trackJobs, refresh: refresh, dismissJobs: dismissJobs };
     refresh(300);
 })();
 </script>

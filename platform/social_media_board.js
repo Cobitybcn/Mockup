@@ -1217,7 +1217,7 @@
                 if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo actualizar el favorito.');
                 const isFavorite = Boolean(result.favorite);
                 card.classList.toggle('is-favorite', isFavorite);
-                favoriteButton.textContent = isFavorite ? '♥' : '♡';
+                favoriteButton.classList.toggle('active', isFavorite);
                 favoriteButton.setAttribute('aria-pressed', isFavorite ? 'true' : 'false');
                 favoriteButton.setAttribute('aria-label', isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos');
                 const mockup = mockupById.get(card.dataset.mockupId);

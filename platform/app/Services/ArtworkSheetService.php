@@ -126,6 +126,106 @@ final class ArtworkSheetService
     }
 
     /**
+     * Persist a validated V2 analysis and promote its suggested title when the
+     * artwork does not have a title yet. Existing artist-edited titles win.
+     *
+     * @param array<string,mixed> $draft
+     * @return array<string,mixed>
+     */
+    public function applyAnalysisV2Draft(int $artworkId, int $userId, array $draft): array
+    {
+        $errors = ArtworkAnalysisV2::validate($draft, false);
+        if ($errors) {
+            throw new RuntimeException(implode(' ', $errors));
+        }
+
+        $artwork = $this->artwork($artworkId, $userId);
+        $sheet = $this->sheetForArtwork($artworkId, $userId);
+        $editorial = (array)($draft['canonical_editorial'] ?? []);
+        $search = (array)($draft['search_metadata'] ?? []);
+        $keywords = array_values(array_unique(array_filter(array_map('trim', array_merge(
+            (array)($search['core_keywords'] ?? []),
+            (array)($search['specific_keywords'] ?? [])
+        )))));
+
+        $existingTitle = trim((string)($artwork['final_title'] ?? ''));
+        $existingSubtitle = trim((string)($artwork['subtitle'] ?? ''));
+        $suggestedTitle = trim((string)($editorial['title'] ?? ''));
+        $suggestedSubtitle = trim((string)($editorial['subtitle'] ?? ''));
+        $title = $existingTitle !== '' ? $existingTitle : $suggestedTitle;
+        $subtitle = $existingSubtitle !== '' ? $existingSubtitle : $suggestedSubtitle;
+
+        $this->saveArtworkSheet((int)$sheet['id'], $userId, [
+            'related_artwork_ids' => (string)$sheet['related_artwork_ids'],
+            'source_image_file' => (string)$sheet['source_image_file'],
+            'title' => $title,
+            'subtitle' => $subtitle,
+            'description' => (string)($editorial['master_description'] ?? ''),
+            'short_description' => (string)($editorial['short_description'] ?? ''),
+            'keywords' => implode(', ', $keywords),
+            'tags' => (string)$sheet['tags'],
+            'alt_text' => (string)($editorial['alt_text'] ?? ''),
+            'caption' => (string)($editorial['caption'] ?? ''),
+            'user_notes' => (string)$sheet['user_notes'],
+            'status' => 'validated',
+        ]);
+
+        $this->pdo->prepare('
+            UPDATE artwork_sheets
+            SET generated_json = :generated_json, updated_at = :updated_at
+            WHERE id = :id AND user_id = :user_id
+        ')->execute([
+            'generated_json' => json_encode($draft, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+            'updated_at' => date('c'),
+            'id' => (int)$sheet['id'],
+            'user_id' => $userId,
+        ]);
+
+        if ($title !== '') {
+            $this->pdo->prepare("\n                UPDATE artworks\n                SET final_title = CASE WHEN TRIM(COALESCE(final_title, '')) = '' THEN :title ELSE final_title END,\n                    subtitle = CASE WHEN TRIM(COALESCE(subtitle, '')) = '' THEN :subtitle ELSE subtitle END,\n                    updated_at = :updated_at\n                WHERE id = :id AND user_id = :user_id\n            ")->execute([
+                'title' => $title,
+                'subtitle' => $subtitle,
+                'updated_at' => date('c'),
+                'id' => $artworkId,
+                'user_id' => $userId,
+            ]);
+        }
+
+        return $this->artwork($artworkId, $userId);
+    }
+
+    public function saveArtworkTitle(int $artworkId, int $userId, string $title): void
+    {
+        $title = trim($title);
+        if ($title === '') {
+            throw new InvalidArgumentException('The artwork title cannot be empty.');
+        }
+
+        $sheet = $this->sheetForArtwork($artworkId, $userId);
+        $now = date('c');
+        $this->pdo->prepare('
+            UPDATE artworks
+            SET final_title = :title, updated_at = :updated_at
+            WHERE id = :id AND user_id = :user_id
+        ')->execute([
+            'title' => $title,
+            'updated_at' => $now,
+            'id' => $artworkId,
+            'user_id' => $userId,
+        ]);
+        $this->pdo->prepare('
+            UPDATE artwork_sheets
+            SET title = :title, updated_at = :updated_at
+            WHERE id = :id AND user_id = :user_id
+        ')->execute([
+            'title' => $title,
+            'updated_at' => $now,
+            'id' => (int)$sheet['id'],
+            'user_id' => $userId,
+        ]);
+    }
+
+    /**
      * @param array<int|string> $artworkIds
      */
     public function mergeArtworkIds(int $primaryArtworkId, int $userId, array $artworkIds): array

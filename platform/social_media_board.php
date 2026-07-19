@@ -5,7 +5,7 @@ require_once __DIR__ . '/app/bootstrap.php';
 
 $user = Auth::requireUser();
 $isAdmin = Auth::isAdmin($user);
-FeatureAccess::requirePage($user, FeatureAccess::SOCIAL_MANAGE, 'Social Media');
+FeatureAccess::requirePage($user, FeatureAccess::SOCIAL_MANAGE, 'Social Media Board');
 
 $pdo = Database::connection();
 $userId = (int)$user['id'];
@@ -192,7 +192,8 @@ foreach ($mockups as $mockup) {
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Social Media Board - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="social_media_board.css?v=13">
+    <link rel="stylesheet" href="social_media_board.css?v=15">
+    <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body data-social-board-user="<?= $userId ?>">
 <div class="app-shell">
@@ -203,22 +204,23 @@ foreach ($mockups as $mockup) {
             <section class="smb-catalog" aria-labelledby="smb-catalog-title">
                 <div class="smb-catalog-head">
                     <div>
-                        <h2 id="smb-catalog-title">Catálogo de mockups</h2>
+                        <span class="smb-catalog-kicker">Mockup Catalog</span>
+                        <h2 id="smb-catalog-title">Social Media Board</h2>
                         <div class="smb-filters">
                             <label class="smb-artwork-filter">
-                                <span class="sr-only">Filtrar por obra</span>
+                                <span class="sr-only">Filter by artwork</span>
                                 <select data-artwork-filter>
-                                    <option value="">Filtrar por obra</option>
+                                    <option value="">Filter by artwork</option>
                                     <?php foreach ($artworks as $artwork): ?>
                                         <option value="<?= (int)$artwork['id'] ?>"><?= smb_h((string)$artwork['display_title']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </label>
                             <label class="smb-series-filter">
-                                <span class="sr-only">Filtrar por serie</span>
+                                <span class="sr-only">Filter by series</span>
                                 <select data-series-filter>
-                                    <option value="">Filtrar por serie</option>
-                                    <option value="none">Sin serie</option>
+                                    <option value="">Filter by series</option>
+                                    <option value="none">No series</option>
                                     <?php foreach ($series as $item): ?>
                                         <option value="<?= (int)$item['id'] ?>"><?= smb_h((string)$item['title']) ?></option>
                                     <?php endforeach; ?>
@@ -226,11 +228,11 @@ foreach ($mockups as $mockup) {
                             </label>
                         </div>
                     </div>
-                    <button class="smb-focus-exit" type="button" data-exit-network-focus>Vista<br>general</button>
+                    <button class="smb-focus-exit" type="button" data-exit-network-focus>Overview</button>
                 </div>
 
                 <div class="smb-catalog-rail-wrap">
-                    <button class="smb-rail-arrow smb-rail-arrow--left" type="button" data-scroll-catalog="-1" aria-label="Ver mockups anteriores">‹</button>
+                    <button class="smb-rail-arrow smb-rail-arrow--left" type="button" data-scroll-catalog="-1" aria-label="Previous mockups">‹</button>
                     <div class="smb-catalog-rail" data-catalog-rail>
                         <?php foreach ($mockupPayload as $mockup): ?>
                             <article
@@ -245,21 +247,21 @@ foreach ($mockups as $mockup) {
                             >
                                 <img src="<?= smb_h((string)$mockup['image']) ?>" alt="<?= smb_h((string)$mockup['artworkTitle']) ?>" loading="lazy" draggable="false">
                                 <button
-                                    class="smb-favorite"
+                                    class="smb-favorite media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--right <?= $mockup['favorite'] ? 'active' : '' ?>"
                                     type="button"
                                     data-toggle-favorite
                                     aria-pressed="<?= $mockup['favorite'] ? 'true' : 'false' ?>"
                                     aria-label="<?= $mockup['favorite'] ? 'Quitar de favoritos' : 'Agregar a favoritos' ?>"
-                                ><?= $mockup['favorite'] ? '♥' : '♡' ?></button>
+                                ><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
                                 <div class="smb-catalog-card-copy">
                                     <strong><?= smb_h((string)$mockup['editorialTitle']) ?></strong>
                                     <span><?= smb_h((string)$mockup['artworkTitle']) ?> · <?= smb_h((string)$mockup['contextTitle']) ?></span>
                                 </div>
                             </article>
                         <?php endforeach; ?>
-                        <?php if (!$mockups): ?><div class="smb-empty-catalog">Todavía no hay mockups disponibles.</div><?php endif; ?>
+                        <?php if (!$mockups): ?><div class="smb-empty-catalog">No mockups available yet.</div><?php endif; ?>
                     </div>
-                    <button class="smb-rail-arrow smb-rail-arrow--right" type="button" data-scroll-catalog="1" aria-label="Ver más mockups">›</button>
+                    <button class="smb-rail-arrow smb-rail-arrow--right" type="button" data-scroll-catalog="1" aria-label="More mockups">›</button>
                 </div>
             </section>
 

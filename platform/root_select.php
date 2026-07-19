@@ -982,6 +982,7 @@ function h($v): string {
             box-sizing: border-box;
         }
     </style>
+    <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body>
 
@@ -1029,8 +1030,8 @@ function h($v): string {
                                     <div class="candidate-frame" style="margin-bottom: 0;">
                                         <img src="<?= h($candidateUrl) ?>" alt="Candidate Version <?= $idx + 1 ?>">
                                     </div>
-                                    <button type="button" class="zoom-trigger-btn" onclick="openLightbox('<?= h($candidateUrl) ?>', 'Version <?= $idx + 1 ?>'); event.stopPropagation();" title="Zoom in / check details" style="position: absolute; right: 10px; top: 10px; background: rgba(255,255,255,0.95); border: 1px solid var(--gal-border); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: var(--gal-shadow); z-index: 10;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gal-ink);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                                    <button type="button" class="zoom-trigger-btn media-icon-button media-thumb-action media-thumb-action--right" onclick="openLightbox('<?= h($candidateUrl) ?>', 'Version <?= $idx + 1 ?>'); event.stopPropagation();" title="Zoom in / check details">
+                                        <svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16.2 16.2 4 4M11 8v6M8 11h6"/></svg>
                                     </button>
                                 </div>
                                 <button type="button" class="select-btn" id="btn_<?= $idx ?>">

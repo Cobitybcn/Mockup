@@ -261,25 +261,130 @@ ARTWORK PHYSICAL DATA:
 - Orientation: {{ARTWORK_ORIENTATION}}
 
 TASK:
-Create a close-up photographic view of the physical canvas edge of IMAGE 1. The subject is the transition between the painted front face, the lateral side depth, the canvas thickness, the nearby wall contact, and the subtle cast shadow. A partial crop is expected. This is not a full-room mockup.
+Create a macro photographic study of the physical canvas edge of IMAGE 1.
+
+The purpose of this image is NOT to present the artwork.
+
+The purpose is to document the physical construction of the artwork: the painted front surface, the lateral canvas edge, the canvas thickness, the immediate wall contact, and the natural cast shadow.
+
+The painted artwork should appear only as a cropped fragment supporting the study of the physical object.
+
+This is not a full artwork presentation.
+This is not a room mockup.
 
 CAMERA:
-Use a close-focus 50-70 mm lens equivalent, or a natural close-up lens with controlled perspective. The camera is near artwork height and slightly side-oblique, close enough to read the physical edge and wall contact. Keep the canvas edge, front-face fragment, lateral side, thickness, and immediate wall contact sharp. Distant background may soften gently, but it must not become the subject.
+Use a close-focus 50–70 mm equivalent lens.
+
+Position the camera very close to the artwork, approximately at artwork height, with a slight side-oblique angle.
+
+Maintain a constant close viewing distance.
+
+Never move the camera backwards simply to reveal more of the artwork.
+
+The canvas edge is the primary subject.
+
+The painted front surface is secondary.
+
+Keep the edge, lateral side, canvas thickness and wall contact critically sharp.
+
+A gentle background falloff is acceptable, but the background must remain visually insignificant.
 
 STRICT ARTWORK FIDELITY:
-Preserve the visible portion of IMAGE 1 exactly: colors, marks, sparse areas, local composition, edge relationships, and format logic. Do not redraw, reinterpret, beautify, simplify, complete, recompose, recolor, mirror, rotate, stretch, compress, or replace the artwork. Do not invent symbols, figures, faces, landscapes, decorative motifs, new lines, new color blocks, or another painting.
+Preserve the visible portion of IMAGE 1 exactly: colors, marks, textures, sparse areas, local composition, edge relationships, surface appearance, and format logic.
 
-CANVAS EDGE AND SCALE LIMITS:
-The visible canvas remains a rigid physical object at the supplied dimensions. The edge thickness must be moderate and plausible for a stretched canvas or physical artwork object; do not turn it into a thick block, slab, plinth, box, wedge, floating panel, poster, paper sheet, digital screen, or framed object. Preserve the original artwork orientation and aspect ratio even when only a fragment is visible: a portrait artwork must still read as part of a taller-than-wide canvas, a landscape artwork as part of a wider-than-tall canvas, and a square artwork as part of a square canvas.
+Do not redraw, reinterpret, beautify, simplify, complete, recompose, recolor, mirror, rotate, stretch, compress, replace, or invent any part of the artwork.
 
-CROP LIMITS:
-Cropping is camera framing only, not artwork alteration. The full artwork does not need to be visible. One or more artwork edges may fall outside the image frame. Do not complete, widen, shorten, square, compress, extend, redesign, or reformat the visible fragment into a different full-format painting.
+Do not invent symbols, figures, faces, landscapes, decorative motifs, new lines, new color blocks, or another painting.
 
-ATMOSPHERE LIMITS:
-No atmospheric scene-building. No dramatic atelier mood. No cinematic haze. No golden-room storytelling. No full-room context. No visible furniture, easels, shelves, table setups, large windows, decorative props, people, pets, or architectural narrative. The background, if visible, must stay minimal, peripheral, soft, and secondary to the canvas edge.
+CANVAS EDGE:
+The artwork remains a rigid physical stretched canvas.
+
+The edge thickness must remain realistic and proportional to the supplied artwork depth.
+
+Do not transform the artwork into a thick block, slab, plinth, floating panel, poster, paper sheet, framed object, digital screen, or sculptural object.
+
+CROP:
+Frame the canvas as a photographic macro detail.
+
+Only a small portion of the artwork should be visible.
+
+Typically only 10–30% of the painted surface should appear inside the frame.
+
+The remaining artwork naturally falls outside the image.
+
+This is expected.
+
+The camera must never widen the framing simply to identify the complete artwork.
+
+If recognizing the complete painting requires moving farther away, do not do it.
+
+The close camera distance always has priority.
+
+The visible artwork fragment may not contain enough information to identify the entire painting.
+
+This is intentional.
+
+ATMOSPHERE:
+No atmospheric scene-building.
+
+No cinematic storytelling.
+
+No dramatic atelier mood.
+
+No decorative interior.
+
+No furniture.
+
+No easels.
+
+No shelves.
+
+No windows.
+
+No architectural narrative.
+
+Only the immediate wall adjacent to the artwork may be visible.
+
+The wall exists only to support the perception of the physical canvas edge.
 
 NEGATIVE PROMPT:
-No poster, no flat print, no paper sheet, no digital screen, no floating panel, no exaggerated thickness, no block canvas, no slab, no plinth, no box, no wedge, no invented frame, no ornate frame, no raw wood stretcher bars unless visible in IMAGE 1, no staples unless visible in IMAGE 1, no redesigned side edge, no changed artwork format, no squared portrait artwork, no stretched artwork, no compressed artwork, no artwork substitution, no invented imagery, no invented marks, no artificial impasto, no new tactile marks, no full room, no room atmosphere, no furniture, no easel, no table setup, no shelves, no large windows, no window-dominant composition, no dramatic atelier mood, no cinematic haze, no golden-room storytelling, no people, no pets, no crowds, no children, no visible text, no logos, no watermarks.',
+No poster.
+No flat print.
+No paper sheet.
+No digital screen.
+No floating panel.
+No exaggerated canvas thickness.
+No block canvas.
+No slab.
+No plinth.
+No box.
+No wedge.
+No invented frame.
+No ornate frame.
+No raw wood stretcher bars unless visible in IMAGE 1.
+No staples unless visible in IMAGE 1.
+No redesigned canvas edge.
+No changed artwork proportions.
+No altered orientation.
+No artwork substitution.
+No invented imagery.
+No invented brushwork.
+No artificial impasto.
+No added tactile texture.
+No widened framing.
+No zooming out to reveal more of the painting.
+No full artwork presentation.
+No room.
+No furniture.
+No easel.
+No shelves.
+No table.
+No large windows.
+No people.
+No pets.
+No visible text.
+No logos.
+No watermarks.',
       'primary_scene_set' => false,
     ),
     'rasante_superficie_pintura' =>
@@ -913,40 +1018,268 @@ La obra de arte es de {{ARTWORK_WIDTH_CM}} x {{ARTWORK_HEIGHT_CM}} cm, clase de 
       'full_prompt_template' => 'Generar un mockup fotográfico premium a partir de IMAGEN 1 e IMAGEN 2.
 
 ROLES DE ENTRADA:
-IMAGEN 1: primera imagen de referencia adjunta. Es la obra de arte. Preservar su identidad visual — colores, formas, proporciones internas, texturas, marcas, superficie — Esta preservación se refiere únicamente al CONTENIDO de la obra, no a su perspectiva o ángulo de cámara, que se define exclusivamente en la sección CAMARA de este prompt.
 
-IMAGEN 2: referencia de entorno. Mantener su estilo, familia de materiales, lógica de luz, carácter de superficie e identidad espacial. No reemplazarla con un pasillo genérico, un vestíbulo, un pasaje de galería o un entorno inventado alternativo.
+IMAGEN 1:
+Primera imagen de referencia adjunta. Es la obra de arte.
 
-Si la IMAGEN 2 contiene pinturas, lienzos, caballetes, marcos, dibujos, carteles u otras obras de arte, tratarlas solo como objetos ambientales. IMAGEN 1 es la obra de arte más importante en la nueva imagen.
+Preservar rigurosamente su identidad visual:
+- colores;
+- formas;
+- composición;
+- proporciones internas;
+- texturas;
+- marcas;
+- superficie pictórica;
+- áreas en blanco;
+- bloques de color;
+- símbolos y detalles.
+
+Esta preservación se refiere únicamente al contenido de la obra. No se debe conservar el ángulo, la perspectiva ni la posición de cámara de IMAGEN 1. La perspectiva final se define exclusivamente en la sección CÁMARA.
+
+IMAGEN 2:
+Referencia visual del entorno.
+
+Conservar:
+- su estilo arquitectónico;
+- su familia de materiales;
+- su lógica de iluminación;
+- su carácter de superficies;
+- su atmósfera;
+- su identidad espacial.
+
+No copiar literalmente su composición, su distribución, su cámara ni la posición exacta de sus muebles y objetos.
+
+No reemplazar IMAGEN 2 por un pasillo genérico, un vestíbulo, una galería convencional, una habitación neutra o un entorno inventado sin relación con la referencia.
+
+Si IMAGEN 2 contiene pinturas, lienzos, caballetes, marcos, dibujos, carteles u otras obras de arte, tratarlos únicamente como objetos ambientales secundarios. IMAGEN 1 debe ser la única obra protagonista.
 
 ARTWORK PHYSICAL DATA:
+
 Artwork title: {{ARTWORK_TITLE}}
 Artwork width: {{ARTWORK_WIDTH_CM}} cm
 Artwork height: {{ARTWORK_HEIGHT_CM}} cm
 Artwork orientation: {{ARTWORK_ORIENTATION}}
 Artwork size class: {{ARTWORK_SIZE_CLASS}}
 
+INSTALACIÓN FÍSICA DE LA OBRA:
 
-Genera un mockup fotográfico en contrapicado extremo casi nadir desde un lateral de la obra de arte, como si la cámara estuviera colocada en el suelo en el vértice de la obra de arte. Esta imagen busca la perspectiva artística de la fotografia de la obra de arte.
+Debe existir exactamente una sola obra de arte basada en IMAGEN 1 en toda la imagen.
 
-La obra debe estar muy cerca de la cámara, entrando desde el primer plano inferior. El borde inferior del lienzo debe sentirse cercano y dominante. La parte superior de la obra desenfoca levemente.
+La obra debe estar colocada en posición vertical.
 
-Usa un lente ultra gran angular rectilíneo, sin ojo de pez. La perspectiva debe sentirse dramática y arquitectónica, similar a una fotografía tomada desde el suelo mirando hacia una torre, una fachada alta o una persona vista desde abajo.
+Debe apoyarse sobre su borde inferior en el suelo y estar ligeramente recostada contra una pared.
+
+No está colgada.
+
+No está acostada horizontalmente.
+
+No está extendida sobre el suelo.
+
+No crear:
+- una segunda copia;
+- una repetición;
+- una extensión de la pintura;
+- un segundo panel;
+- un díptico;
+- una plataforma pintada;
+- un reflejo que reproduzca la obra;
+- una superficie pictórica adicional;
+- una continuación de la obra sobre el suelo o la pared.
+
+La superficie pintada debe pertenecer únicamente al lienzo vertical.
+
+CÁMARA:
+
+Generar un mockup fotográfico en contrapicado extremo, casi nadir, observado desde un lateral de la obra.
+
+La cámara debe estar colocada prácticamente a nivel del suelo, muy cerca de uno de los vértices inferiores del lienzo.
+
+La cámara observa la obra desde abajo y lateralmente.
+
+El borde inferior y el grosor del lienzo deben ser los elementos físicamente más cercanos a la cámara.
+
+La superficie pintada debe ascender desde el primer plano inferior hacia la parte superior del encuadre debido exclusivamente a la perspectiva.
+
+La obra no debe avanzar horizontalmente sobre el suelo.
+
+Usar un lente ultra gran angular rectilíneo.
+
+No usar ojo de pez.
+
+La perspectiva debe ser dramática, arquitectónica y creíble, similar a una fotografía realizada desde el suelo mirando hacia una fachada alta, una torre o una estructura vertical monumental.
+
+La distorsión debe ser únicamente óptica y coherente con la cercanía de la cámara.
+
+La cámara seleccionada tiene autoridad absoluta sobre:
+- el encuadre;
+- la altura;
+- la perspectiva;
+- el punto de fuga;
+- la distancia;
+- la lente;
+- la composición final.
+
+No copiar la cámara ni la composición de IMAGEN 2.
+
+COMPOSICIÓN:
+
+La única obra debe ocupar una presencia importante en el lateral del encuadre, sin quedar centrada como una postal.
+
+El lienzo debe sentirse muy próximo a la cámara.
+
+El canto inferior debe entrar desde la zona inferior del encuadre.
+
+La superficie vertical de la obra debe ascender en profundidad hacia la parte superior de la imagen.
+
+El entorno de IMAGEN 2 debe aparecer parcialmente:
+- en los laterales;
+- al fondo;
+- en la zona superior;
+- alrededor de la obra.
+
+La escena debe conservar suficiente arquitectura para reconocer la identidad espacial de IMAGEN 2, pero debe permanecer como contexto secundario.
+
+No mostrar la habitación completa de manera frontal, simétrica o descriptiva.
 
 ENFOQUE:
-Establecer el plano de enfoque en la obra de arte. Mantener la superficie de la obra, los bordes del lienzo, el grosor, la textura y el área inmediata de la pared nítidos. Los planos de pared lejanos, columnas remotas, ventanas de fondo, puertas lejanas, profundidad del techo y del suelo pueden desenfocarse naturalmente. El desenfoque debe sentirse óptico, no artificial.
 
-DETERMINISMO DE LA OBRA DE ARTE (contenido, no perspectiva):
-La superficie pintada final debe ser la misma imagen que IMAGEN 1 en cuanto a contenido: no redibujar, repintar, simplificar, embellecer, completar, estilizar, intercambiar, fusionar ni reinterpretar rostros, figuras, símbolos, marcas texturales, áreas en blanco dispersas, bloques de color o proporciones internas. Esto no implica preservar el ángulo o la perspectiva de IMAGEN 1 — la perspectiva final la determina exclusivamente la sección CAMARA.
+Establecer el plano principal de enfoque sobre la obra de arte.
+
+Mantener nítidos:
+- la superficie pictórica;
+- el borde inferior;
+- el grosor del lienzo;
+- los bordes laterales;
+- la textura;
+- el área inmediata de la pared;
+- la zona del suelo próxima al lienzo.
+
+La parte superior más distante de la obra puede presentar un desenfoque óptico muy leve y natural.
+
+Los planos lejanos del entorno pueden desenfocarse progresivamente:
+- columnas remotas;
+- ventanas de fondo;
+- puertas lejanas;
+- profundidad del techo;
+- muebles alejados;
+- zonas profundas del suelo.
+
+El desenfoque debe ser fotográfico y óptico.
+
+No aplicar desenfoque artificial, blando o uniforme sobre la superficie de la obra.
+
+DETERMINISMO DE LA OBRA DE ARTE:
+
+La superficie pintada final debe ser exactamente la misma imagen que IMAGEN 1 en cuanto a contenido.
+
+No:
+- redibujar;
+- repintar;
+- simplificar;
+- embellecer;
+- completar;
+- corregir;
+- estilizar;
+- intercambiar;
+- fusionar;
+- reinterpretar;
+- añadir elementos;
+- eliminar elementos;
+- alterar los colores;
+- modificar las proporciones internas;
+- cambiar símbolos;
+- inventar textura;
+- extender la composición.
+
+La única transformación permitida es la perspectiva óptica causada por la posición física del lienzo, la cercanía de la cámara y el ángulo extremo.
+
+La pintura debe permanecer físicamente contenida dentro de los límites del lienzo.
 
 ESCALA:
-La obra de arte es de {{ARTWORK_WIDTH_CM}} x {{ARTWORK_HEIGHT_CM}} cm, clase de tamaño {{ARTWORK_SIZE_CLASS}}. No ampliarla para que domine la habitación o llene la pared disponible. Usar otros objetos de la escena (ventanas, sillones, muebles, lámparas, mesas) como referencia de escala real. Prestar especial atención en sitios de doble altura. Nunca sobredimensionar la obra de arte para darle protagonismo.
 
-IMAGEN 1 debe conservarse fiel: composición, colores, marcas, proporciones internas y superficie pictórica. La pintura no debe rediseñarse. La deformación permitida es solo perspectiva óptica causada por la cercanía y el ángulo de cámara.
+La obra mide {{ARTWORK_WIDTH_CM}} × {{ARTWORK_HEIGHT_CM}} cm y pertenece a la clase de tamaño {{ARTWORK_SIZE_CLASS}}.
 
-El ambiente de IMAGEN 2 debe aparecer solo parcialmente en los bordes, arriba o al fondo, como contexto secundario. No copiar la cámara ni la composición de IMAGEN 2.
+Respetar sus dimensiones físicas reales.
 
-No queremos: vista frontal, cámara a nivel normal, cámara mirando recto a la pared, obra plana contra el muro, obra centrada como postal, sala completa simétrica, obra colgada, obra acostada, ojo de pez, mural gigante, rediseño de la obra, deformación blanda, lienzo curvado, pintura inventada.',
+No ampliar la obra para que llene la pared, domine toda la habitación o funcione como mural.
+
+Usar como referencias de escala:
+- ventanas;
+- sillones;
+- mesas;
+- lámparas;
+- muebles;
+- puertas;
+- columnas;
+- elementos arquitectónicos.
+
+Prestar especial atención a los espacios de doble altura.
+
+La perspectiva extrema puede hacer que el borde inferior parezca grande por cercanía, pero las dimensiones reales de la obra deben seguir siendo coherentes con el entorno.
+
+No confundir dramatismo de cámara con sobredimensionamiento físico.
+
+RELACIÓN ENTRE OBRA Y ESCENA:
+
+IMAGEN 1 es la autoridad absoluta sobre la identidad de la obra.
+
+IMAGEN 2 es autoridad sobre:
+- arquitectura;
+- materiales;
+- luz;
+- superficies;
+- atmósfera;
+- carácter espacial.
+
+La cámara definida en este prompt es autoridad absoluta sobre:
+- punto de vista;
+- encuadre;
+- perspectiva;
+- composición;
+- posición óptica.
+
+Crear una integración físicamente creíble entre la obra vertical, la pared y el suelo.
+
+La obra debe proyectar sombras coherentes con la iluminación de IMAGEN 2.
+
+El contacto del borde inferior con el suelo debe ser realista.
+
+No hacer que el lienzo flote.
+
+No fusionar la obra con la pared, el pavimento o los muebles.
+
+NO QUEREMOS:
+
+- más de una obra basada en IMAGEN 1;
+- duplicación de la obra;
+- repetición de la superficie pictórica;
+- una obra vertical y otra horizontal;
+- pintura extendida sobre el suelo;
+- plataforma pintada;
+- segundo lienzo;
+- panel adicional;
+- díptico;
+- reflejo que reproduzca la obra;
+- mural gigante;
+- obra colgada;
+- obra acostada;
+- obra horizontal;
+- lienzo flotando;
+- lienzo curvado;
+- lienzo deformado de forma blanda;
+- superficie pictórica fuera del lienzo;
+- vista frontal;
+- cámara a nivel normal;
+- cámara mirando recto hacia la pared;
+- obra centrada como una postal;
+- sala completa simétrica;
+- ojo de pez;
+- curvatura extrema de líneas arquitectónicas;
+- rediseño de la obra;
+- pintura inventada;
+- extensión de la composición;
+- entorno genérico;
+- copia literal de la cámara de IMAGEN 2.',
       'primary_scene_set' => true,
       'board_order' => 2,
     ),
@@ -1453,7 +1786,7 @@ La obra de arte es de {{ARTWORK_WIDTH_CM}} x {{ARTWORK_HEIGHT_CM}} cm, clase de 
       2 => 'borgona_recovecos_3_4_loft_hormigon',
       3 => 'detalle_textura_lienzo',
     ),
-    'updated_at' => '2026-07-15T07:47:35+00:00',
+    'updated_at' => '2026-07-19T12:03:21+00:00',
   ),
   'scene_boards' =>
   array (
@@ -1467,7 +1800,7 @@ La obra de arte es de {{ARTWORK_WIDTH_CM}} x {{ARTWORK_HEIGHT_CM}} cm, clase de 
         2 => 'borgona_recovecos_3_4_loft_hormigon',
         3 => 'detalle_textura_lienzo',
       ),
-      'updated_at' => '2026-07-15T07:47:35+00:00',
+      'updated_at' => '2026-07-19T12:03:21+00:00',
     ),
     2 =>
     array (
@@ -1479,7 +1812,7 @@ La obra de arte es de {{ARTWORK_WIDTH_CM}} x {{ARTWORK_HEIGHT_CM}} cm, clase de 
         2 => 'pasillo_obra_descentrada_proxima',
         3 => 'borde_canvas_closeup',
       ),
-      'updated_at' => '2026-07-15T07:47:35+00:00',
+      'updated_at' => '2026-07-19T12:03:21+00:00',
     ),
     3 =>
     array (
@@ -1491,7 +1824,7 @@ La obra de arte es de {{ARTWORK_WIDTH_CM}} x {{ARTWORK_HEIGHT_CM}} cm, clase de 
         2 => 'obra_apoyada_suelo_7_8',
         3 => 'esquina_obra_perspectiva_extrema',
       ),
-      'updated_at' => '2026-07-15T07:47:35+00:00',
+      'updated_at' => '2026-07-19T12:03:21+00:00',
     ),
   ),
 );

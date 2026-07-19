@@ -55,6 +55,20 @@
     state.catalog = state.catalog.map(hydrateCatalog);
     state.notes = state.notes.map(hydrateNote);
 
+    const sortCatalogLikeArtworks = () => {
+        const sourceOrder = new Map(
+            state.sources
+                .filter((source) => source.type === 'artwork')
+                .map((source, index) => [String(source.key), index])
+        );
+        state.catalog.sort((left, right) => {
+            const leftOrder = sourceOrder.get(`artwork:${Number(left.artworkId || 0)}`) ?? Number.MAX_SAFE_INTEGER;
+            const rightOrder = sourceOrder.get(`artwork:${Number(right.artworkId || 0)}`) ?? Number.MAX_SAFE_INTEGER;
+            return leftOrder - rightOrder;
+        });
+    };
+    sortCatalogLikeArtworks();
+
     const preferredNotesFilter = () => 'mockup';
 
     const showToast = (message, error = false) => {
@@ -74,14 +88,14 @@
             body: JSON.stringify({ csrf: config.csrf, action, ...values }),
         });
         const result = await response.json().catch(() => ({}));
-        if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo completar la acción.');
+        if (!response.ok || !result.ok) throw new Error(result.error || 'The action could not be completed.');
         return result.result;
     };
 
     const statusLabel = (status, visibility = '') => {
-        if (status !== 'published') return 'Borrador';
-        if (visibility === 'unlisted') return 'Oculto';
-        return 'Publicado';
+        if (status !== 'published') return 'Draft';
+        if (visibility === 'unlisted') return 'Hidden';
+        return 'Published';
     };
 
     const emptyCover = '<div class="wbb-card-cover"></div>';
@@ -90,26 +104,26 @@
         const cover = entry.media?.[0]?.image || '';
         const actionButtons = entry.status === 'published'
             ? `${entry.visibility === 'unlisted'
-                ? '<button type="button" data-catalog-action="show">Mostrar</button>'
-                : '<button type="button" data-catalog-action="hide">Ocultar</button>'}
-               <button type="button" data-catalog-action="unpublish">Retirar</button>`
-            : '<button type="button" class="wbb-primary" data-catalog-action="publish">Publicar</button>';
+                ? '<button type="button" data-catalog-action="show">Show</button>'
+                : '<button type="button" data-catalog-action="hide">Hide</button>'}
+               <button type="button" data-catalog-action="unpublish">Unpublish</button>`
+            : '<button type="button" class="wbb-primary" data-catalog-action="publish">Publish</button>';
         return `<article class="wbb-card wbb-catalog-card" data-catalog-card data-id="${escapeHtml(entry.id)}">
             ${cover ? `<div class="wbb-card-cover"><img src="${escapeHtml(cover)}" alt="${escapeHtml(entry.title)}"><span class="wbb-card-status">${escapeHtml(statusLabel(entry.status, entry.visibility))}</span></div>` : emptyCover}
             <div class="wbb-card-body">
-                <h3>${escapeHtml(entry.title || 'Obra sin título')}</h3>
-                <p>${escapeHtml(entry.shortDescription || entry.description || entry.seriesTitle || 'Ficha de obra preparada para el website.')}</p>
+                <h3>${escapeHtml(entry.title || 'Untitled artwork')}</h3>
+                <p>${escapeHtml(entry.shortDescription || entry.description || entry.seriesTitle || 'Artwork page prepared for the website.')}</p>
             </div>
             <div class="wbb-edit-fields">
-                <label class="wbb-field"><span>Título</span><input data-catalog-field="title" value="${escapeHtml(entry.title)}"></label>
-                <label class="wbb-field"><span>Descripción breve</span><textarea data-catalog-field="shortDescription">${escapeHtml(entry.shortDescription)}</textarea></label>
-                <label class="wbb-field"><span>Descripción completa</span><textarea data-catalog-field="description">${escapeHtml(entry.description)}</textarea></label>
-                <label class="wbb-field"><span>Texto del enlace</span><input data-catalog-field="ctaLabel" value="${escapeHtml(entry.ctaLabel)}" placeholder="Consultar esta obra"></label>
-                <label class="wbb-field"><span>Enlace secundario</span><input data-catalog-field="ctaUrl" value="${escapeHtml(entry.ctaUrl)}" placeholder="https://..."></label>
+                <label class="wbb-field"><span>Title</span><input data-catalog-field="title" value="${escapeHtml(entry.title)}"></label>
+                <label class="wbb-field"><span>Short description</span><textarea data-catalog-field="shortDescription">${escapeHtml(entry.shortDescription)}</textarea></label>
+                <label class="wbb-field"><span>Full description</span><textarea data-catalog-field="description">${escapeHtml(entry.description)}</textarea></label>
+                <label class="wbb-field"><span>Link label</span><input data-catalog-field="ctaLabel" value="${escapeHtml(entry.ctaLabel)}" placeholder="View this artwork"></label>
+                <label class="wbb-field"><span>Secondary link</span><input data-catalog-field="ctaUrl" value="${escapeHtml(entry.ctaUrl)}" placeholder="https://..."></label>
                 <div class="wbb-actions">
-                    <button type="button" data-catalog-save>Guardar</button>
+                    <button type="button" data-catalog-save>Save</button>
                     ${actionButtons}
-                    <button type="button" class="wbb-danger" data-catalog-action="delete">Quitar</button>
+                    <button type="button" class="wbb-danger" data-catalog-action="delete">Remove</button>
                 </div>
             </div>
         </article>`;
@@ -120,8 +134,8 @@
         const canRemoveMedia = (note.media || []).length > 1;
         return (note.media || []).map((item) => `<div class="wbb-note-media-item${String(item.key) === sourceKey ? ' is-source' : ''}" data-note-media-item data-source-key="${escapeHtml(item.key)}">
             <img src="${escapeHtml(item.image || mediaUrl(item.file))}" alt="${escapeHtml(item.label)}">
-            <span>${String(item.key) === sourceKey ? 'Origen' : escapeHtml(item.type)}</span>
-            ${canRemoveMedia ? '<button type="button" data-remove-note-media aria-label="Quitar imagen" title="Quitar imagen">×</button>' : ''}
+            <span>${String(item.key) === sourceKey ? 'Source' : escapeHtml(item.type)}</span>
+            ${canRemoveMedia ? '<button type="button" data-remove-note-media aria-label="Remove image" title="Remove image">×</button>' : ''}
         </div>`).join('');
     };
 
@@ -132,9 +146,9 @@
         const atmosphere = Array.isArray(guide.atmosphere) ? guide.atmosphere.filter(Boolean) : [];
         const keywords = Array.isArray(guide.keywords) ? guide.keywords.filter(Boolean) : [];
         const contextRows = [
-            ['Obra', source.artworkTitle],
-            ['Serie', source.seriesTitle],
-            ['Escena', guide.spaceType || source.contextTitle],
+            ['Artwork', source.artworkTitle],
+            ['Series', source.seriesTitle],
+            ['Scene', guide.spaceType || source.contextTitle],
         ].filter(([, value]) => String(value || '').trim());
         const textSection = (label, value) => String(value || '').trim()
             ? `<section><h5>${escapeHtml(label)}</h5><p>${escapeHtml(value)}</p></section>`
@@ -143,44 +157,44 @@
             ? `<section><h5>${escapeHtml(label)}</h5><div class="wbb-guide-terms">${values.map((value) => `<span>${escapeHtml(value)}</span>`).join('')}</div></section>`
             : '';
 
-        return `<aside class="wbb-source-guide" aria-label="Guía editorial del mockup">
+        return `<aside class="wbb-source-guide" aria-label="Mockup editorial guide">
             <div class="wbb-guide-heading">
-                <span>Guía editorial</span>
-                <small>Referencia del mockup · no se publica automáticamente</small>
+                <span>Editorial guide</span>
+                <small>Mockup reference · not published automatically</small>
             </div>
-            <h4>${escapeHtml(guide.title || source.label || 'Metadata del mockup')}</h4>
+            <h4>${escapeHtml(guide.title || source.label || 'Mockup metadata')}</h4>
             ${contextRows.length ? `<dl>${contextRows.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join('')}</dl>` : ''}
-            ${textSection('Lectura de la escena', guide.description)}
-            ${textSection('Relación entre obra y espacio', guide.artworkRelationship)}
-            ${chips('Atmósfera', atmosphere)}
-            ${chips('Ideas clave', keywords)}
+            ${textSection('Scene reading', guide.description)}
+            ${textSection('Artwork and space relationship', guide.artworkRelationship)}
+            ${chips('Atmosphere', atmosphere)}
+            ${chips('Key ideas', keywords)}
         </aside>`;
     };
 
     const noteMarkup = (note) => {
         const cover = note.source?.image || note.media?.[0]?.image || '';
-        const typeLabel = { artwork: 'Obra', series: 'Serie', mockup: 'Mockup' }[note.source?.type] || 'Imagen';
+        const typeLabel = { artwork: 'Artwork', series: 'Series', mockup: 'Mockup' }[note.source?.type] || 'Image';
         return `<article class="wbb-card wbb-note-card" data-note-card data-id="${escapeHtml(note.id)}">
             <div class="wbb-note-reference">
                 ${cover ? `<div class="wbb-card-cover"><img src="${escapeHtml(cover)}" alt="${escapeHtml(note.title)}"><span class="wbb-card-status">${escapeHtml(statusLabel(note.status))}</span></div>` : emptyCover}
                 ${noteEditorialGuideMarkup(note)}
             </div>
-            <button type="button" class="wbb-card-remove" data-note-action="delete" aria-label="Eliminar esta nota">×</button>
+            <button type="button" class="wbb-card-remove" data-note-action="delete" aria-label="Delete this note">×</button>
             <div class="wbb-note-workspace">
                 <div class="wbb-card-body">
-                    <h3>${escapeHtml(note.title || 'Nota sin título')}</h3>
+                    <h3>${escapeHtml(note.title || 'Untitled note')}</h3>
                     <div class="wbb-note-source"><span>${escapeHtml(typeLabel)}:</span><strong>${escapeHtml(note.sourceLabel || note.source?.label || '')}</strong></div>
-                    <p>${escapeHtml(String(note.objective || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || 'Comienza a desarrollar esta Nota de estudio.')}</p>
+                    <p>${escapeHtml(String(note.objective || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || 'Start developing this Studio Note.')}</p>
                 </div>
                 <div class="wbb-note-media" data-note-media-list>${noteMediaMarkup(note)}</div>
                 <div class="wbb-edit-fields">
-                    <label class="wbb-field"><span>Título</span><input data-note-title value="${escapeHtml(note.title)}"></label>
-                    <div class="wbb-field wbb-note-editor-field" data-note-editor-drop><span>Ensayo o nota · suelta imágenes aquí</span><div class="wbb-note-editor" data-note-editor></div></div>
+                    <label class="wbb-field"><span>Title</span><input data-note-title value="${escapeHtml(note.title)}"></label>
+                    <div class="wbb-field wbb-note-editor-field" data-note-editor-drop><span>Essay or note · drop images here</span><div class="wbb-note-editor" data-note-editor></div></div>
                     <div class="wbb-actions">
-                        <button type="button" data-note-save>Guardar borrador</button>
+                        <button type="button" data-note-save>Save draft</button>
                         ${note.status === 'published'
-                            ? '<button type="button" data-note-action="unpublish">Retirar</button>'
-                            : '<button type="button" class="wbb-primary" data-note-action="publish">Publicar</button>'}
+                            ? '<button type="button" data-note-action="unpublish">Unpublish</button>'
+                            : '<button type="button" class="wbb-primary" data-note-action="publish">Publish</button>'}
                     </div>
                 </div>
             </div>
@@ -220,12 +234,12 @@
         const noteItems = focusedBoard === 'notes' && activeDraftBoard === 'notes' && activeDraftId
             ? state.notes.filter((note) => Number(note.id) === activeDraftId)
             : state.notes;
-        if (catalogList) catalogList.innerHTML = catalogItems.length ? catalogItems.map(catalogMarkup).join('') : '<div class="wbb-empty">Arrastra una obra para comenzar.</div>';
-        if (notesList) notesList.innerHTML = noteItems.length ? noteItems.map(noteMarkup).join('') : '<div class="wbb-empty">Arrastra una imagen para comenzar una nota.</div>';
+        if (catalogList) catalogList.innerHTML = catalogItems.length ? catalogItems.map(catalogMarkup).join('') : '<div class="wbb-empty">Drag an artwork here to begin.</div>';
+        if (notesList) notesList.innerHTML = noteItems.length ? noteItems.map(noteMarkup).join('') : '<div class="wbb-empty">Drag an image here to begin a note.</div>';
         const catalogCount = document.querySelector('[data-board-count="catalog"]');
         const notesCount = document.querySelector('[data-board-count="notes"]');
-        if (catalogCount) catalogCount.textContent = `${state.catalog.length} ${state.catalog.length === 1 ? 'obra' : 'obras'}`;
-        if (notesCount) notesCount.textContent = `${state.notes.length} ${state.notes.length === 1 ? 'nota' : 'notas'}`;
+        if (catalogCount) catalogCount.textContent = `${state.catalog.length} ${state.catalog.length === 1 ? 'artwork' : 'artworks'}`;
+        if (notesCount) notesCount.textContent = `${state.notes.length} ${state.notes.length === 1 ? 'note' : 'notes'}`;
         initializeEditors();
         initializeDropSortables();
     };
@@ -291,6 +305,7 @@
         const hydrated = hydrateCatalog(entry);
         const index = state.catalog.findIndex((item) => Number(item.id) === Number(hydrated.id));
         if (index >= 0) state.catalog[index] = hydrated; else state.catalog.unshift(hydrated);
+        sortCatalogLikeArtworks();
         renderBoards();
     };
 
@@ -328,7 +343,7 @@
         const editor = editors.get(Number(noteId));
         if (!editor || !source) return false;
         const image = source.image || mediaUrl(source.file, 1200);
-        const label = source.label || source.artworkTitle || 'Imagen de la nota';
+        const label = source.label || source.artworkTitle || 'Note image';
         if (editor.quill) {
             const root = editor.quill.root;
             const domRange = caretRangeAtPoint(Number(point?.x), Number(point?.y));
@@ -370,14 +385,14 @@
         event.item?.remove();
         if (!key) return;
         if (alreadyPublished) {
-            showToast('Esta obra ya está publicada; puedes usarla en Notas de estudio.', true);
+            showToast('This artwork is already published; you can use it in Studio Notes.', true);
             renderBoards();
             return;
         }
         try {
             const entry = await post('catalog_add', { sourceKey: key });
             updateCatalogEntry(entry);
-            showToast('La obra quedó preparada en el Catálogo.');
+            showToast('The artwork was added to the Catalog.');
         } catch (error) { showToast(error.message, true); renderBoards(); }
     };
 
@@ -388,7 +403,7 @@
         try {
             const note = await post('note_create', { sourceKey: key });
             updateNote(note);
-            showToast('Se creó una Nota de estudio desde la imagen elegida.');
+            showToast('A Studio Note was created from the selected image.');
         } catch (error) { showToast(error.message, true); renderBoards(); }
     };
 
@@ -446,7 +461,7 @@
                         }
                         const saved = await post('note_save', noteDraft(card));
                         updateNote(saved);
-                        showToast(insertInEditor ? 'Imagen insertada dentro del ensayo.' : 'Imagen añadida a la nota.');
+                        showToast(insertInEditor ? 'Image inserted into the essay.' : 'Image added to the note.');
                     }
                     catch (error) { showToast(error.message, true); renderBoards(); }
                     finally { editorDrop?.classList.remove('is-drag-over'); editorDropPoint = null; }
@@ -534,13 +549,13 @@
 
         const catalogCard = event.target.closest('[data-catalog-card]');
         if (catalogCard && event.target.closest('[data-catalog-save]')) {
-            try { await saveCatalogCard(catalogCard); showToast('Ficha guardada.'); } catch (error) { showToast(error.message, true); }
+            try { await saveCatalogCard(catalogCard); showToast('Page saved.'); } catch (error) { showToast(error.message, true); }
             return;
         }
         const catalogAction = event.target.closest('[data-catalog-action]');
         if (catalogCard && catalogAction) {
             const action = catalogAction.dataset.catalogAction || '';
-            if (action === 'delete' && !window.confirm('¿Quitar esta obra del tablero y del catálogo del website?')) return;
+            if (action === 'delete' && !window.confirm('Remove this artwork from the board and website catalog?')) return;
             try {
                 if (action === 'publish') await saveCatalogCard(catalogCard);
                 const result = await post(`catalog_${action}`, { id: Number(catalogCard.dataset.id || 0) });
@@ -566,21 +581,21 @@
                     }
                 }
                 else { state.catalog = state.catalog.filter((entry) => Number(entry.id) !== Number(catalogCard.dataset.id)); renderBoards(); }
-                showToast(action === 'publish' ? 'Obra publicada en el website.' : 'Catálogo actualizado.');
+                showToast(action === 'publish' ? 'Artwork published on the website.' : 'Catalog updated.');
             } catch (error) { showToast(error.message, true); }
             return;
         }
 
         const noteCard = event.target.closest('[data-note-card]');
         if (noteCard && event.target.closest('[data-note-save]')) {
-            try { const draft = noteDraft(noteCard); updateNote(await post('note_save', draft)); showToast('Borrador guardado.'); }
+            try { const draft = noteDraft(noteCard); updateNote(await post('note_save', draft)); showToast('Draft saved.'); }
             catch (error) { showToast(error.message, true); }
             return;
         }
         const noteAction = event.target.closest('[data-note-action]');
         if (noteCard && noteAction) {
             const action = noteAction.dataset.noteAction || '';
-            if (action === 'delete' && !window.confirm('¿Eliminar esta Nota de estudio?')) return;
+            if (action === 'delete' && !window.confirm('Delete this Studio Note?')) return;
             try {
                 const id = Number(noteCard.dataset.id || 0);
                 if (action === 'publish') updateNote(await post('note_save', noteDraft(noteCard)));
@@ -588,7 +603,7 @@
                 if (result && result.status !== 'published') updateNote(result);
                 else if (result) { state.notes = state.notes.filter((note) => Number(note.id) !== id); renderBoards(); }
                 else { state.notes = state.notes.filter((note) => Number(note.id) !== id); renderBoards(); }
-                showToast(action === 'publish' ? 'Nota publicada en el website.' : 'Notas de estudio actualizadas.');
+                showToast(action === 'publish' ? 'Note published on the website.' : 'Studio Notes updated.');
             } catch (error) { showToast(error.message, true); }
             return;
         }
@@ -598,7 +613,7 @@
             try {
                 await post('note_save', noteDraft(noteCard));
                 updateNote(await post('note_remove_media', { id: Number(noteCard.dataset.id || 0), sourceKey: item?.dataset.sourceKey || '' }));
-                showToast('Imagen retirada de la nota.');
+                showToast('Image removed from the note.');
             }
             catch (error) { showToast(error.message, true); }
             return;

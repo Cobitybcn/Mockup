@@ -524,33 +524,6 @@ if ($mockupV2) {
             margin-left: 4px;
         }
 
-        .icon-link.download::before {
-            content: '';
-            width: 3px;
-            height: 18px;
-            background: currentColor;
-            margin-top: -4px;
-        }
-
-        .icon-link.download::after {
-            content: '';
-            position: absolute;
-            width: 11px;
-            height: 11px;
-            border-left: 3px solid currentColor;
-            border-bottom: 3px solid currentColor;
-            transform: rotate(-45deg);
-            margin-top: 8px;
-        }
-
-        .icon-link.download .download-base {
-            position: absolute;
-            width: 18px;
-            height: 3px;
-            background: currentColor;
-            bottom: 5px;
-        }
-
         .icon-link:hover {
             opacity: 1;
             color: var(--accent);
@@ -856,6 +829,7 @@ if ($mockupV2) {
             }
         }
     </style>
+    <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body>
     <header class="viewer-top">
@@ -870,15 +844,15 @@ if ($mockupV2) {
             <?php endif; ?>
             <?php if ($viewerMockupId > 0): ?>
                 <button
-                    class="viewer-favorite-btn <?= $viewerIsFavorite ? 'active' : '' ?>"
+                    class="viewer-favorite-btn media-icon-button <?= $viewerIsFavorite ? 'active' : '' ?>"
                     type="button"
                     title="<?= $viewerIsFavorite ? 'Remove favorite' : 'Add favorite' ?>"
                     aria-label="<?= $viewerIsFavorite ? 'Remove favorite' : 'Add favorite' ?>"
                     data-favorite-mockup
                     data-mockup-id="<?= (int)$viewerMockupId ?>"
-                >★</button>
+                ><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
             <?php endif; ?>
-            <a class="icon-link download" href="<?= h(download_url($mockup['mockup_file'])) ?>" aria-label="Download mockup" title="Download mockup"><span class="download-base" aria-hidden="true"></span></a>
+            <a class="icon-link download media-icon-button" href="<?= h(download_url($mockup['mockup_file'])) ?>" aria-label="Download mockup" title="Download mockup"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg></a>
         </nav>
     </header>
 

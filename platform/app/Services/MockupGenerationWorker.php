@@ -21,6 +21,8 @@ final class MockupGenerationWorker
         $pdo = Database::connection();
         $selectorState = json_decode((string)($job['selector_state_json'] ?? ''), true);
         $selectorState = is_array($selectorState) ? $selectorState : [];
+        $isVisualDnaLab = (string)($selectorState['generation_source'] ?? '') === 'visual_dna_lab';
+        $referenceSetId = max(0, (int)($job['reference_set_id'] ?? $selectorState['reference_set_id'] ?? 0));
 
         try {
             $artworkFile = basename((string)$job['artwork_file']);
@@ -33,22 +35,6 @@ final class MockupGenerationWorker
                 throw new RuntimeException('Generation provider mismatch between queued job and worker payload.');
             }
 
-            $combination = (array)($selectorState['combination'] ?? []);
-            $category = basename((string)($selectorState['world_mother_category'] ?? ''));
-            $storedWorldMotherPath = (string)($combination['world_mother_image_absolute_path'] ?? '');
-            $worldMotherFile = basename($storedWorldMotherPath);
-            $worldMotherPath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR
-                . 'world_mothers' . DIRECTORY_SEPARATOR . $category . DIRECTORY_SEPARATOR . $worldMotherFile;
-            if (!is_file($worldMotherPath) && $worldMotherFile !== '' && StorageService::isGcsActive()) {
-                $this->ensureLocalFile($worldMotherPath, 'storage/world_mothers/' . $category . '/' . $worldMotherFile, 'Scene reference');
-            }
-            if (!is_file($worldMotherPath) && is_file($storedWorldMotherPath)) {
-                $worldMotherPath = $storedWorldMotherPath;
-            }
-            if (!is_file($worldMotherPath)) {
-                throw new RuntimeException('Scene reference image was not found.');
-            }
-
             $stmtArtwork = $pdo->prepare('SELECT * FROM artworks WHERE id = :id AND user_id = :user_id LIMIT 1');
             $stmtArtwork->execute(['id' => (int)$job['artwork_id'], 'user_id' => (int)$job['user_id']]);
             $artwork = $stmtArtwork->fetch();
@@ -56,37 +42,126 @@ final class MockupGenerationWorker
                 throw new RuntimeException('Artwork for this generation no longer exists.');
             }
 
-            $profile = ArtistProfile::findForUser((int)$job['user_id']);
-            $artworkTitle = trim((string)($artwork['final_title'] ?? ''));
-            if ($artworkTitle === '') {
-                $artworkTitle = Display::artworkTitle($artworkFile);
-            }
-            $seoParams = [
-                'artistName' => trim((string)($profile['artist_name'] ?? '')),
-                'artworkTitle' => $artworkTitle,
-                'mockupContext' => (string)($combination['context_title'] ?? 'mockup combination'),
-                'cameraAngle' => (string)($combination['selected_camera_slot_id'] ?? ''),
-                'cameraSlotName' => (string)($combination['camera_slot_name'] ?? ''),
-                'imageType' => 'mockup',
-                'extension' => 'jpg',
-            ];
+            if ($isVisualDnaLab) {
+                if ($generationProvider !== 'gemini') {
+                    throw new RuntimeException('The Visual DNA LAB generation connection is Gemini only.');
+                }
+                ProviderSettings::set(ProviderSettings::readForRoot($localArtworkPath));
+                ServiceFactory::mockupGenerator('gemini');
+                $referenceSet = (new ReferenceSetService($pdo))->findForUser(
+                    (int)$job['user_id'],
+                    $referenceSetId,
+                    true
+                );
+                if (!$referenceSet) {
+                    throw new RuntimeException('The selected Visual DNA is no longer available.');
+                }
+                $visualReferences = (new ReferenceAssetService($pdo))->referencesForSet(
+                    (int)$job['user_id'],
+                    $referenceSetId,
+                    6
+                );
+                if (!$visualReferences) {
+                    throw new RuntimeException('The selected Visual DNA has no real reference images.');
+                }
+                $result = (new VisualDnaLabMockupGenerator())->generate(
+                    $localArtworkPath,
+                    (string)$job['context_id'],
+                    (string)$job['prompt'],
+                    [
+                        'reference_set' => $referenceSet,
+                        'visual_dna_references' => $visualReferences,
+                    ]
+                );
+            } else {
+                $combination = (array)($selectorState['combination'] ?? []);
+                $legacyCategory = basename(str_replace('\\', '/', (string)($selectorState['world_mother_category'] ?? '')));
+                $referenceRows = array_values(array_filter(
+                    (array)($combination['world_mother_reference_images'] ?? []),
+                    static fn($reference): bool => is_array($reference)
+                ));
+                if (!$referenceRows) {
+                    $referenceRows[] = [
+                        'category_slug' => $legacyCategory,
+                        'relative_path' => (string)($combination['world_mother_image_path'] ?? ''),
+                        'absolute_path' => (string)($combination['world_mother_image_absolute_path'] ?? ''),
+                    ];
+                }
 
-            ProviderSettings::set(ProviderSettings::readForRoot($localArtworkPath));
-            $generator = ServiceFactory::mockupGenerator($generationProvider);
-            $result = $generator->generate($localArtworkPath, (string)$job['context_id'], (string)$job['prompt'], [
-                'seo_params' => $seoParams,
-                'root_reference_path' => $localArtworkPath,
-                'world_mother_reference_path' => $worldMotherPath,
-                'world_mother_reference_mode' => (string)($selectorState['world_mother_reference_mode'] ?? 'reconstructed_view'),
-                'world_mother_reference_path_original' => $worldMotherPath,
-                'world_mother_scale' => (string)($selectorState['world_mother_scale'] ?? ''),
-                'prompt_passthrough_mode' => (string)$job['prompt'],
-                'skip_world_visual_enhancer' => true,
-                'slot_full_prompt_mode' => AdminPromptComposerPreview::hasSlotFullPromptTemplate(
-                    (string)($combination['selected_camera_slot_id'] ?? '')
-                ),
-                'mockup_combination' => $combination,
-            ]);
+                $worldMotherPaths = [];
+                $worldMotherOriginalPaths = [];
+                foreach (array_slice($referenceRows, 0, 2) as $reference) {
+                    $relativePath = trim(str_replace('\\', '/', (string)($reference['relative_path'] ?? '')));
+                    $storedPath = (string)($reference['absolute_path'] ?? '');
+                    $category = basename(str_replace('\\', '/', (string)($reference['category_slug'] ?? $legacyCategory)));
+                    $worldMotherFile = basename($relativePath !== '' ? $relativePath : $storedPath);
+                    if ($category === '' || $worldMotherFile === '') {
+                        continue;
+                    }
+
+                    $localPath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR
+                        . 'world_mothers' . DIRECTORY_SEPARATOR . $category . DIRECTORY_SEPARATOR . $worldMotherFile;
+                    $storagePath = str_starts_with($relativePath, 'storage/world_mothers/')
+                        ? $relativePath
+                        : 'storage/world_mothers/' . $category . '/' . $worldMotherFile;
+                    if (!is_file($localPath) && StorageService::isGcsActive()) {
+                        $this->ensureLocalFile($localPath, $storagePath, 'Scene reference');
+                    }
+                    if (!is_file($localPath) && is_file($storedPath)) {
+                        $localPath = $storedPath;
+                    }
+                    if (!is_file($localPath)) {
+                        continue;
+                    }
+
+                    $identity = strtolower((string)(realpath($localPath) ?: $localPath));
+                    if (isset($worldMotherPaths[$identity])) {
+                        continue;
+                    }
+                    $worldMotherPaths[$identity] = $localPath;
+                    $worldMotherOriginalPaths[$identity] = $storedPath !== '' ? $storedPath : $relativePath;
+                }
+                $worldMotherPaths = array_values($worldMotherPaths);
+                $worldMotherOriginalPaths = array_values($worldMotherOriginalPaths);
+                if (!$worldMotherPaths) {
+                    throw new RuntimeException('Scene reference image was not found.');
+                }
+                $worldMotherPath = $worldMotherPaths[0];
+
+                $profile = ArtistProfile::findForUser((int)$job['user_id']);
+                $artworkTitle = trim((string)($artwork['final_title'] ?? ''));
+                if ($artworkTitle === '') {
+                    $artworkTitle = Display::artworkTitle($artworkFile);
+                }
+                $seoParams = [
+                    'artistName' => trim((string)($profile['artist_name'] ?? '')),
+                    'artworkTitle' => $artworkTitle,
+                    'mockupContext' => (string)($combination['context_title'] ?? 'mockup combination'),
+                    'cameraAngle' => (string)($combination['selected_camera_slot_id'] ?? ''),
+                    'cameraSlotName' => (string)($combination['camera_slot_name'] ?? ''),
+                    'imageType' => 'mockup',
+                    'extension' => 'jpg',
+                ];
+
+                ProviderSettings::set(ProviderSettings::readForRoot($localArtworkPath));
+                $generator = ServiceFactory::mockupGenerator($generationProvider);
+                $result = $generator->generate($localArtworkPath, (string)$job['context_id'], (string)$job['prompt'], [
+                    'seo_params' => $seoParams,
+                    'root_reference_path' => $localArtworkPath,
+                    'world_mother_reference_path' => $worldMotherPath,
+                    'world_mother_reference_paths' => $worldMotherPaths,
+                    'world_mother_reference_mode' => (string)($selectorState['world_mother_reference_mode'] ?? 'reconstructed_view'),
+                    'world_mother_reference_path_original' => $worldMotherPath,
+                    'world_mother_reference_paths_original' => $worldMotherOriginalPaths,
+                    'world_mother_scale' => (string)($selectorState['world_mother_scale'] ?? ''),
+                    'prompt_passthrough_mode' => (string)$job['prompt'],
+                    'skip_world_visual_enhancer' => true,
+                    'slot_full_prompt_mode' => AdminPromptComposerPreview::hasSlotFullPromptTemplate(
+                        (string)($combination['selected_camera_slot_id'] ?? '')
+                    ),
+                    'mockup_combination' => $combination,
+                ]);
+            }
 
             if (array_key_exists('fidelity_review', $result)) {
                 $selectorState['fidelity_validation'] = [
@@ -106,10 +181,10 @@ final class MockupGenerationWorker
                 }
             }
 
-            $mockupId = (int)Database::withBusyRetry(function () use ($job, $result, $selectorState): int {
+            $mockupId = (int)Database::withBusyRetry(function () use ($job, $result, $selectorState, $referenceSetId): int {
                 $stmt = Database::connection()->prepare('
-                    INSERT INTO mockups (user_id, artwork_group_id, source_artwork_id, artwork_file, mockup_file, context_id, prompt_file, selector_state_json, created_at)
-                    VALUES (:user_id, :artwork_group_id, :source_artwork_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :selector_state_json, :created_at)
+                    INSERT INTO mockups (user_id, artwork_group_id, source_artwork_id, artwork_file, mockup_file, context_id, prompt_file, selector_state_json, reference_set_id, created_at)
+                    VALUES (:user_id, :artwork_group_id, :source_artwork_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :selector_state_json, :reference_set_id, :created_at)
                 ');
                 $stmt->execute([
                     'user_id' => (int)$job['user_id'],
@@ -120,6 +195,7 @@ final class MockupGenerationWorker
                     'context_id' => (string)$job['context_id'],
                     'prompt_file' => basename((string)$result['prompt_file']),
                     'selector_state_json' => json_encode($selectorState, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+                    'reference_set_id' => $referenceSetId > 0 ? $referenceSetId : null,
                     'created_at' => date('c'),
                 ]);
                 return (int)Database::connection()->lastInsertId();
@@ -149,7 +225,7 @@ final class MockupGenerationWorker
                 'error' => '',
             ]);
 
-            if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && $generationProvider === 'gemini') {
+            if (!$isVisualDnaLab && ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && $generationProvider === 'gemini') {
                 try {
                     $sheetService = new ArtworkSheetService($pdo);
                     $artworkSheet = $sheetService->sheetForArtwork((int)$artwork['id'], (int)$job['user_id']);

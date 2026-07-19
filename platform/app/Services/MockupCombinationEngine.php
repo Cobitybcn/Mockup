@@ -3,8 +3,11 @@ declare(strict_types=1);
 
 final class MockupCombinationEngine
 {
+    private const MAX_WORLD_MOTHER_REFERENCES = 2;
+
     private PDO $pdo;
     private WorldMotherLibrary $worldMothers;
+    private ?SceneReferenceDiversityService $sceneReferenceDiversity = null;
 
     public function __construct(?PDO $pdo = null, ?WorldMotherLibrary $worldMothers = null)
     {
@@ -72,6 +75,12 @@ final class MockupCombinationEngine
         $worldMotherVariantOffsets = array_map('intval', (array)($options['world_mother_variant_offsets'] ?? []));
 
         $targetCount = max(1, count($slotIds));
+        $sceneReferencePlan = $this->sceneReferenceDiversity()->buildPlan(
+            $this->annotateWorldMotherVariants((array)($worldImages[$selectedWorldMotherCategory] ?? [])),
+            $selectedWorldMotherCategory,
+            $artworkId,
+            $targetCount
+        );
         for ($i = 0; $i < $targetCount; $i++) {
             $context = $contexts[$i % max(1, count($contexts))] ?? [];
             $contextJson = $this->decodeJson((string)($context['context_json'] ?? ''));
@@ -89,10 +98,22 @@ final class MockupCombinationEngine
 
             $cameraSlot = $cameraSlots[$selectedSlotId] ?? [];
             $variantOffset = max(0, (int)($worldMotherVariantOffsets[$i + 1] ?? 0));
-            $worldMother = $this->selectWorldMotherImageFromCategory($category, $worldImages, $selectedSlotId, $i + 1, $artworkId, $variantOffset);
-            if ($worldMother) {
-                $worldMother = $this->resolveWorldMotherImagePath($worldMother);
+            $worldMotherReferences = $category === $selectedWorldMotherCategory
+                ? $this->selectWorldMotherImagesFromPlan($sceneReferencePlan, $i + 1, $variantOffset)
+                : $this->selectWorldMotherImagesFromCategory(
+                    $category,
+                    $worldImages,
+                    $selectedSlotId,
+                    $i + 1,
+                    $artworkId,
+                    $variantOffset,
+                    self::MAX_WORLD_MOTHER_REFERENCES,
+                    $targetCount
+                );
+            foreach ($worldMotherReferences as $referenceIndex => $reference) {
+                $worldMotherReferences[$referenceIndex] = $this->resolveWorldMotherImagePath($reference);
             }
+            $worldMother = $worldMotherReferences[0] ?? [];
             if ($category !== '' && empty($worldMother)) {
                 $worldMother = [
                     'category_slug' => $category,
@@ -100,6 +121,7 @@ final class MockupCombinationEngine
                     'relative_path' => '',
                     'absolute_path' => '',
                 ];
+                $worldMotherReferences = [$worldMother];
                 $categoryDecision['missing_world_mother'] = [
                     'reason' => 'Selected scene mother category has no image yet. Add one image manually to this folder, then refresh.',
                     'category_slug' => $category,
@@ -127,6 +149,7 @@ final class MockupCombinationEngine
                 $context,
                 $contextJson,
                 $worldMother,
+                $worldMotherReferences,
                 $suggestedSlotId,
                 $selectedSlotId,
                 $cameraSlot,
@@ -148,6 +171,7 @@ final class MockupCombinationEngine
             'selected_world_mother_category' => $selectedWorldMotherCategory,
             'world_mother_base_path' => $this->worldMothers->basePath(),
             'world_mother_categories_available' => count($worldImages),
+            'scene_reference_pair_options' => (array)($sceneReferencePlan['pair_options'] ?? []),
             'combination_count' => count($combinations),
             'generation_mode' => 'review_only_no_image_generation',
             'validation_notes' => $notes,
@@ -328,30 +352,41 @@ final class MockupCombinationEngine
      */
     private function directWorldMotherCategories(array $worldImages, string $selectedWorldMotherCategory): array
     {
-        $ranked = [];
+        $categories = [];
         foreach ($this->worldMothers->categories() as $category) {
             $slug = (string)($category['category_slug'] ?? '');
             if ($slug === '') {
                 continue;
             }
-            $isSelected = $selectedWorldMotherCategory !== '' && $slug === $selectedWorldMotherCategory;
-            $ranked[] = [
+            $categories[] = [
                 'category_slug' => $slug,
                 'category_name' => (string)($category['category_name'] ?? ucwords(str_replace('_', ' ', $slug))),
                 'relative_path' => (string)($category['relative_path'] ?? 'storage/world_mothers/' . $slug),
                 'absolute_path' => (string)($category['absolute_path'] ?? ''),
                 'image_count' => count($worldImages[$slug] ?? []),
-                'score' => $isSelected ? 1 : 0,
                 'matched_terms' => [],
-                'reason' => $isSelected
-                    ? 'Directly selected scene mother folder. No artwork analysis or curatorial ranking was used.'
-                    : 'Available scene mother folder. No artwork analysis or curatorial ranking was used.',
             ];
         }
 
-        usort($ranked, static fn (array $a, array $b): int => ((int)$b['score'] <=> (int)$a['score'])
-            ?: ((int)$b['image_count'] <=> (int)$a['image_count'])
-            ?: strcmp((string)$a['category_slug'], (string)$b['category_slug']));
+        $ranking = new SceneRankingService($this->pdo);
+        $ranked = $ranking->sort($ranking->enrich($categories), 'recommended');
+        foreach ($ranked as &$category) {
+            $isSelected = $selectedWorldMotherCategory !== ''
+                && (string)($category['category_slug'] ?? '') === $selectedWorldMotherCategory;
+            $category['score'] = (int)($category['recommended_score'] ?? 0);
+            $category['reason'] = $isSelected
+                ? 'Directly selected scene family. It remains pinned while the alternatives follow Recommended order.'
+                : 'Available scene family ordered by Recommended score: Editorial 30%, Versatility 25%, Popularity 20%, Featured 15%, and Usage 10%.';
+        }
+        unset($category);
+
+        if ($selectedWorldMotherCategory !== '') {
+            usort($ranked, static function (array $a, array $b) use ($selectedWorldMotherCategory): int {
+                $aSelected = (string)($a['category_slug'] ?? '') === $selectedWorldMotherCategory;
+                $bSelected = (string)($b['category_slug'] ?? '') === $selectedWorldMotherCategory;
+                return $aSelected === $bSelected ? 0 : ($aSelected ? -1 : 1);
+            });
+        }
 
         return $ranked;
     }
@@ -464,24 +499,83 @@ final class MockupCombinationEngine
      */
     private function selectWorldMotherImageFromCategory(string $category, array $worldImages, string $cameraSlotId = '', int $combinationIndex = 0, int $artworkId = 0, int $variantOffset = 0): array
     {
+        $selected = $this->selectWorldMotherImagesFromCategory(
+            $category,
+            $worldImages,
+            $cameraSlotId,
+            $combinationIndex,
+            $artworkId,
+            $variantOffset,
+            1
+        );
+
+        return $selected[0] ?? [];
+    }
+
+    /**
+     * @param array<string,array<int,array<string,mixed>>> $worldImages
+     * @return array<int,array<string,mixed>>
+     */
+    private function selectWorldMotherImagesFromCategory(
+        string $category,
+        array $worldImages,
+        string $cameraSlotId = '',
+        int $combinationIndex = 0,
+        int $artworkId = 0,
+        int $variantOffset = 0,
+        int $limit = self::MAX_WORLD_MOTHER_REFERENCES,
+        int $combinationCount = 4
+    ): array {
         $pool = $worldImages[$category] ?? [];
         if (!$pool) {
             return [];
         }
 
-        $pool = $this->annotateWorldMotherVariants($pool);
-        if (count($pool) === 1) {
-            return $pool[0];
-        }
+        $plan = $this->sceneReferenceDiversity()->buildPlan(
+            $this->annotateWorldMotherVariants($pool),
+            $category,
+            $artworkId,
+            max($combinationCount, $combinationIndex)
+        );
+        $selected = $this->selectWorldMotherImagesFromPlan($plan, $combinationIndex, $variantOffset);
+        return array_slice($selected, 0, max(1, $limit));
+    }
 
-        if ($this->usesStableRandomWorldMotherRotation($category, count($pool), $cameraSlotId)) {
-            $rotatedPool = $this->stableRandomWorldMotherPool($pool, $category, $artworkId);
-            $selected = $rotatedPool[max(0, $combinationIndex - 1 + $variantOffset) % count($rotatedPool)];
-            $selected['world_mother_selection_strategy'] = 'stable_full_pool_rotation';
-            $selected['world_mother_variant_offset'] = $variantOffset;
-            return $selected;
+    /**
+     * @param array{pair_options?:array<int,array<int,array<int,array<string,mixed>>>>} $plan
+     * @return array<int,array<string,mixed>>
+     */
+    private function selectWorldMotherImagesFromPlan(array $plan, int $combinationIndex, int $variantOffset): array
+    {
+        $options = array_values((array)($plan['pair_options'][max(1, $combinationIndex)] ?? []));
+        if (!$options) {
+            return [];
         }
+        $normalizedOffset = max(0, $variantOffset) % count($options);
+        $selected = array_values((array)$options[$normalizedOffset]);
+        foreach ($selected as $referenceIndex => &$image) {
+            $image['world_mother_selection_strategy'] = 'coordinated_diversity_pairing';
+            $image['world_mother_variant_offset'] = $normalizedOffset;
+            $image['world_mother_family_reference_index'] = $referenceIndex + 1;
+        }
+        unset($image);
+        return $selected;
+    }
 
+    private function sceneReferenceDiversity(): SceneReferenceDiversityService
+    {
+        if (!$this->sceneReferenceDiversity) {
+            $this->sceneReferenceDiversity = new SceneReferenceDiversityService(isset($this->pdo) ? $this->pdo : null);
+        }
+        return $this->sceneReferenceDiversity;
+    }
+
+    /**
+     * @param array<int,array<string,mixed>> $pool
+     * @return array<string,mixed>
+     */
+    private function selectPreferredWorldMotherImage(array $pool, string $cameraSlotId, int $combinationIndex): array
+    {
         $preferredRole = $this->preferredWorldMotherVariantRole($cameraSlotId, $combinationIndex);
         foreach ($pool as $image) {
             if ((string)($image['world_mother_variant_role'] ?? '') === $preferredRole) {
@@ -638,6 +732,7 @@ final class MockupCombinationEngine
         array $context,
         array $contextJson,
         array $worldMother,
+        array $worldMotherReferences,
         string $suggestedSlotId,
         string $selectedSlotId,
         array $cameraSlot,
@@ -714,6 +809,8 @@ final class MockupCombinationEngine
             'world_mother_reference_mode' => $this->cameraReferenceMode($selectedSlotId),
             'world_mother_image_path' => (string)($worldMother['relative_path'] ?? ''),
             'world_mother_image_absolute_path' => (string)($worldMother['absolute_path'] ?? ''),
+            'world_mother_reference_images' => array_values($worldMotherReferences),
+            'world_mother_reference_count' => count($worldMotherReferences),
             'context_title' => $contextTitle,
             'context_description' => $contextDescription,
             'compatibility_reason' => $compatibilityReason,

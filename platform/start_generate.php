@@ -165,6 +165,16 @@ if ($widthNumber > $heightNumber) {
 $sceneCategory = trim(str_replace(['\\', '/'], '', (string)($_POST['scene_category'] ?? 'selected')));
 $sceneBoard = max(1, min(3, (int)($_POST['scene_board'] ?? 1)));
 $sceneLimit = max(1, min(4, (int)($_POST['scene_limit'] ?? 4)));
+$referenceSetId = max(0, (int)($_POST['reference_set_id'] ?? 0));
+if ($referenceSetId > 0) {
+    $referenceSet = (new ReferenceSetService(Database::connection()))->findForUser(
+        (int)$currentUser['id'],
+        $referenceSetId
+    );
+    if (!$referenceSet) {
+        fail('The selected Visual DNA is not available.');
+    }
+}
 
 $artistNotes = '';
 $providerSettings = selected_provider_settings();
@@ -213,8 +223,8 @@ if (StorageService::isGcsActive()) {
 }
 
 $stmt = Database::connection()->prepare("
-    INSERT INTO artworks (user_id, job_id, main_file, status, width, height, depth, unit, created_at, updated_at)
-    VALUES (:user_id, :job_id, :main_file, :status, :width, :height, :depth, :unit, :created_at, :updated_at)
+    INSERT INTO artworks (user_id, job_id, main_file, status, width, height, depth, unit, reference_set_id, created_at, updated_at)
+    VALUES (:user_id, :job_id, :main_file, :status, :width, :height, :depth, :unit, :reference_set_id, :created_at, :updated_at)
 ");
 $stmt->execute([
     'user_id' => (int)$currentUser['id'],
@@ -225,6 +235,7 @@ $stmt->execute([
     'height' => $height,
     'depth' => $depth,
     'unit' => $unit,
+    'reference_set_id' => $referenceSetId > 0 ? $referenceSetId : null,
     'created_at' => $status['created_at'],
     'updated_at' => $status['updated_at'],
 ]);

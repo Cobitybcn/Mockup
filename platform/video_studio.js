@@ -243,11 +243,11 @@
         });
 
         const artworks = artworkMap();
-        dom.artworkFilter.innerHTML = '<option value="">Filtrar por obra</option>' + [...artworks.entries()].map(([key, artwork]) =>
+        dom.artworkFilter.innerHTML = '<option value="">Filter by artwork</option>' + [...artworks.entries()].map(([key, artwork]) =>
             `<option value="${escapeHtml(key)}"${String(key) === state.artworkFilter ? ' selected' : ''}>${escapeHtml(artwork.title)}</option>`
         ).join('');
         const series = seriesMap();
-        dom.seriesFilter.innerHTML = '<option value="">Filtrar por serie</option><option value="none">Sin serie</option>' + [...series.entries()].map(([id, title]) =>
+        dom.seriesFilter.innerHTML = '<option value="">Filter by series</option><option value="none">No series</option>' + [...series.entries()].map(([id, title]) =>
             `<option value="${id}"${String(id) === state.seriesFilter ? ' selected' : ''}>${escapeHtml(title)}</option>`
         ).join('');
     }
@@ -272,7 +272,7 @@
                 ${asset.thumbnailUrl
                     ? `<img src="${escapeHtml(asset.thumbnailUrl)}" alt="${escapeHtml(asset.artworkTitle || asset.label)}" loading="lazy" draggable="false">`
                     : `<div class="vds-catalog-video-placeholder" aria-hidden="true"><span>▶</span><small>Video</small></div>`}
-                ${asset.type === 'mockup' ? `<button class="vds-favorite" type="button" data-toggle-favorite aria-pressed="${asset.favorite ? 'true' : 'false'}" aria-label="${asset.favorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}">${asset.favorite ? '♥' : '♡'}</button>` : ''}
+                ${asset.type === 'mockup' ? `<button class="vds-favorite media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--right${asset.favorite ? ' active' : ''}" type="button" data-toggle-favorite aria-pressed="${asset.favorite ? 'true' : 'false'}" aria-label="${asset.favorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>` : ''}
                 <div class="vds-catalog-card-copy"><strong>${escapeHtml(asset.contextTitle || asset.label)}</strong><span>${escapeHtml(asset.type === 'reference_asset' ? 'Desde tu ordenador' : (asset.mediaType === 'video' ? (asset.projectTitle || 'Video generado') : (asset.artworkTitle || 'Imagen de referencia')))}</span></div>
             </article>`).join('') : '<div class="vds-catalog-empty">No hay referencias para esta selección.</div>';
         dom.catalogHelp.textContent = state.selectedAssetKey
@@ -343,7 +343,7 @@
             ? (reference.mediaType === 'video'
                 ? `<video src="${escapeHtml(reference.previewUrl)}" data-continuation-frame-preview muted preload="metadata" playsinline aria-label="Último fotograma de ${escapeHtml(reference.label)}"></video><span class="vds-continuation-frame-badge">Último fotograma</span>`
                 : `<img src="${escapeHtml(reference.thumbnailUrl || reference.previewUrl)}" alt="${escapeHtml(reference.label)}">`)
-                + `<button class="vds-remove-frame" type="button" data-remove-reference="${reference.id}" aria-label="Quitar ${escapeHtml(label)}">×</button><span class="vds-frame-caption">${escapeHtml(reference.label)}</span>`
+                + `<button class="vds-remove-frame media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--right is-danger" type="button" data-remove-reference="${reference.id}" aria-label="Quitar ${escapeHtml(label)}"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button><span class="vds-frame-caption">${escapeHtml(reference.label)}</span>`
             : `<div class="vds-frame-placeholder"><span class="vds-frame-plus">${uploading ? '◌' : '＋'}</span><strong>${uploading ? 'Subiendo archivo…' : 'Arrastra aquí'}</strong><button class="vds-frame-upload-button" type="button" data-upload-reference="${scene.id}" data-role="${role}"${uploading ? ' disabled' : ''}>Desde ordenador</button><span>o selecciona una referencia del catálogo</span></div>`;
         return `<div class="vds-frame-column">
             <span class="vds-frame-label">${escapeHtml(label)}</span>
@@ -373,7 +373,7 @@
         if (!reference && role !== 'reference') reference = referenceFor(scene, role);
         const uploading = state.uploadingSlots.has(uploadSlotKey(scene.id, role));
         const body = reference
-            ? `<div class="vds-compact-reference-media"><img src="${escapeHtml(reference.thumbnailUrl || reference.previewUrl)}" alt="${escapeHtml(reference.label)}"><button type="button" data-remove-reference="${reference.id}" aria-label="Quitar ${escapeHtml(label)}">×</button></div>`
+            ? `<div class="vds-compact-reference-media"><img src="${escapeHtml(reference.thumbnailUrl || reference.previewUrl)}" alt="${escapeHtml(reference.label)}"><button class="media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--right is-danger" type="button" data-remove-reference="${reference.id}" aria-label="Quitar ${escapeHtml(label)}"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button></div>`
             : `<div class="vds-compact-reference-empty"><span>${uploading ? '◌' : '＋'}</span><strong>${uploading ? 'Subiendo…' : 'Añadir'}</strong>${optional ? '<small>Opcional</small>' : ''}</div>`;
         return `<div class="vds-priority-reference${reference ? ' has-media' : ''}" data-reference-drop data-scene-id="${scene.id}" data-role="${role}" tabindex="0">
             <header><span>${number}</span><strong>${escapeHtml(label)}</strong></header>

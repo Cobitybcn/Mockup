@@ -1328,9 +1328,19 @@ class Database
         ]);
     }
 
-    public static function createGenerationJobWithTransaction(int $userId, int $artworkId, string $contextId, string $prompt, string $imagePath, ?string $selectorStateJson = null): int
+    public static function createGenerationJobWithTransaction(
+        int $userId,
+        int $artworkId,
+        string $contextId,
+        string $prompt,
+        string $imagePath,
+        ?string $selectorStateJson = null,
+        ?string $idempotencyKey = null,
+        ?bool &$created = null
+    ): int
     {
-        return self::withBusyRetry(function () use ($userId, $artworkId, $contextId, $prompt, $imagePath, $selectorStateJson): int {
+        $created = false;
+        return self::withBusyRetry(function () use ($userId, $artworkId, $contextId, $prompt, $imagePath, $selectorStateJson, $idempotencyKey, &$created): int {
             $pdo = self::connection();
             $inTransaction = false;
 
@@ -1346,6 +1356,28 @@ class Database
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute(['id' => $userId]);
                 $credits = $stmt->fetchColumn();
+
+                $idempotencyKey = trim((string)$idempotencyKey);
+                if ($idempotencyKey !== '') {
+                    $duplicate = $pdo->prepare(''
+                        . 'SELECT id FROM mockup_generation_jobs '
+                        . 'WHERE user_id = :user_id AND artwork_id = :artwork_id '
+                        . 'AND status IN ("pending_enqueue", "queued", "processing", "done") '
+                        . 'AND selector_state_json LIKE :idempotency_key '
+                        . 'ORDER BY id DESC LIMIT 1'
+                    );
+                    $duplicate->execute([
+                        'user_id' => $userId,
+                        'artwork_id' => $artworkId,
+                        'idempotency_key' => '%"idempotency_key":"' . $idempotencyKey . '"%',
+                    ]);
+                    $existingJobId = (int)($duplicate->fetchColumn() ?: 0);
+                    if ($existingJobId > 0) {
+                        $pdo->exec('COMMIT');
+                        $inTransaction = false;
+                        return $existingJobId;
+                    }
+                }
 
                 if ($credits === false || (int)$credits < 1) {
                     throw new RuntimeException('No tienes créditos suficientes para generar un mockup.');
@@ -1395,6 +1427,7 @@ class Database
                 ]);
 
                 $jobId = (int)$pdo->lastInsertId();
+                $created = true;
 
                 $pdo->exec('COMMIT');
                 $inTransaction = false;

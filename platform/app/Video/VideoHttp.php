@@ -30,7 +30,7 @@ final class VideoHttp
     {
         $expected = self::csrfToken();
         if ($expected === '' || !hash_equals($expected, (string)($input['csrf'] ?? ''))) {
-            self::respond(['ok' => false, 'error' => 'The Video Studio session expired. Reload the page and try again.'], 403);
+            self::respond(['ok' => false, 'error' => 'The Video Lab session expired. Reload the page and try again.'], 403);
         }
     }
 
@@ -58,8 +58,8 @@ final class VideoHttp
         } catch (DomainException $e) {
             self::respond(['ok' => false, 'error' => $e->getMessage()], 409);
         } catch (Throwable $e) {
-            Logger::log('Video Studio request failed: ' . $e->getMessage(), 'error');
-            self::respond(['ok' => false, 'error' => 'Video Studio could not complete the request. Check the server log for details.'], 500);
+            Logger::log('Video Lab request failed: ' . $e->getMessage(), 'error');
+            self::respond(['ok' => false, 'error' => 'Video Lab could not complete the request. Check the server log for details.'], 500);
         }
     }
 }

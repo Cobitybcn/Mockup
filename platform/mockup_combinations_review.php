@@ -492,16 +492,6 @@ function stable_world_mother_pool_for_artwork(array $pool, string $category, int
     return array_values($pool);
 }
 
-function variant_offset_for_world_image(int $comboIndex, int $targetPosition, int $poolCount): int
-{
-    if ($poolCount <= 0) {
-        return 0;
-    }
-
-    $base = max(0, $comboIndex - 1);
-    return ($targetPosition - ($base % $poolCount) + $poolCount) % $poolCount;
-}
-
 $selectedSlots = [];
 foreach (($_GET['slot'] ?? []) as $index => $slotId) {
     $selectedSlots[(int)$index] = trim((string)$slotId);
@@ -522,8 +512,10 @@ $selectedGenerationProvider = $canSelectGenerationProvider
 $generationProviderQuery = $canSelectGenerationProvider ? '&generation_provider=' . rawurlencode($selectedGenerationProvider) : '';
 $sceneSelectionFlow = !empty($_GET['scene_select']);
 $compactSceneFlow = !empty($_GET['compact']);
+$embeddedCompactFlow = $compactSceneFlow && !empty($_GET['embedded']);
 $autoGenerateSceneFlow = !empty($_GET['auto_generate']);
 $compactSceneLimit = max(1, min(4, (int)($_GET['scene_limit'] ?? 4)));
+$sceneFlowJob = basename(trim((string)($_GET['scene_flow_job'] ?? '')));
 
 $engine = new MockupCombinationEngine();
 $review = $engine->buildForArtwork($id, $selectedSlots, [
@@ -531,8 +523,33 @@ $review = $engine->buildForArtwork($id, $selectedSlots, [
     'world_mother_variant_offsets' => $selectedWorldMotherVariants,
     'scene_board_index' => $sceneBoardIndex,
 ]);
-$combinations = $review['combinations'] ?? [];
-$cameraSlots = $review['available_camera_slots'] ?? [];
+$selectedWorldMotherCategory = (string)($review['selected_world_mother_category'] ?? $selectedWorldMotherCategory);
+$sceneBoardIndex = max(1, min(3, (int)($review['scene_board_index'] ?? $sceneBoardIndex)));
+$reviewsByBoard = [$sceneBoardIndex => $review];
+foreach ([1, 2, 3] as $availableBoardIndex) {
+    if (isset($reviewsByBoard[$availableBoardIndex])) {
+        continue;
+    }
+    $reviewsByBoard[$availableBoardIndex] = $engine->buildForArtwork($id, [], [
+        'selected_world_mother_category' => $selectedWorldMotherCategory,
+        'world_mother_variant_offsets' => [],
+        'scene_board_index' => $availableBoardIndex,
+    ]);
+}
+ksort($reviewsByBoard);
+$combinationsByBoard = [];
+$cameraSlotsByBoard = [];
+$combinations = [];
+foreach ($reviewsByBoard as $availableBoardIndex => $boardReview) {
+    $cameraSlotsByBoard[$availableBoardIndex] = (array)($boardReview['available_camera_slots'] ?? []);
+    $combinationsByBoard[$availableBoardIndex] = [];
+    foreach ((array)($boardReview['combinations'] ?? []) as $boardCombination) {
+        $boardCombination['ui_scene_board_index'] = $availableBoardIndex;
+        $combinationsByBoard[$availableBoardIndex][] = $boardCombination;
+        $combinations[] = $boardCombination;
+    }
+}
+$cameraSlots = $cameraSlotsByBoard[$sceneBoardIndex] ?? [];
 $sceneStudio = $isAdmin ? new CameraSlotStudio() : null;
 $cameraSlotsById = [];
 foreach ($cameraSlots as $cameraSlot) {
@@ -542,14 +559,56 @@ foreach ($cameraSlots as $cameraSlot) {
     }
 }
 $suggestedWorldMotherCategories = (array)($review['suggested_world_mother_categories'] ?? []);
-$selectedWorldMotherCategory = (string)($review['selected_world_mother_category'] ?? $selectedWorldMotherCategory);
-$sceneBoardIndex = max(1, min(3, (int)($review['scene_board_index'] ?? $sceneBoardIndex)));
-$scenePageTitle = $sceneBoardIndex > 1 ? 'Create Scenes Batch ' . $sceneBoardIndex : 'Create Scenes';
+$scenePageTitle = 'Explore Scenes';
+$cameraBoardMeta = [
+    1 => ['name' => 'Essential Views', 'description' => 'Balanced front, perspective and artwork detail views.'],
+    2 => ['name' => 'Dramatic Angles', 'description' => 'Extreme architectural, aerial and close-edge viewpoints.'],
+    3 => ['name' => 'Editorial Perspectives', 'description' => 'Expressive low, aerial, leaning and corner compositions.'],
+];
 $selectedWorldMotherImages = stable_world_mother_pool_for_artwork(
     (new WorldMotherLibrary())->imagesForCategory($selectedWorldMotherCategory),
     $selectedWorldMotherCategory,
     $id
 );
+$selectedWorldMotherClientPool = [];
+foreach ($selectedWorldMotherImages as $sceneImage) {
+    $relativePath = (string)($sceneImage['relative_path'] ?? '');
+    $previewUrl = world_mother_image_url($relativePath);
+    if ($previewUrl === '') {
+        continue;
+    }
+    $selectedWorldMotherClientPool[] = [
+        'relative_path' => $relativePath,
+        'url' => $previewUrl,
+        'title' => (string)($sceneImage['title'] ?? 'Scene family reference'),
+    ];
+}
+$selectedWorldMotherClientPairOptions = [];
+foreach ($reviewsByBoard as $availableBoardIndex => $boardReview) {
+    foreach ((array)($boardReview['scene_reference_pair_options'] ?? []) as $combinationIndex => $pairOptions) {
+        foreach ((array)$pairOptions as $pairOption) {
+            $clientPair = [];
+            foreach ((array)$pairOption as $sceneImage) {
+                if (!is_array($sceneImage)) {
+                    continue;
+                }
+                $relativePath = (string)($sceneImage['relative_path'] ?? '');
+                $previewUrl = world_mother_image_url($relativePath);
+                if ($previewUrl === '') {
+                    continue;
+                }
+                $clientPair[] = [
+                    'relative_path' => $relativePath,
+                    'url' => $previewUrl,
+                    'title' => (string)($sceneImage['title'] ?? 'Scene family reference'),
+                ];
+            }
+            if ($clientPair) {
+                $selectedWorldMotherClientPairOptions[$availableBoardIndex][(int)$combinationIndex][] = $clientPair;
+            }
+        }
+    }
+}
 $sceneDirectionOptions = [];
 $selectedSceneDirectionName = $selectedWorldMotherCategory;
 $worldMotherLibrary = new WorldMotherLibrary();
@@ -593,12 +652,6 @@ foreach ($favoriteWorldMotherCategories as $favoriteWorldMotherCategory) {
     $favoriteWorldMotherNormalizedLookup[WorldMotherGenerator::safeSlug($favoriteWorldMotherCategory)] = true;
 }
 
-$rootUrl = '';
-$rootPath = (string)($review['root_artwork_path'] ?? '');
-if ($rootPath !== '') {
-    $rootUrl = 'media.php?file=' . rawurlencode(basename($rootPath));
-}
-
 $currentOptionKnown = false;
 $currentRootGroupKey = scenes_root_group_key((string)($artwork['root_file'] ?? ''));
 foreach ($artworkOptions as $option) {
@@ -617,42 +670,6 @@ if (!$currentOptionKnown) {
     ]);
 }
 
-$rootViewOptions = [];
-$rootViewKnownFiles = [];
-$candidateStmt = $pdo->prepare('
-    SELECT file_name, view_type
-    FROM root_artwork_candidates
-    WHERE artwork_id = :artwork_id
-    ORDER BY id ASC
-');
-$candidateStmt->execute(['artwork_id' => $id]);
-foreach ($candidateStmt->fetchAll() as $candidate) {
-    $file = basename((string)($candidate['file_name'] ?? ''));
-    if ($file === '' || !is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $file)) {
-        continue;
-    }
-    $rootViewOptions[] = [
-        'file_name' => $file,
-        'view_type' => (string)($candidate['view_type'] ?? 'frontal'),
-    ];
-    $rootViewKnownFiles[$file] = true;
-}
-$currentRootFile = basename((string)($artwork['root_file'] ?? ''));
-if ($currentRootFile !== '' && is_file(RESULTS_DIR . DIRECTORY_SEPARATOR . $currentRootFile) && !isset($rootViewKnownFiles[$currentRootFile])) {
-    $rootViewOptions[] = [
-        'file_name' => $currentRootFile,
-        'view_type' => 'frontal',
-    ];
-    $rootViewKnownFiles[$currentRootFile] = true;
-}
-foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
-    $file = (string)$siblingCandidate['file_name'];
-    if (isset($rootViewKnownFiles[$file])) {
-        continue;
-    }
-    $rootViewOptions[] = $siblingCandidate;
-    $rootViewKnownFiles[$file] = true;
-}
 ?>
 <!doctype html>
 <html lang="en">
@@ -737,9 +754,97 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
         }
         .review-grid {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 12px;
             align-items: start;
+        }
+        .camera-board-selector {
+            margin: 18px 0 10px;
+            padding: 14px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: var(--surface);
+            box-shadow: var(--shadow);
+        }
+        .camera-board-selector-head {
+            display:flex;
+            align-items:flex-end;
+            justify-content:space-between;
+            gap:16px;
+            margin-bottom:10px;
+        }
+        .camera-board-selector-head strong {
+            display:block;
+            font-size:10px;
+            letter-spacing:.08em;
+            text-transform:uppercase;
+        }
+        .camera-board-selector-head span {
+            color:var(--muted);
+            font-size:12px;
+        }
+        .camera-board-tabs {
+            display:grid;
+            grid-template-columns:repeat(3, minmax(0, 1fr));
+            gap:8px;
+        }
+        .camera-board-tab {
+            min-width:0;
+            display:grid;
+            grid-template-columns:auto minmax(0, 1fr) auto;
+            align-items:center;
+            gap:10px;
+            padding:11px 12px;
+            border:1px solid var(--line);
+            border-radius:5px;
+            background:var(--surface-soft);
+            color:var(--ink);
+            text-align:left;
+            cursor:pointer;
+            font:inherit;
+        }
+        .camera-board-tab:hover {
+            border-color:rgba(154, 123, 86, .42);
+            background:#fbf7ef;
+        }
+        .camera-board-tab.active {
+            border-color:rgba(183,127,134,.5);
+            background:rgba(183,127,134,.14);
+            box-shadow:inset 0 0 0 1px rgba(183,127,134,.12);
+        }
+        .camera-board-number {
+            display:grid;
+            place-items:center;
+            width:26px;
+            height:26px;
+            border:1px solid var(--line);
+            border-radius:50%;
+            background:var(--surface);
+            color:var(--accent);
+            font-size:10px;
+            font-weight:800;
+        }
+        .camera-board-copy { min-width:0; }
+        .camera-board-copy strong {
+            display:block;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+            font-size:12px;
+        }
+        .camera-board-copy small {
+            display:block;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+            margin-top:2px;
+            color:var(--muted);
+            font-size:10px;
+        }
+        .camera-board-count {
+            color:var(--muted);
+            font-size:10px;
+            white-space:nowrap;
         }
         .review-group-title {
             grid-column: 1 / -1;
@@ -955,192 +1060,125 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
             word-break: break-word;
         }
         .thumb-row {
+            display: block;
+        }
+        .scene-family-images {
             display: grid;
-            grid-template-columns: minmax(118px, .46fr) 42px minmax(0, 1fr);
-            gap: 8px;
-            align-items: center;
+            grid-template-columns: 1fr;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border-radius: var(--radius);
+            transition: opacity .14s ease;
         }
-        .combination-plus {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 42px;
-            height: 42px;
-            border: 1px solid rgba(183, 127, 134, .34);
-            border-radius: 50%;
-            background: rgba(183, 127, 134, .12);
-            color: #9d6770;
-            font-size: 29px;
-            line-height: 1;
-            font-weight: 300;
-            box-shadow: inset 0 0 0 5px rgba(255, 250, 247, .82), 0 5px 14px rgba(52, 36, 28, .08);
-            transform: translate(-12px, -2px);
+        .scene-family-images.is-changing {
+            opacity: .42;
         }
-        .combination-plus::before {
-            content: "+";
+        .scene-family-images.reference-count-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .scene-family-images.reference-count-2 > img + img {
+            border-left: 2px solid var(--surface);
         }
         .card-icon-actions {
             display: none;
-        }
-        .refresh-world-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 28px;
-            height: 28px;
-            border: 1px solid var(--line);
-            border-radius: 4px;
-            background: rgba(251, 250, 247, .68);
-            color: var(--accent);
-            text-decoration: none;
-            font-size: 16px;
-            line-height: 1;
-            font-weight: 700;
-            box-shadow: 0 2px 8px rgba(20, 20, 18, .08);
-        }
-        .refresh-world-btn:hover {
-            background: rgba(251, 250, 247, .92);
-            border-color: rgba(154, 123, 86, .35);
         }
         .thumb-box {
             background: var(--surface-soft);
             border: 1px solid var(--line);
             border-radius: var(--radius);
-            overflow: visible;
+            overflow: hidden;
             min-height: 0;
             position: relative;
         }
-        .scene-thumb-picker {
-            position: absolute;
-            right: 0;
-            bottom: 0;
-            z-index: 80;
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 4px;
-            padding: 5px;
-            width: min(520px, 86vw);
-            max-height: 360px;
-            overflow: auto;
-            background: rgba(251, 250, 247, .94);
-            border: 1px solid rgba(228, 222, 211, .8);
-            border-radius: 7px;
-            opacity: 0;
-            pointer-events: none;
-            transform: translate(8px, 8px);
-            transition: opacity .16s ease, transform .16s ease;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 26px rgba(20, 20, 18, .12);
-            scrollbar-width: none;
+        .scene-reference-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 6px;
         }
-        .scene-thumb-picker::-webkit-scrollbar {
-            display: none;
-        }
-        .thumb-box:hover .scene-thumb-picker,
-        .scene-thumb-picker:focus-within {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translate(0, 0);
-        }
-        .root-thumb-picker {
-            position: absolute;
-            left: 0;
-            bottom: 0;
-            z-index: 85;
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 4px;
-            padding: 5px;
-            width: min(360px, 86vw);
-            background: rgba(251, 250, 247, .94);
-            border: 1px solid rgba(228, 222, 211, .8);
-            border-radius: 7px;
-            opacity: 0;
-            pointer-events: none;
-            transform: translate(-8px, 8px);
-            transition: opacity .16s ease, transform .16s ease;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 26px rgba(20, 20, 18, .12);
-        }
-        .thumb-box:hover .root-thumb-picker,
-        .root-thumb-picker:focus-within {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translate(0, 0);
-        }
-        .root-thumb-option {
-            position: relative;
-            height: 112px;
-            border: 2px solid transparent;
+        .scene-reference-cycle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: auto !important;
+            min-width: 0 !important;
+            min-height: 30px;
+            padding: 0 10px;
+            margin: 0 !important;
+            border: 1px solid var(--line);
             border-radius: 4px;
-            overflow: hidden;
-            background: var(--surface);
-            opacity: .88;
-            padding: 0;
-            cursor: pointer;
-        }
-        .root-thumb-option.active {
-            border-color: var(--accent);
-            opacity: 1;
-            cursor: default;
-        }
-        .root-thumb-option img {
-            display: block;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            background: var(--surface-soft);
-        }
-        .root-thumb-option span {
-            position: absolute;
-            left: 5px;
-            bottom: 5px;
-            border-radius: 3px;
-            background: rgba(18, 17, 15, .64);
-            color: #fff;
-            padding: 3px 5px;
+            background: rgba(251, 250, 247, .72);
+            color: var(--muted);
             font-size: 9px;
-            font-weight: 700;
+            font-weight: 800;
             letter-spacing: .05em;
             text-transform: uppercase;
+            cursor: pointer;
         }
-        .scene-thumb-option {
-            width: 100%;
-            height: 112px;
+        .scene-reference-cycle:hover,
+        .scene-reference-cycle:focus-visible {
+            border-color: rgba(154, 123, 86, .35);
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+        .admin-reference-picker {
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            background: rgba(255,255,255,.52);
+            padding: 6px 8px;
+            margin-top: 8px;
+        }
+        .admin-reference-picker > summary {
+            cursor: pointer;
+            list-style: none;
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+        }
+        .admin-reference-picker > summary::-webkit-details-marker {
+            display: none;
+        }
+        .admin-reference-picker > summary::after {
+            content: "+";
+            float: right;
+            color: var(--accent);
+        }
+        .admin-reference-picker[open] > summary {
+            margin-bottom: 8px;
+        }
+        .admin-reference-picker[open] > summary::after {
+            content: "-";
+        }
+        .admin-reference-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 4px;
+            max-height: 260px;
+            overflow: auto;
+        }
+        .admin-reference-option {
+            position: relative;
+            height: 82px;
+            padding: 0;
             border: 2px solid transparent;
             border-radius: 4px;
             overflow: hidden;
             background: var(--surface);
-            opacity: .86;
-            transition: opacity .16s ease, transform .16s ease, border-color .16s ease;
+            opacity: .8;
+            cursor: pointer;
         }
-        .scene-thumb-option:hover {
+        .admin-reference-option:hover,
+        .admin-reference-option.active {
             opacity: 1;
-            transform: translateY(-2px);
-        }
-        .scene-thumb-option.active {
             border-color: var(--accent);
-            opacity: 1;
         }
-        .scene-thumb-option img {
+        .admin-reference-option img {
             display: block;
             width: 100%;
             height: 100%;
             object-fit: cover;
-        }
-        @media (min-width: 1500px) {
-            .scene-thumb-picker {
-                grid-template-columns: repeat(4, minmax(0, 1fr));
-                width: 640px;
-            }
-        }
-        .combination-card.edge-left .scene-thumb-picker {
-            left: 0;
-            right: auto;
-        }
-        .combination-card.edge-right .scene-thumb-picker {
-            right: 0;
-            left: auto;
         }
         .thumb-box img {
             display: block;
@@ -1150,26 +1188,16 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
             background: var(--surface-soft);
             border-radius: var(--radius);
         }
-        .thumb-box.root-reference-thumb {
-            aspect-ratio: 3 / 4;
-        }
         .thumb-box.scene-reference-thumb {
             aspect-ratio: 4 / 3;
-        }
-        .thumb-box.root-reference-thumb img {
-            object-fit: contain;
-            object-position: center;
-            background: #f4f1ea;
         }
         .thumb-box.scene-reference-thumb img {
             object-fit: cover;
         }
-        .thumb-box .root-thumb-picker .root-thumb-option img {
-            height: 100%;
-            object-fit: contain;
-            object-position: center;
-            background: var(--surface-soft);
-            border-radius: 0;
+        @media (max-width: 768px) {
+            .admin-reference-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
         }
         .thumb-label {
             display: block;
@@ -1666,16 +1694,10 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
             .scene-choice-grid {
                 grid-template-columns: 1fr;
             }
-            .thumb-row {
-                grid-template-columns: 1fr;
-            }
-            .combination-plus {
-                justify-self: center;
-                transform: none;
-            }
             .scene-browser-head {
                 display: block;
             }
+            .camera-board-tabs { grid-template-columns:1fr; }
             .scene-browser-controls {
                 grid-template-columns: 1fr;
             }
@@ -1702,14 +1724,6 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
         @media (min-width: 981px) and (max-width: 1280px) {
             .review-grid {
                 grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
-            .thumb-row {
-                grid-template-columns: minmax(112px, .44fr) 38px minmax(0, 1fr);
-            }
-            .combination-plus {
-                width: 38px;
-                height: 38px;
-                font-size: 26px;
             }
         }
         .breadcrumb-steps {
@@ -1852,7 +1866,7 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
         .scene-direction-panel {
             display: block;
             margin: -8px 0 26px;
-            padding: 14px;
+            padding: 18px;
             border: 1px solid var(--line);
             border-radius: var(--radius);
             background: var(--surface);
@@ -1860,9 +1874,9 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
         }
         .scene-direction-browser > span {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 9px;
             color: var(--muted);
-            font-size: 9px;
+            font-size: 10px;
             font-weight: 800;
             letter-spacing: .08em;
             text-transform: uppercase;
@@ -1873,15 +1887,15 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
         .scene-direction-strip {
             display: grid;
             grid-auto-flow: column;
-            grid-auto-columns: 164px;
-            gap: 8px;
+            grid-auto-columns: clamp(198px, 11vw, 220px);
+            gap: 10px;
             overflow-x: auto;
-            padding: 1px 2px 10px;
+            padding: 1px 2px 14px;
             scrollbar-color: #d8cbbb transparent;
             scrollbar-width: thin;
         }
         .scene-direction-strip::-webkit-scrollbar {
-            height: 6px;
+            height: 8px;
         }
         .scene-direction-strip::-webkit-scrollbar-track {
             background: transparent;
@@ -1897,7 +1911,7 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
             position: relative;
             display: block;
             min-width: 0;
-            padding: 7px;
+            padding: 8px;
             border: 1px solid var(--line);
             border-radius: 4px;
             background: var(--surface-soft);
@@ -1937,12 +1951,12 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
         }
         .scene-direction-card strong {
             display: block;
-            margin-top: 6px;
+            margin-top: 8px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            font-size: 12px;
-            line-height: 1.2;
+            font-size: 13px;
+            line-height: 1.25;
         }
         .scene-direction-preview-grid {
             position: fixed;
@@ -2019,7 +2033,9 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
         body.compact-scene-runner .app-header,
         body.compact-scene-runner .alert-strip,
         body.compact-scene-runner .workspace,
-        body.compact-scene-runner .generation-overlay {
+        body.compact-scene-runner .generation-overlay,
+        body.compact-scene-runner .global-generation-activity,
+        body.compact-scene-runner .global-generation-ready {
             display: none !important;
         }
         body.compact-scene-runner .app-shell {
@@ -2034,26 +2050,36 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
             place-items: center;
             background: var(--bg);
         }
+        body.compact-scene-runner.compact-scene-embedded,
+        body.compact-scene-runner.compact-scene-embedded .app-shell,
+        body.compact-scene-runner.compact-scene-embedded .main-area {
+            background: transparent;
+        }
         .compact-scene-status {
             display: none;
         }
         body.compact-scene-runner .compact-scene-status {
-            width: min(520px, calc(100vw - 32px));
+            width: min(440px, calc(100vw - 32px));
             display: block;
             text-align: center;
-            background: var(--surface);
-            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, .9);
+            border: 1px solid rgba(220, 215, 206, .8);
             border-radius: 8px;
-            padding: clamp(26px, 8vw, 48px);
-            box-shadow: var(--shadow);
+            padding: clamp(24px, 5vw, 32px);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            box-shadow: 0 14px 38px rgba(42, 38, 32, .12);
         }
         .compact-scene-status .generation-spinner {
-            margin: 0 auto 22px;
+            width: 42px;
+            height: 42px;
+            margin: 0 auto 18px;
+            border-width: 3px;
         }
         .compact-scene-status h1 {
             margin: 0;
             font-family: var(--font-serif);
-            font-size: clamp(34px, 8vw, 54px);
+            font-size: clamp(32px, 6vw, 44px);
             font-weight: 500;
             line-height: 0.95;
         }
@@ -2123,24 +2149,55 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
             font-size: 12px;
             line-height: 1.45;
         }
+        .compact-scene-actions {
+            display: grid;
+            grid-template-columns: minmax(0, 190px);
+            justify-content: center;
+            gap: 10px;
+            margin-top: 22px;
+        }
+        .compact-scene-actions[hidden] {
+            display: none !important;
+        }
+        .compact-scene-actions .button-link {
+            width: 100%;
+            min-height: 48px;
+            margin: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            text-align: center;
+            text-decoration: none;
+        }
+        .compact-scene-actions .compact-scene-primary {
+            border-color: #b9cdb3;
+            background: #dcead8;
+            color: #3f593c;
+        }
+        .compact-scene-actions .compact-scene-secondary {
+            border-color: var(--line);
+            background: var(--surface-soft);
+            color: var(--muted);
+        }
         @keyframes compactProgress {
             from { background-position: 0% 0; }
             to { background-position: 180% 0; }
         }
     </style>
 </head>
-<body class="<?= $compactSceneFlow ? 'compact-scene-runner' : '' ?>">
+<body class="<?= $compactSceneFlow ? 'compact-scene-runner' . ($embeddedCompactFlow ? ' compact-scene-embedded' : '') : '' ?>">
 <div class="app-shell">
     <?php include __DIR__ . '/sidebar.php'; ?>
 
     <main class="main-area">
         <?php if ($compactSceneFlow): ?>
-            <section class="compact-scene-status" aria-live="polite">
-                <div class="generation-spinner" aria-hidden="true"></div>
-                <h1>Creating 4 scenes</h1>
-                <p>Rendering four scene views.</p>
+            <section class="compact-scene-status" id="compactSceneStatus" aria-live="polite">
+                <div class="generation-spinner" id="compactSceneSpinner" aria-hidden="true"></div>
+                <h1 id="compactSceneTitle">Creating <?= (int)$compactSceneLimit ?> scene<?= $compactSceneLimit === 1 ? '' : 's' ?></h1>
+                <p id="compactSceneMessage">Registering the scene tasks.</p>
                 <div class="compact-view-progress" aria-label="Scene progress">
-                    <?php for ($compactViewIndex = 1; $compactViewIndex <= 4; $compactViewIndex++): ?>
+                    <?php for ($compactViewIndex = 1; $compactViewIndex <= $compactSceneLimit; $compactViewIndex++): ?>
                         <div class="compact-view-row queued" data-compact-view-row="<?= $compactViewIndex ?>">
                             <div class="compact-view-head">
                                 <strong>View <?= $compactViewIndex ?></strong>
@@ -2149,6 +2206,9 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
                             <div class="compact-view-track"><div class="compact-view-bar"></div></div>
                         </div>
                     <?php endfor; ?>
+                </div>
+                <div class="compact-scene-actions" id="compactSceneActions" hidden>
+                    <button class="button-link compact-scene-primary" id="compactSceneContinue" type="button">Continue working</button>
                 </div>
                 <div class="compact-tip" id="compactSceneTip"></div>
             </section>
@@ -2163,7 +2223,7 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
             <div class="scene-header-v3">
                 <div class="header-main-info">
                     <div class="header-title-block">
-                        <h1><?= h($scenePageTitle) ?></h1>
+                        <h1 id="scene-page-title"><?= h($scenePageTitle) ?></h1>
                     </div>
                     <div class="header-desc-block">
                         <p class="scene-page-desc">
@@ -2173,7 +2233,7 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
                     </div>
                 </div>
                 <div class="scene-primary-action">
-                    <button class="button-link" type="button" id="generate-all-btn" onclick="<?= $sceneSelectionFlow ? 'startCompactSceneFlow(this)' : 'generateAllCombinations(this)' ?>"><?= ($compactSceneFlow || $sceneSelectionFlow) ? 'Create 4 scenes' : 'Generate All Combinations' ?></button>
+                    <button class="button-link" type="button" id="generate-all-btn" onclick="<?= $sceneSelectionFlow ? 'startCompactSceneFlow(this)' : 'generateAllCombinations(this)' ?>"><?= ($compactSceneFlow || $sceneSelectionFlow) ? 'Create 4 scenes' : 'Generate These 4 Views' ?></button>
                 </div>
             </div>
 
@@ -2218,6 +2278,32 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
                 </div>
             </section>
 
+            <section class="camera-board-selector" aria-label="Camera view sets">
+                <div class="camera-board-selector-head">
+                    <strong>Choose a camera set</strong>
+                    <span id="camera-board-summary">Showing 4 of 12 available cameras · <?= h((string)($cameraBoardMeta[$sceneBoardIndex]['name'] ?? ('Set ' . $sceneBoardIndex))) ?></span>
+                </div>
+                <div class="camera-board-tabs" role="tablist" aria-label="Camera sets">
+                    <?php foreach ($cameraBoardMeta as $availableBoardIndex => $boardMeta): ?>
+                        <button
+                            class="camera-board-tab <?= $availableBoardIndex === $sceneBoardIndex ? 'active' : '' ?>"
+                            type="button"
+                            role="tab"
+                            aria-selected="<?= $availableBoardIndex === $sceneBoardIndex ? 'true' : 'false' ?>"
+                            data-camera-board-tab="<?= (int)$availableBoardIndex ?>"
+                            onclick="switchCameraBoard(<?= (int)$availableBoardIndex ?>, this)"
+                        >
+                            <span class="camera-board-number"><?= (int)$availableBoardIndex ?></span>
+                            <span class="camera-board-copy">
+                                <strong><?= h((string)$boardMeta['name']) ?></strong>
+                                <small><?= h((string)$boardMeta['description']) ?></small>
+                            </span>
+                            <span class="camera-board-count">4 views</span>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+
             <?php if (!empty($review['validation_notes'])): ?>
                 <div class="notice warning">
                     <strong>Review notes:</strong>
@@ -2230,47 +2316,39 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
             <?php endif; ?>
 
             <div class="review-grid">
-                <?php $lastCameraGroupKey = null; ?>
                 <?php foreach ($combinations as $combo): ?>
                     <?php
                     $idx = (int)$combo['combination_index'];
+                    $comboBoardIndex = max(1, min(3, (int)($combo['ui_scene_board_index'] ?? $combo['camera_slot_scene_board_index'] ?? 1)));
                     $worldImage = (string)$combo['world_mother_image_path'];
                     $worldImageUrl = world_mother_image_url($worldImage);
+                    $worldReferenceImages = [];
+                    foreach (array_slice((array)($combo['world_mother_reference_images'] ?? []), 0, 2) as $referenceImage) {
+                        if (!is_array($referenceImage)) {
+                            continue;
+                        }
+                        $referenceUrl = world_mother_image_url((string)($referenceImage['relative_path'] ?? ''));
+                        if ($referenceUrl !== '') {
+                            $worldReferenceImages[] = [
+                                'url' => $referenceUrl,
+                                'title' => (string)($referenceImage['title'] ?? 'Scene family reference'),
+                            ];
+                        }
+                    }
+                    if (!$worldReferenceImages && $worldImageUrl !== '') {
+                        $worldReferenceImages[] = ['url' => $worldImageUrl, 'title' => 'Scene family reference'];
+                    }
                     $generatedWorldMother = (array)($combo['world_mother_selection']['generated_world_mother'] ?? []);
                     $missingWorldMother = (array)($combo['world_mother_selection']['missing_world_mother'] ?? []);
                     $isGeneratedWorldMother = !empty($generatedWorldMother);
                     $isMissingWorldMother = !empty($missingWorldMother);
                     $currentVariantOffset = max(0, (int)($combo['world_mother_variant_offset'] ?? ($selectedWorldMotherVariants[$idx] ?? 0)));
-                    $refreshVariantOffsets = [];
-                    foreach ($combinations as $otherComboForVariantUrl) {
-                        $otherIndexForVariantUrl = (int)($otherComboForVariantUrl['combination_index'] ?? 0);
-                        if ($otherIndexForVariantUrl > 0) {
-                            $refreshVariantOffsets[$otherIndexForVariantUrl] = max(0, (int)($otherComboForVariantUrl['world_mother_variant_offset'] ?? ($selectedWorldMotherVariants[$otherIndexForVariantUrl] ?? 0)));
-                        }
-                    }
-                    $refreshVariantOffsets[$idx] = $currentVariantOffset + 1;
-                    $refreshParams = [
-                        'id' => (int)$id,
-                        'board' => (int)$sceneBoardIndex,
-                        'world_mother_category' => $selectedWorldMotherCategory,
-                        'slot' => [],
-                        'world_variant' => [],
-                    ];
-                    foreach ($combinations as $otherComboForUrl) {
-                        $otherIndexForUrl = (int)($otherComboForUrl['combination_index'] ?? 0);
-                        if ($otherIndexForUrl > 0) {
-                            $refreshParams['slot'][$otherIndexForUrl] = (string)($otherComboForUrl['selected_camera_slot_id'] ?? '');
-                        }
-                    }
-                    foreach ($refreshVariantOffsets as $variantIndex => $variantOffset) {
-                        if ((int)$variantIndex > 0 && (int)$variantOffset > 0) {
-                            $refreshParams['world_variant'][(int)$variantIndex] = (int)$variantOffset;
-                        }
-                    }
-                    $refreshUrl = 'mockup_combinations_review.php?' . http_build_query($refreshParams);
-                    $variantBaseParams = $refreshParams;
-                    unset($variantBaseParams['world_variant'][$idx]);
-                    $selectedWorldImagePath = (string)$combo['world_mother_image_path'];
+                    $referencePoolCount = count($selectedWorldMotherClientPool);
+                    $pairOptionCount = count((array)($selectedWorldMotherClientPairOptions[$comboBoardIndex][$idx] ?? []));
+                    $currentReferencePaths = array_values(array_filter(array_map(
+                        static fn (array $reference): string => (string)($reference['relative_path'] ?? ''),
+                        array_slice((array)($combo['world_mother_reference_images'] ?? []), 0, 2)
+                    )));
                     $displayCameraName = trim((string)($combo['camera_slot_name'] ?? ''));
                     if ($displayCameraName === '') {
                         $displayCameraName = get_friendly_camera_name((string)($combo['selected_camera_slot_id'] ?? ''));
@@ -2285,15 +2363,21 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
                     }
                     $cameraVariantLabel = trim((string)($combo['camera_slot_variant_label'] ?? ''));
                     if ($cameraVariantLabel === '') {
-                        $cameraVariantLabel = 'Set ' . $idx;
+                        $cameraVariantLabel = 'View ' . $idx;
                     }
                     ?>
-                    <?php if ($cameraGroupKey !== $lastCameraGroupKey): ?>
-                        <div class="review-group-title"><?= h($cameraGroupName) ?></div>
-                        <?php $lastCameraGroupKey = $cameraGroupKey; ?>
-                    <?php endif; ?>
-                    <?php $columnClass = (($idx - 1) % 3) === 0 ? 'edge-left' : (((($idx - 1) % 3) === 2) ? 'edge-right' : ''); ?>
-                    <details class="combination-card <?= h($columnClass) ?>" data-combination-card data-combination-row="<?= h($cameraGroupKey) ?>" <?= $idx <= 3 ? 'open' : '' ?>>
+                    <?php $columnClass = $idx === 1 ? 'edge-left' : ($idx === 4 ? 'edge-right' : ''); ?>
+                    <details
+                        class="combination-card <?= h($columnClass) ?>"
+                        data-combination-card
+                        data-combination-row="<?= (int)$comboBoardIndex ?>:<?= h($cameraGroupKey) ?>"
+                        data-combination-index="<?= $idx ?>"
+                        data-scene-board="<?= (int)$comboBoardIndex ?>"
+                        data-world-mother-variant="<?= $currentVariantOffset ?>"
+                        data-scene-reference-paths="<?= h((string)json_encode($currentReferencePaths, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) ?>"
+                        <?= $comboBoardIndex !== $sceneBoardIndex ? 'hidden' : '' ?>
+                        open
+                    >
                         <summary class="combination-head">
                             <div class="combination-title">
                                 <span class="badge"><?= h($cameraVariantLabel) ?></span>
@@ -2303,71 +2387,19 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
 
                         <div class="combination-body">
                             <div class="thumb-row">
-                                <div class="thumb-box root-reference-thumb">
-                                    <?php if ($rootUrl !== ''): ?>
-                                        <img src="<?= h($rootUrl) ?>" alt="">
-                                    <?php endif; ?>
-                                    <?php if (count($rootViewOptions) > 1): ?>
-                                        <div class="root-thumb-picker" aria-label="Choose root view">
-                                            <?php foreach ($rootViewOptions as $rootViewOption): ?>
-                                                <?php
-                                                $rootViewFile = (string)$rootViewOption['file_name'];
-                                                $isActiveRootView = $rootViewFile === $currentRootFile;
-                                                ?>
-                                                <form method="post" action="mockup_combinations_review.php?id=<?= (int)$id ?>">
-                                                    <input type="hidden" name="action" value="choose_scene_root_view">
-                                                    <input type="hidden" name="board" value="<?= (int)$sceneBoardIndex ?>">
-                                                    <input type="hidden" name="world_mother_category" value="<?= h($selectedWorldMotherCategory) ?>">
-                                                    <input type="hidden" name="root_file" value="<?= h($rootViewFile) ?>">
-                                                    <button
-                                                        class="root-thumb-option <?= $isActiveRootView ? 'active' : '' ?>"
-                                                        type="submit"
-                                                        title="<?= h(scene_root_view_label((string)$rootViewOption['view_type'])) ?>"
-                                                        aria-label="Use <?= h(scene_root_view_label((string)$rootViewOption['view_type'])) ?>"
-                                                        <?= $isActiveRootView ? 'disabled' : '' ?>
-                                                    >
-                                                        <img src="<?= h('media.php?file=' . rawurlencode($rootViewFile)) ?>" alt="">
-                                                        <span><?= h(scene_root_view_label((string)$rootViewOption['view_type'])) ?></span>
-                                                    </button>
-                                                </form>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="combination-plus" aria-label="plus"></div>
-                                <div class="thumb-box scene-reference-thumb">
-                                    <?php if ($worldImageUrl !== ''): ?>
-                                        <img src="<?= h($worldImageUrl) ?>" alt="">
-                                    <?php endif; ?>
-                                    <?php if (count($selectedWorldMotherImages) > 1): ?>
-                                        <div class="scene-thumb-picker" aria-label="Choose scene reference">
-                                            <?php foreach ($selectedWorldMotherImages as $imagePosition => $sceneImage): ?>
-                                                <?php
-                                                $sceneImagePath = (string)($sceneImage['relative_path'] ?? '');
-                                                $sceneImageUrl = world_mother_image_url($sceneImagePath);
-                                                if ($sceneImageUrl === '') {
-                                                    continue;
-                                                }
-                                                $variantUrlParams = $variantBaseParams;
-                                                $variantOffset = variant_offset_for_world_image($idx, (int)$imagePosition, count($selectedWorldMotherImages));
-                                                if ($variantOffset > 0) {
-                                                    $variantUrlParams['world_variant'][$idx] = $variantOffset;
-                                                }
-                                                $variantUrl = 'mockup_combinations_review.php?' . http_build_query($variantUrlParams);
-                                                ?>
-                                                <a
-                                                    class="scene-thumb-option <?= $sceneImagePath === $selectedWorldImagePath ? 'active' : '' ?>"
-                                                    href="<?= h($variantUrl) ?>"
-                                                    title="<?= h((string)($sceneImage['title'] ?? 'Scene reference')) ?>"
-                                                    aria-label="Choose <?= h((string)($sceneImage['title'] ?? 'scene reference')) ?>"
-                                                >
-                                                    <img src="<?= h($sceneImageUrl) ?>" alt="">
-                                                </a>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php endif; ?>
+                                <div class="thumb-box scene-reference-thumb scene-family-reference" aria-label="Scene family references">
+                                    <div class="scene-family-images reference-count-<?= count($worldReferenceImages) ?>" aria-live="polite">
+                                        <?php foreach ($worldReferenceImages as $referenceImage): ?>
+                                            <img src="<?= h((string)$referenceImage['url']) ?>" alt="" title="<?= h((string)$referenceImage['title']) ?>">
+                                        <?php endforeach; ?>
+                                    </div>
                                 </div>
                             </div>
+                            <?php if ($pairOptionCount > 1): ?>
+                                <div class="scene-reference-actions">
+                                    <button class="scene-reference-cycle" type="button" onclick="cycleSceneReferencePair(this)">Try another visual combination</button>
+                                </div>
+                            <?php endif; ?>
 
                             <?php if ($isGeneratedWorldMother): ?>
                                 <div class="auto-world-panel">
@@ -2388,13 +2420,34 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
                                 </div>
                             <?php endif; ?>
 
+                            <?php if ($isAdmin && $referencePoolCount > 1): ?>
+                                <details class="admin-reference-picker">
+                                    <summary>Admin References</summary>
+                                    <div class="admin-reference-grid" aria-label="Choose exact scene reference anchor">
+                                        <?php foreach ($selectedWorldMotherClientPool as $imagePosition => $referenceImage): ?>
+                                            <button
+                                                class="admin-reference-option <?= in_array((string)$referenceImage['relative_path'], $currentReferencePaths, true) ? 'active' : '' ?>"
+                                                type="button"
+                                                data-reference-position="<?= (int)$imagePosition ?>"
+                                                data-reference-path="<?= h((string)$referenceImage['relative_path']) ?>"
+                                                onclick="chooseSceneReference(this)"
+                                                title="<?= h((string)$referenceImage['title']) ?>"
+                                                aria-label="Use <?= h((string)$referenceImage['title']) ?> as the first reference"
+                                            >
+                                                <img src="<?= h((string)$referenceImage['url']) ?>" alt="">
+                                            </button>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </details>
+                            <?php endif; ?>
+
                             <?= AdminSceneEditor::render($user, (string)($combo['selected_camera_slot_id'] ?? ''), 'mockup_combinations_review.php?' . (string)($_SERVER['QUERY_STRING'] ?? ('id=' . (int)$id))) ?>
 
                             <form class="camera-form beta-hidden-stage" method="get" action="mockup_combinations_review.php">
                                 <input type="hidden" name="id" value="<?= (int)$id ?>">
-                                <input type="hidden" name="board" value="<?= (int)$sceneBoardIndex ?>">
+                                <input type="hidden" name="board" value="<?= (int)$comboBoardIndex ?>">
                                 <input type="hidden" name="world_mother_category" value="<?= h($selectedWorldMotherCategory) ?>">
-                                <?php foreach ($combinations as $other): ?>
+                                <?php foreach ((array)($combinationsByBoard[$comboBoardIndex] ?? []) as $other): ?>
                                     <?php if ((int)$other['combination_index'] !== $idx): ?>
                                         <input type="hidden" name="slot[<?= (int)$other['combination_index'] ?>]" value="<?= h($other['selected_camera_slot_id']) ?>">
                                     <?php endif; ?>
@@ -2402,7 +2455,7 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
                                 <label>
                                     <strong style="display:block; font-size:10px; text-transform:uppercase; color:var(--muted); margin-bottom:4px;">Selected Camera Slot</strong>
                                     <select name="slot[<?= $idx ?>]" onchange="this.form.submit()">
-                                        <?php foreach ($cameraSlots as $slot): ?>
+                                        <?php foreach ((array)($cameraSlotsByBoard[$comboBoardIndex] ?? []) as $slot): ?>
                                             <?php $slotId = (string)($slot['slot_id'] ?? ''); ?>
                                             <option value="<?= h($slotId) ?>" <?= $slotId === (string)$combo['selected_camera_slot_id'] ? 'selected' : '' ?>>
                                                 <?= h(get_friendly_camera_name($slotId)) ?>
@@ -2430,10 +2483,10 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
                                 <input
                                     type="hidden"
                                     class="world-mother-scale-input"
-                                    id="world-mother-scale-<?= $idx ?>"
+                                    id="world-mother-scale-<?= (int)$comboBoardIndex ?>-<?= $idx ?>"
                                     value="1.0"
                                 >
-                                <div id="prepare-result-<?= $idx ?>" class="prepare-result"></div>
+                                <div id="prepare-result-<?= (int)$comboBoardIndex ?>-<?= $idx ?>" class="prepare-result"></div>
                                 <button
                                     class="button-link combination-generate-btn"
                                     type="button"
@@ -2443,7 +2496,7 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
                                     data-camera-name="<?= h($displayCameraName) ?>"
                                     data-world-mother-category="<?= h($selectedWorldMotherCategory) ?>"
                                     data-world-mother-variant="<?= $currentVariantOffset ?>"
-                                    data-scene-board="<?= (int)$sceneBoardIndex ?>"
+                                    data-scene-board="<?= (int)$comboBoardIndex ?>"
                                     data-validation-notes="<?= h(implode(' | ', array_map('strval', (array)($combo['validation_notes'] ?? [])))) ?>"
                                     onclick="prepareCombination(this)"
                                     <?= empty($combo['generation_ready']) ? 'disabled' : '' ?>
@@ -2456,6 +2509,7 @@ foreach (scene_root_sibling_candidates($currentRootFile) as $siblingCandidate) {
         </div>
     </main>
 </div>
+<?php include __DIR__ . '/compact_scene_progress_layer.php'; ?>
 
 <div class="generation-overlay" id="generation-overlay" role="status" aria-live="polite" aria-hidden="true">
     <div class="generation-overlay-card">
@@ -2476,9 +2530,20 @@ const GENERATION_PROVIDER = <?= json_encode($selectedGenerationProvider) ?>;
 const GENERATION_PROVIDER_LABEL = GENERATION_PROVIDER === 'openai' ? 'OpenAI' : 'Vertex';
 const SCENE_SELECTION_FLOW = <?= $sceneSelectionFlow ? 'true' : 'false' ?>;
 const SELECTED_SCENE_CATEGORY = <?= json_encode($selectedWorldMotherCategory, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+const CAMERA_BOARD_META = <?= json_encode($cameraBoardMeta, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+let ACTIVE_SCENE_BOARD = <?= (int)$sceneBoardIndex ?>;
+const SCENE_REFERENCE_POOL = <?= json_encode(
+    $selectedWorldMotherClientPool,
+    JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+) ?>;
+const SCENE_REFERENCE_PAIR_OPTIONS = <?= json_encode(
+    $selectedWorldMotherClientPairOptions,
+    JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+) ?>;
 const USER_SCENE_FLOW = <?= $compactSceneFlow ? 'true' : 'false' ?>;
 const USER_SCENE_AUTO_GENERATE = <?= $autoGenerateSceneFlow ? 'true' : 'false' ?>;
 const USER_SCENE_LIMIT = <?= (int)$compactSceneLimit ?>;
+const SCENE_FLOW_JOB = <?= json_encode($sceneFlowJob, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
 const SCENE_RESULTS_URL = <?= json_encode(
     'mockup_combination_results.php?id=' . (int)$id
     . '&board=' . (int)$sceneBoardIndex
@@ -2487,11 +2552,156 @@ const SCENE_RESULTS_URL = <?= json_encode(
     . ($compactSceneFlow ? '&compact=1&scene_limit=' . (int)$compactSceneLimit : ''),
     JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
 ) ?>;
+const SCENE_ACTIVITY_URL = new URL('mockup_generation_activity.php', window.location.href).href;
 const generationOverlay = document.getElementById('generation-overlay');
 const generationOverlayTitle = document.getElementById('generation-overlay-title');
 const generationOverlayMessage = document.getElementById('generation-overlay-message');
 
 let isGenerationRunning = false;
+
+function scenePairOptions(combinationIndex, boardIndex = ACTIVE_SCENE_BOARD) {
+    return SCENE_REFERENCE_PAIR_OPTIONS[boardIndex]?.[combinationIndex] || [];
+}
+
+function normalizedSceneVariantOffset(offset, combinationIndex, boardIndex = ACTIVE_SCENE_BOARD) {
+    const count = scenePairOptions(combinationIndex, boardIndex).length;
+    if (count < 1) return 0;
+    return ((Number(offset) || 0) % count + count) % count;
+}
+
+function updateSceneVariantUrl(combinationIndex, offset, boardIndex = ACTIVE_SCENE_BOARD) {
+    if (boardIndex !== ACTIVE_SCENE_BOARD) return;
+    const url = new URL(window.location.href);
+    const key = 'world_variant[' + combinationIndex + ']';
+    if (offset > 0) {
+        url.searchParams.set(key, String(offset));
+    } else {
+        url.searchParams.delete(key);
+    }
+    window.history.replaceState(window.history.state, '', url);
+}
+
+function applySceneReferenceVariant(card, requestedOffset) {
+    if (!card) return;
+    const combinationIndex = Number(card.getAttribute('data-combination-index')) || 1;
+    const boardIndex = Number(card.getAttribute('data-scene-board')) || ACTIVE_SCENE_BOARD;
+    const options = scenePairOptions(combinationIndex, boardIndex);
+    if (options.length < 1) return;
+    const offset = normalizedSceneVariantOffset(requestedOffset, combinationIndex, boardIndex);
+    const references = options[offset] || [];
+    const referenceCount = references.length;
+
+    const imageContainer = card.querySelector('.scene-family-images');
+    if (imageContainer) {
+        imageContainer.classList.add('is-changing');
+        imageContainer.replaceChildren(...references.map(reference => {
+            const image = document.createElement('img');
+            image.src = reference.url;
+            image.alt = '';
+            image.title = reference.title || 'Scene family reference';
+            return image;
+        }));
+        imageContainer.classList.remove('reference-count-1', 'reference-count-2');
+        imageContainer.classList.add('reference-count-' + referenceCount);
+        window.requestAnimationFrame(() => imageContainer.classList.remove('is-changing'));
+    }
+
+    card.setAttribute('data-world-mother-variant', String(offset));
+    card.setAttribute('data-scene-reference-paths', JSON.stringify(references.map(reference => reference.relative_path)));
+    const generationButton = card.querySelector('.combination-generate-btn');
+    if (generationButton) {
+        generationButton.setAttribute('data-world-mother-variant', String(offset));
+    }
+    card.querySelectorAll('.admin-reference-option').forEach(option => {
+        option.classList.toggle('active', references.some(reference => reference.relative_path === option.getAttribute('data-reference-path')));
+    });
+    updateSceneVariantUrl(combinationIndex, offset, boardIndex);
+}
+
+function cycleSceneReferencePair(button) {
+    const card = button.closest('[data-combination-card]');
+    if (!card) return;
+    const combinationIndex = Number(card.getAttribute('data-combination-index')) || 1;
+    const boardIndex = Number(card.getAttribute('data-scene-board')) || ACTIVE_SCENE_BOARD;
+    const options = scenePairOptions(combinationIndex, boardIndex);
+    if (options.length < 2) return;
+    const currentOffset = Number(card.getAttribute('data-world-mother-variant')) || 0;
+    const otherSelections = Array.from(document.querySelectorAll('[data-combination-card]'))
+        .filter(candidate => candidate !== card && Number(candidate.getAttribute('data-scene-board')) === boardIndex)
+        .map(candidate => {
+            try { return JSON.parse(candidate.getAttribute('data-scene-reference-paths') || '[]'); }
+            catch (error) { return []; }
+        });
+    let bestOffset = normalizedSceneVariantOffset(currentOffset + 1, combinationIndex, boardIndex);
+    let bestConflict = Number.POSITIVE_INFINITY;
+    for (let step = 1; step < options.length; step++) {
+        const candidateOffset = normalizedSceneVariantOffset(currentOffset + step, combinationIndex, boardIndex);
+        const candidatePaths = options[candidateOffset].map(reference => reference.relative_path).sort();
+        let conflict = 0;
+        otherSelections.forEach(paths => {
+            const sortedPaths = paths.slice().sort();
+            if (candidatePaths.length === sortedPaths.length && candidatePaths.every((path, index) => path === sortedPaths[index])) {
+                conflict += 100;
+            }
+            conflict += candidatePaths.filter(path => paths.includes(path)).length * 10;
+        });
+        if (conflict < bestConflict) {
+            bestConflict = conflict;
+            bestOffset = candidateOffset;
+        }
+        if (conflict === 0) break;
+    }
+    applySceneReferenceVariant(card, bestOffset);
+}
+
+function chooseSceneReference(button) {
+    const card = button.closest('[data-combination-card]');
+    if (!card) return;
+    const combinationIndex = Number(card.getAttribute('data-combination-index')) || 1;
+    const boardIndex = Number(card.getAttribute('data-scene-board')) || ACTIVE_SCENE_BOARD;
+    const targetPath = button.getAttribute('data-reference-path') || '';
+    const options = scenePairOptions(combinationIndex, boardIndex);
+    const offset = options.findIndex(pair => pair.some(reference => reference.relative_path === targetPath));
+    if (offset >= 0) applySceneReferenceVariant(card, offset);
+}
+
+function switchCameraBoard(boardIndex, trigger = null) {
+    boardIndex = Math.max(1, Math.min(3, Number(boardIndex) || 1));
+    ACTIVE_SCENE_BOARD = boardIndex;
+    document.querySelectorAll('[data-combination-card]').forEach(card => {
+        card.hidden = Number(card.getAttribute('data-scene-board')) !== boardIndex;
+    });
+    document.querySelectorAll('[data-camera-board-tab]').forEach(tab => {
+        const active = Number(tab.getAttribute('data-camera-board-tab')) === boardIndex;
+        tab.classList.toggle('active', active);
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+
+    const meta = CAMERA_BOARD_META[boardIndex] || {};
+    const summary = document.getElementById('camera-board-summary');
+    if (summary) summary.textContent = 'Showing 4 of 12 available cameras · ' + (meta.name || ('Set ' + boardIndex));
+    const generateButton = document.getElementById('generate-all-btn');
+    if (generateButton && !USER_SCENE_FLOW) generateButton.textContent = 'Generate These 4 Views';
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('board', String(boardIndex));
+    Array.from(url.searchParams.keys()).forEach(key => {
+        if (key.startsWith('world_variant[')) url.searchParams.delete(key);
+    });
+    document.querySelectorAll('[data-combination-card][data-scene-board="' + boardIndex + '"]').forEach(card => {
+        const combinationIndex = Number(card.getAttribute('data-combination-index')) || 1;
+        const offset = Number(card.getAttribute('data-world-mother-variant')) || 0;
+        if (offset > 0) url.searchParams.set('world_variant[' + combinationIndex + ']', String(offset));
+    });
+    window.history.replaceState(window.history.state, '', url);
+    document.querySelectorAll('.scene-direction-card').forEach(card => {
+        const href = new URL(card.href, window.location.href);
+        href.searchParams.set('board', String(boardIndex));
+        card.href = href.toString();
+    });
+    document.title = 'Explore Scenes · ' + (meta.name || ('Set ' + boardIndex)) + ' - Artwork Mockups';
+    trigger?.focus({ preventScroll: true });
+}
 
 window.addEventListener('beforeunload', function (e) {
     if (isGenerationRunning) {
@@ -2542,7 +2752,14 @@ function hideGenerationOverlay() {
     toggleOverlayMaximize();
 }
 
-function prepareCombination(btn, skipConfirm = false) {
+function createGenerationRunId() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return window.crypto.randomUUID();
+    }
+    return 'run-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+}
+
+function prepareCombination(btn, skipConfirm = false, generationRunId = '') {
     const cameraName = btn.getAttribute('data-camera-name') || 'selected camera';
     const cameraSlot = btn.getAttribute('data-camera-slot') || '';
     const label = cameraName + (cameraSlot ? ' [' + cameraSlot + ']' : '');
@@ -2553,14 +2770,13 @@ function prepareCombination(btn, skipConfirm = false) {
         showGenerationOverlay('Generating scene', 'Working on ' + cameraName + '. This can take a moment.');
         isGenerationRunning = true;
     }
-    const generation = runCombinationGeneration(btn);
+    const generation = runCombinationGeneration(btn, generationRunId || createGenerationRunId());
     if (skipConfirm) {
         return generation;
     }
 
     return generation.then(result => {
-        const index = btn.getAttribute('data-index');
-        const status = document.getElementById('prepare-result-' + index);
+        const status = btn.closest('[data-combination-card]')?.querySelector('.prepare-result');
         btn.textContent = 'Working in background';
         if (status) {
             status.textContent = 'Task registered. You can continue through the app; a notice will appear when the result is ready.';
@@ -2569,9 +2785,10 @@ function prepareCombination(btn, skipConfirm = false) {
     });
 }
 
-function runCombinationGeneration(btn) {
+function runCombinationGeneration(btn, generationRunId = '') {
     const index = btn.getAttribute('data-index');
-    const status = document.getElementById('prepare-result-' + index);
+    const card = btn.closest('[data-combination-card]');
+    const status = card?.querySelector('.prepare-result');
     const formData = new FormData();
     formData.append('artwork_id', btn.getAttribute('data-artwork-id'));
     formData.append('combination_index', index);
@@ -2580,7 +2797,13 @@ function runCombinationGeneration(btn) {
     formData.append('world_mother_variant_offset', btn.getAttribute('data-world-mother-variant') || '0');
     formData.append('board', btn.getAttribute('data-scene-board') || '1');
     formData.append('generation_provider', GENERATION_PROVIDER);
-    const scaleInput = document.getElementById('world-mother-scale-' + index);
+    if (generationRunId !== '') {
+        formData.append('generation_run_id', generationRunId);
+    }
+    if (SCENE_FLOW_JOB !== '') {
+        formData.append('scene_flow_job', SCENE_FLOW_JOB);
+    }
+    const scaleInput = card?.querySelector('.world-mother-scale-input');
     if (scaleInput && scaleInput.value) {
         formData.append('world_mother_scale', scaleInput.value);
     }
@@ -2588,7 +2811,7 @@ function runCombinationGeneration(btn) {
     btn.disabled = true;
     const originalText = btn.textContent;
     btn.textContent = 'Generating...';
-    status.textContent = 'Generating image from root artwork, world mother reference, selected camera, and ADMIN prompt.';
+    if (status) status.textContent = 'Generating image from root artwork, world mother reference, selected camera, and ADMIN prompt.';
     console.info('[scene-generation] request start', { index: index, camera: btn.getAttribute('data-camera-name') || '', provider: GENERATION_PROVIDER });
 
     return fetch('generate_mockup_combination.php', { method: 'POST', body: formData })
@@ -2603,7 +2826,9 @@ function runCombinationGeneration(btn) {
                     const jobId = result.body.job_id;
                     status.textContent = 'Queued. It will continue if you leave this page.';
                     btn.textContent = 'In background';
-                    window.artworkGenerationTracker?.trackJobs([jobId]);
+                    if (!btn.dataset.batchGeneration) {
+                        window.artworkGenerationTracker?.trackJobs([jobId]);
+                    }
                     console.info('[scene-generation] request queued', { index: index, jobId: jobId });
                     return result.body;
                 } else {
@@ -2649,11 +2874,16 @@ function startCompactSceneFlow(btn) {
         return;
     }
 
-    if (btn) btn.disabled = true;
-    window.location.href = 'mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$sceneBoardIndex ?>'
+    const target = 'mockup_combinations_review.php?id=<?= (int)$id ?>&board=' + ACTIVE_SCENE_BOARD
         + '&world_mother_category=' + encodeURIComponent(slug)
         + '&generation_provider=' + encodeURIComponent(GENERATION_PROVIDER)
         + '&auto_generate=1&compact=1&scene_limit=' + USER_SCENE_LIMIT;
+    if (typeof window.openArtworkSceneProgress === 'function') {
+        window.openArtworkSceneProgress(target);
+        return;
+    }
+    if (btn) btn.disabled = true;
+    window.location.href = target;
 }
 
 function setCompactViewState(index, state, label) {
@@ -2673,6 +2903,10 @@ const compactSceneTips = [
     'You can create 4 more views after the first set is ready.'
 ];
 let compactSceneTipIndex = 0;
+let compactScenePollTimer = 0;
+let compactSceneJobs = [];
+let compactSceneRegistrationFailures = 0;
+let compactSceneImmediateReady = 0;
 
 function rotateCompactSceneTip() {
     const target = document.getElementById('compactSceneTip');
@@ -2681,13 +2915,132 @@ function rotateCompactSceneTip() {
     compactSceneTipIndex++;
 }
 
+function compactSceneCountLabel(count, singular, plural) {
+    return count + ' ' + (count === 1 ? singular : plural);
+}
+
+function showCompactSceneBackgroundChoice(jobs, registrationFailures, immediateReady) {
+    if (!USER_SCENE_FLOW) return;
+    compactSceneJobs = jobs.slice();
+    compactSceneRegistrationFailures = registrationFailures;
+    compactSceneImmediateReady = immediateReady;
+
+    const title = document.getElementById('compactSceneTitle');
+    const message = document.getElementById('compactSceneMessage');
+    const actions = document.getElementById('compactSceneActions');
+    if (title) {
+        title.textContent = compactSceneCountLabel(jobs.length, 'scene is', 'scenes are') + ' being created';
+    }
+    if (message) {
+        message.textContent = registrationFailures > 0
+            ? compactSceneCountLabel(registrationFailures, 'scene could', 'scenes could') + ' not be registered. The others will continue in the background.'
+            : 'They will continue in the background. You do not need to keep this page open.';
+    }
+    if (actions) actions.hidden = false;
+    pollCompactSceneBatch();
+}
+
+function finishCompactSceneBatch(readyCount, failedCount) {
+    window.clearTimeout(compactScenePollTimer);
+    const title = document.getElementById('compactSceneTitle');
+    const message = document.getElementById('compactSceneMessage');
+    const spinner = document.getElementById('compactSceneSpinner');
+    const actions = document.getElementById('compactSceneActions');
+
+    if (spinner) spinner.hidden = true;
+    if (actions) actions.hidden = false;
+    if (title) {
+        title.textContent = readyCount > 0
+            ? compactSceneCountLabel(readyCount, 'scene is ready', 'scenes are ready')
+            : 'The scenes could not be created';
+    }
+    if (message) {
+        message.textContent = failedCount > 0
+            ? compactSceneCountLabel(failedCount, 'scene could', 'scenes could') + ' not be completed. You can review the available results.'
+            : 'The complete set is ready to review.';
+    }
+    if (window.parent !== window) {
+        window.parent.postMessage({
+            type: 'artworkmockups:scene-progress-complete',
+            readyCount: readyCount,
+            failedCount: failedCount
+        }, window.location.origin);
+    }
+}
+
+function updateCompactSceneJob(job, item) {
+    if (!item) return false;
+    const status = String(item.status || '');
+    if (status === 'done') {
+        setCompactViewState(job.viewIndex, 'ready', 'Ready');
+        return true;
+    }
+    if (status === 'error' || status === 'failed_enqueue') {
+        setCompactViewState(job.viewIndex, 'failed', 'Failed');
+        return true;
+    }
+    if (status === 'processing') {
+        setCompactViewState(job.viewIndex, 'creating', 'Creating');
+    } else {
+        setCompactViewState(job.viewIndex, 'queued', 'In background');
+    }
+    return false;
+}
+
+async function pollCompactSceneBatch() {
+    if (!USER_SCENE_FLOW || compactSceneJobs.length === 0) return;
+    try {
+        const response = await fetch(SCENE_ACTIVITY_URL, {
+            headers: { Accept: 'application/json' },
+            cache: 'no-store'
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) throw new Error(data.error || 'Could not load scene progress.');
+
+        const items = Array.isArray(data.items) ? data.items : [];
+        const byId = new Map(items.map(item => [Number(item.id), item]));
+        let terminalCount = 0;
+        let readyCount = compactSceneImmediateReady;
+        let failedCount = compactSceneRegistrationFailures;
+        compactSceneJobs.forEach(job => {
+            const item = byId.get(Number(job.jobId));
+            if (!updateCompactSceneJob(job, item)) return;
+            terminalCount++;
+            if (String(item.status || '') === 'done') readyCount++;
+            else failedCount++;
+        });
+
+        if (terminalCount === compactSceneJobs.length) {
+            finishCompactSceneBatch(readyCount, failedCount);
+            return;
+        }
+    } catch (error) {
+        console.warn('[scene-generation] progress check failed', error);
+    }
+    window.clearTimeout(compactScenePollTimer);
+    compactScenePollTimer = window.setTimeout(pollCompactSceneBatch, 3000);
+}
+
+document.getElementById('compactSceneContinue')?.addEventListener('click', function () {
+    if (window.parent !== window) {
+        window.parent.postMessage({ type: 'artworkmockups:hide-scene-progress' }, window.location.origin);
+        return;
+    }
+    if (window.history.length > 1) {
+        window.history.back();
+        return;
+    }
+    window.location.href = 'root_album.php';
+});
+
 async function generateAllCombinations(btn) {
-    let buttons = Array.from(document.querySelectorAll('button[data-index][data-artwork-id][data-camera-slot]:not([disabled])'));
+    const activeBoardSelector = '[data-combination-card][data-scene-board="' + ACTIVE_SCENE_BOARD + '"] ';
+    let buttons = Array.from(document.querySelectorAll(activeBoardSelector + 'button[data-index][data-artwork-id][data-camera-slot]:not([disabled])'));
     if (USER_SCENE_FLOW) {
         buttons = buttons.slice(0, USER_SCENE_LIMIT);
     }
     if (buttons.length === 0) {
-        const disabled = Array.from(document.querySelectorAll('button[data-index][data-artwork-id][data-camera-slot][disabled]'));
+        const disabled = Array.from(document.querySelectorAll(activeBoardSelector + 'button[data-index][data-artwork-id][data-camera-slot][disabled]'));
         const reasons = disabled
             .map(button => button.getAttribute('data-validation-notes') || '')
             .filter(Boolean)
@@ -2711,6 +3064,8 @@ async function generateAllCombinations(btn) {
     let successCount = 0;
     let failCount = 0;
     const failures = [];
+    const compactBatchJobs = [];
+    const generationRunId = createGenerationRunId();
 
     isGenerationRunning = true;
 
@@ -2741,8 +3096,9 @@ async function generateAllCombinations(btn) {
                 'Registering tasks. Queued ' + completedCount + ' of ' + buttons.length + '.'
             );
             try {
+                let generationResult;
                 try {
-                    await prepareCombination(comboBtn, true);
+                    generationResult = await prepareCombination(comboBtn, true, generationRunId);
                 } catch (err) {
                     if (!isRetryableGenerationError(err)) {
                         throw err;
@@ -2757,10 +3113,15 @@ async function generateAllCombinations(btn) {
                     setCompactViewState(compactViewIndex, 'retrying', 'Retrying');
                     await waitForRetry(retryDelay);
                     setCompactViewState(compactViewIndex, 'creating', 'Creating');
-                    await prepareCombination(comboBtn, true);
+                    generationResult = await prepareCombination(comboBtn, true, generationRunId);
                 }
                 successCount++;
-                setCompactViewState(compactViewIndex, 'queued', 'In background');
+                if (generationResult?.enqueued && generationResult.job_id) {
+                    compactBatchJobs.push({ jobId: Number(generationResult.job_id), viewIndex: compactViewIndex });
+                    setCompactViewState(compactViewIndex, 'queued', 'In background');
+                } else {
+                    setCompactViewState(compactViewIndex, 'ready', 'Ready');
+                }
             } catch (err) {
                 failCount++;
                 setCompactViewState(compactViewIndex, 'failed', 'Failed');
@@ -2788,8 +3149,13 @@ async function generateAllCombinations(btn) {
     isGenerationRunning = false;
     hideGenerationOverlay();
 
+    const compactBatchJobIds = compactBatchJobs.map(job => job.jobId);
+    if (compactBatchJobIds.length > 0) {
+        window.artworkGenerationTracker?.trackJobs(compactBatchJobIds);
+    }
+
     if (successCount > 0) {
-        if (failures.length > 0) {
+        if (failures.length > 0 && !USER_SCENE_FLOW) {
             let summary = (USER_SCENE_FLOW
                 ? successCount + ' scenes registered. Failed to register: ' + failCount + '.'
                 : 'Tasks registered: ' + successCount + ', failed to register: ' + failCount + '.')
@@ -2801,6 +3167,13 @@ async function generateAllCombinations(btn) {
             alert(summary);
         }
         btn.textContent = successCount === 1 ? '1 TASK IN BACKGROUND' : successCount + ' TASKS IN BACKGROUND';
+        if (USER_SCENE_FLOW) {
+            if (compactBatchJobs.length > 0) {
+                showCompactSceneBackgroundChoice(compactBatchJobs, failCount, successCount - compactBatchJobs.length);
+            } else {
+                finishCompactSceneBatch(successCount, failCount);
+            }
+        }
         window.artworkGenerationTracker?.refresh(100);
         window.setTimeout(() => {
             btn.disabled = false;
@@ -2837,7 +3210,7 @@ if (sceneSelect) {
     sceneSelect.addEventListener('change', () => {
         const slug = sceneSelect.value || '';
         if (slug !== '') {
-            window.location.href = 'mockup_combinations_review.php?id=<?= (int)$id ?>&board=<?= (int)$sceneBoardIndex ?>&world_mother_category='
+            window.location.href = 'mockup_combinations_review.php?id=<?= (int)$id ?>&board=' + ACTIVE_SCENE_BOARD + '&world_mother_category='
                 + encodeURIComponent(slug)
                 + '&generation_provider=' + encodeURIComponent(GENERATION_PROVIDER)
                 + (SCENE_SELECTION_FLOW ? '&scene_select=1&scene_limit=' + USER_SCENE_LIMIT : '');

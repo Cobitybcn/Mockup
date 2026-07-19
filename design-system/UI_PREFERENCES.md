@@ -1,50 +1,25 @@
-\# UI Preferences
+# UI Preferences
 
+These inherited preferences remain part of the Visual Constitution and apply when a more specific approved reference does not provide direction.
 
+## Forms
 
-Estas preferencias deben aplicarse por defecto cuando no exista una indicación diferente.
+- Writing areas should be broad and comfortable.
+- Avoid text areas that force immediate scrolling.
+- Prioritize comfort during extended studio sessions.
 
+## Panels
 
+- Keep secondary expandable panels folded by default when their content is not immediately required.
+- Show essential visual material first.
+- Reduce visual noise.
 
-\## Formularios
+## Typography
 
+- Use comfortable text for reading and writing.
+- Avoid small typography that strains sustained use.
+- Keep operational text discreet without sacrificing readability.
 
+## Principle
 
-\- Las áreas de texto deben ser amplias y cómodas para escribir.
-
-\- Evitar textareas de pocas líneas.
-
-\- La altura inicial debe permitir escribir sin necesidad de desplazarse inmediatamente.
-
-
-
-\## Paneles
-
-
-
-\- Los paneles desplegables deben permanecer plegados por defecto cuando su contenido no sea necesario inmediatamente.
-
-\- Mostrar primero el contenido esencial.
-
-\- Reducir el ruido visual.
-
-
-
-\## Tipografía
-
-
-
-\- Utilizar un tamaño de texto cómodo para lectura y escritura.
-
-\- Aproximar el tamaño utilizado por ChatGPT para el contenido principal.
-
-\- Evitar tipografías pequeñas que obliguen a forzar la vista.
-
-
-
-\## Filosofía
-
-
-
-Priorizar la comodidad durante sesiones largas de trabajo sobre la densidad de información.
-
+Prioritize long-session comfort over information density.

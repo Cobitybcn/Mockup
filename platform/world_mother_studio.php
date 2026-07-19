@@ -13,14 +13,15 @@ if (!function_exists('h')) {
     }
 }
 
-function wms_media_url(string $path): string
+function wms_media_url(string $path, int $width = 640): string
 {
     $relativePath = wms_storage_relative_path($path);
     if ($relativePath === '') {
         return '';
     }
 
-    return 'world_mother_media.php?file=' . rawurlencode($relativePath) . '&thumb=1&w=640';
+    $width = max(240, min(1200, $width));
+    return 'world_mother_media.php?file=' . rawurlencode($relativePath) . '&thumb=1&w=' . $width;
 }
 
 function wms_storage_relative_path(string $path): string
@@ -130,6 +131,8 @@ function wms_upload_files(array $files): array
 
 $library = new WorldMotherLibrary();
 $generator = new WorldMotherGenerator($library);
+$sceneRanking = new SceneRankingService(Database::connection());
+$sceneDiversity = new SceneReferenceDiversityService(Database::connection());
 $error = '';
 $notice = (string)($_SESSION['world_mother_studio_notice'] ?? '');
 unset($_SESSION['world_mother_studio_notice']);
@@ -146,7 +149,7 @@ $generated = null;
 
 try {
     $action = trim((string)($_POST['action'] ?? ''));
-    $adminActions = ['create_category', 'rename_category', 'merge_category', 'delete_category', 'rebuild_index', 'upload_variant'];
+    $adminActions = ['create_category', 'rename_category', 'merge_category', 'delete_category', 'rebuild_index', 'upload_variant', 'update_ranking', 'update_similarity_groups'];
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, $adminActions, true)) {
         if (!Auth::isAdmin($user)) {
             throw new RuntimeException('Only an administrator can manage the scene library.');
@@ -155,20 +158,50 @@ try {
             throw new RuntimeException('The scene management session expired. Reload the page and try again.');
         }
 
-        if ($action === 'create_category') {
+        if ($action === 'update_similarity_groups') {
+            $sourceCategory = trim((string)($_POST['source_category'] ?? ''));
+            $sceneImages = $library->imagesForCategory($sourceCategory);
+            if (!$sceneImages) {
+                throw new RuntimeException('The selected scene has no references to organize.');
+            }
+            $referenceKeys = array_values(array_map('strval', (array)($_POST['reference_key'] ?? [])));
+            $similarityGroups = array_values(array_map('strval', (array)($_POST['similarity_group'] ?? [])));
+            $groupsByReferenceKey = [];
+            foreach ($referenceKeys as $position => $referenceKey) {
+                $groupsByReferenceKey[$referenceKey] = (string)($similarityGroups[$position] ?? '');
+            }
+            $updatedCount = $sceneDiversity->updateSimilarityGroups($sceneImages, $groupsByReferenceKey);
+            $notice = sprintf('Reference diversity updated for %d images in %s.', $updatedCount, $sourceCategory);
+        } elseif ($action === 'update_ranking') {
+            $updatedRanking = $sceneRanking->updateProfile(
+                (string)($_POST['source_category'] ?? ''),
+                (int)($_POST['featured_score'] ?? 0),
+                (string)($_POST['featured_until'] ?? ''),
+                (int)($_POST['editorial_score'] ?? 50)
+            );
+            $notice = sprintf(
+                'Scene ranking updated: featured %d, editorial %d.',
+                (int)($updatedRanking['featured_score'] ?? 0),
+                (int)($updatedRanking['editorial_score'] ?? 50)
+            );
+        } elseif ($action === 'create_category') {
             $createdCategory = $library->createCategory((string)($_POST['category_name'] ?? ''));
             $notice = 'Scene created: ' . (string)($createdCategory['category_name'] ?? $createdCategory['category_slug'] ?? '');
         } elseif ($action === 'rename_category') {
+            $sourceCategory = (string)($_POST['source_category'] ?? '');
             $renamedCategory = $library->renameCategory(
-                (string)($_POST['source_category'] ?? ''),
+                $sourceCategory,
                 (string)($_POST['new_category_name'] ?? '')
             );
+            $sceneRanking->renameCategory($sourceCategory, (string)($renamedCategory['category_slug'] ?? ''));
+            $sceneDiversity->renameCategory($sourceCategory, (string)($renamedCategory['category_slug'] ?? ''));
             $notice = 'Scene renamed to ' . (string)($renamedCategory['category_name'] ?? $renamedCategory['category_slug'] ?? '') . '.';
         } elseif ($action === 'merge_category') {
             $merge = $library->mergeCategory(
                 (string)($_POST['source_category'] ?? ''),
                 (string)($_POST['target_category'] ?? '')
             );
+            $sceneRanking->mergeCategory((string)($merge['source_slug'] ?? ''), (string)($merge['target_slug'] ?? ''));
             $notice = sprintf(
                 'Scenes unified: %d images moved to %s%s.',
                 (int)($merge['moved_count'] ?? 0),
@@ -180,6 +213,8 @@ try {
                 throw new RuntimeException('Explicit deletion confirmation is required.');
             }
             $deleted = $library->deleteCategory((string)($_POST['source_category'] ?? ''));
+            $sceneRanking->deleteCategory((string)($deleted['category_slug'] ?? ''));
+            $sceneDiversity->deleteCategory((string)($deleted['category_slug'] ?? ''));
             $notice = sprintf(
                 'Scene deleted: %s (%d images removed).',
                 (string)($deleted['category_slug'] ?? ''),
@@ -311,7 +346,7 @@ try {
     }
 }
 
-$categories = $library->categories();
+$categories = $sceneRanking->sort($sceneRanking->enrich($library->categories()), 'recommended');
 $canManageScenes = Auth::isAdmin($user);
 $sceneCards = [];
 foreach ($categories as $category) {
@@ -323,6 +358,7 @@ foreach ($categories as $category) {
     $sceneCards[] = [
         'category' => $category,
         'images' => $images,
+        'similarity_groups' => $sceneDiversity->manualGroupsForImages($images),
     ];
 }
 $totalSceneVariants = array_sum(array_map(
@@ -358,7 +394,7 @@ $creatorOpen = is_array($analysis)
         .scene-library-heading {
             display:flex;
             justify-content:space-between;
-            align-items:end;
+            align-items:flex-end;
             gap:22px;
             padding-bottom:18px;
             margin-bottom:18px;
@@ -375,9 +411,13 @@ $creatorOpen = is_array($analysis)
         }
         .scene-library-heading h2 { margin:0; font-size:28px; }
         .scene-library-heading p { margin:5px 0 0; color:var(--muted); font-size:13px; }
-        .scene-library-search { display:grid; gap:6px; width:min(280px, 100%); }
-        .scene-library-search span { color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
-        .scene-library-search input { width:100%; height:42px; padding:9px 12px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); color:var(--ink); }
+        .scene-library-controls { display:flex; justify-content:flex-end; align-items:flex-end; gap:10px; flex-wrap:wrap; flex:1 1 680px; }
+        .scene-library-control { display:grid; gap:6px; width:180px; }
+        .scene-library-control.scene-library-search { width:min(280px, 100%); }
+        .scene-library-control span { color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+        .scene-library-control input,
+        .scene-library-control select { width:100%; height:42px; padding:9px 12px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); color:var(--ink); }
+        .scene-library-result { min-width:78px; height:42px; display:flex; align-items:center; justify-content:flex-end; color:var(--muted); font-size:11px; white-space:nowrap; }
         .scene-card-grid { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:24px; align-items:start; }
         .scene-card {
             border: 1px solid var(--line);
@@ -395,8 +435,9 @@ $creatorOpen = is_array($analysis)
         }
         .scene-card h3 { margin:0; font-family:var(--font-serif), Georgia, serif; font-size:18px; font-weight: 600; line-height:1.25; color: var(--ink); }
         .scene-card code { color:var(--muted); font-size:11px; word-break:break-word; }
-        .scene-card-thumbs { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:5px; min-height:72px; }
-        .scene-card-thumbs img { width:100%; aspect-ratio: 4 / 3; object-fit:cover; border:1px solid var(--line); border-radius:4px; background:var(--surface-soft); }
+        .scene-card-thumbs { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:5px; min-height:72px; margin:8px 0; }
+        .scene-card-thumb-item { aspect-ratio:4 / 3; overflow:hidden; border:1px solid var(--line); border-radius:4px; background:var(--surface-soft); cursor:zoom-in; }
+        .scene-card-thumb-item img { width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.2s ease; }
         .scene-card-empty { display:grid; place-items:center; min-height:120px; border:1px dashed var(--line); border-radius:4px; color:var(--muted); font-size:12px; }
         .scene-card-meta { display:flex; flex-wrap:wrap; gap:6px; margin-top:2px; }
         .scene-pill {
@@ -415,6 +456,16 @@ $creatorOpen = is_array($analysis)
             background: #eaf2e8;
             color: #5a8a58;
             border-color: #d6e8d4;
+        }
+        .scene-pill.ranking-score {
+            background:#eef0f7;
+            color:#5f647d;
+            border-color:#dfe2ee;
+        }
+        .scene-pill.featured-score {
+            background:#f3ead7;
+            color:#80643c;
+            border-color:#e7d8b8;
         }
         .scene-admin-bar {
             display: flex;
@@ -477,15 +528,28 @@ $creatorOpen = is_array($analysis)
         .scene-card-admin label { color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
         .scene-card-admin input, .scene-card-admin select, .scene-admin-bar select { width:100%; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-soft); color:var(--ink); padding:10px; }
         .scene-card-admin .button-row { display:flex; gap:8px; align-items:center; }
+        .scene-ranking-form { padding-bottom:12px; border-bottom:1px dashed var(--line); }
+        .scene-diversity-admin { border-bottom:1px dashed var(--line); padding-bottom:12px; }
+        .scene-diversity-admin summary { cursor:pointer; color:var(--ink); font-size:11px; text-transform:uppercase; letter-spacing:.04em; padding:4px 0; }
+        .scene-diversity-list { display:grid; gap:8px; margin-top:10px; }
+        .scene-diversity-row { display:grid; grid-template-columns:54px minmax(0,1fr); gap:9px; align-items:center; }
+        .scene-diversity-row img { width:54px; height:46px; object-fit:cover; border:1px solid var(--line); border-radius:4px; background:var(--surface-soft); }
+        .scene-diversity-row input[type="text"] { padding:8px 9px; font-size:12px; }
+        .scene-diversity-note { margin:8px 0 0; color:var(--muted); font-size:11px; line-height:1.5; }
+        .scene-score-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
+        .scene-score-grid label { display:grid; gap:5px; }
+        .scene-score-grid .featured-until-field { grid-column:1 / -1; }
+        .scene-ranking-note { margin:0; color:var(--muted); font-size:11px; line-height:1.5; }
         .scene-card-admin .danger-button { border-color:var(--danger); background:transparent; color:var(--danger); box-shadow:none; }
         .scene-card-admin .danger-button:hover { background:#fff5f5; border-color:var(--danger); color:var(--danger); }
         .scene-empty-library { grid-column:1 / -1; padding:32px; border:1px dashed var(--line); border-radius:var(--radius); color:var(--muted); text-align:center; }
+        .scene-empty-library[hidden] { display:none; }
         @media (min-width: 2400px) { .scene-card-grid { grid-template-columns:repeat(6, minmax(0, 1fr)); } }
         @media (max-width: 1740px) { .scene-card-grid { grid-template-columns:repeat(4, minmax(0, 1fr)); } }
         @media (max-width: 1350px) { .scene-card-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); } }
         @media (max-width: 1050px) { .scene-card-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
         @media (max-width: 980px) { .studio-grid { grid-template-columns: 1fr; } }
-        @media (max-width: 720px) { .scene-card-grid { grid-template-columns:1fr; } .scene-library-head, .scene-library-heading { display:block; } .scene-library-search { margin-top:14px; width:100%; } .scene-admin-bar, .scene-admin-bar form { grid-template-columns:1fr; } }
+        @media (max-width: 720px) { .scene-card-grid { grid-template-columns:1fr; } .scene-library-head, .scene-library-heading { display:block; } .scene-library-controls { justify-content:stretch; margin-top:14px; } .scene-library-control, .scene-library-control.scene-library-search { width:100%; } .scene-library-result { justify-content:flex-start; height:auto; } .scene-admin-bar, .scene-admin-bar form, .scene-score-grid { grid-template-columns:1fr; } .scene-score-grid .featured-until-field { grid-column:auto; } }
 
         /* Modern layout and drag and drop enhancements */
         /* Scene Studio follows the generous editorial hierarchy used by Mockup Lab. */
@@ -838,70 +902,6 @@ $creatorOpen = is_array($analysis)
             background: var(--accent-light);
             box-shadow: 0 0 10px rgba(154, 123, 86, 0.2);
         }
-        .scene-gallery-layout {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin: 8px 0;
-        }
-        .scene-gallery-featured {
-            width: 100%;
-            height: 0;
-            padding-bottom: 75%; /* Bulletproof 4:3 Aspect Ratio */
-            position: relative;
-            border: 1px solid var(--line);
-            border-radius: 4px;
-            overflow: hidden;
-            background: var(--surface-soft);
-        }
-        .scene-gallery-featured img {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            transition: opacity 0.25s ease;
-        }
-        .scene-gallery-thumbs {
-            display: flex;
-            gap: 5px;
-            overflow-x: auto;
-            scrollbar-width: none;
-            padding-bottom: 2px;
-        }
-        .scene-gallery-thumbs::-webkit-scrollbar {
-            display: none;
-        }
-        .scene-gallery-thumb-item {
-            width: 56px;
-            height: 56px;
-            flex-shrink: 0;
-            border: 1px solid var(--line);
-            border-radius: 3px;
-            overflow: hidden;
-            cursor: pointer;
-            background: var(--surface-soft);
-            transition: border-color 0.2s, transform 0.2s;
-        }
-        .scene-gallery-thumb-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-        .scene-gallery-thumb-item:hover,
-        .scene-gallery-thumb-item.active {
-            border-color: #b07d80; /* Old rose border accent */
-            transform: scale(1.035);
-        }
-        .scene-card-thumb-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.2s ease;
-        }
         .scene-card-thumb-item:hover img {
             transform: scale(1.15);
         }
@@ -1179,10 +1179,35 @@ $creatorOpen = is_array($analysis)
                             <h2>Scene Library</h2>
                             <p><?= count($sceneCards) ?> scenes · <?= $totalSceneVariants ?> variants</p>
                         </div>
-                        <label class="scene-library-search">
-                            <span>Search scenes</span>
-                            <input id="scene-library-search" type="search" placeholder="Search by name" autocomplete="off">
-                        </label>
+                        <div class="scene-library-controls" aria-label="Scene library controls">
+                            <label class="scene-library-control scene-library-search">
+                                <span>Search scenes</span>
+                                <input id="scene-library-search" type="search" placeholder="Search by name" autocomplete="off">
+                            </label>
+                            <label class="scene-library-control">
+                                <span>Sort by</span>
+                                <select id="scene-library-sort">
+                                    <option value="recommended">Recommended</option>
+                                    <option value="featured">Featured</option>
+                                    <option value="editorial">Editorial</option>
+                                    <option value="popular">Popular</option>
+                                    <option value="versatile">Most versatile</option>
+                                    <option value="usage">Usage</option>
+                                    <option value="newest">Newest</option>
+                                    <option value="alpha">A–Z</option>
+                                </select>
+                            </label>
+                            <label class="scene-library-control">
+                                <span>Show</span>
+                                <select id="scene-library-filter">
+                                    <option value="all">All scenes</option>
+                                    <option value="featured">Active Featured</option>
+                                    <option value="low-usage">Low usage (1–2)</option>
+                                    <option value="no-data">Needs data</option>
+                                </select>
+                            </label>
+                            <span class="scene-library-result" id="scene-library-result" aria-live="polite"></span>
+                        </div>
                     </div>
                     <div class="scene-card-grid">
                         <?php if (!$sceneCards): ?>
@@ -1192,9 +1217,20 @@ $creatorOpen = is_array($analysis)
                             <?php
                             $category = (array)$sceneCard['category'];
                             $images = (array)$sceneCard['images'];
+                            $similarityGroups = (array)($sceneCard['similarity_groups'] ?? []);
                             $slug = (string)($category['category_slug'] ?? '');
                             ?>
-                            <article class="scene-card" draggable="<?= $canManageScenes ? 'true' : 'false' ?>" data-slug="<?= h($slug) ?>" data-name="<?= h((string)($category['category_name'] ?? $slug)) ?>">
+                            <article class="scene-card" draggable="<?= $canManageScenes ? 'true' : 'false' ?>"
+                                data-slug="<?= h($slug) ?>"
+                                data-name="<?= h((string)($category['category_name'] ?? $slug)) ?>"
+                                data-recommended-score="<?= (int)($category['recommended_score'] ?? 0) ?>"
+                                data-featured-score="<?= (int)($category['featured_score_effective'] ?? 0) ?>"
+                                data-featured-active="<?= !empty($category['featured_active']) ? '1' : '0' ?>"
+                                data-editorial-score="<?= (int)($category['editorial_score'] ?? 0) ?>"
+                                data-popularity-score="<?= (int)($category['popularity_score'] ?? 0) ?>"
+                                data-versatility-score="<?= (int)($category['versatility_score'] ?? 0) ?>"
+                                data-usage-count="<?= (int)($category['usage_count'] ?? 0) ?>"
+                                data-newest="<?= h((string)($category['discovered_at'] ?? '')) ?>">
                                 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap: 8px;">
                                     <div>
                                         <div style="display:flex; align-items:center; gap: 4px;">
@@ -1205,33 +1241,89 @@ $creatorOpen = is_array($analysis)
                                     </div>
                                 </div>
                                 <?php if ($images): ?>
-                                    <div class="scene-gallery-layout">
-                                        <!-- Main featured thumbnail (Big Thumb) -->
-                                        <?php $firstImage = h(wms_media_url((string)($images[0]['relative_path'] ?? ''))); ?>
-                                        <div class="scene-gallery-featured" data-full-url="<?= $firstImage ?>">
-                                            <img class="featured-img" src="<?= $firstImage ?>" alt="Featured variant" id="featured-<?= h(md5($slug)) ?>">
-                                        </div>
-                                        
-                                        <!-- Other variants (Small Thumbs) -->
-                                        <div class="scene-gallery-thumbs">
-                                            <?php foreach ($images as $idx => $image): ?>
-                                                <?php $variantUrl = h(wms_media_url((string)($image['relative_path'] ?? ''))); ?>
-                                                <div class="scene-gallery-thumb-item <?= $idx === 0 ? 'active' : '' ?>" data-full-url="<?= $variantUrl ?>" data-target-id="featured-<?= h(md5($slug)) ?>">
-                                                    <img src="<?= $variantUrl ?>" alt="<?= h((string)($image['title'] ?? 'Scene variant')) ?>">
-                                                </div>
-                                            <?php endforeach; ?>
-                                        </div>
+                                    <div class="scene-card-thumbs">
+                                        <?php foreach (array_slice($images, 0, 3) as $image): ?>
+                                            <?php
+                                            $relativePath = (string)($image['relative_path'] ?? '');
+                                            $thumbnailUrl = h(wms_media_url($relativePath, 320));
+                                            $previewUrl = h(wms_media_url($relativePath, 960));
+                                            ?>
+                                            <div class="scene-card-thumb-item" data-full-url="<?= $previewUrl ?>">
+                                                <img src="<?= $thumbnailUrl ?>" alt="<?= h((string)($image['title'] ?? 'Scene variant')) ?>" loading="lazy">
+                                            </div>
+                                        <?php endforeach; ?>
                                     </div>
                                 <?php else: ?>
                                     <div class="scene-card-empty">Drop an image here to add a variant</div>
                                 <?php endif; ?>
                                 <div class="scene-card-meta">
                                     <span class="scene-pill variants-count"><?= (int)($category['image_count'] ?? count($images)) ?> variants</span>
+                                    <span class="scene-pill ranking-score">Recommended <?= (int)($category['recommended_score'] ?? 0) ?></span>
+                                    <span class="scene-pill ranking-score">Popular <?= (int)($category['popularity_score'] ?? 0) ?></span>
+                                    <span class="scene-pill ranking-score">Versatile <?= (int)($category['versatility_score'] ?? 0) ?></span>
+                                    <span class="scene-pill ranking-score"><?= (int)($category['usage_count'] ?? 0) ?> uses</span>
+                                    <?php if (!empty($category['featured_active'])): ?>
+                                        <span class="scene-pill featured-score">Featured <?= (int)($category['featured_score_effective'] ?? 0) ?></span>
+                                    <?php endif; ?>
                                 </div>
                                 <?php if ($canManageScenes): ?>
                                     <details class="scene-card-admin">
                                         <summary>Manage Scene</summary>
                                         <div class="scene-card-admin-body">
+                                            <form method="post" class="scene-ranking-form">
+                                                <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
+                                                <input type="hidden" name="action" value="update_ranking">
+                                                <input type="hidden" name="source_category" value="<?= h($slug) ?>">
+                                                <div class="scene-score-grid">
+                                                    <label>
+                                                        Featured score
+                                                        <input type="number" name="featured_score" min="0" max="100" step="1" value="<?= (int)($category['featured_score'] ?? 0) ?>">
+                                                    </label>
+                                                    <label>
+                                                        Editorial score
+                                                        <input type="number" name="editorial_score" min="0" max="100" step="1" value="<?= (int)($category['editorial_score'] ?? 50) ?>">
+                                                    </label>
+                                                    <label class="featured-until-field">
+                                                        Featured until (optional)
+                                                        <input type="date" name="featured_until" value="<?= h((string)($category['featured_until'] ?? '')) ?>">
+                                                    </label>
+                                                </div>
+                                                <p class="scene-ranking-note">Recommended combines Editorial 30%, Versatility 25%, Popularity 20%, Featured 15%, and Usage 10%.</p>
+                                                <div class="button-row">
+                                                    <button class="button-link secondary" type="submit">Save Ranking</button>
+                                                </div>
+                                            </form>
+
+                                            <?php if ($images): ?>
+                                                <details class="scene-diversity-admin">
+                                                    <summary>Reference Diversity</summary>
+                                                    <form method="post">
+                                                        <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
+                                                        <input type="hidden" name="action" value="update_similarity_groups">
+                                                        <input type="hidden" name="source_category" value="<?= h($slug) ?>">
+                                                        <p class="scene-diversity-note">Automatic analysis avoids visually redundant references. Use the same group name to force images to be treated as similar; use different names to force them apart.</p>
+                                                        <div class="scene-diversity-list">
+                                                            <?php foreach ($images as $image): ?>
+                                                                <?php
+                                                                $referenceKey = (string)($image['world_mother_id'] ?? '');
+                                                                $relativePath = (string)($image['relative_path'] ?? '');
+                                                                ?>
+                                                                <label class="scene-diversity-row">
+                                                                    <img src="<?= h(wms_media_url($relativePath, 320)) ?>" alt="">
+                                                                    <span>
+                                                                        <input type="hidden" name="reference_key[]" value="<?= h($referenceKey) ?>">
+                                                                        <input type="text" name="similarity_group[]" value="<?= h((string)($similarityGroups[$referenceKey] ?? '')) ?>" maxlength="80" placeholder="Automatic">
+                                                                    </span>
+                                                                </label>
+                                                            <?php endforeach; ?>
+                                                        </div>
+                                                        <div class="button-row">
+                                                            <button class="button-link secondary" type="submit">Save Diversity Groups</button>
+                                                        </div>
+                                                    </form>
+                                                </details>
+                                            <?php endif; ?>
+
                                             <form method="post">
                                                 <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
                                                 <input type="hidden" name="action" value="rename_category">
@@ -1280,6 +1372,9 @@ $creatorOpen = is_array($analysis)
                                 <?php endif; ?>
                             </article>
                         <?php endforeach; ?>
+                        <?php if ($sceneCards): ?>
+                            <div class="scene-empty-library" id="scene-library-no-results" hidden>No scenes match these controls.</div>
+                        <?php endif; ?>
                     </div>
             </section>
         </div>
@@ -1319,15 +1414,57 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const sceneSearch = document.getElementById('scene-library-search');
-    if (sceneSearch) {
-        sceneSearch.addEventListener('input', () => {
-            const query = sceneSearch.value.trim().toLowerCase();
-            document.querySelectorAll('.scene-card').forEach(card => {
-                const searchable = `${card.dataset.name || ''} ${card.dataset.slug || ''}`.toLowerCase();
-                card.style.display = searchable.includes(query) ? '' : 'none';
-            });
+    const sceneSort = document.getElementById('scene-library-sort');
+    const sceneFilter = document.getElementById('scene-library-filter');
+    const sceneGrid = document.querySelector('.scene-card-grid');
+    const sceneResult = document.getElementById('scene-library-result');
+    const sceneNoResults = document.getElementById('scene-library-no-results');
+    const sceneCards = Array.from(document.querySelectorAll('.scene-card'));
+
+    function applySceneLibraryControls() {
+        if (!sceneGrid) return;
+
+        const query = (sceneSearch?.value || '').trim().toLowerCase();
+        const filter = sceneFilter?.value || 'all';
+        const mode = sceneSort?.value || 'recommended';
+        const numeric = (card, key) => Number(card.dataset[key] || 0);
+        const byName = (a, b) => (a.dataset.name || '').localeCompare(b.dataset.name || '', undefined, { sensitivity: 'base' });
+        const byRecommended = (a, b) => numeric(b, 'recommendedScore') - numeric(a, 'recommendedScore') || byName(a, b);
+        const comparators = {
+            recommended: byRecommended,
+            featured: (a, b) => numeric(b, 'featuredScore') - numeric(a, 'featuredScore') || byRecommended(a, b),
+            editorial: (a, b) => numeric(b, 'editorialScore') - numeric(a, 'editorialScore') || byRecommended(a, b),
+            popular: (a, b) => numeric(b, 'popularityScore') - numeric(a, 'popularityScore') || numeric(b, 'usageCount') - numeric(a, 'usageCount') || byName(a, b),
+            versatile: (a, b) => numeric(b, 'versatilityScore') - numeric(a, 'versatilityScore') || byRecommended(a, b),
+            usage: (a, b) => numeric(b, 'usageCount') - numeric(a, 'usageCount') || byRecommended(a, b),
+            newest: (a, b) => Date.parse(b.dataset.newest || 0) - Date.parse(a.dataset.newest || 0) || byName(a, b),
+            alpha: byName,
+        };
+
+        sceneCards.sort(comparators[mode] || byRecommended).forEach(card => sceneGrid.appendChild(card));
+
+        let visible = 0;
+        sceneCards.forEach(card => {
+            const searchable = `${card.dataset.name || ''} ${card.dataset.slug || ''}`.toLowerCase();
+            const usage = numeric(card, 'usageCount');
+            const matchesQuery = searchable.includes(query);
+            const matchesFilter = filter === 'all'
+                || (filter === 'featured' && card.dataset.featuredActive === '1')
+                || (filter === 'low-usage' && usage > 0 && usage <= 2)
+                || (filter === 'no-data' && usage === 0);
+            const shouldShow = matchesQuery && matchesFilter;
+            card.hidden = !shouldShow;
+            if (shouldShow) visible += 1;
         });
+
+        if (sceneResult) sceneResult.textContent = `${visible} of ${sceneCards.length}`;
+        if (sceneNoResults) sceneNoResults.hidden = visible !== 0;
     }
+
+    sceneSearch?.addEventListener('input', applySceneLibraryControls);
+    sceneSort?.addEventListener('change', applySceneLibraryControls);
+    sceneFilter?.addEventListener('change', applySceneLibraryControls);
+    applySceneLibraryControls();
 
     // -------------------------------------------------------------
     // 2. POPOVER PREVIEW FOR COMPACT THUMBNAILS
@@ -1336,30 +1473,8 @@ document.addEventListener('DOMContentLoaded', () => {
     popover.className = 'popover-preview';
     document.body.appendChild(popover);
 
-    // Hover variant swap in card
     document.addEventListener('mouseover', e => {
-        const thumbItem = e.target.closest('.scene-gallery-thumb-item');
-        if (thumbItem) {
-            const targetId = thumbItem.getAttribute('data-target-id');
-            const fullUrl = thumbItem.getAttribute('data-full-url');
-            const featuredImg = document.getElementById(targetId);
-            if (featuredImg && featuredImg.src !== fullUrl) {
-                featuredImg.src = fullUrl;
-                
-                // Highlight active state
-                const card = thumbItem.closest('.scene-card');
-                if (card) {
-                    card.querySelectorAll('.scene-gallery-thumb-item').forEach(item => {
-                        item.classList.remove('active');
-                    });
-                    thumbItem.classList.add('active');
-                }
-            }
-        }
-    });
-
-    document.addEventListener('mouseover', e => {
-        const thumbItem = e.target.closest('.analysis-thumb-item');
+        const thumbItem = e.target.closest('.analysis-thumb-item, .scene-card-thumb-item');
         if (thumbItem) {
             const img = thumbItem.querySelector('img');
             if (img) {
@@ -1387,7 +1502,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.addEventListener('mouseout', e => {
-        const thumbItem = e.target.closest('.analysis-thumb-item');
+        const thumbItem = e.target.closest('.analysis-thumb-item, .scene-card-thumb-item');
         if (thumbItem) {
             popover.style.display = 'none';
         }

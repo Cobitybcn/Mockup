@@ -10,7 +10,7 @@ VideoHttp::handle(function (): array {
     if (!$user) {
         VideoHttp::respond(['ok' => false, 'error' => 'Authentication required.'], 401);
     }
-    FeatureAccess::requireJson($user, FeatureAccess::VIDEO_MANAGE, 'Video Studio');
+    FeatureAccess::requireJson($user, FeatureAccess::VIDEO_MANAGE, 'Video Lab');
 
     $input = VideoHttp::input();
     VideoHttp::verifyCsrf($input);
@@ -82,6 +82,6 @@ VideoHttp::handle(function (): array {
             $input['instruction'] ?? ''
         ),
         'library_list' => ['assets' => $service->library($userId)],
-        default => throw new InvalidArgumentException('Unknown Video Studio action.'),
+        default => throw new InvalidArgumentException('Unknown Video Lab action.'),
     };
 });

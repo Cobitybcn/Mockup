@@ -33,9 +33,9 @@ final class FeatureAccess
     public static function overridableFeatures(): array
     {
         return [
-            self::WEBSITE_MANAGE => 'Website',
-            self::SOCIAL_MANAGE => 'Social Media',
-            self::VIDEO_MANAGE => 'Video Studio',
+            self::WEBSITE_MANAGE => 'Website Catalog Sync',
+            self::SOCIAL_MANAGE => 'Social Media Board',
+            self::VIDEO_MANAGE => 'Video Lab',
         ];
     }
 

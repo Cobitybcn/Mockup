@@ -36,6 +36,23 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
         $cameraSlotId = $this->cameraSlotId($finalPrompt, $metadata);
         $usesGraphicPerspectiveSlot = $this->usesGraphicPerspectiveSlot($cameraSlotId);
         $usesGraphicPerspectiveGeminiDirect = $usesGraphicPerspectiveSlot && $this->graphicPerspectiveMode($cameraSlotId) === 'gemini_direct';
+        $usesInpaintingCamera = $this->usesInpaintingCamera($cameraSlotId);
+        $worldMotherReferencePaths = array_values(array_filter(
+            (array)($metadata['world_mother_reference_paths'] ?? []),
+            static fn($path): bool => is_string($path) && $path !== '' && is_file($path)
+        ));
+        $legacyWorldMotherReferencePath = (string)($metadata['world_mother_reference_path'] ?? '');
+        if (!$worldMotherReferencePaths && $legacyWorldMotherReferencePath !== '' && is_file($legacyWorldMotherReferencePath)) {
+            $worldMotherReferencePaths[] = $legacyWorldMotherReferencePath;
+        }
+        $worldMotherReferencePaths = array_values(array_unique(array_map(
+            static fn(string $path): string => (string)(realpath($path) ?: $path),
+            $worldMotherReferencePaths
+        )));
+        $worldMotherReferencePaths = array_slice($worldMotherReferencePaths, 0, 2);
+        if ($usesInpaintingCamera || ($usesGraphicPerspectiveSlot && !$usesGraphicPerspectiveGeminiDirect)) {
+            $worldMotherReferencePaths = array_slice($worldMotherReferencePaths, 0, 1);
+        }
         $roleContract = "IMAGE ROLE CONTRACT:\n"
             . "- AUTHORITY 1 - ROOT ARTWORK: IMAGE 1 is the product authority. Preserve its exact artwork content, colors, marks, composition, texture, proportions, format, and visual identity.\n"
             . "- The final mockup must contain the same recognizable artwork from IMAGE 1, not a similar painting, not a newly painted abstract surface, not a style transfer, not a botanical/gestural reinterpretation, and not artwork invented from the room or world mother.\n"
@@ -58,9 +75,17 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
             . "- Keep the artwork fully inside the {$outputAspectRatio} composition unless the selected close-up camera explicitly requires a detail crop.";
         $submittedPrompt = ($slotFullPromptMode || $usesGraphicPerspectiveGeminiDirect) ? $finalPrompt : $roleContract . "\n\n" . $finalPrompt;
         $submittedPrompt = $outputFrameContract . "\n\n" . $submittedPrompt;
-        $worldMotherReferencePath = (string)($metadata['world_mother_reference_path'] ?? '');
-        if ($worldMotherReferencePath !== '' && is_file($worldMotherReferencePath)) {
+        if ($worldMotherReferencePaths) {
             $submittedPrompt = WorldMotherCameraAuthorityPolicy::applyToPrompt($submittedPrompt, $cameraSlotId);
+        }
+        if (count($worldMotherReferencePaths) > 1) {
+            $firstSceneImageNumber = $usesGraphicPerspectiveGeminiDirect ? 3 : 2;
+            $secondSceneImageNumber = $firstSceneImageNumber + 1;
+            $sceneFamilyContract = "SCENE REFERENCE FAMILY CONTRACT:\n"
+                . "- IMAGE {$firstSceneImageNumber} and IMAGE {$secondSceneImageNumber} represent the same visual family. Use them jointly as secondary references for architecture, materials, lighting, and atmosphere.\n"
+                . "- Do not literally copy either room, layout, furniture arrangement, framing, camera angle, crop, or perspective. Create a new, coherent, rich, and original context from their shared visual identity.\n"
+                . "- The ROOT ARTWORK remains the first authority. The camera defined by the selected camera slot has absolute authority over the final viewpoint, framing, perspective, and composition.";
+            $submittedPrompt = $sceneFamilyContract . "\n\n" . $submittedPrompt;
         }
         $parts = [$this->client->textPart($submittedPrompt)];
         if ($usesGraphicPerspectiveGeminiDirect) {
@@ -93,13 +118,15 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
             }
             $parts[] = $this->client->imagePart($rootReferencePath);
         }
-        if ($worldMotherReferencePath !== '' && is_file($worldMotherReferencePath)) {
+        foreach ($worldMotherReferencePaths as $referenceIndex => $worldMotherReferencePath) {
             if ($usesGraphicPerspectiveGeminiDirect) {
-                $parts[] = $this->client->textPart("IMAGE 3 - STYLE REFERENCE: atmosphere, materials, lighting, and color temperature only.");
+                $imageNumber = 3 + $referenceIndex;
+                $parts[] = $this->client->textPart("IMAGE {$imageNumber} - STYLE REFERENCE: secondary environmental-family evidence for atmosphere, architecture, materials, lighting, and color temperature only.");
             } elseif ($usesGraphicPerspectiveSlot) {
-                $parts[] = $this->client->textPart("WORLD MOTHER: environment mood reference only.");
+                $parts[] = $this->client->textPart("WORLD MOTHER: secondary environment mood reference only.");
             } else {
-                $parts[] = $this->client->textPart("IMAGE 2 - WORLD MOTHER: environmental inspiration only. Use materiality, light, palette, surface language, architectural mood, and atmosphere to build a new environment through the selected camera slot. Do not copy this image's layout, camera angle, crop, room geometry, wall choice, window placement, object positions, or furniture placement. Do not use this image as artwork content.");
+                $imageNumber = 2 + $referenceIndex;
+                $parts[] = $this->client->textPart("IMAGE {$imageNumber} - WORLD MOTHER: secondary environmental-family reference only. Use materiality, light, palette, surface language, architectural mood, and atmosphere to build a new environment through the selected camera slot. Do not copy this image's layout, camera angle, crop, room geometry, wall choice, window placement, object positions, or furniture placement. Do not use this image as artwork content.");
             }
             $parts[] = $this->client->imagePart($worldMotherReferencePath);
         }
@@ -111,7 +138,6 @@ class GeminiMockupGenerator implements MockupGeneratorInterface
             // if that global flag were ever re-enabled — see docs/AUDITORIA_PROMPTS_MOCKUPS_20260701.md,
             // Fase 5). Today MOCKUP_USE_PRECOMPOSITION is already false everywhere, so this is a
             // no-op in practice; it removes the dependency on that flag staying off by accident.
-            $usesInpaintingCamera = $this->usesInpaintingCamera($cameraSlotId);
             $envOverrides = [
                 'GEMINI_OUTPUT_ASPECT_RATIO' => self::OUTPUT_ASPECT_RATIO,
             ];

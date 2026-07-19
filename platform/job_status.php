@@ -125,7 +125,8 @@ if (!empty($status['user_scene_flow']) && (string)($status['status'] ?? '') === 
                 . '&board=' . $sceneBoard
                 . '&world_mother_category=' . rawurlencode($sceneCategory)
                 . '&generation_provider=' . rawurlencode($generationProvider)
-                . '&auto_generate=1&compact=1&scene_limit=' . $sceneLimit;
+                . '&auto_generate=1&compact=1&scene_limit=' . $sceneLimit
+                . '&scene_flow_job=' . rawurlencode($job);
         }
     } catch (Throwable $e) {
         $status['scene_redirect_error'] = $e->getMessage();

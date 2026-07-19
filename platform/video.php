@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/app/Video/bootstrap.php';
 
 $user = Auth::requireUser();
-FeatureAccess::requirePage($user, FeatureAccess::VIDEO_MANAGE, 'Video Studio');
+FeatureAccess::requirePage($user, FeatureAccess::VIDEO_MANAGE, 'Video Lab');
 $userId = (int)$user['id'];
 $repository = new VideoStudioRepository(Database::connection());
 $service = new VideoStudioService($repository);
@@ -71,9 +71,10 @@ function vds_h(mixed $value): string
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Video Studio - Artwork Mockups</title>
+    <title>Video Lab - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="video_studio.css?v=15">
+    <link rel="stylesheet" href="video_studio.css?v=17">
+    <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body>
 <div class="app-shell">
@@ -85,15 +86,16 @@ function vds_h(mixed $value): string
                 <section class="vds-catalog" aria-labelledby="vds-catalog-title">
                     <div class="vds-catalog-head">
                         <div class="vds-catalog-heading">
-                            <h1 id="vds-catalog-title">Catálogo de referencias</h1>
+                            <span class="vds-catalog-kicker">Reference Catalog</span>
+                            <h1 id="vds-catalog-title">Video Lab</h1>
                             <div class="vds-filters">
                                 <label>
-                                    <span class="vds-sr-only">Filtrar por obra</span>
-                                    <select data-artwork-filter><option value="">Filtrar por obra</option></select>
+                                    <span class="vds-sr-only">Filter by artwork</span>
+                                    <select data-artwork-filter><option value="">Filter by artwork</option></select>
                                 </label>
                                 <label>
-                                    <span class="vds-sr-only">Filtrar por serie</span>
-                                    <select data-series-filter><option value="">Filtrar por serie</option></select>
+                                    <span class="vds-sr-only">Filter by series</span>
+                                    <select data-series-filter><option value="">Filter by series</option></select>
                                 </label>
                             </div>
                         </div>

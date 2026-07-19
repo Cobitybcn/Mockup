@@ -1,25 +1,10 @@
 {
-    "generated_at": "2026-07-15T20:36:54+00:00",
+    "generated_at": "2026-07-19T10:50:22+00:00",
     "categories": [
         {
             "category_slug": "Architecture Studios",
             "category_name": "Architecture Studios",
             "relative_path": "storage/world_mothers/Architecture Studios"
-        },
-        {
-            "category_slug": "Attic Ateliers",
-            "category_name": "Attic Ateliers",
-            "relative_path": "storage/world_mothers/Attic Ateliers"
-        },
-        {
-            "category_slug": "Attic Studios",
-            "category_name": "Attic Studios",
-            "relative_path": "storage/world_mothers/Attic Studios"
-        },
-        {
-            "category_slug": "Blue Hour",
-            "category_name": "Blue Hour",
-            "relative_path": "storage/world_mothers/Blue Hour"
         },
         {
             "category_slug": "Bohemian Ateliers",
@@ -62,11 +47,6 @@
             "relative_path": "storage/world_mothers/Golden Hour"
         },
         {
-            "category_slug": "Historic European Interiors",
-            "category_name": "Historic European Interiors",
-            "relative_path": "storage/world_mothers/Historic European Interiors"
-        },
-        {
             "category_slug": "Industrial Loft",
             "category_name": "Industrial Loft",
             "relative_path": "storage/world_mothers/Industrial Loft"
@@ -85,11 +65,6 @@
             "category_slug": "Monumental Interiors",
             "category_name": "Monumental Interiors",
             "relative_path": "storage/world_mothers/Monumental Interiors"
-        },
-        {
-            "category_slug": "Moody Contemporary Interiors",
-            "category_name": "Moody Contemporary Interiors",
-            "relative_path": "storage/world_mothers/Moody Contemporary Interiors"
         },
         {
             "category_slug": "Organic Minimalism",
@@ -152,66 +127,6 @@
                 "file_name": "Architecture Studios (4).jpg",
                 "title": "Architecture Studios (4)",
                 "relative_path": "storage/world_mothers/Architecture Studios/Architecture Studios (4).jpg",
-                "extension": "jpg"
-            }
-        ],
-        "Attic Ateliers": [
-            {
-                "world_mother_id": "Attic Ateliers/artist_atelier (1)",
-                "category_slug": "Attic Ateliers",
-                "category_name": "Attic Ateliers",
-                "file_name": "artist_atelier (1).png",
-                "title": "Artist Atelier (1)",
-                "relative_path": "storage/world_mothers/Attic Ateliers/artist_atelier (1).png",
-                "extension": "png"
-            }
-        ],
-        "Attic Studios": [
-            {
-                "world_mother_id": "Attic Studios/artist_atelier (4)",
-                "category_slug": "Attic Studios",
-                "category_name": "Attic Studios",
-                "file_name": "artist_atelier (4).png",
-                "title": "Artist Atelier (4)",
-                "relative_path": "storage/world_mothers/Attic Studios/artist_atelier (4).png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Attic Studios/attic_studio",
-                "category_slug": "Attic Studios",
-                "category_name": "Attic Studios",
-                "file_name": "attic_studio.jpg",
-                "title": "Attic Studio",
-                "relative_path": "storage/world_mothers/Attic Studios/attic_studio.jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Attic Studios/industrial_loft_1",
-                "category_slug": "Attic Studios",
-                "category_name": "Attic Studios",
-                "file_name": "industrial_loft_1.jpg",
-                "title": "Industrial Loft 1",
-                "relative_path": "storage/world_mothers/Attic Studios/industrial_loft_1.jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Attic Studios/ny loft 1",
-                "category_slug": "Attic Studios",
-                "category_name": "Attic Studios",
-                "file_name": "ny loft 1.jpg",
-                "title": "Ny Loft 1",
-                "relative_path": "storage/world_mothers/Attic Studios/ny loft 1.jpg",
-                "extension": "jpg"
-            }
-        ],
-        "Blue Hour": [
-            {
-                "world_mother_id": "Blue Hour/Blue_hour_interior-(2)",
-                "category_slug": "Blue Hour",
-                "category_name": "Blue Hour",
-                "file_name": "Blue_hour_interior-(2).jpg",
-                "title": "Blue Hour Interior (2)",
-                "relative_path": "storage/world_mothers/Blue Hour/Blue_hour_interior-(2).jpg",
                 "extension": "jpg"
             }
         ],
@@ -347,15 +262,6 @@
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "Catalan Modernisme/Catalan Modernisme (1)",
-                "category_slug": "Catalan Modernisme",
-                "category_name": "Catalan Modernisme",
-                "file_name": "Catalan Modernisme (1).png",
-                "title": "Catalan Modernisme (1)",
-                "relative_path": "storage/world_mothers/Catalan Modernisme/Catalan Modernisme (1).png",
-                "extension": "png"
-            },
-            {
                 "world_mother_id": "Catalan Modernisme/Catalan Modernisme (2)",
                 "category_slug": "Catalan Modernisme",
                 "category_name": "Catalan Modernisme",
@@ -365,22 +271,31 @@
                 "extension": "png"
             },
             {
-                "world_mother_id": "Catalan Modernisme/Catalan Modernisme (3)",
+                "world_mother_id": "Catalan Modernisme/Catalan-Modernisme-(2)",
                 "category_slug": "Catalan Modernisme",
                 "category_name": "Catalan Modernisme",
-                "file_name": "Catalan Modernisme (3).png",
-                "title": "Catalan Modernisme (3)",
-                "relative_path": "storage/world_mothers/Catalan Modernisme/Catalan Modernisme (3).png",
-                "extension": "png"
+                "file_name": "Catalan-Modernisme-(2).jpg",
+                "title": "Catalan Modernisme (2)",
+                "relative_path": "storage/world_mothers/Catalan Modernisme/Catalan-Modernisme-(2).jpg",
+                "extension": "jpg"
             },
             {
-                "world_mother_id": "Catalan Modernisme/Catalan Modernisme (4)",
+                "world_mother_id": "Catalan Modernisme/Catalan-Modernisme-(3)",
                 "category_slug": "Catalan Modernisme",
                 "category_name": "Catalan Modernisme",
-                "file_name": "Catalan Modernisme (4).png",
+                "file_name": "Catalan-Modernisme-(3).jpg",
+                "title": "Catalan Modernisme (3)",
+                "relative_path": "storage/world_mothers/Catalan Modernisme/Catalan-Modernisme-(3).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Catalan Modernisme/Catalan-Modernisme-(4)",
+                "category_slug": "Catalan Modernisme",
+                "category_name": "Catalan Modernisme",
+                "file_name": "Catalan-Modernisme-(4).jpg",
                 "title": "Catalan Modernisme (4)",
-                "relative_path": "storage/world_mothers/Catalan Modernisme/Catalan Modernisme (4).png",
-                "extension": "png"
+                "relative_path": "storage/world_mothers/Catalan Modernisme/Catalan-Modernisme-(4).jpg",
+                "extension": "jpg"
             },
             {
                 "world_mother_id": "Catalan Modernisme/Catalan Modernisme (5)",
@@ -392,13 +307,22 @@
                 "extension": "png"
             },
             {
-                "world_mother_id": "Catalan Modernisme/Catalan Modernisme (6)",
+                "world_mother_id": "Catalan Modernisme/Catalan-Modernisme-(5)",
                 "category_slug": "Catalan Modernisme",
                 "category_name": "Catalan Modernisme",
-                "file_name": "Catalan Modernisme (6).png",
+                "file_name": "Catalan-Modernisme-(5).jpg",
+                "title": "Catalan Modernisme (5)",
+                "relative_path": "storage/world_mothers/Catalan Modernisme/Catalan-Modernisme-(5).jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Catalan Modernisme/Catalan-Modernisme-(6)",
+                "category_slug": "Catalan Modernisme",
+                "category_name": "Catalan Modernisme",
+                "file_name": "Catalan-Modernisme-(6).jpg",
                 "title": "Catalan Modernisme (6)",
-                "relative_path": "storage/world_mothers/Catalan Modernisme/Catalan Modernisme (6).png",
-                "extension": "png"
+                "relative_path": "storage/world_mothers/Catalan Modernisme/Catalan-Modernisme-(6).jpg",
+                "extension": "jpg"
             }
         ],
         "Collector Study": [
@@ -708,12 +632,12 @@
                 "extension": "jpg"
             },
             {
-                "world_mother_id": "Golden Hour/golden hour (2)",
+                "world_mother_id": "Golden Hour/golden-hour-(2)",
                 "category_slug": "Golden Hour",
                 "category_name": "Golden Hour",
-                "file_name": "golden hour (2).jpg",
+                "file_name": "golden-hour-(2).jpg",
                 "title": "Golden Hour (2)",
-                "relative_path": "storage/world_mothers/Golden Hour/golden hour (2).jpg",
+                "relative_path": "storage/world_mothers/Golden Hour/golden-hour-(2).jpg",
                 "extension": "jpg"
             },
             {
@@ -760,53 +684,6 @@
                 "title": "Golden Hour (7)",
                 "relative_path": "storage/world_mothers/Golden Hour/golden hour (7).jpg",
                 "extension": "jpg"
-            }
-        ],
-        "Historic European Interiors": [
-            {
-                "world_mother_id": "Historic European Interiors/ritual (1)",
-                "category_slug": "Historic European Interiors",
-                "category_name": "Historic European Interiors",
-                "file_name": "ritual (1).png",
-                "title": "Ritual (1)",
-                "relative_path": "storage/world_mothers/Historic European Interiors/ritual (1).png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Historic European Interiors/ritual (2)",
-                "category_slug": "Historic European Interiors",
-                "category_name": "Historic European Interiors",
-                "file_name": "ritual (2).png",
-                "title": "Ritual (2)",
-                "relative_path": "storage/world_mothers/Historic European Interiors/ritual (2).png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Historic European Interiors/ritual (3)",
-                "category_slug": "Historic European Interiors",
-                "category_name": "Historic European Interiors",
-                "file_name": "ritual (3).png",
-                "title": "Ritual (3)",
-                "relative_path": "storage/world_mothers/Historic European Interiors/ritual (3).png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Historic European Interiors/ritual (4)",
-                "category_slug": "Historic European Interiors",
-                "category_name": "Historic European Interiors",
-                "file_name": "ritual (4).png",
-                "title": "Ritual (4)",
-                "relative_path": "storage/world_mothers/Historic European Interiors/ritual (4).png",
-                "extension": "png"
-            },
-            {
-                "world_mother_id": "Historic European Interiors/ritual (5)",
-                "category_slug": "Historic European Interiors",
-                "category_name": "Historic European Interiors",
-                "file_name": "ritual (5).png",
-                "title": "Ritual (5)",
-                "relative_path": "storage/world_mothers/Historic European Interiors/ritual (5).png",
-                "extension": "png"
             }
         ],
         "Industrial Loft": [
@@ -1111,35 +988,6 @@
                 "file_name": "Monumental Interiors (9).jpg",
                 "title": "Monumental Interiors (9)",
                 "relative_path": "storage/world_mothers/Monumental Interiors/Monumental Interiors (9).jpg",
-                "extension": "jpg"
-            }
-        ],
-        "Moody Contemporary Interiors": [
-            {
-                "world_mother_id": "Moody Contemporary Interiors/Blue_hour_interior (1)",
-                "category_slug": "Moody Contemporary Interiors",
-                "category_name": "Moody Contemporary Interiors",
-                "file_name": "Blue_hour_interior (1).jpg",
-                "title": "Blue Hour Interior (1)",
-                "relative_path": "storage/world_mothers/Moody Contemporary Interiors/Blue_hour_interior (1).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Moody Contemporary Interiors/Blue_hour_interior (10)",
-                "category_slug": "Moody Contemporary Interiors",
-                "category_name": "Moody Contemporary Interiors",
-                "file_name": "Blue_hour_interior (10).jpg",
-                "title": "Blue Hour Interior (10)",
-                "relative_path": "storage/world_mothers/Moody Contemporary Interiors/Blue_hour_interior (10).jpg",
-                "extension": "jpg"
-            },
-            {
-                "world_mother_id": "Moody Contemporary Interiors/Blue_hour_interior (6)",
-                "category_slug": "Moody Contemporary Interiors",
-                "category_name": "Moody Contemporary Interiors",
-                "file_name": "Blue_hour_interior (6).jpg",
-                "title": "Blue Hour Interior (6)",
-                "relative_path": "storage/world_mothers/Moody Contemporary Interiors/Blue_hour_interior (6).jpg",
                 "extension": "jpg"
             }
         ],

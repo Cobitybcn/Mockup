@@ -607,6 +607,87 @@ class ArtworkSeries
             ->execute([$creationNumber, date('c'), $artworkId, $userId]);
     }
 
+    /**
+     * @param array<int,int> $orderedArtworkIds Canonical artworks in their desired visible order.
+     * @return array<int,array{number:int,identifier:string,position:int}>
+     */
+    public static function reorderArtworks(PDO $pdo, int $userId, int $seriesId, array $orderedArtworkIds): array
+    {
+        self::ensureSchema($pdo);
+        if ($seriesId <= 0) {
+            throw new RuntimeException('Series is required.');
+        }
+
+        $seriesStmt = $pdo->prepare('SELECT title FROM artwork_series WHERE id = ? AND user_id = ? AND status = ? LIMIT 1');
+        $seriesStmt->execute([$seriesId, $userId, 'active']);
+        $seriesTitle = trim((string)$seriesStmt->fetchColumn());
+        if ($seriesTitle === '') {
+            throw new RuntimeException('Series not found.');
+        }
+
+        $orderedArtworkIds = array_values(array_unique(array_filter(
+            array_map('intval', $orderedArtworkIds),
+            static fn (int $artworkId): bool => $artworkId > 0
+        )));
+        if (!$orderedArtworkIds) {
+            throw new RuntimeException('No artworks were supplied.');
+        }
+
+        $currentStmt = $pdo->prepare('
+            SELECT a.id
+            FROM artwork_groups g
+            INNER JOIN artworks a ON a.id = g.canonical_artwork_id AND a.user_id = g.user_id
+            WHERE g.user_id = ? AND g.status = ? AND a.status = ? AND a.series_id = ?
+            ORDER BY
+                CASE WHEN a.series_creation_number IS NULL THEN 1 ELSE 0 END ASC,
+                a.series_creation_number ASC,
+                g.created_at ASC,
+                a.id ASC
+        ');
+        $currentStmt->execute([$userId, 'active', 'done', $seriesId]);
+        $currentIds = array_map('intval', $currentStmt->fetchAll(PDO::FETCH_COLUMN));
+        $currentLookup = array_fill_keys($currentIds, true);
+        foreach ($orderedArtworkIds as $artworkId) {
+            if (!isset($currentLookup[$artworkId])) {
+                throw new RuntimeException('One artwork does not belong to this series.');
+            }
+        }
+
+        $requestedLookup = array_fill_keys($orderedArtworkIds, true);
+        foreach ($currentIds as $artworkId) {
+            if (!isset($requestedLookup[$artworkId])) {
+                $orderedArtworkIds[] = $artworkId;
+            }
+        }
+
+        $startedTransaction = !$pdo->inTransaction();
+        if ($startedTransaction) {
+            $pdo->beginTransaction();
+        }
+        try {
+            $update = $pdo->prepare('UPDATE artworks SET series_creation_number = ? WHERE id = ? AND user_id = ? AND series_id = ?');
+            $positions = [];
+            foreach ($orderedArtworkIds as $index => $artworkId) {
+                $creationNumber = ($index + 1) * 10;
+                $update->execute([$creationNumber, $artworkId, $userId, $seriesId]);
+                $positions[$artworkId] = [
+                    'number' => $creationNumber,
+                    'identifier' => self::creationIdentifier($seriesTitle, $creationNumber),
+                    'position' => $index + 1,
+                ];
+            }
+            if ($startedTransaction) {
+                $pdo->commit();
+            }
+            return $positions;
+        } catch (Throwable $e) {
+            if ($startedTransaction && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
+    }
+
     private static function nextCreationNumber(PDO $pdo, int $userId, int $seriesId): int
     {
         $stmt = $pdo->prepare('SELECT MAX(series_creation_number) FROM artworks WHERE user_id = ? AND series_id = ?');

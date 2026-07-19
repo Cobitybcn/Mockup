@@ -28,11 +28,14 @@ while ($idleRounds < 8) {
         SELECT id
         FROM mockup_generation_jobs
         WHERE status = "queued"
-        AND selector_state_json LIKE :generation_source
+        AND (selector_state_json LIKE :generation_source OR selector_state_json LIKE :dna_generation_source)
         ORDER BY id ASC
         LIMIT 1
     ');
-    $stmt->execute(['generation_source' => '%"generation_source":"mockup_combination_review"%']);
+    $stmt->execute([
+        'generation_source' => '%"generation_source":"mockup_combination_review"%',
+        'dna_generation_source' => '%"generation_source":"visual_dna_lab"%',
+    ]);
     $jobId = (int)($stmt->fetchColumn() ?: 0);
     if ($jobId <= 0) {
         $idleRounds++;

@@ -36,10 +36,15 @@ foreach ($stmt->fetchAll() as $row) {
     $board = max(1, min(3, (int)($state['scene_board_index'] ?? $combination['camera_slot_scene_board_index'] ?? 1)));
     $provider = ServiceFactory::generationProvider((string)($state['generation_provider'] ?? ''));
     $category = trim((string)($state['world_mother_category'] ?? $combination['world_mother_category'] ?? ''));
+    $generationRunId = strtolower(trim((string)($state['generation_run_id'] ?? '')));
+    if ($generationRunId !== '' && !preg_match('/^[a-z0-9-]{8,64}$/', $generationRunId)) {
+        $generationRunId = '';
+    }
     $resultsUrl = 'mockup_combination_results.php?id=' . (int)$row['artwork_id']
         . '&board=' . $board
         . '&generation_provider=' . rawurlencode($provider)
         . ($category !== '' ? '&world_mother_category=' . rawurlencode($category) : '')
+        . ($generationRunId !== '' ? '&generation_run=' . rawurlencode($generationRunId) : '')
         . '&highlight_job=' . (int)$row['id'];
     $improvement = (array)($combination['improvement_controls'] ?? []);
     $items[] = [
@@ -49,6 +54,9 @@ foreach ($stmt->fetchAll() as $row) {
         'status' => $status,
         'active' => in_array($status, $activeStatuses, true),
         'kind' => (int)($improvement['existing_mockup_id'] ?? 0) > 0 ? 'regeneration' : 'generation',
+        'generation_run_id' => $generationRunId,
+        'scene_category' => $category,
+        'replaces_mockup_id' => (int)($improvement['existing_mockup_id'] ?? 0) ?: null,
         'mockup_id' => (int)($row['mockup_id'] ?? 0) ?: null,
         'error' => (string)($row['error'] ?? ''),
         'results_url' => $resultsUrl,

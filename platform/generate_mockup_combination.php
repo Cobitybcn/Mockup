@@ -97,6 +97,11 @@ try {
     $worldMotherCategory = trim(str_replace(['\\', '/'], '', (string)($_POST['world_mother_category'] ?? $_GET['world_mother_category'] ?? '')));
     $sceneBoardIndex = max(1, min(3, (int)($_POST['board'] ?? $_GET['board'] ?? 1)));
     $worldMotherVariantOffset = max(0, (int)($_POST['world_mother_variant_offset'] ?? $_GET['world_mother_variant_offset'] ?? 0));
+    $sceneFlowJob = basename(trim((string)($_POST['scene_flow_job'] ?? $_GET['scene_flow_job'] ?? '')));
+    $generationRunId = strtolower(trim((string)($_POST['generation_run_id'] ?? $_GET['generation_run_id'] ?? '')));
+    if ($generationRunId !== '' && !preg_match('/^[a-z0-9-]{8,64}$/', $generationRunId)) {
+        $generationRunId = '';
+    }
     $worldMotherScale = trim((string)($_POST['world_mother_scale'] ?? $_GET['world_mother_scale'] ?? ''));
     if ($worldMotherScale !== '' && (!is_numeric($worldMotherScale) || (float)$worldMotherScale < 1.0 || (float)$worldMotherScale > 3.0)) {
         $worldMotherScale = '';
@@ -130,6 +135,11 @@ try {
     if ((int)$artwork['user_id'] !== (int)$user['id'] && !Auth::isAdmin($user)) {
         http_response_code(403);
         echo json_encode(['ok' => false, 'error' => 'Access denied.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    if ($sceneFlowJob !== '' && !hash_equals((string)($artwork['job_id'] ?? ''), $sceneFlowJob)) {
+        http_response_code(400);
+        echo json_encode(['ok' => false, 'error' => 'Scene flow does not match this artwork.'], JSON_UNESCAPED_UNICODE);
         exit;
     }
     $existingMockup = null;
@@ -288,10 +298,31 @@ try {
         'scene_board_index' => $sceneBoardIndex,
         'world_mother_category' => $worldMotherCategory,
     ];
+    if ($generationRunId !== '') {
+        $selectorState['generation_run_id'] = $generationRunId;
+    }
+    $generationRunQuery = $generationRunId !== '' ? '&generation_run=' . rawurlencode($generationRunId) : '';
+    $idempotencyKey = '';
+    if ($sceneFlowJob !== '') {
+        $idempotencyKey = hash('sha256', implode('|', [
+            'initial_scene_flow_v1',
+            $sceneFlowJob,
+            (string)$artworkId,
+            (string)$sceneBoardIndex,
+            $worldMotherCategory,
+            (string)$combinationIndex,
+            $cameraSlotId,
+            (string)$worldMotherVariantOffset,
+            $generationProvider,
+        ]));
+        $selectorState['idempotency_key'] = $idempotencyKey;
+        $selectorState['scene_flow_job'] = $sceneFlowJob;
+    }
     $selectorStateJson = json_encode($selectorState, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
     // 1. Database Transaction: Lock user, check credits, deduct 1 credit, register ledger, insert job
     $jobId = 0;
+    $jobCreated = true;
     try {
         $jobId = Database::createGenerationJobWithTransaction(
             (int)$user['id'],
@@ -299,7 +330,9 @@ try {
             $contextId,
             $finalPrompt,
             $rootPath,
-            $selectorStateJson
+            $selectorStateJson,
+            $idempotencyKey !== '' ? $idempotencyKey : null,
+            $jobCreated
         );
     } catch (Exception $e) {
         $audit['status'] = 'failed';
@@ -307,6 +340,27 @@ try {
         file_put_contents($auditPath, json_encode($audit, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
         http_response_code(400);
         echo json_encode(['ok' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    if (!$jobCreated) {
+        @unlink($auditPath);
+        $existingJobStmt = $pdo->prepare('SELECT selector_state_json FROM mockup_generation_jobs WHERE id = :id LIMIT 1');
+        $existingJobStmt->execute(['id' => $jobId]);
+        $existingState = json_decode((string)$existingJobStmt->fetchColumn(), true);
+        $existingAuditFile = is_array($existingState) ? (string)($existingState['audit_file'] ?? '') : '';
+        echo json_encode([
+            'ok' => true,
+            'enqueued' => true,
+            'deduplicated' => true,
+            'job_id' => $jobId,
+            'message' => 'This scene is already registered and continues in the background.',
+            'audit_file' => $existingAuditFile,
+            'results_url' => 'mockup_combination_results.php?id=' . $artworkId . '&board=' . $sceneBoardIndex . '&generation_provider=' . rawurlencode($generationProvider) . ($worldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($worldMotherCategory) : '') . $generationRunQuery . '&highlight_job=' . $jobId,
+            'generation_mode' => 'mockup_combination_full_generation',
+            'generation_provider' => $generationProvider,
+            'dispatch_mode' => 'existing_job',
+        ], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
@@ -331,7 +385,7 @@ try {
             'job_id' => $jobId,
             'message' => 'Generation continues in the background. You can move through the application.',
             'audit_file' => 'analysis/mockup-combination-audit/' . $artworkId . '/' . $auditFile,
-            'results_url' => 'mockup_combination_results.php?id=' . $artworkId . '&board=' . $sceneBoardIndex . '&generation_provider=' . rawurlencode($generationProvider) . ($worldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($worldMotherCategory) : '') . '&highlight_job=' . $jobId,
+            'results_url' => 'mockup_combination_results.php?id=' . $artworkId . '&board=' . $sceneBoardIndex . '&generation_provider=' . rawurlencode($generationProvider) . ($worldMotherCategory !== '' ? '&world_mother_category=' . rawurlencode($worldMotherCategory) : '') . $generationRunQuery . '&highlight_job=' . $jobId,
             'generation_mode' => 'mockup_combination_full_generation',
             'generation_provider' => $generationProvider,
             'dispatch_mode' => $dispatchMode,

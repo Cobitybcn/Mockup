@@ -7,7 +7,7 @@ VideoHttp::requirePost();
 VideoHttp::handle(function (): array {
     $user = Auth::user();
     if (!$user) VideoHttp::respond(['ok' => false, 'error' => 'Authentication required.'], 401);
-    FeatureAccess::requireJson($user, FeatureAccess::VIDEO_MANAGE, 'Video Studio');
+    FeatureAccess::requireJson($user, FeatureAccess::VIDEO_MANAGE, 'Video Lab');
     $input = VideoHttp::input();
     VideoHttp::verifyCsrf($input);
     if (session_status() === PHP_SESSION_ACTIVE) session_write_close();

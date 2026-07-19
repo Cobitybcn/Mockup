@@ -37,6 +37,24 @@ function run_world_mother_library_admin_tests(): void
         TestHarness::assertSame(3, (int)$deleted['deleted_images'], 'delete reports every removed scene image');
         TestHarness::assertTrue(!is_dir($basePath . '/curated_scene'), 'delete removes the scene folder');
 
+        $staleIndex = [
+            'generated_at' => date(DATE_ATOM),
+            'categories' => [[
+                'category_slug' => 'missing_scene',
+                'category_name' => 'Missing Scene',
+                'relative_path' => 'storage/world_mothers_test/missing_scene',
+            ]],
+            'images' => [
+                'missing_scene' => [[
+                    'file_name' => 'missing.jpg',
+                    'relative_path' => 'storage/world_mothers_test/missing_scene/missing.jpg',
+                ]],
+            ],
+        ];
+        file_put_contents($basePath . '/index.json', json_encode($staleIndex, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        $freshLibrary = new WorldMotherLibrary($basePath, 'storage/world_mothers_test');
+        TestHarness::assertSame(0, count($freshLibrary->categories()), 'local library hides stale indexed scenes whose folders are missing');
+
         $appRoot = dirname(__DIR__, 2);
         $studioSource = (string)file_get_contents($appRoot . '/world_mother_studio.php');
         $mediaSource = (string)file_get_contents($appRoot . '/world_mother_media.php');
@@ -46,7 +64,10 @@ function run_world_mother_library_admin_tests(): void
         TestHarness::assertContains("StorageService::uploadFile(\$storageKey, \$path)", $studioSource, 'uploaded references are persisted when cloud storage is active');
         TestHarness::assertContains('persistGeneratedImage', $generatorSource, 'generated scene variants are persisted before indexing');
         TestHarness::assertContains('font-size: 44px', $studioSource, 'Scene Studio keeps the approved editorial header hierarchy');
-        TestHarness::assertContains('width: 56px', $studioSource, 'scene variant thumbnails use the approved larger size');
+        TestHarness::assertContains('<summary>Reference Diversity</summary>', $studioSource, 'Scene Studio keeps diversity corrections inside a folded administrative panel');
+        TestHarness::assertContains('name="similarity_group[]"', $studioSource, 'Scene Studio can curate reference similarity groups');
+        TestHarness::assertContains('array_slice($images, 0, 3)', $studioSource, 'scene cards use the approved compact three-thumbnail treatment');
+        TestHarness::assertTrue(strpos($studioSource, 'scene-gallery-featured') === false, 'scene cards do not expand a variant into an oversized cover');
     } finally {
         remove_world_mother_admin_test_tree($basePath);
     }

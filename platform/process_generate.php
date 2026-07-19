@@ -169,8 +169,8 @@ try {
 
     if (!empty($diskStatus['user_scene_flow']) && $candidateFiles !== []) {
         $selectedRootFile = (string)$candidateFiles[0];
-        $diskStatus['status'] = 'done';
-        $diskStatus['message'] = 'Root image prepared. Creating scenes next.';
+        $diskStatus['status'] = 'processing';
+        $diskStatus['message'] = 'Root image prepared. Analyzing the artwork...';
         $diskStatus['candidates'] = $candidateFiles;
         $diskStatus['result_file'] = $selectedRootFile;
         write_status_file($statusFile, $diskStatus);
@@ -182,7 +182,12 @@ try {
                 $v2Stmt=Database::connection()->prepare('SELECT * FROM artworks WHERE job_id=? LIMIT 1');$v2Stmt->execute([(string)$diskStatus['job_id']]);$v2Artwork=$v2Stmt->fetch(PDO::FETCH_ASSOC);
                 if(is_array($v2Artwork)){
                     $v2Profile=ArtistProfile::findForUser((int)$v2Artwork['user_id']);
-                    (new ArtworkAnalysisV2Service(new GeminiImageClient()))->generateDraft($v2Artwork,$v2Profile,RESULTS_DIR.DIRECTORY_SEPARATOR.$selectedRootFile,(string)($diskStatus['artist_notes']??'Automatic v2 analysis for new artwork.'));
+                    $v2Generated=(new ArtworkAnalysisV2Service(new GeminiImageClient()))->generateDraft($v2Artwork,$v2Profile,RESULTS_DIR.DIRECTORY_SEPARATOR.$selectedRootFile,(string)($diskStatus['artist_notes']??'Automatic v2 analysis for new artwork.'));
+                    (new ArtworkSheetService(Database::connection()))->applyAnalysisV2Draft(
+                        (int)$v2Artwork['id'],
+                        (int)$v2Artwork['user_id'],
+                        (array)$v2Generated['draft']
+                    );
                     $diskStatus['artwork_analysis_v2']='draft_ready';write_status_file($statusFile,$diskStatus);
                 }
             }catch(Throwable $v2Error){error_log('Artwork v2 analysis was not generated: '.$v2Error->getMessage());$diskStatus['artwork_analysis_v2']='error';$diskStatus['artwork_analysis_v2_error']=$v2Error->getMessage();write_status_file($statusFile,$diskStatus);}
@@ -208,6 +213,9 @@ try {
         if (StorageService::isGcsActive()) {
             StorageService::uploadFile('results/' . basename($metaName), $metaPath);
         }
+        $diskStatus['status'] = 'done';
+        $diskStatus['message'] = 'Root image and artwork analysis are ready. Creating scenes next.';
+        write_status_file($statusFile, $diskStatus);
     } else {
         $diskStatus['status'] = 'done';
         $diskStatus['message'] = 'Root image candidates created. Awaiting user selection.';

@@ -49,13 +49,23 @@
     margin-bottom: 16px;
 }
 
+.vds-catalog-kicker {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--vds-accent);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
 .vds-catalog-heading h1 {
     margin: 0 0 12px;
-    font-family: inherit;
-    font-size: 16px;
-    font-weight: 700;
-    letter-spacing: .16em;
-    text-transform: uppercase;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(26px, 2vw, 32px);
+    font-weight: 500;
+    letter-spacing: .01em;
+    text-transform: none;
 }
 
 .vds-filters,

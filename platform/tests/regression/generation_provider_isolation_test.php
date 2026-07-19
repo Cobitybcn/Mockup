@@ -96,10 +96,12 @@ function run_generation_provider_isolation_tests(): void
     $dispatcherSource = (string)file_get_contents(__DIR__ . '/../../app/Services/MockupGenerationDispatcher.php');
     $queueWorkerSource = (string)file_get_contents(__DIR__ . '/../../mockup_queue_worker.php');
     $resultsSource = (string)file_get_contents(__DIR__ . '/../../mockup_combination_results.php');
+    $activitySource = (string)file_get_contents(__DIR__ . '/../../mockup_generation_activity.php');
     $createScenesSource = (string)file_get_contents(__DIR__ . '/../../create_scenes.php');
     $startGenerateSource = (string)file_get_contents(__DIR__ . '/../../start_generate.php');
     $jobStatusSource = (string)file_get_contents(__DIR__ . '/../../job_status.php');
     $sceneWaitSource = (string)file_get_contents(__DIR__ . '/../../create_scenes_wait.php');
+    $databaseSource = (string)file_get_contents(__DIR__ . '/../../app/Support/Database.php');
     TestHarness::assertTrue(
         !str_contains($reviewSource, 'id="generation-provider-select"'),
         'El selector tecnico no aparece en la revision de escenas'
@@ -132,4 +134,13 @@ function run_generation_provider_isolation_tests(): void
     TestHarness::assertContains('data.scene_redirect', $sceneWaitSource, 'La espera abre el orquestador estable al terminar la obra raiz');
     TestHarness::assertTrue(!str_contains($sceneWaitSource, "fetch('generate_mockup_combination.php'"), 'La espera no ejecuta escenas directamente');
     TestHarness::assertContains('Promise.all(Array.from({ length: workerCount }, () => runNext()))', $reviewSource, 'El orquestador estable mantiene cuatro workers paralelos');
+    TestHarness::assertContains("'&scene_flow_job='", $jobStatusSource, 'La primera tanda conserva la identidad del trabajo raiz');
+    TestHarness::assertContains("formData.append('scene_flow_job', SCENE_FLOW_JOB)", $reviewSource, 'Cada escena automatica envia la identidad de su tanda');
+    TestHarness::assertContains("\$selectorState['idempotency_key'] = \$idempotencyKey", $endpointSource, 'El endpoint identifica de forma estable cada escena automatica');
+    TestHarness::assertContains('status IN ("pending_enqueue", "queued", "processing", "done")', $databaseSource, 'Una recarga reutiliza el trabajo activo o terminado sin descontar otro credito');
+    TestHarness::assertContains("formData.append('generation_run_id', generationRunId)", $reviewSource, 'Las cuatro escenas comparten la identidad de la ultima generacion');
+    TestHarness::assertContains("\$selectorState['generation_run_id'] = \$generationRunId", $endpointSource, 'La identidad de la generacion queda guardada con cada resultado');
+    TestHarness::assertContains("'&generation_run='", $activitySource, 'El aviso de finalizacion conserva la tanda recien creada');
+    TestHarness::assertContains('Latest generation (', $resultsSource, 'Resultados abre un filtro explicito para la ultima generacion');
+    TestHarness::assertContains('data-result-filter="all"', $resultsSource, 'El usuario puede volver a todos los resultados sin salir de la pantalla');
 }
