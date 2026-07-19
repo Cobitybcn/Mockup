@@ -1722,7 +1722,7 @@ function render_published_artist_page(array $profile): void
     <?php endif; ?>
 
     <section class="section artist-link-panel">
-        <a class="button" href="<?= e(url_for('artworks')) ?>">View Artworks</a>
+        <a class="button" href="<?= e(url_for('artworks/')) ?>">View Artworks</a>
         <a class="button button--quiet" href="<?= e(url_for('contact')) ?>">Inquire / Contact</a>
     </section>
     <?php

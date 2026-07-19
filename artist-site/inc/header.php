@@ -50,14 +50,14 @@ $metaImage = !empty($meta['image'])
         <small><?= e($site['tagline'] ?? '') ?></small>
     </a>
     <nav class="main-nav" aria-label="Main navigation">
-        <a<?= $isActive('artworks') ?> href="<?= e(url_for('artworks')) ?>">Artworks</a>
+        <a<?= $isActive('artworks') ?> href="<?= e(url_for('artworks/')) ?>">Artworks</a>
         <a<?= $isActive('sold-works') ?> href="<?= e(url_for('sold-works')) ?>">Constellations</a>
         <a<?= $isActive('series') ?> href="<?= e(url_for('series')) ?>">Series</a>
         <a<?= $isActive('artist') ?> href="<?= e(url_for('artist')) ?>">Artist</a>
         <a<?= $isJournalSection ? ' class="is-active" aria-current="page"' : '' ?> href="<?= e(url_for('studio-notes')) ?>">Studio Notes</a>
         <a class="nav-cta<?= $activeSection === 'contact' ? ' is-active' : '' ?>" <?= $activeSection === 'contact' ? 'aria-current="page"' : '' ?> href="<?= e(url_for('contact')) ?>">Inquire</a>
     </nav>
-    <form class="site-search" action="<?= e(url_for('artworks')) ?>" method="get" role="search">
+    <form class="site-search" action="<?= e(url_for('artworks/')) ?>" method="get" role="search">
         <label class="sr-only" for="site-search-input">Search paintings</label>
         <input id="site-search-input" name="q" type="search" placeholder="Search works, series, status..." autocomplete="off">
         <button type="submit">Search</button>
