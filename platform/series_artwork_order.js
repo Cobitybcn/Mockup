@@ -9,10 +9,11 @@
     function applyVisibleOrder(cards, positions) {
         cards.forEach((card, index) => {
             const artworkId = card.getAttribute('data-series-artwork-id') || '';
-            const fallbackNumber = (index + 1) * 10;
+            const fallbackPosition = cards.length - index;
+            const fallbackNumber = fallbackPosition * 10;
             const serverPosition = positions && positions[artworkId] ? positions[artworkId] : null;
             const creationNumber = Number(serverPosition?.number || fallbackNumber);
-            const ordinal = Number(serverPosition?.position || index + 1);
+            const ordinal = Number(serverPosition?.position || fallbackPosition);
             const prefix = card.getAttribute('data-series-prefix') || '';
             const identifier = String(serverPosition?.identifier || (prefix ? prefix + String(creationNumber).padStart(3, '0') : ''));
 

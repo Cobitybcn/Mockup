@@ -354,9 +354,9 @@ if ($id <= 0) {
         if ($selectedArtworkSeriesId > 0) {
             $groupSql .= " ORDER BY
                 CASE WHEN a.series_creation_number IS NULL THEN 1 ELSE 0 END ASC,
-                a.series_creation_number ASC,
-                g.created_at ASC,
-                g.id ASC";
+                a.series_creation_number DESC,
+                g.created_at DESC,
+                g.id DESC";
         } else {
             $groupSql .= " ORDER BY g.updated_at DESC, g.created_at DESC, g.id DESC";
         }
@@ -1067,10 +1067,10 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                 <?php if ($id <= 0): ?>
                     <?php if ($albumArtworks): ?>
                         <div class="mobile-root-slider" aria-label="Root artwork carousel">
-                            <?php $mobileSeriesOrder = 0; ?>
+                            <?php $mobileSeriesOrder = count($albumArtworks); ?>
                             <?php foreach ($albumArtworks as $albumArtwork): ?>
                                 <?php
-                                if ($selectedArtworkSeriesId > 0) $mobileSeriesOrder++;
+                                $visibleMobileSeriesOrder = $selectedArtworkSeriesId > 0 ? $mobileSeriesOrder-- : 0;
                                 $title = trim((string)($albumArtwork['group_title'] ?? ''));
                                 if ($title === '') {
                                     $title = trim((string)($albumArtwork['final_title'] ?? ''));
@@ -1090,7 +1090,7 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                                 <article class="mobile-root-slide">
                                     <a class="mobile-root-slide-link" href="<?= h($targetUrl) ?>">
                                         <img src="<?= h(root_album_media_url((string)$albumArtwork['root_file'])) ?>" alt="<?= h($title) ?>" loading="lazy">
-                                        <?php if ($selectedArtworkSeriesId > 0): ?><span class="series-artwork-order"><?= str_pad((string)$mobileSeriesOrder, 2, '0', STR_PAD_LEFT) ?></span><?php endif; ?>
+                                        <?php if ($selectedArtworkSeriesId > 0): ?><span class="series-artwork-order"><?= str_pad((string)$visibleMobileSeriesOrder, 2, '0', STR_PAD_LEFT) ?></span><?php endif; ?>
                                         <h2><?= h($title) ?><?php if ($seriesTitle !== ''): ?> <span class="title-series-soft">(<?= h($seriesTitle) ?>)</span><?php endif; ?></h2>
                                         <p>
                                             <?= $size !== '' ? h($size) . ' · ' : '' ?><?= h((string)$rootCount) ?> roots<?= $mockupCount > 0 ? ' · ' . h((string)$mockupCount) . ' mockups' : '' ?>
@@ -1116,10 +1116,10 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                             <?php endforeach; ?>
                         </div>
                         <div class="root-album-grid root-album-grid--catalog"<?php if ($selectedArtworkSeriesId > 0): ?> data-series-order-list data-series-order-endpoint="reorder_series_artworks.php" data-series-order-csrf="<?= h($_SESSION['series_csrf']) ?>"<?php endif; ?>>
-                            <?php $desktopSeriesOrder = 0; ?>
+                            <?php $desktopSeriesOrder = count($albumArtworks); ?>
                             <?php foreach ($albumArtworks as $albumArtwork): ?>
                                 <?php
-                                if ($selectedArtworkSeriesId > 0) $desktopSeriesOrder++;
+                                $visibleDesktopSeriesOrder = $selectedArtworkSeriesId > 0 ? $desktopSeriesOrder-- : 0;
                                 $title = trim((string)($albumArtwork['group_title'] ?? ''));
                                 if ($title === '') {
                                     $title = trim((string)($albumArtwork['final_title'] ?? ''));
@@ -1141,7 +1141,7 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                                 <article class="root-album-card"<?php if ($selectedArtworkSeriesId > 0): ?> data-series-artwork-id="<?= (int)$albumArtwork['id'] ?>" data-series-id="<?= $selectedArtworkSeriesId ?>"<?php endif; ?>>
                                     <a href="<?= h($targetUrl) ?>"<?php if ($selectedArtworkSeriesId > 0): ?> data-series-drag-thumb<?php endif; ?>>
                                         <img src="<?= h(root_album_media_url((string)$albumArtwork['root_file'])) ?>" alt="<?= h($title) ?>" loading="lazy" draggable="false">
-                                        <?php if ($selectedArtworkSeriesId > 0): ?><span class="series-artwork-order" data-series-order-position><?= str_pad((string)$desktopSeriesOrder, 2, '0', STR_PAD_LEFT) ?></span><?php endif; ?>
+                                        <?php if ($selectedArtworkSeriesId > 0): ?><span class="series-artwork-order" data-series-order-position><?= str_pad((string)$visibleDesktopSeriesOrder, 2, '0', STR_PAD_LEFT) ?></span><?php endif; ?>
                                     </a>
                                     <?php if (count($albumArtworks) > 1): ?>
                                         <button class="artwork-merge-btn media-icon-button media-thumb-action media-thumb-action--right-secondary" type="button" title="Fusionar con otra obra" aria-label="Fusionar con otra obra"
@@ -1434,7 +1434,7 @@ document.addEventListener('click', event => {
 </script>
 <?php if ($id <= 0 && $selectedArtworkSeriesId > 0): ?>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="series_artwork_order.js?v=20260719-2"></script>
+<script src="series_artwork_order.js?v=20260719-3"></script>
 <?php endif; ?>
 </body>
 </html>
