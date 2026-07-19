@@ -7,6 +7,7 @@ param(
     [string]$WebRuntimeServiceAccountName = "mockups-web-sa",
     [string]$WorkerRuntimeServiceAccountName = "mockups-worker-sa",
     [string]$CicdServiceAccountName = "mockups-cicd-sa",
+    [string]$DatabasePasswordSecretName = "mockups-db-password",
     [string]$GitHubOwner = "Cobitybcn",
     [string]$GitHubRepository = "Mockup",
     [string]$ProductionBranch = "main",
@@ -141,6 +142,22 @@ foreach ($runtimeAccountName in @($WebRuntimeServiceAccountName, $WorkerRuntimeS
         --project=$ProjectId `
         --member="serviceAccount:$cicdServiceAccount" `
         --role="roles/iam.serviceAccountUser" `
+        --condition=None `
+        --quiet
+}
+
+# Both application identities connect to the same database and must read the
+# password through Secret Manager. Keeping this binding in setup prevents a
+# later deployment from falling back to a plain environment variable.
+Invoke-Gcloud secrets describe $DatabasePasswordSecretName `
+    --project=$ProjectId `
+    "--format=value(name)"
+
+foreach ($runtimeAccountName in @($WebRuntimeServiceAccountName, $WorkerRuntimeServiceAccountName)) {
+    Invoke-Gcloud secrets add-iam-policy-binding $DatabasePasswordSecretName `
+        --project=$ProjectId `
+        --member="serviceAccount:$runtimeAccountName@$ProjectId.iam.gserviceaccount.com" `
+        --role="roles/secretmanager.secretAccessor" `
         --condition=None `
         --quiet
 }
