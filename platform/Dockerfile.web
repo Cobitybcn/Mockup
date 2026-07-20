@@ -43,6 +43,13 @@ RUN composer install --no-dev --optimize-autoloader
 COPY platform/ /var/www/html/
 COPY site-admin/ /var/www/html/site-admin/
 
+# Keep the small public-site contract fixture beside the platform image so the
+# production regression suite validates both deployable surfaces before release.
+COPY artist-site/index.php /var/www/artist-site/index.php
+COPY artist-site/inc/header.php /var/www/artist-site/inc/header.php
+COPY artist-site/inc/AppPublishedSeriesCatalog.php /var/www/artist-site/inc/AppPublishedSeriesCatalog.php
+COPY artist-site/assets/css/styles.css /var/www/artist-site/assets/css/styles.css
+
 # Configure Apache port to 8080 (Cloud Run standard)
 RUN sed -i 's/Listen 80/Listen 8080/g' /etc/apache2/ports.conf
 RUN sed -i 's/<VirtualHost \*:80>/<VirtualHost \*:8080>/g' /etc/apache2/sites-available/000-default.conf
