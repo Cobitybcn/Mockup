@@ -114,7 +114,7 @@ function mbh(mixed $value): string
             <article><strong>Instagram</strong><p><?= ($instagramConnection['username'] ?? '') !== '' ? '@' . mbh($instagramConnection['username']) : 'Not connected' ?></p></article>
             <article><strong>Batch status</strong><p><?= mbh($batch['status']) ?></p></article>
         </section>
-        <p><a class="button-link secondary" href="integrations/meta/">Manage Facebook connection</a> <a class="button-link secondary" href="integrations/instagram/">Manage Instagram connection</a></p>
+        <p><a class="button-link secondary" href="connections.php">Manage connections</a></p>
         <div class="meta-grid">
         <?php foreach ($items as $item):
             $published = (string)$item['status'] === 'published';

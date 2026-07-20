@@ -42,4 +42,4 @@ function pph($v):string{return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}
 <label>Título</label><input name="title" maxlength="100" value="<?=pph($variant['title']??$selectedItem['title'])?>" required><label>Descripción</label><textarea name="description" maxlength="500"><?=pph($variant['description']??$selectedItem['description'])?></textarea>
 <p><strong>Destino:</strong><br><?=pph(rtrim(app_env('APP_PUBLIC_URL'),'/').'/public_artwork.php?slug='.$publication['slug'])?></p>
 <label class="confirm"><input type="checkbox" name="confirm" value="yes" required><span>Confirmo que quiero publicar esta imagen ahora en el tablero seleccionado.</span></label><button class="button-link primary" name="action" value="publish">Publicar Pin</button>
-</aside></form><?php elseif(str_contains($error,'Conecta')):?><p><a class="button-link primary" href="integrations/pinterest/">Conectar Pinterest</a></p><?php endif;?></div></main></div></body></html>
+</aside></form><?php elseif(str_contains($error,'Conecta')):?><p><a class="button-link primary" href="connections.php#pinterest">Conectar Pinterest</a></p><?php endif;?></div></main></div></body></html>

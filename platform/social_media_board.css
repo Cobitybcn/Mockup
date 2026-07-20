@@ -370,6 +370,7 @@
 .smb-board--pinterest .smb-board-count { border-color: #e8c9c4; color: #9d4a42; background: #fff2ef; }
 .smb-board--instagram .smb-board-count { border-color: #ead2e8; color: #98508f; background: #fbf1fb; }
 .smb-pinterest-runtime-note { display: grid; gap: 4px; margin: 0 14px 12px; padding: 10px 12px; border: 1px solid #e2c6a0; border-radius: 8px; color: #745b35; background: #fff6e8; }
+.smb-pinterest-runtime-note[hidden] { display: none; }
 .smb-pinterest-runtime-note strong { font-size: 10px; }
 .smb-pinterest-runtime-note span { font-size: 9px; line-height: 1.45; }
 .smb-board--facebook .smb-board-count { border-color: #cad9ee; color: #416899; background: #edf4ff; }
@@ -1005,6 +1006,8 @@
 .smb-confirm-submit { border-color: #849a7f; color: #fff; background: var(--smb-sage); }
 .smb-confirm-submit:hover { background: #768e70; }
 .smb-confirm-submit:disabled { cursor: wait; opacity: .65; }
+.smb-confirm-cancel { border-color: #9a7448; color: #fff; background: #9a7448; }
+.smb-confirm-cancel:hover { border-color: #85633e; color: #fff; background: #85633e; }
 
 .smb-inspector-backdrop[hidden] { display: none; }
 .smb-inspector-backdrop {
@@ -1305,6 +1308,29 @@
     transition: opacity .2s ease, transform .2s ease;
 }
 .smb-toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+.smb-toast.is-persistent {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 2147483647;
+    border-color: #d5a7a3;
+    color: #7d3733;
+    background: #fff1ef;
+    pointer-events: auto;
+}
+.smb-toast-close {
+    flex: 0 0 auto;
+    min-height: 32px;
+    padding: 0 12px;
+    border: 1px solid #c9837d;
+    border-radius: 6px;
+    color: #fff;
+    background: #a6534d;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+.smb-toast-close:hover { background: #8f4540; }
 
 @media (max-width: 1180px) {
     .smb-boards { grid-template-columns: 1fr; }

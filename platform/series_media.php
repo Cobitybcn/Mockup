@@ -28,6 +28,16 @@ if (!is_file($path)) {
     $seriesUpload = ArtworkSeries::headerUploadDir((int)$series['user_id']) . DIRECTORY_SEPARATOR . $file;
     if (is_file($seriesUpload)) $path = $seriesUpload;
 }
+if (!is_file($path)) {
+    $seriesHeadersRoot = dirname(ArtworkSeries::headerUploadDir((int)$series['user_id']));
+    $legacyHeaderPaths = glob($seriesHeadersRoot . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . $file) ?: [];
+    foreach ($legacyHeaderPaths as $legacyHeaderPath) {
+        if (is_file($legacyHeaderPath)) {
+            $path = $legacyHeaderPath;
+            break;
+        }
+    }
+}
 if (!is_file($path) && StorageService::isGcsActive()) {
     StorageService::downloadFile('results/' . $file, $path);
 }

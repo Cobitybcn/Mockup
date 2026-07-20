@@ -10,6 +10,10 @@ $isActive = function (string $section) use ($activeSection): string {
 $metaImage = !empty($meta['image'])
     ? (preg_match('~^https?://~', (string)$meta['image']) ? (string)$meta['image'] : rtrim($site['url'], '/') . '/' . ltrim((string)$meta['image'], '/'))
     : '';
+$artistPhotoFile = trim((string)($profile['photo_file'] ?? ''));
+$faviconUrl = $artistPhotoFile !== ''
+    ? app_artist_photo_url($artistPhotoFile)
+    : artworkmockups_public_url() . '/favicon.svg?v=1';
 ?>
 <!doctype html>
 <html lang="en">
@@ -17,6 +21,7 @@ $metaImage = !empty($meta['image'])
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e($meta['title']) ?></title>
+    <link rel="icon" href="<?= e($faviconUrl) ?>">
     <meta name="description" content="<?= e($meta['description']) ?>">
     <?php if (!empty($meta['keywords'])): ?><meta name="keywords" content="<?= e($meta['keywords']) ?>"><?php endif; ?>
     <link rel="canonical" href="<?= e($meta['canonical']) ?>">
@@ -50,14 +55,14 @@ $metaImage = !empty($meta['image'])
         <small><?= e($site['tagline'] ?? '') ?></small>
     </a>
     <nav class="main-nav" aria-label="Main navigation">
-        <a<?= $isActive('artworks') ?> href="<?= e(url_for('artworks')) ?>">Artworks</a>
-        <a<?= $isActive('sold-works') ?> href="<?= e(url_for('sold-works')) ?>">Constellations</a>
+        <a<?= $isActive('artworks') ?> href="<?= e(url_for('artworks/')) ?>">Artworks</a>
         <a<?= $isActive('series') ?> href="<?= e(url_for('series')) ?>">Series</a>
-        <a<?= $isActive('artist') ?> href="<?= e(url_for('artist')) ?>">Artist</a>
+        <a<?= $isActive('sold-works') ?> href="<?= e(url_for('sold-works')) ?>">Constellations</a>
         <a<?= $isJournalSection ? ' class="is-active" aria-current="page"' : '' ?> href="<?= e(url_for('studio-notes')) ?>">Studio Notes</a>
+        <a<?= $isActive('artist') ?> href="<?= e(url_for('artist')) ?>">Artist</a>
         <a class="nav-cta<?= $activeSection === 'contact' ? ' is-active' : '' ?>" <?= $activeSection === 'contact' ? 'aria-current="page"' : '' ?> href="<?= e(url_for('contact')) ?>">Inquire</a>
     </nav>
-    <form class="site-search" action="<?= e(url_for('artworks')) ?>" method="get" role="search">
+    <form class="site-search" action="<?= e(url_for('artworks/')) ?>" method="get" role="search">
         <label class="sr-only" for="site-search-input">Search paintings</label>
         <input id="site-search-input" name="q" type="search" placeholder="Search works, series, status..." autocomplete="off">
         <button type="submit">Search</button>

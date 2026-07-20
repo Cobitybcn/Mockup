@@ -30,6 +30,9 @@
         ? String(boardConfig.pinterest.purpose)
         : configuredPinterestPurposes[0] || 'artist';
     const pinterestEnvironment = String(boardConfig?.pinterest?.environment || 'production');
+    const pinterestEnvironments = boardConfig?.pinterest?.environments && typeof boardConfig.pinterest.environments === 'object'
+        ? boardConfig.pinterest.environments
+        : {};
 
     const mockupById = new Map(mockups.map((mockup) => [String(mockup.id), mockup]));
     const userId = document.body.dataset.socialBoardUser || 'guest';
@@ -205,9 +208,19 @@
         const toast = document.querySelector('[data-social-toast]');
         if (!toast) return;
         window.clearTimeout(toastTimer);
-        toast.textContent = message;
+        toast.replaceChildren(document.createTextNode(message));
+        toast.classList.toggle('is-persistent', duration <= 0);
+        if (duration <= 0) {
+            const close = document.createElement('button');
+            close.type = 'button';
+            close.className = 'smb-toast-close';
+            close.setAttribute('aria-label', 'Cerrar mensaje');
+            close.textContent = 'Cerrar';
+            close.addEventListener('click', () => toast.classList.remove('is-visible'));
+            toast.appendChild(close);
+        }
         toast.classList.add('is-visible');
-        toastTimer = window.setTimeout(() => toast.classList.remove('is-visible'), duration);
+        if (duration > 0) toastTimer = window.setTimeout(() => toast.classList.remove('is-visible'), duration);
     };
 
     const localScheduleParts = (value) => {
@@ -578,7 +591,8 @@
             showToast(result.message || (isNow ? `${result.publication_count} publicaciones entraron en la cola.` : `${result.publication_count} publicaciones programadas.`), 8000);
             await loadScheduledJobs(true);
         } catch (error) {
-            showToast(error.message || 'No se pudo programar la publicación.');
+            closePublishConfirmation();
+            showToast(error.message || 'No se pudo programar la publicación.', 0);
         } finally {
             if (button) {
                 button.disabled = false;
@@ -1454,12 +1468,20 @@
     };
 
     const pinterestPurposeSelect = document.querySelector('[data-pinterest-purpose]');
+    const syncPinterestEnvironmentNote = () => {
+        const note = document.querySelector('[data-pinterest-sandbox-note]');
+        if (!note) return;
+        const environment = String(pinterestEnvironments[state.pinterestPurpose] || pinterestEnvironment);
+        note.hidden = environment !== 'sandbox';
+    };
+    syncPinterestEnvironmentNote();
     if (pinterestPurposeSelect) {
         pinterestPurposeSelect.value = state.pinterestPurpose;
         pinterestPurposeSelect.addEventListener('change', () => {
             const purpose = String(pinterestPurposeSelect.value || '');
             if (!configuredPinterestPurposes.includes(purpose) || purpose === state.pinterestPurpose) return;
             state.pinterestPurpose = purpose;
+            syncPinterestEnvironmentNote();
             Object.values(state.pinData).forEach((pin) => {
                 if (pin && typeof pin === 'object') {
                     pin.board = '';

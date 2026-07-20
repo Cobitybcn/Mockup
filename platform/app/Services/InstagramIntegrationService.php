@@ -166,7 +166,10 @@ final class InstagramIntegrationService
 
     public function oauthEnabled(): bool
     {
-        return strtolower(app_env('INSTAGRAM_OAUTH_ENABLED', 'false')) === 'true';
+        return strtolower(app_env('INSTAGRAM_OAUTH_ENABLED', 'false')) === 'true'
+            && app_env('INSTAGRAM_APP_ID_ARTIST') !== ''
+            && app_env('INSTAGRAM_APP_SECRET_ARTIST') !== ''
+            && app_env('INSTAGRAM_REDIRECT_URI_ARTIST') !== '';
     }
 
     private function storeConnection(int $userId, string $purpose, string $instagramUserId, string $username, string $accountType, string $token, int $expiresIn): void

@@ -6,6 +6,10 @@ function run_public_pages_regression_tests(): void {
     foreach(['privacy/index.php','terms/index.php','contact/index.php','data-deletion/index.php','integrations/pinterest/index.php','integrations/pinterest/callback/index.php','integrations/meta/index.php','integrations/meta/callback/index.php','integrations/instagram/index.php','integrations/instagram/callback/index.php','integrations/instagram/deauthorize/index.php','integrations/instagram/data-deletion/index.php'] as $path) TestHarness::assertTrue(is_file($root.'/'.$path),$path.' exists');
     $privacy=(string)file_get_contents($root.'/privacy/index.php'); $terms=(string)file_get_contents($root.'/terms/index.php'); $pin=(string)file_get_contents($root.'/integrations/pinterest/index.php'); $callback=(string)file_get_contents($root.'/integrations/pinterest/callback/index.php'); $metaCallback=(string)file_get_contents($root.'/integrations/meta/callback/index.php'); $instagram=(string)file_get_contents($root.'/integrations/instagram/index.php'); $instagramCallback=(string)file_get_contents($root.'/integrations/instagram/callback/index.php');
     TestHarness::assertContains('does not publish automatically',$pin,'automatic publishing is explicitly prohibited');
+    TestHarness::assertContains('Connect your Pinterest account',$pin,'artists can connect their private Pinterest account from the connection page');
+    TestHarness::assertContains('no developer codes or tokens are required',$pin,'artists are not asked for Pinterest developer credentials');
+    TestHarness::assertTrue(!str_contains($pin,'name="access_token"'),'the artist connection page does not request a manual token');
+    TestHarness::assertContains("authorizationUrl(\$userId, 'artist')",(string)file_get_contents($root.'/connections.php'),'artist Pinterest connections use the official OAuth flow');
     TestHarness::assertContains('explicitly approving each',$terms,'terms require Pin approval');
     TestHarness::assertContains('does not use Pinterest data for unrelated advertising',$privacy,'privacy limits Pinterest data use');
     TestHarness::assertContains('We do not sell Meta Platform Data',$privacy,'privacy limits Meta Platform Data use');
@@ -29,4 +33,25 @@ function run_public_pages_regression_tests(): void {
     TestHarness::assertContains('Active Campaign Drafts',$social,'active drafts are separated from the current campaign');
     TestHarness::assertContains('Publication History',$social,'published campaigns have a separate read-only history');
     TestHarness::assertTrue(!str_contains($social,'value="facebook" checked')&&!str_contains($social,'value="instagram" checked'),'Facebook and Instagram destinations are never preselected');
+    $artistSite=(string)file_get_contents(dirname($root).'/artist-site/index.php');
+    $artistHeader=(string)file_get_contents(dirname($root).'/artist-site/inc/header.php');
+    TestHarness::assertContains("app_artist_photo_url(\$artistPhotoFile)",$artistHeader,'the artist website uses the published profile photo as its favicon');
+    TestHarness::assertContains('<link rel="icon" href="<?= e($faviconUrl) ?>">',$artistHeader,'the artist website exposes the resolved artist favicon in every page head');
+    TestHarness::assertTrue(
+        strpos($artistHeader, '>Artworks</a>') < strpos($artistHeader, '>Series</a>')
+            && strpos($artistHeader, '>Series</a>') < strpos($artistHeader, '>Constellations</a>'),
+        'the artist website navigation places Series immediately after Artworks'
+    );
+    TestHarness::assertContains("strcasecmp(trim((string)(\$artwork['series'] ?? '')), \$seriesTitle) === 0",$artistSite,'public series details select their dependent published artworks');
+    TestHarness::assertContains('<h2>Works in this series</h2>',$artistSite,'public series details render their dependent artwork collection');
+    TestHarness::assertContains('class="artwork-series-link"',$artistSite,'published artwork details link their series to its public detail page');
+    TestHarness::assertContains('class="artwork-series-preview"',$artistSite,'published artwork details provide an accessible series preview');
+    $publishedSeriesCatalog=(string)file_get_contents(dirname($root).'/artist-site/inc/AppPublishedSeriesCatalog.php');
+    TestHarness::assertContains('COALESCE(s.year_start, s.year_end) DESC',$publishedSeriesCatalog,'the public series catalog follows the app editorial year order');
+    TestHarness::assertContains('s.created_at DESC',$publishedSeriesCatalog,'the public series catalog preserves the app editorial tie breaker');
+    TestHarness::assertTrue(!str_contains($publishedSeriesCatalog,'ORDER BY s.year_start DESC, s.title ASC'),'the public series catalog no longer replaces editorial order with alphabetical order');
+    $artistStyles=(string)file_get_contents(dirname($root).'/artist-site/assets/css/styles.css');
+    TestHarness::assertContains('grid-template-columns: repeat(4, minmax(0, 1fr));',$artistStyles,'the published series overview uses four equal desktop columns');
+    TestHarness::assertContains('.artwork-series-reference:hover .artwork-series-preview',$artistStyles,'series previews appear on pointer hover');
+    TestHarness::assertContains('.artwork-series-reference:focus-within .artwork-series-preview',$artistStyles,'series previews appear for keyboard focus');
 }

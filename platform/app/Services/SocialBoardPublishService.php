@@ -22,6 +22,7 @@ final class SocialBoardPublishService
         $instagramGroups = array_values((array)($input['instagram'] ?? []));
         $facebookGroups = array_values((array)($input['facebook'] ?? []));
         $pinterestPurpose = $this->pinterestPurpose($user, (string)($input['pinterest_purpose'] ?? 'artist'));
+        $deliveryMode = strtolower(trim((string)($defaultSchedule['mode'] ?? 'scheduled'))) === 'now' ? 'now' : 'scheduled';
         $publicationCount = count($pinterestItems) + count($instagramGroups) + count($facebookGroups);
         if ($publicationCount === 0) throw new InvalidArgumentException('Add at least one publication before confirming.');
         if ($publicationCount > 80) throw new InvalidArgumentException('Schedule at most 80 publications at a time.');
@@ -36,7 +37,7 @@ final class SocialBoardPublishService
             if (!is_array($item)) throw new InvalidArgumentException('Invalid Pinterest publication.');
             $when = $this->scheduledAt((array)($item['schedule'] ?? $defaultSchedule), $timezone);
             $job = $this->preparePinterest($user, $item, $pinterestBoards, $pinterestPurpose, $when, $position);
-            $created[] = $this->enqueueIfNeeded($job, $when);
+            $created[] = $this->enqueueIfNeeded($job, $when, $deliveryMode === 'now');
             $scheduled[] = $when->format(DateTimeInterface::ATOM);
         }
         foreach (['instagram' => $instagramGroups, 'facebook' => $facebookGroups] as $channel => $groups) {
@@ -44,12 +45,11 @@ final class SocialBoardPublishService
                 if (!is_array($group)) throw new InvalidArgumentException('Invalid ' . ucfirst($channel) . ' publication.');
                 $when = $this->scheduledAt((array)($group['schedule'] ?? $defaultSchedule), $timezone);
                 $job = $this->prepareMeta($user, $channel, $group, $when, $position);
-                $created[] = $this->enqueueIfNeeded($job, $when);
+                $created[] = $this->enqueueIfNeeded($job, $when, false);
                 $scheduled[] = $when->format(DateTimeInterface::ATOM);
             }
         }
 
-        $deliveryMode = strtolower(trim((string)($defaultSchedule['mode'] ?? 'scheduled'))) === 'now' ? 'now' : 'scheduled';
         return ['jobs' => $created, 'publication_count' => $publicationCount, 'scheduled_at' => $scheduled, 'delivery_mode' => $deliveryMode];
     }
 
@@ -149,7 +149,7 @@ final class SocialBoardPublishService
         ], $key);
     }
 
-    private function enqueueIfNeeded(array $job, DateTimeImmutable $when): array
+    private function enqueueIfNeeded(array $job, DateTimeImmutable $when, bool $publishDirectly = false): array
     {
         $status = (string)($job['status'] ?? '');
         if ($status === 'failed') {
@@ -161,6 +161,9 @@ final class SocialBoardPublishService
         if ($status === 'published' || trim((string)($job['task_name'] ?? '')) !== '') {
             return $this->summary($job);
         }
+        if ($publishDirectly && (string)($job['channel'] ?? '') === 'pinterest' && !CloudTasksService::isAvailable()) {
+            return $this->publishPinterestDirectly($job);
+        }
         try {
             $taskName = CloudTasksService::enqueueSocialPublication((int)$job['id'], $when);
             $this->jobs->attachTask((int)$job['id'], (int)$job['user_id'], $taskName);
@@ -169,6 +172,52 @@ final class SocialBoardPublishService
             throw new RuntimeException('The publication was prepared but could not be added to the scheduler. ' . $e->getMessage(), 0, $e);
         }
         return $this->summary($this->jobs->job((int)$job['id'], (int)$job['user_id']));
+    }
+
+    private function publishPinterestDirectly(array $job): array
+    {
+        $jobId = (int)$job['id'];
+        $userId = (int)$job['user_id'];
+        $claimed = $this->jobs->claim($jobId);
+        if (!is_array($claimed)) return $this->summary($this->jobs->job($jobId, $userId));
+        $attemptId = (string)$claimed['publish_attempt_id'];
+        $draftService = new MockupPinterestDraftService($this->pdo);
+        $draftId = 0;
+        try {
+            $jobPayload = json_decode((string)$claimed['payload_json'], true);
+            $draftIds = array_values(array_unique(array_filter(array_map('intval', (array)($jobPayload['draft_ids'] ?? [])))));
+            $draftId = (int)($draftIds[0] ?? 0);
+            if ($draftId <= 0) throw new RuntimeException('La publicación no tiene una imagen preparada.');
+            $draft = $draftService->draft($draftId, $userId);
+            $variant = basename((string)($draft['variant_file'] ?? ''));
+            if ($variant === '' || trim((string)($draft['board_id'] ?? '')) === '') {
+                throw new RuntimeException('El Pin de Pinterest no está completamente preparado.');
+            }
+            $imagePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'pinterest_drafts' . DIRECTORY_SEPARATOR . $variant;
+            if (!is_file($imagePath) && StorageService::isGcsActive()) {
+                StorageService::downloadFile('pinterest-drafts/' . $variant, $imagePath);
+            }
+            $pinPayload = (new PinterestPublisher())->imageBase64PinPayload(
+                ['title' => $draft['title'], 'description' => $draft['description']],
+                $draft,
+                (string)$draft['board_id'],
+                (string)$draft['destination_url'],
+                $imagePath
+            );
+            $response = (new PinterestIntegrationService($this->pdo))->createPin($userId, $pinPayload, (string)$draft['purpose']);
+            $externalId = trim((string)($response['id'] ?? ''));
+            if ($externalId === '') throw new RuntimeException('Pinterest no devolvió el identificador del Pin.');
+            $externalUrl = trim((string)($response['link'] ?? ''));
+            if ($externalUrl === '') $externalUrl = 'https://www.pinterest.com/pin/' . rawurlencode($externalId) . '/';
+            $draftService->markPublished($draftId, $userId, $externalId, $externalUrl, $response);
+            $this->jobs->markPublished($jobId, $attemptId, $externalId, $externalUrl);
+            return $this->summary($this->jobs->job($jobId, $userId));
+        } catch (Throwable $e) {
+            if ($draftId > 0) $draftService->markFailed($draftId, $userId, $e->getMessage());
+            if ($e instanceof PinterestTransportException) $this->jobs->markNeedsVerification($jobId, $attemptId, $e->getMessage());
+            else $this->jobs->markFailed($jobId, $attemptId, $e->getMessage());
+            throw $e;
+        }
     }
 
     private function summary(array $job): array
@@ -187,11 +236,12 @@ final class SocialBoardPublishService
     private function assertPublicRuntime(array $pinterest, array $instagram, array $facebook): void
     {
         $base = rtrim(app_env('APP_PUBLIC_URL', ''), '/');
-        if (!str_starts_with(strtolower($base), 'https://')) {
+        $needsPublicMedia = (bool)($instagram || $facebook || ($pinterest && CloudTasksService::isAvailable()));
+        if ($needsPublicMedia && !str_starts_with(strtolower($base), 'https://')) {
             throw new RuntimeException('Real publication requires the public HTTPS site. Localhost can only validate the design.');
         }
         if ($pinterest && (app_env('PINTEREST_LIVE_PUBLISH_ENABLED', 'false') !== 'true'
-            || app_env('PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED', 'false') !== 'true')) {
+            || (CloudTasksService::isAvailable() && app_env('PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED', 'false') !== 'true'))) {
             throw new RuntimeException('Pinterest live publication is not enabled in this environment.');
         }
         if ($facebook && (app_env('META_LIVE_PUBLISH_ENABLED', 'false') !== 'true'

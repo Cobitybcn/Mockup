@@ -36,11 +36,12 @@ WORKDIR /var/www/html
 
 # Install PHP dependencies before copying the app so Docker can cache Composer
 # when only PHP/source files change.
-COPY composer.json /var/www/html/
+COPY platform/composer.json /var/www/html/
 RUN composer install --no-dev --optimize-autoloader
 
 # Copy codebase
-COPY . /var/www/html/
+COPY platform/ /var/www/html/
+COPY site-admin/ /var/www/html/site-admin/
 
 # Configure Apache port to 8080 (Cloud Run standard)
 RUN sed -i 's/Listen 80/Listen 8080/g' /etc/apache2/ports.conf

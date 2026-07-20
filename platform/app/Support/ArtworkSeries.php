@@ -412,8 +412,17 @@ class ArtworkSeries
     {
         $missing = [];
         if (trim((string)($series['header_file'] ?? '')) === '') $missing[] = 'header image';
-        if (trim((string)($series['description'] ?? '')) === '') $missing[] = 'short description';
+        if (trim((string)($series['description'] ?? '')) === '' && trim((string)($series['long_description'] ?? '')) === '') {
+            $missing[] = 'description';
+        }
         return $missing;
+    }
+
+    private static function shortDescriptionFromLong(string $longDescription): string
+    {
+        $paragraphs = preg_split('/\R\s*\R/u', trim($longDescription)) ?: [];
+        $summary = trim((string)($paragraphs[0] ?? ''));
+        return preg_replace('/\s+/u', ' ', $summary) ?? $summary;
     }
 
     public static function setPublished(PDO $pdo, int $userId, int $seriesId, bool $published): void
@@ -423,11 +432,44 @@ class ArtworkSeries
             $stmt->execute([$seriesId, $userId]);
             $series = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$series) throw new RuntimeException('Series not found.');
+            if (trim((string)($series['description'] ?? '')) === '' && trim((string)($series['long_description'] ?? '')) !== '') {
+                $series['description'] = self::shortDescriptionFromLong((string)$series['long_description']);
+                $pdo->prepare('UPDATE artwork_series SET description = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+                    ->execute([(string)$series['description'], date('c'), $seriesId, $userId]);
+            }
             $missing = self::missingForPublish($series);
             if ($missing) throw new RuntimeException('Cannot publish. Missing: ' . implode(', ', $missing) . '.');
+        } else {
+            $publishedArtworkCount = self::publishedArtworkCountForSeries($pdo, $userId, $seriesId);
+            if ($publishedArtworkCount > 0) {
+                $noun = $publishedArtworkCount === 1 ? 'obra publicada' : 'obras publicadas';
+                throw new RuntimeException('No se puede retirar la serie mientras tenga ' . $publishedArtworkCount . ' ' . $noun . '.');
+            }
         }
         $pdo->prepare('UPDATE artwork_series SET published = ?, updated_at = ? WHERE id = ? AND user_id = ?')
             ->execute([$published ? 1 : 0, date('c'), $seriesId, $userId]);
+    }
+
+    private static function publishedArtworkCountForSeries(PDO $pdo, int $userId, int $seriesId): int
+    {
+        $stmt = $pdo->prepare("SELECT COUNT(DISTINCT p.id)
+            FROM publications p
+            INNER JOIN artwork_sheets sh ON sh.id = p.artwork_sheet_id AND sh.user_id = p.user_id
+            INNER JOIN artworks a ON a.id = sh.canonical_artwork_id AND a.user_id = sh.user_id
+            WHERE p.user_id = ? AND a.series_id = ? AND p.status = 'published'");
+        $stmt->execute([$userId, $seriesId]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    private static function artworkIsPublished(PDO $pdo, int $userId, int $artworkId): bool
+    {
+        $stmt = $pdo->prepare("SELECT 1
+            FROM publications p
+            INNER JOIN artwork_sheets sh ON sh.id = p.artwork_sheet_id AND sh.user_id = p.user_id
+            WHERE p.user_id = ? AND sh.canonical_artwork_id = ? AND p.status = 'published'
+            LIMIT 1");
+        $stmt->execute([$userId, $artworkId]);
+        return (bool)$stmt->fetchColumn();
     }
 
     public static function seriesList(PDO $pdo, int $userId): array
@@ -541,11 +583,15 @@ class ArtworkSeries
         $creationNumber = (int)($currentArtwork['series_creation_number'] ?? 0);
         $title = '';
         if ($seriesId !== null) {
-            $stmt = $pdo->prepare('SELECT title FROM artwork_series WHERE id = ? AND user_id = ? AND status = ? LIMIT 1');
+            $stmt = $pdo->prepare('SELECT title, published FROM artwork_series WHERE id = ? AND user_id = ? AND status = ? LIMIT 1');
             $stmt->execute([$seriesId, $userId, 'active']);
-            $title = (string)$stmt->fetchColumn();
-            if ($title === '') {
+            $series = $stmt->fetch(PDO::FETCH_ASSOC);
+            $title = trim((string)($series['title'] ?? ''));
+            if (!$series || $title === '') {
                 throw new RuntimeException('Series not found.');
+            }
+            if ((int)($series['published'] ?? 0) !== 1 && self::artworkIsPublished($pdo, $userId, $artworkId)) {
+                throw new RuntimeException('Esta obra está publicada. Publica primero la serie de destino «' . $title . '».');
             }
             if ($currentSeriesId !== $seriesId || $creationNumber <= 0) {
                 $creationNumber = self::nextCreationNumber($pdo, $userId, $seriesId);

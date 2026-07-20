@@ -7,9 +7,20 @@ require __DIR__ . '/inc/AppPublishedCatalog.php';
 require __DIR__ . '/inc/AppPublishedSeriesCatalog.php';
 require __DIR__ . '/inc/AppPublishedArtistProfile.php';
 require __DIR__ . '/inc/AppPublishedStudioNotes.php';
+require __DIR__ . '/inc/AppPublishedSiteSettings.php';
 
 $path = current_path();
 $segments = array_values(array_filter(explode('/', trim($path, '/'))));
+
+try {
+    $managedSiteSettings = AppPublishedSiteSettings::fromApp(dirname(__DIR__) . '/platform', resolved_artist_email())->get();
+    if (trim((string)($managedSiteSettings['site_title'] ?? '')) !== '') $site['name'] = trim((string)$managedSiteSettings['site_title']);
+    if (trim((string)($managedSiteSettings['tagline'] ?? '')) !== '') $site['tagline'] = trim((string)$managedSiteSettings['tagline']);
+    if (trim((string)($managedSiteSettings['contact_email'] ?? '')) !== '') $site['email'] = trim((string)$managedSiteSettings['contact_email']);
+    $site['inquiry_intro'] = trim((string)($managedSiteSettings['inquiry_intro'] ?? ''));
+} catch (Throwable $error) {
+    error_log('Artist Site Manager settings unavailable: ' . $error->getMessage());
+}
 
 if ($path === '/sitemap.xml') {
     header('Content-Type: application/xml; charset=utf-8');
@@ -1359,6 +1370,16 @@ function render_published_artwork(array $site, array $artwork): void
     $medium = trim((string)($artwork['medium'] ?: ($facts['medium'] ?? '')));
     $year = trim((string)($artwork['artwork_year'] ?: ($facts['year'] ?? '')));
     $mainImageFile = trim((string)($artwork['header_file'] ?? '')) ?: (string)$artwork['source_image_file'];
+    $artworkSeriesTitle = trim((string)($artwork['series'] ?? ''));
+    $publishedSeries = null;
+    if ($artworkSeriesTitle !== '' && ($seriesCatalog = app_series_catalog())) {
+        foreach ($seriesCatalog->all() as $candidateSeries) {
+            if (strcasecmp(trim((string)($candidateSeries['title'] ?? '')), $artworkSeriesTitle) === 0) {
+                $publishedSeries = $candidateSeries;
+                break;
+            }
+        }
+    }
     ?>
     <section class="artwork-detail">
         <div class="artwork-detail__image">
@@ -1390,7 +1411,43 @@ function render_published_artwork(array $site, array $artwork): void
                 <?php if ($year): ?><div><dt>Year</dt><dd><?= e($year) ?></dd></div><?php endif; ?>
                 <?php if ($medium): ?><div><dt>Medium</dt><dd><?= e($medium) ?></dd></div><?php endif; ?>
                 <?php if (published_dimensions($artwork)): ?><div><dt>Size</dt><dd><?= e(published_dimensions($artwork)) ?></dd></div><?php endif; ?>
-                <?php if ($artwork['series']): ?><div><dt>Series</dt><dd><?= e($artwork['series']) ?></dd></div><?php endif; ?>
+                <?php if ($artworkSeriesTitle !== ''): ?>
+                    <div>
+                        <dt>Series</dt>
+                        <dd>
+                            <?php if ($publishedSeries): ?>
+                                <?php
+                                $seriesPreviewId = 'series-preview-' . preg_replace('/[^a-z0-9_-]+/i', '-', (string)$publishedSeries['slug']);
+                                $seriesYear = series_year_label($publishedSeries);
+                                $seriesDescription = trim((string)($publishedSeries['description'] ?? ''));
+                                ?>
+                                <span class="artwork-series-reference">
+                                    <a class="artwork-series-link" href="<?= e(url_for('series/' . $publishedSeries['slug'])) ?>" aria-describedby="<?= e($seriesPreviewId) ?>">
+                                        <?= e($artworkSeriesTitle) ?>
+                                    </a>
+                                    <span class="artwork-series-preview" id="<?= e($seriesPreviewId) ?>" role="tooltip">
+                                        <?php if (!empty($publishedSeries['header_file'])): ?>
+                                            <span class="artwork-series-preview__image">
+                                                <img src="<?= e(app_series_media_url($publishedSeries, (string)$publishedSeries['header_file'])) ?>" alt="" style="<?= e(series_header_style($publishedSeries)) ?>">
+                                            </span>
+                                        <?php endif; ?>
+                                        <span class="artwork-series-preview__content">
+                                            <span class="artwork-series-preview__eyebrow">Painting series</span>
+                                            <strong><?= e((string)$publishedSeries['title']) ?></strong>
+                                            <span class="artwork-series-preview__meta">
+                                                <?= $seriesYear !== '' ? e($seriesYear) . ' · ' : '' ?><?= (int)($publishedSeries['artwork_count'] ?? 0) ?> <?= (int)($publishedSeries['artwork_count'] ?? 0) === 1 ? 'work' : 'works' ?>
+                                            </span>
+                                            <?php if ($seriesDescription !== ''): ?><span class="artwork-series-preview__description"><?= e($seriesDescription) ?></span><?php endif; ?>
+                                            <span class="artwork-series-preview__action">View series</span>
+                                        </span>
+                                    </span>
+                                </span>
+                            <?php else: ?>
+                                <?= e($artworkSeriesTitle) ?>
+                            <?php endif; ?>
+                        </dd>
+                    </div>
+                <?php endif; ?>
                 <?php if (!empty($facts['orientation'])): ?><div><dt>Orientation</dt><dd><?= e(ucfirst((string)$facts['orientation'])) ?></dd></div><?php endif; ?>
                 <?php if (!empty($facts['certificate_of_authenticity'])): ?><div><dt>Certificate</dt><dd><?= e($facts['certificate_of_authenticity']) ?></dd></div><?php endif; ?>
                 <div><dt>Context studies</dt><dd><?= count($artwork['items']) ?></dd></div>
@@ -1616,6 +1673,12 @@ function render_published_series_index(array $items): void
 function render_published_series_detail(array $item): void
 {
     $yearLabel = series_year_label($item);
+    $seriesTitle = trim((string)($item['title'] ?? ''));
+    $publishedArtworks = app_catalog()?->all() ?? [];
+    $dependentArtworks = array_filter(
+        $publishedArtworks,
+        static fn(array $artwork): bool => strcasecmp(trim((string)($artwork['series'] ?? '')), $seriesTitle) === 0
+    );
     ?>
     <section class="page-hero">
         <p class="eyebrow">Series · preview<?= $yearLabel !== '' ? ' · ' . e($yearLabel) : '' ?></p>
@@ -1646,6 +1709,33 @@ function render_published_series_detail(array $item): void
             </div>
         </section>
     <?php endif; ?>
+    <section class="section catalog-grid-section series-dependent-artworks">
+        <div class="section-head">
+            <div>
+                <p class="eyebrow">Series works</p>
+                <h2>Works in this series</h2>
+            </div>
+        </div>
+        <?php if ($dependentArtworks): ?>
+            <div class="art-grid">
+                <?php foreach ($dependentArtworks as $slug => $artwork): ?>
+                    <?php $cardImageFile = trim((string)($artwork['header_file'] ?? '')) ?: (string)$artwork['source_image_file']; ?>
+                    <article class="art-card">
+                        <a class="art-card__image" href="<?= e(url_for('artworks/' . $slug)) ?>">
+                            <img src="<?= e(app_publication_media_url($artwork, $cardImageFile)) ?>" alt="<?= e($artwork['artwork_alt'] ?: $artwork['title'] . ' artwork') ?>">
+                        </a>
+                        <div class="art-card__body">
+                            <div class="eyebrow"><?= e($seriesTitle) ?></div>
+                            <h3><a href="<?= e(url_for('artworks/' . $slug)) ?>"><?= e($artwork['title']) ?></a></h3>
+                            <p><?= e(implode(', ', array_filter([$artwork['medium'], published_dimensions($artwork)]))) ?></p>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <p>No works have been published in this series yet.</p>
+        <?php endif; ?>
+    </section>
     <p><a href="<?= e(url_for('series2')) ?>">Back to Series preview</a></p>
     <?php
 }
@@ -1722,7 +1812,7 @@ function render_published_artist_page(array $profile): void
     <?php endif; ?>
 
     <section class="section artist-link-panel">
-        <a class="button" href="<?= e(url_for('artworks')) ?>">View Artworks</a>
+        <a class="button" href="<?= e(url_for('artworks/')) ?>">View Artworks</a>
         <a class="button button--quiet" href="<?= e(url_for('contact')) ?>">Inquire / Contact</a>
     </section>
     <?php
@@ -2121,7 +2211,7 @@ function render_contact(array $site, array $artworks): void
         } else {
             $profile = app_artist_profile()?->get();
             $artistName = $profile['artist_name'] ?? 'Artist';
-            $to = resolved_artist_email();
+            $to = filter_var((string)($site['email'] ?? ''), FILTER_VALIDATE_EMAIL) ? (string)$site['email'] : resolved_artist_email();
             $from = $to; // e.g. studio@artistdomain.com
             
             $emailSubject = "[" . $artistName . " Website] " . $submittedSubject;
@@ -2154,7 +2244,7 @@ function render_contact(array $site, array $artworks): void
     <section class="page-hero">
         <p class="eyebrow">Inquiries</p>
         <h1>Contact the Studio</h1>
-        <p>For catalog documentation, curatorial questions, commissions, trade inquiries, or studio availability.</p>
+        <p><?= e(trim((string)($site['inquiry_intro'] ?? '')) ?: 'For catalog documentation, curatorial questions, commissions, trade inquiries, or studio availability.') ?></p>
     </section>
     <section class="section contact-panel">
         <div style="min-height: auto; padding: 24px;">
@@ -2988,24 +3078,33 @@ switch ($segments[0] ?? '') {
         $profile = app_artist_profile()?->get();
         $artistName = $profile['artist_name'] ?? 'Artist';
         
-        $publishedItems = app_catalog()?->all() ?? [];
+        $publishedCatalog = app_catalog();
+        $publishedItems = $publishedCatalog?->all() ?? [];
         $publicItems = array_filter($publishedItems, fn(array $item): bool => $item['visibility'] === 'public');
-        
-        // Filter sold works by keywords or tags matching 'sold' or 'constellation'
-        $soldItems = array_filter($publicItems, function(array $item): bool {
-            $keywords = strtolower((string)($item['artwork_keywords'] ?? ''));
-            $tags = strtolower((string)($item['artwork_tags'] ?? ''));
-            return str_contains($keywords, 'sold') 
-                || str_contains($keywords, 'constellation')
-                || str_contains($tags, 'sold')
-                || str_contains($tags, 'constellation');
-        });
+
+        $managedConstellations = $publishedCatalog?->constellations() ?? [];
+        if ($managedConstellations) {
+            $soldItems = array_filter($publicItems, static function (array $item) use ($managedConstellations): bool {
+                return isset($managedConstellations[(int)($item['canonical_artwork_id'] ?? 0)]);
+            });
+        } else {
+            // Preserve legacy keyword-driven entries until the artist manages Constellations explicitly.
+            $soldItems = array_filter($publicItems, function(array $item): bool {
+                $keywords = strtolower((string)($item['artwork_keywords'] ?? ''));
+                $tags = strtolower((string)($item['artwork_tags'] ?? ''));
+                return str_contains($keywords, 'sold')
+                    || str_contains($keywords, 'constellation')
+                    || str_contains($tags, 'sold')
+                    || str_contains($tags, 'constellation');
+            });
+        }
 
         $soldRecords = [];
         $dynamicLocations = [];
         $allowedCountries = ['spain', 'united states', 'uruguay', 'france', 'germany', 'italy', 'uk', 'canada', 'mexico', 'brazil', 'argentina', 'colombia'];
 
         foreach ($soldItems as $slug => $item) {
+            $managedLocation = $managedConstellations[(int)($item['canonical_artwork_id'] ?? 0)] ?? null;
             $dims = $item['width'] && $item['height'] 
                 ? $item['width'] . ' × ' . $item['height'] . ($item['depth'] ? ' × ' . $item['depth'] : '') . ' ' . $item['unit']
                 : 'Custom dimensions';
@@ -3018,6 +3117,28 @@ switch ($segments[0] ?? '') {
                 'cluster' => $item['series'] ?: 'Independent Study',
                 'url' => url_for('artworks/' . $slug)
             ];
+
+            if ($managedLocation) {
+                if ((string)$managedLocation['privacy'] === 'private') continue;
+                $country = trim((string)$managedLocation['country']);
+                $coordinates = null;
+                if ((string)$managedLocation['privacy'] === 'approximate'
+                    && is_numeric($managedLocation['latitude']) && is_numeric($managedLocation['longitude'])) {
+                    $coordinates = ['lat' => (float)$managedLocation['latitude'], 'lng' => (float)$managedLocation['longitude']];
+                }
+                $coordinates ??= $country !== '' ? country_coordinates($country) : null;
+                if ($coordinates) {
+                    $dynamicLocations[] = [
+                        'title' => $item['title'],
+                        'artwork_slug' => $slug,
+                        'country' => $country,
+                        'postal_code' => (string)$managedLocation['privacy'] === 'approximate' ? (string)$managedLocation['postal_code'] : '',
+                        'lat' => $coordinates['lat'],
+                        'lng' => $coordinates['lng'],
+                    ];
+                }
+                continue;
+            }
 
             // Detect country for map coordinates
             $keywords = strtolower((string)($item['artwork_keywords'] ?? ''));
@@ -3042,7 +3163,7 @@ switch ($segments[0] ?? '') {
             ];
         }
 
-        $mergedLocations = array_merge($sold_locations, $dynamicLocations);
+        $mergedLocations = $managedConstellations ? $dynamicLocations : array_merge($sold_locations, $dynamicLocations);
 
         $meta = page_meta('Constellations of Works | ' . $artistName, 'Map of placed works, preserving provenance context.', $site['url'] . '/sold-works/');
         render_published_catalog(

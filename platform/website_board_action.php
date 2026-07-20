@@ -24,6 +24,7 @@ try {
     $result = match ($action) {
         'catalog_add' => $service->addCatalogArtwork($userId, (string)($input['sourceKey'] ?? '')),
         'catalog_save' => $service->saveCatalog($userId, (int)($input['id'] ?? 0), (array)($input['fields'] ?? [])),
+        'catalog_publish_all' => $service->publishCatalogDrafts($userId, (array)($input['ids'] ?? [])),
         'catalog_publish', 'catalog_hide', 'catalog_show', 'catalog_unpublish', 'catalog_delete'
             => $service->catalogAction($userId, (int)($input['id'] ?? 0), substr($action, 8)),
         'note_create' => $service->createNote($userId, (string)($input['sourceKey'] ?? '')),

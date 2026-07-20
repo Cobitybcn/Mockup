@@ -13,12 +13,15 @@ Auth::start();
 $_SESSION['social_media_board_csrf'] ??= bin2hex(random_bytes(32));
 $pinterestIntegration = new PinterestIntegrationService($pdo);
 $pinterestPurposes = [];
+$pinterestEnvironments = [];
 foreach ($isAdmin ? ['platform', 'artist'] : ['artist'] as $purpose) {
     $connection = $pinterestIntegration->connection($userId, $purpose);
+    $environment = strtolower(trim(app_env('PINTEREST_API_ENVIRONMENT', 'production')));
+    $pinterestEnvironments[$purpose] = $environment === 'sandbox' ? 'sandbox' : 'production';
     $pinterestPurposes[] = [
         'value' => $purpose,
         'label' => $purpose === 'platform' ? 'Artworks Mockups · @artworkmockups' : 'Cuenta Pinterest del artista',
-        'connected' => is_array($connection) && (string)($connection['status'] ?? '') === 'connected',
+        'connected' => $pinterestIntegration->isPublishingReady($userId, $purpose),
     ];
 }
 $defaultPinterestPurpose = 'artist';
@@ -30,13 +33,15 @@ if ($isAdmin) {
         }
     }
 }
-$pinterestSandbox = strtolower(trim(app_env('PINTEREST_API_ENVIRONMENT', 'production'))) === 'sandbox';
+$pinterestEnvironment = $pinterestEnvironments[$defaultPinterestPurpose] ?? 'production';
+$pinterestSandbox = $pinterestEnvironment === 'sandbox';
 $socialBoardConfig = [
     'csrf' => (string)$_SESSION['social_media_board_csrf'],
     'pinterest' => [
         'purpose' => $defaultPinterestPurpose,
         'purposes' => $pinterestPurposes,
-        'environment' => $pinterestSandbox ? 'sandbox' : 'production',
+        'environment' => $pinterestEnvironment,
+        'environments' => $pinterestEnvironments,
     ],
     'destinations' => [
         'website' => rtrim(app_env('ARTIST_WEBSITE_CATALOG_URL', 'https://mauriziovalch.com/artworks'), '/'),
@@ -192,7 +197,7 @@ foreach ($mockups as $mockup) {
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Social Media Board - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="social_media_board.css?v=15">
+    <link rel="stylesheet" href="social_media_board.css?v=18">
     <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body data-social-board-user="<?= $userId ?>">
@@ -284,9 +289,7 @@ foreach ($mockups as $mockup) {
                         </div>
                     </header>
                     <p>Cada mockup será un Pin individual.</p>
-                    <?php if ($pinterestSandbox): ?>
-                        <div class="smb-pinterest-runtime-note"><strong>Modo de prueba de Pinterest</strong><span>Mientras la app tenga acceso Trial, los Pines solo pueden publicarse en el tablero Sandbox y son visibles como prueba.</span></div>
-                    <?php endif; ?>
+                    <div class="smb-pinterest-runtime-note" data-pinterest-sandbox-note <?= $pinterestSandbox ? '' : 'hidden' ?>><strong>Modo de prueba de Pinterest</strong><span>Mientras la app tenga acceso Trial, los Pines solo pueden publicarse en el tablero Sandbox y son visibles como prueba.</span></div>
                     <div class="smb-pinterest-items" data-board-items="pinterest"></div>
                 </article>
 
@@ -376,6 +379,6 @@ foreach ($mockups as $mockup) {
 <script type="application/json" id="social-board-mockups"><?= json_encode($mockupPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <script type="application/json" id="social-board-config"><?= json_encode($socialBoardConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="social_media_board.js?v=13"></script>
+<script src="social_media_board.js?v=16"></script>
 </body>
 </html>

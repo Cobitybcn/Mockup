@@ -60,14 +60,13 @@ steps:
 
   - id: build-web
     name: gcr.io/cloud-builders/docker
-    dir: platform
     waitFor: [verify-production-targets, pull-web-cache]
     args:
       - build
       - --cache-from
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WEB_SERVICE}:latest
       - --file
-      - Dockerfile.web
+      - platform/Dockerfile.web
       - --tag
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WEB_SERVICE}:$COMMIT_SHA
       - --tag
@@ -76,14 +75,13 @@ steps:
 
   - id: build-worker
     name: gcr.io/cloud-builders/docker
-    dir: platform
     waitFor: [verify-production-targets, pull-worker-cache]
     args:
       - build
       - --cache-from
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:latest
       - --file
-      - Dockerfile.worker
+      - platform/Dockerfile.worker
       - --tag
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:$COMMIT_SHA
       - --tag
@@ -179,7 +177,7 @@ steps:
           --region="${_REGION}" \
           --platform=managed \
           --image="$${image}@$${digest}" \
-          --update-env-vars="APP_ENV=production,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true" \
+          --update-env-vars="APP_ENV=production,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true,PINTEREST_API_ENVIRONMENT=production,PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED=true,PINTEREST_LIVE_PUBLISH_ENABLED=true" \
           --remove-env-vars="DB_PASSWORD" \
           --update-secrets="DB_PASSWORD=${_DB_PASSWORD_SECRET}:latest" \
           --revision-suffix="cb-$SHORT_SHA-$BUILD_ID" \
@@ -223,7 +221,7 @@ steps:
           --region="${_REGION}" \
           --platform=managed \
           --image="$${image}@$${digest}" \
-          --update-env-vars="APP_ENV=production,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true" \
+          --update-env-vars="APP_ENV=production,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true,PINTEREST_API_ENVIRONMENT=production,PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED=true,PINTEREST_LIVE_PUBLISH_ENABLED=true" \
           --remove-env-vars="DB_PASSWORD" \
           --update-secrets="DB_PASSWORD=${_DB_PASSWORD_SECRET}:latest" \
           --revision-suffix="cb-$SHORT_SHA-$BUILD_ID" \

@@ -35,6 +35,7 @@ $options = getopt('', [
     'target-port:',
     'target-database:',
     'target-username:',
+    'table-allowlist:',
     'allow-empty-target-password',
     'apply',
     'confirm-target:',
@@ -51,6 +52,10 @@ $targetHost = trim((string)($options['target-host'] ?? '127.0.0.1'));
 $targetPort = trim((string)($options['target-port'] ?? '3307'));
 $targetDatabase = trim((string)($options['target-database'] ?? 'mockups'));
 $targetUsername = trim((string)($options['target-username'] ?? 'mockups_app'));
+$tableAllowlist = array_values(array_filter(array_map(
+    static fn(string $table): string => trim($table),
+    explode(',', (string)($options['table-allowlist'] ?? ''))
+)));
 $targetPasswordEnv = getenv('TARGET_DB_PASSWORD');
 $targetPassword = $targetPasswordEnv === false ? '' : (string)$targetPasswordEnv;
 $apply = array_key_exists('apply', $options);
@@ -73,6 +78,23 @@ if ($apply && !hash_equals($targetDatabase, $confirmation)) {
 
 try {
     [$emails, $selectedTables] = readArchiveScope($manifestRoot);
+    if ($tableAllowlist !== []) {
+        foreach ($tableAllowlist as $table) {
+            assertIdentifier($table);
+        }
+        $requested = array_fill_keys($tableAllowlist, true);
+        $unknown = array_values(array_diff($tableAllowlist, $selectedTables));
+        if ($unknown !== []) {
+            throw new RuntimeException('Allowlisted tables are absent from the archive manifests: ' . implode(', ', $unknown));
+        }
+        $selectedTables = array_values(array_filter(
+            $selectedTables,
+            static fn(string $table): bool => $table === 'users' || isset($requested[$table])
+        ));
+        if ($selectedTables === ['users']) {
+            throw new RuntimeException('The table allowlist did not select any user-owned content tables.');
+        }
+    }
     $source = Database::connection();
     if ((string)$source->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql') {
         throw new RuntimeException('The current source database must be MySQL.');
@@ -127,6 +149,7 @@ function usage(): void
     fwrite(STDOUT, "Usage:\n");
     fwrite(STDOUT, "  TARGET_DB_PASSWORD=... php scripts/sync_current_app_to_mysql.php --manifest-root=<absolute-path> --target-database=<database>\n");
     fwrite(STDOUT, "  Add --apply --confirm-target=<database> to commit. The default is rollback-only.\n");
+    fwrite(STDOUT, "  Use --table-allowlist=a,b,c to migrate only explicitly approved content tables.\n");
 }
 
 function fail(string $message): never

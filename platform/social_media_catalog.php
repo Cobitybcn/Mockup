@@ -724,7 +724,7 @@ if ($sourceMockups) {
                                 <div class="notice-card notice-error">Pinterest accepts a maximum of 10 mockups. Modify this campaign before preparing the batch.</div>
                             <?php endif; ?>
                             <div class="pinterest-campaign-bridge__links">
-                                <a class="button-link secondary" href="integrations/pinterest/">Manage Pinterest connection</a>
+                                <a class="button-link secondary" href="connections.php#pinterest">Manage connection</a>
                                 <span><?= count($draftMockupIds) ?> mockups selected · nothing is published during preparation.</span>
                             </div>
                         </section>
@@ -798,8 +798,8 @@ if ($sourceMockups) {
                                 <div class="notice-card">Facebook and Instagram already have publication batches for this campaign.</div>
                             <?php endif; ?>
                             <div class="meta-campaign-bridge__links">
-                                <a class="button-link secondary" href="integrations/meta/">Facebook connection</a>
-                                <a class="button-link secondary" href="integrations/instagram/">Instagram connection</a>
+                                <a class="button-link secondary" href="connections.php#facebook">Facebook connection</a>
+                                <a class="button-link secondary" href="connections.php#instagram">Instagram connection</a>
                                 <span><?= count($draftMockupIds) ?> mockups in this campaign · creating a batch never publishes.</span>
                             </div>
                         </section>

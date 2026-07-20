@@ -263,17 +263,8 @@ final class WebsiteBoardService
             return null;
         }
         if ($action === 'publish') {
-            if ((string)$publication['status'] === 'published') throw new RuntimeException('Esta obra ya está publicada.');
-            $missing = [];
-            if (trim((string)$publication['title']) === '') $missing[] = 'título';
-            if (trim((string)($publication['short_description'] ?: $publication['description'])) === '') $missing[] = 'descripción';
-            $sheet = $this->pdo->prepare('SELECT source_image_file,canonical_artwork_id FROM artwork_sheets WHERE id=? AND user_id=?');
-            $sheet->execute([(int)$publication['artwork_sheet_id'], $userId]);
-            $sheetRow = $sheet->fetch(PDO::FETCH_ASSOC) ?: [];
-            if (trim((string)($sheetRow['source_image_file'] ?? '')) === '') $missing[] = 'imagen principal';
-            if ($missing) throw new RuntimeException('No se puede publicar. Falta: ' . implode(', ', $missing) . '.');
-            $mockupSheetIds = $this->favoriteMockupSheetIds($userId, (int)($sheetRow['canonical_artwork_id'] ?? 0));
-            $this->publications->save($publicationId, $userId, ['visibility' => 'public', 'publish' => true], $mockupSheetIds);
+            $plan = $this->catalogPublishPlan($userId, $publicationId, $publication);
+            $this->publications->save($publicationId, $userId, ['visibility' => 'public', 'publish' => true], $plan['mockupSheetIds']);
         } elseif ($action === 'hide') {
             $this->publications->save($publicationId, $userId, ['visibility' => 'unlisted'], null);
         } elseif ($action === 'show') {
@@ -284,6 +275,85 @@ final class WebsiteBoardService
             throw new RuntimeException('Acción de catálogo desconocida.');
         }
         return $this->catalogEntry($userId, $publicationId);
+    }
+
+    /**
+     * Validate every requested draft before changing any publication, then publish
+     * the complete set in one database transaction.
+     *
+     * @param array<int,mixed> $publicationIds
+     * @return array{count:int,published:array<int,array<string,mixed>>}
+     */
+    public function publishCatalogDrafts(int $userId, array $publicationIds): array
+    {
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', $publicationIds),
+            static fn(int $id): bool => $id > 0
+        )));
+        if (!$ids) throw new RuntimeException('No hay borradores de obras para publicar.');
+
+        $plans = [];
+        $errors = [];
+        foreach ($ids as $publicationId) {
+            try {
+                $publication = $this->publications->get($publicationId, $userId);
+                $plans[] = $this->catalogPublishPlan($userId, $publicationId, $publication);
+            } catch (Throwable $error) {
+                $label = isset($publication) && (int)($publication['id'] ?? 0) === $publicationId
+                    ? (trim((string)($publication['title'] ?? '')) ?: 'Obra #' . $publicationId)
+                    : 'Obra #' . $publicationId;
+                $errors[] = '«' . $label . '»: ' . $error->getMessage();
+            }
+            unset($publication);
+        }
+        if ($errors) {
+            throw new RuntimeException('No se publicó ninguna obra. Revisa: ' . implode(' ', $errors));
+        }
+
+        $startedTransaction = !$this->pdo->inTransaction();
+        if ($startedTransaction) $this->pdo->beginTransaction();
+        try {
+            foreach ($plans as $plan) {
+                $this->publications->save(
+                    (int)$plan['publicationId'],
+                    $userId,
+                    ['visibility' => 'public', 'publish' => true],
+                    $plan['mockupSheetIds']
+                );
+            }
+            if ($startedTransaction) $this->pdo->commit();
+        } catch (Throwable $error) {
+            if ($startedTransaction && $this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $error;
+        }
+
+        $published = [];
+        foreach ($plans as $plan) {
+            $published[] = $this->catalogEntry($userId, (int)$plan['publicationId']);
+        }
+        return ['count' => count($published), 'published' => $published];
+    }
+
+    /** @return array{publicationId:int,mockupSheetIds:array<int,int>} */
+    private function catalogPublishPlan(int $userId, int $publicationId, ?array $publication = null): array
+    {
+        $publication ??= $this->publications->get($publicationId, $userId);
+        if ((string)$publication['status'] === 'published') throw new RuntimeException('Esta obra ya está publicada.');
+
+        $missing = [];
+        if (trim((string)$publication['title']) === '') $missing[] = 'título';
+        if (trim((string)($publication['short_description'] ?: $publication['description'])) === '') $missing[] = 'descripción';
+        $sheet = $this->pdo->prepare('SELECT source_image_file,canonical_artwork_id FROM artwork_sheets WHERE id=? AND user_id=?');
+        $sheet->execute([(int)$publication['artwork_sheet_id'], $userId]);
+        $sheetRow = $sheet->fetch(PDO::FETCH_ASSOC) ?: [];
+        if (trim((string)($sheetRow['source_image_file'] ?? '')) === '') $missing[] = 'imagen principal';
+        if ($missing) throw new RuntimeException('Falta: ' . implode(', ', $missing) . '.');
+
+        $this->publications->assertAssociatedSeriesIsPublished((int)$publication['artwork_sheet_id'], $userId);
+        return [
+            'publicationId' => $publicationId,
+            'mockupSheetIds' => $this->favoriteMockupSheetIds($userId, (int)($sheetRow['canonical_artwork_id'] ?? 0)),
+        ];
     }
 
     public function createNote(int $userId, string $sourceKey): array

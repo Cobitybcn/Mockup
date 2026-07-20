@@ -17,7 +17,12 @@ final class AppPublishedSeriesCatalog
             FROM artwork_series s
             JOIN users u ON u.id = s.user_id
             WHERE LOWER(u.email) = ? AND s.published = 1
-            ORDER BY s.year_start DESC, s.title ASC');
+            ORDER BY
+                CASE WHEN s.year_start IS NULL AND s.year_end IS NULL THEN 1 ELSE 0 END ASC,
+                COALESCE(s.year_start, s.year_end) DESC,
+                COALESCE(s.year_end, s.year_start) DESC,
+                s.created_at DESC,
+                s.id DESC');
         $statement->execute([$this->artistEmail]);
         $rows = [];
         foreach ($statement as $row) {

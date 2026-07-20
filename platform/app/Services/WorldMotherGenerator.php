@@ -549,7 +549,7 @@ final class WorldMotherGenerator
         $notes = trim((string)($options['notes'] ?? ''));
         $referenceDirective = !empty($options['reference_free'])
             ? "No reference image is provided. Build the scene from the category, artwork analysis, and context metadata only.\n"
-            : "Use the uploaded reference image set as visual DNA, mood, material direction, architectural clues, lighting clues, and spatial inspiration. Do not copy it, trace it, lightly clean it, preserve its exact layout, or keep its exact camera angle and object placement.\n";
+            : "Use the uploaded reference image set as visual language, mood, material direction, architectural clues, lighting clues, and spatial inspiration. Do not copy it, trace it, lightly clean it, preserve its exact layout, or keep its exact camera angle and object placement.\n";
         return "Create one original WORLD MOTHER reference image for future artwork mockups.\n"
             . "Category: {$categorySlug}\n"
             . $referenceDirective

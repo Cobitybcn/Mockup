@@ -27,7 +27,7 @@ require_once __DIR__ . '/regression/external_mockup_upload_test.php';
 require_once __DIR__ . '/regression/feature_access_test.php';
 require_once __DIR__ . '/regression/website_board_grouping_test.php';
 require_once __DIR__ . '/regression/schema_migration_governance_test.php';
-require_once __DIR__ . '/regression/reference_set_flow_test.php';
+require_once __DIR__ . '/regression/retired_reference_lab_test.php';
 require_once __DIR__ . '/regression/ui_preview_test.php';
 
 run_root_artwork_regression_tests();
@@ -42,7 +42,7 @@ run_external_mockup_upload_regression_tests();
 run_feature_access_regression_tests();
 run_website_board_grouping_regression_tests();
 run_schema_migration_governance_tests();
-run_reference_set_flow_tests();
+run_retired_reference_lab_tests();
 run_ui_preview_regression_tests();
 
 exit(TestHarness::summary());

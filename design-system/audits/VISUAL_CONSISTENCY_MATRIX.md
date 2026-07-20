@@ -17,7 +17,6 @@
 | Scene Studio | `world_mother_studio.php` | NEEDS CONSISTENCY PASS | Biblioteca densa con mini-referencias | MEDIUM | Thumbnail Card + Glass Actions | Yes en densidad | Partial | P1 |
 | Camera Boards | `camera_studio.php` | DO NOT TOUCH | Workbench administrativo denso sin referencia específica | HIGH | Visual Assignment, sujeto a aprobación | No | Sí | P3 |
 | Video Lab | `video.php` | NEEDS CONSISTENCY PASS | Acciones competidoras, barra Add Sequence y módulos horizontales | MEDIUM | Decision Block + flujo vertical | Partial | Sí | P1 |
-| Studio References LAB / Visual DNA | `studio_references_lab.php` | PASS | Sin divergencia estructural; revisión estática | — | Patrón propio aprobado por constitución | N/A | No | P3 |
 | Account | `account.php` | DO NOT TOUCH | KPI y módulos de plan tipo dashboard | HIGH | Requiere patrón específico de cuenta | No | Sí | P3 |
 | Feature access gate | `FeatureAccess.php` | NEEDS CONSISTENCY PASS | Pantalla sin shell ni lenguaje visual | HIGH | Shell global + Workspace Header | No | Sí | P1 |
 

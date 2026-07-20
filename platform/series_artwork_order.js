@@ -111,5 +111,31 @@
         });
     }
 
+    function initializeFilter(select) {
+        const panel = select.closest('.catalog-panel--series-artworks');
+        const list = panel?.querySelector('[data-series-order-list]');
+        const count = panel?.querySelector('[data-series-visible-count]');
+        const empty = panel?.querySelector('[data-series-filter-empty]');
+        if (!panel || !list) return;
+
+        function applyFilter() {
+            const value = select.value || 'all';
+            let visible = 0;
+            list.querySelectorAll('[data-series-artwork-id]').forEach((card) => {
+                const seriesId = card.getAttribute('data-series-id') || '0';
+                const matches = value === 'all' || (value === 'none' ? seriesId === '0' : seriesId === value);
+                card.hidden = !matches;
+                if (matches) visible += 1;
+            });
+            list.hidden = visible === 0;
+            if (empty) empty.hidden = visible !== 0;
+            if (count) count.textContent = `${visible} ${visible === 1 ? 'artwork' : 'artworks'}`;
+        }
+
+        select.addEventListener('change', applyFilter);
+        applyFilter();
+    }
+
     document.querySelectorAll('[data-series-order-list]').forEach(initializeList);
+    document.querySelectorAll('[data-series-artwork-filter]').forEach(initializeFilter);
 })();

@@ -314,6 +314,65 @@ function run_uploaded_root_regression_tests(): void
         'Website usa como titulo principal el nombre real de la seccion'
     );
     TestHarness::assertContains(
+        '<span>Artist website</span>',
+        $websiteBoardSource,
+        'Website muestra el destino publico del artista en la cabecera'
+    );
+    TestHarness::assertContains(
+        "\$artistSubdomain . '.artworkmockups.com'",
+        $websiteBoardSource,
+        'Website construye el destino publico tambien desde el subdominio configurado'
+    );
+    TestHarness::assertContains(
+        'class="wbb-artist-website-setup" href="artist_profile.php"',
+        $websiteBoardSource,
+        'Website permite configurar el dominio desde Artist Profile cuando falta'
+    );
+    TestHarness::assertContains(
+        'data-catalog-publish-all',
+        $websiteBoardSource,
+        'Catalog sustituye el contador pasivo por una accion para publicar todos los borradores'
+    );
+    TestHarness::assertContains(
+        'width: 76px;',
+        $websiteBoardCssSource,
+        'la publicacion conjunta usa un boton cuadrado pastel y compacto'
+    );
+    $websiteBoardJsSource = (string)file_get_contents(dirname(__DIR__, 2) . '/website_board.js');
+    TestHarness::assertContains(
+        "post('catalog_publish_all', { ids })",
+        $websiteBoardJsSource,
+        'la accion principal envia el lote completo al servidor'
+    );
+    $websiteBoardActionSource = (string)file_get_contents(dirname(__DIR__, 2) . '/website_board_action.php');
+    TestHarness::assertContains(
+        "'catalog_publish_all' => \$service->publishCatalogDrafts",
+        $websiteBoardActionSource,
+        'el endpoint conecta la accion conjunta con la validacion transaccional'
+    );
+    $authenticatedMediaSource = (string)file_get_contents(dirname(__DIR__, 2) . '/media.php');
+    TestHarness::assertContains(
+        'SELECT 1 FROM artwork_series WHERE user_id = :user_id AND header_file = :file LIMIT 1',
+        $authenticatedMediaSource,
+        'las portadas de series se autorizan por su relacion guardada aunque deban recuperarse del storage'
+    );
+    TestHarness::assertContains(
+        "glob(\$seriesHeadersRoot . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . \$file)",
+        $authenticatedMediaSource,
+        'la app recupera una portada historica por su nombre solo despues de validar la propiedad de la serie'
+    );
+    $publicSeriesMediaSource = (string)file_get_contents(dirname(__DIR__, 2) . '/series_media.php');
+    TestHarness::assertContains(
+        "glob(\$seriesHeadersRoot . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . \$file)",
+        $publicSeriesMediaSource,
+        'el sitio local recupera las portadas publicas guardadas bajo un identificador historico'
+    );
+    $publicationMediaSource = (string)file_get_contents(dirname(__DIR__, 2) . '/publication_media.php');
+    TestHarness::assertTrue(
+        !str_contains($publicationMediaSource, 'root_artwork_candidates WHERE artwork_id=(SELECT canonical_artwork_id FROM artwork_sheets WHERE id=? AND user_id=? LIMIT 1) AND user_id=?'),
+        'el endpoint publico de artworks no consulta una columna user_id inexistente en las vistas de obra'
+    );
+    TestHarness::assertContains(
         '<span class="wbb-board-mark" aria-hidden="true">C</span><h2>Catalog</h2>',
         $websiteBoardSource,
         'Website conserva el mismo idioma tambien en su tablero de catalogo'
@@ -379,6 +438,21 @@ function run_uploaded_root_regression_tests(): void
     );
 
     $seriesSource = (string)file_get_contents(dirname(__DIR__, 2) . '/series.php');
+    TestHarness::assertTrue(
+        !str_contains($seriesSource, 'Open a series to edit it, or add a new one.')
+            && !str_contains($seriesSource, "'Choose a series'"),
+        'Series elimina el titulo y la instruccion duplicados dentro del panel'
+    );
+    TestHarness::assertContains(
+        'data-series-header-dropzone',
+        $seriesSource,
+        'la portada de Series reutiliza una unica superficie para seleccionar o soltar la imagen'
+    );
+    TestHarness::assertTrue(
+        !str_contains($seriesSource, 'data-series-header-submit')
+            && !str_contains($seriesSource, '>Upload</button>'),
+        'la portada de Series no conserva un boton de subida redundante'
+    );
     TestHarness::assertContains(
         'FROM artwork_groups g',
         $seriesSource,
@@ -398,6 +472,31 @@ function run_uploaded_root_regression_tests(): void
         'class="series-artwork-thumb" data-series-drag-thumb',
         $seriesSource,
         'Series reutiliza el thumbnail existente como superficie de arrastre'
+    );
+    TestHarness::assertContains(
+        '$displayedArtworks = $selectedSeries',
+        $seriesSource,
+        'el detalle de una serie filtra el carrusel a sus obras dependientes'
+    );
+    TestHarness::assertContains(
+        "=== (int)\$selectedSeries['id']",
+        $seriesSource,
+        'el filtro de detalle compara la relacion por el identificador de serie'
+    );
+    TestHarness::assertContains(
+        'class="series-series-tile__meta"',
+        $seriesSource,
+        'cada bloque de serie muestra si tiene obras asociadas'
+    );
+    TestHarness::assertContains(
+        "'Works in this series'",
+        $seriesSource,
+        'el detalle identifica la coleccion visual propia de la serie'
+    );
+    TestHarness::assertContains(
+        'data-series-artwork-filter',
+        $seriesSource,
+        'Artwork assignment permite filtrar visualmente por serie'
     );
     $catalogUiSource = (string)file_get_contents(dirname(__DIR__, 2) . '/ui-catalog.css');
     TestHarness::assertContains(
@@ -435,12 +534,16 @@ function run_uploaded_root_regression_tests(): void
         $catalogUiSource,
         'el selector de serie no dibuja lineas blancas sobre la cabecera'
     );
-    TestHarness::assertContains(
-        ".series-artwork-controls {\n  order: -1;",
-        $catalogUiSource,
+    TestHarness::assertTrue(
+        (bool)preg_match('/\.series-artwork-controls\s*\{\s*order:\s*-1;/m', $catalogUiSource),
         'el selector de serie aparece arriba de cada ficha sin cambiar de tamano'
     );
     $seriesOrderSource = (string)file_get_contents(dirname(__DIR__, 2) . '/series_artwork_order.js');
+    TestHarness::assertContains(
+        "card.hidden = !matches;",
+        $seriesOrderSource,
+        'el filtro de Series oculta solamente las obras que no corresponden'
+    );
     TestHarness::assertContains(
         "handle: '[data-series-drag-thumb]'",
         $seriesOrderSource,

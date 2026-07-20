@@ -35,10 +35,6 @@ $sceneCategories = array_values(array_filter(
 $sceneRanking = new SceneRankingService(Database::connection());
 $sceneCategories = $sceneRanking->sort($sceneRanking->enrich($sceneCategories), 'recommended');
 
-$referenceSetService = new ReferenceSetService(Database::connection());
-$referenceSetService->ensureStarterSets((int)$user['id']);
-$referenceSets = $referenceSetService->listForUser((int)$user['id']);
-
 $defaultScene = (string)($sceneCategories[0]['category_slug'] ?? 'selected');
 $defaultSceneName = (string)($sceneCategories[0]['category_name'] ?? $defaultScene);
 $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultScene), 24);
@@ -254,31 +250,6 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
             background: #b77f86;
             color: #fffaf7;
             box-shadow: 0 8px 20px rgba(183, 127, 134, 0.24);
-        }
-        .visual-dna-control {
-            width: min(620px, 100%);
-            margin: 14px auto 0;
-            display: grid;
-            gap: 6px;
-            color: var(--muted);
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: .1em;
-            text-transform: uppercase;
-        }
-        .visual-dna-control select {
-            width: 100%;
-            min-height: 42px;
-            padding: 0 34px 0 12px;
-            border: 1px solid var(--line);
-            border-radius: 6px;
-            background: var(--surface-soft);
-            color: var(--ink);
-            font: inherit;
-            font-size: 14px;
-            font-weight: 400;
-            letter-spacing: 0;
-            text-transform: none;
         }
         .artwork-confirm-button:hover,
         .artwork-confirm-button:focus-visible {
@@ -1170,15 +1141,6 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
                                 </span>
                             </label>
                         </div>
-                        <label class="visual-dna-control" for="referenceSetId">
-                            <span>Visual DNA</span>
-                            <select id="referenceSetId" name="reference_set_id">
-                                <option value="0">None</option>
-                                <?php foreach ($referenceSets as $referenceSet): ?>
-                                    <option value="<?= (int)$referenceSet['id'] ?>"><?= h($referenceSet['name']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </label>
                         <button type="button" class="artwork-confirm-button" id="continueToSceneBtn" hidden disabled>Use this artwork</button>
                         <span id="sizeHint" hidden>Swipe up or down on H and W to adjust the real artwork size.</span>
                     </div>

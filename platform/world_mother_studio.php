@@ -1057,7 +1057,7 @@ $creatorOpen = is_array($analysis)
                     <header class="scene-creator-drawer-head">
                         <div>
                             <h2 id="scene-creator-title">Create Scene</h2>
-                            <p>Upload 1–4 references, analyze their visual DNA and generate the reusable scene family.</p>
+                            <p>Upload 1–4 references, analyze their visual language and generate the reusable scene family.</p>
                         </div>
                         <button class="scene-creator-close" type="button" data-close-scene-creator aria-label="Close scene creator">&times;</button>
                     </header>
@@ -1139,7 +1139,7 @@ $creatorOpen = is_array($analysis)
                             </div>
                         <?php else: ?>
                             <div class="analysis-empty-state">
-                                <p>Upload references to extract the visual DNA of the scene:</p>
+                                <p>Upload references to extract the visual language of the scene:</p>
                                 <ul>
                                     <li>architecture and spatial language</li>
                                     <li>materials, palette and lighting</li>
