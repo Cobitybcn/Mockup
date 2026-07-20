@@ -194,7 +194,7 @@
     };
     const groupDisplayTitle = (platform, group) => {
         const mockup = mockupById.get(String(group?.items?.[0] || ''));
-        if (!mockup) return 'Sin imágenes';
+        if (!mockup) return 'No images';
         if (platform === 'instagram') return String(mockup.instagram?.hook || mockup.editorialTitle || mockup.contextTitle || '');
         return String(mockup.facebook?.headline || mockup.editorialTitle || mockup.contextTitle || '');
     };
@@ -214,8 +214,8 @@
             const close = document.createElement('button');
             close.type = 'button';
             close.className = 'smb-toast-close';
-            close.setAttribute('aria-label', 'Cerrar mensaje');
-            close.textContent = 'Cerrar';
+            close.setAttribute('aria-label', 'Close message');
+            close.textContent = 'Close';
             close.addEventListener('click', () => toast.classList.remove('is-visible'));
             toast.appendChild(close);
         }
@@ -241,10 +241,10 @@
         return ({
             published: 'Publicada',
             publishing: 'Publicando',
-            failed: 'Falló',
-            needs_verification: 'Requiere verificación',
-            enqueue_failed: 'No entró en la cola',
-            rescheduling: 'Reprogramando',
+            failed: 'Failed',
+            needs_verification: 'Needs verification',
+            enqueue_failed: 'Not queued',
+            rescheduling: 'Rescheduling',
             retrying: 'Preparando reintento',
             cancelling: 'Cancelando',
             cancelled: 'Cancelada',
@@ -255,7 +255,7 @@
         if (!job) return '';
         const status = String(job.status || '');
         const label = status === 'published' ? 'Publicado'
-            : status === 'failed' ? 'Falló'
+            : status === 'failed' ? 'Failed'
                 : status === 'needs_verification' ? 'Verificar'
                     : status === 'publishing' ? 'Publicando'
                         : status === 'queued' ? (scheduledStatusLabel(job).includes('ahora') ? 'En cola' : 'Programado')
@@ -278,7 +278,7 @@
         const list = document.querySelector('[data-scheduled-list]');
         if (!list) return;
         if (!scheduledJobs.length) {
-            list.innerHTML = '<div class="smb-scheduled-empty">No hay actividad de publicación todavía.</div>';
+            list.innerHTML = '<div class="smb-scheduled-empty">No publishing activity yet.</div>';
             return;
         }
         list.innerHTML = scheduledJobs.map((job) => {
@@ -286,7 +286,7 @@
             const count = Math.max(1, Number(job.item_count || 1));
             const countLabel = job.channel === 'pinterest'
                 ? plural(count, 'Pin', 'Pines')
-                : plural(count, 'imagen', 'imágenes');
+                : plural(count, 'image', 'images');
             const status = String(job.status || '');
             const sandboxDestinationPending = job.channel === 'pinterest'
                 && pinterestEnvironment === 'sandbox'
@@ -300,8 +300,8 @@
             const canReschedule = Boolean(job.can_reschedule) && status === 'queued' && destinationReady;
             const when = canReschedule ? `
                     <div class="smb-scheduled-when">
-                        <label><span>Fecha</span><input type="date" value="${escapeHtml(parts.date)}" data-scheduled-date aria-label="Nueva fecha de publicación"></label>
-                        <label><span>Hora</span><input type="time" value="${escapeHtml(parts.time)}" data-scheduled-time aria-label="Nueva hora de publicación"></label>
+                        <label><span>Date</span><input type="date" value="${escapeHtml(parts.date)}" data-scheduled-date aria-label="New publishing date"></label>
+                        <label><span>Time</span><input type="time" value="${escapeHtml(parts.time)}" data-scheduled-time aria-label="New publishing time"></label>
                     </div>` : '<div class="smb-scheduled-when smb-scheduled-when--empty"></div>';
             const actions = [];
             if (canReschedule) {
@@ -309,15 +309,15 @@
                 actions.push('<button type="button" class="smb-scheduled-action smb-scheduled-action--now" data-scheduled-action="publish_now">Publicar ahora</button>');
                 actions.push('<button type="button" class="smb-scheduled-action smb-scheduled-action--cancel" data-scheduled-action="cancel">Cancelar</button>');
             } else if (status === 'queued' && !destinationReady) {
-                actions.push('<button type="button" class="smb-scheduled-action smb-scheduled-action--cancel" data-scheduled-action="cancel">Cancelar programación</button>');
+                actions.push('<button type="button" class="smb-scheduled-action smb-scheduled-action--cancel" data-scheduled-action="cancel">Cancel schedule</button>');
                 actions.push(`<span class="smb-scheduled-note">${sandboxDestinationMismatch
-                    ? `El tablero “${escapeHtml(job.board_name || 'anterior')}” no existe en Sandbox. Cancela esta programación y crea el Pin con “Artwork Mockups Sandbox Test”.`
+                    ? `The “${escapeHtml(job.board_name || 'previous')}” board does not exist in Sandbox. Cancel this schedule and create the Pin with “Artwork Mockups Sandbox Test”.`
                     : 'Validando el tablero de Pinterest antes de habilitar acciones…'}</span>`);
             } else if (job.can_retry) {
                 actions.push('<button type="button" class="smb-scheduled-action smb-scheduled-action--retry" data-scheduled-action="retry">Reintentar solo esta</button>');
             }
             if (status === 'published' && job.external_url) {
-                actions.push(`<a class="smb-scheduled-link" href="${escapeHtml(job.external_url)}" target="_blank" rel="noopener">Ver publicación</a>`);
+                actions.push(`<a class="smb-scheduled-link" href="${escapeHtml(job.external_url)}" target="_blank" rel="noopener">View publication</a>`);
             }
             if (status === 'needs_verification') {
                 actions.push('<span class="smb-scheduled-note">Verifica la red antes de reintentar para evitar duplicados.</span>');
@@ -348,16 +348,16 @@
                 headers: { Accept: 'application/json' },
             });
             const result = await response.json().catch(() => ({}));
-            if (!response.ok || !result.ok || !Array.isArray(result.jobs)) throw new Error(result.error || 'No se pudo cargar la cola de publicación.');
+            if (!response.ok || !result.ok || !Array.isArray(result.jobs)) throw new Error(result.error || 'The publishing queue could not be loaded.');
             scheduledJobs = result.jobs;
             publicationHistoryReady = true;
             renderScheduledJobs();
             syncScheduledState(scheduledJobs);
         } catch (error) {
             publicationHistoryReady = false;
-            if (!quiet) showToast(error.message || 'No se pudo cargar la cola de publicación.');
+            if (!quiet) showToast(error.message || 'The publishing queue could not be loaded.');
             const list = document.querySelector('[data-scheduled-list]');
-            if (list && !scheduledJobs.length) list.innerHTML = '<div class="smb-scheduled-empty">No se pudo cargar el estado. Pulsa Actualizar para intentarlo nuevamente.</div>';
+            if (list && !scheduledJobs.length) list.innerHTML = '<div class="smb-scheduled-empty">Publishing history could not be loaded. Select Refresh to try again.</div>';
         } finally {
             if (refresh) refresh.disabled = false;
         }
@@ -367,12 +367,12 @@
         const jobId = Number(card?.dataset.scheduledJob || 0);
         if (!jobId || !['reschedule', 'publish_now', 'retry', 'cancel'].includes(action)) return;
         if (['reschedule', 'publish_now', 'retry'].includes(action) && card?.dataset.destinationReady === 'false') {
-            showToast('Este Pin usa un tablero que no existe en Pinterest Sandbox. Cancélalo y créalo nuevamente con el tablero de prueba.');
+            showToast('This Pin uses a board that does not exist in Pinterest Sandbox. Cancel it and create it again with the test board.');
             return;
         }
-        if (action === 'publish_now' && !window.confirm('¿Publicar esta publicación ahora? La acción entrará inmediatamente en la cola real.')) return;
-        if (action === 'retry' && !window.confirm('¿Reintentar solo esta publicación fallida? Las publicaciones que ya salieron no se repetirán.')) return;
-        if (action === 'cancel' && !window.confirm('¿Cancelar esta publicación programada?')) return;
+        if (action === 'publish_now' && !window.confirm('Publish this item now? It will enter the live queue immediately.')) return;
+        if (action === 'retry' && !window.confirm('Retry only this failed publication? Items already published will not be repeated.')) return;
+        if (action === 'cancel' && !window.confirm('Cancel this scheduled publication?')) return;
         const payload = {
             csrf: String(boardConfig.csrf || ''),
             job_id: jobId,
@@ -383,7 +383,7 @@
             confirmation: action === 'reschedule' ? 'REPROGRAMAR' : action === 'publish_now' ? 'PUBLICAR_AHORA' : action === 'retry' ? 'REINTENTAR' : 'CANCELAR',
         };
         if (action === 'reschedule' && (!payload.date || !payload.time)) {
-            showToast('Elige una fecha y una hora para reprogramar.');
+            showToast('Choose a date and time to reschedule.');
             return;
         }
         card.classList.add('is-busy');
@@ -396,15 +396,15 @@
                 body: JSON.stringify(payload),
             });
             const result = await response.json().catch(() => ({}));
-            if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo cambiar la publicación programada.');
+            if (!response.ok || !result.ok) throw new Error(result.error || 'The scheduled publication could not be changed.');
             scheduledJobs = Array.isArray(result.jobs) ? result.jobs : [];
             renderScheduledJobs();
             syncScheduledState(scheduledJobs);
-            showToast(result.message || 'Publicación programada actualizada.', 7000);
+            showToast(result.message || 'Scheduled publication updated.', 7000);
             window.clearTimeout(scheduledReloadTimer);
             scheduledReloadTimer = window.setTimeout(() => loadScheduledJobs(true), ['publish_now', 'retry'].includes(action) ? 5000 : 1500);
         } catch (error) {
-            showToast(error.message || 'No se pudo cambiar la publicación programada.', 7000);
+            showToast(error.message || 'The scheduled publication could not be changed.', 7000);
             card.classList.remove('is-busy');
             card.querySelectorAll('button, input').forEach((control) => { control.disabled = false; });
         }
@@ -491,25 +491,25 @@
         const checkPreviousJob = (platform, clientKey, label) => {
             const previous = state.scheduled?.[platform]?.[String(clientKey)] || null;
             const status = String(previous?.status || '');
-            if (status === 'published') errors.push(`${label}: ya figura como publicada. Modifica la publicación antes de crear una nueva.`);
-            else if (['queued', 'publishing', 'rescheduling', 'retrying'].includes(status)) errors.push(`${label}: ya está en cola o publicándose.`);
-            else if (['failed', 'enqueue_failed'].includes(status)) errors.push(`${label}: falló anteriormente. Usa “Reintentar solo esta” en Estado de publicaciones.`);
-            else if (status === 'needs_verification') errors.push(`${label}: primero verifica la red para evitar una publicación duplicada.`);
+            if (status === 'published') errors.push(`${label}: it is already marked as published. Change the publication before creating another one.`);
+            else if (['queued', 'publishing', 'rescheduling', 'retrying'].includes(status)) errors.push(`${label}: it is already queued or publishing.`);
+            else if (['failed', 'enqueue_failed'].includes(status)) errors.push(`${label}: it failed previously. Use “Retry only this item” in Publishing history.`);
+            else if (status === 'needs_verification') errors.push(`${label}: verify the network first to prevent a duplicate publication.`);
         };
         payload.pinterest.forEach((pin, index) => {
             const label = `Pin ${index + 1}`;
-            if (!pin.title.trim()) errors.push(`${label}: falta el título.`);
-            if (!pin.board_id) errors.push(`${label}: falta seleccionar el tablero.`);
-            if (!isPublicHttpsUrl(pin.destination_url)) errors.push(`${label}: revisa el enlace HTTPS.`);
+            if (!pin.title.trim()) errors.push(`${label}: the title is missing.`);
+            if (!pin.board_id) errors.push(`${label}: select a board.`);
+            if (!isPublicHttpsUrl(pin.destination_url)) errors.push(`${label}: check the HTTPS link.`);
             checkSchedule(pin.schedule, label);
             checkPreviousJob('pinterest', pin.client_key, label);
         });
         ['instagram', 'facebook'].forEach((platform) => {
             payload[platform].forEach((group, index) => {
-                const label = `${platformLabels[platform]} · publicación ${index + 1}`;
-                if (!group.mockup_ids.length) errors.push(`${label}: no tiene imágenes.`);
-                if (!group.copy.trim()) errors.push(`${label}: falta el texto.`);
-                if (!isPublicHttpsUrl(group.destination_url)) errors.push(`${label}: revisa el enlace HTTPS.`);
+                const label = `${platformLabels[platform]} · publication ${index + 1}`;
+                if (!group.mockup_ids.length) errors.push(`${label}: it has no images.`);
+                if (!group.copy.trim()) errors.push(`${label}: the copy is missing.`);
+                if (!isPublicHttpsUrl(group.destination_url)) errors.push(`${label}: check the HTTPS link.`);
                 checkSchedule(group.schedule, label);
                 checkPreviousJob(platform, group.client_key, label);
             });
@@ -521,6 +521,12 @@
         const backdrop = document.querySelector('[data-confirm-backdrop]');
         if (backdrop) backdrop.hidden = true;
         pendingPublishPayload = null;
+        document.body.classList.remove('smb-confirm-open');
+    };
+
+    const closeScheduleDialog = () => {
+        const backdrop = document.querySelector('[data-schedule-backdrop]');
+        if (backdrop) backdrop.hidden = true;
         document.body.classList.remove('smb-confirm-open');
     };
 
@@ -536,27 +542,27 @@
         if (payload.pinterest.length) rows.push(`<li><strong>Pinterest</strong><span>${plural(payload.pinterest.length, 'Pin', 'Pines')}</span></li>`);
         if (payload.instagram.length) {
             const images = payload.instagram.reduce((total, group) => total + group.mockup_ids.length, 0);
-            rows.push(`<li><strong>Instagram</strong><span>${plural(payload.instagram.length, 'carrusel/publicación', 'carruseles/publicaciones')} · ${plural(images, 'imagen', 'imágenes')}</span></li>`);
+            rows.push(`<li><strong>Instagram</strong><span>${plural(payload.instagram.length, 'carousel/publication', 'carousels/publications')} · ${plural(images, 'image', 'images')}</span></li>`);
         }
         if (payload.facebook.length) {
             const images = payload.facebook.reduce((total, group) => total + group.mockup_ids.length, 0);
-            rows.push(`<li><strong>Facebook</strong><span>${plural(payload.facebook.length, 'publicación', 'publicaciones')} · ${plural(images, 'imagen', 'imágenes')}</span></li>`);
+            rows.push(`<li><strong>Facebook</strong><span>${plural(payload.facebook.length, 'publication', 'publications')} · ${plural(images, 'image', 'images')}</span></li>`);
         }
         const isNow = payload.schedule?.mode === 'now';
-        let scheduleText = 'Momento: ahora, al confirmar';
+        let scheduleText = 'Timing: now, after confirmation';
         if (!isNow) {
             const allSchedules = [...payload.pinterest, ...payload.instagram, ...payload.facebook].map((entry) => `${entry.schedule.date} ${entry.schedule.time}`);
             scheduleText = new Set(allSchedules).size === 1
-                ? `Fecha y hora: ${allSchedules[0]}`
-                : `${new Set(allSchedules).size} fechas u horarios configurados`;
+                ? `Date and time: ${allSchedules[0]}`
+                : `${new Set(allSchedules).size} dates or times configured`;
         }
-        title.textContent = isNow ? 'Confirmar publicación inmediata' : 'Confirmar programación';
-        delivery.textContent = isNow ? 'Se publicará ahora' : 'Se publicará más adelante';
+        title.textContent = isNow ? 'Confirm immediate publishing' : 'Confirm schedule';
+        delivery.textContent = isNow ? 'Publishing now' : 'Publishing later';
         delivery.className = `smb-confirm-delivery smb-confirm-delivery--${isNow ? 'now' : 'scheduled'}`;
         warning.textContent = isNow
-            ? 'Al confirmar, estas publicaciones entrarán inmediatamente en la cola real.'
-            : 'Al confirmar, no se publicará ahora: cada elemento saldrá en la fecha y hora indicadas.';
-        submit.textContent = isNow ? 'Publicar ahora' : 'Confirmar programación';
+            ? 'After confirmation, these publications will enter the live queue immediately.'
+            : 'After confirmation, nothing will publish now: each item will be released at its selected date and time.';
+        submit.textContent = isNow ? 'Publish now' : 'Confirm schedule';
         summary.innerHTML = `<ul>${rows.join('')}</ul><p>${escapeHtml(scheduleText)}${isNow ? '' : ` · ${escapeHtml(payload.timezone)}`}</p>`;
         pendingPublishPayload = payload;
         backdrop.hidden = false;
@@ -580,7 +586,7 @@
                 body: JSON.stringify(payload),
             });
             const result = await response.json().catch(() => ({}));
-            if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo programar la publicación.');
+            if (!response.ok || !result.ok) throw new Error(result.error || 'The publication could not be scheduled.');
             (result.jobs || []).forEach((job) => {
                 const platform = String(job.channel || '');
                 const key = String(job.client_key || '');
@@ -588,15 +594,15 @@
             });
             closePublishConfirmation();
             renderAll();
-            showToast(result.message || (isNow ? `${result.publication_count} publicaciones entraron en la cola.` : `${result.publication_count} publicaciones programadas.`), 8000);
+            showToast(result.message || (isNow ? `${result.publication_count} publications entered the queue.` : `${result.publication_count} publications scheduled.`), 8000);
             await loadScheduledJobs(true);
         } catch (error) {
             closePublishConfirmation();
-            showToast(error.message || 'No se pudo programar la publicación.', 0);
+            showToast(error.message || 'The publication could not be scheduled.', 0);
         } finally {
             if (button) {
                 button.disabled = false;
-                button.textContent = isNow ? 'Publicar ahora' : 'Confirmar programación';
+                button.textContent = isNow ? 'Publish now' : 'Confirm schedule';
             }
         }
     };
@@ -619,10 +625,10 @@
 
         const confirmLabel = document.querySelector('[data-confirm-label]');
         if (confirmLabel) {
-            const action = state.schedule.mode === 'scheduled' ? 'Revisar programación de' : 'Revisar y publicar ahora';
+            const action = state.schedule.mode === 'scheduled' ? 'Review schedule for' : 'Review and publish now';
             confirmLabel.textContent = hasFocus
                 ? `${action} ${platformLabels[focusedNetwork]}`
-                : state.schedule.mode === 'scheduled' ? 'Revisar y programar todo' : 'Revisar y publicar ahora';
+                : state.schedule.mode === 'scheduled' ? 'Review and schedule all' : 'Review and publish now';
         }
     };
 
@@ -699,8 +705,8 @@
         const pinterestSection = `
             <section class="smb-inspector-section smb-inspector-section--pinterest">
                 <h3>Pinterest</h3><dl>
-                    ${inspectorValue('Título', mockup.pinterest?.title)}
-                    ${inspectorValue('Descripción', mockup.pinterest?.description)}
+                    ${inspectorValue('Title', mockup.pinterest?.title)}
+                    ${inspectorValue('Description', mockup.pinterest?.description)}
                     ${inspectorTerms('Boards sugeridos', mockup.pinterest?.boards)}
                     ${inspectorTerms('Keywords', mockup.pinterest?.keywords)}
                 </dl>
@@ -719,14 +725,14 @@
                 <h3>Facebook</h3><dl>
                     ${inspectorValue('Titular', mockup.facebook?.headline)}
                     ${inspectorValue('Texto', mockup.facebook?.postText)}
-                    ${inspectorValue('Descripción del enlace', mockup.facebook?.linkDescription)}
+                    ${inspectorValue('Link description', mockup.facebook?.linkDescription)}
                     ${inspectorValue('CTA', mockup.facebook?.cta)}
                 </dl>
             </section>`;
         const metadataSection = `
             <section class="smb-inspector-section">
                 <h3>Metadata visual</h3><dl>
-                    ${inspectorValue('Descripción', mockup.metadata?.description)}
+                    ${inspectorValue('Description', mockup.metadata?.description)}
                     ${inspectorValue('Caption', mockup.metadata?.caption)}
                     ${inspectorValue('Alt text', mockup.metadata?.altText)}
                     ${inspectorTerms('Keywords', mockup.metadata?.keywords)}
@@ -741,7 +747,7 @@
                     ? facebookSection
                     : pinterestSection + instagramSection + facebookSection + metadataSection;
 
-        kicker.textContent = platform ? `Datos de ${platformLabels[platform]}` : 'Datos de publicación';
+        kicker.textContent = platform ? `${platformLabels[platform]} data` : 'Publishing data';
         title.textContent = mockup.editorialTitle || mockup.contextTitle || mockup.artworkTitle || 'Mockup';
         body.innerHTML = `
             <figure class="smb-inspector-preview"><img src="${escapeHtml(mockup.image)}" alt="${escapeHtml(mockup.artworkTitle)}"></figure>
@@ -768,8 +774,8 @@
         const scheduled = state.scheduled.pinterest[`pinterest-${id}`] || null;
         const scheduleFields = state.schedule.mode === 'scheduled' && state.schedule.perPublication ? `
             <div class="smb-item-schedule">
-                <input type="date" value="${escapeHtml(pin.date || state.schedule.date)}" data-pin-date aria-label="Fecha del Pin">
-                <input type="time" value="${escapeHtml(pin.time || state.schedule.time)}" data-pin-time aria-label="Hora del Pin">
+                <input type="date" value="${escapeHtml(pin.date || state.schedule.date)}" data-pin-date aria-label="Pin date">
+                <input type="time" value="${escapeHtml(pin.time || state.schedule.time)}" data-pin-time aria-label="Pin time">
             </div>` : '';
         return `
             <article class="smb-pin-card smb-sortable-item${state.schedule.mode === 'scheduled' && state.schedule.perPublication ? ' has-schedule' : ''}" data-board-item data-platform="pinterest" data-mockup-id="${escapeHtml(id)}" data-id="${escapeHtml(id)}" data-index="${index}">
@@ -777,8 +783,8 @@
                 ${scheduledChip(scheduled)}
                 <button class="smb-remove-media" type="button" data-remove-media aria-label="Quitar de Pinterest">×</button>
                 <img src="${escapeHtml(mockup.image)}" alt="${escapeHtml(mockup.artworkTitle)}" data-inspect-mockup draggable="false">
-                <label class="smb-pin-field smb-pin-field--title"><span>Título</span><input type="text" value="${escapeHtml(title)}" data-pin-title placeholder="Título del Pin"></label>
-                <label class="smb-pin-field smb-pin-field--description"><span>Descripción</span><textarea data-pin-description placeholder="Descripción del Pin">${escapeHtml(description)}</textarea></label>
+                <label class="smb-pin-field smb-pin-field--title"><span>Title</span><input type="text" value="${escapeHtml(title)}" data-pin-title placeholder="Pin title"></label>
+                <label class="smb-pin-field smb-pin-field--description"><span>Description</span><textarea data-pin-description placeholder="Pin description">${escapeHtml(description)}</textarea></label>
                 <label class="smb-pin-field smb-pin-field--board"><span>Tablero</span><select data-pin-board aria-label="Tablero de destino en Pinterest">${pinterestBoardOptions(board)}</select></label>
                 <label class="smb-pin-field smb-pin-field--destination"><span>Enlace de destino</span><select data-pin-destination aria-label="Destino sugerido del Pin"><option value="website"${destination === 'website' ? ' selected' : ''}>Website</option><option value="saatchi"${destination === 'saatchi' ? ' selected' : ''}>Saatchi Art</option></select><input type="url" value="${escapeHtml(destinationUrl)}" data-pin-destination-url placeholder="https://…" aria-label="URL exacta del Pin"></label>
                 ${scheduleFields}
@@ -799,34 +805,34 @@
     const publicationMarkup = (platform, group, index) => {
         const isInstagram = platform === 'instagram';
         const displayTitle = groupDisplayTitle(platform, group);
-        const copyLabel = isInstagram ? 'Caption y hashtags' : 'Texto de la publicación';
+        const copyLabel = isInstagram ? 'Caption and hashtags' : 'Publication copy';
         const websiteLabel = isInstagram ? 'Website · enlace en bio' : 'Website';
         const saatchiLabel = isInstagram ? 'Saatchi Art · enlace en bio' : 'Saatchi Art';
         const linkUrl = String(group.linkUrl || configuredDestinations[group.link] || '');
         const scheduled = state.scheduled[platform][group.id] || null;
         const scheduleFields = state.schedule.mode === 'scheduled' && state.schedule.perPublication ? `
             <div class="smb-item-schedule">
-                <input type="date" value="${escapeHtml(group.date || state.schedule.date)}" data-group-date aria-label="Fecha de publicación">
-                <input type="time" value="${escapeHtml(group.time || state.schedule.time)}" data-group-time aria-label="Hora de publicación">
+                <input type="date" value="${escapeHtml(group.date || state.schedule.date)}" data-group-date aria-label="Publishing date">
+                <input type="time" value="${escapeHtml(group.time || state.schedule.time)}" data-group-time aria-label="Publishing time">
             </div>` : '';
         const media = group.items.length
             ? group.items.map((id, itemIndex) => mediaMarkup(platform, group.id, id, itemIndex)).join('')
-            : '<div class="smb-publication-empty">Arrastra mockups dentro de esta publicación.</div>';
+            : '<div class="smb-publication-empty">Drag mockups into this publication.</div>';
 
         return `
             <article class="smb-publication-card${state.schedule.mode === 'scheduled' && state.schedule.perPublication ? ' has-schedule' : ''}" data-publication-group="${platform}" data-group-id="${escapeHtml(group.id)}">
                 <header class="smb-publication-head">
-                    <div class="smb-publication-label"><strong>Publicación ${index + 1}</strong><span title="${escapeHtml(displayTitle)}">${escapeHtml(displayTitle)}</span><small>${plural(group.items.length, 'imagen', 'imágenes')}</small></div>
+                    <div class="smb-publication-label"><strong>Publication ${index + 1}</strong><span title="${escapeHtml(displayTitle)}">${escapeHtml(displayTitle)}</span><small>${plural(group.items.length, 'image', 'images')}</small></div>
                     ${scheduledChip(scheduled)}
-                    <button type="button" data-remove-publication aria-label="Eliminar publicación">×</button>
+                    <button type="button" data-remove-publication aria-label="Remove publication">×</button>
                 </header>
                 <div class="smb-group-carousel-wrap">
                     <div class="smb-group-carousel smb-group-carousel--${platform}" data-group-carousel data-sortable-platform="${platform}" data-sortable-group-id="${escapeHtml(group.id)}">${media}</div>
                     ${isInstagram && group.items.length ? `<span class="smb-carousel-count" data-carousel-counter>1 / ${group.items.length}</span>` : ''}
                 </div>
                 <div class="smb-publication-details">
-                    <label><span>${copyLabel}</span><textarea data-group-copy placeholder="Escribe el contenido de la publicación">${escapeHtml(group.copy || '')}</textarea></label>
-                    <label><span>Destino</span><select data-group-link><option value="website"${group.link === 'website' ? ' selected' : ''}>${websiteLabel}</option><option value="saatchi"${group.link === 'saatchi' ? ' selected' : ''}>${saatchiLabel}</option></select><input type="url" value="${escapeHtml(linkUrl)}" data-group-link-url placeholder="https://…" aria-label="URL exacta de la publicación"></label>
+                    <label><span>${copyLabel}</span><textarea data-group-copy placeholder="Write the publication copy">${escapeHtml(group.copy || '')}</textarea></label>
+                    <label><span>Destination</span><select data-group-link><option value="website"${group.link === 'website' ? ' selected' : ''}>${websiteLabel}</option><option value="saatchi"${group.link === 'saatchi' ? ' selected' : ''}>${saatchiLabel}</option></select><input type="url" value="${escapeHtml(linkUrl)}" data-group-link-url placeholder="https://…" aria-label="Exact publication URL"></label>
                 </div>
                 ${scheduleFields}
             </article>`;
@@ -836,10 +842,10 @@
         const container = document.querySelector('[data-board-items="pinterest"]');
         const counter = document.querySelector('[data-board-count="pinterest"]');
         if (!container || !counter) return;
-        counter.textContent = plural(state.pinterest.length, 'publicación', 'publicaciones');
+        counter.textContent = plural(state.pinterest.length, 'publication', 'publications');
         container.innerHTML = state.pinterest.length
             ? state.pinterest.map(pinMarkup).join('')
-            : '<div class="smb-board-empty">Arrastra aquí los mockups. Cada uno será un Pin.</div>';
+            : '<div class="smb-board-empty">Drag mockups here. Each one becomes a Pin.</div>';
     };
 
     const renderPublicationBoard = (platform) => {
@@ -847,7 +853,7 @@
         const counter = document.querySelector(`[data-board-count="${platform}"]`);
         if (!stack || !counter) return;
         const groups = state.publications[platform];
-        counter.textContent = plural(groups.length, 'publicación', 'publicaciones');
+        counter.textContent = plural(groups.length, 'publication', 'publications');
         stack.dataset.sortableNewPublication = platform;
         stack.innerHTML = groups.map((group, index) => publicationMarkup(platform, group, index)).join('');
     };
@@ -886,7 +892,7 @@
         scheduleModeButton?.setAttribute('aria-pressed', state.schedule.perPublication ? 'true' : 'false');
         const scheduleFields = document.querySelector('[data-schedule-fields]');
         if (scheduleFields) scheduleFields.hidden = state.schedule.mode !== 'scheduled';
-        document.querySelectorAll('[data-delivery-mode]').forEach((button) => {
+        document.querySelectorAll('[data-delivery-mode][role="radio"]').forEach((button) => {
             const active = button.dataset.deliveryMode === state.schedule.mode;
             button.classList.toggle('is-active', active);
             button.setAttribute('aria-checked', active ? 'true' : 'false');
@@ -941,8 +947,8 @@
             : insertAt;
         if (existingIndex < 0 && targetGroup.items.length >= groupLimits[platform]) {
             showToast(platform === 'facebook'
-                ? 'Esta publicación de Facebook ya tiene 3 imágenes.'
-                : 'Este carrusel de Instagram ya tiene 10 imágenes.');
+                ? 'This Facebook publication already has 3 images.'
+                : 'This Instagram carousel already has 10 images.');
             return false;
         }
 
@@ -1161,6 +1167,19 @@
             closePublishConfirmation();
             return;
         }
+        const scheduleBackdrop = event.target.closest('[data-schedule-backdrop]');
+        if (event.target.closest('[data-close-schedule]') || (scheduleBackdrop && event.target === scheduleBackdrop)) {
+            closeScheduleDialog();
+            return;
+        }
+        if (event.target.closest('[data-open-schedule]')) {
+            state.schedule.mode = 'scheduled';
+            renderAll();
+            const backdrop = document.querySelector('[data-schedule-backdrop]');
+            if (backdrop) backdrop.hidden = false;
+            document.body.classList.add('smb-confirm-open');
+            return;
+        }
         if (event.target.closest('[data-submit-publish]')) {
             await submitPublishPayload();
             return;
@@ -1168,6 +1187,20 @@
 
         if (event.target.closest('[data-refresh-scheduled]')) {
             await loadScheduledJobs();
+            return;
+        }
+
+        const historyToggle = event.target.closest('[data-toggle-scheduled]');
+        if (historyToggle) {
+            const panel = historyToggle.closest('[data-scheduled-panel]');
+            const list = panel?.querySelector('[data-scheduled-list]');
+            const refresh = panel?.querySelector('[data-refresh-scheduled]');
+            const expanded = historyToggle.getAttribute('aria-expanded') === 'true';
+            historyToggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+            historyToggle.textContent = expanded ? 'View history' : 'Hide history';
+            panel?.classList.toggle('is-collapsed', expanded);
+            if (list) list.hidden = expanded;
+            if (refresh) refresh.hidden = expanded;
             return;
         }
 
@@ -1259,18 +1292,6 @@
             return;
         }
 
-        const deliveryMode = event.target.closest('[data-delivery-mode]');
-        if (deliveryMode) {
-            const mode = deliveryMode.dataset.deliveryMode === 'scheduled' ? 'scheduled' : 'now';
-            state.schedule.mode = mode;
-            if (mode === 'now') state.schedule.perPublication = false;
-            renderAll();
-            showToast(mode === 'now'
-                ? 'Publicación inmediata seleccionada. La fecha no intervendrá.'
-                : 'Programación activada. Revisa fecha y hora antes de confirmar.');
-            return;
-        }
-
         if (event.target.closest('[data-schedule-by-network]')) {
             state.schedule.mode = 'scheduled';
             state.schedule.perPublication = !state.schedule.perPublication;
@@ -1278,16 +1299,22 @@
             return;
         }
 
-        if (event.target.closest('[data-confirm-schedule]')) {
+        const confirmSchedule = event.target.closest('[data-confirm-schedule]');
+        if (confirmSchedule) {
+            if (confirmSchedule.matches('[data-publish-now]')) {
+                state.schedule.mode = 'now';
+                state.schedule.perPublication = false;
+                renderAll();
+            }
             if (!publicationHistoryReady) {
-                showToast('Espera a que termine de cargar el estado de publicaciones para evitar duplicados.');
+                showToast('Wait for publishing history to finish loading to prevent duplicates.');
                 return;
             }
             const publicationCount = publicationCountFor(focusedNetwork);
             if (!publicationCount) {
                 showToast(focusedNetwork
-                    ? `Arrastra al menos un mockup al tablero de ${platformLabels[focusedNetwork]}.`
-                    : 'Arrastra al menos un mockup a uno de los tres tableros.');
+                    ? `Drag at least one mockup to the ${platformLabels[focusedNetwork]} board.`
+                    : 'Drag at least one mockup to one of the three boards.');
                 return;
             }
             const payload = buildPublishPayload(focusedNetwork);
@@ -1296,6 +1323,7 @@
                 showToast(errors[0]);
                 return;
             }
+            closeScheduleDialog();
             openPublishConfirmation(payload);
         }
     });
@@ -1305,6 +1333,11 @@
             const confirmation = document.querySelector('[data-confirm-backdrop]');
             if (confirmation && !confirmation.hidden) {
                 closePublishConfirmation();
+                return;
+            }
+            const schedule = document.querySelector('[data-schedule-backdrop]');
+            if (schedule && !schedule.hidden) {
+                closeScheduleDialog();
                 return;
             }
             const inspector = document.querySelector('[data-inspector-backdrop]');
