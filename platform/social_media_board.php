@@ -197,7 +197,7 @@ foreach ($mockups as $mockup) {
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Social Media Board - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="social_media_board.css?v=18">
+    <link rel="stylesheet" href="social_media_board.css?v=19">
     <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body data-social-board-user="<?= $userId ?>">
@@ -208,7 +208,7 @@ foreach ($mockups as $mockup) {
         <div class="smb-page">
             <section class="smb-catalog" aria-labelledby="smb-catalog-title">
                 <div class="smb-catalog-head">
-                    <div>
+                    <div class="smb-catalog-copy">
                         <span class="smb-catalog-kicker">Mockup Catalog</span>
                         <h2 id="smb-catalog-title">Social Media Board</h2>
                         <div class="smb-filters">
@@ -232,6 +232,10 @@ foreach ($mockups as $mockup) {
                                 </select>
                             </label>
                         </div>
+                    </div>
+                    <div class="smb-publish-controls" aria-label="Controles de publicación">
+                        <button type="button" class="smb-confirm" data-confirm-schedule data-publish-now data-delivery-mode="now"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 3-7.6 18-3.2-7.2L3 10.6 21 3Z"/><path d="m10.2 13.8 4.2-4.2"/></svg><span>Publicar ahora</span></button>
+                        <button type="button" class="smb-schedule-open" data-open-schedule>Programar</button>
                     </div>
                     <button class="smb-focus-exit" type="button" data-exit-network-focus>Overview</button>
                 </div>
@@ -326,31 +330,22 @@ foreach ($mockups as $mockup) {
                 </div>
             </section>
 
-            <footer class="smb-schedule">
-                <div class="smb-delivery">
-                    <div class="smb-delivery-heading">
-                        <span>Momento de publicación</span>
-                        <strong>Elige explícitamente cuándo debe salir</strong>
-                    </div>
-                    <div class="smb-delivery-options" role="radiogroup" aria-label="Momento de publicación">
-                        <button type="button" class="smb-delivery-option is-active" data-delivery-mode="now" role="radio" aria-checked="true">
-                            <span class="smb-delivery-radio" aria-hidden="true"></span>
-                            <span><strong>Publicar ahora</strong><small>Entra inmediatamente en la cola real.</small></span>
-                        </button>
-                        <button type="button" class="smb-delivery-option" data-delivery-mode="scheduled" role="radio" aria-checked="false">
-                            <span class="smb-delivery-radio" aria-hidden="true"></span>
-                            <span><strong>Programar para después</strong><small>Requiere fecha, hora y una segunda confirmación visible.</small></span>
-                        </button>
-                    </div>
-                    <div class="smb-schedule-controls" data-schedule-fields hidden>
+            <div class="smb-toast" data-social-toast role="status" aria-live="polite"></div>
+            <div class="smb-confirm-backdrop" data-schedule-backdrop hidden>
+                <section class="smb-confirm-dialog smb-schedule-dialog" role="dialog" aria-modal="true" aria-labelledby="smb-schedule-title">
+                    <span class="smb-confirm-kicker">Programación</span>
+                    <h2 id="smb-schedule-title">Elegir fecha y hora</h2>
+                    <div class="smb-schedule-controls" data-schedule-fields>
                         <label><span>Fecha</span><input type="date" data-schedule-date></label>
                         <label><span>Hora</span><input type="time" data-schedule-time value="10:00"></label>
                         <button type="button" class="smb-schedule-network" data-schedule-by-network aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg> Usar horarios distintos por publicación</button>
                     </div>
-                </div>
-                <button type="button" class="smb-confirm" data-confirm-schedule><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 3-7.6 18-3.2-7.2L3 10.6 21 3Z"/><path d="m10.2 13.8 4.2-4.2"/></svg><span data-confirm-label>Revisar y publicar ahora</span></button>
-            </footer>
-            <div class="smb-toast" data-social-toast role="status" aria-live="polite"></div>
+                    <div class="smb-confirm-actions">
+                        <button type="button" class="smb-confirm-cancel" data-close-schedule>Volver al tablero</button>
+                        <button type="button" class="smb-confirm-submit" data-confirm-schedule>Revisar programación</button>
+                    </div>
+                </section>
+            </div>
             <div class="smb-confirm-backdrop" data-confirm-backdrop hidden>
                 <section class="smb-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="smb-confirm-title">
                     <span class="smb-confirm-kicker">Acción real</span>
@@ -379,6 +374,6 @@ foreach ($mockups as $mockup) {
 <script type="application/json" id="social-board-mockups"><?= json_encode($mockupPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <script type="application/json" id="social-board-config"><?= json_encode($socialBoardConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="social_media_board.js?v=16"></script>
+<script src="social_media_board.js?v=17"></script>
 </body>
 </html>

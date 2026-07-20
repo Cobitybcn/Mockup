@@ -524,6 +524,12 @@
         document.body.classList.remove('smb-confirm-open');
     };
 
+    const closeScheduleDialog = () => {
+        const backdrop = document.querySelector('[data-schedule-backdrop]');
+        if (backdrop) backdrop.hidden = true;
+        document.body.classList.remove('smb-confirm-open');
+    };
+
     const openPublishConfirmation = (payload) => {
         const backdrop = document.querySelector('[data-confirm-backdrop]');
         const summary = document.querySelector('[data-confirm-summary]');
@@ -886,7 +892,7 @@
         scheduleModeButton?.setAttribute('aria-pressed', state.schedule.perPublication ? 'true' : 'false');
         const scheduleFields = document.querySelector('[data-schedule-fields]');
         if (scheduleFields) scheduleFields.hidden = state.schedule.mode !== 'scheduled';
-        document.querySelectorAll('[data-delivery-mode]').forEach((button) => {
+        document.querySelectorAll('[data-delivery-mode][role="radio"]').forEach((button) => {
             const active = button.dataset.deliveryMode === state.schedule.mode;
             button.classList.toggle('is-active', active);
             button.setAttribute('aria-checked', active ? 'true' : 'false');
@@ -1161,6 +1167,19 @@
             closePublishConfirmation();
             return;
         }
+        const scheduleBackdrop = event.target.closest('[data-schedule-backdrop]');
+        if (event.target.closest('[data-close-schedule]') || (scheduleBackdrop && event.target === scheduleBackdrop)) {
+            closeScheduleDialog();
+            return;
+        }
+        if (event.target.closest('[data-open-schedule]')) {
+            state.schedule.mode = 'scheduled';
+            renderAll();
+            const backdrop = document.querySelector('[data-schedule-backdrop]');
+            if (backdrop) backdrop.hidden = false;
+            document.body.classList.add('smb-confirm-open');
+            return;
+        }
         if (event.target.closest('[data-submit-publish]')) {
             await submitPublishPayload();
             return;
@@ -1259,18 +1278,6 @@
             return;
         }
 
-        const deliveryMode = event.target.closest('[data-delivery-mode]');
-        if (deliveryMode) {
-            const mode = deliveryMode.dataset.deliveryMode === 'scheduled' ? 'scheduled' : 'now';
-            state.schedule.mode = mode;
-            if (mode === 'now') state.schedule.perPublication = false;
-            renderAll();
-            showToast(mode === 'now'
-                ? 'Publicación inmediata seleccionada. La fecha no intervendrá.'
-                : 'Programación activada. Revisa fecha y hora antes de confirmar.');
-            return;
-        }
-
         if (event.target.closest('[data-schedule-by-network]')) {
             state.schedule.mode = 'scheduled';
             state.schedule.perPublication = !state.schedule.perPublication;
@@ -1278,7 +1285,13 @@
             return;
         }
 
-        if (event.target.closest('[data-confirm-schedule]')) {
+        const confirmSchedule = event.target.closest('[data-confirm-schedule]');
+        if (confirmSchedule) {
+            if (confirmSchedule.matches('[data-publish-now]')) {
+                state.schedule.mode = 'now';
+                state.schedule.perPublication = false;
+                renderAll();
+            }
             if (!publicationHistoryReady) {
                 showToast('Espera a que termine de cargar el estado de publicaciones para evitar duplicados.');
                 return;
@@ -1296,6 +1309,7 @@
                 showToast(errors[0]);
                 return;
             }
+            closeScheduleDialog();
             openPublishConfirmation(payload);
         }
     });
@@ -1305,6 +1319,11 @@
             const confirmation = document.querySelector('[data-confirm-backdrop]');
             if (confirmation && !confirmation.hidden) {
                 closePublishConfirmation();
+                return;
+            }
+            const schedule = document.querySelector('[data-schedule-backdrop]');
+            if (schedule && !schedule.hidden) {
+                closeScheduleDialog();
                 return;
             }
             const inspector = document.querySelector('[data-inspector-backdrop]');
