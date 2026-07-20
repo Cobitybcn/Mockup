@@ -891,9 +891,9 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    width: 82px;
-    height: 82px;
-    padding: 10px;
+    width: 112px;
+    height: 112px;
+    padding: 15px;
     border: 0;
     border-radius: 8px;
     color: #fff;
@@ -906,7 +906,7 @@
     text-transform: uppercase;
     cursor: pointer;
 }
-.smb-confirm svg { width: 18px; height: 18px; }
+.smb-confirm svg { width: 23px; height: 23px; }
 .smb-confirm:hover { background: #768e70; }
 .smb-confirm:disabled { cursor: wait; opacity: .55; }
 .smb-schedule-open {
@@ -1181,6 +1181,7 @@
 
 .smb-scheduled-head h2 { margin: 4px 0 0; font-family: inherit; font-size: 18px; font-weight: 600; }
 .smb-scheduled-head p { margin: 7px 0 0; color: var(--smb-muted); font-size: 11px; }
+.smb-scheduled-head-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .smb-scheduled-head button,
 .smb-scheduled-action {
     min-height: 36px;
@@ -1202,6 +1203,9 @@
 .smb-scheduled-head button:disabled,
 .smb-scheduled-action:disabled { cursor: wait; opacity: .55; }
 .smb-scheduled-list { display: grid; }
+.smb-scheduled-list[hidden] { display: none; }
+.smb-scheduled.is-collapsed .smb-scheduled-head { align-items: center; padding-block: 15px; border-bottom: 0; }
+.smb-scheduled.is-collapsed .smb-scheduled-head p { display: none; }
 .smb-scheduled-empty { padding: 24px 22px; color: var(--smb-muted); font-size: 11px; }
 .smb-scheduled-card {
     display: grid;

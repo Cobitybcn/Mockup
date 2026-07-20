@@ -191,7 +191,7 @@ foreach ($mockups as $mockup) {
 }
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -233,9 +233,9 @@ foreach ($mockups as $mockup) {
                             </label>
                         </div>
                     </div>
-                    <div class="smb-publish-controls" aria-label="Controles de publicación">
+                    <div class="smb-publish-controls" aria-label="Publishing controls">
                         <button type="button" class="smb-confirm" data-confirm-schedule data-publish-now data-delivery-mode="now"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 3-7.6 18-3.2-7.2L3 10.6 21 3Z"/><path d="m10.2 13.8 4.2-4.2"/></svg><span>Publicar ahora</span></button>
-                        <button type="button" class="smb-schedule-open" data-open-schedule>Programar</button>
+                        <button type="button" class="smb-schedule-open" data-open-schedule>Schedule</button>
                     </div>
                     <button class="smb-focus-exit" type="button" data-exit-network-focus>Overview</button>
                 </div>
@@ -274,7 +274,7 @@ foreach ($mockups as $mockup) {
                 </div>
             </section>
 
-            <section class="smb-boards" aria-label="Tableros de publicación">
+            <section class="smb-boards" aria-label="Publishing boards">
                 <article class="smb-board smb-board--pinterest" data-board="pinterest">
                     <header class="smb-board-head">
                         <button class="smb-board-title" type="button" data-focus-network="pinterest" aria-label="Abrir el tablero de Pinterest en modo enfocado"><span class="smb-network-icon smb-network-icon--pinterest" aria-hidden="true"></span><h2>Pinterest</h2></button>
@@ -289,72 +289,75 @@ foreach ($mockups as $mockup) {
                                     </select>
                                 </label>
                             <?php endif; ?>
-                            <span class="smb-board-count" data-board-count="pinterest">0 publicaciones</span>
+                            <span class="smb-board-count" data-board-count="pinterest">0 publications</span>
                         </div>
                     </header>
-                    <p>Cada mockup será un Pin individual.</p>
-                    <div class="smb-pinterest-runtime-note" data-pinterest-sandbox-note <?= $pinterestSandbox ? '' : 'hidden' ?>><strong>Modo de prueba de Pinterest</strong><span>Mientras la app tenga acceso Trial, los Pines solo pueden publicarse en el tablero Sandbox y son visibles como prueba.</span></div>
+                    <p>Each mockup becomes an individual Pin.</p>
+                    <div class="smb-pinterest-runtime-note" data-pinterest-sandbox-note <?= $pinterestSandbox ? '' : 'hidden' ?>><strong>Pinterest test mode</strong><span>While the app has Trial access, Pins can only be published to the Sandbox board and remain visible as tests.</span></div>
                     <div class="smb-pinterest-items" data-board-items="pinterest"></div>
                 </article>
 
                 <article class="smb-board smb-board--instagram" data-board="instagram">
                     <header class="smb-board-head">
                         <button class="smb-board-title" type="button" data-focus-network="instagram" aria-label="Abrir el tablero de Instagram en modo enfocado"><span class="smb-network-icon smb-network-icon--instagram" aria-hidden="true"></span><h2>Instagram</h2></button>
-                        <div class="smb-board-head-actions"><span class="smb-board-count" data-board-count="instagram">0 publicaciones</span></div>
+                        <div class="smb-board-head-actions"><span class="smb-board-count" data-board-count="instagram">0 publications</span></div>
                     </header>
-                    <p>Publicación individual o carrusel.</p>
+                    <p>Single post or carousel.</p>
                     <div class="smb-publication-stack" data-publication-stack="instagram"></div>
                 </article>
 
                 <article class="smb-board smb-board--facebook" data-board="facebook">
                     <header class="smb-board-head">
                         <button class="smb-board-title" type="button" data-focus-network="facebook" aria-label="Abrir el tablero de Facebook en modo enfocado"><span class="smb-network-icon smb-network-icon--facebook" aria-hidden="true"></span><h2>Facebook</h2></button>
-                        <div class="smb-board-head-actions"><span class="smb-board-count" data-board-count="facebook">0 publicaciones</span></div>
+                        <div class="smb-board-head-actions"><span class="smb-board-count" data-board-count="facebook">0 publications</span></div>
                     </header>
-                    <p>Publicación con hasta 3 imágenes.</p>
+                    <p>Post with up to 3 images.</p>
                     <div class="smb-publication-stack" data-publication-stack="facebook"></div>
                 </article>
             </section>
 
-            <section class="smb-scheduled" aria-labelledby="smb-scheduled-title" data-scheduled-panel>
+            <section class="smb-scheduled is-collapsed" aria-labelledby="smb-scheduled-title" data-scheduled-panel>
                 <header class="smb-scheduled-head">
                     <div>
-                        <span>Control de publicación</span>
-                        <h2 id="smb-scheduled-title">Estado de publicaciones</h2>
-                        <p>Comprueba qué se publicó, qué sigue en cola y qué puede reintentarse sin duplicar resultados.</p>
+                        <span>Publishing control</span>
+                        <h2 id="smb-scheduled-title">Publishing history</h2>
+                        <p>Review what was published, what remains queued, and what can be retried without creating duplicates.</p>
                     </div>
-                    <button type="button" data-refresh-scheduled>Actualizar</button>
+                    <div class="smb-scheduled-head-actions">
+                        <button type="button" data-toggle-scheduled aria-expanded="false">View history</button>
+                        <button type="button" data-refresh-scheduled hidden>Refresh</button>
+                    </div>
                 </header>
-                <div class="smb-scheduled-list" data-scheduled-list aria-live="polite">
-                    <div class="smb-scheduled-empty">Cargando el estado de las publicaciones…</div>
+                <div class="smb-scheduled-list" data-scheduled-list aria-live="polite" hidden>
+                    <div class="smb-scheduled-empty">Loading publishing history…</div>
                 </div>
             </section>
 
             <div class="smb-toast" data-social-toast role="status" aria-live="polite"></div>
             <div class="smb-confirm-backdrop" data-schedule-backdrop hidden>
                 <section class="smb-confirm-dialog smb-schedule-dialog" role="dialog" aria-modal="true" aria-labelledby="smb-schedule-title">
-                    <span class="smb-confirm-kicker">Programación</span>
-                    <h2 id="smb-schedule-title">Elegir fecha y hora</h2>
+                    <span class="smb-confirm-kicker">Scheduling</span>
+                    <h2 id="smb-schedule-title">Choose date and time</h2>
                     <div class="smb-schedule-controls" data-schedule-fields>
-                        <label><span>Fecha</span><input type="date" data-schedule-date></label>
-                        <label><span>Hora</span><input type="time" data-schedule-time value="10:00"></label>
-                        <button type="button" class="smb-schedule-network" data-schedule-by-network aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg> Usar horarios distintos por publicación</button>
+                        <label><span>Date</span><input type="date" data-schedule-date></label>
+                        <label><span>Time</span><input type="time" data-schedule-time value="10:00"></label>
+                        <button type="button" class="smb-schedule-network" data-schedule-by-network aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg> Use different times for each publication</button>
                     </div>
                     <div class="smb-confirm-actions">
-                        <button type="button" class="smb-confirm-cancel" data-close-schedule>Volver al tablero</button>
-                        <button type="button" class="smb-confirm-submit" data-confirm-schedule>Revisar programación</button>
+                        <button type="button" class="smb-confirm-cancel" data-close-schedule>Back to board</button>
+                        <button type="button" class="smb-confirm-submit" data-confirm-schedule>Review schedule</button>
                     </div>
                 </section>
             </div>
             <div class="smb-confirm-backdrop" data-confirm-backdrop hidden>
                 <section class="smb-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="smb-confirm-title">
-                    <span class="smb-confirm-kicker">Acción real</span>
-                    <h2 id="smb-confirm-title" data-confirm-title>Confirmar publicación inmediata</h2>
-                    <div class="smb-confirm-delivery smb-confirm-delivery--now" data-confirm-delivery>Se publicará ahora</div>
+                    <span class="smb-confirm-kicker">Live action</span>
+                    <h2 id="smb-confirm-title" data-confirm-title>Confirm immediate publishing</h2>
+                    <div class="smb-confirm-delivery smb-confirm-delivery--now" data-confirm-delivery>Publishing now</div>
                     <div class="smb-confirm-summary" data-confirm-summary></div>
-                    <p class="smb-confirm-warning" data-confirm-warning>Al confirmar, estas publicaciones entrarán inmediatamente en la cola real.</p>
+                    <p class="smb-confirm-warning" data-confirm-warning>After confirmation, these publications will enter the live queue immediately.</p>
                     <div class="smb-confirm-actions">
-                        <button type="button" class="smb-confirm-cancel" data-cancel-publish>Volver al tablero</button>
+                        <button type="button" class="smb-confirm-cancel" data-cancel-publish>Back to board</button>
                         <button type="button" class="smb-confirm-submit" data-submit-publish data-submit-publish-label>Publicar ahora</button>
                     </div>
                 </section>
@@ -362,8 +365,8 @@ foreach ($mockups as $mockup) {
             <div class="smb-inspector-backdrop" data-inspector-backdrop hidden>
                 <aside class="smb-inspector" data-inspector role="dialog" aria-modal="true" aria-labelledby="smb-inspector-title">
                     <header class="smb-inspector-head">
-                        <div><span data-inspector-kicker>Datos de publicación</span><h2 id="smb-inspector-title" data-inspector-title>Mockup</h2></div>
-                        <button type="button" data-close-inspector aria-label="Cerrar">×</button>
+                        <div><span data-inspector-kicker>Publishing data</span><h2 id="smb-inspector-title" data-inspector-title>Mockup</h2></div>
+                        <button type="button" data-close-inspector aria-label="Close">×</button>
                     </header>
                     <div class="smb-inspector-body" data-inspector-body></div>
                 </aside>
