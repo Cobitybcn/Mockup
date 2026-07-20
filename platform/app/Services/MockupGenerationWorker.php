@@ -21,8 +21,6 @@ final class MockupGenerationWorker
         $pdo = Database::connection();
         $selectorState = json_decode((string)($job['selector_state_json'] ?? ''), true);
         $selectorState = is_array($selectorState) ? $selectorState : [];
-        $isVisualDnaLab = (string)($selectorState['generation_source'] ?? '') === 'visual_dna_lab';
-        $referenceSetId = max(0, (int)($job['reference_set_id'] ?? $selectorState['reference_set_id'] ?? 0));
 
         try {
             $artworkFile = basename((string)$job['artwork_file']);
@@ -42,39 +40,7 @@ final class MockupGenerationWorker
                 throw new RuntimeException('Artwork for this generation no longer exists.');
             }
 
-            if ($isVisualDnaLab) {
-                if ($generationProvider !== 'gemini') {
-                    throw new RuntimeException('The Visual DNA LAB generation connection is Gemini only.');
-                }
-                ProviderSettings::set(ProviderSettings::readForRoot($localArtworkPath));
-                ServiceFactory::mockupGenerator('gemini');
-                $referenceSet = (new ReferenceSetService($pdo))->findForUser(
-                    (int)$job['user_id'],
-                    $referenceSetId,
-                    true
-                );
-                if (!$referenceSet) {
-                    throw new RuntimeException('The selected Visual DNA is no longer available.');
-                }
-                $visualReferences = (new ReferenceAssetService($pdo))->referencesForSet(
-                    (int)$job['user_id'],
-                    $referenceSetId,
-                    6
-                );
-                if (!$visualReferences) {
-                    throw new RuntimeException('The selected Visual DNA has no real reference images.');
-                }
-                $result = (new VisualDnaLabMockupGenerator())->generate(
-                    $localArtworkPath,
-                    (string)$job['context_id'],
-                    (string)$job['prompt'],
-                    [
-                        'reference_set' => $referenceSet,
-                        'visual_dna_references' => $visualReferences,
-                    ]
-                );
-            } else {
-                $combination = (array)($selectorState['combination'] ?? []);
+            $combination = (array)($selectorState['combination'] ?? []);
                 $legacyCategory = basename(str_replace('\\', '/', (string)($selectorState['world_mother_category'] ?? '')));
                 $referenceRows = array_values(array_filter(
                     (array)($combination['world_mother_reference_images'] ?? []),
@@ -161,7 +127,6 @@ final class MockupGenerationWorker
                     ),
                     'mockup_combination' => $combination,
                 ]);
-            }
 
             if (array_key_exists('fidelity_review', $result)) {
                 $selectorState['fidelity_validation'] = [
@@ -181,10 +146,10 @@ final class MockupGenerationWorker
                 }
             }
 
-            $mockupId = (int)Database::withBusyRetry(function () use ($job, $result, $selectorState, $referenceSetId): int {
+            $mockupId = (int)Database::withBusyRetry(function () use ($job, $result, $selectorState): int {
                 $stmt = Database::connection()->prepare('
-                    INSERT INTO mockups (user_id, artwork_group_id, source_artwork_id, artwork_file, mockup_file, context_id, prompt_file, selector_state_json, reference_set_id, created_at)
-                    VALUES (:user_id, :artwork_group_id, :source_artwork_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :selector_state_json, :reference_set_id, :created_at)
+                    INSERT INTO mockups (user_id, artwork_group_id, source_artwork_id, artwork_file, mockup_file, context_id, prompt_file, selector_state_json, created_at)
+                    VALUES (:user_id, :artwork_group_id, :source_artwork_id, :artwork_file, :mockup_file, :context_id, :prompt_file, :selector_state_json, :created_at)
                 ');
                 $stmt->execute([
                     'user_id' => (int)$job['user_id'],
@@ -195,7 +160,6 @@ final class MockupGenerationWorker
                     'context_id' => (string)$job['context_id'],
                     'prompt_file' => basename((string)$result['prompt_file']),
                     'selector_state_json' => json_encode($selectorState, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-                    'reference_set_id' => $referenceSetId > 0 ? $referenceSetId : null,
                     'created_at' => date('c'),
                 ]);
                 return (int)Database::connection()->lastInsertId();
@@ -225,7 +189,7 @@ final class MockupGenerationWorker
                 'error' => '',
             ]);
 
-            if (!$isVisualDnaLab && ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && $generationProvider === 'gemini') {
+            if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && $generationProvider === 'gemini') {
                 try {
                     $sheetService = new ArtworkSheetService($pdo);
                     $artworkSheet = $sheetService->sheetForArtwork((int)$artwork['id'], (int)$job['user_id']);

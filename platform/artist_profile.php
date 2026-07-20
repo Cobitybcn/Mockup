@@ -87,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $profile = ArtistProfile::findForUser((int)$user['id']);
 $isAdmin = Auth::isAdmin($user);
+$canUseSocial = FeatureAccess::allows($user, FeatureAccess::SOCIAL_MANAGE);
 
 function h($v): string
 {
@@ -376,6 +377,9 @@ function admin_vars_hint(bool $isAdmin, string $field): void
                     <p>Configure the artist context that shapes analysis, descriptions, and mockup guidance.</p>
                 </div>
                 <div class="topbar-actions">
+                    <?php if ($canUseSocial): ?>
+                        <a class="button-link secondary" href="connections.php">Connections</a>
+                    <?php endif; ?>
                     <a class="button-link secondary" href="root_album.php">ArtWorks</a>
                 </div>
             </div>

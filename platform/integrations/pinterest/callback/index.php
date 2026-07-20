@@ -7,9 +7,10 @@ try{
     if(!FeatureAccess::allows($user,FeatureAccess::SOCIAL_MANAGE))throw new RuntimeException('Social Media requires Artist Pro.');
     if(isset($_GET['error']))throw new RuntimeException('Pinterest authorization was cancelled.');
     (new PinterestIntegrationService(Database::connection()))->completeAuthorization((int)$user['id'],trim((string)($_GET['code']??'')),trim((string)($_GET['state']??'')));
-    $message='Pinterest account connected successfully.'; $ok=true;
+    $message='La cuenta de Pinterest quedó conectada y lista para trabajar.'; $ok=true;
 }catch(Throwable $e){$message=$e->getMessage();}
-PublicPage::start('Pinterest connection | Artwork Mockups','Secure Pinterest connection response.','integrations/pinterest/callback/',true);
-?>
-<span class="eyebrow">Pinterest connection</span><h1><?=$ok?'Connection complete':'Connection failed'?></h1><div class="info-card"><p><?=PublicPage::h($message)?></p></div><p><a href="<?=PublicPage::h(PublicPage::path('integrations/pinterest/'))?>">Return to Pinterest connections</a></p>
-<?php PublicPage::end(); ?>
+if($ok)$_SESSION['connections_notice']=$message;else $_SESSION['connections_error']=$message;
+$_SESSION['connections_open']='pinterest';
+header('X-Robots-Tag: noindex, nofollow',true);
+header('Location: '.PublicPage::path('connections.php?open=pinterest'));
+exit;

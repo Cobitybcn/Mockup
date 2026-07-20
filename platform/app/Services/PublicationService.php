@@ -29,6 +29,12 @@ final class PublicationService
         } catch (Throwable $e) {
             // Columna ya existe o error en alter table
         }
+        try {
+            $this->pdo->exec('ALTER TABLE publications ADD COLUMN display_order INTEGER NOT NULL DEFAULT 0');
+        } catch (Throwable $e) {
+            // Column already exists.
+        }
+        $this->backfillDisplayOrder();
         $this->pdo->exec("CREATE TABLE IF NOT EXISTS publication_items (
             id {$id}, publication_id {$integer} NOT NULL, mockup_sheet_id {$integer} NOT NULL,
             position INTEGER NOT NULL DEFAULT 0, role VARCHAR(30) NOT NULL DEFAULT 'context',
@@ -144,12 +150,21 @@ final class PublicationService
         $allowedVisibility = ['private', 'unlisted', 'public'];
         $visibility = in_array($input['visibility'] ?? '', $allowedVisibility, true) ? $input['visibility'] : $publication['visibility'];
         $status = ($input['publish'] ?? false) && $visibility !== 'private' ? 'published' : (($input['unpublish'] ?? false) ? 'draft' : $publication['status']);
+        if (($input['publish'] ?? false) && $status === 'published') {
+            $this->assertAssociatedSeriesIsPublished((int)$publication['artwork_sheet_id'], $userId);
+        }
         $publishedAt = $status === 'published' ? ($publication['published_at'] ?: date('c')) : null;
         $this->pdo->prepare('UPDATE publications SET title=?, description=?, short_description=?, language=?, objective=?, cta_label=?, cta_url=?, visibility=?, status=?, published_at=?, updated_at=? WHERE id=? AND user_id=?')->execute([
             trim((string)($input['title'] ?? $publication['title'])), trim((string)($input['description'] ?? $publication['description'])), trim((string)($input['short_description'] ?? $publication['short_description'])),
             trim((string)($input['language'] ?? $publication['language'])), trim((string)($input['objective'] ?? $publication['objective'])),
             trim((string)($input['cta_label'] ?? $publication['cta_label'])), trim((string)($input['cta_url'] ?? $publication['cta_url'])), $visibility, $status, $publishedAt, date('c'), $id, $userId,
         ]);
+        if ($status === 'published' && (int)($publication['display_order'] ?? 0) <= 0) {
+            $next = $this->pdo->prepare('SELECT COALESCE(MAX(display_order),0)+10 FROM publications WHERE user_id=? AND status=\'published\'');
+            $next->execute([$userId]);
+            $this->pdo->prepare('UPDATE publications SET display_order=? WHERE id=? AND user_id=?')
+                ->execute([(int)$next->fetchColumn(), $id, $userId]);
+        }
         // A null $mockupIds means "leave the current mockup selection untouched" (status/visibility/text-only changes).
         if ($mockupIds !== null) {
             $this->pdo->prepare('DELETE FROM publication_items WHERE publication_id = ?')->execute([$id]);
@@ -163,6 +178,50 @@ final class PublicationService
             }
         }
         $this->refreshVariantUrls($id);
+    }
+
+    private function backfillDisplayOrder(): void
+    {
+        $rows = $this->pdo->query("SELECT id,user_id,display_order
+            FROM publications
+            WHERE status='published'
+            ORDER BY user_id,COALESCE(published_at,updated_at) DESC,id DESC")->fetchAll(PDO::FETCH_ASSOC);
+        if (!$rows) return;
+
+        $maximums = [];
+        foreach ($rows as $row) {
+            $userId = (int)$row['user_id'];
+            $maximums[$userId] = max((int)($maximums[$userId] ?? 0), (int)$row['display_order']);
+        }
+        $next = $maximums;
+        $update = $this->pdo->prepare('UPDATE publications SET display_order=? WHERE id=? AND display_order=0');
+        foreach ($rows as $row) {
+            if ((int)$row['display_order'] > 0) continue;
+            $userId = (int)$row['user_id'];
+            $next[$userId] = (int)($next[$userId] ?? 0) + 10;
+            $update->execute([$next[$userId], (int)$row['id']]);
+        }
+    }
+
+    public function assertAssociatedSeriesIsPublished(int $artworkSheetId, int $userId): void
+    {
+        $stmt = $this->pdo->prepare("SELECT a.series_id, s.title, s.published, s.status
+            FROM artwork_sheets sh
+            INNER JOIN artworks a ON a.id = sh.canonical_artwork_id AND a.user_id = sh.user_id
+            LEFT JOIN artwork_series s ON s.id = a.series_id AND s.user_id = a.user_id
+            WHERE sh.id = ? AND sh.user_id = ?
+            LIMIT 1");
+        $stmt->execute([$artworkSheetId, $userId]);
+        $series = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$series || (int)($series['series_id'] ?? 0) <= 0) {
+            return;
+        }
+        if ((int)($series['published'] ?? 0) === 1 && (string)($series['status'] ?? '') === 'active') {
+            return;
+        }
+
+        $title = trim((string)($series['title'] ?? '')) ?: 'sin nombre';
+        throw new RuntimeException('No se puede publicar la obra. Publica primero la serie asociada «' . $title . '».');
     }
 
     public function remove(int $id, int $userId): void

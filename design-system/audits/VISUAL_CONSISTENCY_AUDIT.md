@@ -4,7 +4,7 @@ Fecha: 2026-07-19
 
 ## Resumen ejecutivo
 
-La interfaz conserva una identidad reconocible y coherente en sus flujos visuales más importantes. `Explore Scenes`, `Scene Mockups`, la navegación compartida y `Visual DNA` son las implementaciones más cercanas a la constitución visual aprobada. En ellas se mantiene la jerarquía editorial, el protagonismo de las imágenes, la navegación horizontal dentro de un flujo vertical, las acciones contextuales y el color pastel con función semántica.
+La interfaz conserva una identidad reconocible y coherente en sus flujos visuales más importantes. `Explore Scenes`, `Scene Mockups`, la navegación compartida y `Scene Studio` son las implementaciones más cercanas a la constitución visual aprobada. En ellas se mantiene la jerarquía editorial, el protagonismo de las imágenes, la navegación horizontal dentro de un flujo vertical, las acciones contextuales y el color pastel con función semántica.
 
 La auditoría encontró 18 superficies principales:
 
@@ -32,7 +32,7 @@ Se revisaron:
 - el HTML, PHP y CSS vigente de las pantallas que exigen ADMIN;
 - rutas, navegación, cabeceras, paneles, tarjetas, thumbnails, acciones sobre imágenes, drop zones, estados, filtros, badges, counters, carruseles y áreas de trabajo.
 
-No se enviaron formularios, no se activaron generaciones, no se arrastraron elementos y no se modificaron datos. `Scene Studio`, `Camera Boards` y `Visual DNA` no estaban disponibles en la sesión Artist Pro; su evaluación se basa en la implementación vigente. La pantalla de acceso restringido sí se verificó renderizada. Esta limitación aumenta el riesgo de cualquier futura corrección en esas tres superficies.
+No se enviaron formularios, no se activaron generaciones, no se arrastraron elementos y no se modificaron datos. `Scene Studio` y `Camera Boards` no estaban disponibles en la sesión Artist Pro; su evaluación se basa en la implementación vigente. La pantalla de acceso restringido sí se verificó renderizada. Esta limitación aumenta el riesgo de cualquier futura corrección en esas dos superficies.
 
 ## Conclusiones generales
 
@@ -69,7 +69,7 @@ No se enviaron formularios, no se activaron generaciones, no se arrastraron elem
 - **Patterns correctly applied:** Cabecera editorial de 46 px, flujo vertical, gran área de carga, campos dimensionales subordinados, espacio generoso y paneles secundarios plegados.
 - **Inconsistencies detected:** **MEDIUM:** la acción de compromiso se expresa mediante botón rectangular oscuro o botón convencional en lugar del Primary Action pastel del sistema. **LOW:** varios controles de captura y orientación concentran más peso visual que el necesario antes de existir material.
 - **Severity:** MEDIUM.
-- **Recommended existing pattern to reuse:** Primary Action / Decision Block de `Explore Scenes`; Upload Area de `Visual DNA`.
+- **Recommended existing pattern to reuse:** Primary Action / Decision Block de `Explore Scenes`; Upload Area de `Scene Studio`.
 - **Files likely involved:** `platform/create_scenes.php`, `platform/style.css`.
 - **Risk level:** Medio, porque la captura tiene variantes desktop y mobile.
 - **CSS-only possible:** Parcial.
@@ -189,7 +189,7 @@ No se enviaron formularios, no se activaron generaciones, no se arrastraron elem
 - **Patterns correctly applied:** Catálogo horizontal, thumbnails de escala útil, colores de identidad, paneles de destino visibles y drag and drop directo.
 - **Inconsistencies detected:** **LOW:** el título principal visible usa `h2` y una escala menor a la cabecera editorial canónica. **LOW:** controles de edición locales (`Save`, `Publish`, `Remove`) no convergen completamente con los estilos compartidos. **LOW:** `Catalog` y `Studio Notes` aparecen como dos paneles equivalentes antes de que el flujo vertical quede claro.
 - **Severity:** LOW.
-- **Recommended existing pattern to reuse:** Header de `Explore Scenes`; Workspace Panel y Drop Zone de `Visual DNA`.
+- **Recommended existing pattern to reuse:** Header de `Explore Scenes`; Workspace Panel y Drop Zone de `Scene Studio`.
 - **Files likely involved:** `platform/website_board.php`, `platform/website_board.css`, `platform/social_media_board.css`, `platform/website_board.js`.
 - **Risk level:** Medio.
 - **CSS-only possible:** Parcial.
@@ -204,7 +204,7 @@ No se enviaron formularios, no se activaron generaciones, no se arrastraron elem
 - **Patterns correctly applied:** Catálogo horizontal, favoritos sobre imágenes, tres destinos visibles, color de canal con significado, asignación espacial y estados próximos al tablero.
 - **Inconsistencies detected:** **LOW:** el título principal visible usa `h2` y una escala menor a la cabecera editorial. **MEDIUM:** Pinterest, Instagram y Facebook quedan como tres módulos de igual peso y se aproximan visualmente a un dashboard, aunque su función de destinos justifica mantenerlos como boards. **LOW:** varios labels y counters son demasiado pequeños.
 - **Severity:** MEDIUM.
-- **Recommended existing pattern to reuse:** Workspace Panel + Visual Assignment de `Visual DNA`; Header de `Explore Scenes`.
+- **Recommended existing pattern to reuse:** Workspace Panel + Visual Assignment de `Scene Studio`; Header de `Explore Scenes`.
 - **Files likely involved:** `platform/social_media_board.php`, `platform/social_media_board.css`, `platform/social_media_board.js`, `platform/media-controls.css`.
 - **Risk level:** Medio-alto por publicación y responsive.
 - **CSS-only possible:** Parcial.
@@ -234,7 +234,7 @@ No se enviaron formularios, no se activaron generaciones, no se arrastraron elem
 - **Patterns correctly applied:** Cabecera editorial de 44 px, acción de creación con presencia, panel creador aislado, drop zone, paneles plegables y paleta aprobada.
 - **Inconsistencies detected:** **MEDIUM:** la biblioteca usa hasta cinco cards por fila y cada card contiene tres thumbnails 4:3 pequeños, reduciendo las referencias a iconos. **MEDIUM:** cards administrativas acumulan metadata, badges y formularios, aunque varios estén plegados. **LOW:** persisten sombras y una acción circular con efectos más fuertes que el Glass Action aprobado.
 - **Severity:** MEDIUM.
-- **Recommended existing pattern to reuse:** Thumbnail Card, Workspace Panel y Glass Actions de `Scene Mockups`; drop zone de `Visual DNA`.
+- **Recommended existing pattern to reuse:** Thumbnail Card, Workspace Panel y Glass Actions de `Scene Mockups`; drop zone de `Scene Studio`.
 - **Files likely involved:** `platform/world_mother_studio.php`, `platform/ui-catalog.css`, `platform/style.css`.
 - **Risk level:** Alto; no hubo validación visual ADMIN en esta auditoría.
 - **CSS-only possible:** Sí para densidad, escala y efectos; parcial para simplificar metadata.
@@ -249,7 +249,7 @@ No se enviaron formularios, no se activaron generaciones, no se arrastraron elem
 - **Patterns correctly applied:** Destinos visibles, drag and drop, estado de drop, paneles secundarios y edición técnica plegable.
 - **Inconsistencies detected:** **HIGH:** workbench de dos columnas, toolbar administrativa, tres boards simultáneos, celdas de 82 px, tokens con texto de 9–11 px y acciones sticky producen una interfaz densa y cercana a un panel administrativo. No existe una referencia visual aprobada específica para esta particularidad funcional.
 - **Severity:** HIGH.
-- **Recommended existing pattern to reuse:** Board + Visual Assignment de `Visual DNA`, pero solo después de aprobar una referencia específica para cámaras.
+- **Recommended existing pattern to reuse:** Board + Visual Assignment de `Scene Studio`, pero solo después de aprobar una referencia específica para cámaras.
 - **Files likely involved:** `platform/camera_studio.php`, `platform/camera_studio.css`, `platform/camera_studio.js`.
 - **Risk level:** Alto; sin acceso ADMIN renderizado y con interacción compleja.
 - **CSS-only possible:** No para una corrección completa.
@@ -271,22 +271,7 @@ No se enviaron formularios, no se activaron generaciones, no se arrastraron elem
 - **Markup changes required:** Sí para separar utilidades de decisiones y reforzar el flujo vertical.
 - **Postpone:** No; P1 con feature preview aislada.
 
-### 16. Studio References LAB / Visual DNA
-
-- **Screen:** Visual DNA.
-- **Route or file:** `platform/studio_references_lab.php`, `platform/studio_references_lab.css`, `platform/studio_references_lab.js`.
-- **Status:** PASS.
-- **Patterns correctly applied:** Cabecera editorial grande, biblioteca horizontal, upload sobre la propia biblioteca, Thumbnail Cards, decisiones cuadradas pastel, board con drop zones visibles, sets guardados y Primary Action sage.
-- **Inconsistencies detected:** No se detectó una divergencia estructural. La validación fue estática porque la sesión observada no tenía acceso al LAB ADMIN.
-- **Severity:** Ninguna.
-- **Recommended existing pattern to reuse:** La propia pantalla para Upload Area, Decision Blocks, Drop Zones y visual assignment.
-- **Files likely involved:** `platform/studio_references_lab.php`, `platform/studio_references_lab.css`, `platform/studio_references_lab.js`, `platform/media-controls.css`.
-- **Risk level:** Medio-alto por ausencia de validación ADMIN renderizada.
-- **CSS-only possible:** No aplica.
-- **Markup changes required:** No.
-- **Postpone:** Sí; mantener sin cambios hasta una revisión autenticada.
-
-### 17. Account
+### 16. Account
 
 - **Screen:** Account.
 - **Route or file:** `platform/account.php`.
@@ -301,13 +286,13 @@ No se enviaron formularios, no se activaron generaciones, no se arrastraron elem
 - **Markup changes required:** Sí.
 - **Postpone:** Sí; P3.
 
-### 18. Feature access gate
+### 17. Feature access gate
 
 - **Screen:** Access denied / upgrade required.
-- **Route or file:** Salida compartida desde `platform/app/Support/FeatureAccess.php`; observada en `world_mother_studio.php`, `camera_studio.php` y `studio_references_lab.php`.
+- **Route or file:** Salida compartida desde `platform/app/Support/FeatureAccess.php`; observada en `world_mother_studio.php` y `camera_studio.php`.
 - **Status:** NEEDS CONSISTENCY PASS.
 - **Patterns correctly applied:** Mensaje breve y ausencia de acciones innecesarias.
-- **Inconsistencies detected:** **HIGH:** la pantalla abandona navegación, marca, tipografía editorial, paleta, paneles y espaciado del producto; en Visual DNA se reduce a texto serif sin layout. Parece una respuesta técnica ajena a Artwork Mockups.
+- **Inconsistencies detected:** **HIGH:** la pantalla abandona navegación, marca, tipografía editorial, paleta, paneles y espaciado del producto. Parece una respuesta técnica ajena a Artwork Mockups.
 - **Severity:** HIGH.
 - **Recommended existing pattern to reuse:** Shell global + Workspace Header + panel vacío de bajo ruido.
 - **Files likely involved:** `platform/app/Support/FeatureAccess.php`, `platform/style.css`, posiblemente una vista compartida de acceso.
@@ -321,7 +306,7 @@ No se enviaron formularios, no se activaron generaciones, no se arrastraron elem
 ### Primary Actions múltiples
 
 - **Dónde aparece:** Create Art, Mockup Lab, Mockup Album, Videos, Website Catalog Sync y Video Lab.
-- **Referencia aprobada:** Decision Block / Primary Action de `Explore Scenes`; Decision Blocks de `Series` y `Visual DNA`.
+- **Referencia aprobada:** Decision Block / Primary Action de `Explore Scenes`; Decision Blocks de `Series`.
 - **Implementación correcta:** bloque cuadrado o fuertemente cuadrado, pastel, etiqueta corta y un compromiso por etapa.
 - **Deben converger:** botones oscuros de captura, barras `Apply Changes` y `Add sequence`, botones marrones de navegación/importación y grupos de varias acciones equivalentes.
 
@@ -362,15 +347,15 @@ No se enviaron formularios, no se activaron generaciones, no se arrastraron elem
 
 ### Radios, sombras y padding locales
 
-- **Dónde aparece:** radios de 4 a 13 px, pills de 999 px y varias sombras locales en Scene Studio, Camera Boards, Visual DNA y catálogos.
+- **Dónde aparece:** radios de 4 a 13 px, pills de 999 px y varias sombras locales en Scene Studio, Camera Boards y catálogos.
 - **Referencia aprobada:** bordes finos, superficies claras y sombra mínima de la referencia `scene-creation`.
 - **Implementación correcta:** tokens compartidos de `style.css` cuando el rol del componente es equivalente.
 - **Deben converger:** solo los componentes semánticamente iguales. No normalizar pills o estados que cumplen otra función.
 
 ### Drop zones y estados vacíos
 
-- **Dónde aparece:** Create Art, Website, Social, Scene Studio y Visual DNA.
-- **Referencia aprobada:** biblioteca/drop zone de Visual DNA.
+- **Dónde aparece:** Create Art, Website, Social y Scene Studio.
+- **Referencia aprobada:** biblioteca/drop zone de Scene Studio.
 - **Implementación correcta:** destino visible antes del drag, estado suave, layout estable y resultado en el mismo panel.
 - **Deben converger:** mensajes, borde y feedback de destinos equivalentes; no convertir Upload Area en formulario permanente.
 
@@ -400,7 +385,7 @@ No se enviaron formularios, no se activaron generaciones, no se arrastraron elem
 
 1. Camera Boards hasta contar con referencia y validación ADMIN.
 2. Account hasta definir un patrón visual específico para superficies de cuenta.
-3. Global navigation, Scene Composer, Scene Mockups y Visual DNA: conservar como referencias.
+3. Global navigation, Scene Composer, Scene Mockups y Scene Studio: conservar como referencias.
 
 ## Riesgos
 
@@ -415,7 +400,7 @@ No se enviaron formularios, no se activaron generaciones, no se arrastraron elem
 
 1. Implementar primero una preview ADMIN reversible según `PREVIEW_IMPLEMENTATION_PLAN.md`.
 2. Comenzar por dos scopes independientes: `artworks-kpi` y `primary-actions`.
-3. Comparar cada scope contra `Explore Scenes`, `Scene Mockups`, `Series` y `Visual DNA`; no crear componentes nuevos.
+3. Comparar cada scope contra `Explore Scenes`, `Scene Mockups`, `Series` y `Scene Studio`; no crear componentes nuevos.
 4. Validar visualmente desktop y mobile con datos reales antes de ampliar el alcance.
 5. Mantener Camera Boards y Account fuera de la primera preview.
 

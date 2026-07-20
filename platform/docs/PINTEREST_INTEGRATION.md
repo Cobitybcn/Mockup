@@ -2,6 +2,8 @@
 
 OAuth, encrypted renewable tokens, board selection, explicit confirmation, and Pin creation are implemented. Apply migrations `000001` and `000002` in order. Existing administrator connections become `platform`; existing non-administrator connections become `artist`. Administrators may then connect a separate artist account.
 
+All users authorize through the single official Artwork Mockups app. The artist only clicks **Connect Pinterest**, signs in to their own Pinterest account and approves access. App ID, app secret and access tokens are never requested from the artist. Tokens are stored separately by user and purpose, so the administrator platform identity and every artist identity remain isolated.
+
 Required environment variables are `PINTEREST_APP_ID`, `PINTEREST_APP_SECRET`, and `PINTEREST_REDIRECT_URI`. The app secret is backend-only and must not be committed, rendered, logged, or sent in an error. In Google Cloud production, load `PINTEREST_APP_SECRET` from Secret Manager rather than a deployed environment file.
 
 OAuth state is random, session-bound, single-use, and expires after ten minutes. Tokens use authenticated encryption and refresh automatically. Every Pin requires a fresh explicit confirmation. `artist` connections are used for artwork content; `platform` is reserved for administrator-led promotion of Artwork Mockups.

@@ -20,7 +20,8 @@ final class AppPublishedCatalog
             JOIN artwork_sheets a ON a.id=p.artwork_sheet_id AND a.user_id=p.user_id
             LEFT JOIN artworks aw ON aw.id=a.canonical_artwork_id AND aw.user_id=p.user_id
             WHERE LOWER(u.email)=? AND p.status='published' AND p.visibility IN ('public','unlisted')
-            ORDER BY COALESCE(p.published_at,p.updated_at) DESC,p.id DESC");
+            ORDER BY CASE WHEN p.display_order>0 THEN 0 ELSE 1 END,
+                p.display_order ASC,COALESCE(p.published_at,p.updated_at) DESC,p.id DESC");
         $statement->execute([$this->artistEmail]);
         $publications = [];
         foreach ($statement as $row) {
@@ -39,6 +40,31 @@ final class AppPublishedCatalog
     public function one(string $slug): ?array
     {
         return $this->all()[$slug] ?? null;
+    }
+
+    /** @return array<int,array<string,mixed>> */
+    public function constellations(): array
+    {
+        try {
+            $statement = $this->pdo->prepare("SELECT c.*,p.slug artwork_slug
+                FROM artist_site_constellations c
+                INNER JOIN users u ON u.id=c.user_id
+                INNER JOIN artwork_sheets sh ON sh.user_id=c.user_id AND sh.canonical_artwork_id=c.artwork_id
+                INNER JOIN publications p ON p.user_id=c.user_id AND p.artwork_sheet_id=sh.id
+                    AND p.status='published' AND p.visibility='public'
+                WHERE LOWER(u.email)=? AND c.enabled=1
+                ORDER BY c.updated_at DESC,p.id DESC");
+            $statement->execute([strtolower(trim($this->artistEmail))]);
+            $locations = [];
+            foreach ($statement as $row) {
+                $artworkId = (int)$row['artwork_id'];
+                if (!isset($locations[$artworkId])) $locations[$artworkId] = $row;
+            }
+            return $locations;
+        } catch (PDOException) {
+            // Legacy installations keep their existing Constellations data until migration.
+            return [];
+        }
     }
 
     public function mockup(string $artworkSlug, string $mockupSlug): ?array
@@ -62,7 +88,28 @@ final class AppPublishedCatalog
         foreach ($artwork['items'] as $item) {
             if (basename((string)$item['mockup_file']) === $file) return $file;
         }
+        if ($this->isRelatedMockup((int)$artwork['artwork_sheet_id'], $userId, $file)) return $file;
         return '';
+    }
+
+    private function isRelatedMockup(int $artworkSheetId, int $userId, string $file): bool
+    {
+        if ($artworkSheetId <= 0 || $file === '') return false;
+        try {
+            $statement = $this->pdo->prepare('SELECT 1
+                FROM artwork_sheets sh
+                INNER JOIN artworks a ON a.id=sh.canonical_artwork_id AND a.user_id=sh.user_id
+                INNER JOIN mockup_sheets m ON m.user_id=sh.user_id AND (
+                    m.artwork_id=a.id OR m.artwork_sheet_id=sh.id OR
+                    (COALESCE(a.artwork_group_id,0)>0 AND m.artwork_group_id=a.artwork_group_id)
+                )
+                WHERE sh.id=? AND sh.user_id=? AND m.mockup_file=?
+                LIMIT 1');
+            $statement->execute([$artworkSheetId, $userId, $file]);
+            return (bool)$statement->fetchColumn();
+        } catch (PDOException) {
+            return false;
+        }
     }
 
     private function items(int $publicationId): array
@@ -84,9 +131,9 @@ final class AppPublishedCatalog
     {
         if ($artworkId <= 0) return [];
         $statement = $this->pdo->prepare('SELECT file_name,view_type FROM root_artwork_candidates
-            WHERE artwork_id=? AND user_id=(SELECT id FROM users WHERE LOWER(email)=? LIMIT 1)
+            WHERE artwork_id=?
             ORDER BY id');
-        $statement->execute([$artworkId, $this->artistEmail]);
+        $statement->execute([$artworkId]);
         return $statement->fetchAll();
     }
 

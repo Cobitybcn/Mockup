@@ -240,6 +240,12 @@
         const notesCount = document.querySelector('[data-board-count="notes"]');
         if (catalogCount) catalogCount.textContent = `${state.catalog.length} ${state.catalog.length === 1 ? 'artwork' : 'artworks'}`;
         if (notesCount) notesCount.textContent = `${state.notes.length} ${state.notes.length === 1 ? 'note' : 'notes'}`;
+        const publishAll = document.querySelector('[data-catalog-publish-all]');
+        if (publishAll) {
+            publishAll.hidden = state.catalog.length === 0;
+            publishAll.disabled = false;
+            publishAll.textContent = `Publish ${state.catalog.length} ${state.catalog.length === 1 ? 'artwork' : 'artworks'}`;
+        }
         initializeEditors();
         initializeDropSortables();
     };
@@ -528,6 +534,31 @@
         return entry;
     };
 
+    const markArtworkPublished = (entry) => {
+        const artworkId = Number(entry?.artworkId || 0);
+        const source = state.sources.find((item) => item.type === 'artwork' && Number(item.artworkId || item.id) === artworkId);
+        if (source) source.websitePublished = true;
+        const sourceCard = document.querySelector(`[data-source-card][data-source-key="artwork:${artworkId}"]`);
+        if (!sourceCard) return;
+        sourceCard.dataset.sourcePublished = '1';
+        sourceCard.classList.remove('is-catalog-eligible');
+        sourceCard.querySelector('.wbb-source-state')?.remove();
+    };
+
+    const closeCatalogBoardIfComplete = () => {
+        const hasUnpublishedArtwork = Array.from(document.querySelectorAll('[data-source-card][data-source-type="artwork"]'))
+            .some((card) => card.dataset.sourcePublished !== '1');
+        if (state.catalog.length || hasUnpublishedArtwork) return;
+        document.querySelector('[data-board="catalog"]')?.remove();
+        document.querySelector('[data-website-boards]')?.classList.add('has-single-board');
+        focusedBoard = focusedBoard === 'catalog' ? '' : focusedBoard;
+        activeDraftBoard = activeDraftBoard === 'catalog' ? '' : activeDraftBoard;
+        activeDraftId = activeDraftBoard ? activeDraftId : 0;
+        sourceFilter = preferredNotesFilter();
+        noteFilter = sourceFilter;
+        applyFocus();
+    };
+
     const noteDraft = (card) => {
         const id = Number(card.dataset.id || 0);
         return {
@@ -547,6 +578,41 @@
             return;
         }
 
+        const publishAll = event.target.closest('[data-catalog-publish-all]');
+        if (publishAll) {
+            const ids = state.catalog.map((entry) => Number(entry.id || 0)).filter((id) => id > 0);
+            if (!ids.length) return;
+            publishAll.disabled = true;
+            publishAll.textContent = `Publishing ${ids.length} ${ids.length === 1 ? 'artwork' : 'artworks'}…`;
+            try {
+                const visibleCard = focusedBoard === 'catalog' ? document.querySelector('[data-catalog-card]') : null;
+                if (visibleCard) {
+                    const id = Number(visibleCard.dataset.id || 0);
+                    const saved = hydrateCatalog(await post('catalog_save', { id, fields: catalogFields(visibleCard) }));
+                    const index = state.catalog.findIndex((entry) => Number(entry.id) === id);
+                    if (index >= 0) state.catalog[index] = saved;
+                }
+                const result = await post('catalog_publish_all', { ids });
+                const published = Array.isArray(result?.published) ? result.published.map(hydrateCatalog) : [];
+                const publishedIds = new Set(published.map((entry) => Number(entry.id)));
+                published.forEach(markArtworkPublished);
+                state.catalog = state.catalog.filter((entry) => !publishedIds.has(Number(entry.id)));
+                if (activeDraftBoard === 'catalog' && publishedIds.has(activeDraftId)) {
+                    activeDraftBoard = '';
+                    activeDraftId = 0;
+                }
+                renderBoards();
+                closeCatalogBoardIfComplete();
+                const count = Number(result?.count || published.length);
+                showToast(`${count} ${count === 1 ? 'artwork published' : 'artworks published'} on the website.`);
+            } catch (error) {
+                publishAll.disabled = false;
+                publishAll.textContent = `Publish ${state.catalog.length} ${state.catalog.length === 1 ? 'artwork' : 'artworks'}`;
+                showToast(error.message, true);
+            }
+            return;
+        }
+
         const catalogCard = event.target.closest('[data-catalog-card]');
         if (catalogCard && event.target.closest('[data-catalog-save]')) {
             try { await saveCatalogCard(catalogCard); showToast('Page saved.'); } catch (error) { showToast(error.message, true); }
@@ -562,23 +628,9 @@
                 if (result && result.status !== 'published') updateCatalogEntry(result);
                 else if (result) {
                     state.catalog = state.catalog.filter((entry) => Number(entry.id) !== Number(catalogCard.dataset.id));
-                    const sourceCard = document.querySelector(`[data-source-key="artwork:${Number(result.artworkId || 0)}"]`);
-                    if (sourceCard) {
-                        sourceCard.dataset.sourcePublished = '1';
-                        sourceCard.classList.remove('is-catalog-eligible');
-                        sourceCard.querySelector('.wbb-source-state')?.remove();
-                    }
+                    markArtworkPublished(result);
                     renderBoards();
-                    const hasUnpublishedArtwork = Array.from(document.querySelectorAll('[data-source-card][data-source-type="artwork"]'))
-                        .some((card) => card.dataset.sourcePublished !== '1');
-                    if (!state.catalog.length && !hasUnpublishedArtwork) {
-                        document.querySelector('[data-board="catalog"]')?.remove();
-                        document.querySelector('[data-website-boards]')?.classList.add('has-single-board');
-                        focusedBoard = focusedBoard === 'catalog' ? '' : focusedBoard;
-                        sourceFilter = preferredNotesFilter();
-                        noteFilter = sourceFilter;
-                        applyFocus();
-                    }
+                    closeCatalogBoardIfComplete();
                 }
                 else { state.catalog = state.catalog.filter((entry) => Number(entry.id) !== Number(catalogCard.dataset.id)); renderBoards(); }
                 showToast(action === 'publish' ? 'Artwork published on the website.' : 'Catalog updated.');

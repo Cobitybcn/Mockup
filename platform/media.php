@@ -17,6 +17,9 @@ if ($file === '') {
     exit('Falta archivo.');
 }
 
+$pdo = Database::connection();
+$ownedSeriesHeader = user_owns_series_header_file($pdo, (int)$user['id'], $file);
+
 $path = '';
 if (str_ends_with($file, '.analysis.json')) {
     $path = ANALYSIS_DIR . DIRECTORY_SEPARATOR . $file;
@@ -33,6 +36,17 @@ if (str_ends_with($file, '.analysis.json')) {
 if (!Auth::isAdmin($user) && !user_can_access_result_file((int)$user['id'], $file)) {
     http_response_code(403);
     exit('No tienes acceso a este archivo.');
+}
+
+if (!is_file($path) && $ownedSeriesHeader) {
+    $seriesHeadersRoot = dirname(ArtworkSeries::headerUploadDir((int)$user['id']));
+    $legacyHeaderPaths = glob($seriesHeadersRoot . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . $file) ?: [];
+    foreach ($legacyHeaderPaths as $legacyHeaderPath) {
+        if (is_file($legacyHeaderPath)) {
+            $path = $legacyHeaderPath;
+            break;
+        }
+    }
 }
 
 if (!is_file($path)) {
@@ -139,6 +153,10 @@ function user_can_access_result_file(int $userId, string $file): bool
         return true;
     }
 
+    if (user_owns_series_header_file($pdo, $userId, $file)) {
+        return true;
+    }
+
     if (user_can_access_exact_result_file($pdo, $userId, $file)) {
         return true;
     }
@@ -160,6 +178,16 @@ function user_can_access_result_file(int $userId, string $file): bool
     }
 
     return false;
+}
+
+function user_owns_series_header_file(PDO $pdo, int $userId, string $file): bool
+{
+    $stmt = $pdo->prepare('SELECT 1 FROM artwork_series WHERE user_id = :user_id AND header_file = :file LIMIT 1');
+    $stmt->execute([
+        'user_id' => $userId,
+        'file' => basename($file),
+    ]);
+    return (bool)$stmt->fetchColumn();
 }
 
 function user_can_access_exact_result_file(PDO $pdo, int $userId, string $file): bool

@@ -4,6 +4,10 @@ require_once dirname(__DIR__, 2).'/app/bootstrap.php';
 Auth::start();
 $user = Auth::user();
 if ($user) FeatureAccess::requirePage($user, FeatureAccess::SOCIAL_MANAGE, 'Social Media');
+if ($user && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    header('Location: ' . PublicPage::path('connections.php?open=instagram'));
+    exit;
+}
 $service = new InstagramIntegrationService(Database::connection());
 $error = '';
 $connection = $user ? $service->connection((int)$user['id']) : null;
@@ -33,6 +37,7 @@ $_SESSION['instagram_csrf'] = bin2hex(random_bytes(24));
 $connected = (($connection['status'] ?? '') === 'connected');
 PublicPage::start('Instagram Connection | Artwork Mockups', 'Connect one professional Instagram account for controlled artwork publishing.', 'integrations/instagram/');
 ?>
+<?php if ($user): ?><p><a class="button-link secondary" href="<?= PublicPage::h(PublicPage::path('connections.php')) ?>">Back to Connections</a></p><?php endif; ?>
 <style>
     .public-main{--public-max:920px}.instagram-hero{padding:30px 0 34px;border-bottom:1px solid var(--line)}
     .instagram-hero h1{max-width:730px}.instagram-hero .lede{max-width:710px}

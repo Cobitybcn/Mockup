@@ -27,6 +27,29 @@ function wbb_media_url(string $file, int $width = 900): string
     return 'media.php?file=' . rawurlencode(basename($file)) . '&thumb=1&w=' . max(320, min(1200, $width));
 }
 
+function wbb_website_destination(string $domain): ?array
+{
+    $domain = trim($domain);
+    if ($domain === '') return null;
+
+    $candidate = preg_match('#^https?://#i', $domain) ? $domain : 'https://' . ltrim($domain, '/');
+    $host = strtolower(trim((string)(parse_url($candidate, PHP_URL_HOST) ?: ''), '.'));
+    if ($host === '') return null;
+
+    return ['url' => 'https://' . $host, 'label' => $host];
+}
+
+$artistProfile = ArtistProfile::findForUser($userId);
+$artistWebsites = [];
+$customWebsite = wbb_website_destination((string)($artistProfile['custom_domain'] ?? ''));
+if ($customWebsite) $artistWebsites[$customWebsite['label']] = $customWebsite;
+
+$artistSubdomain = strtolower(trim((string)($artistProfile['subdomain'] ?? '')));
+if (preg_match('/^[a-z0-9-]+$/', $artistSubdomain)) {
+    $subdomainWebsite = wbb_website_destination($artistSubdomain . '.artworkmockups.com');
+    if ($subdomainWebsite) $artistWebsites[$subdomainWebsite['label']] = $subdomainWebsite;
+}
+
 foreach ($sources as &$source) $source['image'] = wbb_media_url((string)$source['file']);
 unset($source);
 foreach ($catalog as &$entry) {
@@ -61,7 +84,7 @@ $payload = [
     <title>Website Catalog Sync - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="social_media_board.css?v=15">
-    <link rel="stylesheet" href="website_board.css?v=18">
+    <link rel="stylesheet" href="website_board.css?v=23">
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
 </head>
 <body data-website-board-user="<?= $userId ?>">
@@ -84,7 +107,22 @@ $payload = [
                             </select>
                         </label>
                     </div>
-                    <button class="smb-focus-exit wbb-focus-exit" type="button" data-exit-board-focus>Overview</button>
+                    <div class="wbb-head-actions">
+                        <a class="wbb-site-manager-link" href="../site-admin/">Open Site Manager</a>
+                        <?php if ($artistWebsites): ?>
+                            <div class="wbb-artist-websites" role="group" aria-label="Artist website">
+                                <span>Artist website</span>
+                                <div>
+                                    <?php foreach ($artistWebsites as $website): ?>
+                                        <a href="<?= wbb_h($website['url']) ?>" target="_blank" rel="noopener noreferrer"><?= wbb_h($website['label']) ?></a>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <a class="wbb-artist-website-setup" href="artist_profile.php">Set artist website</a>
+                        <?php endif; ?>
+                        <button class="smb-focus-exit wbb-focus-exit" type="button" data-exit-board-focus>Overview</button>
+                    </div>
                 </div>
                 <div class="smb-catalog-rail-wrap wbb-source-rail-wrap">
                     <button class="smb-rail-arrow smb-rail-arrow--left wbb-rail-arrow" type="button" data-scroll-source="-1" aria-label="Previous images">‹</button>
@@ -109,7 +147,7 @@ $payload = [
                         <button type="button" class="smb-board-title wbb-board-title" data-focus-board="catalog" aria-label="Work in Catalog">
                             <span class="wbb-board-mark" aria-hidden="true">C</span><h2>Catalog</h2>
                         </button>
-                        <span class="smb-board-count wbb-board-count" data-board-count="catalog"><?= count($catalog) ?> <?= count($catalog) === 1 ? 'artwork' : 'artworks' ?></span>
+                        <button type="button" class="wbb-publish-all" data-catalog-publish-all<?= !$catalog ? ' hidden' : '' ?>>Publish <?= count($catalog) ?> <?= count($catalog) === 1 ? 'artwork' : 'artworks' ?></button>
                     </header>
                     <p>Publish artwork pages in the website catalog.</p>
                     <div class="smb-pinterest-items wbb-catalog-list" data-catalog-list></div>
@@ -134,6 +172,6 @@ $payload = [
 <script type="application/json" id="website-board-data"><?= json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
-<script src="website_board.js?v=13"></script>
+<script src="website_board.js?v=14"></script>
 </body>
 </html>

@@ -25,6 +25,40 @@ final class PinterestPublisher
         return $payload;
     }
 
+    public function imageBase64PinPayload(array $variant, array $item, string $boardId, string $absoluteLandingUrl, string $imagePath): array
+    {
+        if ($boardId === '' || !filter_var($absoluteLandingUrl, FILTER_VALIDATE_URL)) {
+            throw new InvalidArgumentException('Pinterest requiere un tablero y un enlace de destino válido.');
+        }
+        if (!is_file($imagePath) || !is_readable($imagePath)) {
+            throw new RuntimeException('No se encontró la imagen preparada para Pinterest.');
+        }
+        $mime = strtolower((string)(mime_content_type($imagePath) ?: ''));
+        if (!in_array($mime, ['image/jpeg', 'image/png'], true)) {
+            throw new RuntimeException('Pinterest solo admite imágenes JPG o PNG en esta publicación directa.');
+        }
+        $contents = file_get_contents($imagePath);
+        if (!is_string($contents) || $contents === '') {
+            throw new RuntimeException('No se pudo leer la imagen preparada para Pinterest.');
+        }
+        $payload = [
+            'board_id' => $boardId,
+            'link' => $absoluteLandingUrl,
+            'title' => mb_substr(trim((string)($variant['title'] ?? $item['title'] ?? '')), 0, 100),
+            'description' => mb_substr(trim((string)($variant['description'] ?? $item['description'] ?? '')), 0, 500),
+            'alt_text' => mb_substr(trim((string)($item['alt_text'] ?? '')), 0, 500),
+            'media_source' => [
+                'source_type' => 'image_base64',
+                'content_type' => $mime,
+                'data' => base64_encode($contents),
+                'is_standard' => true,
+            ],
+        ];
+        $sectionId = trim((string)($item['board_section_id'] ?? ''));
+        if ($sectionId !== '') $payload['board_section_id'] = $sectionId;
+        return $payload;
+    }
+
     public function createImagePin(string $accessToken, array $payload): array
     {
         if ($accessToken === '') throw new InvalidArgumentException('Falta el access token de Pinterest.');

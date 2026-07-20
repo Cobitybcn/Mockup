@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+
 $user = Auth::requireUser();
 $pdo = Database::connection();
 Auth::start();
@@ -183,6 +186,12 @@ foreach ($seriesRows as $series) {
     if ((int)$series['id'] === $selectedSeriesId) { $selectedSeries = $series; break; }
 }
 $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $userId, '') : [];
+$displayedArtworks = $selectedSeries
+    ? array_values(array_filter(
+        $artworks,
+        static fn(array $artwork): bool => (int)($artwork['series_id'] ?? 0) === (int)$selectedSeries['id']
+    ))
+    : $artworks;
 ?>
 <!doctype html>
 <html lang="en">
@@ -191,7 +200,7 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Series - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="ui-catalog.css?v=10">
+    <link rel="stylesheet" href="ui-catalog.css?v=13">
     <?php if ($seriesPreviewActive): ?>
         <link rel="stylesheet" href="visual-consistency-preview.css?v=2">
     <?php endif; ?>
@@ -262,23 +271,19 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
             <?php if ($error !== ''): ?><div class="notice-card notice-error"><?= series_h($error) ?></div><?php endif; ?>
 
             <section class="catalog-panel catalog-panel--compact catalog-panel--series-picker">
-                <?php if (!$selectedSeries): ?>
-                <div class="detail-heading">
-                    <div>
-                        <h2><?= $seriesPreviewActive ? 'Choose a series' : 'Series' ?></h2>
-                        <p><?= $seriesPreviewActive ? 'Open a collection or create the next one.' : 'Open a series to edit it, or add a new one.' ?></p>
-                    </div>
-                </div>
-                <?php else: ?>
-                    <?php if ($seriesMissing): ?>
-                        <div class="warning-list" style="margin-bottom: 20px;">Complete before publishing: <?= series_h(implode(' · ', $seriesMissing)) ?></div>
-                    <?php endif; ?>
+                <?php if ($selectedSeries && $seriesMissing): ?>
+                    <div class="warning-list" style="margin-bottom: 20px;">Complete before publishing: <?= series_h(implode(' · ', $seriesMissing)) ?></div>
                 <?php endif; ?>
                 <?php if (!$selectedSeries): ?>
                     <div class="social-square-grid">
                         <?php foreach ($seriesRows as $index => $series): ?>
-                            <a class="social-square-button social-square-button--<?= series_tone($index) ?>" href="series.php?series=<?= (int)$series['id'] ?><?= $seriesPreviewActive ? '&amp;design_preview=series-catalog' : '' ?>">
-                                <span><?= series_h($series['title']) ?></span>
+                            <?php $seriesArtworkCount = (int)($series['artwork_count'] ?? 0); ?>
+                            <a class="social-square-button series-series-tile social-square-button--<?= series_tone($index) ?>" href="series.php?series=<?= (int)$series['id'] ?><?= $seriesPreviewActive ? '&amp;design_preview=series-catalog' : '' ?>" aria-label="<?= series_h($series['title']) ?>, <?= $seriesArtworkCount ?> <?= $seriesArtworkCount === 1 ? 'artwork' : 'artworks' ?>, <?= !empty($series['published']) ? 'published' : 'draft' ?>">
+                                <span class="series-series-tile__title"><?= series_h($series['title']) ?></span>
+                                <small class="series-series-tile__meta">
+                                    <?= $seriesArtworkCount > 0 ? $seriesArtworkCount . ' ' . ($seriesArtworkCount === 1 ? 'artwork' : 'artworks') : 'No artworks' ?>
+                                    · <?= !empty($series['published']) ? 'Published' : 'Draft' ?>
+                                </small>
                             </a>
                         <?php endforeach; ?>
                         <details class="series-create-toggle">
@@ -348,11 +353,19 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
                                     });
                                 })();
                                 </script>
-                            <?php else: ?>
-                                <button type="button" class="series-header-empty" onclick="var d=document.getElementById('series-upload-details'); d.open=true; d.scrollIntoView({behavior:'smooth',block:'center'});">
-                                    Upload header image
-                                </button>
                             <?php endif; ?>
+
+                            <form method="post" enctype="multipart/form-data" class="series-header-upload__form <?= empty($series['header_file']) ? 'series-header-upload__form--empty' : 'series-header-upload__form--replace' ?>" data-series-header-upload>
+                                <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
+                                <input type="hidden" name="action" value="upload_series_header">
+                                <input type="hidden" name="series_id" value="<?= (int)$series['id'] ?>">
+                                <label class="<?= empty($series['header_file']) ? 'series-header-empty' : 'series-header-replace' ?>" data-series-header-dropzone tabindex="0" role="button">
+                                    <span data-series-header-label><?= empty($series['header_file']) ? 'Upload header image' : 'Replace header image' ?></span>
+                                    <?php if (empty($series['header_file'])): ?><small>Click or drop a JPG, PNG or WebP · 15 MB maximum</small><?php endif; ?>
+                                    <input class="series-header-upload__input" type="file" name="header_upload" accept="image/png,image/jpeg,image/webp" required data-series-header-file>
+                                </label>
+                                <span class="series-header-upload__status" data-series-header-status aria-live="polite"></span>
+                            </form>
 
                             <details class="series-header-mockups">
                                 <summary>Browse generated mockups</summary>
@@ -378,16 +391,65 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
                                 <?php endif; ?>
                             </details>
 
-                            <details class="series-header-upload" id="series-upload-details">
-                                <summary>Upload your own image</summary>
-                                <form method="post" enctype="multipart/form-data" class="series-header-upload__form">
-                                    <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
-                                    <input type="hidden" name="action" value="upload_series_header">
-                                    <input type="hidden" name="series_id" value="<?= (int)$series['id'] ?>">
-                                    <input type="file" name="header_upload" accept="image/png,image/jpeg,image/webp" required>
-                                    <button class="button-link secondary" type="submit">Upload</button>
-                                </form>
-                            </details>
+                            <script>
+                            (function () {
+                                var form = document.querySelector('[data-series-header-upload]');
+                                var input = form && form.querySelector('[data-series-header-file]');
+                                var dropzone = form && form.querySelector('[data-series-header-dropzone]');
+                                var label = form && form.querySelector('[data-series-header-label]');
+                                var status = form && form.querySelector('[data-series-header-status]');
+                                if (!form || !input || !dropzone || !label) return;
+
+                                function beginUpload(file, fromDrop) {
+                                    if (!file) return;
+                                    if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) {
+                                        if (status) status.textContent = 'Choose a JPG, PNG or WebP image.';
+                                        return;
+                                    }
+                                    if (file.size > 15 * 1024 * 1024) {
+                                        if (status) status.textContent = 'The image must be 15 MB or smaller.';
+                                        return;
+                                    }
+                                    if (fromDrop) {
+                                        try {
+                                            var transfer = new DataTransfer();
+                                            transfer.items.add(file);
+                                            input.files = transfer.files;
+                                        } catch (error) {
+                                            if (status) status.textContent = 'Click the image area to select this file.';
+                                            return;
+                                        }
+                                    }
+                                    form.setAttribute('aria-busy', 'true');
+                                    dropzone.classList.remove('is-dragging');
+                                    label.textContent = 'Uploading…';
+                                    if (status) status.textContent = file.name;
+                                    form.submit();
+                                }
+
+                                input.addEventListener('change', function () {
+                                    beginUpload(input.files && input.files[0], false);
+                                });
+                                dropzone.addEventListener('keydown', function (event) {
+                                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                                    event.preventDefault();
+                                    input.click();
+                                });
+                                ['dragenter', 'dragover'].forEach(function (eventName) {
+                                    dropzone.addEventListener(eventName, function (event) {
+                                        event.preventDefault();
+                                        dropzone.classList.add('is-dragging');
+                                    });
+                                });
+                                dropzone.addEventListener('dragleave', function () {
+                                    dropzone.classList.remove('is-dragging');
+                                });
+                                dropzone.addEventListener('drop', function (event) {
+                                    event.preventDefault();
+                                    beginUpload(event.dataTransfer && event.dataTransfer.files[0], true);
+                                });
+                            }());
+                            </script>
                         </div>
                         <article class="series-card series-card--detailed">
                             <form class="series-delete-form" method="post" id="delete-series-form" onsubmit="return confirm('Remove this series? Artworks will move to NO SERIE.');" style="display:none;">
@@ -439,16 +501,38 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
             <section class="catalog-panel catalog-panel--compact catalog-panel--series-artworks">
                 <div class="detail-heading">
                     <div>
-                        <h2>Artwork Assignment</h2>
-                        <p>Each canonical artwork and all its root views and mockups inherit this series identifier. Changing the series saves right away.</p>
+                        <h2><?= $selectedSeries ? 'Works in this series' : 'Artwork assignment' ?></h2>
+                        <?php if ($selectedSeries): ?>
+                            <p><?= count($displayedArtworks) ?> <?= count($displayedArtworks) === 1 ? 'artwork belongs' : 'artworks belong' ?> to <?= series_h($selectedSeries['title']) ?>. Drag the images to change their order; changing a series saves immediately.</p>
+                        <?php else: ?>
+                            <p>Assign each canonical artwork to its series. All root views and mockups inherit the same relationship.</p>
+                        <?php endif; ?>
+                    </div>
+                    <div class="series-artwork-heading-tools">
+                        <?php if (!$selectedSeries && $displayedArtworks): ?>
+                            <label class="series-artwork-filter">
+                                <span>View by series</span>
+                                <select data-series-artwork-filter aria-label="Filter artwork assignment by series">
+                                    <option value="all">All series</option>
+                                    <?php foreach ($seriesRows as $series): ?>
+                                        <option value="<?= (int)$series['id'] ?>"><?= series_h($series['title']) ?></option>
+                                    <?php endforeach; ?>
+                                    <option value="none">No series</option>
+                                </select>
+                            </label>
+                        <?php endif; ?>
+                        <span class="series-dependent-count" data-series-visible-count><?= count($displayedArtworks) ?> <?= count($displayedArtworks) === 1 ? 'artwork' : 'artworks' ?></span>
                     </div>
                 </div>
-                <?php if (!$artworks): ?>
-                    <div class="empty-state">No finished artworks yet.</div>
+                <?php if (!$displayedArtworks): ?>
+                    <div class="empty-state series-dependent-empty">
+                        <strong>No artworks are associated with <?= $selectedSeries ? series_h($selectedSeries['title']) : 'a series' ?> yet.</strong>
+                        <?php if ($selectedSeries): ?><a href="series.php">Assign artworks from the Series overview</a><?php endif; ?>
+                    </div>
                 <?php else: ?>
                     <div class="series-artwork-list" data-series-order-list data-series-order-endpoint="reorder_series_artworks.php" data-series-order-csrf="<?= series_h($_SESSION['series_csrf']) ?>">
                         <?php $seriesOrderCounters = []; ?>
-                        <?php foreach ($artworks as $artwork): ?>
+                        <?php foreach ($displayedArtworks as $artwork): ?>
                             <?php
                             $title = series_artwork_title($artwork);
                             $seriesTitle = ArtworkSeries::display((string)($artwork['series_title'] ?: $artwork['series']));
@@ -492,12 +576,17 @@ $seriesMockupCandidates = $selectedSeries ? ArtworkSeries::searchMockups($pdo, $
                             </article>
                         <?php endforeach; ?>
                     </div>
+                    <?php if (!$selectedSeries): ?>
+                        <div class="empty-state series-dependent-empty series-filter-empty" data-series-filter-empty hidden>
+                            <strong>No artworks match this series.</strong>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </section>
         </div>
     </main>
 </div>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="series_artwork_order.js?v=20260719-2"></script>
+<script src="series_artwork_order.js?v=20260720-3"></script>
 </body>
 </html>

@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__,2).'/app/bootstrap.php';
 Auth::start();$user=Auth::user();$service=new MetaIntegrationService(Database::connection());
 if($user)FeatureAccess::requirePage($user,FeatureAccess::SOCIAL_MANAGE,'Social Media');
+if($user&&$_SERVER['REQUEST_METHOD']==='GET'){header('Location: '.PublicPage::path('connections.php?open=facebook'));exit;}
 $oauthEnabled=app_env('META_OAUTH_ENABLED','false')==='true';
 $isAdmin=$user?Auth::isAdmin($user):false;
 $purposes=$isAdmin?['artist'=>'Artist account','platform'=>'Artwork Mockups platform account']:['artist'=>'Artist account'];
@@ -24,9 +25,9 @@ $connections=[];if($user)foreach($purposes as $purpose=>$label){
 $_SESSION['meta_csrf']=bin2hex(random_bytes(24));
 PublicPage::start('Meta Connections | Artwork Mockups','Connect a Facebook Page safely. Instagram is connected separately.','integrations/meta/');
 ?>
+<?php if ($user): ?><p><a class="button-link secondary" href="<?= PublicPage::h(PublicPage::path('connections.php')) ?>">Back to Connections</a></p><?php endif; ?>
 <span class="eyebrow">Optional integration</span><h1>Meta Connections</h1>
 <p class="lede">Connect one Facebook Page for controlled publishing. Instagram uses its own direct professional connection. Connecting never publishes content.</p>
-<p><a class="button-link secondary" href="<?=PublicPage::h(PublicPage::path('integrations/instagram/'))?>">Manage Instagram connection</a></p>
 <?php if($error):?><div class="info-card"><p><?=PublicPage::h($error)?></p></div><?php endif;?>
 <section><h2>Connections</h2>
 <?php if(!$user):?><p>Sign in before connecting Meta.</p><a class="button-link primary" href="<?=PublicPage::h(PublicPage::path('login.php'))?>">Sign in</a>

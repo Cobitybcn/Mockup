@@ -150,7 +150,7 @@ Presents a visual gallery horizontally while preserving useful Thumbnail Card sc
 
 ### Purpose
 
-Introduces real visual material into a studio workspace. In Visual DNA, the existing reference library itself is the entry surface for the user's own spaces, materials, light, atmosphere, furniture, textures, and related visual evidence.
+Introduces real visual material into a studio workspace. In Scene Studio, the existing reference library itself is the entry surface for the user's own spaces, materials, light, atmosphere, furniture, textures, and related visual evidence.
 
 ### Visual Rules
 

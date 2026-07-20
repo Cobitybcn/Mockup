@@ -282,7 +282,7 @@ function h($v): string
                     <p><?= h($user['email']) ?></p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link secondary" href="<?= h($canUseSocial ? 'integrations/pinterest/' : 'account.php?upgrade=artist_pro&feature=social#plan') ?>"><?= $canUseSocial ? 'Pinterest Connections' : 'Artist Pro' ?></a>
+                    <a class="button-link secondary" href="<?= h($canUseSocial ? 'connections.php' : 'account.php?upgrade=artist_pro&feature=social#plan') ?>"><?= $canUseSocial ? 'Connections' : 'Artist Pro' ?></a>
                     <a class="button-link secondary" href="root_album.php">ArtWorks</a>
                 </div>
             </div>

@@ -918,7 +918,7 @@ final class MockupCombinationEngine
             $cameraReferenceMode
         );
 
-        $json['context_role'] = 'selected world mother visual DNA transformed by the camera slot into a new environment';
+        $json['context_role'] = 'selected world mother visual language transformed by the camera slot into a new environment';
         $json['space_type'] = $scene['space_type'];
         $json['atmosphere'] = $scene['atmosphere'];
         $json['materials'] = $scene['materials'];

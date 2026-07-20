@@ -223,13 +223,12 @@ $usersActive = ($currentPage === 'admin_users.php');
 $accountActive = ($currentPage === 'account.php');
 $pinterestActive = str_contains(str_replace('\\', '/', (string)($_SERVER['PHP_SELF'] ?? '')), '/integrations/pinterest/');
 $metaActive = str_contains(str_replace('\\', '/', (string)($_SERVER['PHP_SELF'] ?? '')), '/integrations/meta/');
-$connectionsActive = $pinterestActive || $metaActive;
+$instagramConnectionActive = str_contains(str_replace('\\', '/', (string)($_SERVER['PHP_SELF'] ?? '')), '/integrations/instagram/');
+$connectionsActive = $currentPage === 'connections.php' || $pinterestActive || $metaActive || $instagramConnectionActive;
 
 // Admin active states
 $promptsActive = ($currentPage === 'admin_prompts.php');
 $apiActive = ($currentPage === 'admin_api_keys.php');
-$studioReferencesLabEnabled = filter_var(app_env('STUDIO_REFERENCES_LAB_ENABLED', 'true'), FILTER_VALIDATE_BOOLEAN);
-$studioReferencesLabActive = $studioReferencesLabEnabled && ($currentPage === 'studio_references_lab.php');
 $sidebarCanUseWebsite = $sidebarUser ? FeatureAccess::allows($sidebarUser, FeatureAccess::WEBSITE_MANAGE) : false;
 $sidebarCanUseSocial = $sidebarUser ? FeatureAccess::allows($sidebarUser, FeatureAccess::SOCIAL_MANAGE) : false;
 $sidebarCanUseVideo = $sidebarUser ? FeatureAccess::allows($sidebarUser, FeatureAccess::VIDEO_MANAGE) : false;
@@ -860,11 +859,8 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                         <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a>
                         <a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a>
                         <a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a>
-                        <?php if ($studioReferencesLabEnabled): ?>
-                            <a class="<?= $studioReferencesLabActive ? 'active' : '' ?>" href="studio_references_lab.php">Visual DNA</a>
-                        <?php endif; ?>
                         <?php if ($sidebarCanUseSocial): ?>
-                            <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
+                            <a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php">Connections</a>
                         <?php endif; ?>
                         <a href="logout.php">Logout</a>
                     </div>
@@ -873,7 +869,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                         <span>Admin</span>
                         <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
                         <?php if ($sidebarCanUseSocial): ?>
-                            <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
+                            <a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php">Connections</a>
                         <?php endif; ?>
                         <a href="logout.php">Logout</a>
                     </div>
@@ -976,12 +972,9 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <li><a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a></li>
                 <li><a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a></li>
                 <li><a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a></li>
-                <?php if ($studioReferencesLabEnabled): ?>
-                    <li><a class="<?= $studioReferencesLabActive ? 'active' : '' ?>" href="studio_references_lab.php">Visual DNA</a></li>
-                <?php endif; ?>
             <?php endif; ?>
             <?php if ($sidebarCanUseSocial): ?>
-                <li><a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a></li>
+                <li><a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php">Connections</a></li>
             <?php endif; ?>
             <li><a href="logout.php">Logout</a></li>
         </ul>
@@ -1026,11 +1019,8 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                     <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a>
                     <a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a>
                     <a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a>
-                    <?php if ($studioReferencesLabEnabled): ?>
-                        <a class="<?= $studioReferencesLabActive ? 'active' : '' ?>" href="studio_references_lab.php">Visual DNA</a>
-                    <?php endif; ?>
                     <?php if ($sidebarCanUseSocial): ?>
-                        <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
+                        <a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php">Connections</a>
                     <?php endif; ?>
                     <a href="logout.php">Logout</a>
                 </div>
@@ -1039,7 +1029,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                     <span>Admin</span>
                     <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
                     <?php if ($sidebarCanUseSocial): ?>
-                        <a class="<?= $connectionsActive ? 'active' : '' ?>" href="integrations/pinterest/">Pinterest & Meta Connections</a>
+                        <a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php">Connections</a>
                     <?php endif; ?>
                     <a href="logout.php">Logout</a>
                 </div>
