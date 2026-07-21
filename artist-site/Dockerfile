@@ -11,6 +11,15 @@ RUN echo "upload_max_filesize = 64M" > /usr/local/etc/php/conf.d/artist-site.ini
     && echo "memory_limit = 256M" >> /usr/local/etc/php/conf.d/artist-site.ini \
     && echo "expose_php = Off" >> /usr/local/etc/php/conf.d/artist-site.ini
 
+# Cloud Run terminates TLS before Apache, so Apache cannot reliably infer HTTPS
+# from its local connection. Set HSTS in the production container itself.
+RUN printf '%s\n' \
+        '<IfModule mod_headers.c>' \
+        'Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"' \
+        '</IfModule>' \
+        > /etc/apache2/conf-available/artist-site-transport-security.conf \
+    && a2enconf artist-site-transport-security
+
 WORKDIR /var/www/html
 COPY . /var/www/html/
 

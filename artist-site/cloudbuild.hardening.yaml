@@ -77,6 +77,60 @@ steps:
           --quiet
         deployed="$$(gcloud run revisions describe "$$revision" --project="$PROJECT_ID" --region="${_REGION}" --format='value(spec.containers[0].image)')"
         [[ "$$deployed" == "$$image@$$digest" ]] || { echo "Artist-site revision digest mismatch." >&2; exit 1; }
+
+        gcloud run services update-traffic "${_SERVICE}" \
+          --project="$PROJECT_ID" \
+          --region="${_REGION}" \
+          --set-tags="security-candidate=$$revision" \
+          --quiet
+
+  - id: candidate-smoke
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    waitFor: [deploy]
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        service_url="$$(gcloud run services describe "${_SERVICE}" \
+          --project="$PROJECT_ID" --region="${_REGION}" \
+          --format='value(status.url)')"
+        candidate_url="$${service_url/https:\/\//https://security-candidate---}"
+
+        for attempt in 1 2 3 4 5; do
+          if curl --fail --silent --show-error "$${candidate_url}/" >/tmp/artist-home.html; then
+            break
+          fi
+          [[ "$$attempt" == 5 ]] && exit 1
+          sleep 3
+        done
+
+        admin_result="$$(curl --silent --show-error --output /dev/null \
+          --write-out '%{http_code}|%{redirect_url}' "$${candidate_url}/admin/")"
+        admin_v2_result="$$(curl --silent --show-error --output /dev/null \
+          --write-out '%{http_code}|%{redirect_url}' "$${candidate_url}/admin-v2/")"
+        [[ "$$admin_result" == "302|${_ADMIN_URL}/" ]] || {
+          echo "Unexpected artist admin response: $$admin_result" >&2
+          exit 1
+        }
+        [[ "$$admin_v2_result" == "302|${_ADMIN_URL}/" ]] || {
+          echo "Unexpected artist admin-v2 response: $$admin_v2_result" >&2
+          exit 1
+        }
+
+        headers="$$(curl --silent --show-error --head "$${candidate_url}/")"
+        grep -qi '^strict-transport-security: max-age=31536000; includeSubDomains' <<<"$$headers"
+        grep -qi '^x-content-type-options: nosniff' <<<"$$headers"
+        grep -qi '^x-frame-options: DENY' <<<"$$headers"
+
+  - id: promote
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    waitFor: [candidate-smoke]
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        build_short="$${BUILD_ID:0:8}"
+        revision="${_SERVICE}-cb-$SHORT_SHA-$$build_short"
         gcloud run services update-traffic "${_SERVICE}" \
           --project="$PROJECT_ID" \
           --region="${_REGION}" \
