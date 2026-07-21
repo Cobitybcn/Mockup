@@ -11,8 +11,10 @@ if (!Auth::isAdmin($user)) {
 }
 
 $saved = false;
+$csrf = Auth::csrfToken('admin_api_keys');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    Auth::requireValidCsrf((string)($_POST['csrf'] ?? ''), 'admin_api_keys');
     ProviderSettings::save($_POST);
     $saved = true;
 }
@@ -126,6 +128,7 @@ $geminiImagePlans = [
             <?php endif; ?>
 
             <form method="post" class="form" autocomplete="off">
+                <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
                 <div class="settings-grid">
                     <section class="settings-card">
                         <h2>API Mode</h2>

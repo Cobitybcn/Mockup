@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../app/Video/bootstrap.php';
 require_once __DIR__ . '/TestHarness.php';
+require_once __DIR__ . '/VideoIntegrationFixture.php';
 
 TestHarness::group('Deterministic Video Studio export');
 if (!VideoFfmpeg::available()) {
@@ -11,10 +12,9 @@ if (!VideoFfmpeg::available()) {
 }
 
 $pdo = Database::connection();
-$userId = (int)$pdo->query('SELECT id FROM users ORDER BY id LIMIT 1')->fetchColumn();
-$artworkStmt = $pdo->prepare('SELECT id FROM artworks WHERE user_id=? ORDER BY id LIMIT 1');
-$artworkStmt->execute([$userId]);
-$testArtworkId = (int)$artworkStmt->fetchColumn();
+$fixture = createVideoIntegrationFixture($pdo);
+$userId = (int)$fixture['user_id'];
+$testArtworkId = (int)$fixture['artwork_id'];
 $studioRepository = new VideoStudioRepository($pdo);
 $studio = new VideoStudioService($studioRepository);
 $jobs = new VideoJobRepository($pdo);
@@ -144,6 +144,7 @@ try {
     foreach ($objectKeys as $key) StorageService::delete($key);
     foreach (glob($working . DIRECTORY_SEPARATOR . '*') ?: [] as $file) if (is_file($file)) @unlink($file);
     @rmdir($working);
+    removeVideoIntegrationFixture($pdo, $fixture);
 }
 
 TestHarness::assertSame(0,(int)$pdo->query("SELECT COUNT(*) FROM video_projects WHERE title LIKE 'Video Export Integration %'")->fetchColumn(),'export test data is removed');

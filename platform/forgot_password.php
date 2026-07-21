@@ -12,9 +12,13 @@ $message = '';
 $debugLink = '';
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
-    $result = Auth::requestPasswordReset((string)($_POST['email'] ?? ''));
-    $message = 'If an account exists for that email, we sent a password reset link.';
-    $debugLink = (string)($result['debug_link'] ?? '');
+    if (!Auth::validateCsrf((string)($_POST['csrf'] ?? ''), 'forgot_password')) {
+        $message = 'Your form session expired. Reload the page and try again.';
+    } else {
+        $result = Auth::requestPasswordReset((string)($_POST['email'] ?? ''));
+        $message = 'If an account exists for that email, we sent a password reset link.';
+        $debugLink = (string)($result['debug_link'] ?? '');
+    }
 }
 
 function h($v): string
@@ -56,6 +60,7 @@ function h($v): string
         <?php endif; ?>
 
         <form method="post" novalidate>
+            <input type="hidden" name="csrf" value="<?= h(Auth::csrfToken('forgot_password')) ?>">
             <div class="form-group-v2">
                 <label for="email">Email</label>
                 <div class="input-wrapper-v2">

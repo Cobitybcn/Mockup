@@ -1,0 +1,36 @@
+steps:
+  - id: regression-tests
+    name: gcr.io/cloud-builders/docker
+    args: [run, --rm, '${_WEB_IMAGE}', php, tests/run_regression_tests.php]
+
+  - id: assistant-tests
+    name: gcr.io/cloud-builders/docker
+    waitFor: [regression-tests]
+    args: [run, --rm, '${_WEB_IMAGE}', php, tests/run_assistant_tests.php]
+
+  - id: public-page-tests
+    name: gcr.io/cloud-builders/docker
+    waitFor: [regression-tests]
+    args: [run, --rm, '${_WEB_IMAGE}', php, tests/run_public_pages_tests.php]
+
+  - id: dependency-audit
+    name: gcr.io/cloud-builders/docker
+    waitFor: [regression-tests]
+    args: [run, --rm, '${_WEB_IMAGE}', composer, audit, --no-interaction]
+
+  - id: worker-syntax-smoke
+    name: gcr.io/cloud-builders/docker
+    waitFor: ['-']
+    entrypoint: sh
+    args:
+      - -ceu
+      - |
+        docker run --rm "${_WORKER_IMAGE}" php -l worker.php
+        docker run --rm "${_WORKER_IMAGE}" php -l root_worker.php
+        docker run --rm "${_WORKER_IMAGE}" php -l social_publish_worker.php
+        docker run --rm "${_WORKER_IMAGE}" php -l video_worker.php
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1200s

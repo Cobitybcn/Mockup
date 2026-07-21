@@ -11,8 +11,10 @@ if (!Auth::isAdmin($user)) {
 }
 
 $saved = false;
+$csrf = Auth::csrfToken('admin_prompts');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    Auth::requireValidCsrf((string)($_POST['csrf'] ?? ''), 'admin_prompts');
     PromptSettings::save($_POST);
     $saved = true;
 }
@@ -407,6 +409,7 @@ $rootViews = [
             <?php endif; ?>
 
             <form method="post" class="form">
+                <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
             <div class="prompts-workspace">
 
                 <!-- ══════════════════════════════════════════

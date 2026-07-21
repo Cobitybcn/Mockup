@@ -18,6 +18,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+if (!Auth::validateCsrf(Auth::requestCsrfToken(), 'mutation')) {
+    http_response_code(403);
+    echo json_encode(['ok' => false, 'error' => 'Invalid form session.']);
+    exit;
+}
+
 $mockupId = (int)($_POST['mockup_id'] ?? 0);
 if ($mockupId <= 0) {
     $rawInput = file_get_contents('php://input');

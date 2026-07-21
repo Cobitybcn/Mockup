@@ -16,7 +16,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $password = (string)($_POST['password'] ?? '');
     $confirm = (string)($_POST['confirm_password'] ?? '');
 
-    if ($password !== $confirm) {
+    if (!Auth::validateCsrf((string)($_POST['csrf'] ?? ''), 'reset_password')) {
+        $error = 'Your form session expired. Reload the page and try again.';
+    } elseif ($password !== $confirm) {
         $error = 'Passwords do not match.';
     } else {
         try {
@@ -69,6 +71,7 @@ function h($v): string
 
             <form method="post" novalidate>
                 <input type="hidden" name="token" value="<?= h($token) ?>">
+                <input type="hidden" name="csrf" value="<?= h(Auth::csrfToken('reset_password')) ?>">
 
                 <div class="form-group-v2">
                     <label for="password">Password</label>

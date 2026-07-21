@@ -644,7 +644,7 @@ function postAction(fields) {
         form.appendChild(input);
     });
     document.body.appendChild(form);
-    form.submit();
+    form.requestSubmit();
 }
 function moveArtwork(artworkId, targetKey) {
     if (!targetKey) { return; }

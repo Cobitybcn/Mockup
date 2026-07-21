@@ -59,14 +59,31 @@ if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($existingInstance)) {
         --project=$CloudSqlProjectId `
         --database-version=MYSQL_8_0 `
         --region=$Region `
-        --tier=db-f1-micro `
+        --tier=db-custom-1-3840 `
         --storage-type=SSD `
         --storage-size=10GB `
-        --availability-type=zonal `
+        --storage-auto-increase `
+        --availability-type=regional `
         --backup-start-time=03:00 `
+        --enable-bin-log `
+        --retained-backups-count=14 `
+        --retained-transaction-log-days=7 `
+        --connector-enforcement=REQUIRED `
+        --deletion-protection `
         --edition=ENTERPRISE
 } else {
     Write-Host "Cloud SQL instance already exists: $existingInstance" -ForegroundColor Yellow
+    Write-Host "Applying non-disruptive database protection controls..." -ForegroundColor Cyan
+    gcloud sql instances patch $InstanceName `
+        --project=$CloudSqlProjectId `
+        --backup-start-time=03:00 `
+        --enable-bin-log `
+        --retained-backups-count=14 `
+        --retained-transaction-log-days=7 `
+        --storage-auto-increase `
+        --connector-enforcement=REQUIRED `
+        --deletion-protection `
+        --quiet
 }
 
 Write-Host "Ensuring database $DbDatabase exists..." -ForegroundColor Cyan

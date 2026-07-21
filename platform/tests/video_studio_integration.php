@@ -3,14 +3,12 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../app/Video/bootstrap.php';
 require_once __DIR__ . '/TestHarness.php';
+require_once __DIR__ . '/VideoIntegrationFixture.php';
 
 TestHarness::group('Video Studio persistence and provider isolation');
 $pdo = Database::connection();
-$userId = (int)$pdo->query('SELECT id FROM users ORDER BY id LIMIT 1')->fetchColumn();
-if ($userId <= 0) {
-    TestHarness::assertTrue(false, 'a test user exists');
-    exit(TestHarness::summary());
-}
+$fixture = createVideoIntegrationFixture($pdo);
+$userId = (int)$fixture['user_id'];
 
 $studioRepository = new VideoStudioRepository($pdo);
 $service = new VideoStudioService($studioRepository);
@@ -340,6 +338,7 @@ try {
         $pdo->prepare('DELETE FROM video_reference_assets WHERE id=? AND user_id=?')->execute([$uploadedAssetId,$userId]);
     }
     if ($uploadedObjectKey !== '') StorageService::delete($uploadedObjectKey);
+    removeVideoIntegrationFixture($pdo, $fixture);
 }
 
 TestHarness::assertSame(0, (int)$pdo->query("SELECT COUNT(*) FROM video_projects WHERE title LIKE 'Video Studio Integration %'")->fetchColumn(), 'integration data is removed after the test');

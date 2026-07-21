@@ -3079,7 +3079,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                         <?php endif; ?>
                         <form method="post" class="artwork-series-form">
                             <input type="hidden" name="action" value="assign_series">
-                            <select name="series_id" aria-label="Artwork series" onchange="this.form.submit()">
+                            <select name="series_id" aria-label="Artwork series" onchange="this.form.requestSubmit()">
                                 <option value="">NO SERIE</option>
                                 <?php foreach ($artworkSeriesRows as $seriesRow): ?>
                                     <option value="<?= (int)$seriesRow['id'] ?>" <?= (int)($artwork['series_id'] ?? 0) === (int)$seriesRow['id'] ? 'selected' : '' ?>><?= h($seriesRow['title']) ?></option>

@@ -33,6 +33,7 @@ try {
         echo json_encode(['ok' => false, 'error' => 'Method not allowed.'], JSON_UNESCAPED_UNICODE);
         exit;
     }
+    Auth::requireValidCsrf(Auth::requestCsrfToken(), 'mutation');
 
     $mockupId = max(0, (int)($_POST['mockup_id'] ?? 0));
     if ($mockupId <= 0) {

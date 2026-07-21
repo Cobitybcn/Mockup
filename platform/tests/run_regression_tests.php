@@ -29,6 +29,7 @@ require_once __DIR__ . '/regression/website_board_grouping_test.php';
 require_once __DIR__ . '/regression/schema_migration_governance_test.php';
 require_once __DIR__ . '/regression/retired_reference_lab_test.php';
 require_once __DIR__ . '/regression/ui_preview_test.php';
+require_once __DIR__ . '/regression/security_hardening_test.php';
 
 run_root_artwork_regression_tests();
 run_seo_filename_regression_tests();
@@ -44,5 +45,6 @@ run_website_board_grouping_regression_tests();
 run_schema_migration_governance_tests();
 run_retired_reference_lab_tests();
 run_ui_preview_regression_tests();
+run_security_hardening_regression_tests();
 
 exit(TestHarness::summary());

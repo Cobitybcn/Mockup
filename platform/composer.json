@@ -1,6 +1,7 @@
 {
     "name": "artworkmockups/mockups",
     "description": "Mockups generation platform secure architecture",
+    "license": "proprietary",
     "require": {
         "php": ">=8.1",
         "google/cloud-storage": "^1.42",

@@ -1,11 +1,103 @@
 steps:
-  - name: gcr.io/cloud-builders/docker
+  - id: verify-production-target
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        if [[ "$PROJECT_ID" != "${_EXPECTED_PROJECT_ID}" || -z "$COMMIT_SHA" ]]; then
+          echo "Refusing to deploy without the expected project and immutable commit." >&2
+          exit 1
+        fi
+        account="$$(gcloud run services describe "${_SERVICE}" \
+          --project="$PROJECT_ID" --region="${_REGION}" \
+          --format='value(spec.template.spec.serviceAccountName)')"
+        if [[ "$$account" != "${_RUNTIME_SA}@$PROJECT_ID.iam.gserviceaccount.com" ]]; then
+          echo "Unexpected artist-site runtime identity: $$account" >&2
+          exit 1
+        fi
+
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    waitFor: [verify-production-target]
     args:
       - build
-      - -f
-      - Dockerfile.hardening
-      - -t
-      - us-central1-docker.pkg.dev/$PROJECT_ID/mockups-repo/artist-site-web:release-20260714-artist1-r2
+      - --pull
+      - --file
+      - Dockerfile
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:$COMMIT_SHA
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:latest
       - .
+
+  - id: image-smoke
+    name: gcr.io/cloud-builders/docker
+    waitFor: [build]
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:$COMMIT_SHA"
+        docker run --rm "$$image" php -l /var/www/html/index.php
+        docker run --rm "$$image" php -l /var/www/html/admin-v2/index.php
+        docker run --rm "$$image" sh -ceu 'test ! -e /var/www/html/.env; test ! -e /var/www/html/tests; test ! -e /var/www/html/tools'
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    waitFor: [image-smoke]
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}"
+        docker push "$$image:$COMMIT_SHA"
+        docker push "$$image:latest"
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    waitFor: [push]
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}"
+        digest="$$(gcloud artifacts docker images describe "$$image:$COMMIT_SHA" --project="$PROJECT_ID" --format='value(image_summary.digest)')"
+        [[ "$$digest" == sha256:* ]] || { echo "Could not resolve artist-site image digest." >&2; exit 1; }
+        build_short="$${BUILD_ID:0:8}"
+        revision="${_SERVICE}-cb-$SHORT_SHA-$$build_short"
+        gcloud run deploy "${_SERVICE}" \
+          --project="$PROJECT_ID" \
+          --region="${_REGION}" \
+          --platform=managed \
+          --image="$$image@$$digest" \
+          --update-env-vars="APP_ENV=production,ARTIST_ADMIN_URL=${_ADMIN_URL}" \
+          --revision-suffix="cb-$SHORT_SHA-$$build_short" \
+          --no-traffic \
+          --quiet
+        deployed="$$(gcloud run revisions describe "$$revision" --project="$PROJECT_ID" --region="${_REGION}" --format='value(spec.containers[0].image)')"
+        [[ "$$deployed" == "$$image@$$digest" ]] || { echo "Artist-site revision digest mismatch." >&2; exit 1; }
+        gcloud run services update-traffic "${_SERVICE}" \
+          --project="$PROJECT_ID" \
+          --region="${_REGION}" \
+          --to-revisions="$$revision=100" \
+          --clear-tags \
+          --quiet
+
 images:
-  - us-central1-docker.pkg.dev/$PROJECT_ID/mockups-repo/artist-site-web:release-20260714-artist1-r2
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:$COMMIT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:latest
+
+substitutions:
+  _EXPECTED_PROJECT_ID: project-ff549db7-4f7f-4b0c-9a5
+  _REGION: us-central1
+  _REPOSITORY: mockups-repo
+  _IMAGE: artist-site-web
+  _SERVICE: mockups-artist-site
+  _RUNTIME_SA: artist-site-sa
+  _ADMIN_URL: https://artworkmockups.com/site-admin
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1800s

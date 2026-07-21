@@ -133,9 +133,9 @@
 .smb-catalog-card:hover,
 .smb-catalog-card:focus-visible {
     z-index: 2;
-    outline: none;
     transform: translateY(-3px);
 }
+.smb-catalog-card:focus-visible { outline: 3px solid #52654f; outline-offset: 3px; }
 
 .smb-catalog-card.is-dragging,
 .smb-pin-card.is-dragging,
@@ -896,7 +896,7 @@
     padding: 15px;
     border: 0;
     border-radius: 8px;
-    color: #fff;
+    color: #1b2b19;
     background: var(--smb-sage);
     font-size: 10px;
     font-weight: 700;
@@ -907,7 +907,7 @@
     cursor: pointer;
 }
 .smb-confirm svg { width: 23px; height: 23px; }
-.smb-confirm:hover { background: #768e70; }
+.smb-confirm:hover { background: #93aa8d; }
 .smb-confirm:disabled { cursor: wait; opacity: .55; }
 .smb-schedule-open {
     min-height: 29px;
@@ -996,8 +996,8 @@
     text-transform: uppercase;
     cursor: pointer;
 }
-.smb-confirm-submit { border-color: #849a7f; color: #fff; background: var(--smb-sage); }
-.smb-confirm-submit:hover { background: #768e70; }
+.smb-confirm-submit { border-color: #849a7f; color: #1b2b19; background: var(--smb-sage); }
+.smb-confirm-submit:hover { background: #93aa8d; }
 .smb-confirm-submit:disabled { cursor: wait; opacity: .65; }
 .smb-confirm-cancel { border-color: #9a7448; color: #fff; background: #9a7448; }
 .smb-confirm-cancel:hover { border-color: #85633e; color: #fff; background: #85633e; }

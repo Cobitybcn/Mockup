@@ -42,6 +42,25 @@ steps:
         verify_service "${_WEB_SERVICE}" "${_WEB_RUNTIME_SA_NAME}"
         verify_service "${_WORKER_SERVICE}" "${_WORKER_RUNTIME_SA_NAME}"
 
+        if gcloud run services get-iam-policy "${_WORKER_SERVICE}" \
+          --project="$PROJECT_ID" \
+          --region="${_REGION}" \
+          --format=json | grep -q '"allUsers"'; then
+          echo "Refusing to deploy: ${_WORKER_SERVICE} is publicly invokable." >&2
+          exit 1
+        fi
+
+        web_public_role="$$(gcloud run services get-iam-policy "${_WEB_SERVICE}" \
+          --project="$PROJECT_ID" \
+          --region="${_REGION}" \
+          --flatten='bindings[].members' \
+          --filter='bindings.members:allUsers AND bindings.role:roles/run.invoker' \
+          --format='value(bindings.role)')"
+        if [[ "$$web_public_role" != "roles/run.invoker" ]]; then
+          echo "Refusing to deploy: ${_WEB_SERVICE} does not have the expected public invoker policy." >&2
+          exit 1
+        fi
+
   - id: pull-web-cache
     name: gcr.io/cloud-builders/docker
     entrypoint: bash
@@ -140,7 +159,7 @@ steps:
           --image="$${image}@$${digest}" \
           --service-account="${_WEB_RUNTIME_SA_NAME}@$PROJECT_ID.iam.gserviceaccount.com" \
           --set-cloudsql-instances="${_DB_INSTANCE_CONNECTION_NAME}" \
-          --set-env-vars="APP_ENV=production,DB_CONNECTION=mysql,DB_DATABASE=${_DB_DATABASE},DB_USERNAME=${_DB_USERNAME},DB_SOCKET=/cloudsql/${_DB_INSTANCE_CONNECTION_NAME},FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true" \
+          --set-env-vars="APP_ENV=production,APP_ALLOW_SCHEMA_MIGRATIONS=true,DB_CONNECTION=mysql,DB_DATABASE=${_DB_DATABASE},DB_USERNAME=${_DB_USERNAME},DB_SOCKET=/cloudsql/${_DB_INSTANCE_CONNECTION_NAME},FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true" \
           --set-secrets="DB_PASSWORD=${_DB_PASSWORD_SECRET}:latest" \
           --command=php \
           --args=scripts/run_schema_migrations.php \
@@ -177,7 +196,7 @@ steps:
           --region="${_REGION}" \
           --platform=managed \
           --image="$${image}@$${digest}" \
-          --update-env-vars="APP_ENV=production,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true,PINTEREST_API_ENVIRONMENT=production,PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED=true,PINTEREST_LIVE_PUBLISH_ENABLED=true" \
+          --update-env-vars="APP_ENV=production,APP_ALLOW_SCHEMA_MIGRATIONS=false,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true,PINTEREST_API_ENVIRONMENT=production,PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED=true,PINTEREST_LIVE_PUBLISH_ENABLED=true" \
           --remove-env-vars="DB_PASSWORD" \
           --update-secrets="DB_PASSWORD=${_DB_PASSWORD_SECRET}:latest" \
           --revision-suffix="cb-$SHORT_SHA-$BUILD_ID" \
@@ -197,6 +216,7 @@ steps:
           --project="$PROJECT_ID" \
           --region="${_REGION}" \
           --to-revisions="$$revision=100" \
+          --clear-tags \
           --quiet
 
   - id: deploy-web
@@ -221,7 +241,7 @@ steps:
           --region="${_REGION}" \
           --platform=managed \
           --image="$${image}@$${digest}" \
-          --update-env-vars="APP_ENV=production,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true,PINTEREST_API_ENVIRONMENT=production,PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED=true,PINTEREST_LIVE_PUBLISH_ENABLED=true" \
+          --update-env-vars="APP_ENV=production,APP_ALLOW_SCHEMA_MIGRATIONS=false,PUBLIC_REGISTRATION_ENABLED=false,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true,PINTEREST_API_ENVIRONMENT=production,PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED=true,PINTEREST_LIVE_PUBLISH_ENABLED=true" \
           --remove-env-vars="DB_PASSWORD" \
           --update-secrets="DB_PASSWORD=${_DB_PASSWORD_SECRET}:latest" \
           --revision-suffix="cb-$SHORT_SHA-$BUILD_ID" \
@@ -241,6 +261,7 @@ steps:
           --project="$PROJECT_ID" \
           --region="${_REGION}" \
           --to-revisions="$$revision=100" \
+          --clear-tags \
           --quiet
 
 substitutions:

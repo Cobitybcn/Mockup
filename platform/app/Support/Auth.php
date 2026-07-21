@@ -10,16 +10,51 @@ class Auth
             $pdo = Database::connection();
             session_set_save_handler(new DatabaseSessionHandler($pdo), true);
 
-            $secureCookie = str_starts_with(strtolower(app_env('APP_PUBLIC_URL', '')), 'https://')
+            $production = strtolower(app_env('APP_ENV', '')) === 'production';
+            $secureCookie = $production
+                || str_starts_with(strtolower(app_env('APP_PUBLIC_URL', '')), 'https://')
                 || strtolower((string)($_SERVER['HTTPS'] ?? '')) === 'on'
                 || (string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
             session_set_cookie_params([
+                'path' => '/',
                 'httponly' => true,
                 'secure' => $secureCookie,
                 'samesite' => 'Lax',
             ]);
             session_start();
         }
+    }
+
+    public static function csrfToken(string $scope = 'default'): string
+    {
+        self::start();
+        $scope = preg_replace('/[^a-z0-9_.-]/i', '', $scope) ?: 'default';
+        if (empty($_SESSION['csrf_tokens'][$scope]) || !is_string($_SESSION['csrf_tokens'][$scope])) {
+            $_SESSION['csrf_tokens'][$scope] = bin2hex(random_bytes(32));
+        }
+        return $_SESSION['csrf_tokens'][$scope];
+    }
+
+    public static function validateCsrf(string $token, string $scope = 'default'): bool
+    {
+        self::start();
+        $scope = preg_replace('/[^a-z0-9_.-]/i', '', $scope) ?: 'default';
+        $expected = (string)($_SESSION['csrf_tokens'][$scope] ?? '');
+        return $expected !== '' && $token !== '' && hash_equals($expected, $token);
+    }
+
+    public static function requireValidCsrf(string $token, string $scope = 'default'): void
+    {
+        if (!self::validateCsrf($token, $scope)) {
+            throw new RuntimeException('Your form session expired. Reload the page and try again.');
+        }
+    }
+
+    public static function requestCsrfToken(): string
+    {
+        $header = trim((string)($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''));
+        if ($header !== '') return $header;
+        return trim((string)($_POST['csrf'] ?? ''));
     }
 
     public static function user(): ?array
@@ -32,12 +67,12 @@ class Auth
             return null;
         }
 
-        $stmt = Database::connection()->prepare("SELECT id, email, name, credits, plan_code, is_admin, status, created_at FROM users WHERE id = :id AND status = 'active'");
+        $stmt = Database::connection()->prepare("SELECT id, email, name, credits, plan_code, is_admin, status, session_version, created_at FROM users WHERE id = :id AND status = 'active'");
         $stmt->execute(['id' => $id]);
         $user = $stmt->fetch();
 
-        if (!is_array($user)) {
-            unset($_SESSION['user_id']);
+        if (!is_array($user) || (int)($user['session_version'] ?? 1) !== (int)($_SESSION['session_version'] ?? 0)) {
+            unset($_SESSION['user_id'], $_SESSION['session_version']);
             return null;
         }
 
@@ -77,8 +112,14 @@ class Auth
     {
         self::start();
 
+        $email = strtolower(trim($email));
+        if (!AuthRateLimiter::consume('login', $email, 8, 900)) {
+            password_verify($password, '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.');
+            return false;
+        }
+
         $stmt = Database::connection()->prepare("SELECT * FROM users WHERE email = :email AND status = 'active'");
-        $stmt->execute(['email' => strtolower(trim($email))]);
+        $stmt->execute(['email' => $email]);
         $user = $stmt->fetch();
 
         if (!is_array($user) || !password_verify($password, (string)$user['password_hash'])) {
@@ -87,6 +128,8 @@ class Auth
 
         session_regenerate_id(true);
         $_SESSION['user_id'] = (int)$user['id'];
+        $_SESSION['session_version'] = (int)($user['session_version'] ?? 1);
+        AuthRateLimiter::clear('login', $email);
 
         return true;
     }
@@ -95,8 +138,17 @@ class Auth
     {
         self::start();
 
+        if (strtolower(app_env('APP_ENV', '')) === 'production'
+            && strtolower(app_env('PUBLIC_REGISTRATION_ENABLED', 'false')) !== 'true') {
+            throw new RuntimeException('Registration is temporarily unavailable. Contact the studio for access.');
+        }
+
         $email = strtolower(trim($email));
         $name = trim($name);
+
+        if (!AuthRateLimiter::consume('register', $email, 3, 3600)) {
+            throw new RuntimeException('Too many registration attempts. Try again later.');
+        }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new RuntimeException('Ingresa un email valido.');
@@ -124,7 +176,9 @@ class Auth
             throw new RuntimeException('Ese email ya esta registrado.');
         }
 
+        session_regenerate_id(true);
         $_SESSION['user_id'] = (int)Database::connection()->lastInsertId();
+        $_SESSION['session_version'] = 1;
 
         return self::requireUser();
     }
@@ -132,6 +186,9 @@ class Auth
     public static function requestPasswordReset(string $email): array
     {
         $email = strtolower(trim($email));
+        if (!AuthRateLimiter::consume('password_reset_request', $email, 4, 3600)) {
+            return ['ok' => true, 'sent' => false, 'debug_link' => ''];
+        }
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return ['ok' => true, 'sent' => false, 'debug_link' => ''];
         }
@@ -171,12 +228,13 @@ class Auth
 
         $link = self::passwordResetUrl($token);
         $sent = self::sendPasswordResetEmail($email, (string)($user['name'] ?? ''), $link);
-        self::logPasswordResetLink($email, $link, $sent);
+        error_log('Password reset requested; delivery=' . ($sent ? 'sent' : 'failed'));
 
         $host = strtolower((string)($_SERVER['HTTP_HOST'] ?? ''));
-        $debugEnabled = strtolower(app_env('PASSWORD_RESET_DEBUG_LINK', 'false')) === 'true'
+        $debugEnabled = strtolower(app_env('APP_ENV', '')) !== 'production'
+            && (strtolower(app_env('PASSWORD_RESET_DEBUG_LINK', 'false')) === 'true'
             || str_starts_with($host, 'localhost')
-            || str_starts_with($host, '127.0.0.1');
+            || str_starts_with($host, '127.0.0.1'));
 
         return [
             'ok' => true,
@@ -188,6 +246,9 @@ class Auth
     public static function resetPassword(string $token, string $password): void
     {
         $token = trim($token);
+        if (!AuthRateLimiter::consume('password_reset_submit', hash('sha256', $token), 6, 3600)) {
+            throw new RuntimeException('This reset link is invalid or expired.');
+        }
         if ($token === '' || !preg_match('/^[a-f0-9]{64}$/i', $token)) {
             throw new RuntimeException('This reset link is invalid or expired.');
         }
@@ -214,17 +275,17 @@ class Auth
         $now = date('c');
         Database::withBusyRetry(function () use ($row, $password, $now): void {
             $pdo = Database::connection();
-            $pdo->prepare('UPDATE users SET password_hash = :password_hash, updated_at = :updated_at WHERE id = :id')
+            $pdo->prepare('UPDATE users SET password_hash = :password_hash, session_version = session_version + 1, updated_at = :updated_at WHERE id = :id')
                 ->execute([
                     'password_hash' => password_hash($password, PASSWORD_DEFAULT),
                     'updated_at' => $now,
                     'id' => (int)$row['user_id'],
                 ]);
 
-            $pdo->prepare('UPDATE password_resets SET used_at = :used_at WHERE id = :id')
+            $pdo->prepare('UPDATE password_resets SET used_at = :used_at WHERE user_id = :user_id AND used_at IS NULL')
                 ->execute([
                     'used_at' => $now,
-                    'id' => (int)$row['id'],
+                    'user_id' => (int)$row['user_id'],
                 ]);
         });
     }
@@ -253,7 +314,7 @@ class Auth
 
         $now = date('c');
         Database::withBusyRetry(function () use ($pdo, $userId, $newPassword, $now): void {
-            $pdo->prepare('UPDATE users SET password_hash = :password_hash, updated_at = :updated_at WHERE id = :id')
+            $pdo->prepare('UPDATE users SET password_hash = :password_hash, session_version = session_version + 1, updated_at = :updated_at WHERE id = :id')
                 ->execute([
                     'password_hash' => password_hash($newPassword, PASSWORD_DEFAULT),
                     'updated_at' => $now,
@@ -268,6 +329,7 @@ class Auth
         });
 
         session_regenerate_id(true);
+        $_SESSION['session_version'] = (int)($_SESSION['session_version'] ?? 1) + 1;
     }
 
     public static function logout(): void
@@ -285,7 +347,13 @@ class Auth
 
     private static function passwordResetUrl(string $token): string
     {
-        $baseUrl = rtrim(app_env('APP_URL', ''), '/');
+        $baseUrl = rtrim(app_env('APP_URL', app_env('APP_PUBLIC_URL', '')), '/');
+        if (strtolower(app_env('APP_ENV', '')) === 'production') {
+            if (!str_starts_with(strtolower($baseUrl), 'https://')) {
+                throw new RuntimeException('APP_URL must be configured with the production HTTPS origin.');
+            }
+            return $baseUrl . '/reset_password.php?token=' . rawurlencode($token);
+        }
         if ($baseUrl === '') {
             $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
             $scheme = $https ? 'https' : 'http';
@@ -315,16 +383,4 @@ class Auth
         return @mail($email, $subject, $body, implode("\r\n", $headers));
     }
 
-    private static function logPasswordResetLink(string $email, string $link, bool $sent): void
-    {
-        $dir = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'logs';
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0775, true);
-        }
-        @file_put_contents(
-            $dir . DIRECTORY_SEPARATOR . 'password_reset_links.log',
-            '[' . date('c') . '] sent=' . ($sent ? '1' : '0') . ' email=' . $email . ' link=' . $link . PHP_EOL,
-            FILE_APPEND
-        );
-    }
 }

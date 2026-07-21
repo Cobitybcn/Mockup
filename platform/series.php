@@ -424,7 +424,7 @@ $displayedArtworks = $selectedSeries
                                     dropzone.classList.remove('is-dragging');
                                     label.textContent = 'Uploading…';
                                     if (status) status.textContent = file.name;
-                                    form.submit();
+                                    form.requestSubmit();
                                 }
 
                                 input.addEventListener('change', function () {
@@ -565,7 +565,7 @@ $displayedArtworks = $selectedSeries
                                         <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
                                         <input type="hidden" name="action" value="assign_artwork">
                                         <input type="hidden" name="artwork_id" value="<?= (int)$artwork['id'] ?>">
-                                        <select name="series_id" aria-label="Artwork series" onchange="this.form.submit()">
+                                        <select name="series_id" aria-label="Artwork series" onchange="this.form.requestSubmit()">
                                             <option value="">NO SERIE</option>
                                             <?php foreach ($seriesRows as $series): ?>
                                                 <option value="<?= (int)$series['id'] ?>" <?= (int)($artwork['series_id'] ?? 0) === (int)$series['id'] ? 'selected' : '' ?>><?= series_h($series['title']) ?></option>

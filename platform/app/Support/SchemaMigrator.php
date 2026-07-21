@@ -96,7 +96,15 @@ final class SchemaMigrator
 
     public static function assertCurrent(PDO $pdo, ?string $directory = null): void
     {
-        $status = self::status($pdo, $directory);
+        $directory ??= self::defaultDirectory();
+        $migrations = self::loadMigrations($directory);
+        $applied = self::applied($pdo);
+        self::assertHistoryIsImmutable($migrations, $applied);
+        $status = [
+            'latest_code_version' => array_key_last($migrations) ?? '',
+            'latest_database_version' => array_key_last($applied) ?? '',
+            'pending' => array_values(array_diff(array_keys($migrations), array_keys($applied))),
+        ];
         if ($status['pending'] !== []) {
             throw new RuntimeException(
                 'Database schema is behind application code. Pending migrations: ' . implode(', ', $status['pending'])

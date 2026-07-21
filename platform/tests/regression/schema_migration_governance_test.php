@@ -37,6 +37,10 @@ function run_schema_migration_governance_tests(): void
 
     $columns = array_column($pdo->query('PRAGMA table_info(users)')->fetchAll(PDO::FETCH_ASSOC), 'name');
     TestHarness::assertTrue(in_array('plan_code', $columns, true), 'la version agrega el plan de acceso a instalaciones existentes');
+    TestHarness::assertTrue(in_array('session_version', $columns, true), 'las sesiones pueden invalidarse tras un cambio de credenciales');
+    $pdo->query('SELECT action, identity_hash, attempts FROM auth_rate_limits WHERE 1=0');
+    $pdo->query('SELECT id, data, updated_at FROM php_sessions WHERE 1=0');
+    TestHarness::assertTrue(true, 'los limites de autenticacion y sesiones persistentes pertenecen al esquema versionado');
     $pdo->query('SELECT feature_key FROM user_feature_overrides WHERE 1=0');
     $pdo->query('SELECT before_json, after_json FROM user_access_audit WHERE 1=0');
     TestHarness::assertTrue(true, 'las tablas de permisos y auditoria pertenecen a la misma version');

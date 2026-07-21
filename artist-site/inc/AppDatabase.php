@@ -36,3 +36,40 @@ function artist_site_database_connection(string $appRoot): PDO
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
 }
+
+function artist_site_rate_limit(PDO $pdo, string $action, string $identity, int $limit, int $windowSeconds): bool
+{
+    $now = time();
+    $identityHash = hash('sha256', strtolower(trim($identity)) . '|' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+    $pdo->beginTransaction();
+    try {
+        $select = $pdo->prepare('SELECT window_started_at, attempts FROM auth_rate_limits WHERE action = :action AND identity_hash = :identity_hash FOR UPDATE');
+        $select->execute(['action' => $action, 'identity_hash' => $identityHash]);
+        $row = $select->fetch();
+        $windowStartedAt = (int)($row['window_started_at'] ?? $now);
+        $attempts = (int)($row['attempts'] ?? 0);
+
+        if (!$row || ($now - $windowStartedAt) >= $windowSeconds) {
+            $windowStartedAt = $now;
+            $attempts = 1;
+        } else {
+            $attempts++;
+        }
+
+        $write = $pdo->prepare('INSERT INTO auth_rate_limits (action, identity_hash, window_started_at, attempts, updated_at)
+            VALUES (:action, :identity_hash, :window_started_at, :attempts, :updated_at)
+            ON DUPLICATE KEY UPDATE window_started_at = VALUES(window_started_at), attempts = VALUES(attempts), updated_at = VALUES(updated_at)');
+        $write->execute([
+            'action' => $action,
+            'identity_hash' => $identityHash,
+            'window_started_at' => $windowStartedAt,
+            'attempts' => $attempts,
+            'updated_at' => $now,
+        ]);
+        $pdo->commit();
+        return $attempts <= $limit;
+    } catch (Throwable $error) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        throw $error;
+    }
+}
