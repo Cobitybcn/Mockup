@@ -142,6 +142,8 @@ images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:$COMMIT_SHA
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:latest
 
+serviceAccount: projects/project-ff549db7-4f7f-4b0c-9a5/serviceAccounts/mockups-cicd-sa@project-ff549db7-4f7f-4b0c-9a5.iam.gserviceaccount.com
+
 substitutions:
   _EXPECTED_PROJECT_ID: project-ff549db7-4f7f-4b0c-9a5
   _REGION: us-central1
