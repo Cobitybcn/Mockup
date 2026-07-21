@@ -26,3 +26,5 @@ Headers establish an editorial entry into a workspace. A prominent serif title i
 Store one `reference.png` showing a complete approved section header, including the title, any kicker, concise instruction, nearby principal action when present, divider relationship, and the beginning of the workspace below. Exclude global navigation unless it is required to understand the header.
 
 Add `NOTES.md` only when the capture is approved, following the three-question reference format defined in `design-system/references/README.md`.
+
+**Approved reference on file:** `design-system/references/mockup-album/` (Mockup Album screen, `platform/mockups.php`).

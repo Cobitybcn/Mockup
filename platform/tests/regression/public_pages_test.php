@@ -3,7 +3,7 @@ declare(strict_types=1);
 function run_public_pages_regression_tests(): void {
     TestHarness::group('Public legal, Pinterest and Meta pages');
     $root=dirname(__DIR__,2);
-    foreach(['privacy/index.php','terms/index.php','contact/index.php','data-deletion/index.php','integrations/pinterest/index.php','integrations/pinterest/callback/index.php','integrations/meta/index.php','integrations/meta/callback/index.php','integrations/instagram/index.php','integrations/instagram/callback/index.php','integrations/instagram/deauthorize/index.php','integrations/instagram/data-deletion/index.php'] as $path) TestHarness::assertTrue(is_file($root.'/'.$path),$path.' exists');
+    foreach(['privacy/index.php','terms/index.php','contact/index.php','data-deletion/index.php','integrations/pinterest/index.php','integrations/pinterest/callback/index.php','integrations/meta/index.php','integrations/meta/callback/index.php','integrations/instagram/index.php','integrations/instagram/callback/index.php','integrations/instagram/deauthorize/index.php','integrations/instagram/data-deletion/index.php','integrations/stripe/webhook/index.php'] as $path) TestHarness::assertTrue(is_file($root.'/'.$path),$path.' exists');
     $privacy=(string)file_get_contents($root.'/privacy/index.php'); $terms=(string)file_get_contents($root.'/terms/index.php'); $pin=(string)file_get_contents($root.'/integrations/pinterest/index.php'); $callback=(string)file_get_contents($root.'/integrations/pinterest/callback/index.php'); $metaCallback=(string)file_get_contents($root.'/integrations/meta/callback/index.php'); $instagram=(string)file_get_contents($root.'/integrations/instagram/index.php'); $instagramCallback=(string)file_get_contents($root.'/integrations/instagram/callback/index.php');
     TestHarness::assertContains('does not publish automatically',$pin,'automatic publishing is explicitly prohibited');
     TestHarness::assertContains('Connect your Pinterest account',$pin,'artists can connect their private Pinterest account from the connection page');
@@ -35,6 +35,8 @@ function run_public_pages_regression_tests(): void {
     TestHarness::assertTrue(!str_contains($social,'value="facebook" checked')&&!str_contains($social,'value="instagram" checked'),'Facebook and Instagram destinations are never preselected');
     $artistSite=(string)file_get_contents(dirname($root).'/artist-site/index.php');
     $artistHeader=(string)file_get_contents(dirname($root).'/artist-site/inc/header.php');
+    $artistStore=(string)file_get_contents(dirname($root).'/artist-site/inc/AppStore.php');
+    $stripeCheckout=(string)file_get_contents(dirname($root).'/artist-site/inc/StripeCheckout.php');
     TestHarness::assertContains("app_artist_photo_url(\$artistPhotoFile)",$artistHeader,'the artist website uses the published profile photo as its favicon');
     TestHarness::assertContains('<link rel="icon" href="<?= e($faviconUrl) ?>">',$artistHeader,'the artist website exposes the resolved artist favicon in every page head');
     TestHarness::assertTrue(
@@ -46,6 +48,17 @@ function run_public_pages_regression_tests(): void {
     TestHarness::assertContains('<h2>Works in this series</h2>',$artistSite,'public series details render their dependent artwork collection');
     TestHarness::assertContains('class="artwork-series-link"',$artistSite,'published artwork details link their series to its public detail page');
     TestHarness::assertContains('class="artwork-series-preview"',$artistSite,'published artwork details provide an accessible series preview');
+    TestHarness::assertContains("url_for('acquire/' . \$artwork['slug'])",$artistSite,'available published artworks open the private acquisition flow');
+    TestHarness::assertContains("case 'acquire':",$artistSite,'the artist website routes acquisition requests separately from editorial content');
+    TestHarness::assertContains("'order.created'",$artistStore,'public acquisition requests create auditable Store orders');
+    TestHarness::assertContains('stock_reserved=stock_reserved+1',$artistStore,'public acquisition requests reserve stock atomically');
+    TestHarness::assertContains("p.status='published' AND p.visibility IN ('public','unlisted')",$artistStore,'order creation revalidates publication at submission time');
+    TestHarness::assertContains("\$meta['robots'] = 'noindex,nofollow'",$artistSite,'private acquisition forms are excluded from search indexing');
+    TestHarness::assertContains("'stripe_account' => \$connectedAccountId",$stripeCheckout,'Stripe Checkout charges are created directly on the connected artist account');
+    TestHarness::assertContains("hash_equals((string)\$order['provider_account_id'], \$connectedAccountId)",$stripeCheckout,'Stripe webhooks cannot settle an order belonging to another artist account');
+    TestHarness::assertContains('checkout.session.expired',$stripeCheckout,'expired Stripe sessions release temporary artwork reservations');
+    $stripeWebhook=(string)file_get_contents($root.'/integrations/stripe/webhook/index.php');
+    TestHarness::assertContains("\$event->account",$stripeWebhook,'one central Connect webhook scopes events by artist account');
     $publishedSeriesCatalog=(string)file_get_contents(dirname($root).'/artist-site/inc/AppPublishedSeriesCatalog.php');
     TestHarness::assertContains('COALESCE(s.year_start, s.year_end) DESC',$publishedSeriesCatalog,'the public series catalog follows the app editorial year order');
     TestHarness::assertContains('s.created_at DESC',$publishedSeriesCatalog,'the public series catalog preserves the app editorial tie breaker');

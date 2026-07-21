@@ -207,7 +207,7 @@ final class AssistantContext
             'mockups.php', 'viewer.php' => 'mockup_album',
             'mockup_combination_results.php', 'mockup_combinations_review.php' => 'mockup_results',
             'mockup_variation_lab.php' => 'mockup_lab',
-            'website_board.php', 'website_catalog.php', 'website_studio_notes.php' => 'website_publisher',
+            'website_catalog.php', 'website_studio_notes.php' => 'website_publisher',
             'social_media_board.php', 'social_media_catalog.php' => 'social_publishing',
             'create_scenes.php' => 'scene_creation',
             'world_mother_studio.php' => 'scene_studio',

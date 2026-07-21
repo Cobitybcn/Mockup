@@ -839,8 +839,8 @@ if ($mockupV2) {
         <nav class="viewer-actions">
             <a class="icon-link back" href="<?= h($backUrl) ?>" aria-label="Back to details" title="Back to details"></a>
             <a href="mockups.php">Mockups</a>
-            <?php if ($publicationSheetId > 0 && $publicationMockupSheetId > 0): ?>
-                <a href="publish_mockup.php?id=<?= $viewerMockupId ?>">Publish mockup</a>
+            <?php if ($viewerMockupId > 0): ?>
+                <a href="website_studio_notes.php?source=mockup:<?= $viewerMockupId ?>#new-studio-note">Create Studio Note</a>
             <?php endif; ?>
             <?php if ($viewerMockupId > 0): ?>
                 <button

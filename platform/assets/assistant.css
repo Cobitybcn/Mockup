@@ -107,6 +107,24 @@
   display: none !important;
 }
 
+@media (max-width: 600px) {
+  .series-page .faithful-assistant-launcher {
+    inset: auto 12px max(14px, env(safe-area-inset-bottom, 0px)) auto !important;
+    width: 46px !important;
+    min-width: 46px !important;
+    max-width: 46px !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+    flex-basis: 46px !important;
+  }
+
+  .series-page .faithful-assistant-launcher svg {
+    width: 19px;
+    height: 19px;
+  }
+}
+
 .faithful-assistant.is-open .faithful-assistant-launcher {
   opacity: 0;
   pointer-events: none;

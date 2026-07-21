@@ -92,7 +92,7 @@ final class WebsiteBoardService
         $favoriteIds = MockupFavorites::idsForUser($userId);
         $favoriteLookup = array_fill_keys($favoriteIds, true);
         $favoritePosition = array_flip($favoriteIds);
-        $mockupStmt = $this->pdo->prepare("SELECT m.id,m.mockup_file,m.context_id,m.source_artwork_id,
+        $mockupStmt = $this->pdo->prepare("SELECT m.id,m.mockup_file,m.context_id,m.source_artwork_id,m.selector_state_json,
                 COALESCE(m.series_id,a.series_id,0) series_id,
                 COALESCE(NULLIF(ag.title,''),NULLIF(a.final_title,''),{$artworkFallback}) artwork_title,
                 COALESCE(NULLIF(s.title,''),NULLIF(a.series,''),'') series_title,
@@ -122,9 +122,28 @@ final class WebsiteBoardService
             $file = basename((string)$row['mockup_file']);
             if ($file === '') continue;
             $context = Display::contextTitle((string)$row['context_id']);
+            $selectorState = json_decode((string)($row['selector_state_json'] ?? ''), true);
+            $selectorState = is_array($selectorState) ? $selectorState : [];
+            $combination = is_array($selectorState['combination'] ?? null) ? $selectorState['combination'] : [];
+            $cameraSlotId = trim((string)($combination['selected_camera_slot_id'] ?? ''));
+            $cameraSlotName = trim((string)($combination['camera_slot_name'] ?? ''));
+            $cameraContextTitle = trim((string)($combination['context_title'] ?? ''));
             $label = trim((string)$row['editorial_title']);
             if ($label === '') $label = trim((string)$row['artwork_title'] . ' — ' . $context, " —");
             $editorialGuide = $this->mockupEditorialGuide($row);
+            $searchTerms = [
+                $cameraSlotId,
+                str_replace('_', ' ', $cameraSlotId),
+                $cameraSlotName,
+                $cameraContextTitle,
+                (string)($editorialGuide['title'] ?? ''),
+                (string)($editorialGuide['caption'] ?? ''),
+                (string)($editorialGuide['altText'] ?? ''),
+                implode(' ', (array)($editorialGuide['keywords'] ?? [])),
+            ];
+            if (MockupVariationEligibility::isCloseupMockup($row)) {
+                $searchTerms[] = 'close close-up closeup detail detalle macro texture textura edge borde corner esquina surface superficie crop recorte';
+            }
             $sources[] = $this->source('mockup', (int)$row['id'], $file, $label, [
                 'artworkId' => (int)$row['source_artwork_id'],
                 'artworkTitle' => (string)$row['artwork_title'],
@@ -132,6 +151,9 @@ final class WebsiteBoardService
                 'seriesTitle' => (string)$row['series_title'],
                 'favorite' => isset($favoriteLookup[(int)$row['id']]),
                 'contextTitle' => $context,
+                'cameraSlotId' => $cameraSlotId,
+                'cameraSlotName' => $cameraSlotName,
+                'searchTerms' => implode(' ', array_filter($searchTerms, static fn(string $value): bool => $value !== '')),
                 'editorialGuide' => $editorialGuide,
             ]);
         }

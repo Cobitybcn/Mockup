@@ -9,7 +9,7 @@
     function applyVisibleOrder(cards, positions) {
         cards.forEach((card, index) => {
             const artworkId = card.getAttribute('data-series-artwork-id') || '';
-            const fallbackNumber = (index + 1) * 10;
+            const fallbackNumber = (cards.length - index) * 10;
             const serverPosition = positions && positions[artworkId] ? positions[artworkId] : null;
             const creationNumber = Number(serverPosition?.number || fallbackNumber);
             const ordinal = Number(serverPosition?.position || index + 1);
@@ -49,6 +49,7 @@
 
     function initializeList(list) {
         if (typeof window.Sortable !== 'function') return;
+        const filterControlled = list.hasAttribute('data-series-filter-controlled');
         const sortableSeries = new Set(
             Array.from(list.querySelectorAll('[data-series-artwork-id]'))
                 .map(card => card.getAttribute('data-series-id') || '')
@@ -59,8 +60,23 @@
 
         list.classList.add('series-order-enabled');
         Array.from(list.querySelectorAll('[data-series-artwork-id]')).forEach(card => {
-            card.classList.toggle('series-order-card', sortableSeries.has(card.getAttribute('data-series-id') || ''));
+            card.classList.toggle(
+                'series-order-card',
+                !filterControlled && sortableSeries.has(card.getAttribute('data-series-id') || '')
+            );
         });
+
+        list.setSeriesOrderFilter = function (seriesId) {
+            const activeSeriesId = String(seriesId || '');
+            list.dataset.activeSeriesFilter = activeSeriesId;
+            Array.from(list.querySelectorAll('[data-series-artwork-id]')).forEach(card => {
+                const cardSeriesId = card.getAttribute('data-series-id') || '';
+                const enabled = activeSeriesId !== ''
+                    && cardSeriesId === activeSeriesId
+                    && sortableSeries.has(cardSeriesId);
+                card.classList.toggle('series-order-card', enabled);
+            });
+        };
 
         let saving = false;
         let orderBeforeDrag = [];
@@ -85,7 +101,10 @@
                 if (saving) return false;
                 const relatedCard = event.related?.closest?.('[data-series-artwork-id]');
                 if (!relatedCard) return false;
-                return event.dragged.getAttribute('data-series-id') === relatedCard.getAttribute('data-series-id');
+                const draggedSeriesId = event.dragged.getAttribute('data-series-id') || '';
+                const activeSeriesId = list.dataset.activeSeriesFilter || '';
+                if (filterControlled && draggedSeriesId !== activeSeriesId) return false;
+                return draggedSeriesId === relatedCard.getAttribute('data-series-id');
             },
             onEnd: async function (event) {
                 if (event.oldDraggableIndex === event.newDraggableIndex) return;
@@ -116,6 +135,7 @@
         const list = panel?.querySelector('[data-series-order-list]');
         const count = panel?.querySelector('[data-series-visible-count]');
         const empty = panel?.querySelector('[data-series-filter-empty]');
+        const hint = panel?.querySelector('[data-series-order-hint]');
         if (!panel || !list) return;
 
         function applyFilter() {
@@ -130,12 +150,44 @@
             list.hidden = visible === 0;
             if (empty) empty.hidden = visible !== 0;
             if (count) count.textContent = `${visible} ${visible === 1 ? 'artwork' : 'artworks'}`;
+            const specificSeries = /^\d+$/.test(value) && value !== '0';
+            if (typeof list.setSeriesOrderFilter === 'function') {
+                list.setSeriesOrderFilter(specificSeries ? value : '');
+            }
+            if (hint) hint.hidden = !specificSeries;
+            panel.classList.toggle('series-order-filtered', specificSeries);
+            document.querySelectorAll('[data-series-filter-trigger]').forEach(trigger => {
+                const selected = specificSeries && trigger.getAttribute('data-series-filter-id') === value;
+                trigger.classList.toggle('is-filtered', selected);
+                if (selected) trigger.setAttribute('aria-current', 'true');
+                else trigger.removeAttribute('aria-current');
+            });
         }
 
         select.addEventListener('change', applyFilter);
         applyFilter();
     }
 
+    function initializeMobileSeriesPicker(trigger) {
+        trigger.addEventListener('click', function (event) {
+            if (!window.matchMedia('(max-width: 600px)').matches) return;
+            const select = document.querySelector('[data-series-artwork-filter]');
+            const seriesId = trigger.getAttribute('data-series-filter-id') || '';
+            if (!select || seriesId === '') return;
+
+            event.preventDefault();
+            select.value = seriesId;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+
+            const panel = document.getElementById('artwork-assignment');
+            if (panel) {
+                const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                panel.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+            }
+        });
+    }
+
     document.querySelectorAll('[data-series-order-list]').forEach(initializeList);
     document.querySelectorAll('[data-series-artwork-filter]').forEach(initializeFilter);
+    document.querySelectorAll('[data-series-filter-trigger]').forEach(initializeMobileSeriesPicker);
 })();

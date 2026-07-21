@@ -28,3 +28,5 @@ Square geometry communicates decisions. This meaning is more important than the 
 Store one tightly framed `reference.png` showing an approved Decision Block in context. The capture must include its complete square silhouette, pastel section identity, concise label, generous surrounding space, and relationship to the decision or navigation it initiates.
 
 Add `NOTES.md` only when the capture is approved, following the three-question format defined in `design-system/references/README.md`.
+
+**Approved reference on file:** `design-system/references/series-decision-blocks/` (Series screen, `platform/series.php`).

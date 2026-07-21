@@ -326,6 +326,9 @@ if ($id <= 0) {
                    a.series_id,
                    a.series_creation_number,
                    s.title AS series_title,
+                   s.year_start AS series_year_start,
+                   s.year_end AS series_year_end,
+                   s.created_at AS series_created_at,
                    a.width,
                    a.height,
                    a.unit,
@@ -349,16 +352,26 @@ if ($id <= 0) {
         $groupSql .= "
             GROUP BY g.id, g.canonical_artwork_id, g.official_root_artwork_ids, g.title, g.updated_at, g.created_at,
                      a.root_file, a.final_title, a.subtitle, a.series, a.series_id, a.series_creation_number,
-                     s.title, a.width, a.height, a.unit
+                     s.title, s.year_start, s.year_end, s.created_at, a.width, a.height, a.unit
         ";
         if ($selectedArtworkSeriesId > 0) {
             $groupSql .= " ORDER BY
                 CASE WHEN a.series_creation_number IS NULL THEN 1 ELSE 0 END ASC,
-                a.series_creation_number ASC,
-                g.created_at ASC,
-                g.id ASC";
+                a.series_creation_number DESC,
+                g.created_at DESC,
+                g.id DESC";
         } else {
-            $groupSql .= " ORDER BY g.updated_at DESC, g.created_at DESC, g.id DESC";
+            $groupSql .= " ORDER BY
+                CASE WHEN a.series_id IS NULL THEN 1 ELSE 0 END ASC,
+                CASE WHEN s.year_start IS NULL AND s.year_end IS NULL THEN 1 ELSE 0 END ASC,
+                COALESCE(s.year_start, s.year_end) DESC,
+                COALESCE(s.year_end, s.year_start) DESC,
+                s.created_at DESC,
+                s.id DESC,
+                CASE WHEN a.series_creation_number IS NULL THEN 1 ELSE 0 END ASC,
+                a.series_creation_number DESC,
+                g.created_at DESC,
+                g.id DESC";
         }
 
         $groupStmt = $pdo->prepare($groupSql);
@@ -762,9 +775,6 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
             width: auto;
             margin: 0;
         }
-        .mobile-root-slider {
-            display: none;
-        }
         @media (max-width: 760px) {
             .main-area > .app-header,
             .main-area > .alert-strip {
@@ -794,40 +804,6 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                 box-shadow: none;
                 background: transparent;
             }
-            .mobile-root-slider {
-                display: grid;
-                grid-auto-flow: column;
-                grid-auto-columns: minmax(84%, 1fr);
-                gap: 14px;
-                overflow-x: auto;
-                overscroll-behavior-x: contain;
-                scroll-snap-type: x mandatory;
-                -webkit-overflow-scrolling: touch;
-                padding: 2px 2px 16px;
-                margin: 0 -2px 18px;
-                scrollbar-width: none;
-                touch-action: pan-x;
-            }
-            .mobile-root-slider::-webkit-scrollbar {
-                display: none;
-            }
-            .mobile-root-slide {
-                position: relative;
-                scroll-snap-align: center;
-                background: #fffaf7;
-                border: 1.5px solid #b77f86;
-                border-radius: 8px;
-                padding: 10px;
-                box-shadow: 0 14px 34px rgba(83, 61, 43, .11);
-                text-decoration: none;
-                color: inherit;
-            }
-            .mobile-root-slide-link {
-                display: block;
-                color: inherit;
-                text-decoration: none;
-            }
-            .mobile-root-slide .artwork-delete-btn,
             .root-album-card .artwork-delete-btn {
                 top: 18px;
                 right: 18px;
@@ -837,7 +813,6 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                 min-height: 34px !important;
                 opacity: .9;
             }
-            .mobile-root-slide .artwork-merge-btn,
             .root-album-card .artwork-merge-btn {
                 top: 18px;
                 right: 58px;
@@ -845,26 +820,6 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                 height: 34px !important;
                 min-width: 34px !important;
                 min-height: 34px !important;
-            }
-            .mobile-root-slide img {
-                width: 100%;
-                aspect-ratio: 3 / 4;
-                object-fit: cover;
-                display: block;
-                border-radius: 6px;
-                background: #f4f0eb;
-            }
-            .mobile-root-slide h2 {
-                margin: 12px 0 5px;
-                font: 700 13px/1.15 var(--font-sans);
-                letter-spacing: .05em;
-                text-transform: uppercase;
-            }
-            .mobile-root-slide p {
-                margin: 0;
-                color: var(--muted);
-                font: 600 11px/1.45 var(--font-sans);
-                letter-spacing: .02em;
             }
             .root-album-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1066,55 +1021,6 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
             <section class="panel">
                 <?php if ($id <= 0): ?>
                     <?php if ($albumArtworks): ?>
-                        <div class="mobile-root-slider" aria-label="Root artwork carousel">
-                            <?php $mobileSeriesOrder = 0; ?>
-                            <?php foreach ($albumArtworks as $albumArtwork): ?>
-                                <?php
-                                if ($selectedArtworkSeriesId > 0) $mobileSeriesOrder++;
-                                $title = trim((string)($albumArtwork['group_title'] ?? ''));
-                                if ($title === '') {
-                                    $title = trim((string)($albumArtwork['final_title'] ?? ''));
-                                }
-                                if ($title === '') {
-                                    $title = 'Untitled';
-                                }
-                                $seriesTitle = ArtworkSeries::display((string)($albumArtwork['series_title'] ?: $albumArtwork['series'] ?? ''));
-                                $width = trim((string)($albumArtwork['width'] ?? ''));
-                                $height = trim((string)($albumArtwork['height'] ?? ''));
-                                $unit = trim((string)($albumArtwork['unit'] ?? 'cm'));
-                                $size = ($width !== '' && $height !== '') ? trim($width . ' x ' . $height . ' ' . $unit) : '';
-                                $rootCount = (int)($albumArtwork['root_count'] ?? 0);
-                                $mockupCount = (int)($albumArtwork['mockup_count'] ?? 0);
-                                $targetUrl = 'artwork_details.php?id=' . (int)$albumArtwork['id'];
-                                ?>
-                                <article class="mobile-root-slide">
-                                    <a class="mobile-root-slide-link" href="<?= h($targetUrl) ?>">
-                                        <img src="<?= h(root_album_media_url((string)$albumArtwork['root_file'])) ?>" alt="<?= h($title) ?>" loading="lazy">
-                                        <?php if ($selectedArtworkSeriesId > 0): ?><span class="series-artwork-order"><?= str_pad((string)$mobileSeriesOrder, 2, '0', STR_PAD_LEFT) ?></span><?php endif; ?>
-                                        <h2><?= h($title) ?><?php if ($seriesTitle !== ''): ?> <span class="title-series-soft">(<?= h($seriesTitle) ?>)</span><?php endif; ?></h2>
-                                        <p>
-                                            <?= $size !== '' ? h($size) . ' · ' : '' ?><?= h((string)$rootCount) ?> roots<?= $mockupCount > 0 ? ' · ' . h((string)$mockupCount) . ' mockups' : '' ?>
-                                        </p>
-                                    </a>
-                                    <?php if (count($albumArtworks) > 1): ?>
-                                        <button class="artwork-merge-btn media-icon-button media-thumb-action media-thumb-action--right-secondary" type="button" title="Fusionar con otra obra" aria-label="Fusionar con otra obra"
-                                            data-merge-source
-                                            data-group-id="<?= (int)$albumArtwork['group_id'] ?>"
-                                            data-artwork-id="<?= (int)$albumArtwork['id'] ?>"
-                                            data-title="<?= h($title) ?>"
-                                            data-image="<?= h(root_album_media_url((string)$albumArtwork['root_file'])) ?>"
-                                            data-mockups="<?= $mockupCount ?>"
-                                            data-roots="<?= $rootCount ?>"
-                                            data-width="<?= h($width) ?>" data-height="<?= h($height) ?>" data-unit="<?= h($unit) ?>">
-                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 7.5H7a4 4 0 0 0 0 8h2.5M14.5 7.5H17a4 4 0 0 1 0 8h-2.5M8.5 11.5h7"/></svg>
-                                        </button>
-                                    <?php endif; ?>
-                                    <button class="artwork-delete-btn media-icon-button media-thumb-action media-thumb-action--right is-danger" type="button" title="Delete artwork" aria-label="Delete artwork" data-delete-artwork data-artwork-id="<?= (int)$albumArtwork['id'] ?>">
-                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 8.5h7l-.55 9h-5.9l-.55-9Z"/><path d="M7.5 6.5h9M10 6.5V5h4v1.5M10.5 11v4.2M13.5 11v4.2"/></svg>
-                                    </button>
-                                </article>
-                            <?php endforeach; ?>
-                        </div>
                         <div class="root-album-grid root-album-grid--catalog"<?php if ($selectedArtworkSeriesId > 0): ?> data-series-order-list data-series-order-endpoint="reorder_series_artworks.php" data-series-order-csrf="<?= h($_SESSION['series_csrf']) ?>"<?php endif; ?>>
                             <?php $desktopSeriesOrder = 0; ?>
                             <?php foreach ($albumArtworks as $albumArtwork): ?>

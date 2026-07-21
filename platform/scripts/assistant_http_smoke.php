@@ -9,9 +9,9 @@ if (PHP_SAPI !== 'cli') {
 require_once dirname(__DIR__) . '/app/bootstrap.php';
 
 $email = strtolower(trim((string)($argv[1] ?? '')));
-$url = trim((string)($argv[2] ?? 'http://localhost/artworkmockups/platform/website_board.php'));
+$url = trim((string)($argv[2] ?? 'http://localhost/artworkmockups/platform/website_studio_notes.php'));
 if ($email === '' || filter_var($url, FILTER_VALIDATE_URL) === false) {
-    fwrite(STDERR, "Usage: php scripts/assistant_http_smoke.php user@example.com [website_board_url]\n");
+    fwrite(STDERR, "Usage: php scripts/assistant_http_smoke.php user@example.com [authenticated_page_url]\n");
     exit(1);
 }
 
@@ -83,7 +83,7 @@ try {
     $api = $request((string)$baseUrl . 'assistant_api.php', $cookie, [
         'action' => 'history',
         'csrf' => $csrfMatch[1],
-        'page_context' => ['current_route' => 'website_board.php'],
+        'page_context' => ['current_route' => 'website_studio_notes.php'],
     ]);
     $decoded = json_decode($api['body'], true);
     if ($api['status'] !== 200 || !is_array($decoded) || ($decoded['ok'] ?? false) !== true) {
@@ -115,7 +115,7 @@ try {
         throw new RuntimeException('Clipboard image paste and normalization are not wired in the connected workspace JavaScript.');
     }
     echo "ASSISTANT_HTTP_SMOKE_OK\n";
-    echo "page=website_board.php status=200\n";
+    echo "page=website_studio_notes.php status=200\n";
     echo "assistant_ui=connected_workspace\n";
     echo "assistant_backend=same_origin\n";
     echo "csrf=accepted\n";

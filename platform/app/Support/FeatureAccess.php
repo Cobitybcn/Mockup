@@ -33,7 +33,7 @@ final class FeatureAccess
     public static function overridableFeatures(): array
     {
         return [
-            self::WEBSITE_MANAGE => 'Website Catalog Sync',
+            self::WEBSITE_MANAGE => 'Studio Notes & Store',
             self::SOCIAL_MANAGE => 'Social Media Board',
             self::VIDEO_MANAGE => 'Video Lab',
         ];

@@ -173,9 +173,6 @@ Introduces real visual material into a studio workspace. In Scene Studio, the ex
 
 - Adding a permanent metadata form between the visual material and the reference library.
 - Requiring a second confirmation after an image is dropped or pasted.
-
-### Avoid
-
 - Presenting example imagery as if it were usable source material.
 - Hiding required metadata in a separate administrative screen.
 - Replacing the image-led upload surface with a dense file table.

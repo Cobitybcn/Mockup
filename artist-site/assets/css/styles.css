@@ -310,6 +310,52 @@ p {
     margin-top: 18px;
 }
 
+.store-offer { margin-top: 24px; padding: 18px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.store-offer .eyebrow { margin-bottom: 5px; }
+.store-offer__price { display: block; font: 500 clamp(28px, 2.6vw, 38px)/1 var(--serif-display); }
+.store-offer > p:not(.eyebrow) { max-width: 460px; margin: 9px 0 0; color: var(--muted); font-size: 14px; }
+.store-offer--unavailable { background: transparent; }
+
+.acquisition-workspace { display: grid; grid-template-columns: minmax(300px, .8fr) minmax(0, 1.2fr); gap: clamp(28px, 5vw, 68px); width: min(var(--max), calc(100% - 36px)); margin: 0 auto; padding: 0 0 clamp(54px, 7vw, 92px); }
+.acquisition-artwork { align-self: start; border: 1px solid var(--line); background: var(--panel); }
+.acquisition-artwork img { width: 100%; max-height: 650px; object-fit: contain; background: #fff; }
+.acquisition-artwork > div { display: grid; gap: 5px; padding: 18px; border-top: 1px solid var(--line); }
+.acquisition-artwork h2 { margin: 0; font-size: clamp(25px, 2.4vw, 34px); }
+.acquisition-artwork p { margin: 0; color: var(--muted); }
+.acquisition-artwork strong { margin-top: 5px; font: 500 24px/1 var(--serif-display); }
+.acquisition-form { display: grid; align-content: start; gap: 20px; padding: clamp(20px, 3vw, 34px); border: 1px solid var(--line); background: #fff; }
+.acquisition-form__intro { display: grid; gap: 4px; }
+.acquisition-form__intro h2 { margin: 0; font-size: clamp(26px, 2.7vw, 38px); }
+.acquisition-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+.acquisition-fields label { display: grid; align-content: start; gap: 6px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .055em; text-transform: uppercase; }
+.acquisition-fields label small { display: inline; color: #9b948a; font-size: 9px; font-weight: 500; }
+.acquisition-fields input,
+.acquisition-fields select,
+.acquisition-fields textarea { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 0; background: #fff; color: var(--ink); font: 15px/1.4 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: 0; text-transform: none; }
+.acquisition-fields textarea { min-height: 105px; resize: vertical; }
+.acquisition-field--wide { grid-column: 1 / -1; }
+.form-honeypot { position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden !important; clip: rect(0 0 0 0) !important; }
+.acquisition-message { padding: 11px 13px; border: 1px solid var(--line); font-size: 14px; }
+.acquisition-message--error { border-color: #d8aaa5; background: #f7e8e5; color: #7d302a; }
+.acquisition-totals { display: grid; margin: 0; border-top: 1px solid var(--line); }
+.acquisition-totals > div { display: flex; justify-content: space-between; gap: 20px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.acquisition-totals dt { color: var(--muted); }
+.acquisition-totals dd { margin: 0; font-weight: 650; text-align: right; }
+.acquisition-totals dt span { color: #9b948a; }
+.acquisition-totals__total { font-size: 18px; }
+.acquisition-consent { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 9px; align-items: start; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.acquisition-consent input { margin-top: 3px; }
+.acquisition-consent a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.acquisition-submit { min-height: 48px; justify-content: center; border-color: #d5b5b2; background: #ead9d7; color: var(--ink); font-size: 13px; cursor: pointer; }
+.acquisition-submit:hover,
+.acquisition-submit:focus-visible { border-color: #bd8d88; background: #e2c8c5; }
+.acquisition-form__note { margin: -9px 0 0; color: var(--muted); font-size: 11px; text-align: center; }
+.acquisition-confirmation,
+.acquisition-unavailable { width: min(760px, calc(100% - 36px)); padding-top: 28px; }
+.acquisition-confirmation { border-top: 1px solid var(--line); }
+.acquisition-confirmation h2,
+.acquisition-unavailable h2 { font-size: clamp(28px, 3vw, 42px); }
+
 .hero-search {
     width: min(100%, 520px);
     margin-top: 18px;
@@ -2856,7 +2902,8 @@ p {
     .artist-profile,
     .artist-profile-block,
     .artist-statement-excerpt,
-    .artwork-detail {
+    .artwork-detail,
+    .acquisition-workspace {
         grid-template-columns: 1fr;
     }
 
@@ -2964,6 +3011,10 @@ p {
         grid-template-columns: 1fr;
         gap: 2px;
     }
+
+    .acquisition-fields { grid-template-columns: 1fr; }
+    .acquisition-field--wide { grid-column: auto; }
+    .acquisition-form { padding: 18px 14px; }
 
     .artwork-series-preview {
         left: 0;

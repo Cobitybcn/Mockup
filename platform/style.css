@@ -1440,6 +1440,18 @@ button:disabled,
     display: none;
   }
 
+  .series-page .sidebar-tabs > .sidebar-tab-group:first-child {
+    display: none;
+  }
+
+  .series-page .sidebar-basic-library,
+  .series-page .sidebar-context {
+    display: flex;
+    margin-left: 0;
+    padding: 0 8px;
+    border-left: 0;
+  }
+
   .sidebar-mobile-menu {
     display: block !important;
     position: fixed;

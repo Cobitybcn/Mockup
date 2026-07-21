@@ -263,16 +263,9 @@ function run_uploaded_root_regression_tests(): void
         $videosCssSource,
         'videos finales elimina texto secundario para reducir la ficha al minimo'
     );
-    $websiteBoardCssSource = (string)file_get_contents(dirname(__DIR__, 2) . '/website_board.css');
-    TestHarness::assertContains(
-        'grid-template-columns: repeat(3, minmax(0, 1fr));',
-        $websiteBoardCssSource,
-        'el catalogo del website dedica mas superficie a cada thumbnail'
-    );
-    TestHarness::assertContains(
-        'height: 292px;',
-        $websiteBoardCssSource,
-        'las fichas del website muestran una portada mas grande'
+    TestHarness::assertTrue(
+        !is_file(dirname(__DIR__, 2) . '/website_board.php'),
+        'la pantalla heredada Website Board ya no existe'
     );
     $videoStudioPageSource = (string)file_get_contents(dirname(__DIR__, 2) . '/video.php');
     $videoStudioCssSource = (string)file_get_contents(dirname(__DIR__, 2) . '/video_studio.css');
@@ -302,54 +295,6 @@ function run_uploaded_root_regression_tests(): void
         $socialBoardSource,
         'Social Media usa como titulo principal el nombre real de la seccion'
     );
-    $websiteBoardSource = (string)file_get_contents(dirname(__DIR__, 2) . '/website_board.php');
-    TestHarness::assertContains(
-        '<span class="smb-catalog-kicker">Image Catalog</span>',
-        $websiteBoardSource,
-        'Website identifica la sincronizacion del catalogo como rotulo secundario'
-    );
-    TestHarness::assertContains(
-        '<h2 id="wbb-source-title">Website Catalog Sync</h2>',
-        $websiteBoardSource,
-        'Website usa como titulo principal el nombre real de la seccion'
-    );
-    TestHarness::assertContains(
-        '<span>Artist website</span>',
-        $websiteBoardSource,
-        'Website muestra el destino publico del artista en la cabecera'
-    );
-    TestHarness::assertContains(
-        "\$artistSubdomain . '.artworkmockups.com'",
-        $websiteBoardSource,
-        'Website construye el destino publico tambien desde el subdominio configurado'
-    );
-    TestHarness::assertContains(
-        'class="wbb-artist-website-setup" href="artist_profile.php"',
-        $websiteBoardSource,
-        'Website permite configurar el dominio desde Artist Profile cuando falta'
-    );
-    TestHarness::assertContains(
-        'data-catalog-publish-all',
-        $websiteBoardSource,
-        'Catalog sustituye el contador pasivo por una accion para publicar todos los borradores'
-    );
-    TestHarness::assertContains(
-        'width: 76px;',
-        $websiteBoardCssSource,
-        'la publicacion conjunta usa un boton cuadrado pastel y compacto'
-    );
-    $websiteBoardJsSource = (string)file_get_contents(dirname(__DIR__, 2) . '/website_board.js');
-    TestHarness::assertContains(
-        "post('catalog_publish_all', { ids })",
-        $websiteBoardJsSource,
-        'la accion principal envia el lote completo al servidor'
-    );
-    $websiteBoardActionSource = (string)file_get_contents(dirname(__DIR__, 2) . '/website_board_action.php');
-    TestHarness::assertContains(
-        "'catalog_publish_all' => \$service->publishCatalogDrafts",
-        $websiteBoardActionSource,
-        'el endpoint conecta la accion conjunta con la validacion transaccional'
-    );
     $authenticatedMediaSource = (string)file_get_contents(dirname(__DIR__, 2) . '/media.php');
     TestHarness::assertContains(
         'SELECT 1 FROM artwork_series WHERE user_id = :user_id AND header_file = :file LIMIT 1',
@@ -371,26 +316,6 @@ function run_uploaded_root_regression_tests(): void
     TestHarness::assertTrue(
         !str_contains($publicationMediaSource, 'root_artwork_candidates WHERE artwork_id=(SELECT canonical_artwork_id FROM artwork_sheets WHERE id=? AND user_id=? LIMIT 1) AND user_id=?'),
         'el endpoint publico de artworks no consulta una columna user_id inexistente en las vistas de obra'
-    );
-    TestHarness::assertContains(
-        '<span class="wbb-board-mark" aria-hidden="true">C</span><h2>Catalog</h2>',
-        $websiteBoardSource,
-        'Website conserva el mismo idioma tambien en su tablero de catalogo'
-    );
-    TestHarness::assertContains(
-        '.wbb-board-title h2 {',
-        $websiteBoardCssSource,
-        'los tableros de Website comparten la tipografia editorial de los titulos'
-    );
-    TestHarness::assertContains(
-        'aspect-ratio: 3 / 4;',
-        $websiteBoardCssSource,
-        'Website usa fichas verticales compactas para dar prioridad al thumbnail'
-    );
-    TestHarness::assertContains(
-        'object-fit: cover;',
-        $websiteBoardCssSource,
-        'Website muestra las obras a sangre y elimina el marco vacio del thumbnail'
     );
     TestHarness::assertContains(
         'grid-auto-columns: 300px;',
@@ -569,13 +494,47 @@ function run_uploaded_root_regression_tests(): void
         $artworksSource,
         'ArtWorks permite filtrar una serie concreta'
     );
+    TestHarness::assertTrue(
+        !str_contains($artworksSource, 'mobile-root-slider')
+            && !str_contains($artworksSource, 'Root artwork carousel'),
+        'ArtWorks reutiliza su cuadricula y no mantiene un carrusel movil duplicado'
+    );
+    TestHarness::assertContains(
+        'grid-template-columns: repeat(2, minmax(0, 1fr));',
+        $artworksSource,
+        'ArtWorks muestra dos columnas estables en movil'
+    );
     TestHarness::assertContains(
         'if ($selectedArtworkSeriesId > 0): ?> data-series-order-list',
         $artworksSource,
         'ArtWorks habilita el ordenamiento solamente dentro de una serie filtrada'
     );
+    TestHarness::assertContains(
+        'CASE WHEN a.series_id IS NULL THEN 1 ELSE 0 END ASC',
+        $artworksSource,
+        'ArtWorks deja las obras sin serie despues del catalogo editorial'
+    );
+    TestHarness::assertContains(
+        'COALESCE(s.year_start, s.year_end) DESC',
+        $artworksSource,
+        'ArtWorks ordena primero las series editoriales mas recientes'
+    );
+    TestHarness::assertContains(
+        'a.series_creation_number DESC',
+        $artworksSource,
+        'ArtWorks muestra primero las creaciones mas nuevas dentro de cada serie'
+    );
+    TestHarness::assertTrue(
+        !str_contains($artworksSource, 'ORDER BY g.updated_at DESC, g.created_at DESC, g.id DESC'),
+        'ArtWorks ya no usa la fecha de carga o modificacion como orden predeterminado'
+    );
 
     $artworkSeriesSource = (string)file_get_contents(dirname(__DIR__, 2) . '/app/Support/ArtworkSeries.php');
+    TestHarness::assertContains(
+        '$creationNumber = ($artworkCount - $index) * 10;',
+        $artworkSeriesSource,
+        'el drag and drop conserva a la izquierda el numero de creacion mas alto'
+    );
     TestHarness::assertContains(
         'CASE WHEN g.id IS NOT NULL THEN canonical.series_id ELSE a.series_id END AS effective_series_id',
         $artworkSeriesSource,

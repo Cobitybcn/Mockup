@@ -28,9 +28,14 @@ final class SiteManagerService
             contact_email VARCHAR(255) NOT NULL DEFAULT '', inquiry_intro {$long} NOT NULL,
             currency VARCHAR(3) NOT NULL DEFAULT 'EUR', payment_provider VARCHAR(40) NOT NULL DEFAULT '',
             payment_status VARCHAR(30) NOT NULL DEFAULT 'not_connected',
-            shipping_regions {$long} NOT NULL, shipping_policy {$long} NOT NULL,
+            shipping_regions {$long} NOT NULL, shipping_policy {$long} NOT NULL, shipping_rates_json {$long} NOT NULL,
             created_at VARCHAR(40) NOT NULL, updated_at VARCHAR(40) NOT NULL
         )");
+        if (!$this->columnExists('artist_site_settings', 'shipping_rates_json')) {
+            $this->pdo->exec('ALTER TABLE artist_site_settings ADD COLUMN shipping_rates_json ' . ($mysql ? 'LONGTEXT NULL' : "TEXT NOT NULL DEFAULT '{}'"));
+            $this->pdo->prepare('UPDATE artist_site_settings SET shipping_rates_json=? WHERE shipping_rates_json IS NULL OR shipping_rates_json=?')
+                ->execute([$this->defaultShippingRatesJson(), '']);
+        }
         $this->pdo->exec("CREATE TABLE IF NOT EXISTS artist_site_constellations (
             id {$id}, user_id {$integer} NOT NULL, artwork_id {$integer} NOT NULL,
             enabled INTEGER NOT NULL DEFAULT 0, country VARCHAR(120) NOT NULL DEFAULT '',
@@ -57,8 +62,23 @@ final class SiteManagerService
             currency VARCHAR(3) NOT NULL DEFAULT 'EUR', subtotal_minor INTEGER NOT NULL DEFAULT 0,
             shipping_minor INTEGER NOT NULL DEFAULT 0, tax_minor INTEGER NOT NULL DEFAULT 0,
             total_minor INTEGER NOT NULL DEFAULT 0, provider_reference VARCHAR(255) NOT NULL DEFAULT '',
+            provider_account_id VARCHAR(120) NOT NULL DEFAULT '',
             shipping_json {$long} NOT NULL, created_at VARCHAR(40) NOT NULL, updated_at VARCHAR(40) NOT NULL,
             UNIQUE(user_id, public_number)
+        )");
+        if (!$this->columnExists('artist_site_orders', 'provider_account_id')) {
+            $this->pdo->exec("ALTER TABLE artist_site_orders ADD COLUMN provider_account_id VARCHAR(120) NOT NULL DEFAULT ''");
+        }
+        $this->pdo->exec("CREATE TABLE IF NOT EXISTS artist_site_payment_connections (
+            id {$id}, user_id {$integer} NOT NULL UNIQUE,
+            provider VARCHAR(40) NOT NULL DEFAULT 'stripe',
+            external_account_id VARCHAR(120) NOT NULL DEFAULT '',
+            livemode INTEGER NOT NULL DEFAULT 0,
+            charges_enabled INTEGER NOT NULL DEFAULT 0,
+            payouts_enabled INTEGER NOT NULL DEFAULT 0,
+            details_submitted INTEGER NOT NULL DEFAULT 0,
+            connection_status VARCHAR(30) NOT NULL DEFAULT 'not_connected',
+            created_at VARCHAR(40) NOT NULL, updated_at VARCHAR(40) NOT NULL
         )");
         $this->pdo->exec("CREATE TABLE IF NOT EXISTS artist_site_order_items (
             id {$id}, order_id {$integer} NOT NULL, print_variant_id {$integer} NOT NULL,
@@ -95,6 +115,7 @@ final class SiteManagerService
             'payment_status' => 'not_connected',
             'shipping_regions' => '',
             'shipping_policy' => '',
+            'shipping_rates_json' => $this->defaultShippingRatesJson(),
         ];
     }
 
@@ -115,15 +136,17 @@ final class SiteManagerService
             $current['contact_email'] = $email;
             $current['inquiry_intro'] = trim((string)($input['inquiry_intro'] ?? ''));
         } elseif ($section === 'payments') {
-            $provider = strtolower(trim((string)($input['payment_provider'] ?? '')));
-            if (!preg_match('/^[a-z0-9_-]{0,40}$/', $provider)) throw new RuntimeException('Invalid payment provider identifier.');
             $currency = strtoupper(trim((string)($input['currency'] ?? 'EUR')));
             if (!preg_match('/^[A-Z]{3}$/', $currency)) throw new RuntimeException('Currency must use a three-letter ISO code.');
-            $current['payment_provider'] = $provider;
             $current['currency'] = $currency;
-            if ($provider === '') $current['payment_status'] = 'not_connected';
         } elseif ($section === 'shipping') {
-            $current['shipping_regions'] = trim((string)($input['shipping_regions'] ?? ''));
+            $rates = [];
+            foreach (array_keys($this->defaultShippingRates()) as $continent) {
+                $price = str_replace(',', '.', trim((string)($input['shipping_rate_' . $continent] ?? '250')));
+                if (!is_numeric($price) || (float)$price < 0) throw new RuntimeException('Enter a valid shipping price for every continent.');
+                $rates[$continent] = (int)round((float)$price * 100);
+            }
+            $current['shipping_rates_json'] = json_encode($rates, JSON_UNESCAPED_SLASHES) ?: $this->defaultShippingRatesJson();
             $current['shipping_policy'] = trim((string)($input['shipping_policy'] ?? ''));
         } else {
             throw new RuntimeException('Unknown settings section.');
@@ -142,15 +165,106 @@ final class SiteManagerService
             (string)$settings['site_title'], (string)$settings['tagline'], (string)$settings['locale'],
             (string)$settings['site_status'], (string)$settings['contact_email'], (string)$settings['inquiry_intro'],
             (string)$settings['currency'], (string)$settings['payment_provider'], (string)$settings['payment_status'],
-            (string)$settings['shipping_regions'], (string)$settings['shipping_policy'], $now,
+            (string)$settings['shipping_regions'], (string)$settings['shipping_policy'],
+            (string)($settings['shipping_rates_json'] ?? $this->defaultShippingRatesJson()), $now,
         ];
         if ($exists->fetchColumn()) {
-            $this->pdo->prepare('UPDATE artist_site_settings SET site_title=?,tagline=?,locale=?,site_status=?,contact_email=?,inquiry_intro=?,currency=?,payment_provider=?,payment_status=?,shipping_regions=?,shipping_policy=?,updated_at=? WHERE user_id=?')
+            $this->pdo->prepare('UPDATE artist_site_settings SET site_title=?,tagline=?,locale=?,site_status=?,contact_email=?,inquiry_intro=?,currency=?,payment_provider=?,payment_status=?,shipping_regions=?,shipping_policy=?,shipping_rates_json=?,updated_at=? WHERE user_id=?')
                 ->execute([...$values, $userId]);
             return;
         }
-        $this->pdo->prepare('INSERT INTO artist_site_settings (site_title,tagline,locale,site_status,contact_email,inquiry_intro,currency,payment_provider,payment_status,shipping_regions,shipping_policy,created_at,updated_at,user_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-            ->execute([...array_slice($values, 0, 11), $now, $now, $userId]);
+        $this->pdo->prepare('INSERT INTO artist_site_settings (site_title,tagline,locale,site_status,contact_email,inquiry_intro,currency,payment_provider,payment_status,shipping_regions,shipping_policy,shipping_rates_json,created_at,updated_at,user_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+            ->execute([...array_slice($values, 0, 12), $now, $now, $userId]);
+    }
+
+    /** @return array<string,mixed> */
+    public function paymentConnection(int $userId): array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM artist_site_payment_connections WHERE user_id=? LIMIT 1');
+        $stmt->execute([$userId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: [
+            'user_id' => $userId,
+            'provider' => 'stripe',
+            'external_account_id' => '',
+            'livemode' => 0,
+            'charges_enabled' => 0,
+            'payouts_enabled' => 0,
+            'details_submitted' => 0,
+            'connection_status' => 'not_connected',
+        ];
+    }
+
+    /** @param array<string,mixed> $account */
+    public function saveStripeConnection(int $userId, string $accountId, bool $livemode, array $account): void
+    {
+        if (!preg_match('/^acct_[A-Za-z0-9]+$/', $accountId)) throw new RuntimeException('Invalid Stripe connected account.');
+        $duplicate = $this->pdo->prepare("SELECT user_id FROM artist_site_payment_connections WHERE external_account_id=? AND user_id<>? AND connection_status<>'disconnected' LIMIT 1");
+        $duplicate->execute([$accountId, $userId]);
+        if ($duplicate->fetchColumn()) throw new RuntimeException('This Stripe account is already connected to another artist.');
+        $chargesEnabled = !empty($account['charges_enabled']);
+        $payoutsEnabled = !empty($account['payouts_enabled']);
+        $detailsSubmitted = !empty($account['details_submitted']);
+        $status = $chargesEnabled && $payoutsEnabled && $detailsSubmitted ? 'connected' : 'requirements_due';
+        $now = date('c');
+        $exists = $this->pdo->prepare('SELECT id FROM artist_site_payment_connections WHERE user_id=?');
+        $exists->execute([$userId]);
+        if ($exists->fetchColumn()) {
+            $this->pdo->prepare('UPDATE artist_site_payment_connections SET provider=?,external_account_id=?,livemode=?,charges_enabled=?,payouts_enabled=?,details_submitted=?,connection_status=?,updated_at=? WHERE user_id=?')
+                ->execute(['stripe', $accountId, $livemode ? 1 : 0, $chargesEnabled ? 1 : 0, $payoutsEnabled ? 1 : 0, $detailsSubmitted ? 1 : 0, $status, $now, $userId]);
+        } else {
+            $this->pdo->prepare('INSERT INTO artist_site_payment_connections (user_id,provider,external_account_id,livemode,charges_enabled,payouts_enabled,details_submitted,connection_status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
+                ->execute([$userId, 'stripe', $accountId, $livemode ? 1 : 0, $chargesEnabled ? 1 : 0, $payoutsEnabled ? 1 : 0, $detailsSubmitted ? 1 : 0, $status, $now, $now]);
+        }
+        $settings = $this->settings($userId);
+        $settings['payment_provider'] = 'stripe';
+        $settings['payment_status'] = $status;
+        $this->upsertSettings($userId, $settings);
+        $this->log($userId, 'payment.connected', 'payment_connection', $accountId, 'Stripe account connected for this artist.');
+    }
+
+    public function disconnectStripeConnection(int $userId): void
+    {
+        $connection = $this->paymentConnection($userId);
+        $now = date('c');
+        $this->pdo->prepare("UPDATE artist_site_payment_connections SET external_account_id='',livemode=0,charges_enabled=0,payouts_enabled=0,details_submitted=0,connection_status='disconnected',updated_at=? WHERE user_id=?")
+            ->execute([$now, $userId]);
+        $settings = $this->settings($userId);
+        $settings['payment_provider'] = '';
+        $settings['payment_status'] = 'not_connected';
+        $this->upsertSettings($userId, $settings);
+        $this->log($userId, 'payment.disconnected', 'payment_connection', (string)$connection['external_account_id'], 'Stripe account disconnected for this artist.');
+    }
+
+    /** @return array<string,int> */
+    private function defaultShippingRates(): array
+    {
+        return [
+            'europe' => 25000,
+            'africa' => 25000,
+            'asia' => 25000,
+            'north_america' => 25000,
+            'south_america' => 25000,
+            'oceania' => 25000,
+        ];
+    }
+
+    private function defaultShippingRatesJson(): string
+    {
+        return json_encode($this->defaultShippingRates(), JSON_UNESCAPED_SLASHES) ?: '{}';
+    }
+
+    private function columnExists(string $table, string $column): bool
+    {
+        if ($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
+            $stmt = $this->pdo->prepare("SHOW COLUMNS FROM {$table} LIKE ?");
+            $stmt->execute([$column]);
+            return (bool)$stmt->fetchColumn();
+        }
+        foreach ($this->pdo->query("PRAGMA table_info({$table})")->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            if ((string)($row['name'] ?? '') === $column) return true;
+        }
+        return false;
     }
 
     /** @param array<string,mixed> $input */
@@ -167,36 +281,12 @@ final class SiteManagerService
     /** @param array<string,mixed> $input */
     public function saveDomain(int $userId, array $input): void
     {
-        $subdomain = strtolower(trim((string)($input['subdomain'] ?? '')));
-        if ($subdomain !== '' && !preg_match('/^[a-z0-9-]+$/', $subdomain)) throw new RuntimeException('Subdomain may contain lowercase letters, numbers, and hyphens only.');
-        $customDomain = $this->normalizeHost((string)($input['custom_domain'] ?? ''));
-
-        if ($subdomain !== '') {
-            $stmt = $this->pdo->prepare('SELECT 1 FROM artist_profiles WHERE user_id<>? AND LOWER(subdomain)=? LIMIT 1');
-            $stmt->execute([$userId, $subdomain]);
-            if ($stmt->fetchColumn()) throw new RuntimeException('This subdomain is already assigned.');
-        }
-        if ($customDomain !== '') {
-            $stmt = $this->pdo->prepare('SELECT 1 FROM artist_profiles WHERE user_id<>? AND LOWER(custom_domain)=? LIMIT 1');
-            $stmt->execute([$userId, $customDomain]);
-            if ($stmt->fetchColumn()) throw new RuntimeException('This domain is already assigned.');
-        }
-
-        $profile = ArtistProfile::findForUser($userId);
-        $profile['subdomain'] = $subdomain;
-        $profile['custom_domain'] = $customDomain;
-        ArtistProfile::saveForUser($userId, $profile);
+        (new ArtistDomainService($this->pdo))->saveConfiguration(
+            $userId,
+            (string)($input['subdomain'] ?? ''),
+            (string)($input['custom_domain'] ?? '')
+        );
         $this->log($userId, 'domain.updated', 'domain', (string)$userId, 'Artist website destination updated.');
-    }
-
-    private function normalizeHost(string $value): string
-    {
-        $value = trim($value);
-        if ($value === '') return '';
-        $candidate = preg_match('#^https?://#i', $value) ? $value : 'https://' . ltrim($value, '/');
-        $host = strtolower(trim((string)(parse_url($candidate, PHP_URL_HOST) ?: ''), '.'));
-        if ($host === '' || !preg_match('/^[a-z0-9.-]+$/', $host) || !str_contains($host, '.')) throw new RuntimeException('Enter a valid custom domain.');
-        return $host;
     }
 
     /** @return array<int,array<string,mixed>> */
@@ -209,8 +299,9 @@ final class SiteManagerService
                 COALESCE(NULLIF(s.title,''),NULLIF(a.series,''),'') series_title,
                 COALESCE(a.artwork_group_id,0) artwork_group_id,
                 COALESCE(sh.id,0) artwork_sheet_id,
-                COALESCE(p.id,0) publication_id,COALESCE(p.slug,'') slug,COALESCE(p.title,'') public_title,
-                COALESCE(p.short_description,'') short_description,COALESCE(p.description,'') description,
+                COALESCE(p.id,0) publication_id,COALESCE(p.slug,'') slug,
+                COALESCE(sh.title,'') public_title,COALESCE(sh.short_description,'') short_description,
+                COALESCE(sh.description,'') description,'inherit' content_source,
                 COALESCE(p.cta_label,'') cta_label,COALESCE(p.cta_url,'') cta_url,
                 COALESCE(p.header_file,'') header_file,COALESCE(p.status,'not_prepared') publication_status,
                 COALESCE(p.visibility,'private') visibility,COALESCE(p.updated_at,a.updated_at) website_updated_at,
@@ -528,6 +619,105 @@ final class SiteManagerService
         $stmt = $this->pdo->prepare('SELECT * FROM artist_site_orders WHERE user_id=? ORDER BY created_at DESC,id DESC LIMIT 200');
         $stmt->execute([$userId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /** @return array<string,mixed>|null */
+    public function order(int $userId, int $orderId): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM artist_site_orders WHERE id=? AND user_id=? LIMIT 1');
+        $stmt->execute([$orderId, $userId]);
+        $order = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$order) return null;
+        $items = $this->pdo->prepare('SELECT * FROM artist_site_order_items WHERE order_id=? ORDER BY id');
+        $items->execute([$orderId]);
+        $order['items'] = $items->fetchAll(PDO::FETCH_ASSOC);
+        $shipping = json_decode((string)$order['shipping_json'], true);
+        $order['shipping'] = is_array($shipping) ? $shipping : [];
+        return $order;
+    }
+
+    public function updateOrder(int $userId, int $orderId, string $action): void
+    {
+        $driver = strtolower((string)$this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME));
+        $this->pdo->beginTransaction();
+        try {
+            $sql = 'SELECT * FROM artist_site_orders WHERE id=? AND user_id=?' . ($driver === 'mysql' ? ' FOR UPDATE' : '');
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$orderId, $userId]);
+            $order = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$order) throw new RuntimeException('Order not found.');
+            $currentStatus = (string)$order['order_status'];
+            if (in_array($currentStatus, ['cancelled', 'completed'], true)) throw new RuntimeException('This order is already closed.');
+
+            $nextStatus = $currentStatus;
+            $paymentStatus = (string)$order['payment_status'];
+            $event = '';
+            $message = '';
+            if ($action === 'confirm') {
+                $nextStatus = 'confirmed';
+                $event = 'order.confirmed';
+                $message = 'Order ' . $order['public_number'] . ' confirmed.';
+            } elseif ($action === 'paid') {
+                $paymentStatus = 'paid';
+                if (in_array($nextStatus, ['request_received', 'awaiting_payment'], true)) $nextStatus = 'confirmed';
+                $event = 'order.paid';
+                $message = 'Order ' . $order['public_number'] . ' marked as paid.';
+            } elseif ($action === 'shipped') {
+                if ($paymentStatus !== 'paid') throw new RuntimeException('Mark the order as paid before shipping it.');
+                $nextStatus = 'shipped';
+                $event = 'order.shipped';
+                $message = 'Order ' . $order['public_number'] . ' marked as shipped.';
+            } elseif ($action === 'complete') {
+                if ($paymentStatus !== 'paid') throw new RuntimeException('Mark the order as paid before completing it.');
+                $this->settleReservedStock($orderId, $userId, true, $driver);
+                $nextStatus = 'completed';
+                $event = 'order.completed';
+                $message = 'Order ' . $order['public_number'] . ' completed and stock sold.';
+            } elseif ($action === 'cancel') {
+                $this->settleReservedStock($orderId, $userId, false, $driver);
+                $nextStatus = 'cancelled';
+                $event = 'order.cancelled';
+                $message = 'Order ' . $order['public_number'] . ' cancelled and stock released.';
+            } else {
+                throw new RuntimeException('Unknown order action.');
+            }
+
+            $now = date('c');
+            $this->pdo->prepare('UPDATE artist_site_orders SET payment_status=?,order_status=?,updated_at=? WHERE id=? AND user_id=?')
+                ->execute([$paymentStatus, $nextStatus, $now, $orderId, $userId]);
+            $this->pdo->prepare('INSERT INTO artist_site_activity (user_id,event_type,entity_type,entity_id,message,created_at) VALUES (?,?,?,?,?,?)')
+                ->execute([$userId, $event, 'order', (string)$orderId, $message, $now]);
+            $this->pdo->commit();
+        } catch (Throwable $error) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $error;
+        }
+    }
+
+    private function settleReservedStock(int $orderId, int $userId, bool $consume, string $driver): void
+    {
+        $items = $this->pdo->prepare('SELECT print_variant_id,quantity FROM artist_site_order_items WHERE order_id=?');
+        $items->execute([$orderId]);
+        foreach ($items->fetchAll(PDO::FETCH_ASSOC) as $item) {
+            $variantId = (int)$item['print_variant_id'];
+            $quantity = max(1, (int)$item['quantity']);
+            $lockSql = 'SELECT stock_on_hand,stock_reserved FROM artist_site_print_variants WHERE id=? AND user_id=?' . ($driver === 'mysql' ? ' FOR UPDATE' : '');
+            $lock = $this->pdo->prepare($lockSql);
+            $lock->execute([$variantId, $userId]);
+            $stock = $lock->fetch(PDO::FETCH_ASSOC);
+            if (!$stock) throw new RuntimeException('Reserved stock record not found.');
+            if ((int)$stock['stock_reserved'] < $quantity) throw new RuntimeException('Reserved stock is inconsistent for this order.');
+            $stockOnHand = max(0, (int)$stock['stock_on_hand'] - ($consume ? $quantity : 0));
+            $stockReserved = max(0, (int)$stock['stock_reserved'] - $quantity);
+            $status = $consume && $stockOnHand === 0 ? 'sold_out' : null;
+            if ($status !== null) {
+                $this->pdo->prepare('UPDATE artist_site_print_variants SET stock_on_hand=?,stock_reserved=?,status=?,updated_at=? WHERE id=? AND user_id=?')
+                    ->execute([$stockOnHand, $stockReserved, $status, date('c'), $variantId, $userId]);
+            } else {
+                $this->pdo->prepare('UPDATE artist_site_print_variants SET stock_on_hand=?,stock_reserved=?,updated_at=? WHERE id=? AND user_id=?')
+                    ->execute([$stockOnHand, $stockReserved, date('c'), $variantId, $userId]);
+            }
+        }
     }
 
     /** @return array<int,array<string,mixed>> */

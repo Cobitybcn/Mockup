@@ -686,9 +686,9 @@ class ArtworkSeries
             WHERE g.user_id = ? AND g.status = ? AND a.status = ? AND a.series_id = ?
             ORDER BY
                 CASE WHEN a.series_creation_number IS NULL THEN 1 ELSE 0 END ASC,
-                a.series_creation_number ASC,
-                g.created_at ASC,
-                a.id ASC
+                a.series_creation_number DESC,
+                g.created_at DESC,
+                a.id DESC
         ');
         $currentStmt->execute([$userId, 'active', 'done', $seriesId]);
         $currentIds = array_map('intval', $currentStmt->fetchAll(PDO::FETCH_COLUMN));
@@ -713,8 +713,9 @@ class ArtworkSeries
         try {
             $update = $pdo->prepare('UPDATE artworks SET series_creation_number = ? WHERE id = ? AND user_id = ? AND series_id = ?');
             $positions = [];
+            $artworkCount = count($orderedArtworkIds);
             foreach ($orderedArtworkIds as $index => $artworkId) {
-                $creationNumber = ($index + 1) * 10;
+                $creationNumber = ($artworkCount - $index) * 10;
                 $update->execute([$creationNumber, $artworkId, $userId, $seriesId]);
                 $positions[$artworkId] = [
                     'number' => $creationNumber,

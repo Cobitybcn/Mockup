@@ -28,3 +28,5 @@ Rectangular geometry communicates visual content. It must remain semantically di
 Store one tightly framed `reference.png` showing an approved group of rectangular Thumbnail Cards with real image crops, concise labels, spacing relationships, and an established selection, focus, or drag state. Include enough neighboring cards to demonstrate comparison scale and soft visual density.
 
 Add `NOTES.md` only when the capture is approved, following the three-question format defined in `design-system/references/README.md`.
+
+**Approved reference on file:** `design-system/references/scene-mockups/` (Scene Mockups screen, `platform/mockup_combination_results.php`).

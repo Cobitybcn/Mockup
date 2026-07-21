@@ -30,3 +30,5 @@ Horizontal galleries live inside this vertical flow. They support comparison wit
 Store one tall `reference.png` showing an approved vertical workspace sequence from its editorial header through the Primary Decision Block, carousel, active workspace, assignments, and results that are present. The capture must demonstrate vertical progression and horizontal galleries within it.
 
 Add `NOTES.md` only when the capture is approved, following the three-question format defined in `design-system/references/README.md`.
+
+**Approved reference on file:** `design-system/references/mockup-album/` (Mockup Album screen, `platform/mockups.php`).

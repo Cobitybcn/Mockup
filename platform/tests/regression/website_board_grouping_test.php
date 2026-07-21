@@ -30,7 +30,8 @@ function run_website_board_grouping_regression_tests(): void
     )");
     $pdo->exec("CREATE TABLE mockups (
         id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, mockup_file TEXT NOT NULL,
-        context_id TEXT NOT NULL, source_artwork_id INTEGER, series_id INTEGER, created_at TEXT NOT NULL
+        context_id TEXT NOT NULL, source_artwork_id INTEGER, series_id INTEGER,
+        selector_state_json TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL
     )");
     $pdo->exec("CREATE TABLE mockup_sheets (
         id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, artwork_sheet_id INTEGER NOT NULL DEFAULT 0, mockup_file TEXT NOT NULL,
@@ -53,6 +54,15 @@ function run_website_board_grouping_regression_tests(): void
         (202,70,102,'merged','Crimson Duplicate','crimson-secondary.jpg','','Duplicate','Duplicate description'),
         (203,70,103,'validated','Independent Work','independent.jpg','','Ready to publish','Full description'),
         (204,70,104,'validated','Alpha Work','alpha.jpg','','','')");
+    $closeupState = json_encode(['combination' => [
+        'selected_camera_slot_id' => 'detalle_textura_lienzo',
+        'camera_slot_name' => 'Canvas Close-Up',
+        'context_title' => 'Quiet collector interior',
+    ]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $insertMockup = $pdo->prepare("INSERT INTO mockups
+        (id,user_id,mockup_file,context_id,source_artwork_id,series_id,selector_state_json,created_at)
+        VALUES (301,70,'close-detail.jpg','quiet_collector_interior',101,1,?,'2026-07-20T10:00:00Z')");
+    $insertMockup->execute([$closeupState]);
 
     $service = new WebsiteBoardService($pdo);
     $artworks = array_values(array_filter(
@@ -66,10 +76,47 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertTrue(in_array('artwork:101', $keys, true), 'el picker conserva la obra canonica');
     TestHarness::assertTrue(!in_array('artwork:102', $keys, true), 'la referencia absorbida no reaparece como obra independiente');
     TestHarness::assertTrue(in_array('artwork:103', $keys, true), 'las obras sin grupo legado siguen disponibles');
+    $mockupSources = array_values(array_filter(
+        $service->sources(70),
+        static fn (array $source): bool => (string)$source['type'] === 'mockup'
+    ));
+    TestHarness::assertSame('Canvas Close-Up', (string)($mockupSources[0]['cameraSlotName'] ?? ''), 'Studio Notes conserva el nombre real de la camara del mockup');
+    TestHarness::assertTrue(str_contains((string)($mockupSources[0]['searchTerms'] ?? ''), 'close'), 'las tomas de detalle se pueden encontrar buscando close aunque el contexto no lo diga');
 
     $resolver = new ReflectionMethod(WebsiteBoardService::class, 'resolveSource');
     $legacy = $resolver->invoke($service, 70, 'artwork:102');
     TestHarness::assertSame('artwork:101', (string)$legacy['key'], 'una nota antigua se reconecta con la obra canonica');
+
+    $platformRoot = dirname(__DIR__, 2);
+    $studioNotesPage = (string)file_get_contents($platformRoot . '/website_studio_notes.php');
+    $artworkPage = (string)file_get_contents($platformRoot . '/artwork.php');
+    $seriesPage = (string)file_get_contents($platformRoot . '/series.php');
+    $viewerPage = (string)file_get_contents($platformRoot . '/viewer.php');
+    TestHarness::assertContains('class="studio-source-stage"', $studioNotesPage, 'Studio Notes mantiene una única etapa visual para crear una nota');
+    TestHarness::assertContains("['artwork' => 'Artworks', 'series' => 'Series', 'mockup' => 'Mockups']", $studioNotesPage, 'el selector organiza las tres fuentes visuales sin mezclarlas');
+    TestHarness::assertContains('overflow-x:auto', $studioNotesPage, 'el selector movil usa desplazamiento horizontal nativo');
+    TestHarness::assertTrue(!str_contains($studioNotesPage, '<h2>New Studio Note</h2>'), 'Studio Notes no repite un segundo titulo de pagina dentro del creador');
+    TestHarness::assertContains('data-source-tab="none" data-clear-source', $studioNotesPage, 'No source es una pestaña que oculta las galerias y limpia la seleccion');
+    TestHarness::assertContains('social-square-button social-square-button--studio_process studio-create-decision', $studioNotesPage, 'crear una nota reutiliza el Decision Block lavanda al final de la linea visual');
+    TestHarness::assertContains('studio-create-decision__plus">+</span>', $studioNotesPage, 'la accion de crear una nota usa el simbolo + grande del patron de alta');
+    TestHarness::assertContains('studio-create-decision__label">NOTE</span>', $studioNotesPage, 'la accion principal conserva la etiqueta NOTE');
+    TestHarness::assertTrue(!str_contains($studioNotesPage, 'Open Website Blog'), 'Studio Notes no muestra el acceso redundante al blog publico');
+    TestHarness::assertTrue(!str_contains($studioNotesPage, 'placeholder="Title your note"'), 'el titulo se escribe dentro del borrador y no antes de crearlo');
+    TestHarness::assertTrue(!str_contains($studioNotesPage, 'name="destinations[]"'), 'la creacion no adelanta decisiones de destino');
+    TestHarness::assertContains('data-insert-image=', $studioNotesPage, 'el editor permite insertar el material visual relacionado con la fuente');
+    TestHarness::assertContains("quill.insertEmbed(safeIndex, 'image'", $studioNotesPage, 'las imagenes relacionadas se insertan en la posicion del cursor');
+    TestHarness::assertContains('draggable="true"', $studioNotesPage, 'el material relacionado se puede arrastrar al editor');
+    TestHarness::assertContains('application/x-studio-note-media', $studioNotesPage, 'Studio Notes usa un payload de drag and drop propio');
+    TestHarness::assertContains('data-image-align="center"', $studioNotesPage, 'las imagenes insertadas se pueden alinear editorialmente');
+    TestHarness::assertContains('data-media-filter="related"', $studioNotesPage, 'la biblioteca distingue el material relacionado');
+    TestHarness::assertContains('data-media-filter="mockup"', $studioNotesPage, 'la biblioteca permite buscar entre mockups diferentes');
+    TestHarness::assertContains('data-media-search', $studioNotesPage, 'la biblioteca visual ofrece busqueda por sus metadatos');
+    TestHarness::assertContains("(string)(\$media['searchTerms'] ?? '')", $studioNotesPage, 'la busqueda incluye camara, slot y sinonimos del mockup');
+    TestHarness::assertContains("normalize('NFD')", $studioNotesPage, 'la busqueda visual ignora tildes');
+    TestHarness::assertContains('website_studio_notes.php?source=artwork:', $artworkPage, 'cada Artwork puede iniciar una Studio Note contextual');
+    TestHarness::assertContains('website_studio_notes.php?source=series:', $seriesPage, 'cada Series puede iniciar una Studio Note contextual');
+    TestHarness::assertContains('website_studio_notes.php?source=mockup:', $viewerPage, 'el viewer puede iniciar una Studio Note desde el mockup activo');
+    TestHarness::assertTrue(!str_contains($viewerPage, '>Publish mockup</a>'), 'el viewer ya no confunde Studio Notes con Publish mockup');
 
     $insertPublication = $pdo->prepare("INSERT INTO publications
         (user_id,artwork_sheet_id,slug,title,description,short_description,language,objective,cta_label,cta_url,visibility,status,profile_snapshot_json,metadata_snapshot_json,published_at,created_at,updated_at,header_file)

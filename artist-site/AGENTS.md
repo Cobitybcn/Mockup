@@ -724,6 +724,14 @@ Each page should have a clear SEO role.
 
 
 
+\## Visual identity for shared UI
+
+\* This site is part of the artworkmockups repo. Root-level \`AGENTS.md\` and \`design-system/\` define the shared visual constitution for any panel, form, or dashboard-style UI reused across the platform (e.g. account/site-manager style screens). Read root \`AGENTS.md\` before touching that kind of UI here.
+
+\* This file's rules govern content, SEO, and artist-site-specific page layout (Home, Works, Series, Artist, Studio Notes, Collectors), which are specific to this public artist site and are not covered by \`design-system/\`.
+
+
+
 \## Development rules
 
 

@@ -26,3 +26,5 @@ Muted pigmentary pastel color identifies sections, workflow families, boards, an
 Store one `reference.png` showing approved section colors in their real organizational roles: neutral base surfaces, pigmentary pastel section identity, and related badge or board accents. The capture must demonstrate how color identifies areas without decorating or dominating, rather than presenting isolated swatches.
 
 Add `NOTES.md` only when the capture is approved, following the three-question reference format defined in `design-system/references/README.md`.
+
+**Approved reference on file:** `design-system/references/series-decision-blocks/` (Series screen, `platform/series.php`).
