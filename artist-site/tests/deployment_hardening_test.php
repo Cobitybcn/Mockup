@@ -13,6 +13,7 @@ $checks = [
     [str_contains($cloudBuild, '/admin-v2/'), 'both retired Cloud Run admin routes are verified'],
     [str_contains($cloudBuild, '--clear-tags'), 'promotion retires stale tagged revisions'],
     [str_contains($cloudBuild, 'serviceAccounts/mockups-cicd-sa@'), 'artist releases use the dedicated CI/CD identity'],
+    [substr_count($cloudBuild, 'BUILD_ID="$BUILD_ID"') === 2, 'Cloud Build ID is substituted before shell substring expansion'],
     [str_contains($dockerIgnore, 'assets/uploads/') && str_contains($cloudIgnore, 'assets/uploads/'), 'runtime uploads never enter build contexts'],
     [str_contains($dockerIgnore, 'assets/tenants/') && str_contains($cloudIgnore, 'assets/tenants/'), 'tenant runtime data never enters build contexts'],
 ];

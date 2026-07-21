@@ -64,6 +64,7 @@ steps:
         image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}"
         digest="$$(gcloud artifacts docker images describe "$$image:$COMMIT_SHA" --project="$PROJECT_ID" --format='value(image_summary.digest)')"
         [[ "$$digest" == sha256:* ]] || { echo "Could not resolve artist-site image digest." >&2; exit 1; }
+        BUILD_ID="$BUILD_ID"
         build_short="$${BUILD_ID:0:8}"
         revision="${_SERVICE}-cb-$SHORT_SHA-$$build_short"
         gcloud run deploy "${_SERVICE}" \
@@ -129,6 +130,7 @@ steps:
     args:
       - -ceu
       - |
+        BUILD_ID="$BUILD_ID"
         build_short="$${BUILD_ID:0:8}"
         revision="${_SERVICE}-cb-$SHORT_SHA-$$build_short"
         gcloud run services update-traffic "${_SERVICE}" \
