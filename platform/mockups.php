@@ -403,23 +403,6 @@ function mockup_album_label(array $mockup): string
         .mockup-archive-panel .meta-line {
             font-size: 11px;
         }
-        .mobile-album-slider {
-            display: none;
-        }
-        .mobile-album-slide {
-            color: var(--ink);
-            text-decoration: none;
-            position: relative;
-        }
-        .mobile-album-slide img {
-            display: block;
-            width: 100%;
-            aspect-ratio: 3 / 4;
-            object-fit: cover;
-            border: 1px solid var(--line);
-            border-radius: 5px;
-            background: var(--surface-soft);
-        }
         @media (max-width: 760px) {
             .app-header,
             .alert-strip {
@@ -449,28 +432,39 @@ function mockup_album_label(array $mockup): string
                 line-height: 1.45;
             }
             .mockup-album-header .topbar-actions {
-                display: none;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 8px;
+                margin-top: 14px;
+            }
+            .mockup-album-header .topbar-actions .button-link {
+                width: 100%;
+                min-height: 46px;
             }
             .toolbar-form {
                 display: grid;
-                grid-template-columns: minmax(0, 1fr) auto;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 8px;
                 margin-bottom: 14px;
             }
             .toolbar-form input[type="text"] {
+                grid-column: 1 / -1;
                 min-width: 0;
                 min-height: 46px;
-                font-size: 14px;
+                font-size: 16px;
             }
             .toolbar-form button,
             .toolbar-form .button-link {
+                width: 100%;
                 min-height: 46px;
                 padding-left: 14px;
                 padding-right: 14px;
                 font-size: 11px;
             }
-            .toolbar-form .button-link.secondary {
+            .toolbar-form:not(.has-clear) button {
                 grid-column: 1 / -1;
+            }
+            .toolbar-form .button-link.secondary {
                 width: 100%;
             }
             .mockup-archive-panel {
@@ -506,7 +500,7 @@ function mockup_album_label(array $mockup): string
                 display: none;
             }
             .favorite-mockups-strip {
-                grid-auto-columns: calc(100% - 18px);
+                grid-auto-columns: min(70vw, 260px);
                 gap: 10px;
                 padding: 0 2px 2px;
                 scroll-snap-type: x mandatory;
@@ -553,39 +547,6 @@ function mockup_album_label(array $mockup): string
                 margin: 0;
                 white-space: nowrap;
                 font-size: 11px;
-            }
-            .mobile-album-slider {
-                display: grid;
-                grid-auto-flow: column;
-                grid-auto-columns: calc(100% - 18px);
-                gap: 10px;
-                overflow-x: auto;
-                overflow-y: hidden;
-                scroll-snap-type: x mandatory;
-                overscroll-behavior-x: contain;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
-                padding: 0 0 14px;
-                margin-bottom: 12px;
-                border-bottom: 1px solid var(--line);
-            }
-            .mobile-album-slider::-webkit-scrollbar {
-                display: none;
-            }
-            .mobile-album-slide {
-                scroll-snap-align: start;
-                scroll-snap-stop: always;
-                padding: 8px;
-                border: 1px solid var(--line);
-                border-radius: 6px;
-                background: var(--surface-soft);
-            }
-            .mobile-album-slide:first-child {
-                border-color: #b77f86;
-                box-shadow: inset 0 0 0 2px #b77f86;
-            }
-            .mobile-album-slide img {
-                border-radius: 4px;
             }
             .mockup-archive-panel .grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -661,7 +622,7 @@ function mockup_album_label(array $mockup): string
                 </div>
             </div>
 
-            <form class="toolbar-form" method="get">
+            <form class="toolbar-form<?= $query !== '' ? ' has-clear' : '' ?>" method="get">
                 <input type="text" name="q" value="<?= h($query) ?>" placeholder="Search by context, file or artwork title">
                 <button type="submit">Search</button>
                 <?php if ($query !== ''): ?>
@@ -716,29 +677,6 @@ function mockup_album_label(array $mockup): string
                 <?php if (!$mockups): ?>
                     <div class="empty-state">No mockups to display.</div>
                 <?php else: ?>
-                    <div class="mobile-album-slider" aria-label="Featured mockups">
-                        <?php foreach ($mockups as $mockup): ?>
-                            <div class="mobile-album-slide">
-                                <a href="viewer.php?id=<?= h($mockup['id']) ?>&back=<?= rawurlencode(page_url($page, $query)) ?>" aria-label="Open mockup">
-                                    <img src="<?= h(result_url($mockup['mockup_file'], 640)) ?>" alt="" loading="lazy" decoding="async">
-                                </a>
-                                <button
-                                    class="album-favorite-btn media-icon-button media-thumb-action media-thumb-action--left <?= isset($favoriteLookup[(int)$mockup['id']]) ? 'active' : '' ?>"
-                                    type="button"
-                                    title="<?= isset($favoriteLookup[(int)$mockup['id']]) ? 'Remove favorite' : 'Add favorite' ?>"
-                                    aria-label="<?= isset($favoriteLookup[(int)$mockup['id']]) ? 'Remove favorite' : 'Add favorite' ?>"
-                                    data-favorite-mockup
-                                    data-mockup-id="<?= (int)$mockup['id'] ?>"
-                                ><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
-                                <a class="media-icon-button media-thumb-action media-thumb-action--right-secondary" href="<?= h(download_url($mockup['mockup_file'])) ?>" aria-label="Download mockup" title="Download mockup">
-                                    <svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>
-                                </a>
-                                <button class="luxury-delete-btn media-icon-button media-thumb-action media-thumb-action--right is-danger" type="button" title="Delete mockup" aria-label="Delete mockup" data-delete-mockup data-mockup-id="<?= (int)$mockup['id'] ?>">
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 8.5h7l-.55 9h-5.9l-.55-9Z"/><path d="M7.5 6.5h9M10 6.5V5h4v1.5M10.5 11v4.2M13.5 11v4.2"/></svg>
-                                </button>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
                     <div class="grid">
                         <?php foreach ($mockups as $mockup): ?>
                             <article class="item-card">

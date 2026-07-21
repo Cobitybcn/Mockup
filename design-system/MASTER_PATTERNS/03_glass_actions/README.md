@@ -28,3 +28,5 @@ Glass actions are small circular icon controls placed over images. Their restrai
 Store one close-detail `reference.png` showing an approved Thumbnail Card with its complete Glass Action arrangement visible over the image. The capture must show the top-left favorite, top-right secondary actions, circular form, icon treatment, frosted translucency, minimal visual weight, and contrast against real image content.
 
 Add `NOTES.md` only when the capture is approved, following the three-question reference format defined in `design-system/references/README.md`.
+
+**Approved reference on file:** `design-system/references/scene-mockups/` (Scene Mockups screen, `platform/mockup_combination_results.php`).

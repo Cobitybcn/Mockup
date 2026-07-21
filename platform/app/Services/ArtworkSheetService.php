@@ -123,6 +123,7 @@ final class ArtworkSheetService
             'id' => $sheetId,
             'user_id' => $userId,
         ]);
+        (new PublicationService($this->pdo))->syncInheritedFromSheet($sheetId, $userId);
     }
 
     /**
@@ -223,6 +224,7 @@ final class ArtworkSheetService
             'id' => (int)$sheet['id'],
             'user_id' => $userId,
         ]);
+        (new PublicationService($this->pdo))->syncInheritedFromSheet((int)$sheet['id'], $userId);
     }
 
     /**

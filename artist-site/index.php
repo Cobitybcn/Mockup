@@ -1,4 +1,9 @@
 <?php
+require __DIR__ . '/inc/LocalEnv.php';
+load_local_env(dirname(__DIR__) . '/platform/.env');
+load_local_env(__DIR__ . '/.env');
+$platformAutoload = dirname(__DIR__) . '/platform/vendor/autoload.php';
+if (is_file($platformAutoload)) require_once $platformAutoload;
 require __DIR__ . '/data/site.php';
 require __DIR__ . '/inc/functions.php';
 require __DIR__ . '/inc/AppDatabase.php';
@@ -8,6 +13,8 @@ require __DIR__ . '/inc/AppPublishedSeriesCatalog.php';
 require __DIR__ . '/inc/AppPublishedArtistProfile.php';
 require __DIR__ . '/inc/AppPublishedStudioNotes.php';
 require __DIR__ . '/inc/AppPublishedSiteSettings.php';
+require __DIR__ . '/inc/AppStore.php';
+require __DIR__ . '/inc/StripeCheckout.php';
 
 $path = current_path();
 $segments = array_values(array_filter(explode('/', trim($path, '/'))));
@@ -27,6 +34,7 @@ try {
     if (trim((string)($managedSiteSettings['tagline'] ?? '')) !== '') $site['tagline'] = trim((string)$managedSiteSettings['tagline']);
     if (trim((string)($managedSiteSettings['contact_email'] ?? '')) !== '') $site['email'] = trim((string)$managedSiteSettings['contact_email']);
     $site['inquiry_intro'] = trim((string)($managedSiteSettings['inquiry_intro'] ?? ''));
+    $site['url'] = rtrim(app_absolute_url('/'), '/');
 } catch (Throwable $error) {
     error_log('Artist Site Manager settings unavailable: ' . $error->getMessage());
 }
@@ -95,8 +103,22 @@ if (($segments[0] ?? '') === 'admin') {
         'samesite' => 'Lax',
     ]);
     session_start();
-    if (empty($_SESSION['csrf_token'])) {
+    if (($segments[0] ?? '') === 'admin' && empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    if (($segments[0] ?? '') === 'acquire' && empty($_SESSION['purchase_csrf'])) {
+        $_SESSION['purchase_csrf'] = bin2hex(random_bytes(32));
+    }
+} elseif (in_array(($segments[0] ?? ''), ['acquire', 'payment'], true)) {
+    session_set_cookie_params([
+        'path' => '/',
+        'httponly' => true,
+        'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+        'samesite' => 'Lax',
+    ]);
+    session_start();
+    if (($segments[0] ?? '') === 'acquire' && empty($_SESSION['purchase_csrf'])) {
+        $_SESSION['purchase_csrf'] = bin2hex(random_bytes(32));
     }
 }
 
@@ -1174,6 +1196,50 @@ function app_catalog(): ?AppPublishedCatalog
     return $catalog;
 }
 
+function app_store(): ?AppStore
+{
+    static $store = false;
+    if ($store === false) {
+        try {
+            $store = AppStore::fromApp(dirname(__DIR__) . '/platform', resolved_artist_email());
+        } catch (Throwable $error) {
+            error_log('Artist store unavailable: ' . $error->getMessage());
+            $store = null;
+        }
+    }
+    return $store;
+}
+
+function app_stripe_checkout(): ?StripeCheckout
+{
+    static $payments = false;
+    if ($payments === false) {
+        try {
+            $payments = StripeCheckout::fromEnvironment(app_admin_pdo());
+        } catch (Throwable $error) {
+            error_log('Stripe Checkout unavailable: ' . $error->getMessage());
+            $payments = null;
+        }
+    }
+    return $payments;
+}
+
+function app_absolute_url(string $path): string
+{
+    $host = trim((string)($_SERVER['HTTP_HOST'] ?? ''));
+    if ($host !== '') {
+        if (!preg_match('/^[A-Za-z0-9.\-:\[\]]+$/', $host)) throw new RuntimeException('The public website host is invalid.');
+        $forwardedProto = strtolower(trim(explode(',', (string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''))[0]));
+        $https = strtolower((string)($_SERVER['HTTPS'] ?? '')) === 'on'
+            || (string)($_SERVER['SERVER_PORT'] ?? '') === '443'
+            || $forwardedProto === 'https';
+        return ($https ? 'https://' : 'http://') . $host . url_for($path);
+    }
+    $configured = trim((string)(getenv('ARTIST_SITE_PUBLIC_URL') ?: ''));
+    if ($configured !== '') return rtrim($configured, '/') . '/' . ltrim($path, '/');
+    throw new RuntimeException('The artist website public URL is not configured.');
+}
+
 function app_publication_media_url(array $artwork, string $file): string
 {
     return artworkmockups_public_url() . '/publication_media.php?slug=' . rawurlencode((string)$artwork['slug']) . '&file=' . rawurlencode(basename($file));
@@ -1393,6 +1459,7 @@ function render_published_artwork(array $site, array $artwork): void
     $year = trim((string)($artwork['artwork_year'] ?: ($facts['year'] ?? '')));
     $mainImageFile = trim((string)($artwork['header_file'] ?? '')) ?: (string)$artwork['source_image_file'];
     $artworkSeriesTitle = trim((string)($artwork['series'] ?? ''));
+    $storeOffer = app_store()?->offerForArtwork((int)($artwork['canonical_artwork_id'] ?? 0));
     $publishedSeries = null;
     if ($artworkSeriesTitle !== '' && ($seriesCatalog = app_series_catalog())) {
         foreach ($seriesCatalog->all() as $candidateSeries) {
@@ -1479,11 +1546,229 @@ function render_published_artwork(array $site, array $artwork): void
                 <?php if ($studioInformation): ?><h2>Studio Information</h2><p><?= nl2br(e($studioInformation)) ?></p><?php endif; ?>
                 <?php if (!empty($facts['shipping_notes'])): ?><h2>Shipping</h2><p><?= nl2br(e($facts['shipping_notes'])) ?></p><?php endif; ?>
             </div>
-            <div class="actions"><a class="button" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>">Inquire about this work</a></div>
+            <?php if ($storeOffer && !empty($storeOffer['is_purchasable'])): ?>
+                <aside class="store-offer" aria-label="Acquisition information">
+                    <p class="eyebrow">Available for acquisition</p>
+                    <strong class="store-offer__price"><?= e(AppStore::money((int)$storeOffer['price_minor'], (string)$storeOffer['currency'])) ?></strong>
+                    <p>Shipping is calculated from the destination country using the rate set for its continent.</p>
+                    <div class="actions"><a class="button" href="<?= e(url_for('acquire/' . $artwork['slug'])) ?>">Acquire this work</a><a class="button button--quiet" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>">Ask the studio</a></div>
+                </aside>
+            <?php elseif ($storeOffer && ((string)$storeOffer['status'] === 'sold_out' || (int)$storeOffer['stock_available'] <= 0)): ?>
+                <aside class="store-offer store-offer--unavailable"><p class="eyebrow">No longer available</p><p>This work is currently reserved or sold.</p><div class="actions"><a class="button button--quiet" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>">Ask the studio</a></div></aside>
+            <?php else: ?>
+                <div class="actions"><a class="button" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>">Inquire about this work</a></div>
+            <?php endif; ?>
         </div>
     </section>
     <?php
     echo json_ld(['@context'=>'https://schema.org','@type'=>'VisualArtwork','name'=>$artwork['title'],'creator'=>['@type'=>'Person','name'=>$site['name']],'artMedium'=>$artwork['medium'],'dateCreated'=>$artwork['artwork_year'],'image'=>app_publication_media_url($artwork,$artwork['source_image_file']),'description'=>$summary]);
+}
+
+function render_acquisition(array $site, array $artwork): void
+{
+    $store = app_store();
+    $payments = app_stripe_checkout();
+    $offer = $store?->offerForArtwork((int)($artwork['canonical_artwork_id'] ?? 0));
+    $error = '';
+    $values = [
+        'name' => '', 'email' => '', 'phone' => '', 'country_code' => '',
+        'address_line_1' => '', 'address_line_2' => '', 'city' => '', 'region' => '',
+        'postal_code' => '', 'message' => '',
+    ];
+    $receipt = null;
+    if (isset($_GET['payment']) && (string)$_GET['payment'] === 'cancelled'
+        && (string)($_SESSION['stripe_artwork_slug'] ?? '') === (string)$artwork['slug']) {
+        $reservationReleased = false;
+        try {
+            if (!$payments) throw new RuntimeException('Stripe Checkout is unavailable.');
+            $payments->cancelSession(
+                (string)($_SESSION['stripe_session_id'] ?? ''),
+                (string)($_SESSION['stripe_account_id'] ?? '')
+            );
+            $reservationReleased = true;
+        } catch (Throwable $cancelError) {
+            error_log('Stripe Checkout cancellation sync failed: ' . $cancelError->getMessage());
+        }
+        unset($_SESSION['stripe_session_id'], $_SESSION['stripe_account_id'], $_SESSION['stripe_order_id'], $_SESSION['stripe_artwork_slug'], $_SESSION['purchase_receipt']);
+        $error = $reservationReleased
+            ? 'Payment was cancelled. The artwork reservation has been released.'
+            : 'Payment was cancelled. Stripe will release the temporary reservation automatically when the session expires.';
+        $offer = $store?->offerForArtwork((int)($artwork['canonical_artwork_id'] ?? 0));
+    }
+    if (isset($_GET['submitted']) && is_array($_SESSION['purchase_receipt'] ?? null)) {
+        $candidate = (array)$_SESSION['purchase_receipt'];
+        unset($_SESSION['purchase_receipt']);
+        if ((string)($candidate['artwork_slug'] ?? '') === (string)$artwork['slug']) $receipt = $candidate;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'acquire_submit') {
+        foreach (array_keys($values) as $key) $values[$key] = trim((string)($_POST[$key] ?? ''));
+        try {
+            $token = (string)($_POST['csrf'] ?? '');
+            if ($token === '' || empty($_SESSION['purchase_csrf']) || !hash_equals((string)$_SESSION['purchase_csrf'], $token)) {
+                throw new RuntimeException('The form expired. Reload the page and try again.');
+            }
+            if ((string)($_POST['website'] ?? '') !== '') throw new RuntimeException('Your request could not be submitted.');
+            if (empty($_POST['privacy_accepted'])) throw new RuntimeException('Accept the privacy notice to continue.');
+            if (!$store) throw new RuntimeException('The acquisition service is temporarily unavailable.');
+            $order = $store->createOrder($artwork, $_POST);
+            $_SESSION['purchase_receipt'] = $order;
+            $_SESSION['purchase_csrf'] = bin2hex(random_bytes(32));
+            if ($offer && StripeCheckout::enabledForOffer($offer)) {
+                if (!$payments) throw new RuntimeException('Secure payment is temporarily unavailable.');
+                $session = $payments->createSession(
+                    $order,
+                    (string)$offer['stripe_account_id'],
+                    app_absolute_url('payment/success/') . '?session_id={CHECKOUT_SESSION_ID}',
+                    app_absolute_url('acquire/' . rawurlencode((string)$artwork['slug']) . '/') . '?payment=cancelled'
+                );
+                $_SESSION['stripe_session_id'] = $session['id'];
+                $_SESSION['stripe_account_id'] = (string)$offer['stripe_account_id'];
+                $_SESSION['stripe_order_id'] = (int)$order['id'];
+                $_SESSION['stripe_artwork_slug'] = (string)$artwork['slug'];
+                header('Location: ' . $session['url'], true, 303);
+                exit;
+            }
+            $store->notifyOrder($order, $site);
+            header('Location: ' . url_for('acquire/' . $artwork['slug']) . '?submitted=1', true, 303);
+            exit;
+        } catch (Throwable $exception) {
+            unset($_SESSION['purchase_receipt']);
+            $error = $exception->getMessage();
+            $offer = $store?->offerForArtwork((int)($artwork['canonical_artwork_id'] ?? 0));
+        }
+    }
+
+    $mainImageFile = trim((string)($artwork['header_file'] ?? '')) ?: (string)$artwork['source_image_file'];
+    $stripeEnabled = $offer ? StripeCheckout::enabledForOffer($offer) : false;
+    ?>
+    <section class="page-hero page-hero--compact acquisition-heading">
+        <p class="eyebrow">Private acquisition</p>
+        <h1>Acquire <?= e((string)$artwork['title']) ?></h1>
+        <p><?= $stripeEnabled ? 'Enter the delivery details, then continue to Stripe for secure payment.' : 'Submit the delivery details to reserve this work. The studio will confirm the request and payment separately.' ?></p>
+    </section>
+    <?php if ($receipt): ?>
+        <section class="section acquisition-confirmation" role="status">
+            <p class="eyebrow">Request received</p>
+            <h2>Thank you, <?= e((string)$receipt['customer_name']) ?>.</h2>
+            <p>The artwork has been reserved while the studio reviews your acquisition request.</p>
+            <dl class="acquisition-totals">
+                <div><dt>Reference</dt><dd><?= e((string)$receipt['public_number']) ?></dd></div>
+                <div><dt>Artwork</dt><dd><?= e((string)$receipt['artwork_title']) ?></dd></div>
+                <div><dt>Shipping</dt><dd><?= e(AppStore::money((int)$receipt['shipping_minor'], (string)$receipt['currency'])) ?></dd></div>
+                <div class="acquisition-totals__total"><dt>Total</dt><dd><?= e(AppStore::money((int)$receipt['total_minor'], (string)$receipt['currency'])) ?></dd></div>
+            </dl>
+            <div class="actions"><a class="button" href="<?= e(url_for('artworks/' . $artwork['slug'])) ?>">Return to the artwork</a></div>
+        </section>
+    <?php elseif (!$offer || empty($offer['is_purchasable'])): ?>
+        <section class="section acquisition-unavailable"><h2>This work is not currently available.</h2><p><?= e($error !== '' ? $error : 'It may already be reserved, sold, or awaiting a stock update.') ?></p><div class="actions"><a class="button" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>">Contact the studio</a><a class="button button--quiet" href="<?= e(url_for('artworks/' . $artwork['slug'])) ?>">Return to the artwork</a></div></section>
+    <?php else: ?>
+        <section class="acquisition-workspace">
+            <aside class="acquisition-artwork">
+                <img src="<?= e(app_publication_media_url($artwork, $mainImageFile)) ?>" alt="<?= e((string)$artwork['title']) ?>">
+                <div><p class="eyebrow">Original artwork</p><h2><?= e((string)$artwork['title']) ?></h2><?php if (published_dimensions($artwork)): ?><p><?= e(published_dimensions($artwork)) ?></p><?php endif; ?><strong><?= e(AppStore::money((int)$offer['price_minor'], (string)$offer['currency'])) ?></strong></div>
+            </aside>
+            <form method="post" class="acquisition-form" data-acquisition-form data-subtotal="<?= (int)$offer['price_minor'] ?>" data-currency="<?= e((string)$offer['currency']) ?>">
+                <input type="hidden" name="action" value="acquire_submit"><input type="hidden" name="csrf" value="<?= e((string)($_SESSION['purchase_csrf'] ?? '')) ?>">
+                <div class="form-honeypot" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
+                <div class="acquisition-form__intro"><p class="eyebrow">Collector details</p><h2>Delivery and reservation</h2></div>
+                <?php if ($error !== ''): ?><div class="acquisition-message acquisition-message--error" role="alert"><?= e($error) ?></div><?php endif; ?>
+                <div class="acquisition-fields">
+                    <label>Name<input name="name" value="<?= e($values['name']) ?>" autocomplete="name" required></label>
+                    <label>Email<input type="email" name="email" value="<?= e($values['email']) ?>" autocomplete="email" required></label>
+                    <label>Phone <small>Optional</small><input name="phone" value="<?= e($values['phone']) ?>" autocomplete="tel"></label>
+                    <label>Destination country<select name="country_code" autocomplete="country" required data-destination-country><option value="">Select country</option><?php foreach (AppStore::countries() as $continentKey => $countries): ?><optgroup label="<?= e(AppStore::continents()[$continentKey]) ?>"><?php foreach ($countries as $countryCode => $countryName): ?><option value="<?= e($countryCode) ?>" data-continent="<?= e($continentKey) ?>" data-continent-label="<?= e(AppStore::continents()[$continentKey]) ?>" data-rate="<?= (int)$offer['shipping_rates'][$continentKey] ?>" <?= $values['country_code'] === $countryCode ? 'selected' : '' ?>><?= e($countryName) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select></label>
+                    <label class="acquisition-field--wide">Address<input name="address_line_1" value="<?= e($values['address_line_1']) ?>" autocomplete="address-line1" required></label>
+                    <label class="acquisition-field--wide">Address details <small>Optional</small><input name="address_line_2" value="<?= e($values['address_line_2']) ?>" autocomplete="address-line2"></label>
+                    <label>City<input name="city" value="<?= e($values['city']) ?>" autocomplete="address-level2" required></label>
+                    <label>State / Region <small>Optional</small><input name="region" value="<?= e($values['region']) ?>" autocomplete="address-level1"></label>
+                    <label>Postal code <small>Optional</small><input name="postal_code" value="<?= e($values['postal_code']) ?>" autocomplete="postal-code"></label>
+                    <label class="acquisition-field--wide">Message to the studio <small>Optional</small><textarea name="message" rows="4"><?= e($values['message']) ?></textarea></label>
+                </div>
+                <dl class="acquisition-totals" aria-live="polite">
+                    <div><dt>Artwork</dt><dd><?= e(AppStore::money((int)$offer['price_minor'], (string)$offer['currency'])) ?></dd></div>
+                    <div><dt>Shipping <span data-shipping-destination>Select destination</span></dt><dd data-shipping-total>—</dd></div>
+                    <div class="acquisition-totals__total"><dt>Total</dt><dd data-order-total>—</dd></div>
+                </dl>
+                <?php if (trim((string)$offer['shipping_policy']) !== ''): ?><details><summary>Shipping and returns policy</summary><p><?= nl2br(e((string)$offer['shipping_policy'])) ?></p></details><?php endif; ?>
+                <label class="acquisition-consent"><input type="checkbox" name="privacy_accepted" value="1" required><span>I agree that my contact and delivery details may be used to process this acquisition request. <a href="<?= e(url_for('privacy-policy')) ?>" target="_blank">Privacy policy</a>.</span></label>
+                <button class="button acquisition-submit" type="submit"><?= $stripeEnabled ? 'Continue to secure payment' : 'Submit acquisition request' ?></button>
+                <p class="acquisition-form__note"><?= $stripeEnabled ? 'The work is reserved for 30 minutes while payment is completed securely on Stripe.' : 'Submitting this request reserves the work temporarily. It does not process a payment.' ?></p>
+            </form>
+        </section>
+        <script>
+        (() => {
+            const form = document.querySelector('[data-acquisition-form]');
+            if (!form) return;
+            const country = form.querySelector('[data-destination-country]');
+            const shipping = form.querySelector('[data-shipping-total]');
+            const total = form.querySelector('[data-order-total]');
+            const destination = form.querySelector('[data-shipping-destination]');
+            const subtotal = Number(form.dataset.subtotal || 0);
+            const currency = form.dataset.currency || 'EUR';
+            const money = value => new Intl.NumberFormat('en', { style: 'currency', currency }).format(value / 100);
+            const update = () => {
+                const option = country.options[country.selectedIndex];
+                if (!option || !option.dataset.rate) { shipping.textContent = '—'; total.textContent = '—'; destination.textContent = 'Select destination'; return; }
+                const rate = Number(option.dataset.rate);
+                shipping.textContent = money(rate);
+                total.textContent = money(subtotal + rate);
+                destination.textContent = '· ' + option.dataset.continentLabel;
+            };
+            country.addEventListener('change', update);
+            update();
+        })();
+        </script>
+    <?php endif; ?>
+    <?php
+}
+
+function render_stripe_payment_result(): void
+{
+    $sessionId = trim((string)($_GET['session_id'] ?? ''));
+    $expectedSessionId = (string)($_SESSION['stripe_session_id'] ?? '');
+    $connectedAccountId = (string)($_SESSION['stripe_account_id'] ?? '');
+    $orderId = (int)($_SESSION['stripe_order_id'] ?? 0);
+    $receipt = is_array($_SESSION['purchase_receipt'] ?? null) ? (array)$_SESSION['purchase_receipt'] : [];
+    $error = '';
+    $order = null;
+
+    try {
+        if ($sessionId === '' || $expectedSessionId === '' || !hash_equals($expectedSessionId, $sessionId) || $orderId <= 0) {
+            throw new RuntimeException('This payment confirmation link is invalid or has expired.');
+        }
+        $payments = app_stripe_checkout();
+        if (!$payments) throw new RuntimeException('Payment confirmation is temporarily unavailable.');
+        $payments->syncSession($sessionId, $connectedAccountId);
+        $order = $payments->receipt($orderId, $sessionId, $connectedAccountId);
+        if (!$order) throw new RuntimeException('The Stripe payment could not be matched to an order.');
+    } catch (Throwable $paymentError) {
+        error_log('Stripe Checkout return sync failed: ' . $paymentError->getMessage());
+        $error = $paymentError->getMessage();
+    }
+
+    unset($_SESSION['stripe_session_id'], $_SESSION['stripe_account_id'], $_SESSION['stripe_order_id'], $_SESSION['stripe_artwork_slug'], $_SESSION['purchase_receipt']);
+    $paid = $order && (string)$order['payment_status'] === 'paid';
+    ?>
+    <section class="page-hero page-hero--compact acquisition-heading">
+        <p class="eyebrow"><?= $paid ? 'Payment confirmed' : 'Payment processing' ?></p>
+        <h1><?= $paid ? 'Thank you for your acquisition.' : 'We are checking your payment.' ?></h1>
+        <?php if ($paid): ?><p>Your payment was received and the studio will contact you regarding shipment.</p><?php elseif ($error !== ''): ?><p><?= e($error) ?></p><?php else: ?><p>The order remains reserved while Stripe confirms the payment.</p><?php endif; ?>
+    </section>
+    <?php if ($order): ?>
+        <section class="section acquisition-confirmation" role="status">
+            <dl class="acquisition-totals">
+                <div><dt>Reference</dt><dd><?= e((string)$order['public_number']) ?></dd></div>
+                <?php if ((string)($receipt['artwork_title'] ?? '') !== ''): ?><div><dt>Artwork</dt><dd><?= e((string)$receipt['artwork_title']) ?></dd></div><?php endif; ?>
+                <div><dt>Shipping</dt><dd><?= e(AppStore::money((int)$order['shipping_minor'], (string)$order['currency'])) ?></dd></div>
+                <div class="acquisition-totals__total"><dt>Total paid</dt><dd><?= e(AppStore::money((int)$order['total_minor'], (string)$order['currency'])) ?></dd></div>
+            </dl>
+            <div class="actions"><a class="button" href="<?= e(url_for('/')) ?>">Return to the artist website</a></div>
+        </section>
+    <?php else: ?>
+        <section class="section acquisition-unavailable"><p>If you completed the payment, keep your Stripe receipt and contact the studio so the reference can be verified.</p><div class="actions"><a class="button" href="<?= e(url_for('contact')) ?>">Contact the studio</a></div></section>
+    <?php endif; ?>
+    <?php
 }
 
 function render_published_mockup(array $site, array $artwork, array $mockup): void
@@ -3035,7 +3320,7 @@ function render_privacy_policy(array $site): void
         <div class="prose">
             <p>This website is the digital representation and catalog of Maurizio Valch’s original paintings.</p>
             <h3>Personal Information</h3>
-            <p>When you contact the studio using the inquiry form or via email, we collect the personal information you provide, such as your name, email address, and the content of your message. We use this information solely to respond to your inquiries regarding the artwork, acquisitions, and exhibitions.</p>
+            <p>When you contact the studio or submit an acquisition request, we collect the information you provide, such as your name, email, message, destination, and delivery details. We use this information to respond to inquiries, reserve artworks, and manage acquisition and shipping requests.</p>
             <h3>Analytics & Cookies</h3>
             <p>This website uses Google Analytics to analyze traffic and understand visitor behavior. This helps us optimize user experience. Google Analytics uses cookies to gather standard internet log information and visitor behavior in an anonymous form.</p>
             <h3>Third Parties</h3>
@@ -3107,7 +3392,25 @@ switch ($segments[0] ?? '') {
         if (isset($segments[2])) { $handled = false; break; }
         $description = trim((string)($publishedArtwork['short_description'] ?: $publishedArtwork['description']));
         $meta = page_meta($publishedArtwork['title'] . ' | ' . $artistName, $description, $site['url'] . '/artworks/' . $segments[1] . '/', app_publication_media_url($publishedArtwork, $publishedArtwork['source_image_file']));
+        $meta['keywords'] = trim(implode(', ', array_filter([
+            (string)($publishedArtwork['artwork_keywords'] ?? ''),
+            (string)($publishedArtwork['artwork_tags'] ?? ''),
+        ])));
         render_published_artwork($site, $publishedArtwork);
+        break;
+    case 'acquire':
+        if (!isset($segments[1]) || isset($segments[2])) { $handled = false; break; }
+        $publishedArtwork = app_catalog()?->one($segments[1]);
+        if (!$publishedArtwork) { $handled = false; break; }
+        $meta = page_meta('Acquire ' . $publishedArtwork['title'] . ' | ' . $artistName, 'Private acquisition request for ' . $publishedArtwork['title'] . '.', $site['url'] . '/acquire/' . $segments[1] . '/', app_publication_media_url($publishedArtwork, (string)$publishedArtwork['source_image_file']));
+        $meta['robots'] = 'noindex,nofollow';
+        render_acquisition($site, $publishedArtwork);
+        break;
+    case 'payment':
+        if (($segments[1] ?? '') !== 'success' || isset($segments[2])) { $handled = false; break; }
+        $meta = page_meta('Payment confirmation | ' . $artistName, 'Secure acquisition payment confirmation.', $site['url'] . '/payment/success/');
+        $meta['robots'] = 'noindex,nofollow';
+        render_stripe_payment_result();
         break;
     case 'sold-works':
         $profile = app_artist_profile()?->get();

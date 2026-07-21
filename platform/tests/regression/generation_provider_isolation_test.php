@@ -128,6 +128,16 @@ function run_generation_provider_isolation_tests(): void
     );
     TestHarness::assertContains('!in_array($requestedGenerationProvider, $allowedGenerationProviders, true)', $startGenerateSource, 'El servidor bloquea trabajos sin proveedor explicito');
     TestHarness::assertContains("'generation_provider' => \$generationProvider", $startGenerateSource, 'La preparacion de la obra conserva el proveedor elegido');
+    TestHarness::assertContains(
+        'ProviderSettings::allowRealApi() && CloudTasksService::isAvailable()',
+        $startGenerateSource,
+        'La preparacion raiz solo usa Cloud Tasks cuando toda la infraestructura esta configurada'
+    );
+    TestHarness::assertContains(
+        'SET status = "error", updated_at = :updated_at',
+        $startGenerateSource,
+        'Un fallo al despachar la preparacion no deja la obra bloqueada como queued'
+    );
     TestHarness::assertContains("\$status['scene_redirect']", $jobStatusSource, 'El estado redirige al orquestador estable de escenas');
     TestHarness::assertContains("'&generation_provider='", $jobStatusSource, 'La redireccion conserva Vertex de forma explicita');
     TestHarness::assertTrue(!str_contains($jobStatusSource, "\$status['scene_generation']"), 'El estado no entrega workers directos a la pantalla de espera');

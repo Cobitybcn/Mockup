@@ -21,6 +21,8 @@ Interaction Patterns
       ↓
 Forbidden Patterns
       ↓
+UI Preferences
+      ↓
 References
       ↓
 Master Patterns
@@ -45,6 +47,10 @@ Master Patterns
 ### Forbidden Patterns
 
 `04_FORBIDDEN_PATTERNS.md` defines the changes that would break the identity of the product.
+
+### UI Preferences
+
+`UI_PREFERENCES.md` gives inherited, more specific guidance for forms, panels, and typography. It applies when a more specific approved reference does not already cover the case.
 
 ### References
 

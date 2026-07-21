@@ -30,7 +30,12 @@ $pdo->exec("CREATE TABLE artwork_sheets (
     user_id INTEGER NOT NULL,
     source_image_file TEXT NOT NULL,
     canonical_artwork_id INTEGER NOT NULL,
+    title TEXT NOT NULL DEFAULT 'Test Work',
     subtitle TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT 'Full canonical description',
+    short_description TEXT NOT NULL DEFAULT 'Canonical summary',
+    caption TEXT NOT NULL DEFAULT 'Canonical caption',
+    generated_json TEXT NOT NULL DEFAULT '{}',
     alt_text TEXT NOT NULL,
     keywords TEXT NOT NULL,
     tags TEXT NOT NULL

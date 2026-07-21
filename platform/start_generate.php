@@ -296,7 +296,7 @@ $logErr = $jobDir . DIRECTORY_SEPARATOR . 'process_err.log';
 
 $started = false;
 
-if (ProviderSettings::allowRealApi() && class_exists('Google\\Cloud\\Tasks\\V2\\CloudTasksClient')) {
+if (ProviderSettings::allowRealApi() && CloudTasksService::isAvailable()) {
     try {
         CloudTasksService::enqueueRootGeneration($jobId, (int)$currentUser['id']);
         file_put_contents($jobDir . '/start_method.txt', 'Cloud Tasks root_worker');
@@ -307,6 +307,18 @@ if (ProviderSettings::allowRealApi() && class_exists('Google\\Cloud\\Tasks\\V2\\
         $status['error'] = $e->getMessage();
         $status['updated_at'] = date('c');
         file_put_contents($jobDir . '/status.json', json_encode($status, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        try {
+            Database::connection()->prepare('
+                UPDATE artworks
+                SET status = "error", updated_at = :updated_at
+                WHERE job_id = :job_id
+            ')->execute([
+                'updated_at' => $status['updated_at'],
+                'job_id' => $jobId,
+            ]);
+        } catch (Throwable $databaseError) {
+            error_log('Could not mark artwork preparation as failed: ' . $databaseError->getMessage());
+        }
         if (StorageService::isGcsActive()) {
             StorageService::uploadFile('jobs/' . $jobId . '/status.json', $jobDir . '/status.json');
         }

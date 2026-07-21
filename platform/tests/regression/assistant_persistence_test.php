@@ -45,11 +45,11 @@ function run_assistant_persistence_tests(): void
         TestHarness::assertSame($identityId, $repository->identityIdForUser($adminId), 'admin account belongs to the shared assistant identity');
         TestHarness::assertSame($identityId, $repository->identityIdForUser($userId), 'user account belongs to the shared assistant identity');
 
-        $page = AssistantContext::page(['current_route' => 'website_board.php']);
+        $page = AssistantContext::page(['current_route' => 'website_studio_notes.php']);
         $conversation = $repository->conversation(null, $admin, $page);
         $repository->addMessage((int)$conversation['id'], 'user', 'Remember the approved website structure.', $adminId, $page);
         $repository->addMessage((int)$conversation['id'], 'assistant', 'The decision was recorded.', null, $page, 'test-model', 'response-test', ['input_tokens' => 12, 'output_tokens' => 6]);
-        $memoryKey = $repository->recordMemory((int)$conversation['id'], $adminId, 'decision', 'Keep the approved website structure.', ['route' => 'website_board.php'], 90);
+        $memoryKey = $repository->recordMemory((int)$conversation['id'], $adminId, 'decision', 'Keep the approved website structure.', ['route' => 'website_studio_notes.php'], 90);
         $repository->recordAction((int)$conversation['id'], $adminId, 'remember_memory', 'memory', $memoryKey, 'completed');
         $repository->createTask((int)$conversation['id'], $adminId, [
             'title' => 'Review website board spacing',

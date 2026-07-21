@@ -11,7 +11,7 @@
 | ArtWorks | `root_album.php` | NEEDS CONSISTENCY PASS | KPI strip, thumbnails pequeños y metadata excesiva | HIGH | Counter subordinado + Thumbnail Card | No | Sí | P0 |
 | Mockup Album | `mockups.php` | MINOR INCONSISTENCIES | Acciones principales genéricas | MEDIUM | Primary Action + Toolbar | Yes | No | P2 |
 | Videos | `videos.php` | MINOR INCONSISTENCIES | Decisiones como botones rectangulares | MEDIUM | Decision Block + Header | Yes | No | P2 |
-| Website Catalog Sync | `website_board.php` | MINOR INCONSISTENCIES | Título `h2` y acciones locales no convergentes | LOW | Header + Workspace Panel | Partial | Sí para heading | P2 |
+| Artist Site Manager | `../site-admin/` | PASS | Sustituye la pantalla heredada Website Sync | — | Header + Visual Rail + Editor Panel | N/A | No | P3 |
 | Social Media Board | `social_media_board.php` | MINOR INCONSISTENCIES | Tres boards de igual peso y texto pequeño | MEDIUM | Visual Assignment + Header | Partial | Sí para heading | P1 |
 | Artist Profile | `artist_profile.php` | NEEDS CONSISTENCY PASS | Formularios estrechos, texto pequeño, exceso visible | MEDIUM | Workspace Panel vertical + UI Preferences | Partial | Sí | P1 |
 | Scene Studio | `world_mother_studio.php` | NEEDS CONSISTENCY PASS | Biblioteca densa con mini-referencias | MEDIUM | Thumbnail Card + Glass Actions | Yes en densidad | Partial | P1 |

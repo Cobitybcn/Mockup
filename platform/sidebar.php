@@ -215,7 +215,7 @@ $generatedResultsActive = ($currentPage === 'mockup_combination_results.php');
 $rootAlbumActive = ($currentPage === 'root_album.php');
 $seriesActive = ($currentPage === 'series.php');
 $profileActive = ($currentPage === 'artist_profile.php');
-$websiteActive = in_array($currentPage, ['website_board.php', 'website_catalog.php', 'website_studio_notes.php'], true);
+$studioNotesActive = ($currentPage === 'website_studio_notes.php');
 $socialMediaCatalogActive = in_array($currentPage, ['social_media_catalog.php', 'social_media_board.php'], true);
 $videosActive = ($currentPage === 'videos.php');
 $videoStudioActive = ($currentPage === 'video.php');
@@ -235,7 +235,8 @@ $sidebarCanUseVideo = $sidebarUser ? FeatureAccess::allows($sidebarUser, Feature
 $sidebarUsesCompactBasicNavigation = $sidebarUser
     && !$sidebarIsAdmin
     && FeatureAccess::planForUser($sidebarUser) === FeatureAccess::PLAN_ARTIST_STUDIO;
-$sidebarWebsiteUrl = $sidebarCanUseWebsite ? 'website_board.php' : 'account.php?upgrade=artist_pro&feature=website#plan';
+$sidebarStudioNotesUrl = $sidebarCanUseWebsite ? 'website_studio_notes.php' : 'account.php?upgrade=artist_pro&feature=website#plan';
+$sidebarStoreUrl = $sidebarCanUseWebsite ? '../site-admin/?area=store&section=orders' : 'account.php?upgrade=artist_pro&feature=website#plan';
 $sidebarSocialUrl = $sidebarCanUseSocial ? 'social_media_board.php' : 'account.php?upgrade=artist_pro&feature=social#plan';
 $sidebarVideosUrl = $sidebarCanUseVideo ? 'videos.php' : 'account.php?upgrade=artist_pro&feature=video#plan';
 
@@ -866,7 +867,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <div class="sidebar-mobile-section sidebar-publishing-mobile">
                     <span>Publish</span>
                     <?php if ($sidebarCanUseWebsite): ?>
-                        <a class="<?= $websiteActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarWebsiteUrl, ENT_QUOTES, 'UTF-8') ?>">Website Catalog Sync</a>
+                        <a class="<?= $studioNotesActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarStudioNotesUrl, ENT_QUOTES, 'UTF-8') ?>">Studio Notes</a>
                     <?php endif; ?>
                     <?php if ($sidebarCanUseSocial): ?>
                         <a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media Board</a>
@@ -887,6 +888,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                     <div class="sidebar-mobile-section">
                         <span>Admin</span>
                         <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
+                        <?php if ($sidebarCanUseWebsite): ?><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>">Store</a><?php endif; ?>
                         <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a>
                         <a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a>
                         <a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a>
@@ -899,6 +901,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                     <div class="sidebar-mobile-section">
                         <span>Admin</span>
                         <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
+                        <?php if ($sidebarCanUseWebsite): ?><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>">Store</a><?php endif; ?>
                         <?php if ($sidebarCanUseSocial): ?>
                             <a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php">Connections</a>
                         <?php endif; ?>
@@ -962,7 +965,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                     <span class="sidebar-library-divider" aria-hidden="true"></span>
                     <div class="sidebar-publishing-tabs">
                         <?php if ($sidebarCanUseWebsite): ?>
-                            <a class="sidebar-tab <?= $websiteActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarWebsiteUrl, ENT_QUOTES, 'UTF-8') ?>">Website Catalog Sync</a>
+                            <a class="sidebar-tab <?= $studioNotesActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarStudioNotesUrl, ENT_QUOTES, 'UTF-8') ?>">Studio Notes</a>
                         <?php endif; ?>
                         <?php if ($sidebarCanUseSocial): ?>
                             <a class="sidebar-tab <?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media Board</a>
@@ -999,6 +1002,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
         <summary>Admin</summary>
         <ul class="nav">
             <li><a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a></li>
+            <?php if ($sidebarCanUseWebsite): ?><li><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>">Store</a></li><?php endif; ?>
             <?php if ($sidebarIsAdmin): ?>
                 <li><a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a></li>
                 <li><a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a></li>
@@ -1026,7 +1030,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
             <div class="sidebar-mobile-section sidebar-publishing-mobile">
                 <span>Publish</span>
                 <?php if ($sidebarCanUseWebsite): ?>
-                    <a class="<?= $websiteActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarWebsiteUrl, ENT_QUOTES, 'UTF-8') ?>">Website Catalog Sync</a>
+                    <a class="<?= $studioNotesActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarStudioNotesUrl, ENT_QUOTES, 'UTF-8') ?>">Studio Notes</a>
                 <?php endif; ?>
                 <?php if ($sidebarCanUseSocial): ?>
                     <a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media Board</a>
@@ -1047,6 +1051,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <div class="sidebar-mobile-section">
                     <span>Admin</span>
                     <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
+                    <?php if ($sidebarCanUseWebsite): ?><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>">Store</a><?php endif; ?>
                     <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a>
                     <a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php">Prompts</a>
                     <a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php">API Settings</a>
@@ -1059,6 +1064,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <div class="sidebar-mobile-section">
                     <span>Admin</span>
                     <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
+                    <?php if ($sidebarCanUseWebsite): ?><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>">Store</a><?php endif; ?>
                     <?php if ($sidebarCanUseSocial): ?>
                         <a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php">Connections</a>
                     <?php endif; ?>

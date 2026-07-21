@@ -12,7 +12,9 @@ final class AppPublishedCatalog
 
     public function all(): array
     {
-        $statement = $this->pdo->prepare("SELECT p.*, a.source_image_file, a.canonical_artwork_id, a.subtitle, aw.medium,
+        $statement = $this->pdo->prepare("SELECT p.*, a.source_image_file, a.canonical_artwork_id, a.subtitle,
+                a.title artwork_title,a.description artwork_description,a.short_description artwork_short_description,
+                a.caption artwork_caption,a.generated_json artwork_generated_json,aw.medium,
                 aw.artwork_year, aw.series, aw.width, aw.height, aw.depth, aw.unit, a.alt_text artwork_alt,
                 a.keywords artwork_keywords, a.tags artwork_tags
             FROM publications p
@@ -25,9 +27,21 @@ final class AppPublishedCatalog
         $statement->execute([$this->artistEmail]);
         $publications = [];
         foreach ($statement as $row) {
-            $snapshot = json_decode((string)($row['metadata_snapshot_json'] ?? ''), true);
-            $row['artwork_metadata'] = is_array($snapshot) ? $snapshot : [];
-            $analysis = json_decode((string)($row['artwork_metadata']['generated_json'] ?? ''), true);
+            $row['title'] = (string)$row['artwork_title'];
+            $row['description'] = (string)$row['artwork_description'];
+            $row['short_description'] = (string)$row['artwork_short_description'];
+            $row['artwork_metadata'] = [
+                'title' => (string)$row['artwork_title'],
+                'subtitle' => (string)$row['subtitle'],
+                'description' => (string)$row['artwork_description'],
+                'short_description' => (string)$row['artwork_short_description'],
+                'caption' => (string)$row['artwork_caption'],
+                'alt_text' => (string)$row['artwork_alt'],
+                'keywords' => (string)$row['artwork_keywords'],
+                'tags' => (string)$row['artwork_tags'],
+                'generated_json' => (string)$row['artwork_generated_json'],
+            ];
+            $analysis = json_decode((string)$row['artwork_generated_json'], true);
             $row['artwork_analysis'] = is_array($analysis) ? $analysis : [];
             $row['items'] = $this->items((int)$row['id']);
             $row['artwork_views'] = $this->artworkViews((int)$row['canonical_artwork_id']);

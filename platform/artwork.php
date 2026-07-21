@@ -643,6 +643,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
         'id' => $id,
         'user_id' => $artworkOwnerId,
     ]);
+    (new PublicationService($pdo))->syncInheritedFromSheet((int)$sheet['id'], $artworkOwnerId);
 
     header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&metadata_saved=1');
     exit;
@@ -823,6 +824,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'sync_
         exit;
     } catch (Throwable $e) {
         header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&metadata_error=' . rawurlencode($e->getMessage()));
+        exit;
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_artwork_website') {
+    $websiteTransactionStarted = false;
+    try {
+        $websitePublicationService = new PublicationService($pdo);
+        $websiteTransactionStarted = !$pdo->inTransaction();
+        if ($websiteTransactionStarted) $pdo->beginTransaction();
+        $sheet = (new ArtworkSheetService($pdo))->sheetForArtwork($id, $artworkOwnerId);
+        $intent = (string)($_POST['website_intent'] ?? 'save');
+        if (!in_array($intent, ['save', 'publish', 'unpublish'], true)) $intent = 'save';
+        $savedWebsitePublication = $websitePublicationService->saveWebsiteSettings((int)$sheet['id'], $artworkOwnerId, $_POST, $intent);
+        $headerFile = basename(trim((string)($_POST['header_file'] ?? '')));
+        $allowedHeaders = array_filter([basename((string)($sheet['source_image_file'] ?? ''))]);
+        $headerViews = $pdo->prepare('SELECT file_name FROM root_artwork_candidates WHERE artwork_id=?');
+        $headerViews->execute([$id]);
+        $allowedHeaders = array_merge($allowedHeaders, array_map('basename', $headerViews->fetchAll(PDO::FETCH_COLUMN)));
+        $groupStmt = $pdo->prepare('SELECT COALESCE(artwork_group_id,0) FROM artworks WHERE id=? AND user_id=?');
+        $groupStmt->execute([$id, $artworkOwnerId]);
+        $groupId = (int)($groupStmt->fetchColumn() ?: 0);
+        $headerMockups = $pdo->prepare('SELECT mockup_file FROM mockup_sheets WHERE user_id=? AND (artwork_id=? OR artwork_sheet_id=? OR (? > 0 AND artwork_group_id=?))');
+        $headerMockups->execute([$artworkOwnerId, $id, (int)$sheet['id'], $groupId, $groupId]);
+        $allowedHeaders = array_merge($allowedHeaders, array_map('basename', $headerMockups->fetchAll(PDO::FETCH_COLUMN)));
+        if ($headerFile !== '' && !in_array($headerFile, $allowedHeaders, true)) throw new RuntimeException('The selected website cover does not belong to this artwork.');
+        $pdo->prepare('UPDATE publications SET header_file=?,updated_at=? WHERE id=? AND user_id=?')
+            ->execute([$headerFile, date('c'), (int)$savedWebsitePublication['id'], $artworkOwnerId]);
+        $constellationCountry = trim((string)($_POST['constellation_country'] ?? ''));
+        $constellation = $pdo->prepare('SELECT id FROM artist_site_constellations WHERE user_id=? AND artwork_id=? LIMIT 1');
+        $constellation->execute([$artworkOwnerId, $id]);
+        $constellationId = (int)($constellation->fetchColumn() ?: 0);
+        if ($constellationId > 0) {
+            $pdo->prepare("UPDATE artist_site_constellations SET enabled=?,country=?,region='',city='',postal_code='',latitude='',longitude='',privacy=?,public_note='',updated_at=? WHERE id=? AND user_id=?")
+                ->execute([$constellationCountry === '' ? 0 : 1, $constellationCountry, $constellationCountry === '' ? 'private' : 'country', date('c'), $constellationId, $artworkOwnerId]);
+        } elseif ($constellationCountry !== '') {
+            $now = date('c');
+            $pdo->prepare("INSERT INTO artist_site_constellations (user_id,artwork_id,enabled,country,region,city,postal_code,latitude,longitude,privacy,public_note,created_at,updated_at) VALUES (?,?,1,?,'','','','','','country','',?,?)")
+                ->execute([$artworkOwnerId, $id, $constellationCountry, $now, $now]);
+        }
+        $saleVariant = $pdo->prepare('SELECT * FROM artist_site_print_variants WHERE user_id=? AND artwork_id=? ORDER BY id LIMIT 1');
+        $saleVariant->execute([$artworkOwnerId, $id]);
+        $sale = $saleVariant->fetch(PDO::FETCH_ASSOC) ?: null;
+        $priceInput = trim((string)($_POST['sale_price'] ?? ''));
+        if ($sale || $priceInput !== '') {
+            $price = str_replace(',', '.', $priceInput === '' ? '0' : $priceInput);
+            if (!is_numeric($price) || (float)$price < 0) throw new RuntimeException('Enter a valid artwork price.');
+            $currency = strtoupper(trim((string)($_POST['sale_currency'] ?? 'EUR')));
+            if (!preg_match('/^[A-Z]{3}$/', $currency)) throw new RuntimeException('Currency must use a three-letter ISO code.');
+            $saleStatus = (string)($_POST['sale_status'] ?? 'draft');
+            if (!in_array($saleStatus, ['draft', 'active', 'paused', 'sold_out'], true)) $saleStatus = 'draft';
+            $stock = max(0, (int)($_POST['sale_stock'] ?? 0));
+            if ($saleStatus === 'active' && ((float)$price <= 0 || $stock <= 0)) {
+                throw new RuntimeException('Available artworks need a price and at least one available unit.');
+            }
+            $now = date('c');
+            if ($sale) {
+                $stockOnHand = $stock + max(0, (int)($sale['stock_reserved'] ?? 0));
+                $pdo->prepare('UPDATE artist_site_print_variants SET stock_on_hand=?,price_minor=?,currency=?,status=?,updated_at=? WHERE id=? AND user_id=? AND artwork_id=?')
+                    ->execute([$stockOnHand, (int)round((float)$price * 100), $currency, $saleStatus, $now, (int)$sale['id'], $artworkOwnerId, $id]);
+            } else {
+                $pdo->prepare("INSERT INTO artist_site_print_variants (user_id,artwork_id,title,sku,size_label,support,finish,inventory_mode,edition_size,stock_on_hand,stock_reserved,price_minor,currency,status,created_at,updated_at) VALUES (?,?,?,?,'','','','in_stock',1,?,0,?,?,?, ?,?)")
+                    ->execute([$artworkOwnerId, $id, trim((string)($sheet['title'] ?? '')), 'ART-' . $id, $stock, (int)round((float)$price * 100), $currency, $saleStatus, $now, $now]);
+            }
+        }
+        if ($websiteTransactionStarted) $pdo->commit();
+        $message = $intent === 'publish' ? 'published' : ($intent === 'unpublish' ? 'unpublished' : 'saved');
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&website_saved=' . rawurlencode($message) . '#website-publication');
+        exit;
+    } catch (Throwable $e) {
+        if ($websiteTransactionStarted && $pdo->inTransaction()) $pdo->rollBack();
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&website_error=' . rawurlencode($e->getMessage()) . '#website-publication');
         exit;
     }
 }
@@ -1081,6 +1154,33 @@ if ($orientation === '' && (float)$width > 0 && (float)$height > 0) {
 $orientation = $orientation ?: 'Not specified';
 $sheetService = new ArtworkSheetService($pdo);
 $artworkSheet = $sheetService->sheetForArtwork($id, $artworkOwnerId);
+$publicationService = new PublicationService($pdo);
+$websitePublication = $publicationService->findForSheet((int)$artworkSheet['id'], $artworkOwnerId);
+$websiteStatus = (string)($websitePublication['status'] ?? 'not_prepared');
+$websiteVisibility = (string)($websitePublication['visibility'] ?? 'public');
+$constellationStmt = $pdo->prepare('SELECT country FROM artist_site_constellations WHERE user_id=? AND artwork_id=? AND enabled=1 LIMIT 1');
+$constellationStmt->execute([$artworkOwnerId, $id]);
+$websiteConstellationCountry = trim((string)($constellationStmt->fetchColumn() ?: ''));
+$websiteSaleStmt = $pdo->prepare('SELECT * FROM artist_site_print_variants WHERE user_id=? AND artwork_id=? ORDER BY id LIMIT 1');
+$websiteSaleStmt->execute([$artworkOwnerId, $id]);
+$websiteSale = $websiteSaleStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+$websiteSaleAvailable = $websiteSale ? max(0, (int)$websiteSale['stock_on_hand'] - (int)$websiteSale['stock_reserved']) : 0;
+$websiteCurrencyStmt = $pdo->prepare('SELECT currency FROM artist_site_settings WHERE user_id=? LIMIT 1');
+$websiteCurrencyStmt->execute([$artworkOwnerId]);
+$websiteDefaultCurrency = strtoupper(trim((string)($websiteCurrencyStmt->fetchColumn() ?: 'EUR')));
+$websiteCoverOptions = [];
+$addWebsiteCover = static function (array &$options, string $file, string $label): void {
+    $file = basename(trim($file));
+    if ($file !== '' && !isset($options[$file])) $options[$file] = $label;
+};
+$addWebsiteCover($websiteCoverOptions, $rootFile, 'Main artwork image');
+foreach ($rootCandidatesList as $candidate) {
+    $addWebsiteCover($websiteCoverOptions, (string)($candidate['file_name'] ?? ''), ucwords(str_replace('-', ' ', (string)($candidate['view_type'] ?? 'Artwork view'))));
+}
+foreach ($relatedMockups as $mockup) {
+    $addWebsiteCover($websiteCoverOptions, (string)($mockup['mockup_file'] ?? ''), trim((string)($mockup['title'] ?? '')) ?: 'Related mockup');
+}
+$websiteSelectedCover = basename((string)($websitePublication['header_file'] ?? ''));
 $artworkSheetGenerated = json_decode((string)($artworkSheet['generated_json'] ?? ''), true);
 $artworkSheetGenerated = is_array($artworkSheetGenerated) ? $artworkSheetGenerated : [];
 $v2DraftMatch = artwork_v2_draft_for_image($rootFile);
@@ -1127,6 +1227,11 @@ $artworkSheetHasMetadata = trim((string)($artworkSheet['title'] ?? '')) !== ''
     || trim((string)($artworkSheet['alt_text'] ?? '')) !== ''
     || trim((string)($artworkSheet['keywords'] ?? '')) !== ''
     || !empty($artworkSheetLongTail);
+$websiteMetadataComplete = trim((string)($artworkSheet['title'] ?? '')) !== ''
+    && (trim((string)($artworkSheet['short_description'] ?? '')) !== '' || trim((string)($artworkSheet['description'] ?? '')) !== '')
+    && trim((string)($artworkSheet['alt_text'] ?? '')) !== ''
+    && trim((string)($artworkSheet['keywords'] ?? '')) !== ''
+    && trim((string)($artworkSheet['tags'] ?? '')) !== '';
 $artworkMetadataValidated = $artworkSheetHasMetadata
     && in_array((string)($artworkSheet['status'] ?? ''), ['review', 'validated', 'approved'], true);
 $storedTitle = trim((string)($artwork['final_title'] ?? ''));
@@ -1170,6 +1275,9 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .artwork-creation-form button { min-height:35px; margin:0; padding:8px 11px; }
         .artwork-creation-code { align-self:center; color:var(--ink); font-size:12px; font-weight:700; letter-spacing:.04em; }
         .artwork-title-block { width:min(920px, 100%); }
+        .artwork-page-header { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; }
+        .artwork-studio-note-link { flex:0 0 auto; border-color:#c8d5c3; background:#e9f0e7; color:#354633; font-weight:700; }
+        .artwork-studio-note-mobile { display:none; }
         .artwork-title-heading { display:flex; align-items:center; gap:10px; }
         .artwork-page-header h1 { display:inline-block; border-bottom:4px solid #b77f86; padding-bottom:10px; }
         .artwork-title-edit-button {
@@ -1250,6 +1358,29 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .artwork-metadata-edit { width:100%; max-width:none; box-sizing:border-box; margin:12px 0 0; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-soft); }
         .artwork-metadata-edit > summary { cursor:pointer; padding:13px 16px; color:var(--accent); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
         .artwork-metadata-edit .artwork-metadata-v2-form { margin:0; max-width:none; border:0; border-top:1px solid var(--line); border-radius:0; box-shadow:none; }
+        .artwork-website-panel { margin:22px 0 0; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
+        .artwork-website-panel > summary { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 20px; cursor:pointer; list-style:none; }
+        .artwork-website-panel > summary::-webkit-details-marker { display:none; }
+        .artwork-website-panel > summary::after { content:'+'; flex:0 0 auto; color:var(--accent); font:500 24px/1 var(--font-serif); }
+        .artwork-website-panel[open] > summary::after { content:'−'; }
+        .artwork-website-summary strong { display:block; font:500 23px/1.1 var(--font-serif); color:var(--ink); }
+        .artwork-website-summary span { display:block; margin-top:5px; color:var(--muted); font-size:12px; }
+        .artwork-website-state { border:1px solid rgba(160,92,71,.28); border-radius:999px; padding:7px 11px; background:rgba(224,104,76,.09); color:var(--ink); font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; white-space:nowrap; }
+        .artwork-website-form { padding:22px 20px 20px; border-top:1px solid var(--line); }
+        .artwork-website-note { margin:0; padding:13px 14px; border-left:3px solid rgba(224,104,76,.52); background:var(--surface-soft); color:var(--muted); font-size:13px; line-height:1.5; }
+        .artwork-website-sale { margin-top:18px; padding-top:18px; border-top:1px solid var(--line); }
+        .artwork-website-sale h4 { margin:0 0 12px; font:500 20px/1.2 var(--font-serif); }
+        .artwork-website-sale-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+        .artwork-website-sale-grid label { display:grid; gap:7px; color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+        .artwork-website-sale-grid input,.artwork-website-sale-grid select { width:100%; box-sizing:border-box; padding:12px 13px; border:1px solid var(--line); border-radius:var(--radius); background:#fff; color:var(--ink); font:400 15px/1.4 var(--font-sans); }
+        .artwork-website-shipping { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-top:12px; padding:13px 14px; background:var(--surface-soft); color:var(--muted); font-size:13px; }
+        .artwork-website-shipping a { color:var(--accent); font-weight:700; white-space:nowrap; }
+        .artwork-website-settings { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:end; gap:16px; margin-top:18px; }
+        .artwork-website-settings label { display:grid; gap:7px; color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+        .artwork-website-settings input,.artwork-website-settings select { width:100%; box-sizing:border-box; padding:12px 13px; border:1px solid var(--line); border-radius:var(--radius); background:#fff; color:var(--ink); font:400 15px/1.4 var(--font-sans); }
+        .artwork-website-actions { grid-column:1 / -1; display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px; }
+        .artwork-website-actions button { min-height:44px; padding:10px 18px; }
+        .artwork-website-actions .website-publish { border-color:#bdcdb8; background:#e8f0e5; color:#354633; font-weight:700; }
         @media (max-width:800px) { .v2-admin-grid { grid-template-columns:1fr; } }
         .artwork-sheet {
             display: grid;
@@ -2673,6 +2804,14 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                 padding: 6px 10px 40px;
             }
 
+            .artwork-website-panel > summary { align-items:flex-start; padding:16px; }
+            .artwork-website-state { margin-left:auto; }
+            .artwork-website-form { padding:18px 14px 14px; }
+            .artwork-website-settings,.artwork-website-sale-grid { grid-template-columns:1fr; }
+            .artwork-website-shipping { align-items:flex-start; flex-direction:column; }
+            .artwork-website-actions { justify-content:stretch; }
+            .artwork-website-actions button { flex:1 1 100%; width:100%; }
+
             .artwork-session-header,
             .artwork-page-header {
                 display: none !important;
@@ -2684,6 +2823,9 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             .artwork-root-views-card > h3 {
                 display: none !important;
             }
+
+            .artwork-studio-note-mobile { display:flex; margin:0 0 12px; }
+            .artwork-studio-note-mobile .artwork-studio-note-link { width:100%; justify-content:center; }
 
             .artwork-page-header {
                 margin-bottom: 8px;
@@ -2903,6 +3045,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                         <button type="button" class="artwork-title-cancel" data-artwork-title-cancel>Cancel</button>
                     </form>
                 </div>
+                <a class="button-link artwork-studio-note-link" href="website_studio_notes.php?source=artwork:<?= (int)$id ?>#new-studio-note">Create Studio Note</a>
             </div>
 
             <?php if (isset($_GET['series_updated'])): ?>
@@ -2938,6 +3081,12 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             <?php if (isset($_GET['website_v2_synced'])): ?>
                 <div class="notice">Artwork sent to the Maurizio Valch catalogue. It remains hidden until you enable it in the website admin.</div>
             <?php endif; ?>
+            <?php if (isset($_GET['website_saved'])): ?>
+                <div class="notice">Website entry <?= h((string)$_GET['website_saved']) ?>.</div>
+            <?php endif; ?>
+            <?php if (isset($_GET['website_error'])): ?>
+                <div class="notice error"><?= h((string)$_GET['website_error']) ?></div>
+            <?php endif; ?>
             <?php if (isset($_GET['metadata_error'])): ?>
                 <div class="notice error"><?= h((string)$_GET['metadata_error']) ?></div>
             <?php endif; ?>
@@ -2947,6 +3096,10 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             <?php if (isset($_GET['root_views_completed'])): ?>
                 <div class="notice">The two missing root views were added to this artwork.</div>
             <?php endif; ?>
+
+            <div class="artwork-studio-note-mobile">
+                <a class="button-link artwork-studio-note-link" href="website_studio_notes.php?source=artwork:<?= (int)$id ?>#new-studio-note">Create Studio Note</a>
+            </div>
 
             <?php if ($analysisNeedsRefresh): ?>
                 <div class="notice error">
@@ -3204,6 +3357,66 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                             </section>
 
                             <div class="artwork-metadata-slot"><?= $artworkMetadataPanelHtml ?></div>
+
+                            <details class="artwork-website-panel" id="website-publication">
+                                <summary>
+                                    <span class="artwork-website-summary">
+                                        <strong>Website</strong>
+                                        <span>Publication, sale and delivery settings</span>
+                                    </span>
+                                    <span class="artwork-website-state"><?= h(str_replace('_', ' ', $websiteStatus)) ?></span>
+                                </summary>
+                                <form method="post" class="artwork-website-form">
+                                    <input type="hidden" name="action" value="save_artwork_website">
+                                    <p class="artwork-website-note">Title, descriptions, SEO keywords, tags, alt text and captions come directly from Artwork Metadata. <strong><?= $websiteMetadataComplete ? 'Content complete.' : 'Some metadata is still incomplete.' ?></strong></p>
+
+                                    <section class="artwork-website-sale" aria-labelledby="website-sale-title">
+                                        <h4 id="website-sale-title">Price and availability</h4>
+                                        <div class="artwork-website-sale-grid">
+                                            <label>Availability
+                                                <select name="sale_status">
+                                                    <?php foreach (['draft' => 'Not for sale', 'active' => 'Available', 'paused' => 'Temporarily unavailable', 'sold_out' => 'Sold'] as $value => $label): ?>
+                                                        <option value="<?= h($value) ?>" <?= (string)($websiteSale['status'] ?? 'draft') === $value ? 'selected' : '' ?>><?= h($label) ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </label>
+                                            <label>Available units<input type="number" min="0" step="1" name="sale_stock" value="<?= $websiteSaleAvailable ?>"></label>
+                                            <label>Price<input inputmode="decimal" name="sale_price" value="<?= $websiteSale ? h(number_format((int)$websiteSale['price_minor'] / 100, 2, '.', '')) : '' ?>" placeholder="2500.00"></label>
+                                            <label>Currency<input name="sale_currency" maxlength="3" value="<?= h((string)($websiteSale['currency'] ?? $websiteDefaultCurrency)) ?>"></label>
+                                        </div>
+                                        <div class="artwork-website-shipping">
+                                            <span>Shipping uses the editable rates by continent for the whole store.</span>
+                                            <a href="../site-admin/?area=store&amp;section=shipping">Edit shipping rates</a>
+                                        </div>
+                                    </section>
+
+                                    <div class="artwork-website-settings">
+                                        <label>Visibility
+                                            <select name="visibility">
+                                                <?php foreach (['public' => 'Public', 'unlisted' => 'Unlisted', 'private' => 'Private'] as $value => $label): ?>
+                                                    <option value="<?= h($value) ?>" <?= $websiteVisibility === $value ? 'selected' : '' ?>><?= h($label) ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </label>
+                                        <label>Constellation country<input name="constellation_country" value="<?= h($websiteConstellationCountry) ?>" placeholder="Optional"></label>
+                                        <label>Website cover
+                                            <select name="header_file">
+                                                <?php foreach ($websiteCoverOptions as $file => $label): ?>
+                                                    <option value="<?= h($file) ?>" <?= ($websiteSelectedCover !== '' ? $websiteSelectedCover === $file : $file === $rootFile) ? 'selected' : '' ?>><?= h($label) ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </label>
+                                        <div class="artwork-website-actions">
+                                            <button type="submit" name="website_intent" value="save">Save website settings</button>
+                                            <?php if ($websiteStatus === 'published'): ?>
+                                                <button type="submit" name="website_intent" value="unpublish">Unpublish</button>
+                                            <?php else: ?>
+                                                <button class="website-publish" type="submit" name="website_intent" value="publish">Publish artwork</button>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </form>
+                            </details>
 
                             <form class="artwork-metadata-layout-form" method="post">
                                 <input type="hidden" name="action" value="save_artwork_metadata">

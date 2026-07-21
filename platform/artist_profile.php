@@ -5,7 +5,13 @@ require_once __DIR__ . '/app/bootstrap.php';
 
 $user = Auth::requireUser();
 $saved = false;
+$domainSaved = false;
+$domainVerified = false;
 $error = '';
+$pdo = Database::connection();
+$domainService = new ArtistDomainService($pdo);
+$_SESSION['artist_profile_csrf'] ??= bin2hex(random_bytes(32));
+$csrf = (string)$_SESSION['artist_profile_csrf'];
 
 function artist_profile_photo_dir(): string
 {
@@ -75,17 +81,40 @@ function handle_artist_photo_upload(int $userId, string $existingFile): string
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
+        $postedToken = (string)($_POST['csrf'] ?? '');
+        if ($postedToken === '' || !hash_equals($csrf, $postedToken)) {
+            throw new RuntimeException('The form expired. Reload the page and try again.');
+        }
+        $action = (string)($_POST['action'] ?? 'save_profile');
         $currentProfile = ArtistProfile::findForUser((int)$user['id']);
-        $input = $_POST;
-        $input['photo_file'] = handle_artist_photo_upload((int)$user['id'], basename((string)($currentProfile['photo_file'] ?? '')));
-        ArtistProfile::saveForUser((int)$user['id'], $input);
-        $saved = true;
+        if ($action === 'save_domain') {
+            $domainService->saveConfiguration(
+                (int)$user['id'],
+                (string)($_POST['subdomain'] ?? ''),
+                (string)($_POST['custom_domain'] ?? '')
+            );
+            $domainSaved = true;
+        } elseif ($action === 'verify_domain') {
+            $result = $domainService->verifyOwnership((int)$user['id']);
+            $domainVerified = !empty($result['verified_now']);
+            if (!$domainVerified) $error = (string)$result['last_error'];
+        } elseif ($action === 'save_profile') {
+            $input = $_POST;
+            $input['subdomain'] = (string)($currentProfile['subdomain'] ?? '');
+            $input['custom_domain'] = (string)($currentProfile['custom_domain'] ?? '');
+            $input['photo_file'] = handle_artist_photo_upload((int)$user['id'], basename((string)($currentProfile['photo_file'] ?? '')));
+            ArtistProfile::saveForUser((int)$user['id'], $input);
+            $saved = true;
+        } else {
+            throw new RuntimeException('Unknown Artist Profile action.');
+        }
     } catch (Throwable $e) {
         $error = $e->getMessage();
     }
 }
 
 $profile = ArtistProfile::findForUser((int)$user['id']);
+$domain = $domainService->configuration((int)$user['id']);
 $isAdmin = Auth::isAdmin($user);
 $canUseSocial = FeatureAccess::allows($user, FeatureAccess::SOCIAL_MANAGE);
 
@@ -256,6 +285,136 @@ function admin_vars_hint(bool $isAdmin, string $field): void
             object-fit: cover;
             display: block;
         }
+        .domain-workspace {
+            margin: 0 0 24px;
+            border: 1px solid var(--line);
+            background: var(--surface);
+        }
+        .domain-workspace > summary {
+            min-height: 76px;
+            padding: 17px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            cursor: pointer;
+            list-style: none;
+        }
+        .domain-workspace > summary::-webkit-details-marker { display: none; }
+        .domain-summary-copy {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .domain-summary-copy span {
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+        .domain-summary-copy strong {
+            overflow: hidden;
+            color: var(--ink);
+            font: 500 21px/1.15 var(--font-serif);
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .domain-status {
+            flex: 0 0 auto;
+            border: 1px solid var(--line-dark);
+            padding: 6px 10px;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+        }
+        .domain-status--verified {
+            border-color: rgba(93, 122, 86, .32);
+            background: rgba(188, 207, 181, .32);
+            color: #42533f;
+        }
+        .domain-workspace-body {
+            border-top: 1px solid var(--line);
+            padding: 22px 20px 24px;
+        }
+        .domain-address-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+            gap: 16px;
+            align-items: end;
+        }
+        .domain-address-grid .form-group { min-width: 0; }
+        .domain-address-grid button,
+        .domain-verification button {
+            width: auto;
+            min-height: 44px;
+            margin: 0;
+            border-color: #aebca8;
+            background: #b8c6b2;
+            color: #253023;
+            box-shadow: none;
+        }
+        .domain-address-grid button:hover,
+        .domain-verification button:hover {
+            border-color: #98aa91;
+            background: #a9bba3;
+            box-shadow: none;
+        }
+        .domain-verification {
+            margin-top: 22px;
+            padding-top: 20px;
+            border-top: 1px solid var(--line);
+        }
+        .domain-verification h3 {
+            margin: 0 0 4px;
+            font: 500 24px/1.1 var(--font-serif);
+        }
+        .domain-verification > p {
+            max-width: 760px;
+            margin: 0 0 16px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+        .dns-records {
+            display: grid;
+            grid-template-columns: 90px minmax(220px, .8fr) minmax(320px, 1.4fr);
+            border: 1px solid var(--line);
+            background: var(--surface-soft);
+        }
+        .dns-records > div {
+            min-width: 0;
+            padding: 12px 14px;
+            border-right: 1px solid var(--line);
+        }
+        .dns-records > div:last-child { border-right: 0; }
+        .dns-records span {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+        }
+        .dns-records code {
+            display: block;
+            overflow-wrap: anywhere;
+            color: var(--ink);
+            font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+        }
+        .domain-verification form {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .domain-routing-note {
+            margin-top: 14px !important;
+            margin-bottom: 0 !important;
+        }
         @media (max-width: 760px) {
             .app-header,
             .alert-strip {
@@ -307,6 +466,17 @@ function admin_vars_hint(bool $isAdmin, string $field): void
                 padding-bottom: 8px;
                 font-size: 19px;
             }
+            .domain-workspace { margin-bottom: 14px; }
+            .domain-workspace > summary { min-height: 66px; padding: 13px 10px; }
+            .domain-summary-copy strong { font-size: 19px; }
+            .domain-workspace-body { padding: 16px 10px 18px; }
+            .domain-address-grid { grid-template-columns: 1fr; gap: 12px; }
+            .domain-address-grid button,
+            .domain-verification button { width: 100%; min-height: 48px; }
+            .dns-records { grid-template-columns: 1fr; }
+            .dns-records > div { border-right: 0; border-bottom: 1px solid var(--line); }
+            .dns-records > div:last-child { border-bottom: 0; }
+            .domain-verification form { display: block; }
             .artist-photo-box {
                 grid-template-columns: 70px minmax(0, 1fr);
                 gap: 10px;
@@ -388,11 +558,70 @@ function admin_vars_hint(bool $isAdmin, string $field): void
                 <div class="notice">Profile saved successfully.</div>
             <?php endif; ?>
 
+            <?php if ($domainSaved): ?>
+                <div class="notice">Website address saved. Verify the custom domain after adding its DNS record.</div>
+            <?php endif; ?>
+
+            <?php if ($domainVerified): ?>
+                <div class="notice">Domain ownership verified. The artist website can now recognize this host.</div>
+            <?php endif; ?>
+
             <?php if ($error): ?>
                 <div class="notice error"><?= h($error) ?></div>
             <?php endif; ?>
 
+            <?php
+            $domainStatus = (string)$domain['status'];
+            $domainSummary = (string)$domain['public_host'];
+            if ($domainSummary === '') $domainSummary = 'Choose your website address';
+            ?>
+            <details class="domain-workspace" <?= (string)$domain['custom_domain'] !== '' && $domainStatus !== 'verified' ? 'open' : '' ?>>
+                <summary>
+                    <span class="domain-summary-copy"><span>Website address</span><strong><?= h($domainSummary) ?></strong></span>
+                    <span class="domain-status <?= $domainStatus === 'verified' ? 'domain-status--verified' : '' ?>"><?= h($domainStatus === 'verified' ? 'Verified' : ($domainStatus === 'pending' ? 'DNS pending' : 'Optional')) ?></span>
+                </summary>
+                <div class="domain-workspace-body">
+                    <form method="post" class="domain-address-grid">
+                        <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+                        <input type="hidden" name="action" value="save_domain">
+                        <div class="form-group">
+                            <label>Artwork Mockups subdomain</label>
+                            <input type="text" name="subdomain" value="<?= h((string)$domain['subdomain']) ?>" placeholder="artist-name" pattern="^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$" title="Lowercase letters, numbers, and internal hyphens.">
+                            <small><?= h((string)$domain['subdomain']) !== '' ? h((string)$domain['subdomain']) . '.artworkmockups.com' : 'Included with every artist website.' ?></small>
+                        </div>
+                        <div class="form-group">
+                            <label>Own domain</label>
+                            <input type="text" name="custom_domain" value="<?= h((string)$domain['custom_domain']) ?>" placeholder="artist.com" inputmode="url">
+                            <small>Use a domain you own. Do not include a page path.</small>
+                        </div>
+                        <button type="submit">Save address</button>
+                    </form>
+
+                    <?php if ((string)$domain['custom_domain'] !== ''): ?>
+                        <div class="domain-verification">
+                            <h3><?= $domainStatus === 'verified' ? 'Ownership verified' : 'Verify ownership' ?></h3>
+                            <p><?= $domainStatus === 'verified' ? 'Artwork Mockups will accept this verified host for your public artist website.' : 'Add this TXT record where you manage the domain, then return here and verify it.' ?></p>
+                            <div class="dns-records">
+                                <div><span>Type</span><code>TXT</code></div>
+                                <div><span>Name</span><code><?= h((string)$domain['verification_record']) ?></code></div>
+                                <div><span>Value</span><code><?= h((string)$domain['verification_value']) ?></code></div>
+                            </div>
+                            <?php if ($domainStatus !== 'verified'): ?>
+                                <form method="post">
+                                    <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+                                    <input type="hidden" name="action" value="verify_domain">
+                                    <button type="submit">Verify DNS</button>
+                                </form>
+                            <?php endif; ?>
+                            <p class="domain-routing-note">Website traffic target: <strong><?= h((string)$domain['routing_target']) ?></strong>. Ownership verification does not alter your existing DNS automatically.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </details>
+
             <form method="post" enctype="multipart/form-data">
+                <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+                <input type="hidden" name="action" value="save_profile">
                 <div class="profile-grid">
                     <!-- Column 1: Artistic Identity -->
                     <div class="profile-card">
@@ -419,19 +648,6 @@ function admin_vars_hint(bool $isAdmin, string $field): void
                             <label>Artistic Name</label>
                             <input type="text" name="artist_name" value="<?= field_value($profile, 'artist_name') ?>" placeholder="e.g. Elena Rostova">
                             <?php admin_vars_hint($isAdmin, 'artist_name'); ?>
-                        </div>
-
-                        <div class="grid-2col" style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom: 14px;">
-                            <div class="form-group">
-                                <label>Subdominio de la Plataforma (*.artworkmockups.com)</label>
-                                <input type="text" name="subdomain" value="<?= field_value($profile, 'subdomain') ?>" placeholder="e.g. elena" pattern="^[a-z0-9\-]+$" title="Solo letras minúsculas, números y guiones.">
-                                <small style="color: var(--gray-text);">Dirección corta (ej. maurizio para maurizio.artworkmockups.com).</small>
-                            </div>
-                            <div class="form-group">
-                                <label>Dominio Personalizado Propio</label>
-                                <input type="text" name="custom_domain" value="<?= field_value($profile, 'custom_domain') ?>" placeholder="e.g. elenarostova.com">
-                                <small style="color: var(--gray-text);">Dominio web independiente opcional.</small>
-                            </div>
                         </div>
 
                         <div class="form-group">

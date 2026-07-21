@@ -157,9 +157,9 @@ $artworkStmt = $pdo->prepare("
         s.created_at DESC,
         s.id DESC,
         CASE WHEN a.series_creation_number IS NULL THEN 1 ELSE 0 END ASC,
-        a.series_creation_number ASC,
-        g.created_at ASC,
-        a.id ASC
+        a.series_creation_number DESC,
+        g.created_at DESC,
+        a.id DESC
 ");
 $artworkStmt->execute([$userId, 'done']);
 $artworks = $artworkStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -200,12 +200,12 @@ $displayedArtworks = $selectedSeries
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Series - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="ui-catalog.css?v=13">
+    <link rel="stylesheet" href="ui-catalog.css?v=14">
     <?php if ($seriesPreviewActive): ?>
         <link rel="stylesheet" href="visual-consistency-preview.css?v=2">
     <?php endif; ?>
 </head>
-<body<?= $seriesPreviewActive ? ' class="ui-visual-consistency-preview" data-ui-preview="series-catalog"' : '' ?>>
+<body class="series-page<?= $seriesPreviewActive ? ' ui-visual-consistency-preview' : '' ?>"<?= $seriesPreviewActive ? ' data-ui-preview="series-catalog"' : '' ?>>
 <div class="app-shell">
     <?php include __DIR__ . '/sidebar.php'; ?>
     <main class="main-area">
@@ -249,19 +249,7 @@ $displayedArtworks = $selectedSeries
                     </p>
                 </div>
                 <div class="catalog-heading__actions">
-                    <?php if (!empty($selectedSeries['published'])): ?>
-                        <form method="post" style="margin:0;">
-                            <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
-                            <input type="hidden" name="series_id" value="<?= (int)$selectedSeries['id'] ?>">
-                            <button class="button-link secondary" name="action" value="unpublish_series">Unpublish</button>
-                        </form>
-                    <?php else: ?>
-                        <form method="post" style="margin:0;">
-                            <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
-                            <input type="hidden" name="series_id" value="<?= (int)$selectedSeries['id'] ?>">
-                            <button class="button-link" name="action" value="publish_series" <?= $seriesMissing ? 'disabled' : '' ?>>Publish</button>
-                        </form>
-                    <?php endif; ?>
+                    <a class="button-link" href="website_studio_notes.php?source=series:<?= (int)$selectedSeries['id'] ?>#new-studio-note">Create Studio Note</a>
                     <a class="button-link secondary" href="series.php<?= $seriesPreviewActive ? '?design_preview=series-catalog' : '' ?>">Back to series</a>
                 </div>
             </div>
@@ -269,6 +257,28 @@ $displayedArtworks = $selectedSeries
 
             <?php if ($notice !== ''): ?><div class="notice-card notice-ok"><?= series_h($notice) ?></div><?php endif; ?>
             <?php if ($error !== ''): ?><div class="notice-card notice-error"><?= series_h($error) ?></div><?php endif; ?>
+
+            <?php if ($selectedSeries): ?>
+                <details class="series-website-panel" id="series-website">
+                    <summary>
+                        <span><strong>Website</strong><small>Publication settings only · content comes from Series Metadata</small></span>
+                        <b><?= !empty($selectedSeries['published']) ? 'Published' : 'Draft' ?></b>
+                    </summary>
+                    <div class="series-website-panel__body">
+                        <p>Title, descriptions, SEO text, keywords, tags and header image are used directly from this Series record.</p>
+                        <?php if ($seriesMissing): ?><div class="warning-list">Complete before publishing: <?= series_h(implode(' · ', $seriesMissing)) ?></div><?php endif; ?>
+                        <form method="post">
+                            <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
+                            <input type="hidden" name="series_id" value="<?= (int)$selectedSeries['id'] ?>">
+                            <?php if (!empty($selectedSeries['published'])): ?>
+                                <button class="button-link secondary" name="action" value="unpublish_series">Unpublish series</button>
+                            <?php else: ?>
+                                <button class="button-link" name="action" value="publish_series" <?= $seriesMissing ? 'disabled' : '' ?>>Publish series</button>
+                            <?php endif; ?>
+                        </form>
+                    </div>
+                </details>
+            <?php endif; ?>
 
             <section class="catalog-panel catalog-panel--compact catalog-panel--series-picker">
                 <?php if ($selectedSeries && $seriesMissing): ?>
@@ -278,13 +288,18 @@ $displayedArtworks = $selectedSeries
                     <div class="social-square-grid">
                         <?php foreach ($seriesRows as $index => $series): ?>
                             <?php $seriesArtworkCount = (int)($series['artwork_count'] ?? 0); ?>
-                            <a class="social-square-button series-series-tile social-square-button--<?= series_tone($index) ?>" href="series.php?series=<?= (int)$series['id'] ?><?= $seriesPreviewActive ? '&amp;design_preview=series-catalog' : '' ?>" aria-label="<?= series_h($series['title']) ?>, <?= $seriesArtworkCount ?> <?= $seriesArtworkCount === 1 ? 'artwork' : 'artworks' ?>, <?= !empty($series['published']) ? 'published' : 'draft' ?>">
-                                <span class="series-series-tile__title"><?= series_h($series['title']) ?></span>
-                                <small class="series-series-tile__meta">
-                                    <?= $seriesArtworkCount > 0 ? $seriesArtworkCount . ' ' . ($seriesArtworkCount === 1 ? 'artwork' : 'artworks') : 'No artworks' ?>
-                                    · <?= !empty($series['published']) ? 'Published' : 'Draft' ?>
-                                </small>
-                            </a>
+                            <div class="series-series-option">
+                                <a class="social-square-button series-series-tile social-square-button--<?= series_tone($index) ?>" href="series.php?series=<?= (int)$series['id'] ?><?= $seriesPreviewActive ? '&amp;design_preview=series-catalog' : '' ?>" data-series-filter-trigger data-series-filter-id="<?= (int)$series['id'] ?>" aria-label="<?= series_h($series['title']) ?>, <?= $seriesArtworkCount ?> <?= $seriesArtworkCount === 1 ? 'artwork' : 'artworks' ?>, <?= !empty($series['published']) ? 'published' : 'draft' ?>">
+                                    <span class="series-series-tile__title"><?= series_h($series['title']) ?></span>
+                                    <small class="series-series-tile__meta">
+                                        <?= $seriesArtworkCount > 0 ? $seriesArtworkCount . ' ' . ($seriesArtworkCount === 1 ? 'artwork' : 'artworks') : 'No artworks' ?>
+                                        · <?= !empty($series['published']) ? 'Published' : 'Draft' ?>
+                                    </small>
+                                </a>
+                                <a class="series-series-option__edit" href="series.php?series=<?= (int)$series['id'] ?><?= $seriesPreviewActive ? '&amp;design_preview=series-catalog' : '' ?>" aria-label="Edit <?= series_h($series['title']) ?>" title="Edit series">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16v4Zm9.7-13.7 4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </a>
+                            </div>
                         <?php endforeach; ?>
                         <details class="series-create-toggle">
                             <summary class="social-square-button social-square-button--new" aria-label="New series"><span>+</span></summary>
@@ -498,9 +513,9 @@ $displayedArtworks = $selectedSeries
                 <?php endif; ?>
             </section>
 
-            <section class="catalog-panel catalog-panel--compact catalog-panel--series-artworks">
+            <section class="catalog-panel catalog-panel--compact catalog-panel--series-artworks" id="artwork-assignment">
                 <div class="detail-heading">
-                    <div>
+                    <div class="series-artwork-heading-copy">
                         <h2><?= $selectedSeries ? 'Works in this series' : 'Artwork assignment' ?></h2>
                         <?php if ($selectedSeries): ?>
                             <p><?= count($displayedArtworks) ?> <?= count($displayedArtworks) === 1 ? 'artwork belongs' : 'artworks belong' ?> to <?= series_h($selectedSeries['title']) ?>. Drag the images to change their order; changing a series saves immediately.</p>
@@ -524,13 +539,14 @@ $displayedArtworks = $selectedSeries
                         <span class="series-dependent-count" data-series-visible-count><?= count($displayedArtworks) ?> <?= count($displayedArtworks) === 1 ? 'artwork' : 'artworks' ?></span>
                     </div>
                 </div>
+                <p class="series-mobile-order-hint" data-series-order-hint<?= $selectedSeries ? '' : ' hidden' ?>>Hold an artwork image to change its order.</p>
                 <?php if (!$displayedArtworks): ?>
                     <div class="empty-state series-dependent-empty">
                         <strong>No artworks are associated with <?= $selectedSeries ? series_h($selectedSeries['title']) : 'a series' ?> yet.</strong>
                         <?php if ($selectedSeries): ?><a href="series.php">Assign artworks from the Series overview</a><?php endif; ?>
                     </div>
                 <?php else: ?>
-                    <div class="series-artwork-list" data-series-order-list data-series-order-endpoint="reorder_series_artworks.php" data-series-order-csrf="<?= series_h($_SESSION['series_csrf']) ?>">
+                    <div class="series-artwork-list" data-series-order-list<?= !$selectedSeries ? ' data-series-filter-controlled="true"' : '' ?> data-series-order-endpoint="reorder_series_artworks.php" data-series-order-csrf="<?= series_h($_SESSION['series_csrf']) ?>">
                         <?php $seriesOrderCounters = []; ?>
                         <?php foreach ($displayedArtworks as $artwork): ?>
                             <?php
@@ -587,6 +603,6 @@ $displayedArtworks = $selectedSeries
     </main>
 </div>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="series_artwork_order.js?v=20260720-3"></script>
+<script src="series_artwork_order.js?v=20260720-4"></script>
 </body>
 </html>

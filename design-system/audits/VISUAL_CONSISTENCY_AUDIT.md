@@ -181,20 +181,13 @@ No se enviaron formularios, no se activaron generaciones, no se arrastraron elem
 - **Markup changes required:** No necesariamente.
 - **Postpone:** Sí; P2.
 
-### 10. Website Catalog Sync
+### 10. Artist Site Manager
 
-- **Screen:** Website Catalog Sync.
-- **Route or file:** `platform/website_board.php`.
-- **Status:** MINOR INCONSISTENCIES.
-- **Patterns correctly applied:** Catálogo horizontal, thumbnails de escala útil, colores de identidad, paneles de destino visibles y drag and drop directo.
-- **Inconsistencies detected:** **LOW:** el título principal visible usa `h2` y una escala menor a la cabecera editorial canónica. **LOW:** controles de edición locales (`Save`, `Publish`, `Remove`) no convergen completamente con los estilos compartidos. **LOW:** `Catalog` y `Studio Notes` aparecen como dos paneles equivalentes antes de que el flujo vertical quede claro.
-- **Severity:** LOW.
-- **Recommended existing pattern to reuse:** Header de `Explore Scenes`; Workspace Panel y Drop Zone de `Scene Studio`.
-- **Files likely involved:** `platform/website_board.php`, `platform/website_board.css`, `platform/social_media_board.css`, `platform/website_board.js`.
-- **Risk level:** Medio.
-- **CSS-only possible:** Parcial.
-- **Markup changes required:** Sí para corregir la semántica del encabezado; no para espaciado y controles.
-- **Postpone:** Sí; P2.
+- **Screen:** Artist Site Manager.
+- **Route or file:** `site-admin/`.
+- **Status:** PASS.
+- **Patterns correctly applied:** Cabecera orientativa, navegación textual, rail visual compacto y ficha de trabajo editorial.
+- **Migration:** Sustituye la pantalla heredada `platform/website_board.php`, retirada del producto.
 
 ### 11. Social Media Board
 
@@ -305,7 +298,7 @@ No se enviaron formularios, no se activaron generaciones, no se arrastraron elem
 
 ### Primary Actions múltiples
 
-- **Dónde aparece:** Create Art, Mockup Lab, Mockup Album, Videos, Website Catalog Sync y Video Lab.
+- **Dónde aparece:** Create Art, Mockup Lab, Mockup Album, Videos, Website Sync y Video Lab.
 - **Referencia aprobada:** Decision Block / Primary Action de `Explore Scenes`; Decision Blocks de `Series`.
 - **Implementación correcta:** bloque cuadrado o fuertemente cuadrado, pastel, etiqueta corta y un compromiso por etapa.
 - **Deben converger:** botones oscuros de captura, barras `Apply Changes` y `Add sequence`, botones marrones de navegación/importación y grupos de varias acciones equivalentes.

@@ -9,6 +9,7 @@ define('SITE_MANAGER_PLATFORM_PREFIX', $platformDirectory === $localPlatformDire
 require_once $platformDirectory . '/app/bootstrap.php';
 require_once __DIR__ . '/app/SiteManagerService.php';
 require_once __DIR__ . '/app/EmbeddedNoteImage.php';
+require_once __DIR__ . '/app/StripeConnectService.php';
 
 $user = Auth::user();
 if (!$user) {
@@ -26,10 +27,26 @@ $csrf = (string)$_SESSION['site_manager_csrf'];
 $userId = (int)$user['id'];
 $pdo = Database::connection();
 $manager = new SiteManagerService($pdo);
+$domainService = new ArtistDomainService($pdo);
+$stripeConnect = new StripeConnectService();
 
 function sm_h(mixed $value): string
 {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+}
+
+function sm_series_title(string $title): string
+{
+    $title = trim($title);
+    $title = trim((string)preg_replace('/\s+series\s*$/iu', '', $title));
+    if ($title === '') return 'Series';
+    if (function_exists('mb_strtolower')) {
+        $title = mb_strtolower($title, 'UTF-8');
+        $title = mb_strtoupper(mb_substr($title, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($title, 1, null, 'UTF-8');
+    } else {
+        $title = ucfirst(strtolower($title));
+    }
+    return $title . ' Series';
 }
 
 function sm_media(string $file, int $width = 720): string
@@ -43,27 +60,26 @@ function sm_money(int $minor, string $currency): string
     return number_format($minor / 100, 2, '.', ',') . ' ' . strtoupper($currency);
 }
 
-function sm_redirect(string $area, string $section, int $item = 0, int $variant = 0): never
+function sm_redirect(string $area, string $section, int $item = 0, int $variant = 0, int $order = 0): never
 {
     $query = ['area' => $area, 'section' => $section];
     if ($item > 0) $query['item'] = $item;
     if ($variant > 0) $query['variant'] = $variant;
+    if ($order > 0) $query['order'] = $order;
     header('Location: index.php?' . http_build_query($query));
     exit;
 }
 
 $sections = [
-    'content' => ['artworks', 'series', 'studio-notes', 'artist', 'inquire'],
-    'store' => ['prints', 'orders'],
-    'settings' => ['site', 'domain', 'payments', 'shipping'],
-    'activity' => ['activity'],
+    'store' => ['orders', 'shipping', 'payments'],
 ];
-$area = (string)($_GET['area'] ?? $_POST['return_area'] ?? 'content');
-if (!isset($sections[$area])) $area = 'content';
+$area = (string)($_GET['area'] ?? $_POST['return_area'] ?? 'store');
+if (!isset($sections[$area])) $area = 'store';
 $section = (string)($_GET['section'] ?? $_POST['return_section'] ?? $sections[$area][0]);
 if (!in_array($section, $sections[$area], true)) $section = $sections[$area][0];
 $itemId = max(0, (int)($_GET['item'] ?? $_POST['return_item'] ?? 0));
 $variantId = max(0, (int)($_GET['variant'] ?? $_POST['return_variant'] ?? 0));
+$orderId = max(0, (int)($_GET['order'] ?? $_POST['return_order'] ?? 0));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
@@ -74,19 +90,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $order = array_values(array_filter(array_map('intval', explode(',', (string)($_POST['publication_order'] ?? '')))));
             $manager->reorderArtworks($userId, $order);
             $_SESSION['site_manager_notice'] = 'Website artwork order updated.';
-        } elseif (in_array($action, ['save_artwork', 'publish_artwork', 'unpublish_artwork', 'hide_artwork', 'show_artwork'], true)) {
-            $verb = match ($action) {
-                'publish_artwork' => 'publish', 'unpublish_artwork' => 'unpublish',
-                'hide_artwork' => 'hide', 'show_artwork' => 'show', default => 'save',
-            };
-            $manager->saveArtwork($userId, (int)$_POST['artwork_id'], $_POST, $verb);
-            $itemId = (int)$_POST['artwork_id'];
-            $_SESSION['site_manager_notice'] = $verb === 'publish' ? 'Artwork published.' : 'Artwork website entry updated.';
-        } elseif (in_array($action, ['save_series', 'publish_series', 'unpublish_series'], true)) {
-            $verb = $action === 'publish_series' ? 'publish' : ($action === 'unpublish_series' ? 'unpublish' : 'save');
-            $manager->saveSeries($userId, (int)$_POST['series_id'], $_POST, $verb);
-            $itemId = (int)$_POST['series_id'];
-            $_SESSION['site_manager_notice'] = $verb === 'publish' ? 'Series published.' : 'Series website entry updated.';
         } elseif (in_array($action, ['save_note', 'publish_note', 'unpublish_note'], true)) {
             $verb = $action === 'publish_note' ? 'publish' : ($action === 'unpublish_note' ? 'unpublish' : 'save');
             $manager->saveNote($userId, (int)$_POST['note_id'], (string)($_POST['title'] ?? ''), (string)($_POST['body'] ?? ''), $verb);
@@ -106,21 +109,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['site_manager_notice'] = 'Domain settings saved.';
         } elseif ($action === 'save_payments') {
             $manager->saveSettings($userId, 'payments', $_POST);
-            $_SESSION['site_manager_notice'] = 'Payment preferences saved. No live provider connection was created.';
+            $_SESSION['site_manager_notice'] = 'Store currency saved.';
+        } elseif ($action === 'connect_stripe') {
+            $state = bin2hex(random_bytes(32));
+            $_SESSION['stripe_connect_state'] = $state;
+            $_SESSION['stripe_connect_user_id'] = $userId;
+            $connectDestination = $domainService->configuration($userId);
+            $connectHost = trim((string)$connectDestination['public_host']);
+            $businessUrl = $connectHost !== '' ? 'https://' . $connectHost : app_env('APP_PUBLIC_URL', 'http://localhost');
+            header('Location: ' . $stripeConnect->authorizationUrl($user, $state, $businessUrl), true, 303);
+            exit;
+        } elseif ($action === 'refresh_stripe') {
+            $connection = $manager->paymentConnection($userId);
+            $accountId = (string)$connection['external_account_id'];
+            $account = $stripeConnect->account($accountId);
+            $manager->saveStripeConnection($userId, $accountId, (bool)$connection['livemode'], $account);
+            $_SESSION['site_manager_notice'] = 'Stripe account status refreshed.';
+        } elseif ($action === 'disconnect_stripe') {
+            $connection = $manager->paymentConnection($userId);
+            $accountId = (string)$connection['external_account_id'];
+            $pending = $pdo->prepare("SELECT COUNT(*) FROM artist_site_orders WHERE user_id=? AND provider_account_id=? AND payment_status='pending' AND order_status NOT IN ('cancelled','completed')");
+            $pending->execute([$userId, $accountId]);
+            if ((int)$pending->fetchColumn() > 0) throw new RuntimeException('Resolve or cancel pending Stripe orders before disconnecting this account.');
+            $stripeConnect->deauthorize($accountId);
+            $manager->disconnectStripeConnection($userId);
+            $_SESSION['site_manager_notice'] = 'Stripe account disconnected.';
         } elseif ($action === 'save_shipping') {
             $manager->saveSettings($userId, 'shipping', $_POST);
             $_SESSION['site_manager_notice'] = 'Shipping settings saved.';
-        } elseif ($action === 'save_print') {
-            $itemId = (int)$_POST['artwork_id'];
-            $variantId = $manager->savePrint($userId, $itemId, (int)($_POST['variant_id'] ?? 0), $_POST);
-            $_SESSION['site_manager_notice'] = 'Artwork stock saved.';
+        } elseif (in_array($action, ['confirm_order', 'mark_order_paid', 'mark_order_shipped', 'complete_order', 'cancel_order'], true)) {
+            $orderId = max(0, (int)($_POST['order_id'] ?? 0));
+            $verb = match ($action) {
+                'confirm_order' => 'confirm',
+                'mark_order_paid' => 'paid',
+                'mark_order_shipped' => 'shipped',
+                'complete_order' => 'complete',
+                default => 'cancel',
+            };
+            $manager->updateOrder($userId, $orderId, $verb);
+            $_SESSION['site_manager_notice'] = 'Order updated.';
         } else {
             throw new RuntimeException('Unknown Site Manager action.');
         }
     } catch (Throwable $error) {
         $_SESSION['site_manager_error'] = $error->getMessage();
     }
-    sm_redirect($area, $section, $itemId, $variantId);
+    sm_redirect($area, $section, $itemId, $variantId, $orderId);
 }
 
 $notice = (string)($_SESSION['site_manager_notice'] ?? '');
@@ -128,25 +162,23 @@ $error = (string)($_SESSION['site_manager_error'] ?? '');
 unset($_SESSION['site_manager_notice'], $_SESSION['site_manager_error']);
 $profile = ArtistProfile::findForUser($userId);
 $settings = $manager->settings($userId);
+$paymentConnection = $manager->paymentConnection($userId);
 $artistName = trim((string)($profile['artist_name'] ?? '')) ?: trim((string)$user['name']) ?: 'Artist';
-$customDomain = trim((string)($profile['custom_domain'] ?? ''));
-$subdomain = trim((string)($profile['subdomain'] ?? ''));
-if ($customDomain !== '') {
-    $websiteUrl = 'https://' . $customDomain;
-    $websiteLabel = $customDomain;
-} elseif ($subdomain !== '') {
-    $websiteUrl = 'https://' . $subdomain . '.artworkmockups.com';
-    $websiteLabel = $subdomain . '.artworkmockups.com';
+$domainDestination = $domainService->configuration($userId);
+$websiteHost = trim((string)$domainDestination['public_host']);
+if ($websiteHost !== '') {
+    $websiteUrl = 'https://' . $websiteHost;
+    $websiteLabel = $websiteHost;
 } else {
     $websiteUrl = '../artist-site/';
     $websiteLabel = 'Local artist website';
 }
 
-$areaLabels = ['content' => 'Content', 'store' => 'Store', 'settings' => 'Settings', 'activity' => 'Activity'];
+$areaLabels = ['store' => 'Store'];
 $sectionLabels = [
     'artworks' => 'Artworks', 'series' => 'Series',
     'studio-notes' => 'Studio Notes', 'artist' => 'Artist', 'inquire' => 'Inquire',
-    'prints' => 'Stock', 'orders' => 'Orders', 'site' => 'Site', 'domain' => 'Domain',
+    'prints' => 'Prices & Stock', 'orders' => 'Orders', 'site' => 'Site', 'domain' => 'Domain',
     'payments' => 'Payments', 'shipping' => 'Shipping', 'activity' => 'Activity',
 ];
 ?>
@@ -155,29 +187,23 @@ $sectionLabels = [
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title><?= sm_h($sectionLabels[$section]) ?> · Artist Site Manager</title>
-    <link rel="stylesheet" href="style.css?v=7">
+    <title><?= sm_h($sectionLabels[$section]) ?> · Store Admin</title>
+    <link rel="stylesheet" href="style.css?v=39">
     <?php if ($section === 'studio-notes'): ?><link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet"><?php endif; ?>
 </head>
 <body>
 <header class="manager-header">
     <a class="manager-brand" href="index.php">
-        <span>Artist Site Manager</span>
-        <small><?= sm_h($artistName) ?> · <?= sm_h((string)$settings['site_status']) ?></small>
+        <span>Store Admin</span>
+        <small><?= sm_h($sectionLabels[$section]) ?> · <?= sm_h(strtoupper((string)$settings['currency'])) ?></small>
     </a>
-    <nav class="primary-tabs" aria-label="Site Manager sections">
-        <?php foreach ($areaLabels as $key => $label): ?>
-            <a class="<?= $area === $key ? 'is-active' : '' ?>" href="?area=<?= sm_h($key) ?>&section=<?= sm_h($sections[$key][0]) ?>"><?= sm_h($label) ?></a>
-        <?php endforeach; ?>
-    </nav>
+    <a class="manager-return-to-app" href="<?= sm_h(SITE_MANAGER_PLATFORM_PREFIX) ?>/root_album.php">← Return to App</a>
     <div class="manager-header-actions">
-        <a href="<?= sm_h(SITE_MANAGER_PLATFORM_PREFIX) ?>/website_board.php">Back to Artwork Mockups</a>
-        <a href="<?= sm_h($websiteUrl) ?>" target="_blank" rel="noopener noreferrer">View <?= sm_h($websiteLabel) ?></a>
+        <a href="<?= sm_h($websiteUrl) ?>" target="_blank" rel="noopener noreferrer" aria-label="Preview <?= sm_h($websiteLabel) ?>">Preview website ↗</a>
     </div>
 </header>
-
 <main class="manager-main">
-    <nav class="secondary-tabs" aria-label="<?= sm_h($areaLabels[$area]) ?> sections">
+    <nav class="secondary-tabs store-admin-tabs" aria-label="Store sections">
         <?php foreach ($sections[$area] as $key): ?>
             <a class="<?= $section === $key ? 'is-active' : '' ?>" href="?area=<?= sm_h($area) ?>&section=<?= sm_h($key) ?>"><?= sm_h($sectionLabels[$key]) ?></a>
         <?php endforeach; ?>
@@ -199,8 +225,8 @@ $sectionLabels = [
             <?php if (count($publishedOrder) > 1): ?><p class="order-instruction">Drag published works to set the website order. Keyboard: Alt + ← or →.</p><?php endif; ?>
             <div class="visual-rail" aria-label="Artworks" data-public-order-list>
             <?php $publicPosition = 0; foreach ($artworks as $artwork): $image = (string)($artwork['header_file'] ?: $artwork['image_file']); $isPublished = (string)$artwork['publication_status'] === 'published'; if ($isPublished) $publicPosition++; ?>
-                <a class="visual-card <?= (int)$artwork['artwork_id'] === $itemId ? 'is-selected' : '' ?>" href="?area=content&section=artworks&item=<?= (int)$artwork['artwork_id'] ?>"<?= $isPublished ? ' draggable="true" data-public-order-card data-publication-id="' . (int)$artwork['publication_id'] . '" aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight"' : '' ?>>
-                    <?php if ($image !== ''): ?><img src="<?= sm_h(sm_media($image)) ?>" alt=""><?php endif; ?>
+                <a class="visual-card <?= (int)$artwork['artwork_id'] === $itemId ? 'is-selected' : '' ?>" href="?area=content&section=artworks&item=<?= (int)$artwork['artwork_id'] ?>" aria-label="<?= sm_h((string)$artwork['artwork_title']) ?> · <?= sm_h((string)$artwork['publication_status']) ?>"<?= $isPublished ? ' draggable="true" data-public-order-card data-publication-id="' . (int)$artwork['publication_id'] . '" aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight"' : '' ?>>
+                    <?php if ($image !== ''): ?><img src="<?= sm_h(sm_media($image)) ?>" alt="<?= sm_h((string)$artwork['artwork_title']) ?>"><?php endif; ?>
                     <span class="visual-card-state"><?= sm_h((string)$artwork['publication_status']) ?></span>
                     <?php if ($isPublished): ?><span class="visual-card-order" data-public-order-number><?= str_pad((string)$publicPosition, 2, '0', STR_PAD_LEFT) ?></span><?php endif; ?>
                     <strong><?= sm_h((string)$artwork['artwork_title']) ?></strong>
@@ -211,47 +237,19 @@ $sectionLabels = [
             </div>
             <div class="order-save" data-public-order-save hidden><span aria-live="polite">Website order changed.</span><button class="primary-action" name="action" value="reorder_artworks">Save website order</button></div>
         </form>
-        <?php if ($selected): $selectedImage = (string)($selected['header_file'] ?: $selected['image_file']); $coverOptions = $manager->artworkCoverOptions($userId, (int)$selected['artwork_id']); ?>
-            <section class="editor-panel">
-                <div class="editor-visual">
-                    <?php if ($selectedImage !== ''): ?><img src="<?= sm_h(sm_media($selectedImage, 1000)) ?>" alt=""><?php endif; ?>
-                    <p><?= sm_h((string)($selected['series_title'] ?: 'No series')) ?> · <?= sm_h((string)$selected['publication_status']) ?></p>
+        <?php if ($selected): ?>
+            <section class="website-content-handoff">
+                <div>
+                    <p class="editor-context">Selected artwork</p>
+                    <h2 class="editor-selected-title"><?= sm_h((string)$selected['artwork_title']) ?></h2>
+                    <p>Content and metadata are edited once in Artwork. Public order remains automatic.</p>
                 </div>
-                <form method="post" class="editor-form">
-                    <input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>">
-                    <input type="hidden" name="return_area" value="content"><input type="hidden" name="return_section" value="artworks">
-                    <input type="hidden" name="return_item" value="<?= (int)$selected['artwork_id'] ?>">
-                    <input type="hidden" name="artwork_id" value="<?= (int)$selected['artwork_id'] ?>">
-                    <label>Public title<input name="title" value="<?= sm_h((string)($selected['public_title'] ?: $selected['artwork_title'])) ?>"></label>
-                    <label>Short description<textarea name="short_description" rows="4"><?= sm_h((string)$selected['short_description']) ?></textarea></label>
-                    <label>Full description<textarea name="description" rows="9"><?= sm_h((string)$selected['description']) ?></textarea></label>
-                    <label>Constellation country<input name="constellation_country" value="<?= sm_h((string)$selected['constellation_country']) ?>" placeholder="Optional · leave empty to hide"></label>
-                    <details>
-                        <summary>Catalog cover</summary>
-                        <div class="cover-choice-grid">
-                            <?php foreach ($coverOptions as $cover): ?>
-                                <label class="cover-choice"><input type="radio" name="header_file" value="<?= sm_h($cover['file']) ?>" <?= basename($selectedImage) === $cover['file'] ? 'checked' : '' ?>><img src="<?= sm_h(sm_media($cover['file'])) ?>" alt=""><span><?= sm_h($cover['label']) ?></span></label>
-                            <?php endforeach; ?>
-                        </div>
-                    </details>
-                    <details>
-                        <summary>Inquiry and external destination</summary>
-                        <div class="form-grid">
-                            <label>CTA label<input name="cta_label" value="<?= sm_h((string)($selected['cta_label'] ?: 'Inquire about this work')) ?>"></label>
-                            <label>CTA URL<input name="cta_url" type="url" value="<?= sm_h((string)$selected['cta_url']) ?>"></label>
-                        </div>
-                    </details>
-                    <div class="form-actions">
-                        <?php if ((string)$selected['publication_status'] === 'published'): ?>
-                            <button class="primary-action" name="action" value="save_artwork">Update website</button>
-                            <?php if ((string)$selected['visibility'] === 'unlisted'): ?><button name="action" value="show_artwork">Show</button><?php else: ?><button name="action" value="hide_artwork">Hide</button><?php endif; ?>
-                            <button class="danger-action" name="action" value="unpublish_artwork" data-confirm="Unpublish this artwork?">Unpublish</button>
-                        <?php else: ?>
-                            <button class="primary-action" name="action" value="publish_artwork">Publish artwork</button>
-                            <button name="action" value="save_artwork">Save draft</button>
-                        <?php endif; ?>
-                    </div>
-                </form>
+                <dl>
+                    <div><dt>Status</dt><dd><?= sm_h(ucwords(str_replace('_', ' ', (string)$selected['publication_status']))) ?></dd></div>
+                    <div><dt>Visibility</dt><dd><?= sm_h(ucfirst((string)$selected['visibility'])) ?></dd></div>
+                    <div><dt>Content source</dt><dd>Artwork Metadata</dd></div>
+                </dl>
+                <a class="primary-action website-content-handoff__link" href="<?= sm_h(SITE_MANAGER_PLATFORM_PREFIX) ?>/artwork.php?id=<?= (int)$selected['artwork_id'] ?>#website-publication">Open artwork website settings</a>
             </section>
         <?php endif; ?>
 
@@ -263,8 +261,8 @@ $sectionLabels = [
         ?>
         <div class="visual-rail">
             <?php foreach ($seriesItems as $series): ?>
-                <a class="visual-card <?= (int)$series['id'] === $itemId ? 'is-selected' : '' ?>" href="?area=content&section=series&item=<?= (int)$series['id'] ?>">
-                    <?php if ((string)$series['header_file'] !== ''): ?><img src="<?= sm_h(sm_media((string)$series['header_file'])) ?>" alt=""><?php else: ?><span class="visual-placeholder"><?= sm_h((string)$series['title']) ?></span><?php endif; ?>
+                <a class="visual-card <?= (int)$series['id'] === $itemId ? 'is-selected' : '' ?>" href="?area=content&section=series&item=<?= (int)$series['id'] ?>" aria-label="<?= sm_h((string)$series['title']) ?> · <?= (int)$series['published'] === 1 ? 'published' : 'draft' ?>">
+                    <?php if ((string)$series['header_file'] !== ''): ?><img src="<?= sm_h(sm_media((string)$series['header_file'])) ?>" alt="<?= sm_h((string)$series['title']) ?>"><?php else: ?><span class="visual-placeholder"><?= sm_h((string)$series['title']) ?></span><?php endif; ?>
                     <span class="visual-card-state"><?= (int)$series['published'] === 1 ? 'published' : 'draft' ?></span>
                     <strong><?= sm_h((string)$series['title']) ?></strong>
                     <small><?= (int)$series['artwork_count'] ?> works · <?= (int)$series['published_artwork_count'] ?> published</small>
@@ -272,22 +270,18 @@ $sectionLabels = [
             <?php endforeach; ?>
         </div>
         <?php if ($selected): ?>
-            <section class="editor-panel">
-                <div class="editor-visual">
-                    <?php if ((string)$selected['header_file'] !== ''): ?><img src="<?= sm_h(sm_media((string)$selected['header_file'], 1000)) ?>" alt=""><?php else: ?><div class="large-placeholder"><?= sm_h((string)$selected['title']) ?></div><?php endif; ?>
-                    <p><?= (int)$selected['artwork_count'] ?> associated · <?= (int)$selected['published_artwork_count'] ?> published</p>
-                    <a class="quiet-link" href="<?= sm_h(SITE_MANAGER_PLATFORM_PREFIX) ?>/series.php?series=<?= (int)$selected['id'] ?>">Manage source images in Artwork Mockups</a>
+            <section class="website-content-handoff">
+                <div>
+                    <p class="editor-context">Selected series</p>
+                    <h2 class="editor-selected-title editor-selected-title--series"><?= sm_h(sm_series_title((string)$selected['title'])) ?></h2>
+                    <p>Series text, SEO, tags and images are edited once in the canonical Series workspace.</p>
                 </div>
-                <form method="post" class="editor-form">
-                    <input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="content"><input type="hidden" name="return_section" value="series"><input type="hidden" name="return_item" value="<?= (int)$selected['id'] ?>"><input type="hidden" name="series_id" value="<?= (int)$selected['id'] ?>">
-                    <div class="form-grid"><label>Title<input name="title" value="<?= sm_h((string)$selected['title']) ?>"></label><label>Subtitle<input name="subtitle" value="<?= sm_h((string)$selected['subtitle']) ?>"></label><label>URL slug<input name="slug" value="<?= sm_h((string)$selected['slug']) ?>"></label><label>Years<input name="year_start" inputmode="numeric" value="<?= sm_h((string)$selected['year_start']) ?>" placeholder="From"><input name="year_end" inputmode="numeric" value="<?= sm_h((string)$selected['year_end']) ?>" placeholder="Present"></label></div>
-                    <label>Short description<textarea name="description" rows="5"><?= sm_h((string)$selected['description']) ?></textarea></label>
-                    <label>Long description<textarea name="long_description" rows="9"><?= sm_h((string)$selected['long_description']) ?></textarea></label>
-                    <details><summary>Search and classification</summary><div class="form-grid"><label>Tags<textarea name="tags" rows="4"><?= sm_h((string)$selected['tags']) ?></textarea></label><label>Long-tail keywords<textarea name="keywords" rows="4"><?= sm_h((string)$selected['keywords']) ?></textarea></label></div><label>SEO description<textarea name="seo_description" rows="3"><?= sm_h((string)$selected['seo_description']) ?></textarea></label></details>
-                    <div class="form-actions">
-                        <?php if ((int)$selected['published'] === 1): ?><button class="primary-action" name="action" value="save_series">Update website</button><button class="danger-action" name="action" value="unpublish_series" data-confirm="Unpublish this series?">Unpublish</button><?php else: ?><button class="primary-action" name="action" value="publish_series">Publish series</button><button name="action" value="save_series">Save draft</button><?php endif; ?>
-                    </div>
-                </form>
+                <dl>
+                    <div><dt>Status</dt><dd><?= (int)$selected['published'] === 1 ? 'Published' : 'Draft' ?></dd></div>
+                    <div><dt>Works</dt><dd><?= (int)$selected['artwork_count'] ?></dd></div>
+                    <div><dt>Content source</dt><dd>Series Metadata</dd></div>
+                </dl>
+                <a class="primary-action website-content-handoff__link" href="<?= sm_h(SITE_MANAGER_PLATFORM_PREFIX) ?>/series.php?series=<?= (int)$selected['id'] ?>#series-website">Open series website settings</a>
             </section>
         <?php endif; ?>
 
@@ -297,22 +291,23 @@ $sectionLabels = [
         if ($itemId <= 0 && $notes) $itemId = (int)$notes[0]['id'];
         $selected = $itemId > 0 ? $manager->note($userId, $itemId) : null;
         ?>
-        <div class="section-tools"><a class="quiet-link" href="<?= sm_h(SITE_MANAGER_PLATFORM_PREFIX) ?>/website_board.php?focus=notes">Create note in Artwork Mockups</a></div>
+        <div class="section-tools"><a class="quiet-link" href="<?= sm_h(SITE_MANAGER_PLATFORM_PREFIX) ?>/website_studio_notes.php">Create note in Artwork Mockups</a></div>
         <div class="visual-rail">
             <?php foreach ($notes as $note): $source = (array)($note['source'] ?? []); $hasSourceImage = !empty($source['file']); $hasEmbeddedImage = !$hasSourceImage && EmbeddedNoteImage::has((string)$note['objective']); $hasCardImage = $hasSourceImage || $hasEmbeddedImage; ?>
-                <a class="visual-card <?= !$hasCardImage ? 'visual-card--text' : '' ?> <?= (int)$note['id'] === $itemId ? 'is-selected' : '' ?>" href="?area=content&section=studio-notes&item=<?= (int)$note['id'] ?>">
-                    <?php if ($hasSourceImage): ?><img src="<?= sm_h(sm_media((string)$source['file'])) ?>" alt=""><?php elseif ($hasEmbeddedImage): ?><img src="note_thumbnail.php?note=<?= (int)$note['id'] ?>" alt=""><?php endif; ?>
+                <a class="visual-card <?= !$hasCardImage ? 'visual-card--text' : '' ?> <?= (int)$note['id'] === $itemId ? 'is-selected' : '' ?>" href="?area=content&section=studio-notes&item=<?= (int)$note['id'] ?>" aria-label="<?= sm_h((string)$note['title']) ?> · <?= sm_h((string)$note['status']) ?>">
+                    <?php if ($hasSourceImage): ?><img src="<?= sm_h(sm_media((string)$source['file'])) ?>" alt="<?= sm_h((string)$note['title']) ?>"><?php elseif ($hasEmbeddedImage): ?><img src="note_thumbnail.php?note=<?= (int)$note['id'] ?>" alt="<?= sm_h((string)$note['title']) ?>"><?php endif; ?>
                     <span class="visual-card-state"><?= sm_h((string)$note['status']) ?></span><strong><?= sm_h((string)$note['title']) ?></strong><small><?= sm_h((string)$note['sourceLabel']) ?></small>
                 </a>
             <?php endforeach; ?>
             <?php if (!$notes): ?><p class="empty-state">No Studio Notes have been prepared.</p><?php endif; ?>
         </div>
         <?php if ($selected): $source = (array)($selected['source'] ?? []); $hasSourceImage = !empty($source['file']); ?>
-            <section class="editor-panel <?= !$hasSourceImage ? 'editor-panel--text' : '' ?>">
-                <?php if ($hasSourceImage): ?><div class="editor-visual"><img src="<?= sm_h(sm_media((string)$source['file'], 1000)) ?>" alt=""><p><?= sm_h((string)$selected['sourceLabel']) ?></p></div><?php endif; ?>
+            <section class="editor-panel <?= !$hasSourceImage ? 'editor-panel--text' : 'editor-panel--compact-visual' ?>">
+                <?php if ($hasSourceImage): ?><div class="editor-visual"><img src="<?= sm_h(sm_media((string)$source['file'], 1000)) ?>" alt="<?= sm_h((string)$selected['title']) ?>"><p><?= sm_h((string)$selected['sourceLabel']) ?></p></div><?php endif; ?>
                 <form method="post" class="editor-form">
                     <input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="content"><input type="hidden" name="return_section" value="studio-notes"><input type="hidden" name="return_item" value="<?= (int)$selected['id'] ?>"><input type="hidden" name="note_id" value="<?= (int)$selected['id'] ?>">
                     <?php if (!$hasSourceImage): ?><p class="editor-context"><?= sm_h((string)$selected['sourceLabel']) ?></p><?php endif; ?>
+                    <h2 class="editor-selected-title"><?= sm_h((string)$selected['title']) ?></h2>
                     <label>Title<input name="title" value="<?= sm_h((string)$selected['title']) ?>"></label>
                     <div class="editor-field"><span>Note body</span><div class="rich-note-editor" data-note-editor hidden></div><textarea name="body" rows="14" data-note-source><?= sm_h((string)$selected['objective']) ?></textarea></div>
                     <div class="form-actions"><?php if ((string)$selected['status'] === 'published'): ?><button class="primary-action" name="action" value="save_note">Update website</button><button class="danger-action" name="action" value="unpublish_note" data-confirm="Unpublish this note?">Unpublish</button><?php else: ?><button class="primary-action" name="action" value="publish_note">Publish note</button><button name="action" value="save_note">Save draft</button><?php endif; ?></div>
@@ -337,8 +332,16 @@ $sectionLabels = [
         $variants = $itemId > 0 ? $manager->prints($userId, $itemId) : [];
         $selectedVariant = $variants[0] ?? null;
         if ($selectedVariant) $variantId = (int)$selectedVariant['id'];
+        $selectedStockLabel = !$selectedVariant ? 'Stock not set' : match ((string)$selectedVariant['status']) {
+            'sold_out' => 'Sold', 'paused' => 'Unavailable', 'draft' => 'Draft',
+            default => (int)$selectedVariant['stock_available'] . ' available',
+        };
         ?>
-        <div class="visual-rail" aria-label="Artwork stock">
+        <div class="section-intro">
+            <h2>Artwork prices and availability</h2>
+            <p>Select an artwork to set its public price, currency, availability and stock.</p>
+        </div>
+        <div class="visual-rail" aria-label="Artwork prices and stock">
             <?php foreach ($allArtworks as $artwork): $stockRecords = $manager->prints($userId, (int)$artwork['artwork_id']); $stock = $stockRecords[0] ?? null; ?>
                 <?php
                 $stockLabel = 'Stock not set';
@@ -351,27 +354,59 @@ $sectionLabels = [
                     };
                 }
                 ?>
-                <a class="visual-card <?= (int)$artwork['artwork_id'] === $itemId ? 'is-selected' : '' ?>" href="?area=store&section=prints&item=<?= (int)$artwork['artwork_id'] ?>"><img src="<?= sm_h(sm_media((string)$artwork['image_file'])) ?>" alt=""><span class="visual-card-state"><?= sm_h($stockLabel) ?></span><strong><?= sm_h((string)$artwork['artwork_title']) ?></strong><small><?= sm_h((string)($artwork['series_title'] ?: 'Independent work')) ?></small></a>
+                <a class="visual-card <?= (int)$artwork['artwork_id'] === $itemId ? 'is-selected' : '' ?>" href="?area=store&section=prints&item=<?= (int)$artwork['artwork_id'] ?>" aria-label="<?= sm_h((string)$artwork['artwork_title']) ?> · <?= sm_h($stockLabel) ?>"><img src="<?= sm_h(sm_media((string)$artwork['image_file'])) ?>" alt="<?= sm_h((string)$artwork['artwork_title']) ?>"><span class="visual-card-state"><?= sm_h($stockLabel) ?></span><strong><?= sm_h((string)$artwork['artwork_title']) ?></strong><small><?= sm_h((string)($artwork['series_title'] ?: 'Independent work')) ?></small></a>
             <?php endforeach; ?>
             <?php if (!$allArtworks): ?><p class="empty-state">Publish an artwork before configuring its stock.</p><?php endif; ?>
         </div>
         <?php if ($selectedArtwork): ?>
-            <section class="editor-panel editor-panel--stock">
-                <div class="editor-visual"><img src="<?= sm_h(sm_media((string)$selectedArtwork['image_file'], 1000)) ?>" alt=""><h3><?= sm_h((string)$selectedArtwork['artwork_title']) ?></h3></div>
-                <form method="post" class="editor-form">
-                    <input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="store"><input type="hidden" name="return_section" value="prints"><input type="hidden" name="return_item" value="<?= $itemId ?>"><input type="hidden" name="return_variant" value="<?= $variantId ?>"><input type="hidden" name="artwork_id" value="<?= $itemId ?>"><input type="hidden" name="variant_id" value="<?= (int)($selectedVariant['id'] ?? 0) ?>">
-                    <h3>Artwork stock</h3>
-                    <div class="form-grid form-grid--stock"><label>Availability<select name="status"><?php foreach (['active'=>'Available','paused'=>'Temporarily unavailable','sold_out'=>'Sold','draft'=>'Not configured'] as $value=>$label): ?><option value="<?= $value ?>" <?= (string)($selectedVariant['status'] ?? 'draft') === $value ? 'selected' : '' ?>><?= $label ?></option><?php endforeach; ?></select></label><label>Available units<input type="number" min="0" name="stock_on_hand" value="<?= (int)($selectedVariant['stock_on_hand'] ?? 0) ?>"></label><label>Price<input inputmode="decimal" name="price" value="<?= $selectedVariant ? sm_h(number_format((int)$selectedVariant['price_minor']/100, 2, '.', '')) : '' ?>"></label><label>Currency<input name="currency" maxlength="3" value="<?= sm_h((string)($selectedVariant['currency'] ?? $settings['currency'])) ?>"></label></div>
-                    <input type="hidden" name="inventory_mode" value="<?= sm_h((string)($selectedVariant['inventory_mode'] ?? 'in_stock')) ?>"><input type="hidden" name="edition_size" value="<?= max(1, (int)($selectedVariant['edition_size'] ?? 1)) ?>">
-                    <details class="stock-details"><summary>Optional sale details</summary><div class="form-grid"><label>Public sale title<input name="title" value="<?= sm_h((string)($selectedVariant['title'] ?? '')) ?>" placeholder="Original artwork"></label><label>SKU<input name="sku" value="<?= sm_h((string)($selectedVariant['sku'] ?? '')) ?>" placeholder="Generated automatically"></label><label>Size<input name="size_label" value="<?= sm_h((string)($selectedVariant['size_label'] ?? '')) ?>" placeholder="80 × 120 cm"></label><label>Support<input name="support" value="<?= sm_h((string)($selectedVariant['support'] ?? '')) ?>" placeholder="Canvas"></label><label>Finish<input name="finish" value="<?= sm_h((string)($selectedVariant['finish'] ?? '')) ?>"></label></div></details>
-                    <div class="form-actions"><button class="primary-action" name="action" value="save_print">Save stock</button></div>
-                </form>
+            <section class="website-content-handoff">
+                <div>
+                    <p class="editor-context">Selected artwork</p>
+                    <h2 class="editor-selected-title"><?= sm_h((string)$selectedArtwork['artwork_title']) ?></h2>
+                    <p>Price and available units are maintained once inside the artwork Website panel.</p>
+                </div>
+                <dl>
+                    <div><dt>Availability</dt><dd><?= sm_h($selectedStockLabel) ?></dd></div>
+                    <div><dt>Price</dt><dd><?= $selectedVariant ? sm_h(sm_money((int)$selectedVariant['price_minor'], (string)$selectedVariant['currency'])) : 'Not set' ?></dd></div>
+                    <div><dt>Available units</dt><dd><?= (int)($selectedVariant['stock_available'] ?? 0) ?></dd></div>
+                </dl>
+                <a class="primary-action website-content-handoff__link" href="<?= sm_h(SITE_MANAGER_PLATFORM_PREFIX) ?>/artwork.php?id=<?= (int)$selectedArtwork['artwork_id'] ?>#website-publication">Open price and availability</a>
             </section>
         <?php endif; ?>
 
     <?php elseif ($section === 'orders'): ?>
-        <?php $orders = $manager->orders($userId); ?>
-        <?php if (!$orders): ?><div class="empty-state empty-state--large"><h3>No orders yet</h3><p>Orders will appear here after a payment provider and public checkout are activated.</p></div><?php else: ?><div class="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Payment</th><th>Production</th><th>Total</th><th>Date</th></tr></thead><tbody><?php foreach ($orders as $order): ?><tr><td><?= sm_h((string)$order['public_number']) ?></td><td><?= sm_h((string)$order['customer_name']) ?><small><?= sm_h((string)$order['customer_email']) ?></small></td><td><?= sm_h((string)$order['payment_status']) ?></td><td><?= sm_h((string)$order['order_status']) ?></td><td><?= sm_h(sm_money((int)$order['total_minor'], (string)$order['currency'])) ?></td><td><?= sm_h((string)$order['created_at']) ?></td></tr><?php endforeach; ?></tbody></table></div><?php endif; ?>
+        <?php $orders = $manager->orders($userId); $selectedOrder = $orderId > 0 ? $manager->order($userId, $orderId) : null; ?>
+        <?php if (!$orders): ?>
+            <div class="empty-state empty-state--large"><h3>No orders yet</h3><p>Acquisition requests from available artworks will appear here.</p></div>
+        <?php else: ?>
+            <div class="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Payment</th><th>Order status</th><th>Total</th><th>Date</th><th></th></tr></thead><tbody><?php foreach ($orders as $order): ?><tr><td><strong><?= sm_h((string)$order['public_number']) ?></strong></td><td><?= sm_h((string)$order['customer_name']) ?><small><?= sm_h((string)$order['customer_email']) ?></small></td><td><?= sm_h(ucwords(str_replace('_', ' ', (string)$order['payment_status']))) ?></td><td><?= sm_h(ucwords(str_replace('_', ' ', (string)$order['order_status']))) ?></td><td><?= sm_h(sm_money((int)$order['total_minor'], (string)$order['currency'])) ?></td><td><?= sm_h((string)$order['created_at']) ?></td><td><a class="quiet-link" href="?area=store&section=orders&order=<?= (int)$order['id'] ?>">Open</a></td></tr><?php endforeach; ?></tbody></table></div>
+        <?php endif; ?>
+        <?php if ($selectedOrder): $shipping = (array)$selectedOrder['shipping']; ?>
+            <section class="single-panel order-workspace">
+                <div class="order-workspace__heading"><div><p class="editor-context">Acquisition request</p><h2 class="editor-selected-title"><?= sm_h((string)$selectedOrder['public_number']) ?></h2></div><a class="quiet-link" href="?area=store&section=orders">Close</a></div>
+                <div class="order-summary-grid">
+                    <div><span>Collector</span><strong><?= sm_h((string)$selectedOrder['customer_name']) ?></strong><a href="mailto:<?= sm_h((string)$selectedOrder['customer_email']) ?>"><?= sm_h((string)$selectedOrder['customer_email']) ?></a><?php if ((string)($shipping['phone'] ?? '') !== ''): ?><small><?= sm_h((string)$shipping['phone']) ?></small><?php endif; ?></div>
+                    <div><span>Delivery</span><strong><?= sm_h((string)($shipping['country_name'] ?? '')) ?></strong><small><?= sm_h(implode(', ', array_filter([(string)($shipping['address_line_1'] ?? ''), (string)($shipping['address_line_2'] ?? ''), (string)($shipping['city'] ?? ''), (string)($shipping['region'] ?? ''), (string)($shipping['postal_code'] ?? '')]))) ?></small></div>
+                    <div><span>Status</span><strong><?= sm_h(ucwords(str_replace('_', ' ', (string)$selectedOrder['order_status']))) ?></strong><small>Payment · <?= sm_h(ucwords(str_replace('_', ' ', (string)$selectedOrder['payment_status']))) ?></small></div>
+                </div>
+                <div class="order-line-items">
+                    <?php foreach ((array)$selectedOrder['items'] as $orderItem): ?><div><span><?= sm_h((string)$orderItem['title']) ?><small><?= sm_h((string)$orderItem['sku']) ?></small></span><strong><?= sm_h(sm_money((int)$orderItem['total_minor'], (string)$selectedOrder['currency'])) ?></strong></div><?php endforeach; ?>
+                    <div><span>Shipping · <?= sm_h((string)($shipping['continent_label'] ?? '')) ?></span><strong><?= sm_h(sm_money((int)$selectedOrder['shipping_minor'], (string)$selectedOrder['currency'])) ?></strong></div>
+                    <div class="order-line-items__total"><span>Total</span><strong><?= sm_h(sm_money((int)$selectedOrder['total_minor'], (string)$selectedOrder['currency'])) ?></strong></div>
+                </div>
+                <?php if ((string)($shipping['message'] ?? '') !== ''): ?><div class="order-message"><span>Collector note</span><p><?= nl2br(sm_h((string)$shipping['message'])) ?></p></div><?php endif; ?>
+                <?php if (!in_array((string)$selectedOrder['order_status'], ['cancelled', 'completed'], true)): ?>
+                    <form method="post" class="form-actions order-actions">
+                        <input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="store"><input type="hidden" name="return_section" value="orders"><input type="hidden" name="return_order" value="<?= (int)$selectedOrder['id'] ?>"><input type="hidden" name="order_id" value="<?= (int)$selectedOrder['id'] ?>">
+                        <?php if ((string)$selectedOrder['order_status'] === 'request_received'): ?><button class="primary-action" name="action" value="confirm_order">Confirm order</button><?php endif; ?>
+                        <?php if ((string)$selectedOrder['payment_status'] !== 'paid'): ?><button name="action" value="mark_order_paid">Mark paid</button><?php endif; ?>
+                        <?php if ((string)$selectedOrder['payment_status'] === 'paid' && (string)$selectedOrder['order_status'] !== 'shipped'): ?><button name="action" value="mark_order_shipped">Mark shipped</button><?php endif; ?>
+                        <?php if ((string)$selectedOrder['payment_status'] === 'paid'): ?><button name="action" value="complete_order" data-confirm="Complete this order and mark the reserved artwork as sold?">Complete and mark sold</button><?php endif; ?>
+                        <button class="danger-action" name="action" value="cancel_order" data-confirm="Cancel this order and release its reserved stock?">Cancel order</button>
+                    </form>
+                <?php endif; ?>
+            </section>
+        <?php endif; ?>
 
     <?php elseif ($section === 'site'): ?>
         <section class="single-panel"><form method="post" class="editor-form"><input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="settings"><input type="hidden" name="return_section" value="site"><label>Site title<input name="site_title" value="<?= sm_h((string)$settings['site_title']) ?>"></label><label>Tagline<input name="tagline" value="<?= sm_h((string)$settings['tagline']) ?>"></label><div class="form-grid"><label>Language<input name="locale" value="<?= sm_h((string)$settings['locale']) ?>"></label><label>Site status<select name="site_status"><?php foreach (['draft'=>'Draft','active'=>'Active','suspended'=>'Suspended'] as $value=>$label): ?><option value="<?= $value ?>" <?= (string)$settings['site_status'] === $value ? 'selected' : '' ?>><?= $label ?></option><?php endforeach; ?></select></label></div><div class="form-actions"><button class="primary-action" name="action" value="save_site">Save site settings</button></div></form></section>
@@ -380,10 +415,55 @@ $sectionLabels = [
         <section class="single-panel"><form method="post" class="editor-form"><input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="settings"><input type="hidden" name="return_section" value="domain"><label>Artwork Mockups subdomain<div class="input-suffix"><input name="subdomain" value="<?= sm_h((string)$profile['subdomain']) ?>"><span>.artworkmockups.com</span></div></label><label>Custom domain<input name="custom_domain" value="<?= sm_h((string)$profile['custom_domain']) ?>" placeholder="artist.com"></label><p class="supporting-copy">Domain verification remains pending until DNS provisioning is connected.</p><div class="form-actions"><button class="primary-action" name="action" value="save_domain">Save domain</button></div></form></section>
 
     <?php elseif ($section === 'payments'): ?>
-        <section class="single-panel"><form method="post" class="editor-form"><input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="settings"><input type="hidden" name="return_section" value="payments"><label>Provider identifier<input name="payment_provider" value="<?= sm_h((string)$settings['payment_provider']) ?>" placeholder="Leave empty until selected"></label><label>Store currency<input name="currency" maxlength="3" value="<?= sm_h((string)$settings['currency']) ?>"></label><p class="supporting-copy">Status: <?= sm_h((string)$settings['payment_status']) ?>. No card or bank credentials are collected here.</p><div class="form-actions"><button class="primary-action" name="action" value="save_payments">Save payment preferences</button></div></form></section>
+        <?php
+        $stripeAccountId = (string)$paymentConnection['external_account_id'];
+        $stripeConnected = str_starts_with($stripeAccountId, 'acct_');
+        $stripeStatus = (string)$paymentConnection['connection_status'];
+        $maskedStripeAccount = $stripeConnected ? 'acct_••••' . substr($stripeAccountId, -6) : '';
+        ?>
+        <section class="single-panel payment-settings">
+            <div class="section-intro"><p class="editor-context">Payments</p><h2>Stripe for this artist</h2><p>Connect the artist’s own Stripe account. Sales, Stripe fees, refunds and disputes remain in that artist’s Stripe Dashboard.</p></div>
+            <div class="payment-connection <?= $stripeConnected ? 'is-connected' : '' ?>">
+                <div><span>Connection</span><strong><?= $stripeConnected ? sm_h(ucwords(str_replace('_', ' ', $stripeStatus))) : 'Not connected' ?></strong><?php if ($stripeConnected): ?><small><?= sm_h($maskedStripeAccount) ?> · <?= !empty($paymentConnection['livemode']) ? 'Live mode' : 'Test mode' ?></small><?php else: ?><small>Each artist authorizes access directly on Stripe.</small><?php endif; ?></div>
+                <div><span>Payments</span><strong><?= !empty($paymentConnection['charges_enabled']) ? 'Enabled' : 'Unavailable' ?></strong><small><?= !empty($paymentConnection['payouts_enabled']) ? 'Payouts enabled' : 'Payout requirements pending' ?></small></div>
+            </div>
+            <?php if (!$stripeConnected): ?>
+                <form method="post" class="form-actions"><input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="store"><input type="hidden" name="return_section" value="payments"><button class="primary-action" name="action" value="connect_stripe" <?= StripeConnectService::isConfigured() ? '' : 'disabled' ?>>Connect Stripe</button></form>
+                <?php if (!StripeConnectService::isConfigured()): ?><p class="supporting-copy">Stripe Connect must first be enabled for the Artwork Mockups platform. The artist does not need to enter any API key here.</p><?php endif; ?>
+            <?php else: ?>
+                <?php if ($stripeStatus !== 'connected'): ?><p class="supporting-copy">Stripe still requires information from this account before it can accept payments. Complete the requirements in the Stripe Dashboard, then refresh the status here.</p><?php endif; ?>
+                <form method="post" class="form-actions"><input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="store"><input type="hidden" name="return_section" value="payments"><button name="action" value="refresh_stripe">Refresh Stripe status</button><button class="danger-action" name="action" value="disconnect_stripe" data-confirm="Disconnect this artist’s Stripe account from Artwork Mockups?">Disconnect</button></form>
+            <?php endif; ?>
+            <form method="post" class="editor-form payment-currency"><input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="store"><input type="hidden" name="return_section" value="payments"><label>Store currency<input name="currency" maxlength="3" value="<?= sm_h((string)$settings['currency']) ?>"></label><p class="supporting-copy">Artwork prices and shipping must use this same currency.</p><div class="form-actions"><button name="action" value="save_payments">Save currency</button></div></form>
+        </section>
 
     <?php elseif ($section === 'shipping'): ?>
-        <section class="single-panel"><form method="post" class="editor-form"><input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="settings"><input type="hidden" name="return_section" value="shipping"><label>Shipping regions<textarea name="shipping_regions" rows="5" placeholder="Spain, European Union, United States"><?= sm_h((string)$settings['shipping_regions']) ?></textarea></label><label>Shipping and returns policy<textarea name="shipping_policy" rows="12"><?= sm_h((string)$settings['shipping_policy']) ?></textarea></label><div class="form-actions"><button class="primary-action" name="action" value="save_shipping">Save shipping settings</button></div></form></section>
+        <?php
+        $shippingContinents = [
+            'europe' => 'Europe',
+            'africa' => 'Africa',
+            'asia' => 'Asia',
+            'north_america' => 'North America',
+            'south_america' => 'South America',
+            'oceania' => 'Oceania',
+        ];
+        $shippingRates = json_decode((string)($settings['shipping_rates_json'] ?? ''), true);
+        if (!is_array($shippingRates)) $shippingRates = [];
+        ?>
+        <section class="single-panel">
+            <form method="post" class="editor-form">
+                <input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="store"><input type="hidden" name="return_section" value="shipping">
+                <h2 class="editor-selected-title">Shipping by continent</h2>
+                <p class="supporting-copy">Set the standard shipping charge for each destination. Every new order will preserve the rate applied at checkout.</p>
+                <div class="form-grid shipping-rate-grid">
+                    <?php foreach ($shippingContinents as $continentKey => $continentLabel): $rateMinor = max(0, (int)($shippingRates[$continentKey] ?? 25000)); ?>
+                        <label><?= sm_h($continentLabel) ?><span class="input-suffix"><input inputmode="decimal" name="shipping_rate_<?= sm_h($continentKey) ?>" value="<?= sm_h(number_format($rateMinor / 100, 2, '.', '')) ?>"><span><?= sm_h((string)$settings['currency']) ?></span></span></label>
+                    <?php endforeach; ?>
+                </div>
+                <label>Shipping and returns policy<textarea name="shipping_policy" rows="12"><?= sm_h((string)$settings['shipping_policy']) ?></textarea></label>
+                <div class="form-actions"><button class="primary-action" name="action" value="save_shipping">Save shipping rates</button></div>
+            </form>
+        </section>
 
     <?php else: ?>
         <?php $events = $manager->activity($userId); ?>
@@ -408,6 +488,15 @@ if (noteSource && noteEditor && window.Quill) {
     quill.clipboard.dangerouslyPasteHTML(noteSource.value);
     noteSource.form?.addEventListener('submit', () => { noteSource.value = quill.root.innerHTML; });
 }
+const keepSelectedCardsVisible = () => {
+    document.querySelectorAll('.visual-rail').forEach(rail => {
+        const selected = rail.querySelector('.visual-card.is-selected');
+        if (!selected) return;
+        const centered = selected.offsetLeft - ((rail.clientWidth - selected.offsetWidth) / 2);
+        rail.scrollLeft = Math.max(0, Math.min(centered, rail.scrollWidth - rail.clientWidth));
+    });
+};
+window.requestAnimationFrame(keepSelectedCardsVisible);
 const publicOrderForm = document.querySelector('[data-public-order-form]');
 if (publicOrderForm) {
     const list = publicOrderForm.querySelector('[data-public-order-list]');

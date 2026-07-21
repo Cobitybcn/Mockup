@@ -12,17 +12,16 @@ final class TenantResolver
 
     public function resolveEmail(): string
     {
-        // Resolve only from trusted deployment configuration or a registered host.
-        // A query-string tenant override would allow cross-tenant enumeration.
-        $host = strtolower(trim((string)($_SERVER['HTTP_HOST'] ?? '')));
-        $host = preg_replace('/:\d+$/', '', $host) ?: '';
+        $local = self::isLocalEnvironment();
+        $rawHost = trim((string)($_SERVER['HTTP_HOST'] ?? ''));
+        $host = strtolower(trim((string)(parse_url('http://' . $rawHost, PHP_URL_HOST) ?: ''), '.'));
         if ($host !== '' && $host !== 'localhost' && $host !== '127.0.0.1') {
-            // Intentar buscar coincidencia directa por dominio personalizado
             $stmt = $this->pdo->prepare('
                 SELECT u.email 
-                FROM artist_profiles ap
-                JOIN users u ON u.id = ap.user_id
-                WHERE LOWER(ap.custom_domain) = ?
+                FROM artist_domains ad
+                JOIN users u ON u.id = ad.user_id
+                WHERE LOWER(ad.hostname) = ?
+                  AND ad.status = \'verified\'
                 LIMIT 1
             ');
             $stmt->execute([$host]);
@@ -31,7 +30,6 @@ final class TenantResolver
                 return (string)$email;
             }
 
-            // Intentar buscar coincidencia por subdominio (*.artworkmockups.com)
             if (preg_match('/^([a-z0-9\-]+)\.artworkmockups\.com$/i', $host, $matches)) {
                 $subdomain = strtolower($matches[1]);
                 $stmt = $this->pdo->prepare('
@@ -49,7 +47,6 @@ final class TenantResolver
             }
         }
 
-        // Single-tenant deployments must provide an explicit fallback identity.
         $envEmail = getenv('ACTIVE_ARTIST_EMAIL');
         if (!$envEmail) {
             // Cargar archivo .env local si existe
@@ -70,6 +67,21 @@ final class TenantResolver
         if (!$envEmail || !filter_var($envEmail, FILTER_VALIDATE_EMAIL)) {
             throw new RuntimeException('No active artist identity is configured for this host.');
         }
+
+        $configuredUrl = trim((string)(getenv('ARTIST_SITE_PUBLIC_URL') ?: ''));
+        $configuredHost = strtolower(trim((string)(parse_url($configuredUrl, PHP_URL_HOST) ?: ''), '.'));
+        $cloudRunHost = str_ends_with($host, '.run.app');
+        if (!$local && $host !== $configuredHost && !$cloudRunHost) {
+            throw new RuntimeException('No verified artist website matches this host.');
+        }
         return strtolower(trim((string)$envEmail));
+    }
+
+    private static function isLocalEnvironment(): bool
+    {
+        $environment = strtolower(trim((string)(getenv('APP_ENV') ?: '')));
+        if (in_array($environment, ['local', 'development', 'testing'], true)) return true;
+        $host = strtolower(trim((string)($_SERVER['HTTP_HOST'] ?? '')));
+        return $host === '' || str_starts_with($host, 'localhost') || str_starts_with($host, '127.0.0.1') || str_starts_with($host, '[::1]');
     }
 }

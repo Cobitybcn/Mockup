@@ -21,6 +21,7 @@ final class PublicationService
             short_description {$text} NOT NULL, language VARCHAR(20) NOT NULL DEFAULT 'en',
             objective VARCHAR(40) NOT NULL DEFAULT 'portfolio', cta_label VARCHAR(120) NOT NULL DEFAULT '',
             cta_url {$text} NOT NULL, visibility VARCHAR(20) NOT NULL DEFAULT 'private', status VARCHAR(30) NOT NULL DEFAULT 'draft',
+            content_source VARCHAR(20) NOT NULL DEFAULT 'inherit',
             profile_snapshot_json {$text} NOT NULL, metadata_snapshot_json {$text} NOT NULL,
             published_at VARCHAR(40) NULL, created_at VARCHAR(40) NOT NULL, updated_at VARCHAR(40) NOT NULL
         )");
@@ -31,6 +32,11 @@ final class PublicationService
         }
         try {
             $this->pdo->exec('ALTER TABLE publications ADD COLUMN display_order INTEGER NOT NULL DEFAULT 0');
+        } catch (Throwable $e) {
+            // Column already exists.
+        }
+        try {
+            $this->pdo->exec("ALTER TABLE publications ADD COLUMN content_source VARCHAR(20) NOT NULL DEFAULT 'inherit'");
         } catch (Throwable $e) {
             // Column already exists.
         }
@@ -62,7 +68,7 @@ final class PublicationService
 
     public function createForSheet(int $sheetId, int $userId): int
     {
-        $existing = $this->pdo->prepare("SELECT id FROM publications WHERE artwork_sheet_id=? AND user_id=? AND status='draft' ORDER BY id DESC LIMIT 1");
+        $existing = $this->pdo->prepare('SELECT id FROM publications WHERE artwork_sheet_id=? AND user_id=? ORDER BY id DESC LIMIT 1');
         $existing->execute([$sheetId, $userId]);
         if ($existingId = $existing->fetchColumn()) {
             return (int)$existingId;
@@ -77,11 +83,11 @@ final class PublicationService
         $slug = $this->uniqueSlug($this->slug((string)($sheet['title'] ?: 'obra-' . $sheetId)), $userId);
         $now = date('c');
         $this->pdo->prepare('INSERT INTO publications
-            (user_id, artwork_sheet_id, slug, title, description, short_description, language, objective, cta_label, cta_url, visibility, status, profile_snapshot_json, metadata_snapshot_json, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')->execute([
+            (user_id, artwork_sheet_id, slug, title, description, short_description, language, objective, cta_label, cta_url, visibility, status, content_source, profile_snapshot_json, metadata_snapshot_json, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')->execute([
                 $userId, $sheetId, $slug, (string)$sheet['title'], (string)$sheet['description'],
                 (string)$sheet['short_description'], 'en', 'portfolio', 'Enquire about this artwork', '',
-                'private', 'draft', json_encode($profile, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                'private', 'draft', 'inherit', json_encode($profile, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 json_encode($sheet, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $now, $now,
             ]);
         $id = (int)$this->pdo->lastInsertId();
@@ -91,23 +97,79 @@ final class PublicationService
 
     public function get(int $id, int $userId): array
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM publications WHERE id = ? AND user_id = ?');
+        $stmt = $this->pdo->prepare('SELECT p.*,s.title inherited_title,s.description inherited_description,s.short_description inherited_short_description
+            FROM publications p
+            JOIN artwork_sheets s ON s.id=p.artwork_sheet_id AND s.user_id=p.user_id
+            WHERE p.id = ? AND p.user_id = ?');
         $stmt->execute([$id, $userId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$row) throw new RuntimeException('Publicación no encontrada.');
+        $row = $this->withEffectiveContent($row);
         $row['items'] = $this->items($id);
         $row['variants'] = $this->variants($id);
         return $row;
     }
 
+    public function findForSheet(int $sheetId, int $userId): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT id FROM publications WHERE artwork_sheet_id=? AND user_id=? ORDER BY id DESC LIMIT 1');
+        $stmt->execute([$sheetId, $userId]);
+        $id = (int)($stmt->fetchColumn() ?: 0);
+        return $id > 0 ? $this->get($id, $userId) : null;
+    }
+
+    /** @param array<string,mixed> $input */
+    public function saveWebsiteSettings(int $sheetId, int $userId, array $input, string $intent = 'save'): array
+    {
+        $publicationId = $this->createForSheet($sheetId, $userId);
+
+        $sheetStmt = $this->pdo->prepare('SELECT title,description,short_description FROM artwork_sheets WHERE id=? AND user_id=?');
+        $sheetStmt->execute([$sheetId, $userId]);
+        $sheet = $sheetStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$sheet) throw new RuntimeException('Artwork Metadata was not found.');
+
+        $content = [
+            'title' => trim((string)$sheet['title']),
+            'short_description' => trim((string)$sheet['short_description']),
+            'description' => trim((string)$sheet['description']),
+        ];
+
+        $this->pdo->prepare("UPDATE publications SET content_source='inherit' WHERE id=? AND user_id=?")
+            ->execute([$publicationId, $userId]);
+        $this->save($publicationId, $userId, $content + [
+            'visibility' => (string)($input['visibility'] ?? 'public'),
+            'publish' => $intent === 'publish',
+            'unpublish' => $intent === 'unpublish',
+        ], null);
+        return $this->get($publicationId, $userId);
+    }
+
+    public function syncInheritedFromSheet(int $sheetId, int $userId): void
+    {
+        $sheet = $this->pdo->prepare('SELECT title,description,short_description FROM artwork_sheets WHERE id=? AND user_id=?');
+        $sheet->execute([$sheetId, $userId]);
+        $content = $sheet->fetch(PDO::FETCH_ASSOC);
+        if (!$content) return;
+        $this->pdo->prepare("UPDATE publications
+            SET title=?,description=?,short_description=?,updated_at=?
+            WHERE artwork_sheet_id=? AND user_id=?")
+            ->execute([
+                trim((string)$content['title']),
+                trim((string)$content['description']),
+                trim((string)$content['short_description']),
+                date('c'), $sheetId, $userId,
+            ]);
+    }
+
     public function listForUser(int $userId): array
     {
         $stmt = $this->pdo->prepare('SELECT p.*, a.source_image_file, a.subtitle,
+            a.title inherited_title,a.description inherited_description,a.short_description inherited_short_description,
             (SELECT COUNT(*) FROM publication_items i WHERE i.publication_id = p.id) AS item_count
             FROM publications p JOIN artwork_sheets a ON a.id = p.artwork_sheet_id
             WHERE p.user_id = ? ORDER BY p.updated_at DESC, p.id DESC');
         $stmt->execute([$userId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return array_map(fn(array $row): array => $this->withEffectiveContent($row), $stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
     public function savePinterestDraft(int $publicationId, int $userId, int $mockupSheetId, string $board, string $destinationUrl): int
@@ -134,12 +196,14 @@ final class PublicationService
 
     public function publicBySlug(string $slug): array
     {
-        $stmt = $this->pdo->prepare("SELECT p.*, a.source_image_file, a.subtitle, a.caption, a.alt_text, a.keywords, a.tags
+        $stmt = $this->pdo->prepare("SELECT p.*, a.source_image_file, a.subtitle, a.caption, a.alt_text, a.keywords, a.tags,
+                a.title inherited_title,a.description inherited_description,a.short_description inherited_short_description
             FROM publications p JOIN artwork_sheets a ON a.id = p.artwork_sheet_id
             WHERE p.slug = ? AND p.status = 'published' AND p.visibility IN ('public','unlisted') LIMIT 1");
         $stmt->execute([$slug]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$row) throw new RuntimeException('Publicación no encontrada.');
+        $row = $this->withEffectiveContent($row);
         $row['items'] = $this->items((int)$row['id']);
         return $row;
     }
@@ -248,6 +312,16 @@ final class PublicationService
     {
         $slug = (string)$this->pdo->query('SELECT slug FROM publications WHERE id=' . (int)$id)->fetchColumn();
         $this->pdo->prepare('UPDATE channel_variants SET destination_url=?, updated_at=? WHERE publication_id=?')->execute(['public_artwork.php?slug=' . rawurlencode($slug), date('c'), $id]);
+    }
+
+    /** @param array<string,mixed> $row @return array<string,mixed> */
+    private function withEffectiveContent(array $row): array
+    {
+        $row['title'] = (string)($row['inherited_title'] ?? $row['title'] ?? '');
+        $row['description'] = (string)($row['inherited_description'] ?? $row['description'] ?? '');
+        $row['short_description'] = (string)($row['inherited_short_description'] ?? $row['short_description'] ?? '');
+        unset($row['inherited_title'], $row['inherited_description'], $row['inherited_short_description']);
+        return $row;
     }
 
     private function items(int $id): array

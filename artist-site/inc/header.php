@@ -23,6 +23,7 @@ $faviconUrl = $artistPhotoFile !== ''
     <title><?= e($meta['title']) ?></title>
     <link rel="icon" href="<?= e($faviconUrl) ?>">
     <meta name="description" content="<?= e($meta['description']) ?>">
+    <?php if (!empty($meta['robots'])): ?><meta name="robots" content="<?= e($meta['robots']) ?>"><?php endif; ?>
     <?php if (!empty($meta['keywords'])): ?><meta name="keywords" content="<?= e($meta['keywords']) ?>"><?php endif; ?>
     <link rel="canonical" href="<?= e($meta['canonical']) ?>">
     <meta property="og:title" content="<?= e($meta['title']) ?>">

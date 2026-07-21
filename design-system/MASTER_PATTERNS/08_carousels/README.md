@@ -26,3 +26,5 @@ Carousels are horizontal galleries inside the vertical workspace flow. They pres
 Store one wide `reference.png` showing an approved carousel with several complete thumbnails, at least one partially continuing item, its real spacing rhythm, and any established navigation or position indicator. The capture must demonstrate horizontal continuation and useful image scale.
 
 Add `NOTES.md` only when the capture is approved, following the three-question reference format defined in `design-system/references/README.md`.
+
+**Approved reference on file:** `design-system/references/mockup-album/` (Mockup Album screen, `platform/mockups.php`, "Favorite Mockups" rail).
