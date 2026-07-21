@@ -9,6 +9,8 @@ deploy/
 scripts/
 tests/
 tools/
+assets/uploads/
+assets/tenants/
 *.log
 *.py
 *.pyc
