@@ -1655,7 +1655,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <input type="hidden" name="target_category" value="${targetSlug}">
                     `;
                     document.body.appendChild(form);
-                    form.submit();
+                    form.requestSubmit();
                 }
             }
         });

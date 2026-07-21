@@ -15,6 +15,12 @@ $saved = false;
 $error = '';
 $notice = '';
 $resetLink = '';
+$csrf = Auth::csrfToken('admin_users');
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !Auth::validateCsrf((string)($_POST['csrf'] ?? ''), 'admin_users')) {
+    $error = 'Your form session expired. Reload the page and try again.';
+    $_POST = [];
+}
 
 function admin_user_by_id(PDO $pdo, int $userId): ?array
 {
@@ -523,6 +529,7 @@ $totalProArtists = count(array_filter($users, static fn(array $u): bool =>
                 <div class="bulk-actions">
                     <span style="color: var(--muted); font-size: 12px;">Select generated/test users to remove. Admin accounts are ignored.</span>
                     <form id="bulkDeleteUsersForm" method="post" onsubmit="return confirm('Delete selected users and their related data? This cannot be undone.');">
+                        <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') ?>">
                         <input type="hidden" name="action" value="bulk_delete_users">
                         <input type="text" name="bulk_delete_confirmation" placeholder="DELETE" autocomplete="off" required>
                         <button type="submit" class="danger-button">Delete selected</button>
@@ -569,6 +576,7 @@ $totalProArtists = count(array_filter($users, static fn(array $u): bool =>
                                         <details class="access-details">
                                             <summary><?= h(FeatureAccess::planLabel($u)) ?></summary>
                                             <form method="post" class="access-form">
+                                                <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') ?>">
                                                 <input type="hidden" name="action" value="update_access">
                                                 <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
                                                 <label>
@@ -602,6 +610,7 @@ $totalProArtists = count(array_filter($users, static fn(array $u): bool =>
                                 </td>
                                 <td>
                                     <form method="post" class="inline-credit-form">
+                                        <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') ?>">
                                         <input type="hidden" name="action" value="update_credits">
                                         <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
                                         <input type="number" name="credits" value="<?= (int)$u['credits'] ?>" min="0" required placeholder="Credits">
@@ -613,6 +622,7 @@ $totalProArtists = count(array_filter($users, static fn(array $u): bool =>
                                     <div class="user-actions">
                                         <div class="user-actions-row">
                                             <form method="post">
+                                                <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') ?>">
                                                 <input type="hidden" name="action" value="send_password_reset">
                                                 <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
                                                 <button type="submit" class="secondary">Reset link</button>
@@ -624,6 +634,7 @@ $totalProArtists = count(array_filter($users, static fn(array $u): bool =>
                                             <small>Admin account protected.</small>
                                         <?php else: ?>
                                             <form method="post" class="delete-user-form" onsubmit="return confirm('Delete this user and related data? This cannot be undone.');">
+                                                <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') ?>">
                                                 <input type="hidden" name="action" value="delete_user">
                                                 <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
                                                 <input type="text" name="delete_confirmation" placeholder="DELETE" autocomplete="off" required>

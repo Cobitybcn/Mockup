@@ -400,6 +400,37 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
 ?>
 <script>
 (function () {
+    if (!window.__artworkMockupsSecureFetch) {
+        const csrfToken = <?= json_encode(Auth::csrfToken('mutation'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        const nativeFetch = window.fetch.bind(window);
+        window.fetch = function (input, init) {
+            const options = Object.assign({}, init || {});
+            const method = String(options.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();
+            const target = new URL(input instanceof Request ? input.url : String(input), window.location.href);
+            if (target.origin === window.location.origin && !['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+                const headers = new Headers(input instanceof Request ? input.headers : undefined);
+                new Headers(options.headers || {}).forEach((value, key) => headers.set(key, value));
+                headers.set('X-CSRF-Token', csrfToken);
+                options.headers = headers;
+            }
+            return nativeFetch(input, options);
+        };
+        document.addEventListener('submit', function (event) {
+            const form = event.target;
+            if (!(form instanceof HTMLFormElement) || String(form.method || 'get').toLowerCase() !== 'post') return;
+            const target = new URL(form.action || window.location.href, window.location.href);
+            if (target.origin !== window.location.origin) return;
+            let field = form.querySelector('input[name="app_csrf"]');
+            if (!field) {
+                field = document.createElement('input');
+                field.type = 'hidden';
+                field.name = 'app_csrf';
+                form.appendChild(field);
+            }
+            field.value = csrfToken;
+        }, true);
+        window.__artworkMockupsSecureFetch = true;
+    }
     if (document.head.querySelector('link[data-artwork-mockups-favicon]')) return;
     var favicon = document.createElement('link');
     favicon.rel = 'icon';

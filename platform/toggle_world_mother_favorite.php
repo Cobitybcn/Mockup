@@ -7,7 +7,15 @@ header('Content-Type: application/json; charset=utf-8');
 
 try {
     $user = Auth::requireUser();
-    $category = trim(str_replace(['\\', '/'], '', (string)($_POST['category'] ?? $_GET['category'] ?? '')));
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+        http_response_code(405);
+        throw new RuntimeException('Method not allowed.');
+    }
+    if (!Auth::validateCsrf(Auth::requestCsrfToken(), 'mutation')) {
+        http_response_code(403);
+        throw new RuntimeException('Invalid form session.');
+    }
+    $category = trim(str_replace(['\\', '/'], '', (string)($_POST['category'] ?? '')));
     if ($category === '') {
         http_response_code(400);
         echo json_encode(['ok' => false, 'error' => 'Missing scene mother category.'], JSON_UNESCAPED_UNICODE);
@@ -53,6 +61,6 @@ try {
         'favorites' => $favorites,
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
-    http_response_code(500);
+    if (http_response_code() < 400) http_response_code(500);
     echo json_encode(['ok' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
 }

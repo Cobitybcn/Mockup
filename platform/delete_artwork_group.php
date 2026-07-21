@@ -32,6 +32,7 @@ try {
         http_response_code(405);
         throw new RuntimeException('Method not allowed.');
     }
+    Auth::requireValidCsrf(Auth::requestCsrfToken(), 'mutation');
 
     $artworkId = max(0, (int)($_POST['artwork_id'] ?? 0));
     if ($artworkId <= 0) {

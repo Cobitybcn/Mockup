@@ -12,13 +12,10 @@ final class TenantResolver
 
     public function resolveEmail(): string
     {
-        // 1. Permite pasar un parámetro GET para facilitar pruebas en desarrollo local
-        if (!empty($_GET['tenant_email'])) {
-            return (string)$_GET['tenant_email'];
-        }
-
-        // 2. Resolver por Hostname de la petición HTTP
-        $host = strtolower($_SERVER['HTTP_HOST'] ?? '');
+        // Resolve only from trusted deployment configuration or a registered host.
+        // A query-string tenant override would allow cross-tenant enumeration.
+        $host = strtolower(trim((string)($_SERVER['HTTP_HOST'] ?? '')));
+        $host = preg_replace('/:\d+$/', '', $host) ?: '';
         if ($host !== '' && $host !== 'localhost' && $host !== '127.0.0.1') {
             // Intentar buscar coincidencia directa por dominio personalizado
             $stmt = $this->pdo->prepare('
@@ -52,7 +49,7 @@ final class TenantResolver
             }
         }
 
-        // 3. Fallback a la variable configurada en .env o por defecto
+        // Single-tenant deployments must provide an explicit fallback identity.
         $envEmail = getenv('ACTIVE_ARTIST_EMAIL');
         if (!$envEmail) {
             // Cargar archivo .env local si existe
@@ -70,6 +67,9 @@ final class TenantResolver
             }
         }
 
-        return $envEmail ?: 'mauriziovalch@gmail.com';
+        if (!$envEmail || !filter_var($envEmail, FILTER_VALIDATE_EMAIL)) {
+            throw new RuntimeException('No active artist identity is configured for this host.');
+        }
+        return strtolower(trim((string)$envEmail));
     }
 }

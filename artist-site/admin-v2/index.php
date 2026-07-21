@@ -1,6 +1,19 @@
 <?php
 declare(strict_types=1);
+
+if (getenv('K_SERVICE') !== false || strtolower((string)(getenv('APP_ENV') ?: '')) === 'production') {
+    $adminBase = rtrim((string)(getenv('ARTIST_ADMIN_URL') ?: getenv('ARTWORKMOCKUPS_PUBLIC_URL') ?: ''), '/');
+    if ($adminBase === '') {
+        http_response_code(404);
+        exit;
+    }
+    if (!str_ends_with($adminBase, '/site-admin')) $adminBase .= '/site-admin';
+    header('Location: ' . $adminBase . '/', true, 302);
+    exit;
+}
+
 require_once dirname(__DIR__).'/inc/ArtistCatalogV2Repository.php';
+session_set_cookie_params(['path'=>'/','httponly'=>true,'secure'=>(!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off'),'samesite'=>'Lax']);
 session_start();if(empty($_SESSION['admin_v2_csrf']))$_SESSION['admin_v2_csrf']=bin2hex(random_bytes(32));
 $passwordFile=dirname(__DIR__).'/data/admin-password.json';$repo=new ArtistCatalogV2Repository(dirname(__DIR__).'/data/catalog-v2');
 function av2h(mixed $v):string{return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}
@@ -10,8 +23,8 @@ $notice='';$error='';
 try{
     if(($_SERVER['REQUEST_METHOD']??'')==='POST'){
         av2csrf();$action=(string)($_POST['action']??'');
-        if($action==='login'){$config=is_file($passwordFile)?json_decode((string)file_get_contents($passwordFile),true):[];if(!empty($config['hash'])&&password_verify((string)($_POST['password']??''),(string)$config['hash']))$_SESSION['admin_ok']=true;else throw new RuntimeException('Invalid password.');}
-        elseif($action==='logout'){unset($_SESSION['admin_ok']);}
+        if($action==='login'){$config=is_file($passwordFile)?json_decode((string)file_get_contents($passwordFile),true):[];if(!empty($config['hash'])&&password_verify((string)($_POST['password']??''),(string)$config['hash'])){session_regenerate_id(true);$_SESSION['admin_ok']=true;}else throw new RuntimeException('Invalid password.');}
+        elseif($action==='logout'){unset($_SESSION['admin_ok']);session_regenerate_id(true);}
         elseif($action==='save_commerce'){
             if(!av2auth())throw new RuntimeException('Authentication required.');
             $showMap=!empty($_POST['show_on_map']);$location=['show_on_map'=>$showMap,'type'=>in_array($_POST['location_type']??'', ['real_sale','assigned','studio','none'],true)?$_POST['location_type']:'none','country'=>trim((string)($_POST['country']??'')),'city'=>trim((string)($_POST['city']??''))];

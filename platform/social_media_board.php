@@ -234,7 +234,7 @@ foreach ($mockups as $mockup) {
                         </div>
                     </div>
                     <div class="smb-publish-controls" aria-label="Publishing controls">
-                        <button type="button" class="smb-confirm" data-confirm-schedule data-publish-now data-delivery-mode="now"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 3-7.6 18-3.2-7.2L3 10.6 21 3Z"/><path d="m10.2 13.8 4.2-4.2"/></svg><span>Publicar ahora</span></button>
+                        <button type="button" class="smb-confirm" data-confirm-schedule data-publish-now data-delivery-mode="now"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 3-7.6 18-3.2-7.2L3 10.6 21 3Z"/><path d="m10.2 13.8 4.2-4.2"/></svg><span>Publish now</span></button>
                         <button type="button" class="smb-schedule-open" data-open-schedule>Schedule</button>
                     </div>
                     <button class="smb-focus-exit" type="button" data-exit-network-focus>Overview</button>
@@ -358,7 +358,7 @@ foreach ($mockups as $mockup) {
                     <p class="smb-confirm-warning" data-confirm-warning>After confirmation, these publications will enter the live queue immediately.</p>
                     <div class="smb-confirm-actions">
                         <button type="button" class="smb-confirm-cancel" data-cancel-publish>Back to board</button>
-                        <button type="button" class="smb-confirm-submit" data-submit-publish data-submit-publish-label>Publicar ahora</button>
+                        <button type="button" class="smb-confirm-submit" data-submit-publish data-submit-publish-label>Publish now</button>
                     </div>
                 </section>
             </div>

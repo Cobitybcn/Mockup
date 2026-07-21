@@ -12,8 +12,17 @@ require __DIR__ . '/inc/AppPublishedSiteSettings.php';
 $path = current_path();
 $segments = array_values(array_filter(explode('/', trim($path, '/'))));
 
+$resolvedArtistEmail = '';
 try {
-    $managedSiteSettings = AppPublishedSiteSettings::fromApp(dirname(__DIR__) . '/platform', resolved_artist_email())->get();
+    $resolvedArtistEmail = resolved_artist_email();
+} catch (Throwable $error) {
+    http_response_code(503);
+    header('Retry-After: 60');
+    exit('Artist site configuration is temporarily unavailable.');
+}
+
+try {
+    $managedSiteSettings = AppPublishedSiteSettings::fromApp(dirname(__DIR__) . '/platform', $resolvedArtistEmail)->get();
     if (trim((string)($managedSiteSettings['site_title'] ?? '')) !== '') $site['name'] = trim((string)$managedSiteSettings['site_title']);
     if (trim((string)($managedSiteSettings['tagline'] ?? '')) !== '') $site['tagline'] = trim((string)$managedSiteSettings['tagline']);
     if (trim((string)($managedSiteSettings['contact_email'] ?? '')) !== '') $site['email'] = trim((string)$managedSiteSettings['contact_email']);
@@ -69,6 +78,22 @@ if ($bodyClass === 'studio-notes') {
 }
 
 if (($segments[0] ?? '') === 'admin') {
+    if (getenv('K_SERVICE') !== false || strtolower((string)(getenv('APP_ENV') ?: '')) === 'production') {
+        $adminBase = rtrim((string)(getenv('ARTIST_ADMIN_URL') ?: getenv('ARTWORKMOCKUPS_PUBLIC_URL') ?: ''), '/');
+        if ($adminBase === '') {
+            http_response_code(404);
+            exit;
+        }
+        if (!str_ends_with($adminBase, '/site-admin')) $adminBase .= '/site-admin';
+        header('Location: ' . $adminBase . '/', true, 302);
+        exit;
+    }
+    session_set_cookie_params([
+        'path' => '/',
+        'httponly' => true,
+        'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+        'samesite' => 'Lax',
+    ]);
     session_start();
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -256,11 +281,6 @@ function admin_upload_image(array $file): string
         $mime = mime_content_type($file['tmp_name']) ?: '';
     }
 
-    $extension = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
-    $extensionMap = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp'];
-    if (!isset($allowed[$mime])) {
-        $mime = $extensionMap[$extension] ?? '';
-    }
     if (!isset($allowed[$mime])) {
         return '';
     }
@@ -313,8 +333,9 @@ function admin_handle_post(array &$site, array &$series, array &$artworks, array
 
     if ($action === 'setup_password') {
         $password = trim($_POST['password'] ?? '');
-        if ($password !== '' && !admin_is_configured()) {
+        if (strlen($password) >= 12 && !admin_is_configured()) {
             file_put_contents(admin_password_file(), json_encode(['hash' => password_hash($password, PASSWORD_DEFAULT)]));
+            session_regenerate_id(true);
             $_SESSION['admin_ok'] = true;
         }
         header('Location: ' . url_for('admin'));
@@ -324,6 +345,7 @@ function admin_handle_post(array &$site, array &$series, array &$artworks, array
     if ($action === 'login') {
         $config = json_decode((string) file_get_contents(admin_password_file()), true);
         if (!empty($config['hash']) && password_verify($_POST['password'] ?? '', $config['hash'])) {
+            session_regenerate_id(true);
             $_SESSION['admin_ok'] = true;
         }
         header('Location: ' . url_for('admin'));
@@ -1132,7 +1154,7 @@ function resolved_artist_email(): string
             $email = $resolver->resolveEmail();
         } catch (Throwable $e) {
             error_log('Tenant resolution failed: ' . $e->getMessage());
-            $email = 'mauriziovalch@gmail.com';
+            throw $e;
         }
     }
     return $email;
@@ -1883,12 +1905,12 @@ function render_published_journal_post(array $notes, string $slug): bool
                 <img src="<?= e($coverUrl) ?>" alt="<?= e($post['title']) ?>" loading="eager">
             </figure>
             <div class="prose">
-                <?= $post['objective'] ?>
+                <?= safe_rich_text((string)$post['objective']) ?>
             </div>
         </section>
     <?php else: ?>
         <section class="section prose prose--wide" style="margin-top: 40px; margin-bottom: 80px;">
-            <?= $post['objective'] ?>
+            <?= safe_rich_text((string)$post['objective']) ?>
         </section>
     <?php endif; ?>
     
@@ -2209,11 +2231,24 @@ function render_contact(array $site, array $artworks): void
         } else if (!filter_var($submittedEmail, FILTER_VALIDATE_EMAIL)) {
             $error = 'Please enter a valid email address.';
         } else {
+            try {
+                $contactPdo = artist_site_database_connection(dirname(__DIR__) . '/platform');
+                if (!artist_site_rate_limit($contactPdo, 'artist_contact', $submittedEmail, 5, 3600)) {
+                    $error = 'Too many messages have been submitted. Please try again later.';
+                }
+            } catch (Throwable $rateLimitError) {
+                error_log('Artist contact rate limiter unavailable: ' . $rateLimitError->getMessage());
+                $error = 'The contact form is temporarily unavailable. Please email the studio directly.';
+            }
+        }
+
+        if ($error === '' && $honeypot === '') {
             $profile = app_artist_profile()?->get();
             $artistName = $profile['artist_name'] ?? 'Artist';
             $to = filter_var((string)($site['email'] ?? ''), FILTER_VALIDATE_EMAIL) ? (string)$site['email'] : resolved_artist_email();
             $from = $to; // e.g. studio@artistdomain.com
             
+            $submittedSubject = str_replace(["\r", "\n"], ' ', mb_substr($submittedSubject, 0, 120));
             $emailSubject = "[" . $artistName . " Website] " . $submittedSubject;
             
             $body = "New message from " . $artistName . " Website:\n\n";

@@ -5,3 +5,12 @@
 # Operating-system noise
 .DS_Store
 Thumbs.db
+
+# Dependency and runtime artifacts are rebuilt from lock files in CI.
+/platform/vendor/
+/platform/jobs/
+/platform/results/
+/platform/uploads/
+/platform/logs/
+/platform/analysis/
+/platform/video/

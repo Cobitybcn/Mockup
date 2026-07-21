@@ -46,6 +46,19 @@ function Ensure-ProjectRole {
         --condition=None | Out-Null
 }
 
+function Ensure-BucketRole {
+    param(
+        [string]$Bucket,
+        [string]$Member,
+        [string]$Role
+    )
+
+    Write-Host "Granting $Role to $Member on gs://$Bucket..." -ForegroundColor Cyan
+    gcloud storage buckets add-iam-policy-binding "gs://$Bucket" `
+        --member=$Member `
+        --role=$Role | Out-Null
+}
+
 function Wait-ForEnabledService {
     param(
         [string]$ProjectId,
@@ -121,10 +134,15 @@ if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($existingBucket)) {
     gcloud storage buckets create "gs://$Bucket" `
         --project=$ProjectId `
         --location=$Region `
-        --uniform-bucket-level-access
+        --uniform-bucket-level-access `
+        --public-access-prevention
 } else {
     Write-Host "Bucket already exists: $Bucket" -ForegroundColor Yellow
 }
+
+gcloud storage buckets update "gs://$Bucket" `
+    --uniform-bucket-level-access `
+    --public-access-prevention | Out-Null
 
 $webSa = Ensure-ServiceAccount -ProjectId $ProjectId -AccountName $WebServiceAccountName -DisplayName "Mockups Web Cloud Run"
 $workerSa = Ensure-ServiceAccount -ProjectId $ProjectId -AccountName $WorkerServiceAccountName -DisplayName "Mockups Worker Cloud Run"
@@ -132,12 +150,12 @@ $tasksInvokerSa = Ensure-ServiceAccount -ProjectId $ProjectId -AccountName $Task
 
 Ensure-ProjectRole -ProjectId $ProjectId -Member "serviceAccount:$webSa" -Role "roles/cloudtasks.enqueuer"
 Ensure-ProjectRole -ProjectId $ProjectId -Member "serviceAccount:$webSa" -Role "roles/cloudtasks.taskDeleter"
-Ensure-ProjectRole -ProjectId $ProjectId -Member "serviceAccount:$webSa" -Role "roles/storage.objectAdmin"
 Ensure-ProjectRole -ProjectId $ProjectId -Member "serviceAccount:$webSa" -Role "roles/cloudsql.client"
-Ensure-ProjectRole -ProjectId $ProjectId -Member "serviceAccount:$workerSa" -Role "roles/storage.objectAdmin"
 Ensure-ProjectRole -ProjectId $ProjectId -Member "serviceAccount:$workerSa" -Role "roles/cloudsql.client"
 Ensure-ProjectRole -ProjectId $ProjectId -Member "serviceAccount:$webSa" -Role "roles/aiplatform.user"
 Ensure-ProjectRole -ProjectId $ProjectId -Member "serviceAccount:$workerSa" -Role "roles/aiplatform.user"
+Ensure-BucketRole -Bucket $Bucket -Member "serviceAccount:$webSa" -Role "roles/storage.objectAdmin"
+Ensure-BucketRole -Bucket $Bucket -Member "serviceAccount:$workerSa" -Role "roles/storage.objectAdmin"
 
 # CloudTasksService creates OIDC-authenticated tasks using the dedicated
 # invoker identity. The web service is the task creator, so it must be allowed

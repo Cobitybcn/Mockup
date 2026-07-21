@@ -33,7 +33,7 @@ if ([string]::IsNullOrWhiteSpace($WorkerUrl)) {
     if ([string]::IsNullOrWhiteSpace($workerBaseUrl)) {
         throw "WorkerUrl was not provided and Cloud Run service '$WorkerService' was not found in project '$ProjectId'. Deploy the worker first or pass -WorkerUrl explicitly."
     }
-    $WorkerUrl = $workerBaseUrl.TrimEnd("/") + "/poc_worker.php"
+    $WorkerUrl = $workerBaseUrl.TrimEnd("/") + "/worker.php"
 }
 if ([string]::IsNullOrWhiteSpace($TasksInvokerServiceAccount)) {
     $TasksInvokerServiceAccount = "mockups-tasks-invoker-sa@$ProjectId.iam.gserviceaccount.com"

@@ -1,9 +1,23 @@
 RewriteEngine On
 Options -Indexes
 
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+</IfModule>
+
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
 <FilesMatch "^(Dockerfile(?:\..*)?|\.dockerignore|\.gcloudignore(?:\..*)?|cloudbuild(?:\..*)?\.ya?ml)$">
     Require all denied
 </FilesMatch>
+
+RewriteRule ^(?:data|inc|tests|tools|scripts|docs)(?:/|$) - [F,L,NC]
 
 RewriteRule ^artworks(?:/.*)?$ index.php [L,QSA]
 RewriteCond %{REQUEST_FILENAME} !-f

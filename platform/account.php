@@ -24,6 +24,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && ($_POST['action'] ?? '')
         $passwordError = 'New passwords do not match.';
     } else {
         try {
+            Auth::requireValidCsrf((string)($_POST['csrf'] ?? ''), 'account_password');
             Auth::changePassword($currentPassword, $newPassword);
             $passwordSuccess = 'Your password has been updated successfully.';
         } catch (RuntimeException $e) {
@@ -366,6 +367,7 @@ function h($v): string
 
                 <form method="post" class="account-security-form">
                     <input type="hidden" name="action" value="change_password">
+                    <input type="hidden" name="csrf" value="<?= htmlspecialchars(Auth::csrfToken('account_password'), ENT_QUOTES, 'UTF-8') ?>">
                     <div class="account-security-fields">
                         <div>
                             <label for="current_password">Current password</label>

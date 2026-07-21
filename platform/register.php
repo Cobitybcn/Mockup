@@ -3,6 +3,15 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
+$publicRegistrationEnabled = strtolower(app_env('APP_ENV', '')) !== 'production'
+    || strtolower(app_env('PUBLIC_REGISTRATION_ENABLED', 'false')) === 'true';
+
+if (!$publicRegistrationEnabled) {
+    http_response_code(404);
+    header('Cache-Control: no-store');
+    exit;
+}
+
 if (Auth::user()) {
     header('Location: create_scenes.php');
     exit;
@@ -12,6 +21,7 @@ $error = '';
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     try {
+        Auth::requireValidCsrf((string)($_POST['csrf'] ?? ''), 'register');
         Auth::register(
             (string)($_POST['email'] ?? ''),
             (string)($_POST['password'] ?? ''),
@@ -30,48 +40,6 @@ function h($v): string
     return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 }
 
-function auth_mockup_images(): array
-{
-    $files = glob(RESULTS_DIR . DIRECTORY_SEPARATOR . '*mockup*.{jpg,jpeg,png}', GLOB_BRACE) ?: [];
-    $files = array_filter($files, static function (string $path): bool {
-        $name = strtolower(basename($path));
-        return !str_contains($name, '.original.')
-            && !str_contains($name, 'prompt')
-            && is_file($path);
-    });
-
-    $groups = [];
-    foreach ($files as $path) {
-        $name = basename($path);
-        if (preg_match('/rootartjob\d+v\d+/i', $name, $matches)) {
-            $key = strtolower($matches[0]);
-        } else {
-            $key = preg_replace('/-(?:[^-]+-)?(?:frontal|3-4-left|3-4-right|mockup).*$/i', '', pathinfo($name, PATHINFO_FILENAME));
-        }
-        $key = $key ?: pathinfo($name, PATHINFO_FILENAME);
-        $groups[$key][] = $path;
-    }
-
-    $selected = [];
-    foreach ($groups as $groupFiles) {
-        $selected[] = $groupFiles[array_rand($groupFiles)];
-    }
-
-    shuffle($selected);
-
-    $fallback = [
-        'assets/auth/gallery-main.jpg',
-        'assets/auth/gallery-side.jpg',
-        'assets/auth/gallery-detail.jpg',
-    ];
-
-    return array_map(
-        static fn(string $path): string => 'auth_mockup_image.php?file=' . rawurlencode(basename($path)) . '&v=' . filemtime($path),
-        array_slice($selected, 0, 3)
-    ) + $fallback;
-}
-
-$authImages = auth_mockup_images();
 $authOpacities = [
     'main' => random_int(52, 72) / 100,
     'secondary' => random_int(38, 58) / 100,
@@ -112,6 +80,7 @@ $authOpacities = [
         <?php endif; ?>
 
         <form method="post" novalidate>
+            <input type="hidden" name="csrf" value="<?= h(Auth::csrfToken('register')) ?>">
             <div class="form-group-v2">
                 <label for="name">Name</label>
                 <div class="input-wrapper-v2">

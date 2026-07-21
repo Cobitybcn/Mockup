@@ -13,19 +13,7 @@ class DatabaseSessionHandler implements SessionHandlerInterface
 
     public function open($savePath, $sessionName): bool
     {
-        try {
-            // Keep it SQLite and MySQL compatible by not using database-specific syntax
-            $this->pdo->exec("
-                CREATE TABLE IF NOT EXISTS php_sessions (
-                    id VARCHAR(255) NOT NULL PRIMARY KEY,
-                    data TEXT NOT NULL,
-                    updated_at INT NOT NULL
-                )
-            ");
-            return true;
-        } catch (Throwable $e) {
-            return false;
-        }
+        return true;
     }
 
     public function close(): bool

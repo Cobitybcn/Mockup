@@ -1,23 +1,64 @@
 steps:
-  - name: gcr.io/cloud-builders/docker
+  - id: pull-web-cache
+    name: gcr.io/cloud-builders/docker
+    waitFor: ['-']
+    entrypoint: sh
+    args: [-c, 'docker pull "${_WEB_CACHE_IMAGE}" || true']
+
+  - id: pull-worker-cache
+    name: gcr.io/cloud-builders/docker
+    waitFor: ['-']
+    entrypoint: sh
+    args: [-c, 'docker pull "${_WORKER_CACHE_IMAGE}" || true']
+
+  - id: build-web
+    name: gcr.io/cloud-builders/docker
+    waitFor: [pull-web-cache]
     args:
       - build
+      - --cache-from
+      - ${_WEB_CACHE_IMAGE}
       - --pull
       - -t
       - ${_WEB_IMAGE}
       - -f
-      - Dockerfile.web
+      - platform/Dockerfile.web
       - .
 
-  - name: gcr.io/cloud-builders/docker
+  - id: build-worker
+    name: gcr.io/cloud-builders/docker
+    waitFor: [pull-worker-cache]
     args:
       - build
+      - --cache-from
+      - ${_WORKER_CACHE_IMAGE}
       - --pull
       - -t
       - ${_WORKER_IMAGE}
       - -f
-      - Dockerfile.worker
+      - platform/Dockerfile.worker
       - .
+
+  - id: regression-tests
+    name: gcr.io/cloud-builders/docker
+    waitFor: [build-web]
+    args:
+      - run
+      - --rm
+      - ${_WEB_IMAGE}
+      - php
+      - tests/run_regression_tests.php
+
+  - id: worker-syntax-smoke
+    name: gcr.io/cloud-builders/docker
+    waitFor: [build-worker]
+    entrypoint: sh
+    args:
+      - -ceu
+      - |
+        docker run --rm "${_WORKER_IMAGE}" php -l worker.php
+        docker run --rm "${_WORKER_IMAGE}" php -l root_worker.php
+        docker run --rm "${_WORKER_IMAGE}" php -l social_publish_worker.php
 
 images:
   - ${_WEB_IMAGE}
@@ -25,3 +66,6 @@ images:
 
 options:
   logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+
+timeout: 3600s

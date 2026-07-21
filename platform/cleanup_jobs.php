@@ -87,9 +87,10 @@ foreach ($entries as $entry) {
 
     if (!is_file($statusFile)) {
         // Sin status.json → probablemente corrupto, pero no borramos sin verificar edad
-        $mtime = @filemtime($jobPath) ?: 0;
+        $jobMtime = filemtime($jobPath);
+        $mtime = $jobMtime === false ? 0 : $jobMtime;
         if ($mtime < $cutoff) {
-            if (deleteDir($jobPath)) {
+            if (deleteDir($jobPath, $jobsDir)) {
                 $stats['deleted']++;
                 $details[] = "Deleted (no status): $entry";
             } else {
@@ -104,7 +105,8 @@ foreach ($entries as $entry) {
     $statusData = json_decode((string)file_get_contents($statusFile), true);
     $jobStatus  = (string)($statusData['status'] ?? 'unknown');
     $createdAt  = (string)($statusData['created_at'] ?? '');
-    $createdTs  = $createdAt !== '' ? (int)strtotime($createdAt) : (@filemtime($statusFile) ?: 0);
+    $statusMtime = filemtime($statusFile);
+    $createdTs  = $createdAt !== '' ? (int)strtotime($createdAt) : ($statusMtime === false ? 0 : $statusMtime);
 
     // Proteger jobs activos
     if (in_array($jobStatus, ['queued', 'processing'], true)) {
@@ -120,7 +122,7 @@ foreach ($entries as $entry) {
         continue;
     }
 
-    if (deleteDir($jobPath)) {
+    if (deleteDir($jobPath, $jobsDir)) {
         $stats['deleted']++;
         $details[] = "Deleted: $entry [$jobStatus, " . date('Y-m-d', $createdTs) . "]";
     } else {
@@ -129,29 +131,50 @@ foreach ($entries as $entry) {
     }
 }
 
-function deleteDir(string $path): bool
+function deleteDir(string $path, string $jobsRoot): bool
 {
-    if (!is_dir($path)) {
+    $root = realpath($jobsRoot);
+    $resolved = realpath($path);
+    if ($root === false || $resolved === false || !is_dir($resolved)) {
+        return false;
+    }
+    $rootPrefix = rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+    if (!str_starts_with($resolved . DIRECTORY_SEPARATOR, $rootPrefix) || $resolved === $root) {
+        error_log('Cleanup refused a path outside the jobs directory: ' . $path);
         return false;
     }
 
-    $items = scandir($path);
+    $items = scandir($resolved);
+    if ($items === false) {
+        error_log('Cleanup could not read job directory: ' . $resolved);
+        return false;
+    }
+
+    $ok = true;
 
     foreach ($items as $item) {
         if ($item === '.' || $item === '..') {
             continue;
         }
 
-        $full = $path . DIRECTORY_SEPARATOR . $item;
+        $full = $resolved . DIRECTORY_SEPARATOR . $item;
 
-        if (is_dir($full)) {
-            deleteDir($full);
-        } else {
-            @unlink($full);
+        if (is_link($full) || is_file($full)) {
+            if (!unlink($full)) {
+                error_log('Cleanup could not delete file: ' . $full);
+                $ok = false;
+            }
+        } elseif (is_dir($full) && !deleteDir($full, $root)) {
+            $ok = false;
         }
     }
 
-    return @rmdir($path);
+    if (!$ok) return false;
+    if (!rmdir($resolved)) {
+        error_log('Cleanup could not remove job directory: ' . $resolved);
+        return false;
+    }
+    return true;
 }
 
 $summary = sprintf(

@@ -5,6 +5,18 @@ function e(mixed $value): string
     return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
 }
 
+function safe_rich_text(string $html): string
+{
+    $withBreaks = preg_replace(
+        '~<(?:br\s*/?|/p|/div|/li|/h[1-6])\s*>~i',
+        "\n",
+        $html
+    ) ?? $html;
+    $text = html_entity_decode(strip_tags($withBreaks), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $text = preg_replace("/\r\n?|\n{3,}/", "\n\n", $text) ?? $text;
+    return nl2br(e(trim($text)), false);
+}
+
 function url_for(string $path = ''): string
 {
     if (preg_match('~^(?:https?:|mailto:|tel:|#)~', $path)) {

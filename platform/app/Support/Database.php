@@ -20,7 +20,12 @@ class Database
         self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         self::$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
-        self::migrate(self::$pdo);
+        if (self::runtimeMigrationsAllowed()) {
+            self::migrate(self::$pdo);
+        } else {
+            require_once __DIR__ . '/SchemaMigrator.php';
+            SchemaMigrator::assertCurrent(self::$pdo);
+        }
 
         return self::$pdo;
     }
@@ -78,7 +83,10 @@ class Database
             return;
         }
 
-        $pdo->exec('BEGIN IMMEDIATE TRANSACTION');
+        // PDO does not reliably report transactions opened with a raw SQLite
+        // BEGIN statement. Use the native API so nested services can detect and
+        // share the caller's transaction instead of attempting a second BEGIN.
+        $pdo->beginTransaction();
     }
 
     public static function withBusyRetry(callable $callback, int $attempts = 8)
@@ -144,20 +152,36 @@ class Database
 
         self::assertEnvironmentDatabaseBoundary($database);
 
-        $serverDsn = self::mysqlDsn('', $charset, $host, $port, $socket);
-        $server = new PDO($serverDsn, $username, $password, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        ]);
-        $server->exec(
-            'CREATE DATABASE IF NOT EXISTS `' . str_replace('`', '``', $database) . '` ' .
-            "CHARACTER SET {$charset} COLLATE {$charset}_unicode_ci"
-        );
-
         $dsn = self::mysqlDsn($database, $charset, $host, $port, $socket);
-        return new PDO($dsn, $username, $password, [
-            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$charset}",
-        ]);
+        try {
+            return new PDO($dsn, $username, $password, [
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$charset}",
+            ]);
+        } catch (PDOException $error) {
+            if (!self::runtimeMigrationsAllowed()) {
+                throw $error;
+            }
+            $serverDsn = self::mysqlDsn('', $charset, $host, $port, $socket);
+            $server = new PDO($serverDsn, $username, $password, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ]);
+            $server->exec(
+                'CREATE DATABASE IF NOT EXISTS `' . str_replace('`', '``', $database) . '` ' .
+                "CHARACTER SET {$charset} COLLATE {$charset}_unicode_ci"
+            );
+            return new PDO($dsn, $username, $password, [
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$charset}",
+            ]);
+        }
+    }
+
+    private static function runtimeMigrationsAllowed(): bool
+    {
+        if (strtolower(trim(app_env('APP_ENV', ''))) !== 'production') {
+            return true;
+        }
+        return strtolower(trim(app_env('APP_ALLOW_SCHEMA_MIGRATIONS', 'false'))) === 'true';
     }
 
     private static function assertEnvironmentDatabaseBoundary(string $database): void
