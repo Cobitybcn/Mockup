@@ -234,6 +234,29 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
             border-bottom: 1px solid var(--line);
         }
 
+        .editorial-shared-title {
+            padding: 24px 0 20px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .editorial-shared-title-label {
+            display: block;
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .editorial-shared-title-text {
+            margin: 8px 0 0;
+            color: var(--ink);
+            font: 500 clamp(36px, 4.5vw, 58px)/1.05 var(--font-serif);
+            overflow-wrap: anywhere;
+        }
+
+        .editorial-shared-title-text:focus { outline: 0; }
+
         .editorial-title-memo label,
         .editorial-language-label {
             color: var(--muted);
@@ -273,20 +296,9 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
         .editorial-page--source { border-top-color: var(--editorial-source); }
         .editorial-page--english { border-top-color: var(--editorial-english); }
 
-        .editorial-page-title {
-            display: block;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            color: var(--ink);
-            font: 500 clamp(24px, 2.4vw, 31px)/1.15 var(--font-serif);
-        }
-
-        .editorial-page-title:focus { outline: 0; }
-
         .editorial-language-label {
             display: block;
-            margin-top: 6px;
+            margin-top: 0;
         }
 
         .editorial-source-copy {
@@ -394,7 +406,7 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
                     <?php endif; ?>
                 </div>
                 <div class="editorial-artwork-copy">
-                    <h1 id="editorial-artwork-title"><?= bilingual_experiment_h($title) ?></h1>
+                    <h1 id="editorial-artwork-title" data-overview-title><?= bilingual_experiment_h($title) ?></h1>
                     <?php if ($subtitle !== ''): ?><p class="editorial-artwork-subtitle"><?= bilingual_experiment_h($subtitle) ?></p><?php endif; ?>
                     <?php if ($facts !== []): ?>
                         <p class="editorial-artwork-facts">
@@ -413,6 +425,11 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
                     <span class="editorial-unsaved">Prueba local · no guarda datos</span>
                 </header>
 
+                <div class="editorial-shared-title">
+                    <span class="editorial-shared-title-label">Título de la obra · universal</span>
+                    <h3 class="editorial-shared-title-text" contenteditable="true" role="textbox" aria-label="Título de la obra" data-shared-title><?= bilingual_experiment_h($title) ?></h3>
+                </div>
+
                 <div class="editorial-title-memo">
                     <label id="title-system-memo-label">Memo de títulos</label>
                     <span contenteditable="true" role="textbox" aria-labelledby="title-system-memo-label">STRATA X — LIMEN · STRATA XI — NUHRĀ (ܢܘܗܪܐ) · no traducir</span>
@@ -420,7 +437,6 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
 
                 <div class="editorial-spread">
                     <article class="editorial-page editorial-page--source">
-                        <h3 class="editorial-page-title" contenteditable="true" role="textbox" aria-label="Título oficial" data-shared-title><?= bilingual_experiment_h($title) ?></h3>
                         <span class="editorial-language-label">Español · fuente</span>
                         <div class="editorial-source-copy" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Descripción en español" data-placeholder="Escribí una descripción en español…"></div>
                         <details class="editorial-secondary">
@@ -430,7 +446,6 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
                     </article>
 
                     <article class="editorial-page editorial-page--english">
-                        <h3 class="editorial-page-title" data-mirrored-title><?= bilingual_experiment_h($title) ?></h3>
                         <span class="editorial-language-label">English · current version</span>
                         <div class="editorial-existing-copy <?= $englishDescription === '' ? 'is-empty' : '' ?>"><?= bilingual_experiment_h($englishDescription !== '' ? $englishDescription : 'No English description is currently available.') ?></div>
                         <?php if ($englishShortDescription !== ''): ?>
@@ -449,10 +464,10 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
 <script>
 (() => {
     const sharedTitle = document.querySelector('[data-shared-title]');
-    const mirroredTitle = document.querySelector('[data-mirrored-title]');
+    const overviewTitle = document.querySelector('[data-overview-title]');
 
     sharedTitle.addEventListener('input', () => {
-        mirroredTitle.textContent = sharedTitle.textContent.trim() || 'Sin título';
+        overviewTitle.textContent = sharedTitle.textContent.trim() || 'Sin título';
     });
 })();
 </script>
