@@ -82,7 +82,6 @@ $artworkId = (int)$artwork['id'];
 $artworkOwnerId = (int)($artwork['user_id'] ?? $user['id']);
 $sheet = bilingual_experiment_sheet($pdo, $artworkId, $artworkOwnerId);
 $title = trim((string)($sheet['title'] ?? '')) ?: trim((string)($artwork['final_title'] ?? '')) ?: 'Untitled';
-$subtitle = trim((string)($sheet['subtitle'] ?? '')) ?: trim((string)($artwork['subtitle'] ?? ''));
 $englishDescription = trim((string)($sheet['description'] ?? ''));
 $englishShortDescription = trim((string)($sheet['short_description'] ?? ''));
 $imageFile = basename((string)($artwork['root_file'] ?? '')) ?: basename((string)($artwork['main_file'] ?? ''));
@@ -140,14 +139,13 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
 
         .editorial-back:hover { color: var(--accent); }
 
-        .editorial-artwork {
+        .editorial-identity {
             display: grid;
             grid-template-columns: 170px minmax(0, 1fr);
             gap: 26px;
             align-items: center;
-            padding: 18px;
-            border: 1px solid var(--line);
-            background: var(--surface);
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--line);
         }
 
         .editorial-artwork-media {
@@ -165,25 +163,13 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
             object-fit: contain;
         }
 
-        .editorial-artwork-copy { min-width: 0; }
-
-        .editorial-artwork-copy h1 {
-            margin: 0;
-            font: 500 clamp(34px, 4vw, 54px)/1.05 var(--font-serif);
-            overflow-wrap: anywhere;
-        }
-
-        .editorial-artwork-subtitle {
-            margin: 8px 0 0;
-            color: var(--accent);
-            font: 400 20px/1.35 var(--font-serif);
-        }
+        .editorial-identity-copy { min-width: 0; }
 
         .editorial-artwork-facts {
             display: flex;
             flex-wrap: wrap;
             gap: 7px 15px;
-            margin: 20px 0 0;
+            margin: 16px 0 0;
             color: var(--muted);
             font-size: 12px;
         }
@@ -194,49 +180,18 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
             background: var(--surface);
         }
 
-        .editorial-workspace-header {
-            display: flex;
-            align-items: end;
-            justify-content: space-between;
-            gap: 24px;
-            padding-bottom: 18px;
-            border-bottom: 1px solid var(--line);
-        }
-
-        .editorial-workspace-header h2 {
-            margin: 0;
-            font: 500 clamp(28px, 3vw, 40px)/1.05 var(--font-serif);
-        }
-
-        .editorial-workspace-header p {
-            max-width: 580px;
-            margin: 6px 0 0;
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.5;
-        }
-
-        .editorial-unsaved {
-            color: var(--muted);
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: .07em;
-            text-transform: uppercase;
-            white-space: nowrap;
-        }
-
         .editorial-title-memo {
             display: grid;
             grid-template-columns: 130px minmax(0, 1fr);
             gap: 14px;
             align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid var(--line);
+            margin-top: 16px;
+            padding-top: 13px;
+            border-top: 1px solid var(--line);
         }
 
         .editorial-shared-title {
-            padding: 24px 0 20px;
-            border-bottom: 1px solid var(--line);
+            padding: 0;
         }
 
         .editorial-shared-title-label {
@@ -397,17 +352,14 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
         }
 
         @media (max-width: 680px) {
-            .editorial-experiment-topline,
-            .editorial-workspace-header { align-items: flex-start; flex-direction: column; }
-            .editorial-artwork { grid-template-columns: 100px minmax(0, 1fr); gap: 14px; padding: 12px; }
+            .editorial-experiment-topline { align-items: flex-start; flex-direction: column; }
+            .editorial-identity { grid-template-columns: 100px minmax(0, 1fr); gap: 14px; }
             .editorial-artwork-media { height: 124px; }
-            .editorial-artwork-copy h1 { font-size: 29px; }
-            .editorial-artwork-subtitle { font-size: 16px; }
+            .editorial-shared-title-text { font-size: 31px; }
             .editorial-artwork-facts { margin-top: 12px; font-size: 10px; }
             .editorial-workspace { padding: 12px; }
             .editorial-title-memo { grid-template-columns: 1fr; gap: 4px; }
             .editorial-page { padding: 18px 15px; }
-            .editorial-unsaved { white-space: normal; }
         }
     </style>
 </head>
@@ -422,46 +374,34 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
 
         <div class="workspace editorial-experiment">
             <div class="editorial-experiment-topline">
-                <p class="editorial-experiment-state">Edición bilingüe · experimento privado</p>
+                <p class="editorial-experiment-state">Edición bilingüe · experimento privado · no guarda datos</p>
                 <a class="editorial-back" href="artwork.php?id=<?= $artworkId ?>">Volver a la ficha actual</a>
             </div>
 
-            <section class="editorial-artwork" aria-labelledby="editorial-artwork-title">
-                <div class="editorial-artwork-media">
-                    <?php if ($imageFile !== ''): ?>
-                        <img src="<?= bilingual_experiment_h(bilingual_experiment_media_url($imageFile)) ?>" alt="<?= bilingual_experiment_h($title) ?>">
-                    <?php else: ?>
-                        <span>Sin imagen</span>
-                    <?php endif; ?>
-                </div>
-                <div class="editorial-artwork-copy">
-                    <h1 id="editorial-artwork-title" data-overview-title><?= bilingual_experiment_h($title) ?></h1>
-                    <?php if ($subtitle !== ''): ?><p class="editorial-artwork-subtitle"><?= bilingual_experiment_h($subtitle) ?></p><?php endif; ?>
-                    <?php if ($facts !== []): ?>
-                        <p class="editorial-artwork-facts">
-                            <?php foreach ($facts as $fact): ?><span><?= bilingual_experiment_h($fact) ?></span><?php endforeach; ?>
-                        </p>
-                    <?php endif; ?>
-                </div>
-            </section>
-
-            <section class="editorial-workspace" aria-labelledby="editorial-content-title">
-                <header class="editorial-workspace-header">
-                    <div>
-                        <h2 id="editorial-content-title">Contenido editorial</h2>
-                        <p>El español se construye mirando el inglés existente, sin duplicar la obra.</p>
+            <section class="editorial-workspace" aria-label="Contenido editorial bilingüe">
+                <div class="editorial-identity">
+                    <div class="editorial-artwork-media">
+                        <?php if ($imageFile !== ''): ?>
+                            <img src="<?= bilingual_experiment_h(bilingual_experiment_media_url($imageFile)) ?>" alt="<?= bilingual_experiment_h($title) ?>">
+                        <?php else: ?>
+                            <span>Sin imagen</span>
+                        <?php endif; ?>
                     </div>
-                    <span class="editorial-unsaved">Prueba local · no guarda datos</span>
-                </header>
-
-                <div class="editorial-shared-title">
-                    <span class="editorial-shared-title-label">Título de la obra · universal</span>
-                    <h3 class="editorial-shared-title-text" contenteditable="true" role="textbox" aria-label="Título de la obra" data-shared-title><?= bilingual_experiment_h($title) ?></h3>
-                </div>
-
-                <div class="editorial-title-memo">
-                    <label id="title-system-memo-label">Memo de títulos</label>
-                    <span contenteditable="true" role="textbox" aria-labelledby="title-system-memo-label">STRATA X — LIMEN · STRATA XI — NUHRĀ (ܢܘܗܪܐ) · no traducir</span>
+                    <div class="editorial-identity-copy">
+                        <div class="editorial-shared-title">
+                            <span class="editorial-shared-title-label">Título de la obra · universal</span>
+                            <h1 class="editorial-shared-title-text" contenteditable="true" role="textbox" aria-label="Título de la obra"><?= bilingual_experiment_h($title) ?></h1>
+                        </div>
+                        <?php if ($facts !== []): ?>
+                            <p class="editorial-artwork-facts">
+                                <?php foreach ($facts as $fact): ?><span><?= bilingual_experiment_h($fact) ?></span><?php endforeach; ?>
+                            </p>
+                        <?php endif; ?>
+                        <div class="editorial-title-memo">
+                            <label id="title-system-memo-label">Memo de títulos</label>
+                            <span contenteditable="true" role="textbox" aria-labelledby="title-system-memo-label">STRATA X — LIMEN · STRATA XI — NUHRĀ (ܢܘܗܪܐ) · no traducir</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="editorial-spread">
@@ -493,15 +433,5 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
     </main>
 </div>
 
-<script>
-(() => {
-    const sharedTitle = document.querySelector('[data-shared-title]');
-    const overviewTitle = document.querySelector('[data-overview-title]');
-
-    sharedTitle.addEventListener('input', () => {
-        overviewTitle.textContent = sharedTitle.textContent.trim() || 'Sin título';
-    });
-})();
-</script>
 </body>
 </html>
