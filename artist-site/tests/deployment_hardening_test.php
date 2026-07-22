@@ -16,6 +16,8 @@ $checks = [
     [str_contains($cloudBuild, 'pull-cache') && str_contains($cloudBuild, '--cache-from'), 'artist releases reuse the previous production image as a build cache'],
     [str_contains($cloudBuild, 'artist-site/Dockerfile') && str_contains($cloudBuild, "- artist-site\n"), 'artist trigger builds only the artist-site context from the monorepo root'],
     [str_contains($cloudBuild, '_PRODUCTION_BRANCH: main') && str_contains($cloudBuild, '$BRANCH_NAME'), 'artist releases accept only the production branch'],
+    [str_contains($cloudBuild, 'git lfs pull --include="artist-site/assets/images/**" --exclude=""') && str_contains($cloudBuild, 'hydrate-active-lfs-assets'), 'artist releases hydrate only active Git LFS images before building'],
+    [str_contains($cloudBuild, 'waitFor: [verify-production-target, pull-cache, hydrate-active-lfs-assets]'), 'artist image build waits for active Git LFS assets'],
     [str_contains($cloudBuild, 'git-lfs.github.com/spec/v1'), 'artist image smoke test rejects unresolved Git LFS pointers'],
     [substr_count($cloudBuild, 'BUILD_ID="$BUILD_ID"') === 2, 'Cloud Build ID is substituted before shell substring expansion'],
     [str_contains($dockerIgnore, 'assets/uploads/') && str_contains($cloudIgnore, 'assets/uploads/'), 'runtime uploads never enter build contexts'],
