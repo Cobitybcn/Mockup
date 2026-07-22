@@ -20,6 +20,7 @@ $faviconUrl = $artistPhotoFile !== ''
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>document.documentElement.classList.add('has-js');</script>
     <title><?= e($meta['title']) ?></title>
     <link rel="icon" href="<?= e($faviconUrl) ?>">
     <meta name="description" content="<?= e($meta['description']) ?>">
@@ -55,18 +56,24 @@ $faviconUrl = $artistPhotoFile !== ''
         <span><?= e($artistName ?? 'Artist') ?></span>
         <small><?= e($site['tagline'] ?? '') ?></small>
     </a>
-    <nav class="main-nav" aria-label="Main navigation">
-        <a<?= $isActive('artworks') ?> href="<?= e(url_for('artworks/')) ?>">Artworks</a>
-        <a<?= $isActive('series') ?> href="<?= e(url_for('series')) ?>">Series</a>
-        <a<?= $isActive('sold-works') ?> href="<?= e(url_for('sold-works')) ?>">Constellations</a>
-        <a<?= $isJournalSection ? ' class="is-active" aria-current="page"' : '' ?> href="<?= e(url_for('studio-notes')) ?>">Studio Notes</a>
-        <a<?= $isActive('artist') ?> href="<?= e(url_for('artist')) ?>">Artist</a>
-        <a class="nav-cta<?= $activeSection === 'contact' ? ' is-active' : '' ?>" <?= $activeSection === 'contact' ? 'aria-current="page"' : '' ?> href="<?= e(url_for('contact')) ?>">Inquire</a>
-    </nav>
-    <form class="site-search" action="<?= e(url_for('artworks/')) ?>" method="get" role="search">
-        <label class="sr-only" for="site-search-input">Search paintings</label>
-        <input id="site-search-input" name="q" type="search" placeholder="Search works, series, status..." autocomplete="off">
-        <button type="submit">Search</button>
-    </form>
+    <button class="mobile-nav-toggle" type="button" aria-expanded="false" aria-controls="header-tools" data-mobile-nav-toggle>
+        <span class="mobile-nav-toggle__icon" aria-hidden="true"><i></i><i></i></span>
+        <span>Menu</span>
+    </button>
+    <div class="header-tools" id="header-tools" data-header-tools>
+        <nav class="main-nav" aria-label="Main navigation">
+            <a<?= $isActive('artworks') ?> href="<?= e(url_for('artworks/')) ?>">Artworks</a>
+            <a<?= $isActive('series') ?> href="<?= e(url_for('series')) ?>">Series</a>
+            <a<?= $isActive('sold-works') ?> href="<?= e(url_for('sold-works')) ?>">Constellations</a>
+            <a<?= $isJournalSection ? ' class="is-active" aria-current="page"' : '' ?> href="<?= e(url_for('studio-notes')) ?>">Studio Notes</a>
+            <a<?= $isActive('artist') ?> href="<?= e(url_for('artist')) ?>">Artist</a>
+            <a class="nav-cta<?= $activeSection === 'contact' ? ' is-active' : '' ?>" <?= $activeSection === 'contact' ? 'aria-current="page"' : '' ?> href="<?= e(url_for('contact')) ?>">Inquire</a>
+        </nav>
+        <form class="site-search" action="<?= e(url_for('artworks/')) ?>" method="get" role="search">
+            <label class="sr-only" for="site-search-input">Search paintings</label>
+            <input id="site-search-input" name="q" type="search" placeholder="Search works or series" autocomplete="off">
+            <button type="submit">Search</button>
+        </form>
+    </div>
 </header>
 <main>

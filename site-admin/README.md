@@ -33,7 +33,9 @@ Artworks · Series · Constellations · Studio Notes · Artist · Inquire
 
 ## Commerce boundary
 
-The current interface exposes one simple stock record per published artwork. The underlying schema retains room for future variants, orders, and payment/shipping configuration, but those secondary concepts do not lead the workflow. No payment provider, public cart, or checkout is activated by this phase. Provider credentials must never be collected in the generic settings form.
+Artwork Mockups owns one Stripe Connect platform configuration. It is managed once by a system administrator and reused for every artist; platform credentials are never collected from artists or exposed in their Store Admin.
+
+Each artist authorizes a separate Stripe Standard account. Only its `acct_…` identity and operational status are stored for that artist. Checkout becomes available only when the platform configuration, the artist connection, price, stock, shipping, and currency are ready. Charges are created on the connected artist account, so sales, Stripe fees, refunds, disputes, and payouts remain separated by artist.
 
 ## Visual protection
 

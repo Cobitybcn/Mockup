@@ -300,6 +300,10 @@ a {
   background: #E6F2E7;
 }
 
+.sidebar-profile-account {
+  background: var(--surface);
+}
+
 .sidebar-basic-profile .sidebar-tab:hover {
   background: rgba(76, 120, 82, 0.08);
 }
@@ -2111,7 +2115,7 @@ button:disabled,
 .btn-submit-v2 {
   width: 100%;
   height: 48px;
-  background: linear-gradient(135deg, #8A6F4E 0%, #5E4A32 100%);
+  background: var(--accent);
   color: #FFFFFF;
   border: none;
   border-radius: 8px;
@@ -2120,19 +2124,16 @@ button:disabled,
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(138, 111, 78, 0.15);
+  transition: background-color 0.2s ease;
   margin-top: 6px;
 }
 
 .btn-submit-v2:hover {
-  background: linear-gradient(135deg, #9C805D 0%, #6D563C 100%);
-  box-shadow: 0 6px 16px rgba(138, 111, 78, 0.25);
-  transform: translateY(-1px);
+  background: var(--accent-hover);
 }
 
 .btn-submit-v2:active {
-  transform: translateY(0);
+  background: var(--accent-hover);
 }
 
 .auth-links-v2 {

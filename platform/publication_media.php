@@ -21,4 +21,6 @@ $path=RESULTS_DIR.DIRECTORY_SEPARATOR.$file;
 if(!is_file($path)){ $upload=__DIR__.DIRECTORY_SEPARATOR.'uploads'.DIRECTORY_SEPARATOR.$file; if(is_file($upload))$path=$upload; }
 if(!is_file($path) && StorageService::isGcsActive()){StorageService::downloadFile('results/'.$file,$path);}
 if(!is_file($path)){http_response_code(404);exit;}
-$mime=@mime_content_type($path)?:'application/octet-stream'; header('Content-Type: '.$mime); header('Content-Length: '.filesize($path)); header('Cache-Control: public, max-age=86400'); header('X-Content-Type-Options: nosniff'); readfile($path);
+$width=ResponsiveImage::requestedWidth();
+$path=ResponsiveImage::prepare($path,$file,$width);
+$mime=@mime_content_type($path)?:'application/octet-stream'; header('Content-Type: '.$mime); header('Content-Length: '.filesize($path)); header('Cache-Control: public, max-age=604800'); header('X-Content-Type-Options: nosniff'); readfile($path);

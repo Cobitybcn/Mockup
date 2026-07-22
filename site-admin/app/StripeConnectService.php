@@ -5,29 +5,42 @@ final class StripeConnectService
 {
     public static function secretKey(): string
     {
-        return trim((string)(function_exists('app_env') ? app_env('STRIPE_CONNECT_SECRET_KEY', '') : (getenv('STRIPE_CONNECT_SECRET_KEY') ?: '')));
+        return class_exists('ProviderSettings')
+            ? ProviderSettings::stripeConnectSecretKey()
+            : trim((string)(getenv('STRIPE_CONNECT_SECRET_KEY') ?: ''));
     }
 
     public static function clientId(): string
     {
-        return trim((string)(function_exists('app_env') ? app_env('STRIPE_CONNECT_CLIENT_ID', '') : (getenv('STRIPE_CONNECT_CLIENT_ID') ?: '')));
+        return class_exists('ProviderSettings')
+            ? ProviderSettings::stripeConnectClientId()
+            : trim((string)(getenv('STRIPE_CONNECT_CLIENT_ID') ?: ''));
     }
 
     public static function webhookSecret(): string
     {
-        return trim((string)(function_exists('app_env') ? app_env('STRIPE_CONNECT_WEBHOOK_SECRET', '') : (getenv('STRIPE_CONNECT_WEBHOOK_SECRET') ?: '')));
+        return class_exists('ProviderSettings')
+            ? ProviderSettings::stripeConnectWebhookSecret()
+            : trim((string)(getenv('STRIPE_CONNECT_WEBHOOK_SECRET') ?: ''));
     }
 
     public static function redirectUri(): string
     {
-        return trim((string)(function_exists('app_env') ? app_env('STRIPE_CONNECT_REDIRECT_URI', '') : (getenv('STRIPE_CONNECT_REDIRECT_URI') ?: '')));
+        return class_exists('ProviderSettings')
+            ? ProviderSettings::stripeConnectRedirectUri()
+            : trim((string)(getenv('STRIPE_CONNECT_REDIRECT_URI') ?: ''));
     }
 
     public static function isConfigured(): bool
     {
+        return self::isConnectionConfigured()
+            && str_starts_with(self::webhookSecret(), 'whsec_');
+    }
+
+    public static function isConnectionConfigured(): bool
+    {
         return self::validSecretKey(self::secretKey())
             && str_starts_with(self::clientId(), 'ca_')
-            && str_starts_with(self::webhookSecret(), 'whsec_')
             && filter_var(self::redirectUri(), FILTER_VALIDATE_URL)
             && class_exists(\Stripe\StripeClient::class);
     }
@@ -42,7 +55,7 @@ final class StripeConnectService
     /** @param array<string,mixed> $user */
     public function authorizationUrl(array $user, string $state, string $businessUrl): string
     {
-        if (!self::isConfigured()) throw new RuntimeException('Stripe Connect platform credentials are incomplete.');
+        if (!self::isConnectionConfigured()) throw new RuntimeException('Stripe Connect authorization credentials are incomplete.');
         if (strlen($state) < 32) throw new RuntimeException('Stripe connection state is invalid.');
         $query = [
             'response_type' => 'code',
@@ -61,7 +74,7 @@ final class StripeConnectService
     /** @return array{account_id:string,livemode:bool,account:array<string,mixed>} */
     public function exchangeAuthorizationCode(string $code): array
     {
-        if (!self::isConfigured()) throw new RuntimeException('Stripe Connect platform credentials are incomplete.');
+        if (!self::isConnectionConfigured()) throw new RuntimeException('Stripe Connect authorization credentials are incomplete.');
         if ($code === '' || !str_starts_with($code, 'ac_')) throw new RuntimeException('Stripe returned an invalid authorization code.');
         \Stripe\Stripe::setApiKey(self::secretKey());
         $response = \Stripe\OAuth::token(['grant_type' => 'authorization_code', 'code' => $code]);
@@ -77,14 +90,14 @@ final class StripeConnectService
     /** @return array<string,mixed> */
     public function account(string $accountId): array
     {
-        if (!self::isConfigured() || !str_starts_with($accountId, 'acct_')) throw new RuntimeException('Stripe account cannot be checked.');
+        if (!self::isConnectionConfigured() || !str_starts_with($accountId, 'acct_')) throw new RuntimeException('Stripe account cannot be checked.');
         $client = new \Stripe\StripeClient(self::secretKey());
         return $client->accounts->retrieve($accountId, [])->toArray();
     }
 
     public function deauthorize(string $accountId): void
     {
-        if (!self::isConfigured() || !str_starts_with($accountId, 'acct_')) throw new RuntimeException('Stripe account cannot be disconnected.');
+        if (!self::isConnectionConfigured() || !str_starts_with($accountId, 'acct_')) throw new RuntimeException('Stripe account cannot be disconnected.');
         \Stripe\Stripe::setApiKey(self::secretKey());
         \Stripe\OAuth::deauthorize(['client_id' => self::clientId(), 'stripe_user_id' => $accountId]);
     }

@@ -31,6 +31,7 @@ require_once __DIR__ . '/regression/retired_reference_lab_test.php';
 require_once __DIR__ . '/regression/ui_preview_test.php';
 require_once __DIR__ . '/regression/security_hardening_test.php';
 require_once __DIR__ . '/regression/artist_domain_verification_test.php';
+require_once __DIR__ . '/regression/deployment_pipeline_test.php';
 
 run_root_artwork_regression_tests();
 run_seo_filename_regression_tests();
@@ -48,5 +49,6 @@ run_retired_reference_lab_tests();
 run_ui_preview_regression_tests();
 run_security_hardening_regression_tests();
 run_artist_domain_verification_tests();
+run_deployment_pipeline_regression_tests();
 
 exit(TestHarness::summary());

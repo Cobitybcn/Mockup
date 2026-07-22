@@ -93,9 +93,15 @@ function run_feature_access_regression_tests(): void
 
     $sidebar = file_get_contents(__DIR__ . '/../../sidebar.php') ?: '';
     TestHarness::assertContains(
-        'if ($sidebarIsAdmin || $sidebarCanUseVideo)',
+        '<div class="sidebar-publishing-tabs">',
         $sidebar,
-        'Artist Pro receives the Video Studio navigation entry'
+        'Artist Pro publishing tools share the pastel green navigation group'
+    );
+    TestHarness::assertTrue(
+        str_contains($sidebar, '<div class="sidebar-publishing-tabs">')
+        && str_contains($sidebar, '$videoStudioActive')
+        && str_contains($sidebar, '>Video Lab</a>'),
+        'Video Lab appears with Studio Notes and Social Media Board'
     );
     foreach (['Video' => 'Video', 'Website' => 'Website', 'Social' => 'Social'] as $featureLabel => $accessVariable) {
         TestHarness::assertContains(
@@ -119,6 +125,11 @@ function run_feature_access_regression_tests(): void
         '<section class="sidebar-account sidebar-basic-profile" aria-label="Artist account">',
         $sidebar,
         'Artist Profile remains beside the Admin menu for the basic plan'
+    );
+    TestHarness::assertContains(
+        '<section class="sidebar-account sidebar-profile-account" aria-label="Artist account">',
+        $sidebar,
+        'Artist Profile remains beside the Admin menu for the complete navigation'
     );
     $sidebarStyles = file_get_contents(__DIR__ . '/../../style.css') ?: '';
     TestHarness::assertContains(

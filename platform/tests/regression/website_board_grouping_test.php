@@ -113,6 +113,11 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertContains('data-media-search', $studioNotesPage, 'la biblioteca visual ofrece busqueda por sus metadatos');
     TestHarness::assertContains("(string)(\$media['searchTerms'] ?? '')", $studioNotesPage, 'la busqueda incluye camara, slot y sinonimos del mockup');
     TestHarness::assertContains("normalize('NFD')", $studioNotesPage, 'la busqueda visual ignora tildes');
+    TestHarness::assertContains('data-website-cover-picker', $artworkPage, 'Website muestra la portada activa en un selector visual');
+    TestHarness::assertContains('class="artwork-cover-options"', $artworkPage, 'Website permite comparar las portadas mediante miniaturas');
+    TestHarness::assertContains('type="radio"', $artworkPage, 'la portada elegida se envia como una opcion accesible del formulario');
+    TestHarness::assertTrue(!str_contains($artworkPage, '<select name="header_file">'), 'Website ya no oculta la portada elegida en un select de texto');
+    TestHarness::assertContains("['camera_slot_name']", $artworkPage, 'los mockups del selector usan el nombre real de su camara');
     TestHarness::assertContains('website_studio_notes.php?source=artwork:', $artworkPage, 'cada Artwork puede iniciar una Studio Note contextual');
     TestHarness::assertContains('website_studio_notes.php?source=series:', $seriesPage, 'cada Series puede iniciar una Studio Note contextual');
     TestHarness::assertContains('website_studio_notes.php?source=mockup:', $viewerPage, 'el viewer puede iniciar una Studio Note desde el mockup activo');

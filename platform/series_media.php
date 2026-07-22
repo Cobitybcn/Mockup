@@ -46,9 +46,11 @@ if (!is_file($path)) {
     exit;
 }
 
+$width = ResponsiveImage::requestedWidth();
+$path = ResponsiveImage::prepare($path, $file, $width);
 $mime = @mime_content_type($path) ?: 'application/octet-stream';
 header('Content-Type: ' . $mime);
 header('Content-Length: ' . filesize($path));
-header('Cache-Control: public, max-age=86400');
+header('Cache-Control: public, max-age=604800');
 header('X-Content-Type-Options: nosniff');
 readfile($path);

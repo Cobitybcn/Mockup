@@ -5,8 +5,8 @@ steps:
     args:
       - -ceu
       - |
-        if [[ "$PROJECT_ID" != "${_EXPECTED_PROJECT_ID}" || -z "$COMMIT_SHA" ]]; then
-          echo "Refusing to deploy without the expected project and immutable commit." >&2
+        if [[ "$PROJECT_ID" != "${_EXPECTED_PROJECT_ID}" || "$BRANCH_NAME" != "${_PRODUCTION_BRANCH}" || -z "$COMMIT_SHA" ]]; then
+          echo "Refusing to deploy without the expected project, production branch, and immutable commit." >&2
           exit 1
         fi
         account="$$(gcloud run services describe "${_SERVICE}" \
@@ -17,19 +17,29 @@ steps:
           exit 1
         fi
 
+  - id: pull-cache
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    waitFor: ['-']
+    args:
+      - -c
+      - docker pull "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:latest" || true
+
   - id: build
     name: gcr.io/cloud-builders/docker
-    waitFor: [verify-production-target]
+    waitFor: [verify-production-target, pull-cache]
     args:
       - build
       - --pull
+      - --cache-from
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:latest
       - --file
-      - Dockerfile
+      - artist-site/Dockerfile
       - --tag
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:$COMMIT_SHA
       - --tag
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:latest
-      - .
+      - artist-site
 
   - id: image-smoke
     name: gcr.io/cloud-builders/docker
@@ -42,6 +52,7 @@ steps:
         docker run --rm "$$image" php -l /var/www/html/index.php
         docker run --rm "$$image" php -l /var/www/html/admin-v2/index.php
         docker run --rm "$$image" sh -ceu 'test ! -e /var/www/html/.env; test ! -e /var/www/html/tests; test ! -e /var/www/html/tools'
+        docker run --rm "$$image" sh -ceu '! grep -RIl "^version https://git-lfs.github.com/spec/v1$" /var/www/html/assets/images | grep -q .'
 
   - id: push
     name: gcr.io/cloud-builders/docker
@@ -72,7 +83,7 @@ steps:
           --region="${_REGION}" \
           --platform=managed \
           --image="$$image@$$digest" \
-          --update-env-vars="APP_ENV=production,ARTIST_ADMIN_URL=${_ADMIN_URL}" \
+          --update-env-vars="APP_ENV=production,APP_RELEASE_COMMIT=$COMMIT_SHA,ARTIST_ADMIN_URL=${_ADMIN_URL}" \
           --revision-suffix="cb-$SHORT_SHA-$$build_short" \
           --no-traffic \
           --quiet
@@ -148,6 +159,7 @@ serviceAccount: projects/project-ff549db7-4f7f-4b0c-9a5/serviceAccounts/mockups-
 
 substitutions:
   _EXPECTED_PROJECT_ID: project-ff549db7-4f7f-4b0c-9a5
+  _PRODUCTION_BRANCH: main
   _REGION: us-central1
   _REPOSITORY: mockups-repo
   _IMAGE: artist-site-web

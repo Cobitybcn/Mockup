@@ -61,6 +61,48 @@ steps:
           exit 1
         fi
 
+        # Compare against the commit currently serving web traffic. The first
+        # release after introducing APP_RELEASE_COMMIT deliberately falls back
+        # to the complete pipeline.
+        deployed_commit="$$(gcloud run services describe "${_WEB_SERVICE}" \
+          --project="$PROJECT_ID" \
+          --region="${_REGION}" \
+          --format=json | python3 -c 'import json, sys; data=json.load(sys.stdin); env=data.get("spec",{}).get("template",{}).get("spec",{}).get("containers",[{}])[0].get("env",[]); print(next((item.get("value","") for item in env if item.get("name")=="APP_RELEASE_COMMIT"), ""))')"
+
+        worker_required=true
+        migrations_required=true
+        if [[ "$$deployed_commit" =~ ^[0-9a-f]{40}$$ ]] && git cat-file -e "$$deployed_commit^{commit}" 2>/dev/null; then
+          changed_files="$$(git diff --name-only "$$deployed_commit" "$COMMIT_SHA")"
+          worker_required=false
+          migrations_required=false
+
+          while IFS= read -r changed_file; do
+            [[ -z "$$changed_file" ]] && continue
+            case "$$changed_file" in
+              platform/migrations/schema/*)
+                migrations_required=true
+                worker_required=true
+                ;;
+              site-admin/*|platform/*.css|platform/*.js|platform/assets/*|platform/public/*)
+                ;;
+              platform/*)
+                worker_required=true
+                ;;
+            esac
+          done <<<"$$changed_files"
+        else
+          changed_files="baseline unavailable; complete release required"
+        fi
+
+        {
+          echo "WORKER_REQUIRED=$$worker_required"
+          echo "MIGRATIONS_REQUIRED=$$migrations_required"
+        } > /workspace/deploy-scope.env
+
+        echo "Release scope:"
+        echo "$$changed_files"
+        echo "worker=$$worker_required migrations=$$migrations_required"
+
   - id: pull-web-cache
     name: gcr.io/cloud-builders/docker
     entrypoint: bash
@@ -72,10 +114,16 @@ steps:
   - id: pull-worker-cache
     name: gcr.io/cloud-builders/docker
     entrypoint: bash
-    waitFor: ['-']
+    waitFor: [verify-production-targets]
     args:
-      - -c
-      - docker pull "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:latest" || true
+      - -ceu
+      - |
+        source /workspace/deploy-scope.env
+        if [[ "$$WORKER_REQUIRED" != "true" ]]; then
+          echo "Skipping worker cache: this release only changes the web surface."
+          exit 0
+        fi
+        docker pull "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:latest" || true
 
   - id: build-web
     name: gcr.io/cloud-builders/docker
@@ -94,18 +142,22 @@ steps:
 
   - id: build-worker
     name: gcr.io/cloud-builders/docker
+    entrypoint: bash
     waitFor: [verify-production-targets, pull-worker-cache]
     args:
-      - build
-      - --cache-from
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:latest
-      - --file
-      - platform/Dockerfile.worker
-      - --tag
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:$COMMIT_SHA
-      - --tag
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:latest
-      - .
+      - -ceu
+      - |
+        source /workspace/deploy-scope.env
+        if [[ "$$WORKER_REQUIRED" != "true" ]]; then
+          echo "Skipping worker build: this release only changes the web surface."
+          exit 0
+        fi
+        docker build \
+          --cache-from "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:latest" \
+          --file platform/Dockerfile.worker \
+          --tag "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:$COMMIT_SHA" \
+          --tag "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:latest" \
+          .
 
   - id: regression-tests
     name: gcr.io/cloud-builders/docker
@@ -134,6 +186,11 @@ steps:
     args:
       - -ceu
       - |
+        source /workspace/deploy-scope.env
+        if [[ "$$WORKER_REQUIRED" != "true" ]]; then
+          echo "Skipping worker push: no worker image was built."
+          exit 0
+        fi
         docker push "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:$COMMIT_SHA"
         docker push "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}:latest"
 
@@ -144,6 +201,11 @@ steps:
     args:
       - -ceu
       - |
+        source /workspace/deploy-scope.env
+        if [[ "$$MIGRATIONS_REQUIRED" != "true" ]]; then
+          echo "Skipping database migration job: schema migrations did not change."
+          exit 0
+        fi
         image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WEB_SERVICE}"
         digest="$$(gcloud artifacts docker images describe "$${image}:$COMMIT_SHA" \
           --project="$PROJECT_ID" \
@@ -181,6 +243,11 @@ steps:
     args:
       - -ceu
       - |
+        source /workspace/deploy-scope.env
+        if [[ "$$WORKER_REQUIRED" != "true" ]]; then
+          echo "Skipping worker deployment: this release only changes the web surface."
+          exit 0
+        fi
         image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WORKER_SERVICE}"
         digest="$$(gcloud artifacts docker images describe "$${image}:$COMMIT_SHA" \
           --project="$PROJECT_ID" \
@@ -196,7 +263,7 @@ steps:
           --region="${_REGION}" \
           --platform=managed \
           --image="$${image}@$${digest}" \
-          --update-env-vars="APP_ENV=production,APP_ALLOW_SCHEMA_MIGRATIONS=false,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true,PINTEREST_API_ENVIRONMENT=production,PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED=true,PINTEREST_LIVE_PUBLISH_ENABLED=true" \
+          --update-env-vars="APP_ENV=production,APP_ALLOW_SCHEMA_MIGRATIONS=false,APP_RELEASE_COMMIT=$COMMIT_SHA,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true,PINTEREST_API_ENVIRONMENT=production,PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED=true,PINTEREST_LIVE_PUBLISH_ENABLED=true" \
           --remove-env-vars="DB_PASSWORD" \
           --update-secrets="DB_PASSWORD=${_DB_PASSWORD_SECRET}:latest" \
           --revision-suffix="cb-$SHORT_SHA-$BUILD_ID" \
@@ -241,7 +308,7 @@ steps:
           --region="${_REGION}" \
           --platform=managed \
           --image="$${image}@$${digest}" \
-          --update-env-vars="APP_ENV=production,APP_ALLOW_SCHEMA_MIGRATIONS=false,PUBLIC_REGISTRATION_ENABLED=false,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true,PINTEREST_API_ENVIRONMENT=production,PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED=true,PINTEREST_LIVE_PUBLISH_ENABLED=true" \
+          --update-env-vars="APP_ENV=production,APP_ALLOW_SCHEMA_MIGRATIONS=false,APP_RELEASE_COMMIT=$COMMIT_SHA,PUBLIC_REGISTRATION_ENABLED=false,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true,PINTEREST_API_ENVIRONMENT=production,PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED=true,PINTEREST_LIVE_PUBLISH_ENABLED=true" \
           --remove-env-vars="DB_PASSWORD" \
           --update-secrets="DB_PASSWORD=${_DB_PASSWORD_SECRET}:latest" \
           --revision-suffix="cb-$SHORT_SHA-$BUILD_ID" \

@@ -1169,18 +1169,43 @@ $websiteCurrencyStmt = $pdo->prepare('SELECT currency FROM artist_site_settings 
 $websiteCurrencyStmt->execute([$artworkOwnerId]);
 $websiteDefaultCurrency = strtoupper(trim((string)($websiteCurrencyStmt->fetchColumn() ?: 'EUR')));
 $websiteCoverOptions = [];
-$addWebsiteCover = static function (array &$options, string $file, string $label): void {
+$websiteCoverItems = [];
+$addWebsiteCover = static function (array &$options, array &$items, string $file, string $label, string $type): void {
     $file = basename(trim($file));
-    if ($file !== '' && !isset($options[$file])) $options[$file] = $label;
+    if ($file === '' || isset($options[$file])) return;
+    $options[$file] = $label;
+    $items[$file] = [
+        'file' => $file,
+        'label' => $label,
+        'type' => $type,
+    ];
 };
-$addWebsiteCover($websiteCoverOptions, $rootFile, 'Main artwork image');
+$addWebsiteCover($websiteCoverOptions, $websiteCoverItems, $rootFile, 'Main artwork image', 'Artwork');
 foreach ($rootCandidatesList as $candidate) {
-    $addWebsiteCover($websiteCoverOptions, (string)($candidate['file_name'] ?? ''), ucwords(str_replace('-', ' ', (string)($candidate['view_type'] ?? 'Artwork view'))));
+    $addWebsiteCover(
+        $websiteCoverOptions,
+        $websiteCoverItems,
+        (string)($candidate['file_name'] ?? ''),
+        ucwords(str_replace('-', ' ', (string)($candidate['view_type'] ?? 'Artwork view'))),
+        'Artwork view'
+    );
 }
 foreach ($relatedMockups as $mockup) {
-    $addWebsiteCover($websiteCoverOptions, (string)($mockup['mockup_file'] ?? ''), trim((string)($mockup['title'] ?? '')) ?: 'Related mockup');
+    $mockupState = (array)($mockup['selector_state'] ?? []);
+    $mockupCombination = (array)($mockupState['combination'] ?? []);
+    $mockupLabel = trim((string)($mockupCombination['camera_slot_name'] ?? ''));
+    if ($mockupLabel === '') $mockupLabel = trim((string)($mockup['title'] ?? ''));
+    if ($mockupLabel === '') $mockupLabel = trim((string)($mockup['context_id'] ?? ''));
+    if ($mockupLabel === '') $mockupLabel = 'Mockup ' . (int)($mockup['id'] ?? 0);
+    $addWebsiteCover($websiteCoverOptions, $websiteCoverItems, (string)($mockup['mockup_file'] ?? ''), $mockupLabel, 'Mockup');
 }
 $websiteSelectedCover = basename((string)($websitePublication['header_file'] ?? ''));
+$websiteSelectedCover = isset($websiteCoverItems[$websiteSelectedCover]) ? $websiteSelectedCover : $rootFile;
+$websiteSelectedCoverItem = $websiteCoverItems[$websiteSelectedCover] ?? reset($websiteCoverItems) ?: [
+    'file' => $rootFile,
+    'label' => 'Main artwork image',
+    'type' => 'Artwork',
+];
 $artworkSheetGenerated = json_decode((string)($artworkSheet['generated_json'] ?? ''), true);
 $artworkSheetGenerated = is_array($artworkSheetGenerated) ? $artworkSheetGenerated : [];
 $v2DraftMatch = artwork_v2_draft_for_image($rootFile);
@@ -1378,6 +1403,29 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .artwork-website-settings { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:end; gap:16px; margin-top:18px; }
         .artwork-website-settings label { display:grid; gap:7px; color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
         .artwork-website-settings input,.artwork-website-settings select { width:100%; box-sizing:border-box; padding:12px 13px; border:1px solid var(--line); border-radius:var(--radius); background:#fff; color:var(--ink); font:400 15px/1.4 var(--font-sans); }
+        .artwork-website-cover { grid-column:1 / -1; display:grid; gap:7px; }
+        .artwork-website-cover-label { color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+        .artwork-cover-picker { border:1px solid var(--line); border-radius:var(--radius); background:#fff; overflow:hidden; }
+        .artwork-cover-picker > summary { min-height:112px; display:grid; grid-template-columns:86px minmax(0,1fr) auto; align-items:center; gap:16px; padding:10px; list-style:none; cursor:pointer; }
+        .artwork-cover-picker > summary::-webkit-details-marker { display:none; }
+        .artwork-cover-picker > summary:hover { background:var(--surface-soft); }
+        .artwork-cover-current-image { width:86px; height:92px; display:block; border:1px solid var(--line-dark); padding:4px; background:var(--surface); object-fit:contain; }
+        .artwork-cover-current-copy { min-width:0; display:grid; gap:4px; }
+        .artwork-cover-current-copy strong { overflow:hidden; color:var(--ink); font:500 20px/1.15 var(--font-serif); text-overflow:ellipsis; white-space:nowrap; }
+        .artwork-cover-current-copy span { color:var(--muted); font-size:12px; letter-spacing:.02em; }
+        .artwork-cover-change { align-self:center; padding:8px 10px; color:var(--accent); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+        .artwork-cover-change::after { content:' ↓'; font:500 16px/1 var(--font-serif); }
+        .artwork-cover-picker[open] .artwork-cover-change::after { content:' ↑'; }
+        .artwork-cover-options { display:flex; gap:12px; overflow-x:auto; padding:14px 12px 16px; border-top:1px solid var(--line); background:var(--surface-soft); scroll-snap-type:x proximity; scrollbar-color:var(--line-dark) transparent; }
+        .artwork-cover-option { position:relative; flex:0 0 142px; display:grid; grid-template-rows:154px auto; gap:8px; padding:6px; border:1px solid var(--line); border-radius:2px; background:var(--surface); cursor:pointer; scroll-snap-align:start; text-transform:none; }
+        .artwork-cover-option input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+        .artwork-cover-option img { width:100%; height:154px; display:block; object-fit:contain; background:#efeee9; }
+        .artwork-cover-option-copy { min-width:0; display:grid; gap:2px; padding:0 3px 3px; }
+        .artwork-cover-option-copy strong { overflow:hidden; color:var(--ink); font:500 15px/1.15 var(--font-serif); text-overflow:ellipsis; white-space:nowrap; }
+        .artwork-cover-option-copy small { color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        .artwork-cover-option:hover { border-color:var(--line-dark); }
+        .artwork-cover-option.is-selected { border-color:rgba(224,104,76,.72); box-shadow:inset 0 -3px rgba(224,104,76,.48); }
+        .artwork-cover-option.is-selected .artwork-cover-option-copy small { color:#a65a47; }
         .artwork-website-actions { grid-column:1 / -1; display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px; }
         .artwork-website-actions button { min-height:44px; padding:10px 18px; }
         .artwork-website-actions .website-publish { border-color:#bdcdb8; background:#e8f0e5; color:#354633; font-weight:700; }
@@ -2808,6 +2856,11 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             .artwork-website-state { margin-left:auto; }
             .artwork-website-form { padding:18px 14px 14px; }
             .artwork-website-settings,.artwork-website-sale-grid { grid-template-columns:1fr; }
+            .artwork-cover-picker > summary { min-height:98px; grid-template-columns:70px minmax(0,1fr); gap:12px; }
+            .artwork-cover-current-image { width:70px; height:78px; }
+            .artwork-cover-change { grid-column:2; padding:0; }
+            .artwork-cover-option { flex-basis:126px; grid-template-rows:136px auto; }
+            .artwork-cover-option img { height:136px; }
             .artwork-website-shipping { align-items:flex-start; flex-direction:column; }
             .artwork-website-actions { justify-content:stretch; }
             .artwork-website-actions button { flex:1 1 100%; width:100%; }
@@ -3399,13 +3452,45 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                             </select>
                                         </label>
                                         <label>Constellation country<input name="constellation_country" value="<?= h($websiteConstellationCountry) ?>" placeholder="Optional"></label>
-                                        <label>Website cover
-                                            <select name="header_file">
-                                                <?php foreach ($websiteCoverOptions as $file => $label): ?>
-                                                    <option value="<?= h($file) ?>" <?= ($websiteSelectedCover !== '' ? $websiteSelectedCover === $file : $file === $rootFile) ? 'selected' : '' ?>><?= h($label) ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </label>
+                                        <div class="artwork-website-cover">
+                                            <span class="artwork-website-cover-label">Website cover</span>
+                                            <details class="artwork-cover-picker" data-website-cover-picker>
+                                                <summary>
+                                                    <img
+                                                        class="artwork-cover-current-image"
+                                                        src="<?= h(media_url((string)$websiteSelectedCoverItem['file'])) ?>"
+                                                        alt=""
+                                                        data-cover-current-image
+                                                    >
+                                                    <span class="artwork-cover-current-copy">
+                                                        <strong data-cover-current-label><?= h((string)$websiteSelectedCoverItem['label']) ?></strong>
+                                                        <span data-cover-current-type><?= h((string)$websiteSelectedCoverItem['type']) ?> selected for the website</span>
+                                                    </span>
+                                                    <span class="artwork-cover-change">Change cover</span>
+                                                </summary>
+                                                <div class="artwork-cover-options" role="radiogroup" aria-label="Choose website cover">
+                                                    <?php foreach ($websiteCoverItems as $file => $item): ?>
+                                                        <?php $coverSelected = $websiteSelectedCover === $file; ?>
+                                                        <label class="artwork-cover-option <?= $coverSelected ? 'is-selected' : '' ?>" data-cover-option>
+                                                            <input
+                                                                type="radio"
+                                                                name="header_file"
+                                                                value="<?= h($file) ?>"
+                                                                data-cover-image="<?= h(media_url($file)) ?>"
+                                                                data-cover-label="<?= h((string)$item['label']) ?>"
+                                                                data-cover-type="<?= h((string)$item['type']) ?>"
+                                                                <?= $coverSelected ? 'checked' : '' ?>
+                                                            >
+                                                            <img src="<?= h(media_url($file)) ?>" alt="<?= h((string)$item['label']) ?>" loading="lazy">
+                                                            <span class="artwork-cover-option-copy">
+                                                                <strong><?= h((string)$item['label']) ?></strong>
+                                                                <small><?= $coverSelected ? 'Selected · ' : '' ?><?= h((string)$item['type']) ?></small>
+                                                            </span>
+                                                        </label>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            </details>
+                                        </div>
                                         <div class="artwork-website-actions">
                                             <button type="submit" name="website_intent" value="save">Save website settings</button>
                                             <?php if ($websiteStatus === 'published'): ?>
@@ -4360,6 +4445,31 @@ document.querySelectorAll('.v2-mobile-toggle').forEach((button) => {
         if (!panel) return;
         const open = panel.classList.toggle('is-open');
         button.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+});
+</script>
+<script>
+document.querySelectorAll('[data-website-cover-picker]').forEach((picker) => {
+    const currentImage = picker.querySelector('[data-cover-current-image]');
+    const currentLabel = picker.querySelector('[data-cover-current-label]');
+    const currentType = picker.querySelector('[data-cover-current-type]');
+
+    picker.querySelectorAll('input[name="header_file"]').forEach((input) => {
+        input.addEventListener('change', () => {
+            picker.querySelectorAll('[data-cover-option]').forEach((option) => {
+                const optionInput = option.querySelector('input[name="header_file"]');
+                const selected = optionInput === input;
+                option.classList.toggle('is-selected', selected);
+                const type = option.querySelector('small');
+                if (type && optionInput) {
+                    type.textContent = (selected ? 'Selected · ' : '') + (optionInput.dataset.coverType || 'Image');
+                }
+            });
+            if (currentImage) currentImage.src = input.dataset.coverImage || '';
+            if (currentLabel) currentLabel.textContent = input.dataset.coverLabel || 'Website cover';
+            if (currentType) currentType.textContent = (input.dataset.coverType || 'Image') + ' selected for the website';
+            window.setTimeout(() => { picker.open = false; }, 140);
+        });
     });
 });
 </script>
