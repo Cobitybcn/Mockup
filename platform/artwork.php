@@ -1388,8 +1388,12 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .artwork-metadata-edit { width:100%; max-width:none; box-sizing:border-box; margin:12px 0 0; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-soft); }
         .artwork-metadata-edit > summary { cursor:pointer; padding:13px 16px; color:var(--accent); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
         .artwork-metadata-edit .artwork-metadata-v2-form { margin:0; max-width:none; border:0; border-top:1px solid var(--line); border-radius:0; box-shadow:none; }
-        .artwork-title-universal-label { display:block; margin:0 0 7px; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
-        .artwork-title-universal-memo { margin:12px 0 0; padding-top:11px; border-top:1px solid var(--line); color:var(--accent); font:italic 500 18px/1.45 var(--font-serif); }
+        .artwork-page-header--bilingual .artwork-title-block { width:min(1120px,100%); }
+        .artwork-page-header--bilingual .artwork-title-heading { padding-bottom:14px; border-bottom:1px solid var(--line); }
+        .artwork-page-header--bilingual h1 { display:block; margin:0; padding:0; border:0; font:500 clamp(42px,4.5vw,58px)/1.05 var(--font-serif); letter-spacing:-.01em; }
+        .artwork-page-header--bilingual .artwork-title-edit-button { display:none; }
+        .artwork-title-universal-label { display:block; margin:0 0 15px; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        .artwork-title-universal-memo { margin:15px 0 0; padding:0; border:0; color:var(--accent); font:italic 500 21px/1.5 var(--font-serif); }
         .bilingual-editorial-panel { width:100%; max-width:none; box-sizing:border-box; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
         .bilingual-editorial-panel > summary { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 20px; cursor:pointer; list-style:none; }
         .bilingual-editorial-panel > summary::-webkit-details-marker { display:none; }
@@ -3152,7 +3156,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         </header>
 
         <div class="workspace">
-            <div class="workspace-header artwork-page-header">
+            <div class="workspace-header artwork-page-header <?= $bilingualExperiment ? 'artwork-page-header--bilingual' : '' ?>">
                 <div class="artwork-title-block">
                     <?php if ($bilingualExperiment): ?><span class="artwork-title-universal-label">Título universal</span><?php endif; ?>
                     <div class="artwork-title-heading">
