@@ -1398,9 +1398,10 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .bilingual-editorial-state { color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
         .bilingual-editorial-state::after { content:'+'; display:inline-block; margin-left:14px; color:var(--accent); font:500 22px/1 var(--font-serif); vertical-align:-2px; }
         .bilingual-editorial-panel[open] .bilingual-editorial-state::after { content:'−'; }
-        .bilingual-editorial-spread { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; padding:0 14px 14px; border-top:1px solid var(--line); }
-        .bilingual-editorial-page { min-width:0; margin-top:14px; padding:18px; border:1px solid var(--line); border-top:3px solid #c89aa1; background:var(--surface-soft); }
-        .bilingual-editorial-page--english { border-top-color:#9fb19a; }
+        .bilingual-editorial-spread { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:auto repeat(8,auto); column-gap:12px; row-gap:0; padding:14px; border-top:1px solid var(--line); }
+        .bilingual-editorial-page { display:grid; grid-row:1 / span 9; grid-template-rows:subgrid; min-width:0; padding:18px; border:1px solid var(--line); border-top:3px solid #c89aa1; background:var(--surface-soft); }
+        .bilingual-editorial-page--source { grid-column:1; }
+        .bilingual-editorial-page--english { grid-column:2; border-top-color:#9fb19a; }
         .bilingual-editorial-language { display:block; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
         .bilingual-editorial-field { min-height:96px; margin-top:16px; padding-top:13px; border-top:1px solid var(--line); }
         .bilingual-editorial-field--description { min-height:230px; }
@@ -1458,7 +1459,10 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .artwork-website-actions { grid-column:1 / -1; display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px; }
         .artwork-website-actions button { min-height:44px; padding:10px 18px; }
         .artwork-website-actions .website-publish { border-color:#bdcdb8; background:#e8f0e5; color:#354633; font-weight:700; }
-        @media (max-width:800px) { .v2-admin-grid,.bilingual-editorial-spread { grid-template-columns:1fr; } }
+        @media (max-width:800px) {
+            .v2-admin-grid,.bilingual-editorial-spread { grid-template-columns:1fr; grid-template-rows:none; }
+            .bilingual-editorial-page { display:block; grid-column:auto; grid-row:auto; }
+        }
         .artwork-sheet {
             display: grid;
             grid-template-columns: minmax(280px, 420px) 1fr;
@@ -3251,7 +3255,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                         <span class="bilingual-editorial-state">Español + English</span>
                     </summary>
                     <div class="bilingual-editorial-spread">
-                        <article class="bilingual-editorial-page">
+                        <article class="bilingual-editorial-page bilingual-editorial-page--source">
                             <span class="bilingual-editorial-language">Español · fuente</span>
                             <?php foreach ($bilingualEditorialFields as $field): ?>
                                 <section class="bilingual-editorial-field <?= $field['description'] ? 'bilingual-editorial-field--description' : '' ?>">
