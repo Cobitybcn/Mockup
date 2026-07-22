@@ -775,6 +775,42 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
             width: auto;
             margin: 0;
         }
+        .artworks-primary-action {
+            flex: 0 0 140px;
+            align-self: flex-start;
+        }
+        .artworks-primary-action .artworks-decision-block {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 140px;
+            min-width: 140px;
+            height: 140px;
+            min-height: 140px;
+            margin: 0;
+            padding: 20px;
+            border: 1px solid #b77f86;
+            border-radius: 4px;
+            background: #b77f86;
+            color: #fffaf7;
+            box-shadow: none;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.25;
+            letter-spacing: .07em;
+            text-align: center;
+            text-decoration: none;
+            text-transform: uppercase;
+        }
+        .artworks-primary-action .artworks-decision-block:hover {
+            border-color: #a86f77;
+            background: #a86f77;
+            color: #fffaf7;
+        }
+        .artworks-primary-action .artworks-decision-block:focus-visible {
+            outline: 2px solid #8f6168;
+            outline-offset: 3px;
+        }
         @media (max-width: 760px) {
             .main-area > .app-header,
             .main-area > .alert-strip {
@@ -793,10 +829,24 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                 margin-bottom: 0;
             }
             .workspace-header p,
-            .topbar-actions,
             .stats,
             .root-pending-panel {
                 display: none !important;
+            }
+            .workspace-header--artworks {
+                flex-direction: column;
+                gap: 18px;
+            }
+            .artworks-primary-action {
+                flex-basis: auto;
+            }
+            .artworks-primary-action .artworks-decision-block {
+                width: 112px;
+                min-width: 112px;
+                height: 112px;
+                min-height: 112px;
+                padding: 16px;
+                font-size: 11px;
             }
             .panel {
                 padding: 0;
@@ -882,7 +932,7 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                         <a href="root_album.php<?= $selectedArtworkSeriesId > 0 ? '?series=' . (int)$selectedArtworkSeriesId : '' ?>">Exit preview</a>
                     </aside>
                 <?php endif; ?>
-                <div class="workspace-header">
+                <div class="workspace-header workspace-header--artworks">
                     <div>
                         <h1>ArtWorks</h1>
                         <p>Canonical artworks with official root views and attached mockups.</p>
@@ -898,9 +948,8 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                             </select>
                         </form>
                     </div>
-                    <div class="topbar-actions">
-                        <a class="button-link" href="create_scenes.php">Create Art</a>
-                        <a class="button-link secondary" href="account.php">Account</a>
+                    <div class="artworks-primary-action">
+                        <a class="artworks-decision-block" href="create_scenes.php">Create Art</a>
                     </div>
                 </div>
 

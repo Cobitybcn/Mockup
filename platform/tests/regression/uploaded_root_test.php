@@ -102,6 +102,20 @@ function run_uploaded_root_regression_tests(): void
         $rootAlbumSource,
         'ArtWorks abre el flujo unificado de Create Art'
     );
+    TestHarness::assertContains(
+        'class="artworks-decision-block"',
+        $rootAlbumSource,
+        'ArtWorks presenta Create Art como el unico Decision Block de la cabecera'
+    );
+    TestHarness::assertContains(
+        'width: 140px;',
+        $rootAlbumSource,
+        'la accion principal de ArtWorks conserva geometria cuadrada en escritorio'
+    );
+    TestHarness::assertTrue(
+        !str_contains($rootAlbumSource, '<a class="button-link secondary" href="account.php">Account</a>'),
+        'ArtWorks no duplica Account junto a la accion creativa'
+    );
     TestHarness::assertTrue(
         !str_contains($rootAlbumSource, 'href="artwork_new.php"'),
         'ArtWorks no conserva enlaces al formulario antiguo'
