@@ -10,6 +10,7 @@ $canUseSocial = FeatureAccess::allows($user, FeatureAccess::SOCIAL_MANAGE);
 
 $id = (int)($_GET['id'] ?? 0);
 $file = basename((string)($_GET['file'] ?? ''));
+$bilingualExperiment = (string)($_GET['bilingual_experiment'] ?? '') === '1';
 
 if ($id > 0) {
     $sql = 'SELECT * FROM mockups WHERE id = :id';
@@ -431,6 +432,15 @@ if ($mockupV2) {
     $instagramV2=(array)($channelsV2['instagram']??[]); $facebookV2=(array)($channelsV2['facebook']??[]); $tiktokV2=(array)($channelsV2['tiktok']??[]);
     $otherSocial=['Instagram'=>trim((string)($instagramV2['caption']??'')."\n\n".implode(' ',(array)($instagramV2['hashtags']??[]))),'Facebook'=>trim((string)($facebookV2['headline']??'')."\n\n".(string)($facebookV2['post_text']??'')),'TikTok · future'=>trim((string)($tiktokV2['caption_seed']??'')."\n".(string)($tiktokV2['video_notes']??''))];
 }
+$mockupEditorialSheet = is_array($publicationMockupSheet ?? null) ? $publicationMockupSheet : [];
+$mockupEditorialTitle = trim((string)($mockupEditorialSheet['title'] ?? '')) ?: trim((string)$pinTitle) ?: $contextTitle;
+$mockupEditorialFields = [
+    ['es' => 'Descripción', 'en' => 'Description', 'value' => trim((string)($mockupEditorialSheet['description'] ?? '')) ?: $pinDescription, 'large' => true, 'es_placeholder' => 'Escribí la descripción editorial de este mockup…', 'en_placeholder' => 'No English description is currently available.'],
+    ['es' => 'Palabras clave', 'en' => 'Keywords', 'value' => trim((string)($mockupEditorialSheet['keywords'] ?? '')) ?: implode(', ', $pinKeywords), 'large' => false, 'es_placeholder' => 'Escena, arquitectura, luz, atmósfera…', 'en_placeholder' => 'No English keywords are currently available.'],
+    ['es' => 'Etiquetas', 'en' => 'Tags', 'value' => trim((string)($mockupEditorialSheet['tags'] ?? '')) ?: implode(', ', array_map(static fn(string $tag): string => ltrim($tag, '#'), $pinHashtags)), 'large' => false, 'es_placeholder' => 'Etiquetas editoriales…', 'en_placeholder' => 'No English tags are currently available.'],
+    ['es' => 'Texto alternativo', 'en' => 'Alt text', 'value' => trim((string)($mockupEditorialSheet['alt_text'] ?? '')) ?: $pinAlt, 'large' => false, 'es_placeholder' => 'Descripción visual accesible del mockup…', 'en_placeholder' => 'No English alt text is currently available.'],
+    ['es' => 'Caption', 'en' => 'Caption', 'value' => trim((string)($mockupEditorialSheet['caption'] ?? '')) ?: (string)($otherSocial['Instagram'] ?? $titleLine), 'large' => false, 'es_placeholder' => 'Texto breve para publicar este mockup…', 'en_placeholder' => 'No English caption is currently available.'],
+];
 ?>
 <!doctype html>
 <html lang="en">
@@ -672,6 +682,100 @@ if ($mockupV2) {
             border-color: rgba(154, 123, 86, 0.32);
         }
 
+        .mockup-bilingual-title {
+            margin-bottom:18px;
+            padding:18px 20px;
+            border:1px solid var(--line);
+            background:var(--surface);
+        }
+
+        .mockup-bilingual-label {
+            display:block;
+            margin:0 0 15px;
+            color:var(--muted);
+            font-size:9px;
+            font-weight:700;
+            letter-spacing:.08em;
+            text-transform:uppercase;
+        }
+
+        .mockup-bilingual-heading {
+            margin:0;
+            padding:0 0 14px;
+            border-bottom:1px solid var(--line);
+            color:var(--ink);
+            font:500 clamp(42px,4.5vw,58px)/1.05 var(--font-serif);
+            letter-spacing:-.01em;
+            overflow-wrap:anywhere;
+        }
+
+        .mockup-bilingual-heading:focus { outline:0; }
+
+        .mockup-bilingual-title-memo {
+            margin:15px 0 0;
+            color:var(--accent);
+            font:italic 500 21px/1.5 var(--font-serif);
+        }
+
+        .mockup-bilingual-editorial {
+            margin-bottom:24px;
+            border:1px solid var(--line);
+            background:var(--surface);
+        }
+
+        .mockup-bilingual-editorial > summary {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:20px;
+            padding:18px 20px;
+            cursor:pointer;
+            list-style:none;
+        }
+
+        .mockup-bilingual-editorial > summary::-webkit-details-marker { display:none; }
+        .mockup-bilingual-summary strong { display:block; color:var(--ink); font:500 23px/1.1 var(--font-serif); }
+        .mockup-bilingual-summary span { display:block; margin-top:5px; color:var(--muted); font-size:12px; }
+        .mockup-bilingual-state { color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
+        .mockup-bilingual-state::after { content:'+'; display:inline-block; margin-left:14px; color:var(--accent); font:500 22px/1 var(--font-serif); vertical-align:-2px; }
+        .mockup-bilingual-editorial[open] .mockup-bilingual-state::after { content:'−'; }
+
+        .mockup-bilingual-spread {
+            display:grid;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            grid-template-rows:auto repeat(5,auto);
+            column-gap:12px;
+            row-gap:0;
+            padding:14px;
+            border-top:1px solid var(--line);
+        }
+
+        .mockup-bilingual-page {
+            display:grid;
+            grid-row:1 / span 6;
+            grid-template-rows:subgrid;
+            min-width:0;
+            padding:18px;
+            border:1px solid var(--line);
+            border-top:3px solid #c89aa1;
+            background:var(--surface-soft);
+        }
+
+        .mockup-bilingual-page--source { grid-column:1; }
+        .mockup-bilingual-page--english { grid-column:2; border-top-color:#9fb19a; }
+        .mockup-bilingual-language { display:block; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        .mockup-bilingual-field { min-height:96px; margin-top:16px; padding-top:13px; border-top:1px solid var(--line); }
+        .mockup-bilingual-field--large { min-height:230px; }
+        .mockup-bilingual-field label { display:block; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
+        .mockup-bilingual-copy { min-height:62px; margin-top:10px; color:var(--ink); font-size:14px; line-height:1.65; white-space:pre-wrap; }
+        .mockup-bilingual-field--large .mockup-bilingual-copy { min-height:190px; }
+        .mockup-bilingual-copy:empty::before { content:attr(data-placeholder); color:var(--muted); font-style:italic; }
+        .mockup-bilingual-copy:focus { outline:0; }
+
+        .mockup-bilingual-memo { margin:0 14px 14px; padding:14px 6px 2px; border-top:1px solid var(--line); }
+        .mockup-bilingual-memo summary { cursor:pointer; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        .mockup-bilingual-memo .mockup-bilingual-copy { min-height:82px; }
+
         .section-heading {
             display: flex;
             align-items: baseline;
@@ -827,6 +931,9 @@ if ($mockupV2) {
             .social-grid {
                 grid-template-columns: 1fr;
             }
+
+            .mockup-bilingual-spread { grid-template-columns:1fr; grid-template-rows:none; }
+            .mockup-bilingual-page { display:block; grid-column:auto; grid-row:auto; }
         }
     </style>
     <link rel="stylesheet" href="media-controls.css?v=2">
@@ -880,7 +987,48 @@ if ($mockupV2) {
         <?php if($canUseSocial && $pinterestDraftError!==''):?><div class="notice error"><?=h($pinterestDraftError)?></div><?php endif;?>
         <?php if($canUseSocial && $metaDraftNotice!==''):?><div class="notice success"><?=h($metaDraftNotice)?></div><?php endif;?>
         <?php if($canUseSocial && $metaDraftError!==''):?><div class="notice error"><?=h($metaDraftError)?></div><?php endif;?>
-        <?php if($viewerMockupId>0): ?>
+        <?php if($bilingualExperiment && $viewerMockupId>0): ?>
+            <section class="mockup-bilingual-title" aria-label="Título universal del mockup">
+                <span class="mockup-bilingual-label">Título universal</span>
+                <h1 class="mockup-bilingual-heading" contenteditable="true" role="textbox" aria-label="Título del mockup"><?=h($mockupEditorialTitle)?></h1>
+                <p class="mockup-bilingual-title-memo">STRATA X — LIMEN · MOCKUP I — NUHRĀ (ܢܘܗܪܐ) · no traducir</p>
+            </section>
+
+            <details class="mockup-bilingual-editorial">
+                <summary>
+                    <span class="mockup-bilingual-summary">
+                        <strong>Espacio editorial</strong>
+                        <span>Contenido original en español y versión publicada en inglés.</span>
+                    </span>
+                    <span class="mockup-bilingual-state">Español + English</span>
+                </summary>
+                <div class="mockup-bilingual-spread">
+                    <article class="mockup-bilingual-page mockup-bilingual-page--source">
+                        <span class="mockup-bilingual-language">Español · fuente</span>
+                        <?php foreach($mockupEditorialFields as $field): ?>
+                            <section class="mockup-bilingual-field <?=$field['large']?'mockup-bilingual-field--large':''?>">
+                                <label><?=h($field['es'])?></label>
+                                <div class="mockup-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="<?=h($field['es_placeholder'])?>"></div>
+                            </section>
+                        <?php endforeach; ?>
+                    </article>
+                    <article class="mockup-bilingual-page mockup-bilingual-page--english">
+                        <span class="mockup-bilingual-language">English · current version</span>
+                        <?php foreach($mockupEditorialFields as $field): ?>
+                            <section class="mockup-bilingual-field <?=$field['large']?'mockup-bilingual-field--large':''?>">
+                                <label><?=h($field['en'])?></label>
+                                <div class="mockup-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="<?=h($field['en_placeholder'])?>"><?=h($field['value'])?></div>
+                            </section>
+                        <?php endforeach; ?>
+                    </article>
+                </div>
+                <details class="mockup-bilingual-memo">
+                    <summary>Memo privado del mockup</summary>
+                    <div class="mockup-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Ideas y decisiones específicas de esta escena…"></div>
+                </details>
+            </details>
+        <?php endif; ?>
+        <?php if($viewerMockupId>0 && !$bilingualExperiment): ?>
             <section class="panel">
                 <div class="section-heading">
                     <div><h2>Admin · Mockup Analysis v2</h2><p>Neutral scene analysis derived from the approved artwork identity and this exact mockup.</p></div>
@@ -928,7 +1076,7 @@ if ($mockupV2) {
                 <?php else: ?><p>No v2 draft exists for this mockup yet.</p><?php endif; ?>
             </section>
         <?php endif; ?>
-        <?php if($mockupV2 && $canUseSocial): ?><section class="panel pinterest">
+        <?php if($mockupV2 && $canUseSocial && !$bilingualExperiment): ?><section class="panel pinterest">
             <div class="section-heading">
                 <div>
                     <h2>Pinterest Pin Content</h2>
