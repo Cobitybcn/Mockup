@@ -26,9 +26,7 @@ class MockArtworkProcessor implements ArtworkProcessorInterface
 
         $files = [];
         $paths = [];
-        $rootCount = !empty($status['user_scene_flow'])
-            ? RootArtworkViewSetService::requiredCount()
-            : PromptSettings::rootArtworkCount();
+        $rootCount = !empty($status['user_scene_flow']) ? 1 : PromptSettings::rootArtworkCount();
 
         for ($i = 1; $i <= $rootCount; $i++) {
             $outputName = 'base_artwork_mock_' . $jobId . '_v' . $i . '.' . $ext;

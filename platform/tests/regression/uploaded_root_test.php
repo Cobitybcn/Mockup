@@ -90,6 +90,14 @@ function run_uploaded_root_regression_tests(): void
         $createScenesSource,
         'Create Art enlaza la obra raiz con el selector de escenas'
     );
+    foreach (['GeminiArtworkProcessor.php', 'OpenAIArtworkProcessor.php', 'MockArtworkProcessor.php'] as $processorFile) {
+        $processorSource = (string)file_get_contents(dirname(__DIR__, 2) . '/app/Services/' . $processorFile);
+        TestHarness::assertContains(
+            "!empty(\$status['user_scene_flow']) ? 1 : PromptSettings::rootArtworkCount()",
+            $processorSource,
+            $processorFile . ' conserva una sola generacion raiz en el flujo automatico'
+        );
+    }
     TestHarness::assertContains(
         'margin-inline: auto;',
         $createScenesSource,
