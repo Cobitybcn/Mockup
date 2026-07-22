@@ -13,6 +13,7 @@ $isAdmin = Auth::isAdmin($user);
 $pdo = Database::connection();
 ArtworkSeries::ensureSchema($pdo);
 $id = max(0, (int)($_GET['id'] ?? 0));
+$bilingualExperiment = (string)($_GET['bilingual_experiment'] ?? '') === '1';
 $metadataErrorMessage = trim((string)($_GET['metadata_error'] ?? ''));
 
 function h($v): string
@@ -1387,6 +1388,30 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .artwork-metadata-edit { width:100%; max-width:none; box-sizing:border-box; margin:12px 0 0; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-soft); }
         .artwork-metadata-edit > summary { cursor:pointer; padding:13px 16px; color:var(--accent); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
         .artwork-metadata-edit .artwork-metadata-v2-form { margin:0; max-width:none; border:0; border-top:1px solid var(--line); border-radius:0; box-shadow:none; }
+        .artwork-title-universal-label { display:block; margin:0 0 7px; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        .artwork-title-universal-memo { margin:12px 0 0; padding-top:11px; border-top:1px solid var(--line); color:var(--accent); font:italic 500 18px/1.45 var(--font-serif); }
+        .bilingual-editorial-panel { width:100%; max-width:none; box-sizing:border-box; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
+        .bilingual-editorial-panel > summary { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 20px; cursor:pointer; list-style:none; }
+        .bilingual-editorial-panel > summary::-webkit-details-marker { display:none; }
+        .bilingual-editorial-summary strong { display:block; color:var(--ink); font:500 23px/1.1 var(--font-serif); }
+        .bilingual-editorial-summary span { display:block; margin-top:5px; color:var(--muted); font-size:12px; }
+        .bilingual-editorial-state { color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
+        .bilingual-editorial-state::after { content:'+'; display:inline-block; margin-left:14px; color:var(--accent); font:500 22px/1 var(--font-serif); vertical-align:-2px; }
+        .bilingual-editorial-panel[open] .bilingual-editorial-state::after { content:'−'; }
+        .bilingual-editorial-spread { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; padding:0 14px 14px; border-top:1px solid var(--line); }
+        .bilingual-editorial-page { min-width:0; margin-top:14px; padding:18px; border:1px solid var(--line); border-top:3px solid #c89aa1; background:var(--surface-soft); }
+        .bilingual-editorial-page--english { border-top-color:#9fb19a; }
+        .bilingual-editorial-language { display:block; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        .bilingual-editorial-field { min-height:96px; margin-top:16px; padding-top:13px; border-top:1px solid var(--line); }
+        .bilingual-editorial-field--description { min-height:230px; }
+        .bilingual-editorial-field label { display:block; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
+        .bilingual-editorial-copy { min-height:62px; margin-top:10px; color:var(--ink); font-size:14px; line-height:1.65; white-space:pre-wrap; }
+        .bilingual-editorial-field--description .bilingual-editorial-copy { min-height:190px; }
+        .bilingual-editorial-copy:empty::before { content:attr(data-placeholder); color:var(--muted); font-style:italic; }
+        .bilingual-editorial-copy:focus { outline:0; }
+        .bilingual-editorial-memo { margin:0 14px 14px; padding:14px 6px 2px; border-top:1px solid var(--line); }
+        .bilingual-editorial-memo summary { cursor:pointer; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        .bilingual-editorial-memo .bilingual-editorial-copy { min-height:82px; }
         .artwork-website-panel { margin:22px 0 0; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
         .artwork-website-panel > summary { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 20px; cursor:pointer; list-style:none; }
         .artwork-website-panel > summary::-webkit-details-marker { display:none; }
@@ -1433,7 +1458,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .artwork-website-actions { grid-column:1 / -1; display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px; }
         .artwork-website-actions button { min-height:44px; padding:10px 18px; }
         .artwork-website-actions .website-publish { border-color:#bdcdb8; background:#e8f0e5; color:#354633; font-weight:700; }
-        @media (max-width:800px) { .v2-admin-grid { grid-template-columns:1fr; } }
+        @media (max-width:800px) { .v2-admin-grid,.bilingual-editorial-spread { grid-template-columns:1fr; } }
         .artwork-sheet {
             display: grid;
             grid-template-columns: minmax(280px, 420px) 1fr;
@@ -3125,6 +3150,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         <div class="workspace">
             <div class="workspace-header artwork-page-header">
                 <div class="artwork-title-block">
+                    <?php if ($bilingualExperiment): ?><span class="artwork-title-universal-label">Título universal</span><?php endif; ?>
                     <div class="artwork-title-heading">
                         <h1><?= h($displayTitle) ?></h1>
                         <button
@@ -3144,6 +3170,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                         <button type="submit">Save title</button>
                         <button type="button" class="artwork-title-cancel" data-artwork-title-cancel>Cancel</button>
                     </form>
+                    <?php if ($bilingualExperiment): ?><p class="artwork-title-universal-memo">STRATA X — LIMEN · STRATA XI — NUHRĀ (ܢܘܗܪܐ) · no traducir</p><?php endif; ?>
                 </div>
                 <a class="button-link artwork-studio-note-link" href="website_studio_notes.php?source=artwork:<?= (int)$id ?>#new-studio-note">Create Studio Note</a>
             </div>
@@ -3202,7 +3229,53 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             <?php endif; ?>
 
             <?php ob_start(); ?>
-            <?php if (true): ?>
+            <?php if ($bilingualExperiment): ?>
+                <?php
+                $bilingualEditorialFields = [
+                    ['es' => 'Subtítulo', 'en' => 'Subtitle', 'value' => $displaySubtitle, 'description' => false, 'es_placeholder' => 'Subtítulo editorial en español…', 'en_placeholder' => 'No English subtitle is currently available.'],
+                    ['es' => 'Descripción', 'en' => 'Description', 'value' => $displayDescription, 'description' => true, 'es_placeholder' => 'Escribí la descripción original en español…', 'en_placeholder' => 'No English description is currently available.'],
+                    ['es' => 'Resumen breve', 'en' => 'Short description', 'value' => (string)($artworkSheet['short_description'] ?? ''), 'description' => false, 'es_placeholder' => 'Dos o tres frases para series, tarjetas y mockups…', 'en_placeholder' => 'No English short description is currently available.'],
+                    ['es' => 'Palabras clave', 'en' => 'Keywords', 'value' => (string)($artworkSheet['keywords'] ?? ''), 'description' => false, 'es_placeholder' => 'Conceptos, temas y materiales…', 'en_placeholder' => 'No English keywords are currently available.'],
+                    ['es' => 'Etiquetas', 'en' => 'Tags', 'value' => (string)($artworkSheet['tags'] ?? ''), 'description' => false, 'es_placeholder' => 'Etiquetas editoriales…', 'en_placeholder' => 'No English tags are currently available.'],
+                    ['es' => 'Términos de búsqueda', 'en' => 'Long-tail terms', 'value' => implode("\n", array_map('strval', $artworkSheetLongTail)), 'description' => false, 'es_placeholder' => 'Frases de búsqueda en español…', 'en_placeholder' => 'No English search terms are currently available.'],
+                    ['es' => 'Texto alternativo', 'en' => 'Alt text', 'value' => (string)($artworkSheet['alt_text'] ?? ''), 'description' => false, 'es_placeholder' => 'Descripción visual accesible…', 'en_placeholder' => 'No English alt text is currently available.'],
+                    ['es' => 'Caption', 'en' => 'Caption', 'value' => (string)($artworkSheet['caption'] ?? ''), 'description' => false, 'es_placeholder' => 'Texto breve para publicación…', 'en_placeholder' => 'No English caption is currently available.'],
+                ];
+                ?>
+                <details class="bilingual-editorial-panel" id="artwork-metadata">
+                    <summary>
+                        <span class="bilingual-editorial-summary">
+                            <strong>Espacio editorial</strong>
+                            <span>Contenido original en español y versión publicada en inglés.</span>
+                        </span>
+                        <span class="bilingual-editorial-state">Español + English</span>
+                    </summary>
+                    <div class="bilingual-editorial-spread">
+                        <article class="bilingual-editorial-page">
+                            <span class="bilingual-editorial-language">Español · fuente</span>
+                            <?php foreach ($bilingualEditorialFields as $field): ?>
+                                <section class="bilingual-editorial-field <?= $field['description'] ? 'bilingual-editorial-field--description' : '' ?>">
+                                    <label><?= h($field['es']) ?></label>
+                                    <div class="bilingual-editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="<?= h($field['es_placeholder']) ?>"></div>
+                                </section>
+                            <?php endforeach; ?>
+                        </article>
+                        <article class="bilingual-editorial-page bilingual-editorial-page--english">
+                            <span class="bilingual-editorial-language">English · current version</span>
+                            <?php foreach ($bilingualEditorialFields as $field): ?>
+                                <section class="bilingual-editorial-field <?= $field['description'] ? 'bilingual-editorial-field--description' : '' ?>">
+                                    <label><?= h($field['en']) ?></label>
+                                    <div class="bilingual-editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="<?= h($field['en_placeholder']) ?>"><?= h($field['value']) ?></div>
+                                </section>
+                            <?php endforeach; ?>
+                        </article>
+                    </div>
+                    <details class="bilingual-editorial-memo">
+                        <summary>Memo privado de la obra</summary>
+                        <div class="bilingual-editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Ideas, decisiones y recordatorios que no se publican…"></div>
+                    </details>
+                </details>
+            <?php elseif (true): ?>
                 <?php if ($v2Draft): ?>
                     <?php
                     $v2Editorial = (array)($v2Draft['canonical_editorial'] ?? []);
