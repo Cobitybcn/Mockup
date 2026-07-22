@@ -264,7 +264,7 @@ $sectionLabels = [
                     <div><dt>Works</dt><dd><?= (int)$selected['artwork_count'] ?></dd></div>
                     <div><dt>Content source</dt><dd>Series Metadata</dd></div>
                 </dl>
-                <a class="primary-action website-content-handoff__link" href="<?= sm_h(SITE_MANAGER_PLATFORM_PREFIX) ?>/series.php?series=<?= (int)$selected['id'] ?>#series-website">Open series website settings</a>
+                <a class="primary-action website-content-handoff__link" href="<?= sm_h(SITE_MANAGER_PLATFORM_PREFIX) ?>/series.php?series=<?= (int)$selected['id'] ?>">Open Series workspace</a>
             </section>
         <?php endif; ?>
 
@@ -487,6 +487,14 @@ document.addEventListener('click', (event) => {
     const target = event.target.closest('[data-confirm]');
     if (target && !window.confirm(target.dataset.confirm || 'Continue?')) event.preventDefault();
 });
+document.addEventListener('error', (event) => {
+    const image = event.target;
+    if (!(image instanceof HTMLImageElement)) return;
+    const card = image.closest('.visual-card');
+    if (!card) return;
+    image.remove();
+    card.classList.add('visual-card--text');
+}, true);
 const noteSource = document.querySelector('[data-note-source]');
 const noteEditor = document.querySelector('[data-note-editor]');
 if (noteSource && noteEditor && window.Quill) {

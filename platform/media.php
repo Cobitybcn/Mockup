@@ -157,6 +157,10 @@ function user_can_access_result_file(int $userId, string $file): bool
         return true;
     }
 
+    if (user_owns_studio_note_media($pdo, $userId, $file)) {
+        return true;
+    }
+
     if (user_can_access_exact_result_file($pdo, $userId, $file)) {
         return true;
     }
@@ -175,6 +179,43 @@ function user_can_access_result_file(int $userId, string $file): bool
         ]);
 
         return (bool)$stmt->fetchColumn();
+    }
+
+    return false;
+}
+
+function user_owns_studio_note_media(PDO $pdo, int $userId, string $file): bool
+{
+    $file = basename($file);
+    $prefix = 'studio-note-' . $userId . '-';
+    if (!str_starts_with($file, $prefix)
+        || preg_match('/^' . preg_quote($prefix, '/') . '\d+-[a-f0-9]{16,64}\.(?:jpe?g|png|webp)$/i', $file) !== 1) {
+        return false;
+    }
+
+    $stmt = $pdo->prepare('SELECT payload_json FROM social_campaigns WHERE user_id = :user_id AND payload_json LIKE :needle');
+    $stmt->execute([
+        'user_id' => $userId,
+        'needle' => '%' . $file . '%',
+    ]);
+
+    foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $payloadJson) {
+        $payload = json_decode((string)$payloadJson, true);
+        if (!is_array($payload)
+            || !in_array('website_blog', array_map('strval', (array)($payload['channels'] ?? [])), true)) {
+            continue;
+        }
+        $candidates = array_merge(
+            is_array($payload['source'] ?? null) ? [$payload['source']] : [],
+            (array)($payload['media'] ?? [])
+        );
+        foreach ($candidates as $candidate) {
+            if (is_array($candidate)
+                && (string)($candidate['type'] ?? '') === 'studio_note'
+                && basename((string)($candidate['file'] ?? '')) === $file) {
+                return true;
+            }
+        }
     }
 
     return false;

@@ -406,6 +406,12 @@ function run_uploaded_root_regression_tests(): void
         $authenticatedMediaSource,
         'las portadas de series se autorizan por su relacion guardada aunque deban recuperarse del storage'
     );
+    TestHarness::assertTrue(
+        str_contains($authenticatedMediaSource, 'function user_owns_studio_note_media')
+            && str_contains($authenticatedMediaSource, "(string)(\$candidate['type'] ?? '') === 'studio_note'")
+            && str_contains($authenticatedMediaSource, "basename((string)(\$candidate['file'] ?? '')) === \$file"),
+        'las imagenes persistentes de Studio Notes se autorizan solo desde una nota del mismo artista'
+    );
     TestHarness::assertContains(
         "glob(\$seriesHeadersRoot . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . \$file)",
         $authenticatedMediaSource,
