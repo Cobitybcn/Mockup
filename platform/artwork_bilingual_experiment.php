@@ -362,6 +362,26 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
             white-space: pre-line;
         }
 
+        .editorial-secondary p.is-empty {
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        .editorial-private-memo {
+            margin-top: 16px;
+            padding: 16px 2px 0;
+            border-top: 1px solid var(--line);
+        }
+
+        .editorial-private-memo summary {
+            cursor: pointer;
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
         @media (max-width: 900px) {
             .editorial-spread { grid-template-columns: 1fr; }
             .editorial-page { min-height: 380px; }
@@ -440,7 +460,7 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
                         <span class="editorial-language-label">Español · fuente</span>
                         <div class="editorial-source-copy" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Descripción en español" data-placeholder="Escribí una descripción en español…"></div>
                         <details class="editorial-secondary">
-                            <summary>Resumen breve y notas privadas</summary>
+                            <summary>Resumen breve · español</summary>
                             <div class="editorial-source-copy editorial-source-copy--short" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Resumen breve en español" data-placeholder="Dos o tres frases para series, tarjetas y mockups…"></div>
                         </details>
                     </article>
@@ -448,14 +468,17 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
                     <article class="editorial-page editorial-page--english">
                         <span class="editorial-language-label">English · current version</span>
                         <div class="editorial-existing-copy <?= $englishDescription === '' ? 'is-empty' : '' ?>"><?= bilingual_experiment_h($englishDescription !== '' ? $englishDescription : 'No English description is currently available.') ?></div>
-                        <?php if ($englishShortDescription !== ''): ?>
-                            <details class="editorial-secondary">
-                                <summary>Current short description</summary>
-                                <p><?= bilingual_experiment_h($englishShortDescription) ?></p>
-                            </details>
-                        <?php endif; ?>
+                        <details class="editorial-secondary">
+                            <summary>Short description · English</summary>
+                            <p class="<?= $englishShortDescription === '' ? 'is-empty' : '' ?>"><?= bilingual_experiment_h($englishShortDescription !== '' ? $englishShortDescription : 'No English short description is currently available.') ?></p>
+                        </details>
                     </article>
                 </div>
+
+                <details class="editorial-private-memo">
+                    <summary>Memo privado de la obra</summary>
+                    <div class="editorial-source-copy editorial-source-copy--short" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Memo privado de la obra" data-placeholder="Ideas, decisiones y recordatorios que no se publican…"></div>
+                </details>
             </section>
         </div>
     </main>
