@@ -87,11 +87,7 @@ $englishShortDescription = trim((string)($sheet['short_description'] ?? ''));
 $imageFile = basename((string)($artwork['root_file'] ?? '')) ?: basename((string)($artwork['main_file'] ?? ''));
 $year = trim((string)($artwork['artwork_year'] ?? ''));
 $medium = trim((string)($artwork['medium'] ?? ''));
-$width = trim((string)($artwork['width'] ?? ''));
-$height = trim((string)($artwork['height'] ?? ''));
-$unit = trim((string)($artwork['unit'] ?? '')) ?: 'cm';
-$dimensions = $width !== '' && $height !== '' ? $width . ' × ' . $height . ' ' . $unit : '';
-$facts = array_values(array_filter([$year, $medium, $dimensions], static fn(string $value): bool => $value !== ''));
+$facts = array_values(array_filter([$year, $medium], static fn(string $value): bool => $value !== ''));
 ?>
 <!doctype html>
 <html lang="es">
