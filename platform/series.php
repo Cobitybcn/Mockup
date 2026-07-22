@@ -215,10 +215,7 @@ $seriesEditorialFields = $selectedSeries ? [
     <?php endif; ?>
     <style>
         .series-bilingual-title {
-            display:grid;
-            grid-template-columns:160px minmax(0,1fr);
-            gap:22px;
-            align-items:stretch;
+            display:block;
             width:100%;
             box-sizing:border-box;
             padding:18px 20px;
@@ -226,11 +223,10 @@ $seriesEditorialFields = $selectedSeries ? [
             background:var(--surface);
         }
 
-        .series-bilingual-title--without-cover { grid-template-columns:1fr; }
-
         .series-bilingual-cover {
             position:relative;
-            min-height:160px;
+            width:160px;
+            height:120px;
             overflow:hidden;
             background:var(--surface-soft);
         }
@@ -243,10 +239,11 @@ $seriesEditorialFields = $selectedSeries ? [
             transform-origin:center;
         }
 
-        .series-bilingual-title-copy {
-            min-width:0;
-            align-self:center;
-        }
+        .series-bilingual-cover-panel { display:flex; align-items:center; gap:18px; margin-top:18px; padding:12px; border:1px solid var(--line); background:var(--surface); }
+        .series-bilingual-cover-copy { min-width:0; }
+        .series-bilingual-cover-copy span { display:block; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        .series-bilingual-cover-copy strong { display:block; margin-top:7px; color:var(--ink); font:500 21px/1.15 var(--font-serif); }
+        .series-bilingual-cover-copy p { margin:5px 0 0; color:var(--muted); font-size:12px; }
 
         .series-bilingual-label {
             display:block;
@@ -335,9 +332,8 @@ $seriesEditorialFields = $selectedSeries ? [
         .series-bilingual-memo .series-bilingual-copy { min-height:82px; }
 
         @media (max-width:800px) {
-            .series-bilingual-title { grid-template-columns:100px minmax(0,1fr); gap:14px; padding:14px; }
-            .series-bilingual-title--without-cover { grid-template-columns:1fr; }
-            .series-bilingual-cover { min-height:112px; }
+            .series-bilingual-title { padding:14px; }
+            .series-bilingual-cover { width:100px; height:88px; }
             .series-bilingual-heading { font-size:36px; }
             .series-bilingual-title-memo { font-size:17px; }
             .series-bilingual-spread { grid-template-columns:1fr; grid-template-rows:none; }
@@ -365,16 +361,7 @@ $seriesEditorialFields = $selectedSeries ? [
                 </div>
             </div>
             <?php elseif ($seriesBilingualExperiment): ?>
-            <div class="series-bilingual-title <?= empty($selectedSeries['header_file']) ? 'series-bilingual-title--without-cover' : '' ?>" aria-label="Título universal de la serie">
-                <?php if (!empty($selectedSeries['header_file'])): ?>
-                    <div class="series-bilingual-cover" aria-label="Portada de la serie">
-                        <img
-                            src="<?= series_h(series_media_url($selectedSeries['header_file'], 520)) ?>"
-                            alt="Portada de <?= series_h($selectedSeries['title']) ?>"
-                            style="object-position:<?= (int)($selectedSeries['header_focal_x'] ?? 50) ?>% <?= (int)($selectedSeries['header_focal_y'] ?? 50) ?>%;transform:scale(<?= ((int)($selectedSeries['header_zoom'] ?? 115)) / 100 ?>);"
-                        >
-                    </div>
-                <?php endif; ?>
+            <div class="series-bilingual-title" aria-label="Título universal de la serie">
                 <div class="series-bilingual-title-copy">
                     <span class="series-bilingual-label">Título universal</span>
                     <h1 class="series-bilingual-heading" contenteditable="true" role="textbox" aria-label="Título de la serie"><?= series_h($selectedSeries['title']) ?></h1>
@@ -414,6 +401,22 @@ $seriesEditorialFields = $selectedSeries ? [
                     <div class="series-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Ideas, decisiones y evolución conceptual de la serie…"></div>
                 </details>
             </details>
+            <?php if (!empty($selectedSeries['header_file'])): ?>
+                <section class="series-bilingual-cover-panel" aria-label="Portada de la serie">
+                    <div class="series-bilingual-cover">
+                        <img
+                            src="<?= series_h(series_media_url($selectedSeries['header_file'], 520)) ?>"
+                            alt="Portada de <?= series_h($selectedSeries['title']) ?>"
+                            style="object-position:<?= (int)($selectedSeries['header_focal_x'] ?? 50) ?>% <?= (int)($selectedSeries['header_focal_y'] ?? 50) ?>%;transform:scale(<?= ((int)($selectedSeries['header_zoom'] ?? 115)) / 100 ?>);"
+                        >
+                    </div>
+                    <div class="series-bilingual-cover-copy">
+                        <span>Portada de la serie</span>
+                        <strong>Presentación visual</strong>
+                        <p>Imagen actual utilizada para representar STRATA.</p>
+                    </div>
+                </section>
+            <?php endif; ?>
             <?php else:
                 $seriesMissing = ArtworkSeries::missingForPublish($selectedSeries);
                 $seriesYearInline = trim(series_year_range_label($selectedSeries['year_start'] ?? null, $selectedSeries['year_end'] ?? null), " \xC2\xB7");
@@ -735,7 +738,7 @@ $seriesEditorialFields = $selectedSeries ? [
                                 : '';
                             ?>
                             <article class="series-artwork-row<?= $cardSeriesTone !== '' ? ' series-artwork-row--' . series_h($cardSeriesTone) : '' ?>" data-series-artwork-id="<?= (int)$artwork['id'] ?>" data-series-id="<?= $cardSeriesId ?>">
-                                <a class="series-artwork-thumb" data-series-drag-thumb href="artwork_details.php?id=<?= (int)$artwork['id'] ?>">
+                                <a class="series-artwork-thumb" data-series-drag-thumb href="<?= $seriesBilingualExperiment ? 'artwork_bilingual_experiment.php?id=' : 'artwork_details.php?id=' ?><?= (int)$artwork['id'] ?>">
                                     <img src="<?= series_h(series_media_url($file, 420)) ?>" alt="<?= series_h($title) ?>" loading="lazy" draggable="false">
                                     <?php if ($orderPosition > 0): ?><span class="series-artwork-order" data-series-order-position><?= str_pad((string)$orderPosition, 2, '0', STR_PAD_LEFT) ?></span><?php endif; ?>
                                 </a>
