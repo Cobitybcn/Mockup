@@ -100,6 +100,7 @@ steps:
           --platform=managed \
           --image="$$image@$$digest" \
           --update-env-vars="APP_ENV=production,APP_RELEASE_COMMIT=$COMMIT_SHA,ARTIST_ADMIN_URL=${_ADMIN_URL}" \
+          --update-secrets="STRIPE_CREDENTIALS_KEY=${_STRIPE_CREDENTIALS_KEY_SECRET}:latest" \
           --revision-suffix="cb-$SHORT_SHA-$$build_short" \
           --no-traffic \
           --quiet
@@ -182,6 +183,7 @@ substitutions:
   _SERVICE: mockups-artist-site
   _RUNTIME_SA: artist-site-sa
   _ADMIN_URL: https://artworkmockups.com/site-admin
+  _STRIPE_CREDENTIALS_KEY_SECRET: mockups-stripe-credentials-key
 
 options:
   logging: CLOUD_LOGGING_ONLY
