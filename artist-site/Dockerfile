@@ -1,8 +1,14 @@
+FROM composer:2.9.4 AS composer-deps
+
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+
 FROM php:8.2.32-apache-bookworm
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libonig-dev \
-    && docker-php-ext-install pdo_mysql mbstring \
+    && apt-get install -y --no-install-recommends libcurl4-openssl-dev libonig-dev \
+    && docker-php-ext-install curl pdo_mysql mbstring \
     && a2enmod rewrite headers \
     && rm -rf /var/lib/apt/lists/*
 
@@ -22,6 +28,7 @@ RUN printf '%s\n' \
 
 WORKDIR /var/www/html
 COPY . /var/www/html/
+COPY --from=composer-deps /app/vendor /var/www/html/vendor
 
 RUN rm -f /var/www/html/.env /var/www/html/.dockerignore /var/www/html/.gcloudignore \
         /var/www/html/Dockerfile /var/www/html/php-server.err.log /var/www/html/php-server.out.log \

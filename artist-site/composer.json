@@ -1,0 +1,10 @@
+{
+    "name": "artworkmockups/artist-site",
+    "description": "Public artist website",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.1",
+        "phpmailer/phpmailer": "^6.10",
+        "stripe/stripe-php": "^19.4"
+    }
+}

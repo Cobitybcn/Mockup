@@ -86,7 +86,7 @@ sm_test(str_contains($managerSource, 'name="stripe_secret_key"') && str_contains
 sm_test(str_contains($managerSource, 'Account credentials') && str_contains($managerSource, 'Website checkout'), 'Payments clearly show artist account and checkout readiness');
 sm_test(str_contains($managerSource, 'A publishable key is not needed'), 'Payments asks only for the credentials required by server-side Checkout');
 sm_test(str_contains($managerSource, 'value="disconnect_stripe"'), 'Artists can remove their own Stripe credentials');
-$stripeCredentialsService = (string)file_get_contents($root . '/platform/app/Services/StripeArtistCredentials.php');
+$stripeCredentialsService = (string)file_get_contents($root . '/artist-site/inc/StripeArtistCredentials.php');
 sm_test(str_contains($stripeCredentialsService, 'sodium_crypto_secretbox') && str_contains($stripeCredentialsService, 'STRIPE_CREDENTIALS_KEY'), 'Artist Stripe credentials are encrypted with a server-side key');
 sm_test(str_contains($stripeCredentialsService, 'user_id=?') && str_contains($stripeCredentialsService, 'already configured for another artist'), 'Stripe credentials and account identity stay isolated by artist');
 sm_test(!is_file($root . '/site-admin/stripe-connect-callback.php') && !str_contains($managerSource, 'value="connect_stripe"'), 'Payments no longer depends on platform Stripe Connect or OAuth');

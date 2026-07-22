@@ -3,12 +3,13 @@ declare(strict_types=1);
 
 $root = dirname(__DIR__);
 $dockerfile = (string)file_get_contents($root . '/Dockerfile');
-$cloudBuild = (string)file_get_contents($root . '/cloudbuild.hardening.yaml');
+$cloudBuild = str_replace("\r\n", "\n", (string)file_get_contents($root . '/cloudbuild.hardening.yaml'));
 $dockerIgnore = (string)file_get_contents($root . '/.dockerignore');
 $cloudIgnore = (string)file_get_contents($root . '/.gcloudignore');
 
 $checks = [
     [str_contains($dockerfile, 'artist-site-transport-security'), 'production TLS termination emits HSTS'],
+    [str_contains($dockerfile, 'composer install --no-dev') && str_contains($dockerfile, '/app/vendor'), 'production image installs the contact mail transport'],
     [str_contains($cloudBuild, 'candidate-smoke'), 'candidate revision is smoke-tested before promotion'],
     [str_contains($cloudBuild, '/admin-v2/'), 'both retired Cloud Run admin routes are verified'],
     [str_contains($cloudBuild, '--clear-tags'), 'promotion retires stale tagged revisions'],

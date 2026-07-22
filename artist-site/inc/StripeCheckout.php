@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 2) . '/platform/app/Services/StripeArtistCredentials.php';
+require_once __DIR__ . '/StripeArtistCredentials.php';
 
 final class StripeCheckout
 {
