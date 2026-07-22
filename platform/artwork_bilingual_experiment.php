@@ -243,23 +243,16 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
             text-transform: uppercase;
         }
 
-        .editorial-title-memo input {
+        .editorial-title-memo [contenteditable] {
             width: 100%;
             min-width: 0;
             box-sizing: border-box;
             padding: 5px 0;
-            border: 0;
-            border-bottom: 1px solid transparent;
-            border-radius: 0;
-            background: transparent;
             color: var(--ink);
             font: 500 16px/1.45 var(--font-serif);
         }
 
-        .editorial-title-memo input:focus {
-            outline: 0;
-            border-bottom-color: var(--editorial-source);
-        }
+        .editorial-title-memo [contenteditable]:focus { outline: 0; }
 
         .editorial-spread {
             display: grid;
@@ -283,49 +276,38 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
         .editorial-page-title {
             display: block;
             width: 100%;
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            border: 0;
-            border-bottom: 1px solid transparent;
-            border-radius: 0;
-            background: transparent;
             color: var(--ink);
             font: 500 clamp(24px, 2.4vw, 31px)/1.15 var(--font-serif);
         }
 
-        .editorial-page-title:focus {
-            outline: 0;
-            border-bottom-color: var(--editorial-source);
-        }
+        .editorial-page-title:focus { outline: 0; }
 
         .editorial-language-label {
             display: block;
             margin-top: 6px;
         }
 
-        .editorial-page textarea {
+        .editorial-source-copy {
             display: block;
             width: 100%;
             min-height: 300px;
             box-sizing: border-box;
             margin-top: 20px;
             padding: 0;
-            border: 0;
-            border-radius: 0;
-            background: transparent;
             color: var(--ink);
             font: 400 15px/1.75 var(--font-sans);
-            resize: vertical;
+            white-space: pre-wrap;
         }
 
-        .editorial-page textarea::placeholder {
+        .editorial-source-copy:empty::before {
+            content: attr(data-placeholder);
             color: var(--muted);
             font-style: italic;
-            opacity: 1;
         }
 
-        .editorial-page textarea:focus { outline: 0; }
+        .editorial-source-copy:focus { outline: 0; }
 
         .editorial-existing-copy {
             margin-top: 20px;
@@ -355,7 +337,7 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
             text-transform: uppercase;
         }
 
-        .editorial-secondary textarea {
+        .editorial-source-copy--short {
             min-height: 100px;
             margin-top: 14px;
         }
@@ -432,18 +414,18 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
                 </header>
 
                 <div class="editorial-title-memo">
-                    <label for="title-system-memo">Memo de títulos</label>
-                    <input id="title-system-memo" type="text" value="STRATA X — LIMEN · STRATA XI — NUHRĀ (ܢܘܗܪܐ) · no traducir">
+                    <label id="title-system-memo-label">Memo de títulos</label>
+                    <span contenteditable="true" role="textbox" aria-labelledby="title-system-memo-label">STRATA X — LIMEN · STRATA XI — NUHRĀ (ܢܘܗܪܐ) · no traducir</span>
                 </div>
 
                 <div class="editorial-spread">
                     <article class="editorial-page editorial-page--source">
-                        <input class="editorial-page-title" type="text" value="<?= bilingual_experiment_h($title) ?>" aria-label="Título oficial" data-shared-title>
+                        <h3 class="editorial-page-title" contenteditable="true" role="textbox" aria-label="Título oficial" data-shared-title><?= bilingual_experiment_h($title) ?></h3>
                         <span class="editorial-language-label">Español · fuente</span>
-                        <textarea aria-label="Descripción en español" placeholder="Escribí una descripción en español…"></textarea>
+                        <div class="editorial-source-copy" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Descripción en español" data-placeholder="Escribí una descripción en español…"></div>
                         <details class="editorial-secondary">
                             <summary>Resumen breve y notas privadas</summary>
-                            <textarea aria-label="Resumen breve en español" placeholder="Dos o tres frases para series, tarjetas y mockups…"></textarea>
+                            <div class="editorial-source-copy editorial-source-copy--short" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Resumen breve en español" data-placeholder="Dos o tres frases para series, tarjetas y mockups…"></div>
                         </details>
                     </article>
 
@@ -470,7 +452,7 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
     const mirroredTitle = document.querySelector('[data-mirrored-title]');
 
     sharedTitle.addEventListener('input', () => {
-        mirroredTitle.textContent = sharedTitle.value.trim() || 'Sin título';
+        mirroredTitle.textContent = sharedTitle.textContent.trim() || 'Sin título';
     });
 })();
 </script>
