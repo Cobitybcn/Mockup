@@ -11,6 +11,7 @@ $pdo = Database::connection();
 Auth::start();
 $userId = (int)$user['id'];
 $seriesPreviewActive = UiPreview::isActive($user, 'series-catalog');
+$seriesBilingualExperiment = (string)($_GET['bilingual_experiment'] ?? '') === '1';
 
 ArtworkSeries::ensureSchema($pdo);
 (new ArtworkGroupService($pdo))->syncUser($userId);
@@ -192,6 +193,14 @@ $displayedArtworks = $selectedSeries
         static fn(array $artwork): bool => (int)($artwork['series_id'] ?? 0) === (int)$selectedSeries['id']
     ))
     : $artworks;
+$seriesEditorialFields = $selectedSeries ? [
+    ['es' => 'Subtítulo', 'en' => 'Subtitle', 'value' => (string)($selectedSeries['subtitle'] ?? ''), 'large' => false, 'es_placeholder' => 'Subtítulo editorial de la serie…', 'en_placeholder' => 'No English subtitle is currently available.'],
+    ['es' => 'Descripción breve', 'en' => 'Short description', 'value' => (string)($selectedSeries['description'] ?? ''), 'large' => false, 'es_placeholder' => 'Una o dos frases para presentar la serie…', 'en_placeholder' => 'No English short description is currently available.'],
+    ['es' => 'Texto curatorial', 'en' => 'Long description', 'value' => (string)($selectedSeries['long_description'] ?? ''), 'large' => true, 'es_placeholder' => 'Escribí el texto curatorial completo de la serie…', 'en_placeholder' => 'No English long description is currently available.'],
+    ['es' => 'Etiquetas', 'en' => 'Tags', 'value' => (string)($selectedSeries['tags'] ?? ''), 'large' => false, 'es_placeholder' => 'Etiquetas editoriales…', 'en_placeholder' => 'No English tags are currently available.'],
+    ['es' => 'Términos de búsqueda', 'en' => 'Long-tail keywords', 'value' => (string)($selectedSeries['keywords'] ?? ''), 'large' => false, 'es_placeholder' => 'Frases de búsqueda en español…', 'en_placeholder' => 'No English search terms are currently available.'],
+    ['es' => 'Descripción SEO', 'en' => 'SEO description', 'value' => (string)($selectedSeries['seo_description'] ?? ''), 'large' => false, 'es_placeholder' => 'Descripción breve para buscadores…', 'en_placeholder' => 'No English SEO description is currently available.'],
+] : [];
 ?>
 <!doctype html>
 <html lang="en">
@@ -204,6 +213,107 @@ $displayedArtworks = $selectedSeries
     <?php if ($seriesPreviewActive): ?>
         <link rel="stylesheet" href="visual-consistency-preview.css?v=2">
     <?php endif; ?>
+    <style>
+        .series-bilingual-title {
+            display:block;
+            width:100%;
+            box-sizing:border-box;
+            padding:18px 20px;
+            border:1px solid var(--line);
+            background:var(--surface);
+        }
+
+        .series-bilingual-label {
+            display:block;
+            margin:0 0 15px;
+            color:var(--muted);
+            font-size:9px;
+            font-weight:700;
+            letter-spacing:.08em;
+            text-transform:uppercase;
+        }
+
+        .series-bilingual-heading {
+            margin:0;
+            padding:0 0 14px;
+            border-bottom:1px solid var(--line);
+            color:var(--ink);
+            font:500 clamp(42px,4.5vw,58px)/1.05 var(--font-serif);
+            letter-spacing:-.01em;
+            overflow-wrap:anywhere;
+        }
+
+        .series-bilingual-heading:focus { outline:0; }
+
+        .series-bilingual-title-memo {
+            margin:15px 0 0;
+            color:var(--accent);
+            font:italic 500 21px/1.5 var(--font-serif);
+        }
+
+        .series-bilingual-editorial {
+            margin-top:18px;
+            border:1px solid var(--line);
+            background:var(--surface);
+        }
+
+        .series-bilingual-editorial > summary {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:20px;
+            padding:18px 20px;
+            cursor:pointer;
+            list-style:none;
+        }
+
+        .series-bilingual-editorial > summary::-webkit-details-marker { display:none; }
+        .series-bilingual-summary strong { display:block; color:var(--ink); font:500 23px/1.1 var(--font-serif); }
+        .series-bilingual-summary span { display:block; margin-top:5px; color:var(--muted); font-size:12px; }
+        .series-bilingual-state { color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
+        .series-bilingual-state::after { content:'+'; display:inline-block; margin-left:14px; color:var(--accent); font:500 22px/1 var(--font-serif); vertical-align:-2px; }
+        .series-bilingual-editorial[open] .series-bilingual-state::after { content:'−'; }
+
+        .series-bilingual-spread {
+            display:grid;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            grid-template-rows:auto repeat(6,auto);
+            column-gap:12px;
+            row-gap:0;
+            padding:14px;
+            border-top:1px solid var(--line);
+        }
+
+        .series-bilingual-page {
+            display:grid;
+            grid-row:1 / span 7;
+            grid-template-rows:subgrid;
+            min-width:0;
+            padding:18px;
+            border:1px solid var(--line);
+            border-top:3px solid #c89aa1;
+            background:var(--surface-soft);
+        }
+
+        .series-bilingual-page--source { grid-column:1; }
+        .series-bilingual-page--english { grid-column:2; border-top-color:#9fb19a; }
+        .series-bilingual-language { display:block; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        .series-bilingual-field { min-height:96px; margin-top:16px; padding-top:13px; border-top:1px solid var(--line); }
+        .series-bilingual-field--large { min-height:250px; }
+        .series-bilingual-field label { display:block; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
+        .series-bilingual-copy { min-height:62px; margin-top:10px; color:var(--ink); font-size:14px; line-height:1.65; white-space:pre-wrap; }
+        .series-bilingual-field--large .series-bilingual-copy { min-height:210px; }
+        .series-bilingual-copy:empty::before { content:attr(data-placeholder); color:var(--muted); font-style:italic; }
+        .series-bilingual-copy:focus { outline:0; }
+        .series-bilingual-memo { margin:0 14px 14px; padding:14px 6px 2px; border-top:1px solid var(--line); }
+        .series-bilingual-memo summary { cursor:pointer; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        .series-bilingual-memo .series-bilingual-copy { min-height:82px; }
+
+        @media (max-width:800px) {
+            .series-bilingual-spread { grid-template-columns:1fr; grid-template-rows:none; }
+            .series-bilingual-page { display:block; grid-column:auto; grid-row:auto; }
+        }
+    </style>
 </head>
 <body class="series-page<?= $seriesPreviewActive ? ' ui-visual-consistency-preview' : '' ?>"<?= $seriesPreviewActive ? ' data-ui-preview="series-catalog"' : '' ?>>
 <div class="app-shell">
@@ -224,6 +334,45 @@ $displayedArtworks = $selectedSeries
                     <p>Group artworks and mockups by series. NO SERIE stays silent in public titles.</p>
                 </div>
             </div>
+            <?php elseif ($seriesBilingualExperiment): ?>
+            <div class="series-bilingual-title" aria-label="Título universal de la serie">
+                <span class="series-bilingual-label">Título universal</span>
+                <h1 class="series-bilingual-heading" contenteditable="true" role="textbox" aria-label="Título de la serie"><?= series_h($selectedSeries['title']) ?></h1>
+                <p class="series-bilingual-title-memo">STRATA — LIMEN · SERIES X — NUHRĀ (ܢܘܗܪܐ) · no traducir</p>
+            </div>
+            <details class="series-bilingual-editorial">
+                <summary>
+                    <span class="series-bilingual-summary">
+                        <strong>Espacio editorial</strong>
+                        <span>Contenido original en español y versión publicada en inglés.</span>
+                    </span>
+                    <span class="series-bilingual-state">Español + English</span>
+                </summary>
+                <div class="series-bilingual-spread">
+                    <article class="series-bilingual-page series-bilingual-page--source">
+                        <span class="series-bilingual-language">Español · fuente</span>
+                        <?php foreach ($seriesEditorialFields as $field): ?>
+                            <section class="series-bilingual-field <?= $field['large'] ? 'series-bilingual-field--large' : '' ?>">
+                                <label><?= series_h($field['es']) ?></label>
+                                <div class="series-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="<?= series_h($field['es_placeholder']) ?>"></div>
+                            </section>
+                        <?php endforeach; ?>
+                    </article>
+                    <article class="series-bilingual-page series-bilingual-page--english">
+                        <span class="series-bilingual-language">English · current version</span>
+                        <?php foreach ($seriesEditorialFields as $field): ?>
+                            <section class="series-bilingual-field <?= $field['large'] ? 'series-bilingual-field--large' : '' ?>">
+                                <label><?= series_h($field['en']) ?></label>
+                                <div class="series-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="<?= series_h($field['en_placeholder']) ?>"><?= series_h($field['value']) ?></div>
+                            </section>
+                        <?php endforeach; ?>
+                    </article>
+                </div>
+                <details class="series-bilingual-memo">
+                    <summary>Memo privado de la serie</summary>
+                    <div class="series-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Ideas, decisiones y evolución conceptual de la serie…"></div>
+                </details>
+            </details>
             <?php else:
                 $seriesMissing = ArtworkSeries::missingForPublish($selectedSeries);
                 $seriesYearInline = trim(series_year_range_label($selectedSeries['year_start'] ?? null, $selectedSeries['year_end'] ?? null), " \xC2\xB7");
@@ -251,6 +400,7 @@ $displayedArtworks = $selectedSeries
             <?php if ($notice !== ''): ?><div class="notice-card notice-ok"><?= series_h($notice) ?></div><?php endif; ?>
             <?php if ($error !== ''): ?><div class="notice-card notice-error"><?= series_h($error) ?></div><?php endif; ?>
 
+            <?php if (!$seriesBilingualExperiment || !$selectedSeries): ?>
             <section class="catalog-panel catalog-panel--compact catalog-panel--series-picker">
                 <?php if ($selectedSeries && $seriesMissing): ?>
                     <div class="warning-list" style="margin-bottom: 20px;">Complete before publishing: <?= series_h(implode(' · ', $seriesMissing)) ?></div>
@@ -490,6 +640,7 @@ $displayedArtworks = $selectedSeries
                     </div>
                 <?php endif; ?>
             </section>
+            <?php endif; ?>
 
             <section class="catalog-panel catalog-panel--compact catalog-panel--series-artworks" id="artwork-assignment">
                 <div class="detail-heading">
