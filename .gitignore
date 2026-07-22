@@ -1,6 +1,8 @@
 # Local recovery bundles and generated release artifacts
 /.release/
 *.bundle
+/.claude/
+/.codex-remote-attachments/
 
 # Operating-system noise
 .DS_Store

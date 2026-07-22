@@ -4,6 +4,7 @@
 **/.agents
 **/.claude
 **/.codex
+**/.codex-remote-attachments
 **/.idea
 **/.vscode
 **/__pycache__
@@ -18,5 +19,10 @@ platform/analysis
 platform/backups
 platform/scratch
 platform/video
+platform/storage/*
+!platform/storage/world_mothers/
+platform/storage/world_mothers/*
+!platform/storage/world_mothers/index.json
 artist-site/assets/uploads
 artist-site/assets/tenants
+artist-site/tools/sftp-venv

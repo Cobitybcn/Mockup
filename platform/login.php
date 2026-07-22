@@ -38,6 +38,7 @@ $authOpacities = [
     'secondary' => 0.48,
     'tertiary' => 0.44,
 ];
+$showcaseBackground = PublicArtistShowcase::background(Database::connection(), 'assets/showcase/latest_mockup_1.jpg');
 ?>
 <!doctype html>
 <html lang="en">
@@ -51,7 +52,7 @@ $authOpacities = [
 <body class="auth-page">
 
 <div class="auth-bg-full">
-    <img src="assets/showcase/latest_mockup_1.jpg" alt="Background" class="auth-bg-image-full">
+    <img src="<?= h($showcaseBackground['url']) ?>" alt="" class="auth-bg-image-full">
     <div class="auth-bg-overlay-full"></div>
 </div>
 

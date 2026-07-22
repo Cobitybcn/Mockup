@@ -56,6 +56,7 @@ COPY artist-site/inc/header.php /var/www/artist-site/inc/header.php
 COPY artist-site/inc/functions.php /var/www/artist-site/inc/functions.php
 COPY artist-site/inc/TenantResolver.php /var/www/artist-site/inc/TenantResolver.php
 COPY artist-site/inc/AppStore.php /var/www/artist-site/inc/AppStore.php
+COPY artist-site/inc/StripeArtistCredentials.php /var/www/artist-site/inc/StripeArtistCredentials.php
 COPY artist-site/inc/StripeCheckout.php /var/www/artist-site/inc/StripeCheckout.php
 COPY artist-site/inc/AppPublishedSeriesCatalog.php /var/www/artist-site/inc/AppPublishedSeriesCatalog.php
 COPY artist-site/assets/css/styles.css /var/www/artist-site/assets/css/styles.css
