@@ -14,7 +14,8 @@ param(
     [string]$GitHubRepository = "Mockup",
     [string]$ProductionBranch = "main",
     [string]$TriggerName = "artwork-mockups-main-deploy",
-    [string]$ArtistTriggerName = "artist-site-main-deploy"
+    [string]$ArtistTriggerName = "artist-site-main-deploy",
+    [string]$PreflightTriggerName = "artwork-mockups-preflight"
 )
 
 $ErrorActionPreference = "Stop"
@@ -23,6 +24,7 @@ $ErrorActionPreference = "Stop"
 $Gcloud = "gcloud.ps1"
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $buildConfig = "platform/cloudbuild.ci.yaml"
+$preflightBuildConfig = "platform/cloudbuild.preflight.yaml"
 $artistBuildConfig = "artist-site/cloudbuild.hardening.yaml"
 $cicdServiceAccount = "$CicdServiceAccountName@$ProjectId.iam.gserviceaccount.com"
 $cicdServiceAccountResource = "projects/$ProjectId/serviceAccounts/$cicdServiceAccount"
@@ -80,7 +82,8 @@ function Ensure-GitHubTrigger {
         [string]$Description,
         [string]$BuildConfig,
         [string[]]$IncludedFiles,
-        [string[]]$IgnoredFiles
+        [string[]]$IgnoredFiles,
+        [string]$BranchPattern = ""
     )
 
     $existingTriggerId = Get-GcloudValue builds triggers list `
@@ -88,7 +91,9 @@ function Ensure-GitHubTrigger {
         --region=global `
         "--filter=name=$Name" `
         "--format=value(id)"
-    $branchPattern = '^' + [regex]::Escape($ProductionBranch) + '$'
+    if ([string]::IsNullOrWhiteSpace($BranchPattern)) {
+        $BranchPattern = '^' + [regex]::Escape($ProductionBranch) + '$'
+    }
     $included = $IncludedFiles -join ','
     $ignored = $IgnoredFiles -join ','
 
@@ -100,7 +105,7 @@ function Ensure-GitHubTrigger {
             "--description=$Description" `
             --repo-owner=$GitHubOwner `
             --repo-name=$GitHubRepository `
-            --branch-pattern=$branchPattern `
+            --branch-pattern=$BranchPattern `
             --build-config=$BuildConfig `
             --service-account=$cicdServiceAccountResource `
             --included-files=$included `
@@ -115,7 +120,7 @@ function Ensure-GitHubTrigger {
         --project=$ProjectId `
         --region=global `
         "--description=$Description" `
-        --branch-pattern=$branchPattern `
+        --branch-pattern=$BranchPattern `
         --build-config=$BuildConfig `
         --service-account=$cicdServiceAccountResource `
         --included-files=$included `
@@ -128,7 +133,7 @@ function Ensure-GitHubTrigger {
 if ($ProductionBranch -ne "main") {
     throw "Safety stop: the production branch must be main. Received: $ProductionBranch"
 }
-foreach ($requiredBuildConfig in @($buildConfig, $artistBuildConfig)) {
+foreach ($requiredBuildConfig in @($buildConfig, $preflightBuildConfig, $artistBuildConfig)) {
     if (-not (Test-Path -LiteralPath (Join-Path $repoRoot $requiredBuildConfig))) {
         throw "Cloud Build configuration not found: $requiredBuildConfig"
     }
@@ -234,6 +239,14 @@ try {
         -BuildConfig $artistBuildConfig `
         -IncludedFiles @('artist-site/**') `
         -IgnoredFiles @('artist-site/assets/uploads/**', 'artist-site/assets/tenants/**', 'artist-site/docs/**', 'artist-site/tests/**', 'artist-site/scripts/**', 'artist-site/AGENTS.md', 'artist-site/README.md')
+
+    Ensure-GitHubTrigger `
+        -Name $PreflightTriggerName `
+        -Description "Build and validate app production artifacts on Codex release branches" `
+        -BuildConfig $preflightBuildConfig `
+        -IncludedFiles @('platform/**', 'site-admin/**', '.dockerignore', '.gcloudignore') `
+        -IgnoredFiles @('platform/docs/**', 'platform/**/*.md', 'site-admin/**/*.md') `
+        -BranchPattern '^codex/.*$'
 } catch {
     Write-Host "Cloud Build could not access $GitHubOwner/$GitHubRepository." -ForegroundColor Yellow
     Write-Host "Connect that repository once at:" -ForegroundColor Yellow
@@ -242,5 +255,5 @@ try {
     throw
 }
 
-Write-Host "SUCCESS: Cloud Build triggers $TriggerName and $ArtistTriggerName are configured for $GitHubOwner/${GitHubRepository}:$ProductionBranch." -ForegroundColor Green
+Write-Host "SUCCESS: Cloud Build triggers $TriggerName, $ArtistTriggerName, and $PreflightTriggerName are configured for $GitHubOwner/$GitHubRepository." -ForegroundColor Green
 Write-Host "No build or deployment was started by this setup script." -ForegroundColor Green

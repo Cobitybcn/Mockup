@@ -1,7 +1,12 @@
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 2) . '/platform/app/Services/StripeArtistCredentials.php';
+$stripeCredentialsBridge = dirname(__DIR__, 2) . '/platform/app/Services/StripeArtistCredentials.php';
+if (!is_file($stripeCredentialsBridge)) {
+    $stripeCredentialsBridge = dirname(__DIR__, 2) . '/app/Services/StripeArtistCredentials.php';
+}
+require_once $stripeCredentialsBridge;
+unset($stripeCredentialsBridge);
 
 final class SiteManagerService
 {

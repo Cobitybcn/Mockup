@@ -25,6 +25,7 @@ function h($v): string
 {
     return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 }
+$showcaseBackground = PublicArtistShowcase::background(Database::connection(), 'assets/showcase/latest_mockup_1.jpg');
 ?>
 <!doctype html>
 <html lang="en">
@@ -37,7 +38,7 @@ function h($v): string
 </head>
 <body class="auth-page">
 <div class="auth-bg-full">
-    <img src="assets/showcase/latest_mockup_1.jpg" alt="Background" class="auth-bg-image-full">
+    <img src="<?= h($showcaseBackground['url']) ?>" alt="" class="auth-bg-image-full">
     <div class="auth-bg-overlay-full"></div>
 </div>
 

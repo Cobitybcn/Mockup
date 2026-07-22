@@ -29,9 +29,14 @@ function h($v): string
 {
     return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
 }
+
+$heroComposition = PublicArtistShowcase::composition(
+    Database::connection(),
+    'assets/showcase/latest_mockup_1.jpg'
+);
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="landing-page">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -46,6 +51,21 @@ function h($v): string
         /* Landing Page Specific Scoped Styling */
         html {
             scroll-behavior: smooth;
+        }
+        @media (min-width: 768px) {
+            html.landing-page,
+            html.landing-page .brand,
+            html.landing-page h1,
+            html.landing-page h2,
+            html.landing-page h3,
+            html.landing-page h4,
+            html.landing-page h5,
+            html.landing-page h6,
+            html.landing-page button,
+            html.landing-page input[type="submit"],
+            html.landing-page input[type="button"] {
+                zoom: 1;
+            }
         }
         body.landing-theme {
             background: var(--bg);
@@ -139,24 +159,27 @@ function h($v): string
 
         /* Hero Section */
         .hero-section {
-            min-height: 90vh;
-            min-height: 90dvh;
-            padding: 160px 4% 100px;
+            min-height: 100vh;
+            min-height: 100dvh;
+            box-sizing: border-box;
+            padding: 132px 4% 64px;
             display: flex;
             align-items: center;
             position: relative;
-            background: var(--bg);
+            background: #F3EEE6;
             overflow: hidden;
         }
         .hero-content {
             position: relative;
             z-index: 5;
             max-width: 550px;
+            width: 40%;
+            flex: 0 0 40%;
         }
         .hero-content h1 {
             font-family: var(--font-serif);
             font-weight: 400;
-            font-size: clamp(48px, 5.8vw, 72px);
+            font-size: clamp(46px, 4.8vw, 68px);
             line-height: 1.08;
             margin: 0 0 24px 0;
             color: var(--ink) !important;
@@ -176,8 +199,14 @@ function h($v): string
         }
         .hero-actions {
             display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
+            gap: 12px;
+            flex-wrap: nowrap;
+        }
+        .hero-actions .btn-cta,
+        .hero-actions .btn-secondary {
+            padding: 14px 22px !important;
+            font-size: 12px !important;
+            white-space: nowrap;
         }
         .btn-secondary {
             background: transparent !important;
@@ -333,51 +362,102 @@ function h($v): string
             line-height: 1;
         }
         
-        /* High-Impact Hero Showcase Visuals: Immersive Backdrop Slider */
-        .hero-bg-slider {
+        /* Editorial hero composition: complete portrait mockups, never panoramic crops. */
+        .hero-visual-composition {
             position: absolute;
-            top: 0;
+            top: 80px;
             bottom: 0;
             right: 0;
-            left: 36%;
+            left: 42%;
             z-index: 1;
             overflow: hidden;
+            background: #D9D1C6;
+        }
+        .hero-visual-composition::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 32%;
+            height: 58%;
+            background: #CDBAB1;
+            z-index: 1;
+        }
+        .hero-visual-label {
+            position: absolute;
+            top: 6%;
+            left: 7%;
+            z-index: 4;
+            color: #655F58;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+        .hero-mockup {
+            position: absolute;
+            z-index: 3;
+            margin: 0;
+            overflow: hidden;
+            background: #F8F5EF;
+            border: 1px solid rgba(87, 78, 69, 0.42);
+        }
+        .hero-mockup img {
+            width: 100%;
+            display: block;
+            object-fit: contain;
+            background: #E7E0D7;
+        }
+        .hero-mockup--primary {
+            top: 50%;
+            right: clamp(24px, 4vw, 72px);
+            width: min(36vw, 610px);
+            aspect-ratio: 4 / 5;
+            transform: translateY(-50%);
+            z-index: 3;
+            padding: 0;
+        }
+        .hero-mockup--primary img {
+            height: calc(100% - 38px);
+        }
+        .hero-mockup--primary figcaption {
+            height: 38px;
             display: flex;
             align-items: center;
-            justify-content: flex-end;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 0 10px;
+            box-sizing: border-box;
+            border-top: 1px solid rgba(87, 78, 69, 0.22);
+            color: #625B53;
+            font-size: 10px;
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+            overflow: hidden;
         }
-        .hero-slide {
-            position: absolute;
-            inset: 0;
-            width: 100%;
+        .hero-mockup--primary figcaption strong {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+        .hero-mockup--primary figcaption span {
+            flex: 0 0 auto;
+            color: var(--accent);
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+        .hero-mockup--secondary {
+            left: 7%;
+            bottom: 8%;
+            width: min(18vw, 285px);
+            aspect-ratio: 4 / 5;
+            z-index: 4;
+            padding: 4px;
+        }
+        .hero-mockup--secondary img {
             height: 100%;
-            opacity: 0;
-            z-index: 1;
-            transition: opacity 1.2s ease-in-out;
-            pointer-events: none;
-        }
-        .hero-slide.active {
-            opacity: 1;
-            z-index: 2;
-        }
-        .hero-slide img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center center;
-            display: block;
-        }
-        .hero-bg-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, 
-                rgba(250, 249, 246, 1) 0%, 
-                rgba(250, 249, 246, 0.8) 18%, 
-                rgba(250, 249, 246, 0.2) 65%, 
-                rgba(250, 249, 246, 0) 100%
-            );
-            z-index: 3;
-            pointer-events: none;
         }
         .hero-section::before {
             content: "";
@@ -583,17 +663,66 @@ function h($v): string
 
         /* Responsive */
         @media (max-width: 960px) {
+            .landing-header {
+                height: 72px;
+                padding: 0 20px;
+            }
+            .landing-header .brand-kicker {
+                display: none;
+            }
+            .landing-header .brand-title {
+                font-size: 16px;
+                letter-spacing: 0.16em;
+                white-space: nowrap;
+            }
+            .landing-nav {
+                gap: 0;
+            }
+            .landing-nav > a:not(.btn-cta) {
+                display: none;
+            }
+            .landing-nav .btn-cta {
+                padding: 9px 14px;
+                font-size: 10px;
+            }
             .hero-section {
-                grid-template-columns: 1fr;
+                min-height: auto;
+                display: block;
                 text-align: center;
-                padding-top: 120px;
-                gap: 40px;
+                padding: 104px 24px 56px;
+            }
+            .hero-content {
+                width: 100%;
+                max-width: 680px;
+                margin: 0 auto 44px;
             }
             .hero-content h1 {
                 font-size: 42px;
             }
             .hero-actions {
                 justify-content: center;
+                flex-wrap: wrap;
+            }
+            .hero-visual-composition {
+                position: relative;
+                inset: auto;
+                width: 100%;
+                height: min(122vw, 680px);
+            }
+            .hero-visual-label {
+                top: 24px;
+                left: 24px;
+            }
+            .hero-mockup--primary {
+                top: 54px;
+                right: 5%;
+                width: min(68vw, 430px);
+                transform: none;
+            }
+            .hero-mockup--secondary {
+                left: 5%;
+                bottom: 5%;
+                width: min(36vw, 220px);
             }
             .showcase-grid {
                 grid-template-columns: 1fr;
@@ -634,42 +763,20 @@ function h($v): string
                 <a href="#showcase" class="btn-secondary" style="padding: 14px 32px; font-size: 13px;">VIEW ART MOCKUP EXAMPLES</a>
             </div>
         </div>
-        <div class="hero-bg-slider">
-            <?php
-            $showcaseDir = __DIR__ . '/assets/showcase';
-            $slides = [];
-            if (is_dir($showcaseDir)) {
-                $allFiles = glob($showcaseDir . '/*.{jpg,jpeg,png}', GLOB_BRACE) ?: [];
-                foreach ($allFiles as $file) {
-                    $name = basename($file);
-                    // Filter out original artworks or templates
-                    if (
-                        !str_contains(strtolower($name), 'artwork') 
-                        && !str_contains(strtolower($name), 'original')
-                        && is_file($file)
-                    ) {
-                        $slides[] = 'assets/showcase/' . $name;
-                    }
-                }
-            }
-            if (empty($slides)) {
-                $slides = [
-                    'assets/showcase/latest_mockup_1.jpg',
-                    'assets/showcase/latest_mockup_2.jpg',
-                    'assets/showcase/latest_mockup_3.jpg',
-                ];
-            }
-            
-            // Limit to 10 showcase images
-            $slides = array_slice($slides, 0, 10);
-            $totalSlides = count($slides);
-            ?>
-            <?php foreach ($slides as $index => $slidePath): ?>
-                <div class="hero-slide<?= $index === 0 ? ' active' : '' ?>">
-                    <img src="<?= htmlspecialchars($slidePath) ?>" alt="Showcase Space <?= $index + 1 ?>">
-                </div>
-            <?php endforeach; ?>
-            <div class="hero-bg-overlay"></div>
+        <div class="hero-visual-composition" aria-label="Artwork mockups from the Maurizio Valch collection">
+            <span class="hero-visual-label">Maurizio Valch · Live artist collection</span>
+            <figure class="hero-mockup hero-mockup--primary">
+                <img src="<?= h($heroComposition['primary']['url']) ?>" alt="<?= h($heroComposition['primary']['alt']) ?>" fetchpriority="high" decoding="async">
+                <figcaption>
+                    <strong><?= h($heroComposition['primary']['label']) ?></strong>
+                    <span>Artist mockup</span>
+                </figcaption>
+            </figure>
+            <?php if ($heroComposition['secondary']): ?>
+                <figure class="hero-mockup hero-mockup--secondary" aria-hidden="true">
+                    <img src="<?= h($heroComposition['secondary']['url']) ?>" alt="" decoding="async">
+                </figure>
+            <?php endif; ?>
         </div>
     </section>
 
@@ -846,17 +953,5 @@ function h($v): string
     <!-- Footer -->
     <?php PublicPage::footer(); ?>
 
-    <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const slides = document.querySelectorAll('.hero-slide');
-        if (slides.length <= 1) return;
-        let currentSlide = 0;
-        setInterval(() => {
-            slides[currentSlide].classList.remove('active');
-            currentSlide = (currentSlide + 1) % slides.length;
-            slides[currentSlide].classList.add('active');
-        }, 5000);
-    });
-    </script>
 </body>
 </html>

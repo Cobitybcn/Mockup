@@ -169,10 +169,29 @@ steps:
       - php
       - tests/run_regression_tests.php
 
+  - id: production-artifact-smoke
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    waitFor: [build-web]
+    args:
+      - -ceu
+      - |
+        image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WEB_SERVICE}:$COMMIT_SHA"
+        docker run --rm "$$image" sh -ceu '
+          test -f /var/www/html/app/Services/StripeArtistCredentials.php
+          test -f /var/www/artist-site/inc/StripeArtistCredentials.php
+        '
+        docker run --rm "$$image" php -r '
+          require "/var/www/html/app/bootstrap.php";
+          require "/var/www/html/site-admin/app/SiteManagerService.php";
+          if (!class_exists("SiteManagerService") || !class_exists("StripeArtistCredentials")) exit(1);
+          echo "PASS: Site Manager production dependencies\n";
+        '
+
   - id: push-web-images
     name: gcr.io/cloud-builders/docker
     entrypoint: bash
-    waitFor: [regression-tests]
+    waitFor: [regression-tests, production-artifact-smoke]
     args:
       - -ceu
       - |
@@ -324,6 +343,53 @@ steps:
           exit 1
         fi
 
+        gcloud run services update-traffic "${_WEB_SERVICE}" \
+          --project="$PROJECT_ID" \
+          --region="${_REGION}" \
+          --set-tags="release-candidate=$$revision" \
+          --quiet
+
+  - id: web-candidate-smoke
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    waitFor: [deploy-web]
+    args:
+      - -ceu
+      - |
+        service_url="$$(gcloud run services describe "${_WEB_SERVICE}" \
+          --project="$PROJECT_ID" --region="${_REGION}" \
+          --format='value(status.url)')"
+        candidate_url="$${service_url/https:\/\//https://release-candidate---}"
+        paths=(
+          "/"
+          "/login.php"
+          "/site-admin/?area=store&section=orders"
+        )
+
+        for path in "$${paths[@]}"; do
+          response_file="/tmp/web-candidate-$${RANDOM}.html"
+          status="$$(curl --silent --show-error --max-time 30 \
+            --output "$$response_file" --write-out '%{http_code}' "$${candidate_url}$${path}")"
+          if [[ ! "$$status" =~ ^(2|3)[0-9]{2}$$ ]]; then
+            echo "Candidate route $$path returned HTTP $$status." >&2
+            cat "$$response_file" >&2
+            exit 1
+          fi
+          if grep -Eqi 'Fatal error|Warning: require(_once)?' "$$response_file"; then
+            echo "Candidate route $$path rendered a PHP dependency failure." >&2
+            cat "$$response_file" >&2
+            exit 1
+          fi
+        done
+
+  - id: promote-web
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    waitFor: [web-candidate-smoke]
+    args:
+      - -ceu
+      - |
+        revision="${_WEB_SERVICE}-cb-$SHORT_SHA-$BUILD_ID"
         gcloud run services update-traffic "${_WEB_SERVICE}" \
           --project="$PROJECT_ID" \
           --region="${_REGION}" \

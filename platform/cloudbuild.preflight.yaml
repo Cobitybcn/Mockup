@@ -1,0 +1,74 @@
+steps:
+  - id: pull-cache
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    waitFor: ['-']
+    args:
+      - -c
+      - docker pull "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WEB_SERVICE}:latest" || true
+
+  - id: build-production-web-image
+    name: gcr.io/cloud-builders/docker
+    waitFor: [pull-cache]
+    args:
+      - build
+      - --cache-from
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_WEB_SERVICE}:latest
+      - --file
+      - platform/Dockerfile.web
+      - --tag
+      - artworkmockups-web-preflight:$BUILD_ID
+      - .
+
+  - id: regression-tests
+    name: gcr.io/cloud-builders/docker
+    waitFor: [build-production-web-image]
+    args:
+      - run
+      - --rm
+      - artworkmockups-web-preflight:$BUILD_ID
+      - php
+      - tests/run_regression_tests.php
+
+  - id: production-artifact-smoke
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    waitFor: [build-production-web-image]
+    args:
+      - -ceu
+      - |
+        image="artworkmockups-web-preflight:$BUILD_ID"
+        docker run --rm "$$image" sh -ceu '
+          test -f /var/www/html/app/Services/StripeArtistCredentials.php
+          test -f /var/www/artist-site/inc/StripeArtistCredentials.php
+        '
+        docker run --rm "$$image" php -r '
+          require "/var/www/html/app/bootstrap.php";
+          require "/var/www/html/site-admin/app/SiteManagerService.php";
+          if (!class_exists("SiteManagerService") || !class_exists("StripeArtistCredentials")) exit(1);
+          echo "PASS: Site Manager production dependencies\n";
+        '
+
+  - id: dependency-audit
+    name: gcr.io/cloud-builders/docker
+    waitFor: [regression-tests]
+    args:
+      - run
+      - --rm
+      - artworkmockups-web-preflight:$BUILD_ID
+      - composer
+      - audit
+      - --no-interaction
+
+serviceAccount: projects/project-ff549db7-4f7f-4b0c-9a5/serviceAccounts/mockups-cicd-sa@project-ff549db7-4f7f-4b0c-9a5.iam.gserviceaccount.com
+
+substitutions:
+  _REGION: us-central1
+  _REPOSITORY: mockups-repo
+  _WEB_SERVICE: mockups-web
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+
+timeout: 1800s

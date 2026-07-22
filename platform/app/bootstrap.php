@@ -31,6 +31,7 @@ require_once __DIR__ . '/Support/DescriptionDiversityEngine.php';
 require_once __DIR__ . '/Support/WorldMotherCameraAuthorityPolicy.php';
 require_once __DIR__ . '/Support/MockupVariationEligibility.php';
 require_once __DIR__ . '/Support/MockupFavorites.php';
+require_once __DIR__ . '/Support/PublicArtistShowcase.php';
 require_once __DIR__ . '/Support/ArtworkSeries.php';
 require_once __DIR__ . '/Support/AdminSceneEditor.php';
 require_once __DIR__ . '/Support/PublicPage.php';
