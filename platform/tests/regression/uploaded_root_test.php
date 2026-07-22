@@ -320,6 +320,11 @@ function run_uploaded_root_regression_tests(): void
         $videosStyles,
         'las acciones principales de Videos conservan geometria cuadrada'
     );
+    TestHarness::assertContains(
+        'font-size: clamp(42px, 3.4vw, 52px);',
+        $videosStyles,
+        'Videos usa la jerarquia editorial prominente del patron de cabeceras'
+    );
     TestHarness::assertTrue(
         !str_contains($videosSource, 'Biblioteca')
             && !str_contains($videosSource, 'Videos finales')

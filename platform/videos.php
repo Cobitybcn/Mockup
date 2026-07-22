@@ -63,7 +63,7 @@ function videos_date(string $value): string
     <title>Videos - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
-    <link rel="stylesheet" href="videos.css?v=11">
+    <link rel="stylesheet" href="videos.css?v=12">
     <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body>

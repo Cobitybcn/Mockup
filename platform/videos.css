@@ -5,6 +5,17 @@
 
 .videos-heading {
     align-items: center;
+    margin-bottom: 20px;
+    padding: 10px 0 22px;
+}
+
+.videos-heading h1 {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: clamp(42px, 3.4vw, 52px);
+    font-weight: 500;
+    letter-spacing: -.01em;
+    line-height: .96;
 }
 
 .videos-kicker,
@@ -668,7 +679,8 @@ body.has-video-modal { overflow: hidden; }
 
 @media (max-width: 760px) {
     .videos-catalog { padding: 16px 12px 24px; }
-    .videos-heading { align-items: flex-start; }
+    .videos-heading { align-items: flex-start; padding-top:4px; }
+    .videos-heading h1 { font-size:40px; }
     .videos-decision-block { padding:14px; }
     .videos-primary-actions { --videos-action-size:112px; width:100%; justify-content:flex-end; gap:10px; }
     .videos-panel { padding: 14px; }
