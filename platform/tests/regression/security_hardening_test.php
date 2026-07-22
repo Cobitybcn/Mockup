@@ -16,6 +16,26 @@ function run_security_hardening_regression_tests(): void
     TestHarness::assertContains('check_', $apache, 'diagnostic scripts are denied by Apache');
     TestHarness::assertContains('cleanup_jobs', $apache, 'maintenance scripts are denied by Apache');
     TestHarness::assertContains('/(?:analysis|app|docs|jobs|logs|migrations', $apache, 'internal directories are denied by Apache');
+    TestHarness::assertContains(
+        'SetEnvIf Request_URI "^/(?:platform/)?(?:create_scenes_wait|mockup_combinations_review)\\.php$" artwork_same_origin_frame=1',
+        $apache,
+        'only the authenticated compact progress pages may be framed'
+    );
+    TestHarness::assertContains(
+        'X-Frame-Options "SAMEORIGIN" env=artwork_same_origin_frame',
+        $apache,
+        'compact progress framing remains restricted to the same origin'
+    );
+    TestHarness::assertContains(
+        'frame-ancestors \'self\'" env=artwork_same_origin_frame',
+        $apache,
+        'the CSP independently restricts compact progress to the same origin'
+    );
+    TestHarness::assertContains(
+        'X-Frame-Options "DENY" env=!artwork_same_origin_frame',
+        $apache,
+        'every other production page remains impossible to frame'
+    );
 
     $auth = (string)file_get_contents($platformRoot . '/app/Support/Auth.php');
     TestHarness::assertTrue(!str_contains($auth, 'password_reset_links.log'), 'password reset links are never written below the document root');
@@ -65,4 +85,5 @@ function run_security_hardening_regression_tests(): void
     TestHarness::assertContains('tests/run_regression_tests.php', $releaseBuild, 'release artifacts must pass regression tests before they are published');
     $webDockerfile = (string)file_get_contents($platformRoot . '/Dockerfile.web');
     TestHarness::assertContains('artist-site/inc/functions.php', $webDockerfile, 'the production image carries the complete artist security contract fixture');
+    TestHarness::assertContains('apache2ctl configtest', $webDockerfile, 'the production image rejects invalid Apache security configuration during its build');
 }

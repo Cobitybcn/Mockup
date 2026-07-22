@@ -27,7 +27,9 @@ class GeminiArtworkProcessor implements ArtworkProcessorInterface
             mkdir($resultsDir, 0775, true);
         }
 
-        $rootCount = !empty($status['user_scene_flow']) ? 1 : PromptSettings::rootArtworkCount();
+        $rootCount = !empty($status['user_scene_flow'])
+            ? RootArtworkViewSetService::requiredCount()
+            : PromptSettings::rootArtworkCount();
 
         $promptsMap = [];
         for ($i = 1; $i <= $rootCount; $i++) {

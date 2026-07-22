@@ -75,6 +75,7 @@ require_once __DIR__ . '/Services/SocialBoardPublishService.php';
 require_once __DIR__ . '/Services/SocialScheduledPublicationService.php';
 require_once __DIR__ . '/Services/ArtworkEmbeddingService.php';
 require_once __DIR__ . '/Services/ArtworkGroupService.php';
+require_once __DIR__ . '/Services/RootArtworkViewSetService.php';
 require_once __DIR__ . '/Services/MockArtworkProcessor.php';
 require_once __DIR__ . '/Services/MockMockupGenerator.php';
 require_once __DIR__ . '/Services/MockupBatchQueue.php';

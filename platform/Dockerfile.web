@@ -47,7 +47,7 @@ COPY site-admin/ /var/www/html/site-admin/
 # and worker entry points. These files must never be reachable from the public
 # web service even if a future build accidentally copies them again.
 COPY platform/apache-security.conf /etc/apache2/conf-available/artworkmockups-security.conf
-RUN a2enconf artworkmockups-security
+RUN a2enconf artworkmockups-security && apache2ctl configtest
 
 # Keep the small public-site contract fixture beside the platform image so the
 # production regression suite validates both deployable surfaces before release.

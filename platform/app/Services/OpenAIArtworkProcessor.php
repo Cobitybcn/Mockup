@@ -36,14 +36,34 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
         }
 
         $outputNameTemplate = 'base_artwork_ai_' . $jobId . '_v';
-        $prompt = $this->buildPrompt($status, $source);
         $targetSize = $this->targetSize($status, $source);
-        $rootCount = !empty($status['user_scene_flow']) ? 1 : PromptSettings::rootArtworkCount();
+        $isUserSceneFlow = !empty($status['user_scene_flow']);
+        $rootCount = $isUserSceneFlow
+            ? RootArtworkViewSetService::requiredCount()
+            : PromptSettings::rootArtworkCount();
 
-        file_put_contents($jobDir . '/prompt.txt', $prompt);
+        $prompts = [];
+        if ($isUserSceneFlow) {
+            for ($version = 1; $version <= $rootCount; $version++) {
+                $prompts[$version] = $this->buildPromptForVersion($version, $status);
+            }
+        } else {
+            $prompts[1] = $this->buildPrompt($status);
+        }
+
+        $promptSummary = '';
+        foreach ($prompts as $version => $prompt) {
+            $promptSummary .= "=== VERSION {$version} ===\n{$prompt}\n\n";
+        }
+        file_put_contents($jobDir . '/prompt.txt', trim($promptSummary));
         file_put_contents($jobDir . '/target_size.txt', $targetSize);
 
-        $images = $this->callImageEditCandidates($jobDir, $source, $status, $prompt, $targetSize, $rootCount);
+        $images = [];
+        if ($isUserSceneFlow) {
+            $images = $this->callImageEditViewSetParallel($jobDir, $source, $status, $prompts, $targetSize);
+        } else {
+            $images = $this->callImageEditCandidates($jobDir, $source, $status, $prompts[1], $targetSize, $rootCount);
+        }
 
         $files = [];
         $paths = [];
@@ -67,9 +87,25 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
         ];
     }
 
-    private function buildPrompt(array $status, string $source): string
+    private function buildPrompt(array $status): string
     {
-        $prompt = trim(PromptSettings::rootArtworkRules());
+        return $this->withGeometryDirective(trim(PromptSettings::rootArtworkRules()), $status);
+    }
+
+    private function buildPromptForVersion(int $version, array $status): string
+    {
+        $prompt = match ($version) {
+            1 => PromptSettings::rootArtworkRulesFrontal(),
+            2 => PromptSettings::rootArtworkRulesLeft(),
+            3 => PromptSettings::rootArtworkRulesRight(),
+            default => PromptSettings::rootArtworkRulesFrontal(),
+        };
+
+        return $this->withGeometryDirective(trim($prompt), $status);
+    }
+
+    private function withGeometryDirective(string $prompt, array $status): string
+    {
         $m = (array)($status['measurements'] ?? []);
         $shape = (string)($m['artwork_shape'] ?? '');
         $width = trim((string)($m['width'] ?? ''));
@@ -89,6 +125,68 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
     }
 
     private function callImageEditCandidates(string $jobDir, string $source, array $status, string $prompt, string $targetSize, int $rootCount): array
+    {
+        $fields = $this->buildImageEditFields($jobDir, $source, $status, $prompt, $targetSize, $rootCount);
+
+        $lastRaw = '';
+        $lastStatus = 0;
+        $lastErr = '';
+
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            $response = $this->postImageEdit($fields);
+            $lastRaw = $response['raw'];
+            $lastStatus = $response['status'];
+            $lastErr = $response['err'];
+
+            if ($lastErr === '' && $lastStatus >= 200 && $lastStatus < 300) {
+                return $this->decodeImageResponse($lastRaw);
+            }
+
+            if (!in_array($lastStatus, [429, 500, 502, 503, 504], true)) {
+                break;
+            }
+
+            sleep($attempt * 3);
+        }
+
+        if ($lastErr !== '') {
+            throw new RuntimeException('Error CURL OpenAI: ' . $lastErr);
+        }
+
+        throw new RuntimeException('Error OpenAI HTTP ' . $lastStatus . ': ' . $lastRaw);
+    }
+
+    private function callImageEditViewSetParallel(string $jobDir, string $source, array $status, array $prompts, string $targetSize): array
+    {
+        $requests = [];
+        foreach ($prompts as $prompt) {
+            $requests[] = $this->buildImageEditFields($jobDir, $source, $status, (string)$prompt, $targetSize, 1);
+        }
+
+        $responses = $this->postImageEditsParallel($requests);
+        $images = [];
+        foreach ($responses as $index => $response) {
+            if ($response['err'] !== '' || $response['status'] < 200 || $response['status'] >= 300) {
+                $fallback = $this->callImageEditCandidates(
+                    $jobDir,
+                    $source,
+                    $status,
+                    (string)array_values($prompts)[$index],
+                    $targetSize,
+                    1
+                );
+                $images[] = $fallback[0];
+                continue;
+            }
+
+            $decoded = $this->decodeImageResponse($response['raw']);
+            $images[] = $decoded[0];
+        }
+
+        return $images;
+    }
+
+    private function buildImageEditFields(string $jobDir, string $source, array $status, string $prompt, string $targetSize, int $rootCount): array
     {
         $apiDir = rtrim($jobDir, '/\\') . DIRECTORY_SEPARATOR . 'api_inputs';
         if (!is_dir($apiDir)) {
@@ -123,51 +221,7 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
             $i++;
         }
 
-        $lastRaw = '';
-        $lastStatus = 0;
-        $lastErr = '';
-
-        for ($attempt = 1; $attempt <= 3; $attempt++) {
-            $response = $this->postImageEdit($fields);
-            $lastRaw = $response['raw'];
-            $lastStatus = $response['status'];
-            $lastErr = $response['err'];
-
-            if ($lastErr === '' && $lastStatus >= 200 && $lastStatus < 300) {
-                $decoded = json_decode((string)$lastRaw, true);
-                
-                $images = [];
-                if (isset($decoded['data']) && is_array($decoded['data'])) {
-                    foreach ($decoded['data'] as $item) {
-                        $b64 = $item['b64_json'] ?? null;
-                        if ($b64) {
-                            $decodedB64 = base64_decode($b64);
-                            if ($decodedB64) {
-                                $images[] = $decodedB64;
-                            }
-                        }
-                    }
-                }
-
-                if (count($images) === 0) {
-                    throw new RuntimeException('OpenAI no devolvio imagenes validas para la obra raiz. Respuesta: ' . $lastRaw);
-                }
-
-                return $images;
-            }
-
-            if (!in_array($lastStatus, [429, 500, 502, 503, 504], true)) {
-                break;
-            }
-
-            sleep($attempt * 3);
-        }
-
-        if ($lastErr !== '') {
-            throw new RuntimeException('Error CURL OpenAI: ' . $lastErr);
-        }
-
-        throw new RuntimeException('Error OpenAI HTTP ' . $lastStatus . ': ' . $lastRaw);
+        return $fields;
     }
 
     private function postImageEdit(array $fields): array
@@ -176,6 +230,61 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
             throw new RuntimeException('Falta OPENAI_API_KEY para preparar la obra raiz.');
         }
 
+        $ch = $this->createImageEditHandle($fields);
+        $raw = curl_exec($ch);
+        $err = curl_error($ch);
+        $statusCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        return [
+            'raw' => (string)$raw,
+            'err' => (string)$err,
+            'status' => $statusCode,
+        ];
+    }
+
+    private function postImageEditsParallel(array $requests): array
+    {
+        if ($this->apiKey === '') {
+            throw new RuntimeException('Falta OPENAI_API_KEY para preparar la obra raiz.');
+        }
+
+        $multi = curl_multi_init();
+        $handles = [];
+        foreach ($requests as $index => $fields) {
+            $handle = $this->createImageEditHandle($fields);
+            $handles[$index] = $handle;
+            curl_multi_add_handle($multi, $handle);
+        }
+
+        do {
+            $multiStatus = curl_multi_exec($multi, $running);
+            if ($multiStatus !== CURLM_OK) {
+                break;
+            }
+            if ($running > 0 && curl_multi_select($multi, 1.0) === -1) {
+                usleep(10000);
+            }
+        } while ($running > 0);
+
+        $responses = [];
+        foreach ($handles as $index => $handle) {
+            $responses[$index] = [
+                'raw' => (string)curl_multi_getcontent($handle),
+                'err' => (string)curl_error($handle),
+                'status' => (int)curl_getinfo($handle, CURLINFO_HTTP_CODE),
+            ];
+            curl_multi_remove_handle($multi, $handle);
+            curl_close($handle);
+        }
+        curl_multi_close($multi);
+        ksort($responses);
+
+        return array_values($responses);
+    }
+
+    private function createImageEditHandle(array $fields): CurlHandle
+    {
         $ch = curl_init('https://api.openai.com/v1/images/edits');
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
@@ -188,16 +297,30 @@ class OpenAIArtworkProcessor implements ArtworkProcessorInterface
             CURLOPT_CONNECTTIMEOUT => 60,
         ]);
 
-        $raw = curl_exec($ch);
-        $err = curl_error($ch);
-        $statusCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        return $ch;
+    }
 
-        return [
-            'raw' => (string)$raw,
-            'err' => (string)$err,
-            'status' => $statusCode,
-        ];
+    private function decodeImageResponse(string $raw): array
+    {
+        $decoded = json_decode($raw, true);
+        $images = [];
+        if (isset($decoded['data']) && is_array($decoded['data'])) {
+            foreach ($decoded['data'] as $item) {
+                $b64 = $item['b64_json'] ?? null;
+                if ($b64) {
+                    $decodedB64 = base64_decode($b64, true);
+                    if ($decodedB64 !== false) {
+                        $images[] = $decodedB64;
+                    }
+                }
+            }
+        }
+
+        if ($images === []) {
+            throw new RuntimeException('OpenAI no devolvio imagenes validas para la obra raiz. Respuesta: ' . $raw);
+        }
+
+        return $images;
     }
 
     private function prepareApiImage(string $sourcePath, string $apiDir, string $name): string

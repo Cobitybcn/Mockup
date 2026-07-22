@@ -168,10 +168,17 @@ try {
     }
 
     if (!empty($diskStatus['user_scene_flow']) && $candidateFiles !== []) {
-        $selectedRootFile = (string)$candidateFiles[0];
+        $rootViewSet = (new RootArtworkViewSetService())->replaceForJob(
+            Database::connection(),
+            (string)$diskStatus['job_id'],
+            (int)($diskStatus['user_id'] ?? 0),
+            $candidateFiles
+        );
+        $selectedRootFile = (string)$rootViewSet['selected_file'];
         $diskStatus['status'] = 'processing';
-        $diskStatus['message'] = 'Root image prepared. Analyzing the artwork...';
+        $diskStatus['message'] = 'Front, left and right root views prepared. Analyzing the frontal view...';
         $diskStatus['candidates'] = $candidateFiles;
+        $diskStatus['root_views'] = $rootViewSet['views'];
         $diskStatus['result_file'] = $selectedRootFile;
         write_status_file($statusFile, $diskStatus);
 
@@ -193,28 +200,32 @@ try {
             }catch(Throwable $v2Error){error_log('Artwork v2 analysis was not generated: '.$v2Error->getMessage());$diskStatus['artwork_analysis_v2']='error';$diskStatus['artwork_analysis_v2_error']=$v2Error->getMessage();write_status_file($statusFile,$diskStatus);}
         }
 
-        $metaName = pathinfo($selectedRootFile, PATHINFO_FILENAME) . '.meta.json';
-        $metaPath = RESULTS_DIR . DIRECTORY_SEPARATOR . $metaName;
-        file_put_contents(
-            $metaPath,
-            json_encode([
-                'source_job_id' => $jobId,
-                'user_id' => (int)($diskStatus['user_id'] ?? 0),
-                'root_file' => $selectedRootFile,
-                'measurements' => $diskStatus['measurements'] ?? [],
-                'artist_notes' => $diskStatus['artist_notes'] ?? '',
-                'provider_settings' => $diskStatus['provider_settings'] ?? ProviderSettings::all(),
-                'generation_provider' => $generationProvider,
-                'scale_text' => build_scale_text_for_meta((array)($diskStatus['measurements'] ?? [])),
-                'root_source' => 'auto_selected_user_scene_flow',
-                'user_scene_flow' => true,
-            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-        );
-        if (StorageService::isGcsActive()) {
-            StorageService::uploadFile('results/' . basename($metaName), $metaPath);
+        foreach ((array)$rootViewSet['views'] as $rootViewType => $rootViewFile) {
+            $metaName = pathinfo((string)$rootViewFile, PATHINFO_FILENAME) . '.meta.json';
+            $metaPath = RESULTS_DIR . DIRECTORY_SEPARATOR . $metaName;
+            file_put_contents(
+                $metaPath,
+                json_encode([
+                    'source_job_id' => $jobId,
+                    'user_id' => (int)($diskStatus['user_id'] ?? 0),
+                    'root_file' => (string)$rootViewFile,
+                    'root_view_type' => (string)$rootViewType,
+                    'is_active_root' => (string)$rootViewFile === $selectedRootFile,
+                    'measurements' => $diskStatus['measurements'] ?? [],
+                    'artist_notes' => $diskStatus['artist_notes'] ?? '',
+                    'provider_settings' => $diskStatus['provider_settings'] ?? ProviderSettings::all(),
+                    'generation_provider' => $generationProvider,
+                    'scale_text' => build_scale_text_for_meta((array)($diskStatus['measurements'] ?? [])),
+                    'root_source' => 'auto_selected_user_scene_flow',
+                    'user_scene_flow' => true,
+                ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+            );
+            if (StorageService::isGcsActive()) {
+                StorageService::uploadFile('results/' . basename($metaName), $metaPath);
+            }
         }
         $diskStatus['status'] = 'done';
-        $diskStatus['message'] = 'Root image and artwork analysis are ready. Creating scenes next.';
+        $diskStatus['message'] = 'Front, left and right root views and artwork analysis are ready. Creating scenes next.';
         write_status_file($statusFile, $diskStatus);
     } else {
         $diskStatus['status'] = 'done';
