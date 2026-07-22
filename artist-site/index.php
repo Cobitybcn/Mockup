@@ -813,7 +813,8 @@ function render_home(array $site, array $series, array $artworks): void
             $file = trim((string)($artwork['header_file'] ?? ''))
                 ?: basename((string)($artwork['source_image_file'] ?? ''));
             return [
-                'image' => app_publication_media_url($artwork, $file),
+                'image' => app_publication_media_url($artwork, $file, 1200),
+                'srcset' => app_publication_media_srcset($artwork, $file),
                 'title' => $artwork['title'] ?? 'Maurizio Valch artwork',
             ];
         },
@@ -823,6 +824,7 @@ function render_home(array $site, array $series, array $artworks): void
         $heroSlides = array_values(array_filter(array_map(
             fn ($artwork) => !empty($artwork['image']) ? [
                 'image' => asset_url($artwork['image']),
+                'srcset' => '',
                 'title' => $artwork['title'] ?? 'Maurizio Valch artwork',
             ] : null,
             $available
@@ -831,6 +833,7 @@ function render_home(array $site, array $series, array $artworks): void
     if (!$heroSlides) {
         $heroSlides[] = [
             'image' => asset_url('/assets/images/the-path-before-architecture.jpg'),
+            'srcset' => '',
             'title' => 'Maurizio Valch artwork',
         ];
     }
@@ -839,7 +842,12 @@ function render_home(array $site, array $series, array $artworks): void
         <div class="hero__media" data-hero-slider>
             <div class="hero__slides">
                 <?php foreach ($heroSlides as $index => $slide): ?>
-                    <img class="hero__slide" src="<?= e($slide['image']) ?>" alt="<?= e($slide['title'] . ' root artwork image') ?>" data-hero-slide <?= $index === 0 ? 'data-active="true"' : '' ?>>
+                    <img class="hero__slide"
+                        <?= $index === 0 ? 'src="' . e($slide['image']) . '"' : 'data-src="' . e($slide['image']) . '"' ?>
+                        <?= !empty($slide['srcset']) ? ($index === 0 ? 'srcset="' : 'data-srcset="') . e($slide['srcset']) . '" sizes="(max-width: 940px) 100vw, 55vw"' : '' ?>
+                        alt="<?= e($slide['title'] . ' root artwork image') ?>"
+                        decoding="async" <?= $index === 0 ? 'fetchpriority="high"' : 'loading="lazy"' ?>
+                        data-hero-slide <?= $index === 0 ? 'data-active="true"' : '' ?>>
                 <?php endforeach; ?>
             </div>
             <?php if (count($heroSlides) > 1): ?>
@@ -908,7 +916,11 @@ function render_home(array $site, array $series, array $artworks): void
                     <?php $cardImageFile = trim((string)($artwork['header_file'] ?? '')) ?: (string)$artwork['source_image_file']; ?>
                     <article class="art-card">
                         <a class="art-card__image" href="<?= e(url_for('artworks/' . $slug)) ?>">
-                            <img src="<?= e(app_publication_media_url($artwork, $cardImageFile)) ?>" alt="<?= e($artwork['artwork_alt'] ?: $artwork['title'] . ' by Maurizio Valch') ?>">
+                            <img src="<?= e(app_publication_media_url($artwork, $cardImageFile, 480)) ?>"
+                                srcset="<?= e(app_publication_media_srcset($artwork, $cardImageFile)) ?>"
+                                sizes="(max-width: 940px) calc(100vw - 36px), 33vw"
+                                alt="<?= e($artwork['artwork_alt'] ?: $artwork['title'] . ' by Maurizio Valch') ?>"
+                                loading="lazy" decoding="async">
                         </a>
                         <div class="art-card__body">
                             <div class="eyebrow"><?= e($artwork['series'] ?: 'Original work') ?></div>
@@ -1273,9 +1285,18 @@ function app_absolute_url(string $path): string
     throw new RuntimeException('The artist website public URL is not configured.');
 }
 
-function app_publication_media_url(array $artwork, string $file): string
+function app_publication_media_url(array $artwork, string $file, int $width = 0): string
 {
-    return artworkmockups_public_url() . '/publication_media.php?slug=' . rawurlencode((string)$artwork['slug']) . '&file=' . rawurlencode(basename($file));
+    $url = artworkmockups_public_url() . '/publication_media.php?slug=' . rawurlencode((string)$artwork['slug']) . '&file=' . rawurlencode(basename($file));
+    return $width > 0 ? $url . '&w=' . $width : $url;
+}
+
+function app_publication_media_srcset(array $artwork, string $file): string
+{
+    return implode(', ', array_map(
+        static fn (int $width): string => app_publication_media_url($artwork, $file, $width) . ' ' . $width . 'w',
+        [480, 768, 1200]
+    ));
 }
 
 function artworkmockups_public_url(): string
@@ -1300,10 +1321,19 @@ function app_series_catalog(): ?AppPublishedSeriesCatalog
     return $catalog;
 }
 
-function app_series_media_url(array $series, string $file): string
+function app_series_media_url(array $series, string $file, int $width = 0): string
 {
     if ($file === '') return '';
-    return artworkmockups_public_url() . '/series_media.php?slug=' . rawurlencode((string)$series['slug']) . '&file=' . rawurlencode(basename($file));
+    $url = artworkmockups_public_url() . '/series_media.php?slug=' . rawurlencode((string)$series['slug']) . '&file=' . rawurlencode(basename($file));
+    return $width > 0 ? $url . '&w=' . $width : $url;
+}
+
+function app_series_media_srcset(array $series, string $file): string
+{
+    return implode(', ', array_map(
+        static fn (int $width): string => app_series_media_url($series, $file, $width) . ' ' . $width . 'w',
+        [480, 768, 1200]
+    ));
 }
 
 function app_artist_profile(): ?AppPublishedArtistProfile
@@ -1340,16 +1370,26 @@ function app_studio_notes_catalog(): ?AppPublishedStudioNotes
     return $catalog;
 }
 
-function app_studio_note_media_url(array $post, string $file): string
+function app_studio_note_media_url(array $post, string $file, int $width = 0): string
 {
     if ($file === '' || (int)($post['id'] ?? 0) <= 0) return '';
-    return artworkmockups_public_url() . '/studio_note_media.php?note=' . (int)$post['id'] . '&file=' . rawurlencode(basename($file));
+    $url = artworkmockups_public_url() . '/studio_note_media.php?note=' . (int)$post['id'] . '&file=' . rawurlencode(basename($file));
+    return $width > 0 ? $url . '&w=' . $width : $url;
+}
+
+function app_studio_note_media_srcset(array $post, string $file): string
+{
+    return implode(', ', array_map(
+        static fn (int $width): string => app_studio_note_media_url($post, $file, $width) . ' ' . $width . 'w',
+        [480, 768, 1200]
+    ));
 }
 
 function first_html_image_src(string $html): string
 {
     if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $html, $matches)) {
-        return $matches[1];
+        $source = trim((string)$matches[1]);
+        return preg_match('~^(?:data:|javascript:)~i', $source) ? '' : $source;
     }
     return '';
 }
@@ -1391,7 +1431,7 @@ function render_published_constellation_map(array $soldLocations, array $items):
             'title' => $artwork['title'] ?? ($location['title'] ?? 'Placed work'),
             'country' => $location['country'] ?? '',
             'postal_code' => $location['postal_code'] ?? '',
-            'image' => app_publication_media_url($artwork, $cardImageFile),
+            'image' => app_publication_media_url($artwork, $cardImageFile, 480),
             'url' => url_for('artworks/' . $artworkSlug),
         ];
     }
@@ -1433,7 +1473,11 @@ function render_published_catalog(array $items, string $title = 'Artworks', stri
                 <?php $cardImageFile = trim((string)($artwork['header_file'] ?? '')) ?: (string)$artwork['source_image_file']; ?>
                 <article class="art-card">
                     <a class="art-card__image" href="<?= e(url_for('artworks/' . $slug)) ?>">
-                        <img src="<?= e(app_publication_media_url($artwork, $cardImageFile)) ?>" alt="<?= e($artwork['artwork_alt'] ?: $artwork['title'] . ' by ' . ($artistName ?? 'Artist')) ?>">
+                        <img src="<?= e(app_publication_media_url($artwork, $cardImageFile, 480)) ?>"
+                            srcset="<?= e(app_publication_media_srcset($artwork, $cardImageFile)) ?>"
+                            sizes="(max-width: 940px) calc(100vw - 36px), 33vw"
+                            alt="<?= e($artwork['artwork_alt'] ?: $artwork['title'] . ' by ' . ($artistName ?? 'Artist')) ?>"
+                            loading="lazy" decoding="async">
                     </a>
                     <div class="art-card__body">
                         <div class="eyebrow"><?= e($artwork['series'] ?: 'Original work') ?></div>
@@ -1505,12 +1549,20 @@ function render_published_artwork(array $site, array $artwork): void
     ?>
     <section class="artwork-detail">
         <div class="artwork-detail__image">
-            <img src="<?= e(app_publication_media_url($artwork, $mainImageFile)) ?>" alt="<?= e($artwork['artwork_alt'] ?: $artwork['title'] . ' original painting by Maurizio Valch') ?>">
+            <img src="<?= e(app_publication_media_url($artwork, $mainImageFile, 1200)) ?>"
+                srcset="<?= e(app_publication_media_srcset($artwork, $mainImageFile)) ?>"
+                sizes="(max-width: 940px) calc(100vw - 36px), 62vw"
+                alt="<?= e($artwork['artwork_alt'] ?: $artwork['title'] . ' original painting by Maurizio Valch') ?>"
+                fetchpriority="high" decoding="async">
             <?php if ($artwork['artwork_views']): ?>
                 <div class="mockup-gallery artwork-view-gallery" aria-label="<?= e($artwork['title'] . ' additional artwork views') ?>">
                     <?php foreach ($artwork['artwork_views'] as $view): ?>
                         <a href="<?= e(app_publication_media_url($artwork, $view['file_name'])) ?>" target="_blank" rel="noopener">
-                            <img src="<?= e(app_publication_media_url($artwork, $view['file_name'])) ?>" alt="<?= e($artwork['title'] . ' ' . str_replace('-', ' ', $view['view_type']) . ' view') ?>">
+                            <img src="<?= e(app_publication_media_url($artwork, $view['file_name'], 768)) ?>"
+                                srcset="<?= e(app_publication_media_srcset($artwork, $view['file_name'])) ?>"
+                                sizes="(max-width: 940px) calc(100vw - 36px), 62vw"
+                                alt="<?= e($artwork['title'] . ' ' . str_replace('-', ' ', $view['view_type']) . ' view') ?>"
+                                loading="lazy" decoding="async">
                         </a>
                     <?php endforeach; ?>
                 </div>
@@ -1519,7 +1571,11 @@ function render_published_artwork(array $site, array $artwork): void
                 <div class="mockup-gallery" aria-label="<?= e($artwork['title'] . ' contextual mockups') ?>">
                     <?php foreach ($artwork['items'] as $mockup): ?>
                         <a class="mockup-gallery__link" href="<?= e(url_for('artworks/' . $artwork['slug'] . '/mockups/' . $mockup['public_slug'])) ?>">
-                            <img src="<?= e(app_publication_media_url($artwork, $mockup['mockup_file'])) ?>" alt="<?= e($mockup['alt_text'] ?: $mockup['title'] ?: $artwork['title'] . ' contextual mockup') ?>">
+                            <img src="<?= e(app_publication_media_url($artwork, $mockup['mockup_file'], 768)) ?>"
+                                srcset="<?= e(app_publication_media_srcset($artwork, $mockup['mockup_file'])) ?>"
+                                sizes="(max-width: 940px) calc(100vw - 36px), 62vw"
+                                alt="<?= e($mockup['alt_text'] ?: $mockup['title'] ?: $artwork['title'] . ' contextual mockup') ?>"
+                                loading="lazy" decoding="async">
                         </a>
                     <?php endforeach; ?>
                 </div>
@@ -1550,7 +1606,9 @@ function render_published_artwork(array $site, array $artwork): void
                                     <span class="artwork-series-preview" id="<?= e($seriesPreviewId) ?>" role="tooltip">
                                         <?php if (!empty($publishedSeries['header_file'])): ?>
                                             <span class="artwork-series-preview__image">
-                                                <img src="<?= e(app_series_media_url($publishedSeries, (string)$publishedSeries['header_file'])) ?>" alt="" style="<?= e(series_header_style($publishedSeries)) ?>">
+                                                <img src="<?= e(app_series_media_url($publishedSeries, (string)$publishedSeries['header_file'], 480)) ?>"
+                                                    srcset="<?= e(app_series_media_srcset($publishedSeries, (string)$publishedSeries['header_file'])) ?>"
+                                                    sizes="92px" alt="" style="<?= e(series_header_style($publishedSeries)) ?>" loading="lazy" decoding="async">
                                             </span>
                                         <?php endif; ?>
                                         <span class="artwork-series-preview__content">
@@ -1698,7 +1756,10 @@ function render_acquisition(array $site, array $artwork): void
     <?php else: ?>
         <section class="acquisition-workspace">
             <aside class="acquisition-artwork">
-                <img src="<?= e(app_publication_media_url($artwork, $mainImageFile)) ?>" alt="<?= e((string)$artwork['title']) ?>">
+                <img src="<?= e(app_publication_media_url($artwork, $mainImageFile, 768)) ?>"
+                    srcset="<?= e(app_publication_media_srcset($artwork, $mainImageFile)) ?>"
+                    sizes="(max-width: 940px) calc(100vw - 36px), 40vw"
+                    alt="<?= e((string)$artwork['title']) ?>" fetchpriority="high" decoding="async">
                 <div><p class="eyebrow">Original artwork</p><h2><?= e((string)$artwork['title']) ?></h2><?php if (published_dimensions($artwork)): ?><p><?= e(published_dimensions($artwork)) ?></p><?php endif; ?><strong><?= e(AppStore::money((int)$offer['price_minor'], (string)$offer['currency'])) ?></strong></div>
             </aside>
             <form method="post" class="acquisition-form" data-acquisition-form data-subtotal="<?= (int)$offer['price_minor'] ?>" data-currency="<?= e((string)$offer['currency']) ?>">
@@ -1811,7 +1872,10 @@ function render_published_mockup(array $site, array $artwork, array $mockup): vo
     ?>
     <section class="artwork-detail mockup-landing">
         <div class="artwork-detail__image">
-            <img src="<?= e(app_publication_media_url($artwork, $mockup['mockup_file'])) ?>" alt="<?= e($mockup['alt_text'] ?: $title) ?>">
+            <img src="<?= e(app_publication_media_url($artwork, $mockup['mockup_file'], 1200)) ?>"
+                srcset="<?= e(app_publication_media_srcset($artwork, $mockup['mockup_file'])) ?>"
+                sizes="(max-width: 940px) calc(100vw - 36px), 62vw"
+                alt="<?= e($mockup['alt_text'] ?: $title) ?>" fetchpriority="high" decoding="async">
         </div>
         <div class="artwork-detail__content">
             <p class="eyebrow">Context study / <?= e($artwork['title']) ?></p>
@@ -1977,7 +2041,10 @@ function render_published_series_index(array $items): void
                     <a class="series-card" href="<?= e(url_for('series2/' . $slug)) ?>">
                         <?php if ($item['header_file']): ?>
                             <div class="series-card__image-container">
-                                <img src="<?= e(app_series_media_url($item, (string)$item['header_file'])) ?>" alt="<?= e($item['title'] . ' series thumbnail') ?>" style="<?= e(series_header_style($item)) ?>">
+                                <img src="<?= e(app_series_media_url($item, (string)$item['header_file'], 480)) ?>"
+                                    srcset="<?= e(app_series_media_srcset($item, (string)$item['header_file'])) ?>"
+                                    sizes="(max-width: 940px) calc(100vw - 72px), 25vw"
+                                    alt="<?= e($item['title'] . ' series thumbnail') ?>" style="<?= e(series_header_style($item)) ?>" loading="lazy" decoding="async">
                             </div>
                         <?php endif; ?>
                         <span><?= e($item['title']) ?><?= $yearLabel !== '' ? ' (' . e($yearLabel) . ')' : '' ?></span>
@@ -1993,7 +2060,10 @@ function render_published_series_index(array $items): void
                             <a class="earlier-work" href="<?= e(url_for('series2/' . $slug)) ?>">
                                 <?php if ($item['header_file']): ?>
                                     <div class="earlier-work__image-container">
-                                        <img src="<?= e(app_series_media_url($item, (string)$item['header_file'])) ?>" alt="<?= e($item['title'] . ' series thumbnail') ?>" style="<?= e(series_header_style($item)) ?>">
+                                        <img src="<?= e(app_series_media_url($item, (string)$item['header_file'], 480)) ?>"
+                                            srcset="<?= e(app_series_media_srcset($item, (string)$item['header_file'])) ?>"
+                                            sizes="(max-width: 940px) calc(100vw - 72px), 33vw"
+                                            alt="<?= e($item['title'] . ' series thumbnail') ?>" style="<?= e(series_header_style($item)) ?>" loading="lazy" decoding="async">
                                     </div>
                                 <?php endif; ?>
                                 <div>
@@ -2027,7 +2097,10 @@ function render_published_series_detail(array $item): void
     </section>
     <?php if ($item['header_file']): ?>
         <section class="section series-preview-hero">
-            <img src="<?= e(app_series_media_url($item, (string)$item['header_file'])) ?>" alt="<?= e($item['title'] . ' representative image') ?>" style="<?= e(series_header_style($item)) ?>">
+            <img src="<?= e(app_series_media_url($item, (string)$item['header_file'], 1200)) ?>"
+                srcset="<?= e(app_series_media_srcset($item, (string)$item['header_file'])) ?>"
+                sizes="(max-width: 940px) calc(100vw - 36px), 760px"
+                alt="<?= e($item['title'] . ' representative image') ?>" style="<?= e(series_header_style($item)) ?>" fetchpriority="high" decoding="async">
         </section>
     <?php endif; ?>
     <section class="section section--split">
@@ -2062,7 +2135,10 @@ function render_published_series_detail(array $item): void
                     <?php $cardImageFile = trim((string)($artwork['header_file'] ?? '')) ?: (string)$artwork['source_image_file']; ?>
                     <article class="art-card">
                         <a class="art-card__image" href="<?= e(url_for('artworks/' . $slug)) ?>">
-                            <img src="<?= e(app_publication_media_url($artwork, $cardImageFile)) ?>" alt="<?= e($artwork['artwork_alt'] ?: $artwork['title'] . ' artwork') ?>">
+                            <img src="<?= e(app_publication_media_url($artwork, $cardImageFile, 480)) ?>"
+                                srcset="<?= e(app_publication_media_srcset($artwork, $cardImageFile)) ?>"
+                                sizes="(max-width: 940px) calc(100vw - 36px), 33vw"
+                                alt="<?= e($artwork['artwork_alt'] ?: $artwork['title'] . ' artwork') ?>" loading="lazy" decoding="async">
                         </a>
                         <div class="art-card__body">
                             <div class="eyebrow"><?= e($seriesTitle) ?></div>
@@ -2170,8 +2246,11 @@ function render_published_journal(array $notes): void
         <?php foreach ($notes as $slug => $post): ?>
             <?php 
             $thumbUrl = '';
-            if (!empty($post['media_files'][0] ?? $post['mockup_files'][0] ?? '')) {
-                $thumbUrl = app_studio_note_media_url($post, (string)($post['media_files'][0] ?? $post['mockup_files'][0]));
+            $thumbSrcset = '';
+            $thumbFile = (string)($post['media_files'][0] ?? $post['mockup_files'][0] ?? '');
+            if ($thumbFile !== '') {
+                $thumbUrl = app_studio_note_media_url($post, $thumbFile, 480);
+                $thumbSrcset = app_studio_note_media_srcset($post, $thumbFile);
             } else {
                 $thumbUrl = first_html_image_src((string)$post['objective']);
             }
@@ -2187,7 +2266,8 @@ function render_published_journal(array $notes): void
             <article>
                 <?php if ($thumbUrl !== ''): ?>
                     <a class="article-thumb" href="<?= e(url_for('studio-notes/' . $slug)) ?>">
-                        <img src="<?= e($thumbUrl) ?>" alt="<?= e($post['title'] . ' thumbnail') ?>">
+                        <img src="<?= e($thumbUrl) ?>" <?= $thumbSrcset !== '' ? 'srcset="' . e($thumbSrcset) . '" sizes="(max-width: 940px) calc(100vw - 72px), 33vw"' : '' ?>
+                            alt="<?= e($post['title'] . ' thumbnail') ?>" loading="lazy" decoding="async">
                     </a>
                 <?php endif; ?>
                 <p class="eyebrow">Essay</p>
@@ -2207,8 +2287,11 @@ function render_published_journal_post(array $notes, string $slug): bool
     $post = $notes[$slug];
     
     $coverUrl = '';
-    if (!empty($post['media_files'][0] ?? $post['mockup_files'][0] ?? '')) {
-        $coverUrl = app_studio_note_media_url($post, (string)($post['media_files'][0] ?? $post['mockup_files'][0]));
+    $coverSrcset = '';
+    $coverFile = (string)($post['media_files'][0] ?? $post['mockup_files'][0] ?? '');
+    if ($coverFile !== '') {
+        $coverUrl = app_studio_note_media_url($post, $coverFile, 768);
+        $coverSrcset = app_studio_note_media_srcset($post, $coverFile);
     }
     ?>
     <section class="page-hero artist-page-hero journal-post-hero__intro">
@@ -2220,7 +2303,9 @@ function render_published_journal_post(array $notes, string $slug): bool
     <?php if ($coverUrl !== ''): ?>
         <section class="section artist-profile-block journal-post-feature">
             <figure class="artist-profile-block__portrait journal-post-feature__portrait">
-                <img src="<?= e($coverUrl) ?>" alt="<?= e($post['title']) ?>" loading="eager">
+                <img src="<?= e($coverUrl) ?>" srcset="<?= e($coverSrcset) ?>"
+                    sizes="(max-width: 940px) calc(100vw - 36px), 148px"
+                    alt="<?= e($post['title']) ?>" fetchpriority="high" decoding="async">
             </figure>
             <div class="prose">
                 <?= safe_rich_text((string)$post['objective']) ?>
@@ -2239,12 +2324,11 @@ function render_published_journal_post(array $notes, string $slug): bool
             </div>
             <div class="artist-studio-grid">
                 <?php foreach (array_slice($post['mockup_files'], 1) as $mockupFile): ?>
-                    <?php 
-                    $appsBase = rtrim(str_replace('\\', '/', dirname(base_path())), '/');
-                    $imgUrl = $appsBase . '/platform/media.php?file=' . rawurlencode(basename($mockupFile));
-                    ?>
                     <figure>
-                        <img src="<?= e($imgUrl) ?>" alt="Context mockup">
+                        <img src="<?= e(app_studio_note_media_url($post, (string)$mockupFile, 768)) ?>"
+                            srcset="<?= e(app_studio_note_media_srcset($post, (string)$mockupFile)) ?>"
+                            sizes="(max-width: 940px) calc(100vw - 36px), 33vw"
+                            alt="Context mockup" loading="lazy" decoding="async">
                     </figure>
                 <?php endforeach; ?>
             </div>

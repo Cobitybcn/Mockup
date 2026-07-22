@@ -1,4 +1,28 @@
 (function () {
+    const toggle = document.querySelector('[data-mobile-nav-toggle]');
+    const header = toggle && toggle.closest('.site-header');
+    if (!toggle || !header) return;
+
+    function setOpen(open) {
+        header.classList.toggle('is-menu-open', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    toggle.addEventListener('click', () => {
+        setOpen(!header.classList.contains('is-menu-open'));
+    });
+    header.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            setOpen(false);
+            toggle.focus();
+        }
+    });
+    window.matchMedia('(min-width: 941px)').addEventListener('change', (event) => {
+        if (event.matches) setOpen(false);
+    });
+})();
+
+(function () {
     const slider = document.querySelector('[data-hero-slider]');
 
     if (!slider) {
@@ -13,8 +37,19 @@
         return;
     }
 
-    let index = Math.floor(Math.random() * slides.length);
-    let timer = 0;
+    let index = 0;
+    const desktop = window.matchMedia('(min-width: 941px)');
+
+    function hydrate() {
+        slides.forEach((slide) => {
+            if (!slide.getAttribute('src') && slide.dataset.src) {
+                slide.setAttribute('src', slide.dataset.src);
+            }
+            if (!slide.getAttribute('srcset') && slide.dataset.srcset) {
+                slide.setAttribute('srcset', slide.dataset.srcset);
+            }
+        });
+    }
 
     function show(nextIndex) {
         index = (nextIndex + slides.length) % slides.length;
@@ -27,27 +62,25 @@
         });
     }
 
-    function restart() {
-        window.clearInterval(timer);
-        timer = window.setInterval(() => show(index + 1), 6500);
-    }
-
     if (prev) {
         prev.addEventListener('click', () => {
             show(index - 1);
-            restart();
         });
     }
 
     if (next) {
         next.addEventListener('click', () => {
             show(index + 1);
-            restart();
         });
     }
 
-    show(index);
-    restart();
+    function configure() {
+        show(0);
+        if (desktop.matches) hydrate();
+    }
+
+    desktop.addEventListener('change', configure);
+    configure();
 })();
 
 (function () {
