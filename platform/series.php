@@ -215,12 +215,37 @@ $seriesEditorialFields = $selectedSeries ? [
     <?php endif; ?>
     <style>
         .series-bilingual-title {
-            display:block;
+            display:grid;
+            grid-template-columns:160px minmax(0,1fr);
+            gap:22px;
+            align-items:stretch;
             width:100%;
             box-sizing:border-box;
             padding:18px 20px;
             border:1px solid var(--line);
             background:var(--surface);
+        }
+
+        .series-bilingual-title--without-cover { grid-template-columns:1fr; }
+
+        .series-bilingual-cover {
+            position:relative;
+            min-height:160px;
+            overflow:hidden;
+            background:var(--surface-soft);
+        }
+
+        .series-bilingual-cover img {
+            display:block;
+            width:100%;
+            height:100%;
+            object-fit:cover;
+            transform-origin:center;
+        }
+
+        .series-bilingual-title-copy {
+            min-width:0;
+            align-self:center;
         }
 
         .series-bilingual-label {
@@ -310,6 +335,11 @@ $seriesEditorialFields = $selectedSeries ? [
         .series-bilingual-memo .series-bilingual-copy { min-height:82px; }
 
         @media (max-width:800px) {
+            .series-bilingual-title { grid-template-columns:100px minmax(0,1fr); gap:14px; padding:14px; }
+            .series-bilingual-title--without-cover { grid-template-columns:1fr; }
+            .series-bilingual-cover { min-height:112px; }
+            .series-bilingual-heading { font-size:36px; }
+            .series-bilingual-title-memo { font-size:17px; }
             .series-bilingual-spread { grid-template-columns:1fr; grid-template-rows:none; }
             .series-bilingual-page { display:block; grid-column:auto; grid-row:auto; }
         }
@@ -335,10 +365,21 @@ $seriesEditorialFields = $selectedSeries ? [
                 </div>
             </div>
             <?php elseif ($seriesBilingualExperiment): ?>
-            <div class="series-bilingual-title" aria-label="Título universal de la serie">
-                <span class="series-bilingual-label">Título universal</span>
-                <h1 class="series-bilingual-heading" contenteditable="true" role="textbox" aria-label="Título de la serie"><?= series_h($selectedSeries['title']) ?></h1>
-                <p class="series-bilingual-title-memo">STRATA — LIMEN · SERIES X — NUHRĀ (ܢܘܗܪܐ) · no traducir</p>
+            <div class="series-bilingual-title <?= empty($selectedSeries['header_file']) ? 'series-bilingual-title--without-cover' : '' ?>" aria-label="Título universal de la serie">
+                <?php if (!empty($selectedSeries['header_file'])): ?>
+                    <div class="series-bilingual-cover" aria-label="Portada de la serie">
+                        <img
+                            src="<?= series_h(series_media_url($selectedSeries['header_file'], 520)) ?>"
+                            alt="Portada de <?= series_h($selectedSeries['title']) ?>"
+                            style="object-position:<?= (int)($selectedSeries['header_focal_x'] ?? 50) ?>% <?= (int)($selectedSeries['header_focal_y'] ?? 50) ?>%;transform:scale(<?= ((int)($selectedSeries['header_zoom'] ?? 115)) / 100 ?>);"
+                        >
+                    </div>
+                <?php endif; ?>
+                <div class="series-bilingual-title-copy">
+                    <span class="series-bilingual-label">Título universal</span>
+                    <h1 class="series-bilingual-heading" contenteditable="true" role="textbox" aria-label="Título de la serie"><?= series_h($selectedSeries['title']) ?></h1>
+                    <p class="series-bilingual-title-memo">STRATA — LIMEN · SERIES X — NUHRĀ (ܢܘܗܪܐ) · no traducir</p>
+                </div>
             </div>
             <details class="series-bilingual-editorial">
                 <summary>
