@@ -468,6 +468,32 @@ function run_uploaded_root_regression_tests(): void
     );
 
     $seriesSource = (string)file_get_contents(dirname(__DIR__, 2) . '/series.php');
+    $createArtSource = (string)file_get_contents(dirname(__DIR__, 2) . '/create_scenes.php');
+    $startGenerateSource = (string)file_get_contents(dirname(__DIR__, 2) . '/start_generate.php');
+    TestHarness::assertContains(
+        'class="series-create-art-decision" href="create_scenes.php?series=',
+        $seriesSource,
+        'el detalle de Series inicia Create Art con la serie activa'
+    );
+    TestHarness::assertTrue(
+        !str_contains($seriesSource, '>Back to series</a>'),
+        'el detalle de Series elimina la accion redundante Back to series'
+    );
+    TestHarness::assertContains(
+        'class="series-detail-title-row"',
+        $seriesSource,
+        'el encabezado de Series separa titulo, estado y metadatos con jerarquia editorial'
+    );
+    TestHarness::assertContains(
+        'name="series_id" value="<?= $createSeriesId ?>"',
+        $createArtSource,
+        'Create Art conserva la serie elegida como contexto de creacion'
+    );
+    TestHarness::assertContains(
+        'ArtworkSeries::assignArtwork($pdo, (int)$currentUser[\'id\'], $artworkId, $seriesId, false);',
+        $startGenerateSource,
+        'la obra nueva queda asociada automaticamente a la serie validada'
+    );
     TestHarness::assertTrue(
         !str_contains($seriesSource, 'Open a series to edit it, or add a new one.')
             && !str_contains($seriesSource, "'Choose a series'"),

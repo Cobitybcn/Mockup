@@ -6,6 +6,19 @@ require_once __DIR__ . '/app/bootstrap.php';
 $user = Auth::requireUser();
 FeatureAccess::requirePage($user, FeatureAccess::MOCKUPS_GENERATE, 'Mockup generation');
 
+$createSeriesId = max(0, (int)($_GET['series'] ?? 0));
+$createSeries = null;
+if ($createSeriesId > 0) {
+    $createSeriesPdo = Database::connection();
+    ArtworkSeries::ensureSchema($createSeriesPdo);
+    $createSeriesStmt = $createSeriesPdo->prepare('SELECT id, title FROM artwork_series WHERE id = ? AND user_id = ? AND status = ? LIMIT 1');
+    $createSeriesStmt->execute([$createSeriesId, (int)$user['id'], 'active']);
+    $createSeries = $createSeriesStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    if (!$createSeries) {
+        $createSeriesId = 0;
+    }
+}
+
 function h($v): string
 {
     return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
@@ -108,6 +121,19 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
             color: var(--accent);
             font-size: 16px;
             font-weight: 600;
+        }
+        .creation-series-context {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 12px;
+            padding: 6px 10px;
+            border: 1px solid #d8c4a8;
+            border-radius: 999px;
+            background: #f5ecdf;
+            color: #71583b;
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 1.3;
         }
         .scene-panel {
             background: var(--surface);
@@ -1063,12 +1089,14 @@ $defaultScenePreviews = scene_preview_urls($library->imagesForCategory($defaultS
         <input type="hidden" name="generation_provider" value="gemini">
         <input type="hidden" name="unit" id="measureUnitInput" value="cm">
         <input type="hidden" name="real_dimensions_enabled" value="1">
+        <?php if ($createSeriesId > 0): ?><input type="hidden" name="series_id" value="<?= $createSeriesId ?>"><?php endif; ?>
 
         <header class="scene-flow-header">
             <h1>Create Art</h1>
             <p class="desktop-header-copy">
                 <span class="desc-kicker">Create realistic scene mockups from a clear photograph or image file.</span>
                 <span class="desc-instructions">Upload the artwork, confirm its orientation and approximate dimensions, then choose the visual environment for the first mockups.</span>
+                <?php if ($createSeries): ?><span class="creation-series-context">New artwork will be added to <?= h($createSeries['title']) ?>.</span><?php endif; ?>
             </p>
             <p class="mobile-header-copy">Adjust the artwork width and height on the photo. They do not need to be exact—an approximate size helps create more realistic mockups.</p>
         </header>

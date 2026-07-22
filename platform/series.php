@@ -200,7 +200,7 @@ $displayedArtworks = $selectedSeries
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Series - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="ui-catalog.css?v=14">
+    <link rel="stylesheet" href="ui-catalog.css?v=15">
     <?php if ($seriesPreviewActive): ?>
         <link rel="stylesheet" href="visual-consistency-preview.css?v=2">
     <?php endif; ?>
@@ -228,29 +228,23 @@ $displayedArtworks = $selectedSeries
                 $seriesMissing = ArtworkSeries::missingForPublish($selectedSeries);
                 $seriesYearInline = trim(series_year_range_label($selectedSeries['year_start'] ?? null, $selectedSeries['year_end'] ?? null), " \xC2\xB7");
             ?>
-            <div class="catalog-heading">
-                <div>
-                    <h1>
-                        <span class="series-kicker">Series:</span>
-                        <?= series_h($selectedSeries['title']) ?>
+            <div class="catalog-heading series-detail-heading">
+                <div class="series-detail-heading__copy">
+                    <span class="series-detail-kicker">Series</span>
+                    <div class="series-detail-title-row">
+                        <h1><?= series_h($selectedSeries['title']) ?></h1>
                         <span class="status-pill <?= !empty($selectedSeries['published']) ? 'status-published' : 'status-pending' ?>">
                             <?= !empty($selectedSeries['published']) ? 'Published' : 'Draft' ?>
                         </span>
-                    </h1>
-                    <p>
-                        <?php if (trim((string)($selectedSeries['subtitle'] ?? '')) !== ''): ?>
-                            <span style="font-weight: 500; color: var(--ink);"><?= series_h($selectedSeries['subtitle']) ?></span>
-                            <?php if ($seriesYearInline !== '' || (int)$selectedSeries['artwork_count'] > 0 || (int)$selectedSeries['mockup_count'] > 0): ?> · <?php endif; ?>
-                        <?php endif; ?>
-                        <?php if ($seriesYearInline !== ''): ?>
-                            <?= series_h($seriesYearInline) ?> · 
-                        <?php endif; ?>
-                        <?= (int)$selectedSeries['artwork_count'] ?> artworks · <?= (int)$selectedSeries['mockup_count'] ?> mockups
-                    </p>
+                    </div>
+                    <?php if (trim((string)($selectedSeries['subtitle'] ?? '')) !== ''): ?>
+                        <p class="series-detail-subtitle"><?= series_h($selectedSeries['subtitle']) ?></p>
+                    <?php endif; ?>
+                    <p class="series-detail-meta"><?php if ($seriesYearInline !== ''): ?><?= series_h($seriesYearInline) ?> · <?php endif; ?><?= (int)$selectedSeries['artwork_count'] ?> artworks · <?= (int)$selectedSeries['mockup_count'] ?> mockups</p>
                 </div>
-                <div class="catalog-heading__actions">
-                    <a class="button-link" href="website_studio_notes.php?source=series:<?= (int)$selectedSeries['id'] ?>#new-studio-note">Create Studio Note</a>
-                    <a class="button-link secondary" href="series.php<?= $seriesPreviewActive ? '?design_preview=series-catalog' : '' ?>">Back to series</a>
+                <div class="catalog-heading__actions series-detail-actions">
+                    <a class="button-link secondary" href="website_studio_notes.php?source=series:<?= (int)$selectedSeries['id'] ?>#new-studio-note">Create Studio Note</a>
+                    <a class="series-create-art-decision" href="create_scenes.php?series=<?= (int)$selectedSeries['id'] ?>"><span>Create Art</span></a>
                 </div>
             </div>
             <?php endif; ?>

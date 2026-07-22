@@ -68,6 +68,19 @@ function measurement_to_cm_string(string $value, string $unit): string
     return rtrim(rtrim(number_format($number, 2, '.', ''), '0'), '.');
 }
 
+$pdo = Database::connection();
+$seriesId = max(0, (int)($_POST['series_id'] ?? 0));
+$seriesTitle = '';
+if ($seriesId > 0) {
+    ArtworkSeries::ensureSchema($pdo);
+    $seriesStmt = $pdo->prepare('SELECT title FROM artwork_series WHERE id = ? AND user_id = ? AND status = ? LIMIT 1');
+    $seriesStmt->execute([$seriesId, (int)$currentUser['id'], 'active']);
+    $seriesTitle = trim((string)$seriesStmt->fetchColumn());
+    if ($seriesTitle === '') {
+        fail('The selected series is not available.');
+    }
+}
+
 if (empty($_FILES['main_artwork']) || $_FILES['main_artwork']['error'] !== UPLOAD_ERR_OK) {
     fail('Did not receive the main artwork correctly.');
 }
@@ -201,6 +214,8 @@ $status = [
     'scene_category' => $sceneCategory,
     'scene_board' => $sceneBoard,
     'scene_limit' => $sceneLimit,
+    'series_id' => $seriesId > 0 ? $seriesId : null,
+    'series_title' => $seriesTitle,
 ];
 
 file_put_contents(
@@ -212,7 +227,7 @@ if (StorageService::isGcsActive()) {
     StorageService::uploadFile('jobs/' . $jobId . '/status.json', $jobDir . '/status.json');
 }
 
-$stmt = Database::connection()->prepare("
+$stmt = $pdo->prepare("
     INSERT INTO artworks (user_id, job_id, main_file, status, width, height, depth, unit, created_at, updated_at)
     VALUES (:user_id, :job_id, :main_file, :status, :width, :height, :depth, :unit, :created_at, :updated_at)
 ");
@@ -228,6 +243,10 @@ $stmt->execute([
     'created_at' => $status['created_at'],
     'updated_at' => $status['updated_at'],
 ]);
+$artworkId = (int)$pdo->lastInsertId();
+if ($seriesId > 0) {
+    ArtworkSeries::assignArtwork($pdo, (int)$currentUser['id'], $artworkId, $seriesId, false);
+}
 
 /* =========================
    REDIRECCIÓN INMEDIATA
