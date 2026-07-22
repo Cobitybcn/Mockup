@@ -31,16 +31,9 @@ class ProviderSettings
             'openai_image_size' => $input['openai_image_size'] ?? '',
             'mockup_worker_count' => $input['mockup_worker_count'] ?? '',
             'ffmpeg_binary_path' => $input['ffmpeg_binary_path'] ?? '',
-            'stripe_connect_redirect_uri' => $input['stripe_connect_redirect_uri'] ?? '',
         ]);
 
-        foreach ([
-            'openai_api_key',
-            'gemini_api_key',
-            'stripe_connect_secret_key',
-            'stripe_connect_client_id',
-            'stripe_connect_webhook_secret',
-        ] as $key) {
+        foreach (['openai_api_key', 'gemini_api_key'] as $key) {
             $clearKey = 'clear_' . $key;
             $inputValue = trim((string)($input[$key] ?? ''));
 
@@ -52,8 +45,6 @@ class ProviderSettings
                 $settings[$key] = (string)$existing[$key];
             }
         }
-
-        self::validateStripeSettings($settings);
 
         foreach ($settings as $key => $value) {
             $stmt->execute([
@@ -80,7 +71,6 @@ class ProviderSettings
             'openai_image_size' => self::openAIImageSize(),
             'mockup_worker_count' => (string)self::mockupWorkerCount(),
             'ffmpeg_binary_path' => self::ffmpegBinaryPath(),
-            'stripe_connect_redirect_uri' => self::stripeConnectRedirectUri(),
         ];
     }
 
@@ -189,45 +179,6 @@ class ProviderSettings
         return self::value('ffmpeg_binary_path', '');
     }
 
-    public static function stripeConnectSecretKey(): string
-    {
-        return self::value('stripe_connect_secret_key', self::environmentValue('STRIPE_CONNECT_SECRET_KEY'));
-    }
-
-    public static function stripeConnectClientId(): string
-    {
-        return self::value('stripe_connect_client_id', self::environmentValue('STRIPE_CONNECT_CLIENT_ID'));
-    }
-
-    public static function stripeConnectWebhookSecret(): string
-    {
-        return self::value('stripe_connect_webhook_secret', self::environmentValue('STRIPE_CONNECT_WEBHOOK_SECRET'));
-    }
-
-    public static function stripeConnectRedirectUri(): string
-    {
-        return self::value('stripe_connect_redirect_uri', self::environmentValue('STRIPE_CONNECT_REDIRECT_URI'));
-    }
-
-    /** @return array{ready:bool,mode:string,secret_key:bool,client_id:bool,webhook_secret:bool,redirect_uri:bool} */
-    public static function stripeConnectStatus(): array
-    {
-        $secretKey = self::stripeConnectSecretKey();
-        $clientId = self::stripeConnectClientId();
-        $webhookSecret = self::stripeConnectWebhookSecret();
-        $redirectUri = self::stripeConnectRedirectUri();
-        $mode = str_starts_with($secretKey, 'sk_live_') ? 'live' : (str_starts_with($secretKey, 'sk_test_') ? 'test' : 'not configured');
-        $status = [
-            'mode' => $mode,
-            'secret_key' => str_starts_with($secretKey, 'sk_live_') || str_starts_with($secretKey, 'sk_test_'),
-            'client_id' => str_starts_with($clientId, 'ca_'),
-            'webhook_secret' => str_starts_with($webhookSecret, 'whsec_'),
-            'redirect_uri' => filter_var($redirectUri, FILTER_VALIDATE_URL) !== false,
-        ];
-        $status['ready'] = $status['secret_key'] && $status['client_id'] && $status['webhook_secret'] && $status['redirect_uri'];
-        return $status;
-    }
-
     private static function value(string $key, string $fallback): string
     {
         self::load();
@@ -313,45 +264,7 @@ class ProviderSettings
             'openai_image_size',
             'mockup_worker_count',
             'ffmpeg_binary_path',
-            'stripe_connect_secret_key',
-            'stripe_connect_client_id',
-            'stripe_connect_webhook_secret',
-            'stripe_connect_redirect_uri',
         ];
-    }
-
-    private static function validateStripeSettings(array $settings): void
-    {
-        $validators = [
-            'stripe_connect_secret_key' => static fn(string $value): bool => str_starts_with($value, 'sk_test_') || str_starts_with($value, 'sk_live_'),
-            'stripe_connect_client_id' => static fn(string $value): bool => str_starts_with($value, 'ca_'),
-            'stripe_connect_webhook_secret' => static fn(string $value): bool => str_starts_with($value, 'whsec_'),
-            'stripe_connect_redirect_uri' => static fn(string $value): bool => filter_var($value, FILTER_VALIDATE_URL) !== false,
-        ];
-        $labels = [
-            'stripe_connect_secret_key' => 'Stripe secret key',
-            'stripe_connect_client_id' => 'Stripe Connect client ID',
-            'stripe_connect_webhook_secret' => 'Stripe webhook secret',
-            'stripe_connect_redirect_uri' => 'Stripe redirect URI',
-        ];
-
-        foreach ($validators as $key => $validator) {
-            $value = trim((string)($settings[$key] ?? ''));
-            if ($value !== '' && !$validator($value)) {
-                throw new InvalidArgumentException($labels[$key] . ' has an invalid format.');
-            }
-        }
-    }
-
-    private static function environmentValue(string $key): string
-    {
-        $configured = function_exists('app_env') ? trim((string)app_env($key, '')) : '';
-        if ($configured !== '') {
-            return $configured;
-        }
-
-        $environment = getenv($key);
-        return $environment === false ? '' : trim((string)$environment);
     }
 
     private static function normalizeAppMode(string $mode): string

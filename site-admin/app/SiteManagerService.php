@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/platform/app/Services/StripeArtistCredentials.php';
+
 final class SiteManagerService
 {
     private PublicationService $publications;
@@ -78,8 +80,16 @@ final class SiteManagerService
             payouts_enabled INTEGER NOT NULL DEFAULT 0,
             details_submitted INTEGER NOT NULL DEFAULT 0,
             connection_status VARCHAR(30) NOT NULL DEFAULT 'not_connected',
+            secret_key_encrypted {$long} NOT NULL,
+            webhook_secret_encrypted {$long} NOT NULL,
             created_at VARCHAR(40) NOT NULL, updated_at VARCHAR(40) NOT NULL
         )");
+        foreach (['secret_key_encrypted', 'webhook_secret_encrypted'] as $credentialColumn) {
+            if (!$this->columnExists('artist_site_payment_connections', $credentialColumn)) {
+                $this->pdo->exec('ALTER TABLE artist_site_payment_connections ADD COLUMN ' . $credentialColumn . ' ' . ($mysql ? 'LONGTEXT NULL' : "TEXT NOT NULL DEFAULT ''"));
+                if ($mysql) $this->pdo->exec("UPDATE artist_site_payment_connections SET {$credentialColumn}='' WHERE {$credentialColumn} IS NULL");
+            }
+        }
         $this->pdo->exec("CREATE TABLE IF NOT EXISTS artist_site_order_items (
             id {$id}, order_id {$integer} NOT NULL, print_variant_id {$integer} NOT NULL,
             artwork_id {$integer} NOT NULL, title VARCHAR(255) NOT NULL DEFAULT '',
@@ -180,55 +190,23 @@ final class SiteManagerService
     /** @return array<string,mixed> */
     public function paymentConnection(int $userId): array
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM artist_site_payment_connections WHERE user_id=? LIMIT 1');
-        $stmt->execute([$userId]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $row ?: [
-            'user_id' => $userId,
-            'provider' => 'stripe',
-            'external_account_id' => '',
-            'livemode' => 0,
-            'charges_enabled' => 0,
-            'payouts_enabled' => 0,
-            'details_submitted' => 0,
-            'connection_status' => 'not_connected',
-        ];
+        return (new StripeArtistCredentials($this->pdo))->connection($userId);
     }
 
-    /** @param array<string,mixed> $account */
-    public function saveStripeConnection(int $userId, string $accountId, bool $livemode, array $account): void
+    public function saveStripeCredentials(int $userId, string $secretKey, string $webhookSecret): void
     {
-        if (!preg_match('/^acct_[A-Za-z0-9]+$/', $accountId)) throw new RuntimeException('Invalid Stripe connected account.');
-        $duplicate = $this->pdo->prepare("SELECT user_id FROM artist_site_payment_connections WHERE external_account_id=? AND user_id<>? AND connection_status<>'disconnected' LIMIT 1");
-        $duplicate->execute([$accountId, $userId]);
-        if ($duplicate->fetchColumn()) throw new RuntimeException('This Stripe account is already connected to another artist.');
-        $chargesEnabled = !empty($account['charges_enabled']);
-        $payoutsEnabled = !empty($account['payouts_enabled']);
-        $detailsSubmitted = !empty($account['details_submitted']);
-        $status = $chargesEnabled && $payoutsEnabled && $detailsSubmitted ? 'connected' : 'requirements_due';
-        $now = date('c');
-        $exists = $this->pdo->prepare('SELECT id FROM artist_site_payment_connections WHERE user_id=?');
-        $exists->execute([$userId]);
-        if ($exists->fetchColumn()) {
-            $this->pdo->prepare('UPDATE artist_site_payment_connections SET provider=?,external_account_id=?,livemode=?,charges_enabled=?,payouts_enabled=?,details_submitted=?,connection_status=?,updated_at=? WHERE user_id=?')
-                ->execute(['stripe', $accountId, $livemode ? 1 : 0, $chargesEnabled ? 1 : 0, $payoutsEnabled ? 1 : 0, $detailsSubmitted ? 1 : 0, $status, $now, $userId]);
-        } else {
-            $this->pdo->prepare('INSERT INTO artist_site_payment_connections (user_id,provider,external_account_id,livemode,charges_enabled,payouts_enabled,details_submitted,connection_status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
-                ->execute([$userId, 'stripe', $accountId, $livemode ? 1 : 0, $chargesEnabled ? 1 : 0, $payoutsEnabled ? 1 : 0, $detailsSubmitted ? 1 : 0, $status, $now, $now]);
-        }
+        $connection = (new StripeArtistCredentials($this->pdo))->save($userId, $secretKey, $webhookSecret);
         $settings = $this->settings($userId);
         $settings['payment_provider'] = 'stripe';
-        $settings['payment_status'] = $status;
+        $settings['payment_status'] = (string)$connection['connection_status'];
         $this->upsertSettings($userId, $settings);
-        $this->log($userId, 'payment.connected', 'payment_connection', $accountId, 'Stripe account connected for this artist.');
+        $this->log($userId, 'payment.connected', 'payment_connection', (string)$connection['external_account_id'], 'Stripe account configured for this artist.');
     }
 
     public function disconnectStripeConnection(int $userId): void
     {
         $connection = $this->paymentConnection($userId);
-        $now = date('c');
-        $this->pdo->prepare("UPDATE artist_site_payment_connections SET external_account_id='',livemode=0,charges_enabled=0,payouts_enabled=0,details_submitted=0,connection_status='disconnected',updated_at=? WHERE user_id=?")
-            ->execute([$now, $userId]);
+        (new StripeArtistCredentials($this->pdo))->disconnect($userId);
         $settings = $this->settings($userId);
         $settings['payment_provider'] = '';
         $settings['payment_status'] = 'not_connected';

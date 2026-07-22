@@ -27,10 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $settings = ProviderSettings::all();
 $openAIKey = ProviderSettings::openAIAPIKey();
 $geminiKey = ProviderSettings::geminiAPIKey();
-$stripeStatus = ProviderSettings::stripeConnectStatus();
-$stripeRedirectUri = ProviderSettings::stripeConnectRedirectUri();
-$stripePublicUrl = trim(app_env('APP_PUBLIC_URL', '')) ?: 'https://artworkmockups.com';
-$stripeWebhookUrl = rtrim($stripePublicUrl, '/') . '/integrations/stripe/webhook/';
 
 function h($v): string
 {
@@ -100,52 +96,12 @@ $geminiImagePlans = [
             width: auto;
         }
 
-        .stripe-platform-panel {
-            margin-top: 18px;
-            padding: clamp(22px, 3vw, 34px);
-            border: 1px solid var(--line);
-            background: var(--surface);
-        }
-
-        .stripe-platform-heading {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 24px;
-            margin-bottom: 22px;
-        }
-
-        .stripe-platform-heading h2 { margin-bottom: 5px; }
-        .stripe-platform-heading p { max-width: 760px; margin: 0; color: var(--muted); }
-        .stripe-platform-status {
-            flex: 0 0 auto;
-            padding: 7px 10px;
-            border: 1px solid var(--line-dark);
-            color: var(--muted);
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: .06em;
-            text-transform: uppercase;
-        }
-        .stripe-platform-status.is-ready { border-color: #9caf94; background: #e7efe4; color: #40543c; }
-        .stripe-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px; }
-        .stripe-field-note { margin: -7px 0 12px; color: var(--muted); font-size: 12px; }
-        .stripe-field-wide { grid-column: 1 / -1; }
-        .stripe-webhook-guide { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
-        .stripe-webhook-guide summary { cursor: pointer; font-weight: 650; }
-        .stripe-webhook-guide code { overflow-wrap: anywhere; }
-        .stripe-webhook-guide ul { columns: 2; color: var(--muted); font-size: 13px; }
-
         .notice.error { border-color: #d8aaa5; background: #f6e8e6; color: #7d342e; }
 
         @media (max-width: 980px) {
             .settings-grid {
                 grid-template-columns: 1fr;
             }
-            .stripe-fields { grid-template-columns: 1fr; }
-            .stripe-field-wide { grid-column: auto; }
-            .stripe-platform-heading { flex-direction: column; }
-            .stripe-webhook-guide ul { columns: 1; }
         }
     </style>
 </head>
@@ -159,7 +115,7 @@ $geminiImagePlans = [
         </header>
 
         <div class="alert-strip">
-            Private configuration of AI providers and platform integrations.
+            Private configuration of AI providers and credentials.
         </div>
 
         <div class="workspace">
@@ -275,57 +231,6 @@ $geminiImagePlans = [
                         </p>
                     </section>
                 </div>
-
-                <section class="stripe-platform-panel" id="stripe-connect">
-                    <div class="stripe-platform-heading">
-                        <div>
-                            <h2>Stripe Connect · Platform</h2>
-                            <p>Configure this once for Artwork Mockups. Every artist then authorizes a separate Stripe Standard account from their own Store Admin; artists never enter platform API keys.</p>
-                        </div>
-                        <span class="stripe-platform-status <?= $stripeStatus['ready'] ? 'is-ready' : '' ?>">
-                            <?= $stripeStatus['ready'] ? h(ucfirst($stripeStatus['mode']) . ' mode ready') : 'Setup incomplete' ?>
-                        </span>
-                    </div>
-
-                    <div class="stripe-fields">
-                        <div>
-                            <label for="stripe_connect_secret_key">Platform secret key</label>
-                            <input id="stripe_connect_secret_key" name="stripe_connect_secret_key" type="password" value="" placeholder="<?= $stripeStatus['secret_key'] ? 'Configured — paste to replace' : 'sk_test_… or sk_live_…' ?>" autocomplete="new-password">
-                            <p class="stripe-field-note">Used server-side to create Checkout sessions on connected artist accounts.</p>
-                            <label class="checkbox-line"><input type="checkbox" name="clear_stripe_connect_secret_key" value="1">Clear saved secret key</label>
-                        </div>
-                        <div>
-                            <label for="stripe_connect_client_id">Connect client ID</label>
-                            <input id="stripe_connect_client_id" name="stripe_connect_client_id" type="password" value="" placeholder="<?= $stripeStatus['client_id'] ? 'Configured — paste to replace' : 'ca_…' ?>" autocomplete="new-password">
-                            <p class="stripe-field-note">Identifies the platform during each artist authorization.</p>
-                            <label class="checkbox-line"><input type="checkbox" name="clear_stripe_connect_client_id" value="1">Clear saved client ID</label>
-                        </div>
-                        <div>
-                            <label for="stripe_connect_webhook_secret">Connected accounts webhook secret</label>
-                            <input id="stripe_connect_webhook_secret" name="stripe_connect_webhook_secret" type="password" value="" placeholder="<?= $stripeStatus['webhook_secret'] ? 'Configured — paste to replace' : 'whsec_…' ?>" autocomplete="new-password">
-                            <p class="stripe-field-note">Verifies payment and account-status events received from Stripe.</p>
-                            <label class="checkbox-line"><input type="checkbox" name="clear_stripe_connect_webhook_secret" value="1">Clear saved webhook secret</label>
-                        </div>
-                        <div>
-                            <label for="stripe_connect_redirect_uri">OAuth redirect URI</label>
-                            <input id="stripe_connect_redirect_uri" name="stripe_connect_redirect_uri" type="url" value="<?= h($stripeRedirectUri) ?>" placeholder="https://artworkmockups.com/site-admin/stripe-connect-callback.php">
-                            <p class="stripe-field-note">This URL must exactly match a redirect URI allowed in Stripe Connect.</p>
-                        </div>
-                    </div>
-
-                    <details class="stripe-webhook-guide">
-                        <summary>Webhook endpoint and required events</summary>
-                        <p>In Stripe, create a webhook for <strong>Connected accounts</strong> pointing to <code><?= h($stripeWebhookUrl) ?></code>.</p>
-                        <ul>
-                            <li><code>checkout.session.completed</code></li>
-                            <li><code>checkout.session.async_payment_succeeded</code></li>
-                            <li><code>checkout.session.expired</code></li>
-                            <li><code>checkout.session.async_payment_failed</code></li>
-                            <li><code>account.updated</code></li>
-                            <li><code>account.application.deauthorized</code></li>
-                        </ul>
-                    </details>
-                </section>
 
                 <section class="form-section">
                     <h2>Media Processing</h2>

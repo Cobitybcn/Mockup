@@ -2,8 +2,10 @@
 require __DIR__ . '/inc/LocalEnv.php';
 load_local_env(dirname(__DIR__) . '/platform/.env');
 load_local_env(__DIR__ . '/.env');
+$artistAutoload = __DIR__ . '/vendor/autoload.php';
 $platformAutoload = dirname(__DIR__) . '/platform/vendor/autoload.php';
-if (is_file($platformAutoload)) require_once $platformAutoload;
+if (is_file($artistAutoload)) require_once $artistAutoload;
+elseif (is_file($platformAutoload)) require_once $platformAutoload;
 require __DIR__ . '/data/site.php';
 require __DIR__ . '/inc/functions.php';
 require __DIR__ . '/inc/AppDatabase.php';
@@ -15,6 +17,7 @@ require __DIR__ . '/inc/AppPublishedStudioNotes.php';
 require __DIR__ . '/inc/AppPublishedSiteSettings.php';
 require __DIR__ . '/inc/AppStore.php';
 require __DIR__ . '/inc/StripeCheckout.php';
+require __DIR__ . '/inc/ArtistContactMailer.php';
 
 $path = current_path();
 $segments = array_values(array_filter(explode('/', trim($path, '/'))));
@@ -1260,7 +1263,11 @@ function app_stripe_checkout(): ?StripeCheckout
     static $payments = false;
     if ($payments === false) {
         try {
-            $payments = StripeCheckout::fromEnvironment(app_admin_pdo());
+            $pdo = app_admin_pdo();
+            $stmt = $pdo->prepare('SELECT id FROM users WHERE LOWER(email)=? LIMIT 1');
+            $stmt->execute([strtolower(resolved_artist_email())]);
+            $userId = (int)($stmt->fetchColumn() ?: 0);
+            $payments = $userId > 0 ? StripeCheckout::forArtist($pdo, $userId) : null;
         } catch (Throwable $error) {
             error_log('Stripe Checkout unavailable: ' . $error->getMessage());
             $payments = null;
@@ -1672,15 +1679,12 @@ function render_acquisition(array $site, array $artwork): void
         $reservationReleased = false;
         try {
             if (!$payments) throw new RuntimeException('Stripe Checkout is unavailable.');
-            $payments->cancelSession(
-                (string)($_SESSION['stripe_session_id'] ?? ''),
-                (string)($_SESSION['stripe_account_id'] ?? '')
-            );
+            $payments->cancelSession((string)($_SESSION['stripe_session_id'] ?? ''));
             $reservationReleased = true;
         } catch (Throwable $cancelError) {
             error_log('Stripe Checkout cancellation sync failed: ' . $cancelError->getMessage());
         }
-        unset($_SESSION['stripe_session_id'], $_SESSION['stripe_account_id'], $_SESSION['stripe_order_id'], $_SESSION['stripe_artwork_slug'], $_SESSION['purchase_receipt']);
+        unset($_SESSION['stripe_session_id'], $_SESSION['stripe_order_id'], $_SESSION['stripe_artwork_slug'], $_SESSION['purchase_receipt']);
         $error = $reservationReleased
             ? 'Payment was cancelled. The artwork reservation has been released.'
             : 'Payment was cancelled. Stripe will release the temporary reservation automatically when the session expires.';
@@ -1709,12 +1713,10 @@ function render_acquisition(array $site, array $artwork): void
                 if (!$payments) throw new RuntimeException('Secure payment is temporarily unavailable.');
                 $session = $payments->createSession(
                     $order,
-                    (string)$offer['stripe_account_id'],
                     app_absolute_url('payment/success/') . '?session_id={CHECKOUT_SESSION_ID}',
                     app_absolute_url('acquire/' . rawurlencode((string)$artwork['slug']) . '/') . '?payment=cancelled'
                 );
                 $_SESSION['stripe_session_id'] = $session['id'];
-                $_SESSION['stripe_account_id'] = (string)$offer['stripe_account_id'];
                 $_SESSION['stripe_order_id'] = (int)$order['id'];
                 $_SESSION['stripe_artwork_slug'] = (string)$artwork['slug'];
                 header('Location: ' . $session['url'], true, 303);
@@ -1821,7 +1823,6 @@ function render_stripe_payment_result(): void
 {
     $sessionId = trim((string)($_GET['session_id'] ?? ''));
     $expectedSessionId = (string)($_SESSION['stripe_session_id'] ?? '');
-    $connectedAccountId = (string)($_SESSION['stripe_account_id'] ?? '');
     $orderId = (int)($_SESSION['stripe_order_id'] ?? 0);
     $receipt = is_array($_SESSION['purchase_receipt'] ?? null) ? (array)$_SESSION['purchase_receipt'] : [];
     $error = '';
@@ -1833,15 +1834,15 @@ function render_stripe_payment_result(): void
         }
         $payments = app_stripe_checkout();
         if (!$payments) throw new RuntimeException('Payment confirmation is temporarily unavailable.');
-        $payments->syncSession($sessionId, $connectedAccountId);
-        $order = $payments->receipt($orderId, $sessionId, $connectedAccountId);
+        $payments->syncSession($sessionId);
+        $order = $payments->receipt($orderId, $sessionId);
         if (!$order) throw new RuntimeException('The Stripe payment could not be matched to an order.');
     } catch (Throwable $paymentError) {
         error_log('Stripe Checkout return sync failed: ' . $paymentError->getMessage());
         $error = $paymentError->getMessage();
     }
 
-    unset($_SESSION['stripe_session_id'], $_SESSION['stripe_account_id'], $_SESSION['stripe_order_id'], $_SESSION['stripe_artwork_slug'], $_SESSION['purchase_receipt']);
+    unset($_SESSION['stripe_session_id'], $_SESSION['stripe_order_id'], $_SESSION['stripe_artwork_slug'], $_SESSION['purchase_receipt']);
     $paid = $order && (string)$order['payment_status'] === 'paid';
     ?>
     <section class="page-hero page-hero--compact acquisition-heading">
@@ -2648,31 +2649,21 @@ function render_contact(array $site, array $artworks): void
             $profile = app_artist_profile()?->get();
             $artistName = $profile['artist_name'] ?? 'Artist';
             $to = filter_var((string)($site['email'] ?? ''), FILTER_VALIDATE_EMAIL) ? (string)$site['email'] : resolved_artist_email();
-            $from = $to; // e.g. studio@artistdomain.com
-            
             $submittedSubject = str_replace(["\r", "\n"], ' ', mb_substr($submittedSubject, 0, 120));
-            $emailSubject = "[" . $artistName . " Website] " . $submittedSubject;
-            
-            $body = "New message from " . $artistName . " Website:\n\n";
-            $body .= "Name: " . $submittedName . "\n";
-            $body .= "Email: " . $submittedEmail . "\n";
-            $body .= "Subject: " . $submittedSubject . "\n\n";
-            $body .= "Message:\n" . $submittedMessage . "\n";
-            
-            $headers = [
-                "From: " . $from,
-                "Reply-To: " . $submittedEmail,
-                "X-Mailer: PHP/" . phpversion(),
-                "Content-Type: text/plain; charset=UTF-8"
-            ];
-            
-            if (mail($to, $emailSubject, $body, implode("\r\n", $headers))) {
+            try {
+                (new ArtistContactMailer())->send([
+                    'name' => $submittedName,
+                    'email' => $submittedEmail,
+                    'subject' => $submittedSubject,
+                    'message' => $submittedMessage,
+                ], $to, $artistName);
                 $success = true;
                 $submittedName = '';
                 $submittedEmail = '';
-                $submittedSubject = 'Painting inquiry';
+                $submittedSubject = $subject;
                 $submittedMessage = '';
-            } else {
+            } catch (Throwable $mailError) {
+                error_log('Artist contact delivery failed: ' . $mailError->getMessage());
                 $error = 'There was an error sending your message. Please try again or email directly at ' . $to;
             }
         }

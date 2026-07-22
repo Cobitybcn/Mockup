@@ -82,14 +82,14 @@ sm_test(str_contains($publishedCatalogSource, "\$row['title'] = (string)\$row['a
 sm_test(str_contains($managerSource, 'Alt+ArrowLeft Alt+ArrowRight'), 'Artwork ordering keeps a keyboard alternative to drag and drop');
 sm_test(str_contains($artworkSource, 'name="sale_price"') && str_contains($artworkSource, 'name="sale_stock"'), 'Price and quantity are maintained once in the folded Website panel');
 sm_test(!str_contains($managerSource, 'New print format') && !str_contains($managerSource, 'New format</a>'), 'Store does not expose the future multi-format workflow');
-sm_test(str_contains($managerSource, 'value="connect_stripe"') && str_contains($managerSource, 'This artist’s account'), 'Each artist can connect an independent Stripe account');
-sm_test(str_contains($managerSource, 'Artwork Mockups platform') && str_contains($managerSource, 'Website checkout'), 'Payments clearly separate platform, artist account, and checkout readiness');
-sm_test(str_contains($managerSource, 'The artist connects without entering any API key.'), 'Artists are never asked for platform Stripe credentials');
-sm_test(str_contains($managerSource, 'value="disconnect_stripe"') && str_contains($managerSource, 'pending Stripe orders'), 'Stripe disconnection protects unresolved artist orders');
-$stripeConnectService = (string)file_get_contents($root . '/site-admin/app/StripeConnectService.php');
-sm_test(str_contains($stripeConnectService, 'stripe_user_id') && !str_contains($stripeConnectService, "'access_token' =>"), 'Stripe Connect stores the artist account identity without persisting OAuth access tokens');
-sm_test(str_contains($stripeConnectService, 'ProviderSettings::stripeConnectSecretKey()'), 'Every artist connection reuses the centrally managed Stripe platform configuration');
-sm_test(str_contains($stripeConnectService, 'isConnectionConfigured()') && str_contains($managerSource, '$stripeConnectionConfigured ?'), 'Artist OAuth can start before the checkout webhook is configured');
+sm_test(str_contains($managerSource, 'name="stripe_secret_key"') && str_contains($managerSource, 'name="stripe_webhook_secret"'), 'Each artist can enter their own Stripe credentials');
+sm_test(str_contains($managerSource, 'Account credentials') && str_contains($managerSource, 'Website checkout'), 'Payments clearly show artist account and checkout readiness');
+sm_test(str_contains($managerSource, 'A publishable key is not needed'), 'Payments asks only for the credentials required by server-side Checkout');
+sm_test(str_contains($managerSource, 'value="disconnect_stripe"'), 'Artists can remove their own Stripe credentials');
+$stripeCredentialsService = (string)file_get_contents($root . '/platform/app/Services/StripeArtistCredentials.php');
+sm_test(str_contains($stripeCredentialsService, 'sodium_crypto_secretbox') && str_contains($stripeCredentialsService, 'STRIPE_CREDENTIALS_KEY'), 'Artist Stripe credentials are encrypted with a server-side key');
+sm_test(str_contains($stripeCredentialsService, 'user_id=?') && str_contains($stripeCredentialsService, 'already configured for another artist'), 'Stripe credentials and account identity stay isolated by artist');
+sm_test(!is_file($root . '/site-admin/stripe-connect-callback.php') && !str_contains($managerSource, 'value="connect_stripe"'), 'Payments no longer depends on platform Stripe Connect or OAuth');
 sm_test(str_contains($managerStyles, 'max-width: min(100%, 640px)') && str_contains($managerStyles, 'max-height: 480px'), 'Site Manager keeps embedded Studio Note images at a standard responsive size');
 sm_test(str_contains($publicStyles, '.journal .prose img') && str_contains($publicStyles, 'max-height: 480px'), 'Published Studio Notes preserve the embedded-image standard');
 

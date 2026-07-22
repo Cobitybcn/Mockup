@@ -9,7 +9,6 @@ define('SITE_MANAGER_PLATFORM_PREFIX', $platformDirectory === $localPlatformDire
 require_once $platformDirectory . '/app/bootstrap.php';
 require_once __DIR__ . '/app/SiteManagerService.php';
 require_once __DIR__ . '/app/EmbeddedNoteImage.php';
-require_once __DIR__ . '/app/StripeConnectService.php';
 
 $user = Auth::user();
 if (!$user) {
@@ -28,7 +27,6 @@ $userId = (int)$user['id'];
 $pdo = Database::connection();
 $manager = new SiteManagerService($pdo);
 $domainService = new ArtistDomainService($pdo);
-$stripeConnect = new StripeConnectService();
 
 function sm_h(mixed $value): string
 {
@@ -110,28 +108,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'save_payments') {
             $manager->saveSettings($userId, 'payments', $_POST);
             $_SESSION['site_manager_notice'] = 'Store currency saved.';
-        } elseif ($action === 'connect_stripe') {
-            $state = bin2hex(random_bytes(32));
-            $_SESSION['stripe_connect_state'] = $state;
-            $_SESSION['stripe_connect_user_id'] = $userId;
-            $connectDestination = $domainService->configuration($userId);
-            $connectHost = trim((string)$connectDestination['public_host']);
-            $businessUrl = $connectHost !== '' ? 'https://' . $connectHost : app_env('APP_PUBLIC_URL', 'http://localhost');
-            header('Location: ' . $stripeConnect->authorizationUrl($user, $state, $businessUrl), true, 303);
-            exit;
+        } elseif ($action === 'save_stripe') {
+            $manager->saveStripeCredentials($userId, (string)($_POST['stripe_secret_key'] ?? ''), (string)($_POST['stripe_webhook_secret'] ?? ''));
+            $_SESSION['site_manager_notice'] = 'Stripe account verified and saved.';
         } elseif ($action === 'refresh_stripe') {
-            $connection = $manager->paymentConnection($userId);
-            $accountId = (string)$connection['external_account_id'];
-            $account = $stripeConnect->account($accountId);
-            $manager->saveStripeConnection($userId, $accountId, (bool)$connection['livemode'], $account);
+            $manager->saveStripeCredentials($userId, '', '');
             $_SESSION['site_manager_notice'] = 'Stripe account status refreshed.';
         } elseif ($action === 'disconnect_stripe') {
-            $connection = $manager->paymentConnection($userId);
-            $accountId = (string)$connection['external_account_id'];
-            $pending = $pdo->prepare("SELECT COUNT(*) FROM artist_site_orders WHERE user_id=? AND provider_account_id=? AND payment_status='pending' AND order_status NOT IN ('cancelled','completed')");
-            $pending->execute([$userId, $accountId]);
-            if ((int)$pending->fetchColumn() > 0) throw new RuntimeException('Resolve or cancel pending Stripe orders before disconnecting this account.');
-            $stripeConnect->deauthorize($accountId);
             $manager->disconnectStripeConnection($userId);
             $_SESSION['site_manager_notice'] = 'Stripe account disconnected.';
         } elseif ($action === 'save_shipping') {
@@ -420,45 +403,45 @@ $sectionLabels = [
         $stripeConnected = str_starts_with($stripeAccountId, 'acct_');
         $stripeStatus = (string)$paymentConnection['connection_status'];
         $maskedStripeAccount = $stripeConnected ? 'acct_••••' . substr($stripeAccountId, -6) : '';
-        $stripeConnectionConfigured = StripeConnectService::isConnectionConfigured();
-        $stripePlatformConfigured = StripeConnectService::isConfigured();
-        $stripePlatformMode = StripeConnectService::mode();
         $stripeAccountMode = !empty($paymentConnection['livemode']) ? 'live' : 'test';
-        $stripeModeMatches = !$stripeConnected || $stripePlatformMode === $stripeAccountMode;
         $stripeArtistReady = $stripeConnected
             && $stripeStatus === 'connected'
             && !empty($paymentConnection['charges_enabled'])
             && !empty($paymentConnection['payouts_enabled'])
-            && $stripeModeMatches;
-        $stripeCheckoutReady = $stripePlatformConfigured && $stripeArtistReady;
+            && !empty($paymentConnection['has_secret_key'])
+            && !empty($paymentConnection['has_webhook_secret']);
+        $stripeStorageReady = StripeArtistCredentials::encryptionConfigured();
+        $stripeWebhookUrl = rtrim(app_env('APP_PUBLIC_URL', 'https://artworkmockups.com'), '/') . '/integrations/stripe/webhook/';
         ?>
         <section class="single-panel payment-settings">
-            <div class="section-intro"><p class="editor-context">Payments</p><h2>Stripe Connect</h2><p>Artwork Mockups supplies the platform connection once. This artist authorizes a separate Stripe account, and sales, Stripe fees, refunds and disputes stay in that artist’s Stripe Dashboard.</p></div>
+            <div class="section-intro"><p class="editor-context">Payments</p><h2>Your Stripe account</h2><p>Enter the credentials from your own Stripe account. This artist website will create Checkout payments directly in that account; no Artwork Mockups Stripe account is involved.</p></div>
             <div class="payment-path" aria-label="Stripe setup status">
                 <div class="payment-path__step">
                     <span class="payment-path__number">1</span>
-                    <div><strong>Artwork Mockups platform</strong><small><?= $stripePlatformConfigured ? sm_h(ucfirst($stripePlatformMode) . ' mode is available to all artists.') : ($stripeConnectionConfigured ? 'Artist connections are available; the checkout webhook is still pending.' : 'The platform administrator must add the Stripe authorization credentials.') ?></small></div>
-                    <span class="payment-state <?= $stripePlatformConfigured ? 'is-ready' : '' ?>"><?= $stripePlatformConfigured ? 'Ready' : ($stripeConnectionConfigured ? 'Webhook pending' : 'Needs setup') ?></span>
+                    <div><strong>Account credentials</strong><small><?= !empty($paymentConnection['has_secret_key']) ? 'The secret key is stored encrypted.' : 'Add this artist’s Stripe secret key.' ?></small></div>
+                    <span class="payment-state <?= !empty($paymentConnection['has_secret_key']) ? 'is-ready' : '' ?>"><?= !empty($paymentConnection['has_secret_key']) ? 'Saved' : 'Required' ?></span>
                 </div>
                 <div class="payment-path__step">
                     <span class="payment-path__number">2</span>
-                    <div><strong>This artist’s account</strong><small><?= $stripeConnected ? sm_h($maskedStripeAccount . ' · ' . ucfirst($stripeAccountMode) . ' mode') : 'The artist connects without entering any API key.' ?></small></div>
+                    <div><strong>This artist’s account</strong><small><?= $stripeConnected ? sm_h($maskedStripeAccount . ' · ' . ucfirst($stripeAccountMode) . ' mode') : 'The account will be identified when the key is verified.' ?></small></div>
                     <span class="payment-state <?= $stripeArtistReady ? 'is-ready' : '' ?>"><?= $stripeArtistReady ? 'Connected' : ($stripeConnected ? sm_h(ucwords(str_replace('_', ' ', $stripeStatus))) : 'Not connected') ?></span>
                 </div>
                 <div class="payment-path__step">
                     <span class="payment-path__number">3</span>
-                    <div><strong>Website checkout</strong><small><?= $stripeCheckoutReady ? 'Payments and payouts are enabled for this artist.' : 'Checkout remains unavailable until both connections are ready.' ?></small></div>
-                    <span class="payment-state <?= $stripeCheckoutReady ? 'is-ready' : '' ?>"><?= $stripeCheckoutReady ? 'Active' : 'Inactive' ?></span>
+                    <div><strong>Website checkout</strong><small><?= $stripeArtistReady ? 'Payments and payouts are enabled for this artist.' : 'Checkout remains unavailable until the account and webhook are ready.' ?></small></div>
+                    <span class="payment-state <?= $stripeArtistReady ? 'is-ready' : '' ?>"><?= $stripeArtistReady ? 'Active' : 'Inactive' ?></span>
                 </div>
             </div>
-            <?php if (!$stripeConnected): ?>
-                <form method="post" class="form-actions"><input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="store"><input type="hidden" name="return_section" value="payments"><button class="primary-action" name="action" value="connect_stripe" <?= $stripeConnectionConfigured ? '' : 'disabled' ?>>Connect Stripe</button></form>
-                <?php if (!$stripeConnectionConfigured): ?><p class="supporting-copy">Add the platform secret key, Connect client ID and OAuth redirect URI before connecting an artist. The artist does not enter any API key here.<?php if (Auth::isAdmin($user)): ?> <a class="quiet-link" href="<?= sm_h(SITE_MANAGER_PLATFORM_PREFIX) ?>/admin_api_keys.php#stripe-connect">Open platform Stripe settings</a><?php endif; ?></p><?php elseif (!$stripePlatformConfigured): ?><p class="supporting-copy">You can connect this artist now. Checkout will remain inactive until the Connected accounts webhook is configured.</p><?php endif; ?>
-            <?php else: ?>
-                <?php if ($stripeStatus !== 'connected'): ?><p class="supporting-copy">Stripe still requires information from this account before it can accept payments. Complete the requirements in the Stripe Dashboard, then refresh the status here.</p><?php endif; ?>
-                <?php if (!$stripeModeMatches): ?><p class="supporting-copy payment-warning">This account was connected in <?= sm_h($stripeAccountMode) ?> mode, but the platform is currently in <?= sm_h($stripePlatformMode) ?> mode. Both must use the same mode.</p><?php endif; ?>
-                <form method="post" class="form-actions"><input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="store"><input type="hidden" name="return_section" value="payments"><button name="action" value="refresh_stripe">Refresh Stripe status</button><button class="danger-action" name="action" value="disconnect_stripe" data-confirm="Disconnect this artist’s Stripe account from Artwork Mockups?">Disconnect</button></form>
-            <?php endif; ?>
+            <form method="post" class="editor-form stripe-credentials-form" autocomplete="off">
+                <input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="store"><input type="hidden" name="return_section" value="payments">
+                <label>Stripe secret key<input type="password" name="stripe_secret_key" spellcheck="false" autocomplete="new-password" placeholder="<?= !empty($paymentConnection['has_secret_key']) ? 'Saved — leave blank to keep it' : 'sk_live_… or sk_test_…' ?>"></label>
+                <p class="supporting-copy">Use the secret key from this artist’s Stripe account. A publishable key is not needed because Checkout is created on the server.</p>
+                <label>Webhook signing secret<input type="password" name="stripe_webhook_secret" spellcheck="false" autocomplete="new-password" placeholder="<?= !empty($paymentConnection['has_webhook_secret']) ? 'Saved — leave blank to keep it' : 'whsec_…' ?>"></label>
+                <p class="supporting-copy">In Stripe, add endpoint <code><?= sm_h($stripeWebhookUrl) ?></code> and subscribe to <code>checkout.session.completed</code>, <code>checkout.session.async_payment_succeeded</code>, <code>checkout.session.async_payment_failed</code> and <code>checkout.session.expired</code>.</p>
+                <?php if (!$stripeStorageReady): ?><p class="supporting-copy payment-warning">Encrypted Stripe credential storage is not configured on this server yet.</p><?php endif; ?>
+                <?php if ($stripeConnected && $stripeStatus !== 'connected'): ?><p class="supporting-copy payment-warning">Stripe verified the account, but it still requires account details before charges and payouts can be enabled.</p><?php endif; ?>
+                <div class="form-actions"><button class="primary-action" name="action" value="save_stripe" <?= $stripeStorageReady ? '' : 'disabled' ?>>Verify and save Stripe</button><?php if ($stripeConnected): ?><button name="action" value="refresh_stripe">Refresh status</button><button class="danger-action" name="action" value="disconnect_stripe" data-confirm="Remove this artist’s saved Stripe credentials?">Disconnect</button><?php endif; ?></div>
+            </form>
             <details class="payment-currency-settings">
                 <summary>Store currency · <?= sm_h(strtoupper((string)$settings['currency'])) ?></summary>
                 <form method="post" class="editor-form payment-currency"><input type="hidden" name="csrf" value="<?= sm_h($csrf) ?>"><input type="hidden" name="return_area" value="store"><input type="hidden" name="return_section" value="payments"><label>Store currency<input name="currency" maxlength="3" value="<?= sm_h((string)$settings['currency']) ?>"></label><p class="supporting-copy">Artwork prices and shipping must use this same currency.</p><div class="form-actions"><button name="action" value="save_payments">Save currency</button></div></form>

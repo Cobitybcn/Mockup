@@ -33,9 +33,9 @@ Artworks · Series · Constellations · Studio Notes · Artist · Inquire
 
 ## Commerce boundary
 
-Artwork Mockups owns one Stripe Connect platform configuration. It is managed once by a system administrator and reused for every artist; platform credentials are never collected from artists or exposed in their Store Admin.
+Each artist configures their own existing Stripe account from Store Admin → Payments. The artist enters that account's secret API key and the signing secret for the shared webhook URL. Both values are encrypted before storage with the server-side `STRIPE_CREDENTIALS_KEY`; they are never displayed again or shared with another user.
 
-Each artist authorizes a separate Stripe Standard account. Only its `acct_…` identity and operational status are stored for that artist. Checkout becomes available only when the platform configuration, the artist connection, price, stock, shipping, and currency are ready. Charges are created on the connected artist account, so sales, Stripe fees, refunds, disputes, and payouts remain separated by artist.
+Checkout sessions are created directly with the current artist's key. No Artwork Mockups Stripe account, Connect client ID, OAuth authorization, or platform charge is involved. Checkout becomes available only when Stripe verifies the artist account and price, stock, shipping, currency, and webhook configuration are ready.
 
 ## Visual protection
 

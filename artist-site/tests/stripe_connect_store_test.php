@@ -18,34 +18,35 @@ $pdo->exec("INSERT INTO artist_site_orders VALUES (2,7,'AM-EXPIRED','pending','a
 $pdo->exec("INSERT INTO artist_site_order_items VALUES (1,9,1)");
 $pdo->exec("INSERT INTO artist_site_order_items VALUES (2,9,1)");
 
-$payments = new StripeCheckout($pdo, '', '', null);
+$payments = new StripeCheckout($pdo, 7, 'acct_ArtistA', '', '', null);
 $paid = $payments->processEvent('checkout.session.completed', [
     'id' => 'cs_test_paid',
     'payment_status' => 'paid',
     'amount_total' => 12500,
     'currency' => 'eur',
     'metadata' => ['order_id' => '1'],
-], 'acct_ArtistA');
+]);
 $expired = $payments->processEvent('checkout.session.expired', [
     'id' => 'cs_test_expired',
     'payment_status' => 'unpaid',
     'amount_total' => 12500,
     'currency' => 'eur',
     'metadata' => ['order_id' => '2'],
-], 'acct_ArtistA');
+]);
 
 $failures = [];
 $expect = static function (bool $condition, string $message) use (&$failures): void { if (!$condition) $failures[] = $message; };
-$expect($paid['status'] === 'paid', 'Paid Connect event was not applied.');
-$expect($expired['status'] === 'expired', 'Expired Connect event was not applied.');
+$expect($paid['status'] === 'paid', 'Paid Stripe event was not applied.');
+$expect($expired['status'] === 'expired', 'Expired Stripe event was not applied.');
 $expect((string)$pdo->query('SELECT payment_status FROM artist_site_orders WHERE id=1')->fetchColumn() === 'paid', 'Paid order was not persisted.');
 $expect((string)$pdo->query('SELECT order_status FROM artist_site_orders WHERE id=2')->fetchColumn() === 'cancelled', 'Expired order was not cancelled.');
 $expect((int)$pdo->query('SELECT stock_reserved FROM artist_site_print_variants WHERE id=9')->fetchColumn() === 1, 'Expired payment did not release only its own reservation.');
 
 try {
-    $payments->processEvent('checkout.session.completed', [
+    $otherArtistPayments = new StripeCheckout($pdo, 8, 'acct_ArtistB', '', '', null);
+    $otherArtistPayments->processEvent('checkout.session.completed', [
         'id' => 'cs_test_paid', 'payment_status' => 'paid', 'amount_total' => 12500, 'currency' => 'eur', 'metadata' => ['order_id' => '1'],
-    ], 'acct_ArtistB');
+    ]);
     $failures[] = 'A different artist account was allowed to settle the order.';
 } catch (RuntimeException) {
 }
@@ -54,4 +55,4 @@ if ($failures) {
     foreach ($failures as $failure) fwrite(STDERR, "FAIL: {$failure}\n");
     exit(1);
 }
-echo "PASS: Stripe Connect events stay scoped to each artist and settle reservations safely.\n";
+echo "PASS: Direct Stripe events stay scoped to each artist and settle reservations safely.\n";

@@ -310,7 +310,7 @@ steps:
           --image="$${image}@$${digest}" \
           --update-env-vars="APP_ENV=production,APP_ALLOW_SCHEMA_MIGRATIONS=false,APP_RELEASE_COMMIT=$COMMIT_SHA,PUBLIC_REGISTRATION_ENABLED=false,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true,PINTEREST_API_ENVIRONMENT=production,PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED=true,PINTEREST_LIVE_PUBLISH_ENABLED=true" \
           --remove-env-vars="DB_PASSWORD" \
-          --update-secrets="DB_PASSWORD=${_DB_PASSWORD_SECRET}:latest" \
+          --update-secrets="DB_PASSWORD=${_DB_PASSWORD_SECRET}:latest,STRIPE_CREDENTIALS_KEY=${_STRIPE_CREDENTIALS_KEY_SECRET}:latest" \
           --revision-suffix="cb-$SHORT_SHA-$BUILD_ID" \
           --no-traffic \
           --quiet
@@ -345,6 +345,7 @@ substitutions:
   _DB_DATABASE: mockups
   _DB_USERNAME: mockups_app
   _DB_PASSWORD_SECRET: mockups-db-password
+  _STRIPE_CREDENTIALS_KEY_SECRET: mockups-stripe-credentials-key
 
 options:
   logging: CLOUD_LOGGING_ONLY
