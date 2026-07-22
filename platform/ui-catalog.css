@@ -2086,8 +2086,8 @@
   background-image: var(--series-tile-image, none);
   background-position: var(--series-tile-position, 50% 50%);
   background-size: cover;
-  opacity: .18;
-  filter: saturate(.6) contrast(.86);
+  opacity: .3;
+  filter: saturate(.78) contrast(.92);
   transform: scale(1.025);
 }
 

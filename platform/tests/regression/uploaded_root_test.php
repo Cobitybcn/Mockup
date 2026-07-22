@@ -510,7 +510,7 @@ function run_uploaded_root_regression_tests(): void
         'el visor de portada respeta automaticamente el formato horizontal o vertical de la imagen'
     );
     TestHarness::assertContains(
-        'ui-catalog.css?v=16',
+        'ui-catalog.css?v=17',
         $seriesSource,
         'Series invalida la cache al publicar cambios visuales del visor y sus bloques'
     );
