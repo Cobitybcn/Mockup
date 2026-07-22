@@ -25,9 +25,25 @@ steps:
       - -c
       - docker pull "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:latest" || true
 
+  - id: hydrate-active-lfs-assets
+    name: alpine:3.20
+    entrypoint: sh
+    waitFor: ['-']
+    args:
+      - -ceu
+      - |
+        apk add --no-cache git git-lfs
+        git config --global --add safe.directory /workspace
+        git lfs install --local
+        git lfs pull --include="artist-site/assets/images/**" --exclude=""
+        if grep -RIl '^version https://git-lfs.github.com/spec/v1$' artist-site/assets/images | grep -q .; then
+          echo "Active artist-site images still contain unresolved Git LFS pointers." >&2
+          exit 1
+        fi
+
   - id: build
     name: gcr.io/cloud-builders/docker
-    waitFor: [verify-production-target, pull-cache]
+    waitFor: [verify-production-target, pull-cache, hydrate-active-lfs-assets]
     args:
       - build
       - --pull
