@@ -441,6 +441,80 @@ $mockupEditorialFields = [
     ['es' => 'Texto alternativo', 'en' => 'Alt text', 'value' => trim((string)($mockupEditorialSheet['alt_text'] ?? '')) ?: $pinAlt, 'large' => false, 'es_placeholder' => 'Descripción visual accesible del mockup…', 'en_placeholder' => 'No English alt text is currently available.'],
     ['es' => 'Caption', 'en' => 'Caption', 'value' => trim((string)($mockupEditorialSheet['caption'] ?? '')) ?: (string)($otherSocial['Instagram'] ?? $titleLine), 'large' => false, 'es_placeholder' => 'Texto breve para publicar este mockup…', 'en_placeholder' => 'No English caption is currently available.'],
 ];
+$mockupChannelData = is_array($mockupV2['channels'] ?? null) ? (array)$mockupV2['channels'] : [];
+$mockupSocialSpecs = [
+    'website' => [
+        'label' => 'Website',
+        'fields' => [
+            'description' => ['es' => 'Descripción', 'en' => 'Description'],
+            'caption' => ['es' => 'Caption', 'en' => 'Caption'],
+            'alt_text' => ['es' => 'Texto alternativo', 'en' => 'Alt text'],
+            'seo_keywords' => ['es' => 'Palabras clave SEO', 'en' => 'SEO keywords'],
+            'long_tail_keywords' => ['es' => 'Términos de búsqueda', 'en' => 'Long-tail keywords'],
+        ],
+    ],
+    'instagram' => [
+        'label' => 'Instagram',
+        'fields' => [
+            'hook' => ['es' => 'Apertura', 'en' => 'Hook'],
+            'caption' => ['es' => 'Caption', 'en' => 'Caption'],
+            'hashtags' => ['es' => 'Hashtags', 'en' => 'Hashtags'],
+            'cta' => ['es' => 'Llamada a la acción', 'en' => 'Call to action'],
+        ],
+    ],
+    'facebook' => [
+        'label' => 'Facebook',
+        'fields' => [
+            'headline' => ['es' => 'Titular', 'en' => 'Headline'],
+            'post_text' => ['es' => 'Texto de publicación', 'en' => 'Post text'],
+            'link_description' => ['es' => 'Descripción del enlace', 'en' => 'Link description'],
+            'cta' => ['es' => 'Llamada a la acción', 'en' => 'Call to action'],
+        ],
+    ],
+    'pinterest' => [
+        'label' => 'Pinterest',
+        'fields' => [
+            'title' => ['es' => 'Título del pin', 'en' => 'Pin title'],
+            'description' => ['es' => 'Descripción del pin', 'en' => 'Pin description'],
+            'board_suggestions' => ['es' => 'Tableros sugeridos', 'en' => 'Board suggestions'],
+            'topic_suggestions' => ['es' => 'Temas sugeridos', 'en' => 'Topic suggestions'],
+            'keywords' => ['es' => 'Palabras clave', 'en' => 'Keywords'],
+        ],
+    ],
+    'tiktok' => [
+        'label' => 'TikTok · video',
+        'fields' => [
+            'visual_hook' => ['es' => 'Apertura visual', 'en' => 'Visual hook'],
+            'suggested_motion' => ['es' => 'Movimiento sugerido', 'en' => 'Suggested motion'],
+            'sequence_role' => ['es' => 'Función en la secuencia', 'en' => 'Sequence role'],
+            'caption_seed' => ['es' => 'Base del caption', 'en' => 'Caption seed'],
+            'video_notes' => ['es' => 'Notas de video', 'en' => 'Video notes'],
+        ],
+    ],
+];
+$mockupSocialChannels = [];
+$mockupSocialValue = static function (mixed $value): string {
+    if (is_array($value)) {
+        return implode("\n", array_map(static fn(mixed $item): string => is_scalar($item) ? (string)$item : (string)json_encode($item, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $value));
+    }
+    if (is_bool($value)) {
+        return $value ? 'Yes' : 'No';
+    }
+
+    return trim((string)$value);
+};
+foreach ($mockupSocialSpecs as $channelKey => $channelSpec) {
+    $channelValues = (array)($mockupChannelData[$channelKey] ?? []);
+    $fields = [];
+    foreach ($channelSpec['fields'] as $fieldKey => $fieldLabels) {
+        $fields[] = [
+            'es' => $fieldLabels['es'],
+            'en' => $fieldLabels['en'],
+            'value' => $mockupSocialValue($channelValues[$fieldKey] ?? ''),
+        ];
+    }
+    $mockupSocialChannels[] = ['label' => $channelSpec['label'], 'fields' => $fields];
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -776,6 +850,60 @@ $mockupEditorialFields = [
         .mockup-bilingual-memo summary { cursor:pointer; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
         .mockup-bilingual-memo .mockup-bilingual-copy { min-height:82px; }
 
+        .mockup-social-editorial {
+            margin-bottom:24px;
+            border:1px solid var(--line);
+            background:var(--surface);
+        }
+
+        .mockup-social-editorial > summary {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:20px;
+            padding:18px 20px;
+            cursor:pointer;
+            list-style:none;
+        }
+
+        .mockup-social-editorial > summary::-webkit-details-marker { display:none; }
+        .mockup-social-editorial[open] .mockup-bilingual-state::after { content:'−'; }
+        .mockup-social-channels { padding:0 14px 14px; border-top:1px solid var(--line); }
+
+        .mockup-social-channel { border-bottom:1px solid var(--line); }
+        .mockup-social-channel > summary { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 6px; cursor:pointer; list-style:none; }
+        .mockup-social-channel > summary::-webkit-details-marker { display:none; }
+        .mockup-social-channel-title { color:var(--ink); font:500 20px/1.15 var(--font-serif); }
+        .mockup-social-channel-note { color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        .mockup-social-channel-note::after { content:'+'; display:inline-block; margin-left:12px; color:var(--accent); font:500 18px/1 var(--font-serif); }
+        .mockup-social-channel[open] .mockup-social-channel-note::after { content:'−'; }
+
+        .mockup-social-grid {
+            display:grid;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            column-gap:12px;
+            padding:0 0 14px;
+        }
+
+        .mockup-social-cell {
+            min-width:0;
+            padding:14px 18px;
+            border-right:1px solid var(--line);
+            border-left:1px solid var(--line);
+            border-top:1px solid var(--line);
+            background:var(--surface-soft);
+        }
+
+        .mockup-social-cell--source { grid-column:1; }
+        .mockup-social-cell--english { grid-column:2; }
+        .mockup-social-language { border-top:3px solid #c89aa1; }
+        .mockup-social-language.mockup-social-cell--english { border-top-color:#9fb19a; }
+        .mockup-social-cell--last { border-bottom:1px solid var(--line); }
+        .mockup-social-cell label { display:block; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
+        .mockup-social-copy { min-height:58px; margin-top:9px; color:var(--ink); font-size:14px; line-height:1.65; white-space:pre-wrap; }
+        .mockup-social-copy:empty::before { content:attr(data-placeholder); color:var(--muted); font-style:italic; }
+        .mockup-social-copy:focus { outline:0; }
+
         .section-heading {
             display: flex;
             align-items: baseline;
@@ -934,6 +1062,8 @@ $mockupEditorialFields = [
 
             .mockup-bilingual-spread { grid-template-columns:1fr; grid-template-rows:none; }
             .mockup-bilingual-page { display:block; grid-column:auto; grid-row:auto; }
+            .mockup-social-grid { grid-template-columns:1fr; }
+            .mockup-social-cell { grid-column:1; }
         }
     </style>
     <link rel="stylesheet" href="media-controls.css?v=2">
@@ -1026,6 +1156,41 @@ $mockupEditorialFields = [
                     <summary>Memo privado del mockup</summary>
                     <div class="mockup-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Ideas y decisiones específicas de esta escena…"></div>
                 </details>
+            </details>
+
+            <details class="mockup-social-editorial">
+                <summary>
+                    <span class="mockup-bilingual-summary">
+                        <strong>Publicación y redes</strong>
+                        <span>Adaptaciones específicas de este mockup para cada canal.</span>
+                    </span>
+                    <span class="mockup-bilingual-state">5 canales</span>
+                </summary>
+                <div class="mockup-social-channels">
+                    <?php foreach($mockupSocialChannels as $socialChannel): ?>
+                        <details class="mockup-social-channel">
+                            <summary>
+                                <span class="mockup-social-channel-title"><?=h($socialChannel['label'])?></span>
+                                <span class="mockup-social-channel-note">Español + English</span>
+                            </summary>
+                            <div class="mockup-social-grid">
+                                <div class="mockup-social-cell mockup-social-cell--source mockup-social-language"><span class="mockup-bilingual-language">Español · fuente</span></div>
+                                <div class="mockup-social-cell mockup-social-cell--english mockup-social-language"><span class="mockup-bilingual-language">English · current version</span></div>
+                                <?php foreach($socialChannel['fields'] as $fieldIndex => $socialField): ?>
+                                    <?php $lastSocialField = $fieldIndex === array_key_last($socialChannel['fields']); ?>
+                                    <section class="mockup-social-cell mockup-social-cell--source <?=$lastSocialField?'mockup-social-cell--last':''?>">
+                                        <label><?=h($socialField['es'])?></label>
+                                        <div class="mockup-social-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Escribí la versión en español…"></div>
+                                    </section>
+                                    <section class="mockup-social-cell mockup-social-cell--english <?=$lastSocialField?'mockup-social-cell--last':''?>">
+                                        <label><?=h($socialField['en'])?></label>
+                                        <div class="mockup-social-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="No English content is currently available."><?=h($socialField['value'])?></div>
+                                    </section>
+                                <?php endforeach; ?>
+                            </div>
+                        </details>
+                    <?php endforeach; ?>
+                </div>
             </details>
         <?php endif; ?>
         <?php if($viewerMockupId>0 && !$bilingualExperiment): ?>
