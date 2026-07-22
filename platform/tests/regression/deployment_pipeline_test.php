@@ -28,4 +28,3 @@ function run_deployment_pipeline_regression_tests(): void
         'main branch triggers route app and artist-site changes independently'
     );
 }
-
