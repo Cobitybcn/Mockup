@@ -18,3 +18,8 @@ Thumbs.db
 /deploy/
 /tools/sftp-venv/
 /tools/sftp_known_hosts
+
+# Published media is owned by Artwork Mockups persistent storage. Historical
+# website uploads are archived outside the source repository.
+/assets/uploads/
+/assets/tenants/

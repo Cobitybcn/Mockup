@@ -27,3 +27,5 @@ The Primary Action is the principal production commitment of a workspace stage. 
 Store one `reference.png` showing an approved Primary Action expressed as a Decision Block within its local header or workspace context. The capture must show square geometry, pastel section identity, concise label, generous white space, and contrast with secondary controls.
 
 Add `NOTES.md` only when the capture is approved, following the three-question format defined in `design-system/references/README.md`.
+
+**Approved reference on file:** `design-system/references/explore-scenes-primary-action/` ("Generate these 4 views" block, `platform/mockup_combinations_review.php`).

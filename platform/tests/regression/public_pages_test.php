@@ -59,6 +59,11 @@ function run_public_pages_regression_tests(): void {
     TestHarness::assertContains('checkout.session.expired',$stripeCheckout,'expired Stripe sessions release temporary artwork reservations');
     $stripeWebhook=(string)file_get_contents($root.'/integrations/stripe/webhook/index.php');
     TestHarness::assertContains("\$event->account",$stripeWebhook,'one central Connect webhook scopes events by artist account');
+    $providerSettings=(string)file_get_contents($root.'/app/Support/ProviderSettings.php');
+    $apiSettings=(string)file_get_contents($root.'/admin_api_keys.php');
+    TestHarness::assertContains('stripeConnectStatus',$providerSettings,'Stripe platform readiness is centrally available to admin and checkout services');
+    TestHarness::assertContains('Stripe Connect · Platform',$apiSettings,'the central admin exposes one Stripe platform setup for all artists');
+    TestHarness::assertContains('Connected accounts',$apiSettings,'the central admin identifies the required Connect webhook type');
     $publishedSeriesCatalog=(string)file_get_contents(dirname($root).'/artist-site/inc/AppPublishedSeriesCatalog.php');
     TestHarness::assertContains('COALESCE(s.year_start, s.year_end) DESC',$publishedSeriesCatalog,'the public series catalog follows the app editorial year order');
     TestHarness::assertContains('s.created_at DESC',$publishedSeriesCatalog,'the public series catalog preserves the app editorial tie breaker');

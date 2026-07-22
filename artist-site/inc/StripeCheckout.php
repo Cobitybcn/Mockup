@@ -26,12 +26,16 @@ final class StripeCheckout
 
     public static function secretKey(): string
     {
-        return trim((string)(getenv('STRIPE_CONNECT_SECRET_KEY') ?: ''));
+        return class_exists('ProviderSettings')
+            ? ProviderSettings::stripeConnectSecretKey()
+            : trim((string)(getenv('STRIPE_CONNECT_SECRET_KEY') ?: ''));
     }
 
     public static function webhookSecret(): string
     {
-        return trim((string)(getenv('STRIPE_CONNECT_WEBHOOK_SECRET') ?: ''));
+        return class_exists('ProviderSettings')
+            ? ProviderSettings::stripeConnectWebhookSecret()
+            : trim((string)(getenv('STRIPE_CONNECT_WEBHOOK_SECRET') ?: ''));
     }
 
     public static function isConfigured(): bool

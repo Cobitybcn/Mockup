@@ -872,21 +872,21 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                     <?php if ($sidebarCanUseSocial): ?>
                         <a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media Board</a>
                     <?php endif; ?>
-                    <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
+                    <?php if ($sidebarCanUseVideo): ?>
+                        <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Lab</a>
+                    <?php endif; ?>
                 </div>
-                <?php if ($sidebarIsAdmin || $sidebarCanUseVideo): ?>
+                <?php if ($sidebarIsAdmin): ?>
                     <div class="sidebar-mobile-section sidebar-studios-mobile">
                         <span>Studios</span>
-                        <?php if ($sidebarIsAdmin): ?>
-                            <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
-                            <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
-                        <?php endif; ?>
-                        <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Lab</a>
+                        <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
+                        <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
                     </div>
                 <?php endif; ?>
                 <?php if ($sidebarIsAdmin): ?>
                     <div class="sidebar-mobile-section">
                         <span>Admin</span>
+                        <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
                         <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
                         <?php if ($sidebarCanUseWebsite): ?><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>">Store</a><?php endif; ?>
                         <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a>
@@ -900,6 +900,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <?php else: ?>
                     <div class="sidebar-mobile-section">
                         <span>Admin</span>
+                        <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
                         <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
                         <?php if ($sidebarCanUseWebsite): ?><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>">Store</a><?php endif; ?>
                         <?php if ($sidebarCanUseSocial): ?>
@@ -970,20 +971,19 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                         <?php if ($sidebarCanUseSocial): ?>
                             <a class="sidebar-tab <?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media Board</a>
                         <?php endif; ?>
-                        <a class="sidebar-tab <?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
+                        <?php if ($sidebarCanUseVideo): ?>
+                            <a class="sidebar-tab <?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Lab</a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </section>
         <?php endif; ?>
 
-        <?php if ($sidebarIsAdmin || $sidebarCanUseVideo): ?>
+        <?php if ($sidebarIsAdmin): ?>
             <section class="sidebar-studios" aria-label="Studios">
                 <div class="sidebar-tab-row">
-                    <?php if ($sidebarIsAdmin): ?>
-                        <a class="sidebar-tab <?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
-                        <a class="sidebar-tab <?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
-                    <?php endif; ?>
-                    <a class="sidebar-tab <?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Lab</a>
+                    <a class="sidebar-tab <?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
+                    <a class="sidebar-tab <?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
                 </div>
             </section>
         <?php endif; ?>
@@ -992,6 +992,12 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
 
     <?php if ($sidebarUsesCompactBasicNavigation): ?>
         <section class="sidebar-account sidebar-basic-profile" aria-label="Artist account">
+            <div class="sidebar-tab-row">
+                <a class="sidebar-tab <?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
+            </div>
+        </section>
+    <?php else: ?>
+        <section class="sidebar-account sidebar-profile-account" aria-label="Artist account">
             <div class="sidebar-tab-row">
                 <a class="sidebar-tab <?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
             </div>
@@ -1035,21 +1041,21 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <?php if ($sidebarCanUseSocial): ?>
                     <a class="<?= $socialMediaCatalogActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarSocialUrl, ENT_QUOTES, 'UTF-8') ?>">Social Media Board</a>
                 <?php endif; ?>
-                <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
+                <?php if ($sidebarCanUseVideo): ?>
+                    <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Lab</a>
+                <?php endif; ?>
             </div>
-            <?php if ($sidebarIsAdmin || $sidebarCanUseVideo): ?>
+            <?php if ($sidebarIsAdmin): ?>
                 <div class="sidebar-mobile-section sidebar-studios-mobile">
                     <span>Studios</span>
-                    <?php if ($sidebarIsAdmin): ?>
-                        <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
-                        <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
-                    <?php endif; ?>
-                    <a class="<?= $videoStudioActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideoStudioUrl, ENT_QUOTES, 'UTF-8') ?>">Video Lab</a>
+                    <a class="<?= $worldMotherActive ? 'active' : '' ?>" href="world_mother_studio.php">Scene Estudio</a>
+                    <a class="<?= $cameraStudioActive ? 'active' : '' ?>" href="camera_studio.php">Camera Boards</a>
                 </div>
             <?php endif; ?>
             <?php if ($sidebarIsAdmin): ?>
                 <div class="sidebar-mobile-section">
                     <span>Admin</span>
+                    <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
                     <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
                     <?php if ($sidebarCanUseWebsite): ?><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>">Store</a><?php endif; ?>
                     <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php">Users & Credits</a>
@@ -1063,6 +1069,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
             <?php else: ?>
                 <div class="sidebar-mobile-section">
                     <span>Admin</span>
+                    <a class="<?= $profileActive ? 'active' : '' ?>" href="artist_profile.php">Artist Profile</a>
                     <a class="<?= $accountActive ? 'active' : '' ?>" href="account.php">Account</a>
                     <?php if ($sidebarCanUseWebsite): ?><a href="<?= htmlspecialchars($sidebarStoreUrl, ENT_QUOTES, 'UTF-8') ?>">Store</a><?php endif; ?>
                     <?php if ($sidebarCanUseSocial): ?>

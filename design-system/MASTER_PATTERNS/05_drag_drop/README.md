@@ -26,3 +26,5 @@ Drag and drop is the primary method for ordering, grouping, moving, and assignin
 Store one `reference.png` showing an approved drag operation with the draggable image and active destination visible in the same frame. The capture must clearly record the drag state, destination feedback, surrounding layout stability, and the spatial relationship between source and target.
 
 Add `NOTES.md` only when the capture is approved, following the three-question reference format defined in `design-system/references/README.md`.
+
+**Approved reference on file:** `design-system/references/video-lab-drag-drop/` (reference catalog + sequence Drop Zones, `platform/video.php` — scoped to that element only; the rest of that screen is flagged `NEEDS CONSISTENCY PASS`, not approved).
