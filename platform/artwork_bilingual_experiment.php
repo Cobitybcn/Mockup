@@ -138,7 +138,7 @@ $facts = array_values(array_filter([$year, $medium], static fn(string $value): b
             display: grid;
             grid-template-columns: 170px minmax(0, 1fr);
             gap: 26px;
-            align-items: center;
+            align-items: start;
             padding-bottom: 20px;
             border-bottom: 1px solid var(--line);
         }
@@ -158,7 +158,7 @@ $facts = array_values(array_filter([$year, $medium], static fn(string $value): b
             object-fit: contain;
         }
 
-        .editorial-identity-copy { min-width: 0; }
+        .editorial-identity-copy { min-width: 0; padding-top: 2px; }
 
         .editorial-artwork-facts {
             display: flex;
@@ -379,7 +379,7 @@ $facts = array_values(array_filter([$year, $medium], static fn(string $value): b
                     </div>
                     <div class="editorial-identity-copy">
                         <div class="editorial-shared-title">
-                            <span class="editorial-shared-title-label">Título de la obra · universal</span>
+                            <span class="editorial-shared-title-label">Título universal</span>
                             <h1 class="editorial-shared-title-text" contenteditable="true" role="textbox" aria-label="Título de la obra"><?= bilingual_experiment_h($title) ?></h1>
                         </div>
                         <?php if ($facts !== []): ?>
