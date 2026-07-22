@@ -36,7 +36,7 @@ $heroComposition = PublicArtistShowcase::composition(
 );
 ?>
 <!DOCTYPE html>
-<html lang="es" class="landing-page">
+<html lang="en" class="landing-page">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">

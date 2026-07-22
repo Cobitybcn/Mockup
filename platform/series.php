@@ -231,7 +231,7 @@ $displayedArtworks = $selectedSeries
             <div class="catalog-heading">
                 <div>
                     <h1>
-                        <span class="series-kicker">Serie:</span>
+                        <span class="series-kicker">Series:</span>
                         <?= series_h($selectedSeries['title']) ?>
                         <span class="status-pill <?= !empty($selectedSeries['published']) ? 'status-published' : 'status-pending' ?>">
                             <?= !empty($selectedSeries['published']) ? 'Published' : 'Draft' ?>

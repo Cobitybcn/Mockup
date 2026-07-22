@@ -29,13 +29,13 @@ try {
     }
     $request = json_decode((string)file_get_contents('php://input'), true);
     if (!is_array($request)) {
-        throw new AssistantException('La solicitud no es válida.', 'invalid_json');
+        throw new AssistantException('The request is not valid.', 'invalid_json');
     }
     Auth::start();
     $expectedCsrf = (string)($_SESSION['assistant_csrf'] ?? '');
     $providedCsrf = (string)($request['csrf'] ?? '');
     if ($expectedCsrf === '' || $providedCsrf === '' || !hash_equals($expectedCsrf, $providedCsrf)) {
-        throw new AssistantException('La sesión venció o no es válida. Recarga la página.', 'invalid_csrf');
+        throw new AssistantException('The session expired or is not valid. Reload the page.', 'invalid_csrf');
     }
     session_write_close();
     $pdo = Database::connection();
@@ -48,7 +48,7 @@ try {
         'conversations' => $service->conversations($user),
         'workspace' => $service->workspace($user),
         'new_conversation' => $service->newConversation($user, $request),
-        default => throw new AssistantException('La operación solicitada no está permitida.', 'invalid_operation'),
+        default => throw new AssistantException('The requested operation is not allowed.', 'invalid_operation'),
     };
     assistant_respond(['ok' => true, 'result' => $result]);
 } catch (AssistantException $exception) {
@@ -63,5 +63,5 @@ try {
     assistant_respond(['ok' => false, 'error' => $code, 'message' => $exception->getMessage()], $status);
 } catch (Throwable $exception) {
     Logger::log('Assistant failure: ' . get_class($exception), 'error');
-    assistant_respond(['ok' => false, 'error' => 'assistant_internal', 'message' => 'El asistente encontró un error interno.'], 500);
+    assistant_respond(['ok' => false, 'error' => 'assistant_internal', 'message' => 'The assistant encountered an internal error.'], 500);
 }

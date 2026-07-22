@@ -272,8 +272,8 @@ try {
     TestHarness::assertContains('video_editor.php?generation_id=', $studioJavascript, 'generated results open the standalone video editor');
     TestHarness::assertTrue(!str_contains($studioJavascript, 'data-adjust-result'), 'inline editing controls are removed from sequence boards');
     TestHarness::assertContains("? 'Regenerar'", $studioJavascript, 'generated results keep an independent regeneration action');
-    TestHarness::assertContains('Cada edición crea una nueva versión', $editorPage, 'the standalone editor preserves the original video');
-    TestHarness::assertContains('Opcional · hasta 10', $editorPage, 'the standalone editor exposes the full Omni image budget without visual clutter');
+    TestHarness::assertContains('Each edit creates a new version', $editorPage, 'the standalone editor preserves the original video');
+    TestHarness::assertContains('Optional · up to 10', $editorPage, 'the standalone editor exposes the full Omni image budget without visual clutter');
     TestHarness::assertContains("'role' => 'source_video'", $editorServiceSource, 'video editing always resubmits the real source clip');
     TestHarness::assertTrue(!str_contains($editorServiceSource, "snapshot['previousInteractionId']"), 'video editing never combines previous_interaction_id with the Omni edit task');
     TestHarness::assertSame(1, VideoReferencePolicy::promptNumber('start_frame'), 'the start image has a stable prompt number');

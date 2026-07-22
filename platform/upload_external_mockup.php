@@ -17,17 +17,17 @@ function external_mockup_json(int $status, array $payload): never
 try {
     $user = Auth::user();
     if (!$user) {
-        external_mockup_json(401, ['ok' => false, 'error' => 'Tu sesión venció. Vuelve a iniciar sesión.']);
+        external_mockup_json(401, ['ok' => false, 'error' => 'Your session expired. Sign in again.']);
     }
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        external_mockup_json(405, ['ok' => false, 'error' => 'Método no permitido.']);
+        external_mockup_json(405, ['ok' => false, 'error' => 'Method not allowed.']);
     }
 
     $expectedCsrf = (string)($_SESSION['external_mockup_upload_csrf'] ?? '');
     $providedCsrf = (string)($_POST['csrf'] ?? '');
     if ($expectedCsrf === '' || $providedCsrf === '' || !hash_equals($expectedCsrf, $providedCsrf)) {
-        external_mockup_json(403, ['ok' => false, 'error' => 'La sesión de carga venció. Recarga la página.']);
+        external_mockup_json(403, ['ok' => false, 'error' => 'The upload session expired. Reload the page.']);
     }
 
     $service = new ExternalMockupUploadService(Database::connection());
@@ -49,6 +49,6 @@ try {
     Logger::log('External mockup upload failed: ' . $e->getMessage(), 'error');
     external_mockup_json(500, [
         'ok' => false,
-        'error' => 'No se pudo guardar el mockup. Inténtalo otra vez.',
+        'error' => 'The mockup could not be saved. Try again.',
     ]);
 }

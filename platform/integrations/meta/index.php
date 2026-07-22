@@ -9,9 +9,9 @@ $isAdmin=$user?Auth::isAdmin($user):false;
 $purposes=$isAdmin?['artist'=>'Artist account','platform'=>'Artwork Mockups platform account']:['artist'=>'Artist account'];
 $error='';$pages=[];$selecting='';
 if($user&&$_SERVER['REQUEST_METHOD']==='POST'){
-    if(!hash_equals((string)($_SESSION['meta_csrf']??''),(string)($_POST['csrf']??'')))$error='La sesión expiró. Recarga la página.';
+    if(!hash_equals((string)($_SESSION['meta_csrf']??''),(string)($_POST['csrf']??'')))$error='Your session expired. Reload the page.';
     else try{
-        $purpose=(string)($_POST['purpose']??'artist');if(!isset($purposes[$purpose]))throw new RuntimeException('Esta identidad de Meta no está disponible.');
+        $purpose=(string)($_POST['purpose']??'artist');if(!isset($purposes[$purpose]))throw new RuntimeException('This Meta identity is not available.');
         $action=(string)($_POST['action']??'');
         if($action==='connect'){header('Location: '.$service->authorizationUrl((int)$user['id'],$purpose));exit;}
         if($action==='disconnect'){$service->disconnect((int)$user['id'],$purpose);header('Location: ./');exit;}

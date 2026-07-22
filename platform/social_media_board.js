@@ -177,10 +177,10 @@
         return pinterestBoards.find((board) => board.id === id)?.name || '';
     };
     const pinterestBoardOptions = (selected) => {
-        if (pinterestBoardsStatus === 'loading') return '<option value="">Cargando tableros…</option>';
+        if (pinterestBoardsStatus === 'loading') return '<option value="">Loading boards…</option>';
         if (pinterestBoardsStatus === 'error') return '<option value="">Pinterest no conectado</option>';
         return `
-            <option value=""${selected === '' ? ' selected' : ''}>Seleccionar tablero</option>
+            <option value=""${selected === '' ? ' selected' : ''}>Select board</option>
             ${pinterestBoards.map((board) => `<option value="${escapeHtml(board.id)}"${selected === board.id ? ' selected' : ''}>${escapeHtml(board.name)}</option>`).join('')}`;
     };
     const defaultGroupCopy = (platform, id) => {
@@ -235,7 +235,7 @@
         if (status === 'queued') {
             const scheduledAt = new Date(String(job?.scheduled_at || '')).getTime();
             return Number.isFinite(scheduledAt) && scheduledAt <= Date.now() + 2 * 60 * 1000
-                ? 'En cola para publicar ahora'
+                ? 'Queued to publish now'
                 : 'Programada';
         }
         return ({
@@ -258,7 +258,7 @@
             : status === 'failed' ? 'Failed'
                 : status === 'needs_verification' ? 'Verificar'
                     : status === 'publishing' ? 'Publicando'
-                        : status === 'queued' ? (scheduledStatusLabel(job).includes('ahora') ? 'En cola' : 'Programado')
+                        : status === 'queued' ? (scheduledStatusLabel(job).includes('now') ? 'Queued' : 'Scheduled')
                             : scheduledStatusLabel(job);
         return `<span class="smb-scheduled-chip smb-scheduled-chip--${escapeHtml(status)}" title="${escapeHtml(job.error || job.scheduled_at || '')}">${escapeHtml(label)}</span>`;
     };
@@ -305,25 +305,25 @@
                     </div>` : '<div class="smb-scheduled-when smb-scheduled-when--empty"></div>';
             const actions = [];
             if (canReschedule) {
-                actions.push('<button type="button" class="smb-scheduled-action" data-scheduled-action="reschedule">Guardar nueva fecha</button>');
-                actions.push('<button type="button" class="smb-scheduled-action smb-scheduled-action--now" data-scheduled-action="publish_now">Publicar ahora</button>');
-                actions.push('<button type="button" class="smb-scheduled-action smb-scheduled-action--cancel" data-scheduled-action="cancel">Cancelar</button>');
+                actions.push('<button type="button" class="smb-scheduled-action" data-scheduled-action="reschedule">Save new date</button>');
+                actions.push('<button type="button" class="smb-scheduled-action smb-scheduled-action--now" data-scheduled-action="publish_now">Publish now</button>');
+                actions.push('<button type="button" class="smb-scheduled-action smb-scheduled-action--cancel" data-scheduled-action="cancel">Cancel</button>');
             } else if (status === 'queued' && !destinationReady) {
                 actions.push('<button type="button" class="smb-scheduled-action smb-scheduled-action--cancel" data-scheduled-action="cancel">Cancel schedule</button>');
                 actions.push(`<span class="smb-scheduled-note">${sandboxDestinationMismatch
                     ? `The “${escapeHtml(job.board_name || 'previous')}” board does not exist in Sandbox. Cancel this schedule and create the Pin with “Artwork Mockups Sandbox Test”.`
-                    : 'Validando el tablero de Pinterest antes de habilitar acciones…'}</span>`);
+                    : 'Validating the Pinterest board before enabling actions…'}</span>`);
             } else if (job.can_retry) {
-                actions.push('<button type="button" class="smb-scheduled-action smb-scheduled-action--retry" data-scheduled-action="retry">Reintentar solo esta</button>');
+                actions.push('<button type="button" class="smb-scheduled-action smb-scheduled-action--retry" data-scheduled-action="retry">Retry this one only</button>');
             }
             if (status === 'published' && job.external_url) {
                 actions.push(`<a class="smb-scheduled-link" href="${escapeHtml(job.external_url)}" target="_blank" rel="noopener">View publication</a>`);
             }
             if (status === 'needs_verification') {
-                actions.push('<span class="smb-scheduled-note">Verifica la red antes de reintentar para evitar duplicados.</span>');
+                actions.push('<span class="smb-scheduled-note">Check the network before retrying to avoid duplicates.</span>');
             }
             if (status === 'failed' && !job.can_retry) {
-                actions.push(`<span class="smb-scheduled-note">${escapeHtml(job.retry_hint || 'Corrige la causa indicada antes de volver a publicar.')}</span>`);
+                actions.push(`<span class="smb-scheduled-note">${escapeHtml(job.retry_hint || 'Correct the reported cause before publishing again.')}</span>`);
             }
             return `
                 <article class="smb-scheduled-card smb-scheduled-card--${escapeHtml(status)}" data-scheduled-job="${escapeHtml(job.id)}" data-destination-ready="${destinationReady ? 'true' : 'false'}">
@@ -485,7 +485,7 @@
         const checkSchedule = (schedule, label) => {
             if (schedule?.mode === 'now') return;
             if (!/^\d{4}-\d{2}-\d{2}$/.test(schedule?.date || '') || !/^\d{2}:\d{2}$/.test(schedule?.time || '')) {
-                errors.push(`${label}: elige fecha y hora.`);
+                errors.push(`${label}: choose a date and time.`);
             }
         };
         const checkPreviousJob = (platform, clientKey, label) => {
@@ -690,7 +690,7 @@
                 <section class="smb-inspector-current smb-inspector-current--pinterest">
                     <span>Contenido actual en Pinterest</span>
                     <strong>${escapeHtml(pin.title ?? defaultPinTitle(mockup))}</strong>
-                    <p>Tablero: ${escapeHtml(boardName || 'Sin seleccionar')}</p>
+                    <p>Board: ${escapeHtml(boardName || 'Not selected')}</p>
                 </section>`;
         } else if (publicationPlatforms.includes(platform)) {
             const group = findGroup(platform, groupId);
@@ -752,8 +752,8 @@
         body.innerHTML = `
             <figure class="smb-inspector-preview"><img src="${escapeHtml(mockup.image)}" alt="${escapeHtml(mockup.artworkTitle)}"></figure>
             <dl class="smb-inspector-identity">
-                ${inspectorValue('Obra', mockup.artworkTitle)}
-                ${inspectorValue('Serie', mockup.seriesTitle || 'Sin serie')}
+                ${inspectorValue('Artwork', mockup.artworkTitle)}
+                ${inspectorValue('Series', mockup.seriesTitle || 'No series')}
                 ${inspectorValue('Escena', mockup.contextTitle)}
             </dl>
             ${currentPublication}
@@ -781,11 +781,11 @@
             <article class="smb-pin-card smb-sortable-item${state.schedule.mode === 'scheduled' && state.schedule.perPublication ? ' has-schedule' : ''}" data-board-item data-platform="pinterest" data-mockup-id="${escapeHtml(id)}" data-id="${escapeHtml(id)}" data-index="${index}">
                 <span class="smb-pin-drag" data-drag-handle aria-label="Mover Pin" role="button">⋮⋮</span>
                 ${scheduledChip(scheduled)}
-                <button class="smb-remove-media" type="button" data-remove-media aria-label="Quitar de Pinterest">×</button>
+                <button class="smb-remove-media" type="button" data-remove-media aria-label="Remove from Pinterest">×</button>
                 <img src="${escapeHtml(mockup.image)}" alt="${escapeHtml(mockup.artworkTitle)}" data-inspect-mockup draggable="false">
                 <label class="smb-pin-field smb-pin-field--title"><span>Title</span><input type="text" value="${escapeHtml(title)}" data-pin-title placeholder="Pin title"></label>
                 <label class="smb-pin-field smb-pin-field--description"><span>Description</span><textarea data-pin-description placeholder="Pin description">${escapeHtml(description)}</textarea></label>
-                <label class="smb-pin-field smb-pin-field--board"><span>Tablero</span><select data-pin-board aria-label="Tablero de destino en Pinterest">${pinterestBoardOptions(board)}</select></label>
+                <label class="smb-pin-field smb-pin-field--board"><span>Board</span><select data-pin-board aria-label="Destination board on Pinterest">${pinterestBoardOptions(board)}</select></label>
                 <label class="smb-pin-field smb-pin-field--destination"><span>Enlace de destino</span><select data-pin-destination aria-label="Destino sugerido del Pin"><option value="website"${destination === 'website' ? ' selected' : ''}>Website</option><option value="saatchi"${destination === 'saatchi' ? ' selected' : ''}>Saatchi Art</option></select><input type="url" value="${escapeHtml(destinationUrl)}" data-pin-destination-url placeholder="https://…" aria-label="URL exacta del Pin"></label>
                 ${scheduleFields}
             </article>`;
@@ -797,7 +797,7 @@
         return `
             <article class="smb-media-tile smb-sortable-item" data-board-item data-platform="${platform}" data-group-id="${escapeHtml(groupId)}" data-mockup-id="${escapeHtml(id)}" data-id="${escapeHtml(id)}" data-index="${index}">
                 <span class="smb-media-position">${index + 1}</span>
-                <button class="smb-remove-media" type="button" data-remove-media aria-label="Quitar imagen">×</button>
+                <button class="smb-remove-media" type="button" data-remove-media aria-label="Remove image">×</button>
                 <img src="${escapeHtml(mockup.image)}" alt="${escapeHtml(mockup.artworkTitle)}" data-drag-handle data-inspect-mockup draggable="false">
             </article>`;
     };
@@ -900,7 +900,7 @@
         const confirmButton = document.querySelector('[data-confirm-schedule]');
         if (confirmButton) {
             confirmButton.disabled = !publicationHistoryReady;
-            confirmButton.title = publicationHistoryReady ? '' : 'Cargando el estado anterior para evitar duplicados…';
+            confirmButton.title = publicationHistoryReady ? '' : 'Loading previous status to avoid duplicates…';
         }
         applyFocusMode();
         saveState();
@@ -1135,7 +1135,7 @@
     const initializeCatalogSortable = () => {
         const catalog = document.querySelector('[data-catalog-rail]');
         if (!catalog || typeof window.Sortable !== 'function') {
-            showToast('No se pudo iniciar el sistema de arrastre.');
+            showToast('The drag-and-drop system could not be started.');
             return;
         }
         catalog.dataset.sortableCatalog = 'true';
@@ -1261,17 +1261,17 @@
             try {
                 const response = await fetch('toggle_mockup_favorite.php', { method: 'POST', body: form });
                 const result = await response.json();
-                if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo actualizar el favorito.');
+                if (!response.ok || !result.ok) throw new Error(result.error || 'The favorite could not be updated.');
                 const isFavorite = Boolean(result.favorite);
                 card.classList.toggle('is-favorite', isFavorite);
                 favoriteButton.classList.toggle('active', isFavorite);
                 favoriteButton.setAttribute('aria-pressed', isFavorite ? 'true' : 'false');
-                favoriteButton.setAttribute('aria-label', isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos');
+                favoriteButton.setAttribute('aria-label', isFavorite ? 'Remove from favorites' : 'Add to favorites');
                 const mockup = mockupById.get(card.dataset.mockupId);
                 if (mockup) mockup.favorite = isFavorite;
                 sortCatalog();
             } catch (error) {
-                showToast(error.message || 'No se pudo actualizar el favorito.');
+                showToast(error.message || 'The favorite could not be updated.');
             } finally {
                 favoriteButton.disabled = false;
             }

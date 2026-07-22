@@ -31,7 +31,7 @@ final class AssistantView
             <div class="faithful-assistant-target-banner" data-assistant-target-banner aria-hidden="true">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
                 <span>Haz clic en el botón, formulario o elemento que quieres mostrarle al asistente.</span>
-                <button type="button" data-assistant-target-cancel>Cancelar</button>
+                <button type="button" data-assistant-target-cancel>Cancel</button>
             </div>
 
             <section class="faithful-assistant-cropper" data-assistant-cropper role="dialog" aria-modal="true" aria-labelledby="faithful-assistant-crop-title" aria-hidden="true" hidden>
@@ -66,7 +66,7 @@ final class AssistantView
                             <strong>Artwork Assistant</strong>
                             <span>Conectado a Artwork</span>
                         </div>
-                        <button type="button" class="faithful-assistant-icon-button faithful-assistant-mobile-only" data-assistant-sidebar-close aria-label="Cerrar historial">
+                        <button type="button" class="faithful-assistant-icon-button faithful-assistant-mobile-only" data-assistant-sidebar-close aria-label="Close history">
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg>
                         </button>
                     </header>
@@ -106,7 +106,7 @@ final class AssistantView
                                 <svg class="icon-contract" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h5V4M20 9h-5V4M4 15h5v5M20 15h-5v5"/></svg>
                                 <span data-assistant-focus-label>Ampliar</span>
                             </button>
-                            <button type="button" class="faithful-assistant-icon-button" data-assistant-close aria-label="Cerrar Artwork Assistant" title="Cerrar">
+                            <button type="button" class="faithful-assistant-icon-button" data-assistant-close aria-label="Close Artwork Assistant" title="Close">
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg>
                             </button>
                         </div>
@@ -146,7 +146,7 @@ final class AssistantView
                 </main>
             </section>
         </div>
-        <script src="assets/assistant.js?v=20260715r" defer></script>
+        <script src="assets/assistant.js?v=20260722en" defer></script>
         <?php
     }
 }

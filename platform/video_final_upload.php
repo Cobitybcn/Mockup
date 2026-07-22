@@ -10,7 +10,7 @@ FeatureAccess::requireJson($user, FeatureAccess::VIDEO_MANAGE, 'Video Lab');
 VideoHttp::handle(static function () use ($user): array {
     VideoHttp::verifyCsrf(['csrf' => (string)($_POST['csrf'] ?? '')]);
     $file = $_FILES['video'] ?? null;
-    if (!is_array($file)) throw new InvalidArgumentException('Selecciona un video final.');
+    if (!is_array($file)) throw new InvalidArgumentException('Select a final video.');
     $repository = new VideoStudioRepository(Database::connection());
     $service = new VideoFinalUploadService($repository, new VideoJobRepository($repository->pdo()));
     return $service->upload(

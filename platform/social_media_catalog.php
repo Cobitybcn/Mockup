@@ -21,23 +21,23 @@ function sm_media_url(?string $file, int $width = 360): string
 function sm_campaign_types(): array
 {
     return [
-        'artwork_launch' => ['title' => 'New Artwork Launch', 'objective' => 'Presentar una obra nueva con claridad editorial.'],
-        'series_launch' => ['title' => 'New Series Launch', 'objective' => 'Presentar una serie completa y su lenguaje común.'],
-        'symbolism' => ['title' => 'Symbolism / Concept', 'objective' => 'Explicar símbolos, composición, territorio, tensión o materia.'],
-        'available_catalog' => ['title' => 'Available Catalog', 'objective' => 'Mostrar catálogo disponible con intención comercial.'],
-        'sold_constellation' => ['title' => 'Sold Artwork / Constellation', 'objective' => 'Mostrar ubicación, destino e historia de obras vendidas.'],
-        'studio_process' => ['title' => 'Studio Process', 'objective' => 'Mostrar proceso, decisiones visuales, técnica y contexto.'],
-        'refresh' => ['title' => 'Repost / Refresh', 'objective' => 'Reactivar una obra o serie ya publicada después de un tiempo.'],
+        'artwork_launch' => ['title' => 'New Artwork Launch', 'objective' => 'Present a new artwork with editorial clarity.'],
+        'series_launch' => ['title' => 'New Series Launch', 'objective' => 'Present a complete series and its shared visual language.'],
+        'symbolism' => ['title' => 'Symbolism / Concept', 'objective' => 'Explain symbols, composition, territory, tension, or materiality.'],
+        'available_catalog' => ['title' => 'Available Catalog', 'objective' => 'Present the available catalog with commercial intent.'],
+        'sold_constellation' => ['title' => 'Sold Artwork / Constellation', 'objective' => 'Present the location, destination, and history of sold artworks.'],
+        'studio_process' => ['title' => 'Studio Process', 'objective' => 'Present process, visual decisions, technique, and context.'],
+        'refresh' => ['title' => 'Repost / Refresh', 'objective' => 'Bring a previously published artwork or series back into view.'],
     ];
 }
 function sm_criteria(): array
 {
     return [
-        'series' => ['title' => 'Series', 'description' => 'Agrupar obras y mockups desde una serie.'],
-        'artwork' => ['title' => 'Artwork', 'description' => 'Promocionar una obra puntual y sus mockups.'],
-        'catalog' => ['title' => 'Catalog', 'description' => 'Promocionar catálogo disponible o selección amplia.'],
+        'series' => ['title' => 'Series', 'description' => 'Group artworks and mockups from one series.'],
+        'artwork' => ['title' => 'Artwork', 'description' => 'Promote one artwork and its mockups.'],
+        'catalog' => ['title' => 'Catalog', 'description' => 'Promote the available catalog or a broader selection.'],
         'symbolism' => ['title' => 'Symbolism', 'description' => 'Trabajar una idea visual o conceptual.'],
-        'sold_constellation' => ['title' => 'Sold / Constellation', 'description' => 'Comunicar obras vendidas, destino y mapa.'],
+        'sold_constellation' => ['title' => 'Sold / Constellation', 'description' => 'Communicate sold artworks, destination, and map.'],
     ];
 }
 function sm_channels(): array

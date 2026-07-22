@@ -47,12 +47,12 @@
     const labels = {
         queued: 'En cola',
         submitting: 'Enviando',
-        polling: 'Generando',
-        processing: 'Generando',
-        succeeded: 'Video listo',
+        polling: 'Generating',
+        processing: 'Generating',
+        succeeded: 'Video ready',
         failed: 'Error',
-        ready: 'Lista para generar',
-        draft: 'Sin preparar',
+        ready: 'Ready to generate',
+        draft: 'Not prepared',
     };
 
     function escapeHtml(value) {
@@ -108,9 +108,9 @@
             body: JSON.stringify({ csrf: state.csrf, ...payload }),
         });
         let data;
-        try { data = await response.json(); } catch (_) { data = { ok: false, error: `La solicitud falló (${response.status}).` }; }
+        try { data = await response.json(); } catch (_) { data = { ok: false, error: `The request failed (${response.status}).` }; }
         if (!response.ok || !data.ok) {
-            const error = new Error(data.error || `La solicitud falló (${response.status}).`);
+            const error = new Error(data.error || `The request failed (${response.status}).`);
             error.status = response.status;
             throw error;
         }
@@ -146,11 +146,11 @@
             try {
                 const result = await work();
                 if (result?.project && result?.scenes) applyStudio(result);
-                setSaveState('Guardado');
+                setSaveState('Saved');
                 if (successMessage) toast(successMessage);
                 return result;
             } catch (error) {
-                setSaveState('Error al guardar', 'error');
+                setSaveState('Save failed', 'error');
                 toast(error.message, true);
                 if (error.status === 409) window.setTimeout(() => window.location.reload(), 1500);
                 throw error;
@@ -196,7 +196,7 @@
                 targetDurationSeconds: 24,
                 projectType: 'social_clip',
             },
-        }), 'Proyecto creado').then(result => {
+        }), 'Project created').then(result => {
             applyStudio(result, true);
             window.history.replaceState({}, '', `video.php?project=${result.project.id}`);
             ensureMinimumSequences();
@@ -226,7 +226,7 @@
         (state.assets.mockups || []).forEach(asset => {
             const id = Number(asset.seriesId || 0);
             const title = String(asset.seriesTitle || '').trim();
-            if (id > 0) values.set(id, title || `Serie #${id}`);
+            if (id > 0) values.set(id, title || `Series #${id}`);
         });
         return new Map([...values.entries()].sort((left, right) => left[1].localeCompare(right[1], 'es', { sensitivity: 'base' })));
     }
@@ -272,12 +272,12 @@
                 ${asset.thumbnailUrl
                     ? `<img src="${escapeHtml(asset.thumbnailUrl)}" alt="${escapeHtml(asset.artworkTitle || asset.label)}" loading="lazy" draggable="false">`
                     : `<div class="vds-catalog-video-placeholder" aria-hidden="true"><span>▶</span><small>Video</small></div>`}
-                ${asset.type === 'mockup' ? `<button class="vds-favorite media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--right${asset.favorite ? ' active' : ''}" type="button" data-toggle-favorite aria-pressed="${asset.favorite ? 'true' : 'false'}" aria-label="${asset.favorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>` : ''}
-                <div class="vds-catalog-card-copy"><strong>${escapeHtml(asset.contextTitle || asset.label)}</strong><span>${escapeHtml(asset.type === 'reference_asset' ? 'Desde tu ordenador' : (asset.mediaType === 'video' ? (asset.projectTitle || 'Video generado') : (asset.artworkTitle || 'Imagen de referencia')))}</span></div>
-            </article>`).join('') : '<div class="vds-catalog-empty">No hay referencias para esta selección.</div>';
+                ${asset.type === 'mockup' ? `<button class="vds-favorite media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--right${asset.favorite ? ' active' : ''}" type="button" data-toggle-favorite aria-pressed="${asset.favorite ? 'true' : 'false'}" aria-label="${asset.favorite ? 'Remove from favorites' : 'Add to favorites'}"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>` : ''}
+                <div class="vds-catalog-card-copy"><strong>${escapeHtml(asset.contextTitle || asset.label)}</strong><span>${escapeHtml(asset.type === 'reference_asset' ? 'From your computer' : (asset.mediaType === 'video' ? (asset.projectTitle || 'Generated video') : (asset.artworkTitle || 'Reference image')))}</span></div>
+            </article>`).join('') : '<div class="vds-catalog-empty">No references are available for this selection.</div>';
         dom.catalogHelp.textContent = state.selectedAssetKey
-            ? 'Referencia seleccionada. Haz clic en el destino donde quieras utilizarla, o arrástrala.'
-            : 'Arrastra imágenes a sus referencias. Un video generado puede continuar otra secuencia desde su último fotograma.';
+            ? 'Reference selected. Click the destination where you want to use it, or drag it there.'
+            : 'Drag images into their reference slots. A generated video can continue another sequence from its final frame.';
     }
 
     function defaultGenerationMode() {
@@ -341,10 +341,10 @@
         const uploading = state.uploadingSlots.has(uploadSlotKey(scene.id, role));
         const media = reference
             ? (reference.mediaType === 'video'
-                ? `<video src="${escapeHtml(reference.previewUrl)}" data-continuation-frame-preview muted preload="metadata" playsinline aria-label="Último fotograma de ${escapeHtml(reference.label)}"></video><span class="vds-continuation-frame-badge">Último fotograma</span>`
+                ? `<video src="${escapeHtml(reference.previewUrl)}" data-continuation-frame-preview muted preload="metadata" playsinline aria-label="Final frame of ${escapeHtml(reference.label)}"></video><span class="vds-continuation-frame-badge">Final frame</span>`
                 : `<img src="${escapeHtml(reference.thumbnailUrl || reference.previewUrl)}" alt="${escapeHtml(reference.label)}">`)
-                + `<button class="vds-remove-frame media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--right is-danger" type="button" data-remove-reference="${reference.id}" aria-label="Quitar ${escapeHtml(label)}"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button><span class="vds-frame-caption">${escapeHtml(reference.label)}</span>`
-            : `<div class="vds-frame-placeholder"><span class="vds-frame-plus">${uploading ? '◌' : '＋'}</span><strong>${uploading ? 'Subiendo archivo…' : 'Arrastra aquí'}</strong><button class="vds-frame-upload-button" type="button" data-upload-reference="${scene.id}" data-role="${role}"${uploading ? ' disabled' : ''}>Desde ordenador</button><span>o selecciona una referencia del catálogo</span></div>`;
+                + `<button class="vds-remove-frame media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--right is-danger" type="button" data-remove-reference="${reference.id}" aria-label="Remove ${escapeHtml(label)}"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button><span class="vds-frame-caption">${escapeHtml(reference.label)}</span>`
+            : `<div class="vds-frame-placeholder"><span class="vds-frame-plus">${uploading ? '◌' : '＋'}</span><strong>${uploading ? 'Uploading file…' : 'Drag here'}</strong><button class="vds-frame-upload-button" type="button" data-upload-reference="${scene.id}" data-role="${role}"${uploading ? ' disabled' : ''}>From computer</button><span>or select a reference from the catalog</span></div>`;
         return `<div class="vds-frame-column">
             <span class="vds-frame-label">${escapeHtml(label)}</span>
             <div class="vds-frame-slot${reference ? ' has-media' : ''}${uploading ? ' is-uploading' : ''}" data-frame-drop data-scene-id="${scene.id}" data-role="${role}" tabindex="0">
@@ -373,8 +373,8 @@
         if (!reference && role !== 'reference') reference = referenceFor(scene, role);
         const uploading = state.uploadingSlots.has(uploadSlotKey(scene.id, role));
         const body = reference
-            ? `<div class="vds-compact-reference-media"><img src="${escapeHtml(reference.thumbnailUrl || reference.previewUrl)}" alt="${escapeHtml(reference.label)}"><button class="media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--right is-danger" type="button" data-remove-reference="${reference.id}" aria-label="Quitar ${escapeHtml(label)}"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button></div>`
-            : `<div class="vds-compact-reference-empty"><span>${uploading ? '◌' : '＋'}</span><strong>${uploading ? 'Subiendo…' : 'Añadir'}</strong>${optional ? '<small>Opcional</small>' : ''}</div>`;
+            ? `<div class="vds-compact-reference-media"><img src="${escapeHtml(reference.thumbnailUrl || reference.previewUrl)}" alt="${escapeHtml(reference.label)}"><button class="media-icon-button media-icon-button--compact media-thumb-action media-thumb-action--right is-danger" type="button" data-remove-reference="${reference.id}" aria-label="Remove ${escapeHtml(label)}"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button></div>`
+            : `<div class="vds-compact-reference-empty"><span>${uploading ? '◌' : '＋'}</span><strong>${uploading ? 'Uploading…' : 'Add'}</strong>${optional ? '<small>Optional</small>' : ''}</div>`;
         return `<div class="vds-priority-reference${reference ? ' has-media' : ''}" data-reference-drop data-scene-id="${scene.id}" data-role="${role}" tabindex="0">
             <header><span>${number}</span><strong>${escapeHtml(label)}</strong></header>
             ${body}
@@ -396,7 +396,7 @@
             scene,
             'reference',
             slot + 6,
-            'Referencia',
+            'Reference',
             extras[slot] || null,
             true
         )).join('');
@@ -405,15 +405,15 @@
             : `video_editor.php?reference_asset_id=${Number(sourceVideo?.sourceId || 0)}`;
 
         return `<section class="vds-reference-manager">
-            <div class="vds-reference-section-head"><div><strong>Referencias visuales</strong><small>Escribe “Imagen 3”, “Imagen 4”… en el prompt para indicar cómo usar cada una.</small></div><span>${usedImages}/${maxImages}</span></div>
+            <div class="vds-reference-section-head"><div><strong>Visual references</strong><small>Write “Image 3”, “Image 4”… in the prompt to indicate how each one should be used.</small></div><span>${usedImages}/${maxImages}</span></div>
             <div class="vds-priority-grid">
-                ${compactReferenceSlot(scene, 'artwork_fidelity', 3, 'Obra de arte')}
+                ${compactReferenceSlot(scene, 'artwork_fidelity', 3, 'Artwork')}
                 ${compactReferenceSlot(scene, 'character_identity', 4, 'Personaje', null, true)}
                 ${compactReferenceSlot(scene, 'wardrobe_identity', 5, 'Vestuario', null, true)}
                 ${extraSlots}
             </div>
-            <p class="vds-reference-empty-note">Los espacios vacíos no se envían a Omni.</p>
-            ${sourceVideo ? `<div class="vds-legacy-edit-reference"><span>Este video base pertenece al flujo anterior.</span><a href="${escapeHtml(legacyEditorUrl)}">Abrir en Editor de video</a><button type="button" data-remove-reference="${sourceVideo.id}">Quitar</button></div>` : ''}
+            <p class="vds-reference-empty-note">Empty slots are not sent to Omni.</p>
+            ${sourceVideo ? `<div class="vds-legacy-edit-reference"><span>This source video belongs to the previous workflow.</span><a href="${escapeHtml(legacyEditorUrl)}">Open in Video Editor</a><button type="button" data-remove-reference="${sourceVideo.id}">Remove</button></div>` : ''}
         </section>`;
     }
 
@@ -423,21 +423,21 @@
             const nextScene = scenes()[index + 1] || null;
             const assetKey = `generation_job:${Number(result.id)}`;
             const nextAction = nextScene
-                ? `<button class="vds-use-next" type="button" data-use-clip-next="${nextScene.id}" data-asset-key="${escapeHtml(assetKey)}">Usar al inicio de Secuencia ${index + 2}</button>`
+                ? `<button class="vds-use-next" type="button" data-use-clip-next="${nextScene.id}" data-asset-key="${escapeHtml(assetKey)}">Use at the start of Sequence ${index + 2}</button>`
                 : '';
             return `<div class="vds-generated-clip" data-generated-clip data-asset-key="${escapeHtml(assetKey)}" data-asset-type="generation_job" data-media-type="video">
                 <video class="vds-result-video" src="${escapeHtml(result.previewUrl)}"${result.thumbnailUrl ? ` poster="${escapeHtml(result.thumbnailUrl)}"` : ''} controls preload="metadata" playsinline></video>
                 <div class="vds-generated-continuation">
-                    <button class="vds-generated-drag" type="button" draggable="true" data-generated-drag data-asset-key="${escapeHtml(assetKey)}" aria-label="Arrastrar este resultado al inicio de otra secuencia">
+                    <button class="vds-generated-drag" type="button" draggable="true" data-generated-drag data-asset-key="${escapeHtml(assetKey)}" aria-label="Drag this result to the start of another sequence">
                         <span class="vds-generated-grip" aria-hidden="true">⋮⋮</span>
-                        <span><strong>Arrastra para continuar</strong><small>Su último fotograma será la imagen inicial de otra secuencia.</small></span>
+                        <span><strong>Drag to continue</strong><small>Its final frame will become the starting image of another sequence.</small></span>
                     </button>
                     ${nextAction}
                 </div>
             </div>`;
         }
         const pending = ['queued','submitting','polling','processing'].includes(String(scene.generation?.status || ''));
-        return `<div class="vds-result-placeholder"><span aria-hidden="true">${pending ? '◌' : '▶'}</span><strong>${pending ? 'Generando resultado' : 'Sin resultado generado'}</strong><small>${pending ? 'La vista previa aparecerá al finalizar.' : 'Genera esta secuencia para verla aquí.'}</small></div>`;
+        return `<div class="vds-result-placeholder"><span aria-hidden="true">${pending ? '◌' : '▶'}</span><strong>${pending ? 'Generating result' : 'No result generated'}</strong><small>${pending ? 'The preview will appear when generation finishes.' : 'Generate this sequence to view it here.'}</small></div>`;
     }
 
     function generationState(scene, previousScene = null) {
@@ -461,45 +461,45 @@
             const maxImages = Number(state.capabilities.referenceLimits?.images || 10);
             const expanded = state.openContexts.has(Number(scene.id));
             const download = scene.active_generation?.previewUrl
-                ? `<a class="vds-download-clip" href="${escapeHtml(scene.active_generation.previewUrl)}&download=1">Descargar MP4</a>` : '';
+                ? `<a class="vds-download-clip" href="${escapeHtml(scene.active_generation.previewUrl)}&download=1">Download MP4</a>` : '';
             const resultActions = scene.active_generation?.previewUrl
-                ? `<a class="vds-secondary" href="video_editor.php?generation_id=${Number(scene.active_generation.id)}">Editar video</a>`
+                ? `<a class="vds-secondary" href="video_editor.php?generation_id=${Number(scene.active_generation.id)}">Edit video</a>`
                 : '';
             const generateLabel = scene.active_generation?.previewUrl
                 ? 'Regenerar'
-                : 'Generar';
+                : 'Generate';
             const generationError = status.id === 'failed' && String(scene.generation?.error || '').trim()
-                ? `<p class="vds-generation-error" role="alert"><strong>No se pudo generar el video.</strong><span>${escapeHtml(String(scene.generation.error).trim())}</span></p>`
+                ? `<p class="vds-generation-error" role="alert"><strong>The video could not be generated.</strong><span>${escapeHtml(String(scene.generation.error).trim())}</span></p>`
                 : '';
             const continuityText = index === 0
                 ? (chosenContinuation
-                    ? `Continuación elegida desde ${chosenContinuation.label}; se usará su último fotograma.`
-                    : 'Añade una imagen desde el catálogo o desde tu ordenador.')
+                    ? `Continuation selected from ${chosenContinuation.label}; its final frame will be used.`
+                    : 'Add an image from the catalog or from your computer.')
                 : chosenContinuation
-                    ? `Continuación elegida desde ${chosenContinuation.label}; reemplaza la continuidad automática.`
+                    ? `Continuation selected from ${chosenContinuation.label}; it replaces automatic continuity.`
                 : previousReady
-                    ? `Continuidad automática desde el último fotograma de la Secuencia ${index}.`
-                    : `Genera primero la Secuencia ${index} para enlazar la continuidad.`;
+                    ? `Automatic continuity from the final frame of Sequence ${index}.`
+                    : `Generate Sequence ${index} first to link the continuity.`;
             return `<article class="vds-sequence-board" data-sequence-board data-scene-id="${scene.id}" data-accent="${(index % 4) + 1}">
                 <header class="vds-board-head">
-                    <div class="vds-board-title"><span class="vds-sequence-number">${index + 1}</span><h3>Secuencia ${index + 1}</h3></div>
+                    <div class="vds-board-title"><span class="vds-sequence-number">${index + 1}</span><h3>Sequence ${index + 1}</h3></div>
                     <div class="vds-board-actions">
-                        <button class="vds-board-drag" type="button" aria-label="Reordenar secuencia">⋮⋮</button>
-                        <button class="vds-board-menu" type="button" data-duplicate-sequence="${scene.id}" aria-label="Duplicar secuencia">⧉</button>
-                        <button class="vds-board-menu" type="button" data-delete-sequence="${scene.id}" aria-label="Eliminar secuencia">×</button>
+                        <button class="vds-board-drag" type="button" aria-label="Reorder sequence">⋮⋮</button>
+                        <button class="vds-board-menu" type="button" data-duplicate-sequence="${scene.id}" aria-label="Duplicate sequence">⧉</button>
+                        <button class="vds-board-menu" type="button" data-delete-sequence="${scene.id}" aria-label="Delete sequence">×</button>
                     </div>
                 </header>
                 <p class="vds-board-subtitle">${escapeHtml(continuityText)}</p>
-                <div class="vds-frame-flow">${frameSlot(scene, 'start_frame', '1 · Imagen inicial')}<span class="vds-frame-arrow" aria-hidden="true">→</span>${frameSlot(scene, 'end_frame', '2 · Imagen final objetivo')}</div>
-                <button class="vds-context-toggle" type="button" data-toggle-context="${scene.id}" aria-expanded="${expanded ? 'true' : 'false'}"><span>＋ Prompt, referencias y duración · ${usedImages}/${maxImages}</span><span>${expanded ? '−' : '+'}</span></button>
+                <div class="vds-frame-flow">${frameSlot(scene, 'start_frame', '1 · Start image')}<span class="vds-frame-arrow" aria-hidden="true">→</span>${frameSlot(scene, 'end_frame', '2 · Target end image')}</div>
+                <button class="vds-context-toggle" type="button" data-toggle-context="${scene.id}" aria-expanded="${expanded ? 'true' : 'false'}"><span>＋ Prompt, references, and duration · ${usedImages}/${maxImages}</span><span>${expanded ? '−' : '+'}</span></button>
                 <div class="vds-context-panel" data-context-panel${expanded ? '' : ' hidden'}>
-                    <label><span>Prompt</span><textarea data-scene-field="prompt" data-scene-id="${scene.id}" placeholder="Describe aquí cámara, movimiento, ritmo, luz, ambiente, acción y transición.">${escapeHtml(scene.prompt || '')}</textarea></label>
+                    <label><span>Prompt</span><textarea data-scene-field="prompt" data-scene-id="${scene.id}" placeholder="Describe camera, movement, pace, light, atmosphere, action, and transition.">${escapeHtml(scene.prompt || '')}</textarea></label>
                     ${referenceManager(scene, index)}
                     <div class="vds-context-grid">
-                        <label><span>Duración</span><select data-scene-field="durationSeconds" data-scene-id="${scene.id}">${durationValues.map(value => `<option value="${value}"${Number(scene.durationSeconds) === Number(value) ? ' selected' : ''}>${value} segundos</option>`).join('')}</select></label>
+                        <label><span>Duration</span><select data-scene-field="durationSeconds" data-scene-id="${scene.id}">${durationValues.map(value => `<option value="${value}"${Number(scene.durationSeconds) === Number(value) ? ' selected' : ''}>${value} seconds</option>`).join('')}</select></label>
                     </div>
                 </div>
-                ${scene.active_generation?.previewUrl ? `<div class="vds-inline-result"><span>Resultado generado</span>${resultPreview(scene, index)}</div>` : ''}
+                ${scene.active_generation?.previewUrl ? `<div class="vds-inline-result"><span>Generated result</span>${resultPreview(scene, index)}</div>` : ''}
                 <footer class="vds-board-footer">
                     <span class="vds-generation-state is-${escapeHtml(status.id)}">${escapeHtml(status.label)}</span>
                     <div class="vds-board-footer-actions">${download}${resultActions}<button type="button" data-generate-sequence="${scene.id}"${pending || baseVideo ? ' disabled' : ''}>${generateLabel}</button></div>
@@ -596,29 +596,29 @@
         if (!asset || !scene) return;
         if (asset.mediaType === 'video') {
             if (role === 'start_frame' && asset.type !== 'generation_job') {
-                return toast('Los videos subidos se editan desde la sección Videos.', true);
+                return toast('Uploaded videos are edited from the Videos section.', true);
             }
             if (!['start_frame','source_video'].includes(role)) {
-                return toast('Un video generado solo puede continuar otra secuencia.', true);
+                return toast('A generated video can only continue another sequence.', true);
             }
         } else if (role === 'source_video') {
-            return toast('Video base admite únicamente un video.', true);
+            return toast('Source Video accepts one video only.', true);
         }
         if (asset.type === 'generation_job' && Number(asset.sceneId) === Number(sceneId)) {
-            return toast('El resultado debe continuar en otra secuencia, no en la misma.', true);
+            return toast('The result must continue in another sequence, not the same one.', true);
         }
         const alreadyAttached = (scene.references || []).some(reference => reference.role === role && reference.sourceType === asset.type && Number(reference.sourceId) === Number(asset.id));
-        if (alreadyAttached) return toast('Esta referencia ya está añadida en este bloque.');
+        if (alreadyAttached) return toast('This reference is already attached to this block.');
         if (asset.mediaType === 'image') {
             const sceneIndex = scenes().findIndex(item => Number(item.id) === Number(sceneId));
             if (availableImagesForRole(scene, sceneIndex, role) < 1) {
-                return toast('Omni admite un máximo de 10 imágenes por secuencia.', true);
+                return toast('Omni accepts a maximum of 10 images per sequence.', true);
             }
         }
         const targetIndex = scenes().findIndex(item => Number(item.id) === Number(sceneId)) + 1;
         const sourceIndex = scenes().findIndex(item => Number(item.id) === Number(asset.sceneId)) + 1;
         const message = asset.type === 'generation_job'
-            ? `Secuencia ${targetIndex} enlazada${sourceIndex > 0 ? ` al resultado de Secuencia ${sourceIndex}` : ' al video elegido'}`
+            ? `Sequence ${targetIndex} linked${sourceIndex > 0 ? ` to the result of Sequence ${sourceIndex}` : ' to the selected video'}`
             : `${referenceRoleLabel(role)} actualizado`;
         queueMutation(() => api({
             action: 'reference_add',
@@ -633,14 +633,14 @@
         const scene = sceneById(sceneId);
         if (!scene || files.length === 0) return;
         const multiRole = role === 'reference';
-        if (!multiRole && files.length > 1) return toast('Esta referencia admite un solo archivo.', true);
+        if (!multiRole && files.length > 1) return toast('This reference accepts one file only.', true);
         if (role === 'source_video') {
-            if (files.some(file => !String(file.type || '').startsWith('video/'))) return toast('Video base admite únicamente un video.', true);
+            if (files.some(file => !String(file.type || '').startsWith('video/'))) return toast('Source Video accepts one video only.', true);
         } else {
-            if (files.some(file => !String(file.type || '').startsWith('image/'))) return toast('Las referencias visuales admiten únicamente imágenes.', true);
+            if (files.some(file => !String(file.type || '').startsWith('image/'))) return toast('Visual references accept images only.', true);
             const sceneIndex = scenes().findIndex(item => Number(item.id) === Number(sceneId));
             if (files.length > availableImagesForRole(scene, sceneIndex, role)) {
-                return toast('La selección supera el máximo de 10 imágenes de Omni.', true);
+                return toast('The selection exceeds Omni’s maximum of 10 images.', true);
             }
         }
         const slotKey = uploadSlotKey(sceneId, role);
@@ -665,14 +665,14 @@
                 });
                 let result;
                 try { result = await response.json(); }
-                catch (_) { result = { ok: false, error: `La carga falló (${response.status}).` }; }
+                catch (_) { result = { ok: false, error: `The upload failed (${response.status}).` }; }
                 if (!response.ok || !result.ok) {
-                    const error = new Error(result.error || `La carga falló (${response.status}).`);
+                    const error = new Error(result.error || `The upload failed (${response.status}).`);
                     error.status = response.status;
                     throw error;
                 }
                 return result;
-            }, `${referenceRoleLabel(role)} actualizado desde el ordenador`);
+            }, `${referenceRoleLabel(role)} updated from your computer`);
         } finally {
             state.uploadingSlots.delete(slotKey);
             renderAll();
@@ -681,14 +681,14 @@
 
     function referenceRoleLabel(role) {
         return ({
-            start_frame: 'Imagen inicial',
-            end_frame: 'Imagen final objetivo',
-            artwork_fidelity: 'Obra de arte',
+            start_frame: 'Start image',
+            end_frame: 'Target end image',
+            artwork_fidelity: 'Artwork',
             character_identity: 'Personaje',
             wardrobe_identity: 'Vestuario',
-            source_video: 'Video base',
-            reference: 'Referencias adicionales',
-        })[String(role)] || 'Referencia';
+            source_video: 'Source video',
+            reference: 'Additional references',
+        })[String(role)] || 'Reference';
     }
 
     function availableImagesForRole(scene, sceneIndex, role) {
@@ -708,7 +708,7 @@
             projectId: currentProject().id,
             version: currentProject().version,
             scene: { title: `Sequence ${number}`, generationMode: defaultGenerationMode(), durationSeconds: defaultGenerationDuration() },
-        }), `Secuencia ${number} agregada`);
+        }), `Sequence ${number} added`);
     }
 
     async function ensureMinimumSequences() {
@@ -734,17 +734,17 @@
         const startReference = explicitStartReference(scene);
         const baseVideo = sourceVideoReference(scene);
         const continuityLabel = baseVideo
-            ? `Editar video: ${baseVideo.label}`
+            ? `Edit video: ${baseVideo.label}`
             : startReference
-            ? (startReference.mediaType === 'video' ? `Último fotograma de ${startReference.label}` : `Start Frame: ${startReference.label}`)
-            : (index === 0 ? 'Primera secuencia' : (previousScene?.active_generation ? `Automática desde Secuencia ${index}` : 'Aún sin resultado anterior'));
+            ? (startReference.mediaType === 'video' ? `Final frame of ${startReference.label}` : `Start Frame: ${startReference.label}`)
+            : (index === 0 ? 'First sequence' : (previousScene?.active_generation ? `Automatic from Sequence ${index}` : 'No previous result yet'));
         const referenceCount = Array.isArray(scene.references) ? scene.references.length : 0;
         state.pendingGenerationSceneId = scene.id;
         dom.generationSummary.innerHTML = `<div class="vds-generation-facts">
-            <div><span>Secuencia</span><strong>${index + 1}</strong></div>
-            <div><span>Referencias adjuntas</span><strong>${referenceCount}</strong></div>
+            <div><span>Sequence</span><strong>${index + 1}</strong></div>
+            <div><span>Attached references</span><strong>${referenceCount}</strong></div>
             <div><span>Continuidad</span><strong>${escapeHtml(continuityLabel)}</strong></div>
-            <div><span>Duración</span><strong>${baseVideo ? 'La conserva el video base' : `${Number(scene.durationSeconds)} segundos`}</strong></div>
+            <div><span>Duration</span><strong>${baseVideo ? 'Preserved from the source video' : `${Number(scene.durationSeconds)} seconds`}</strong></div>
             <div><span>Modelo</span><strong>${escapeHtml(state.capabilities.generationModel || 'Gemini Omni Flash')}</strong></div>
         </div>`;
         dom.generationModal.hidden = false;
@@ -760,7 +760,7 @@
             form.set('mockup_id', String(assetId));
             const response = await fetch('toggle_mockup_favorite.php', { method: 'POST', credentials: 'same-origin', body: form });
             const result = await response.json();
-            if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo actualizar el favorito.');
+            if (!response.ok || !result.ok) throw new Error(result.error || 'The favorite could not be updated.');
             asset.favorite = Boolean(result.favorite);
             asset.favoriteRank = asset.favorite ? -1 : Number.MAX_SAFE_INTEGER;
             renderCatalog();
@@ -808,7 +808,7 @@
                     version: latestProject.version,
                     changes: { aspectRatio },
                 });
-            }, 'Formato actualizado');
+            }, 'Format updated');
             return;
         }
 
@@ -830,8 +830,8 @@
         if (event.target.closest('[data-save-project]')) {
             dom.projectTitle?.blur();
             state.mutation.then(() => {
-                setSaveState('Guardado');
-                toast('Proyecto guardado');
+                setSaveState('Saved');
+                toast('Project saved');
             });
             return;
         }
@@ -840,9 +840,9 @@
             if (!project) return;
             const clipCount = Number(project.generatedClipCount || 0);
             const detail = clipCount > 0
-                ? ` Sus ${clipCount} video${clipCount === 1 ? '' : 's'} generado${clipCount === 1 ? '' : 's'} permanecerán en Videos.`
+                ? ` Its ${clipCount} generated video${clipCount === 1 ? '' : 's'} will remain in Videos.`
                 : '';
-            if (!window.confirm(`¿Eliminar “${project.title}” del espacio de trabajo?${detail}`)) return;
+            if (!window.confirm(`Remove “${project.title}” from the workspace?${detail}`)) return;
             queueMutation(() => api({ action: 'project_delete', projectId: project.id, version: project.version }))
                 .then(async result => {
                     state.projects = Array.isArray(result.projects) ? result.projects : [];
@@ -854,7 +854,7 @@
                     } else {
                         await createProjectNow();
                     }
-                    toast('Proyecto eliminado del espacio de trabajo');
+                    toast('Project removed from workspace');
                 });
             return;
         }
@@ -887,7 +887,7 @@
         const remove = event.target.closest('[data-remove-reference]');
         if (remove) {
             event.stopPropagation();
-            queueMutation(() => api({ action: 'reference_remove', referenceId: Number(remove.dataset.removeReference), version: currentProject().version }), 'Referencia eliminada');
+            queueMutation(() => api({ action: 'reference_remove', referenceId: Number(remove.dataset.removeReference), version: currentProject().version }), 'Reference removed');
             return;
         }
 
@@ -912,7 +912,7 @@
         const duplicateScene = event.target.closest('[data-duplicate-sequence]');
         if (duplicateScene) {
             const id = Number(duplicateScene.dataset.duplicateSequence);
-            queueMutation(() => api({ action: 'scene_duplicate', sceneId: id, version: currentProject().version }), 'Secuencia duplicada');
+            queueMutation(() => api({ action: 'scene_duplicate', sceneId: id, version: currentProject().version }), 'Sequence duplicated');
             return;
         }
 
@@ -920,10 +920,10 @@
         if (removeScene) {
             const id = Number(removeScene.dataset.deleteSequence);
             const index = scenes().findIndex(scene => Number(scene.id) === id) + 1;
-            if (scenes().length <= 1) return toast('El proyecto debe conservar al menos una secuencia.', true);
-            if (window.confirm(`¿Eliminar la Secuencia ${index}?`)) {
+            if (scenes().length <= 1) return toast('The project must keep at least one sequence.', true);
+            if (window.confirm(`Delete Sequence ${index}?`)) {
                 state.openContexts.delete(id);
-                queueMutation(() => api({ action: 'scene_delete', sceneId: id, version: currentProject().version }), 'Secuencia eliminada');
+                queueMutation(() => api({ action: 'scene_delete', sceneId: id, version: currentProject().version }), 'Sequence deleted');
             }
             return;
         }
@@ -941,7 +941,7 @@
             const sceneId = Number(state.pendingGenerationSceneId || 0);
             if (!sceneId) return;
             event.target.disabled = true;
-            queueMutation(() => request(state.endpoints.generationStart || 'video_generation_start.php', { sceneId, version: currentProject().version }), 'Generación iniciada')
+            queueMutation(() => request(state.endpoints.generationStart || 'video_generation_start.php', { sceneId, version: currentProject().version }), 'Generation started')
                 .finally(() => {
                     event.target.disabled = false;
                     dom.generationModal.hidden = true;
@@ -977,7 +977,7 @@
             if (!project) return;
             if (!title) {
                 event.target.value = String(project.title || '');
-                toast('El nombre del proyecto no puede quedar vacío.', true);
+                toast('The project name cannot be empty.', true);
                 return;
             }
             if (title === String(project.title || '')) return;

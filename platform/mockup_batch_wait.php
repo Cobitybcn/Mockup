@@ -1117,7 +1117,7 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
         switch (status) {
             case 'queued': return 'En cola';
             case 'processing': return 'Generating';
-            case 'done': return 'Listo';
+            case 'done': return 'Ready';
             case 'error': return 'Error';
             default: return 'En espera';
         }
@@ -1167,7 +1167,7 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
             }
 
             if (!data.ready || !Array.isArray(data.prompts) || data.prompts.length === 0) {
-                empty.textContent = 'Aun no hay prompts de mockups. Esperando contextos...';
+                empty.textContent = 'No mockup prompts yet. Waiting for contexts...';
                 window.setTimeout(pollAdminMockupPrompts, 2500);
                 return;
             }
@@ -1220,7 +1220,7 @@ $mockupCountLabel = $mockupCount === 1 ? '1 mockup' : $mockupCount . ' mockups';
             const complete = done + error;
             const pct = total > 0 ? Math.round((complete / total) * 100) : 0;
             const statusParts = [
-                `${done} listo${done === 1 ? '' : 's'}`,
+                `${done} ready`,
                 `${processing} generando`,
                 `${queued} en cola`,
             ];

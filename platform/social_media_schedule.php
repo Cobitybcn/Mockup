@@ -41,7 +41,7 @@ try {
         'jobs' => $result['jobs'],
         'delivery_mode' => $result['delivery_mode'],
         'message' => $result['delivery_mode'] === 'now'
-            ? $result['publication_count'] . ' publicaciones entraron en la cola para publicarse ahora.'
+            ? $result['publication_count'] . ' publications were queued to publish now.'
             : $result['publication_count'] . ' publicaciones fueron validadas y programadas.',
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (InvalidArgumentException $e) {

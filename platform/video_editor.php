@@ -19,11 +19,11 @@ function editor_h(mixed $value): string { return htmlspecialchars((string)$value
 function editor_duration(float $seconds): string { return rtrim(rtrim(number_format($seconds, 1, ',', ''), '0'), ',') . ' s'; }
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Editor de video - Artwork Mockups</title>
+    <title>Video Editor - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
     <link rel="stylesheet" href="video_editor.css?v=1">
@@ -33,18 +33,18 @@ function editor_duration(float $seconds): string { return rtrim(rtrim(number_for
     <?php include __DIR__ . '/sidebar.php'; ?>
     <main class="main-area">
         <header class="app-header"><a class="user-chip" href="account.php"><?= editor_h($user['email']) ?></a></header>
-        <div class="alert-strip">Cada edición crea una nueva versión. El video original se conserva.</div>
+        <div class="alert-strip">Each edit creates a new version. The original video is preserved.</div>
         <div class="ved-page">
             <header class="catalog-heading ved-heading">
-                <div><span>Herramienta independiente</span><h1>Editor de video</h1><p>Ajusta un clip con Gemini Omni.</p></div>
-                <a class="button-link secondary" href="videos.php">Volver a Videos</a>
+                <div><span>Standalone tool</span><h1>Video Editor</h1><p>Refine a clip with Gemini Omni.</p></div>
+                <a class="button-link secondary" href="videos.php">Back to Videos</a>
             </header>
 
             <?php if (!$source): ?>
                 <section class="catalog-panel ved-empty">
-                    <span aria-hidden="true">▶</span><h2>Selecciona un video</h2>
-                    <p>En Videos, pulsa “Editar” sobre un clip generado o un video final.</p>
-                    <a class="button-link" href="videos.php">Elegir video</a>
+                    <span aria-hidden="true">▶</span><h2>Select a video</h2>
+                    <p>In Videos, choose “Edit” on a generated clip or final video.</p>
+                    <a class="button-link" href="videos.php">Choose video</a>
                 </section>
             <?php else: ?>
                 <section class="catalog-panel ved-workspace">
@@ -57,28 +57,28 @@ function editor_duration(float $seconds): string { return rtrim(rtrim(number_for
                         <input type="hidden" name="csrf" value="<?= editor_h($csrf) ?>">
                         <input type="hidden" name="sourceType" value="<?= editor_h($sourceType) ?>">
                         <input type="hidden" name="sourceId" value="<?= $sourceId ?>">
-                        <label class="ved-prompt"><span>¿Qué quieres cambiar?</span><textarea name="prompt" required placeholder="Describe solo el cambio. Omni conservará lo demás."></textarea></label>
+                        <label class="ved-prompt"><span>What would you like to change?</span><textarea name="prompt" required placeholder="Describe only the change. Omni will preserve everything else."></textarea></label>
                         <details class="ved-references">
-                            <summary><span>Imágenes de referencia <small>Opcional · hasta 10</small></span><b>+</b></summary>
+                            <summary><span>Reference images <small>Optional · up to 10</small></span><b>+</b></summary>
                             <div>
-                                <label class="ved-file"><input type="file" name="images[]" accept="image/jpeg,image/png,image/webp,image/gif" multiple data-editor-images><span>＋ Añadir desde ordenador</span><small>Podrás citarlas como Imagen 1, Imagen 2… según su orden.</small></label>
+                                <label class="ved-file"><input type="file" name="images[]" accept="image/jpeg,image/png,image/webp,image/gif" multiple data-editor-images><span>＋ Add from computer</span><small>You can refer to them as Image 1, Image 2… in their displayed order.</small></label>
                                 <div class="ved-image-list" data-editor-image-list></div>
                             </div>
                         </details>
-                        <?php if (!$editable): ?><p class="ved-warning">Este video dura más de 10 segundos. Omni no permite editarlo completo; divide el video en clips cortos.</p><?php endif; ?>
+                        <?php if (!$editable): ?><p class="ved-warning">This video is longer than 10 seconds. Omni cannot edit it in full; split it into shorter clips.</p><?php endif; ?>
                         <p class="ved-error" data-editor-error role="alert" hidden></p>
-                        <footer><span data-editor-state><?= $editable ? 'Listo para editar' : 'Edición no disponible' ?></span><button type="submit"<?= $editable ? '' : ' disabled' ?>>Crear nueva versión</button></footer>
+                        <footer><span data-editor-state><?= $editable ? 'Ready to edit' : 'Editing unavailable' ?></span><button type="submit"<?= $editable ? '' : ' disabled' ?>>Create new version</button></footer>
                     </form>
                 </section>
                 <section class="catalog-panel ved-result" data-editor-result hidden>
-                    <div><span>Nueva versión</span><h2>Resultado editado</h2></div>
+                    <div><span>New version</span><h2>Edited result</h2></div>
                     <video controls playsinline data-editor-result-video></video>
-                    <footer><a class="button-link secondary" data-editor-download>Descargar MP4</a><a class="button-link" href="videos.php">Ver en Videos</a></footer>
+                    <footer><a class="button-link secondary" data-editor-download>Download MP4</a><a class="button-link" href="videos.php">View in Videos</a></footer>
                 </section>
             <?php endif; ?>
         </div>
     </main>
 </div>
-<?php if ($source): ?><script src="video_editor.js?v=1"></script><?php endif; ?>
+<?php if ($source): ?><script src="video_editor.js?v=2"></script><?php endif; ?>
 </body>
 </html>

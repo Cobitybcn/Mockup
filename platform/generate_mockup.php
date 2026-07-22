@@ -179,13 +179,13 @@ function assert_root_owner(string $imagePath, array $user): void
     $metaPath = RESULTS_DIR . DIRECTORY_SEPARATOR . pathinfo(basename($imagePath), PATHINFO_FILENAME) . '.meta.json';
 
     if (!is_file($metaPath)) {
-        fail_page('No se encontro metadata de propiedad para esta obra.');
+        fail_page('Ownership metadata was not found for this artwork.');
     }
 
     $data = json_decode((string)file_get_contents($metaPath), true);
 
     if (is_array($data) && (int)($data['user_id'] ?? 0) !== (int)$user['id']) {
-        fail_page('No tienes acceso a esta obra.');
+        fail_page('You do not have access to this artwork.');
     }
 }
 
@@ -532,13 +532,13 @@ if ($currentMockupFile === '' && $shouldApplyOverrides) {
 }
 
 if ($image === '' || $prompt === '') {
-    fail_page('Faltan datos para generar el mockup simulado.');
+    fail_page('Data required to generate the simulated mockup is missing.');
 }
 
 $imagePath = find_image($image);
 
 if (!$imagePath) {
-    fail_page('No se encontro la imagen raiz: ' . $image);
+    fail_page('Root image not found: ' . $image);
 }
 
 assert_root_owner($imagePath, $currentUser);

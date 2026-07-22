@@ -6,7 +6,7 @@ require_once __DIR__ . '/app/bootstrap.php';
 http_response_code(410);
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <title>Flujo legacy desactivado</title>

@@ -63,7 +63,7 @@ final class AdminSceneEditor
             . '<textarea name="full_prompt_template" rows="10">' . self::h($prompt) . '</textarea>'
             . '</details>'
             . '<div class="admin-scene-editor-actions">'
-            . '<button class="button-link" type="submit">Guardar</button>'
+            . '<button class="button-link" type="submit">Save</button>'
             . '<a class="button-link secondary" href="camera_studio.php?slot_id=' . rawurlencode($slotId) . '">Tablero</a>'
             . '</div>'
             . '</form>'

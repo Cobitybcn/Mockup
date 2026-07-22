@@ -20,7 +20,7 @@ foreach ($isAdmin ? ['platform', 'artist'] : ['artist'] as $purpose) {
     $pinterestEnvironments[$purpose] = $environment === 'sandbox' ? 'sandbox' : 'production';
     $pinterestPurposes[] = [
         'value' => $purpose,
-        'label' => $purpose === 'platform' ? 'Artworks Mockups · @artworkmockups' : 'Cuenta Pinterest del artista',
+        'label' => $purpose === 'platform' ? 'Artwork Mockups · @artworkmockups' : 'Artist Pinterest account',
         'connected' => $pinterestIntegration->isPublishingReady($userId, $purpose),
     ];
 }
@@ -76,7 +76,7 @@ function smb_string_list(mixed $value): array
 
 $artworkStmt = $pdo->prepare("
     SELECT a.id,
-           COALESCE(NULLIF(ag.title,''),NULLIF(a.final_title,''),CONCAT('Obra #',a.id)) AS display_title
+           COALESCE(NULLIF(ag.title,''),NULLIF(a.final_title,''),CONCAT('Artwork #',a.id)) AS display_title
     FROM artworks a
     LEFT JOIN artwork_groups ag
       ON ag.id=a.artwork_group_id
@@ -111,7 +111,7 @@ foreach ($sheetStmt->fetchAll(PDO::FETCH_ASSOC) as $sheet) {
 
 $mockupStmt = $pdo->prepare("
     SELECT m.id,m.mockup_file,m.context_id,m.source_artwork_id,m.created_at,
-           COALESCE(NULLIF(ag.title,''),NULLIF(a.final_title,''),CONCAT('Obra #',a.id)) AS artwork_title,
+           COALESCE(NULLIF(ag.title,''),NULLIF(a.final_title,''),CONCAT('Artwork #',a.id)) AS artwork_title,
            COALESCE(m.series_id,a.series_id,0) AS series_id,
            COALESCE(NULLIF(s.title,''),NULLIF(a.series,''),'') AS series_title
     FROM mockups m
@@ -260,7 +260,7 @@ foreach ($mockups as $mockup) {
                                     type="button"
                                     data-toggle-favorite
                                     aria-pressed="<?= $mockup['favorite'] ? 'true' : 'false' ?>"
-                                    aria-label="<?= $mockup['favorite'] ? 'Quitar de favoritos' : 'Agregar a favoritos' ?>"
+                                    aria-label="<?= $mockup['favorite'] ? 'Remove from favorites' : 'Add to favorites' ?>"
                                 ><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.7 2.55 5.17 5.71.83-4.13 4.03.97 5.69L12 16.73l-5.1 2.69.97-5.69L3.74 9.7l5.71-.83L12 3.7Z"/></svg></button>
                                 <div class="smb-catalog-card-copy">
                                     <strong><?= smb_h((string)$mockup['editorialTitle']) ?></strong>
@@ -277,7 +277,7 @@ foreach ($mockups as $mockup) {
             <section class="smb-boards" aria-label="Publishing boards">
                 <article class="smb-board smb-board--pinterest" data-board="pinterest">
                     <header class="smb-board-head">
-                        <button class="smb-board-title" type="button" data-focus-network="pinterest" aria-label="Abrir el tablero de Pinterest en modo enfocado"><span class="smb-network-icon smb-network-icon--pinterest" aria-hidden="true"></span><h2>Pinterest</h2></button>
+                        <button class="smb-board-title" type="button" data-focus-network="pinterest" aria-label="Open the Pinterest board in focus mode"><span class="smb-network-icon smb-network-icon--pinterest" aria-hidden="true"></span><h2>Pinterest</h2></button>
                         <div class="smb-board-head-actions">
                             <?php if (count($pinterestPurposes) > 1): ?>
                                 <label class="smb-pinterest-purpose">
@@ -299,7 +299,7 @@ foreach ($mockups as $mockup) {
 
                 <article class="smb-board smb-board--instagram" data-board="instagram">
                     <header class="smb-board-head">
-                        <button class="smb-board-title" type="button" data-focus-network="instagram" aria-label="Abrir el tablero de Instagram en modo enfocado"><span class="smb-network-icon smb-network-icon--instagram" aria-hidden="true"></span><h2>Instagram</h2></button>
+                        <button class="smb-board-title" type="button" data-focus-network="instagram" aria-label="Open the Instagram board in focus mode"><span class="smb-network-icon smb-network-icon--instagram" aria-hidden="true"></span><h2>Instagram</h2></button>
                         <div class="smb-board-head-actions"><span class="smb-board-count" data-board-count="instagram">0 publications</span></div>
                     </header>
                     <p>Single post or carousel.</p>
@@ -308,7 +308,7 @@ foreach ($mockups as $mockup) {
 
                 <article class="smb-board smb-board--facebook" data-board="facebook">
                     <header class="smb-board-head">
-                        <button class="smb-board-title" type="button" data-focus-network="facebook" aria-label="Abrir el tablero de Facebook en modo enfocado"><span class="smb-network-icon smb-network-icon--facebook" aria-hidden="true"></span><h2>Facebook</h2></button>
+                        <button class="smb-board-title" type="button" data-focus-network="facebook" aria-label="Open the Facebook board in focus mode"><span class="smb-network-icon smb-network-icon--facebook" aria-hidden="true"></span><h2>Facebook</h2></button>
                         <div class="smb-board-head-actions"><span class="smb-board-count" data-board-count="facebook">0 publications</span></div>
                     </header>
                     <p>Post with up to 3 images.</p>
@@ -377,6 +377,6 @@ foreach ($mockups as $mockup) {
 <script type="application/json" id="social-board-mockups"><?= json_encode($mockupPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <script type="application/json" id="social-board-config"><?= json_encode($socialBoardConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="social_media_board.js?v=17"></script>
+<script src="social_media_board.js?v=18"></script>
 </body>
 </html>

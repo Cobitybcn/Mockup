@@ -44,16 +44,16 @@ try {
             (string)($input['time'] ?? ''),
             (string)($input['timezone'] ?? 'UTC')
         );
-        $message = 'La publicación fue reprogramada.';
+        $message = 'The publication was rescheduled.';
     } elseif ($action === 'publish_now' && $confirmation === 'PUBLICAR_AHORA') {
         $job = $service->publishNow($jobId, $userId);
-        $message = 'La publicación entró en la cola para publicarse ahora.';
+        $message = 'The publication was queued to publish now.';
     } elseif ($action === 'retry' && $confirmation === 'REINTENTAR') {
         $job = $service->retry($jobId, $userId);
-        $message = 'La publicación fallida volvió a la cola sin duplicar las que ya se publicaron.';
+        $message = 'The failed publication was queued again without duplicating completed publications.';
     } elseif ($action === 'cancel' && $confirmation === 'CANCELAR') {
         $job = $service->cancel($jobId, $userId);
-        $message = 'La publicación programada fue cancelada.';
+        $message = 'The scheduled publication was cancelled.';
     } else {
         throw new InvalidArgumentException('Confirm the scheduled publication action.');
     }

@@ -67,7 +67,7 @@ function vds_h(mixed $value): string
 }
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -101,46 +101,46 @@ function vds_h(mixed $value): string
                         </div>
                         <div class="vds-project-controls">
                             <label class="vds-project-title">
-                                <span>Nombre del proyecto</span>
-                                <input type="text" maxlength="255" data-project-title aria-label="Nombre del proyecto actual">
+                                <span>Project name</span>
+                                <input type="text" maxlength="255" data-project-title aria-label="Current project name">
                             </label>
                             <fieldset class="vds-aspect-picker">
-                                <legend>Formato</legend>
-                                <div class="vds-aspect-options" aria-label="Formato del video">
-                                    <button type="button" data-project-aspect-ratio="9:16" aria-pressed="false" aria-label="Formato vertical 9:16" title="Vertical · 9:16">
+                                <legend>Format</legend>
+                                <div class="vds-aspect-options" aria-label="Video format">
+                                    <button type="button" data-project-aspect-ratio="9:16" aria-pressed="false" aria-label="Vertical format 9:16" title="Vertical · 9:16">
                                         <span class="vds-aspect-icon vds-aspect-icon--vertical" aria-hidden="true"></span>
                                         <span>9:16</span>
                                     </button>
-                                    <button type="button" data-project-aspect-ratio="16:9" aria-pressed="false" aria-label="Formato horizontal 16:9" title="Horizontal · 16:9">
+                                    <button type="button" data-project-aspect-ratio="16:9" aria-pressed="false" aria-label="Horizontal format 16:9" title="Horizontal · 16:9">
                                         <span class="vds-aspect-icon vds-aspect-icon--horizontal" aria-hidden="true"></span>
                                         <span>16:9</span>
                                     </button>
                                 </div>
                             </fieldset>
                             <div class="vds-project-actions">
-                                <span class="vds-save-state" data-save-state>Guardado</span>
+                                <span class="vds-save-state" data-save-state>Saved</span>
                                 <button class="vds-project-action vds-project-action--save" type="button" data-save-project>
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h12l2 2v14H5zM8 4v6h8V4M8 20v-6h8v6"/></svg>
-                                    <span>Guardar</span>
+                                    <span>Save</span>
                                 </button>
                                 <button class="vds-project-action vds-project-action--new" type="button" data-new-project>
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-                                    <span>Nuevo</span>
+                                    <span>New</span>
                                 </button>
                                 <button class="vds-project-action vds-project-action--delete" type="button" data-delete-project>
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg>
-                                    <span>Eliminar</span>
+                                    <span>Delete</span>
                                 </button>
                             </div>
                         </div>
                     </div>
 
                     <div class="vds-catalog-rail-wrap">
-                        <button class="vds-rail-arrow vds-rail-arrow--left" type="button" data-scroll-catalog="-1" aria-label="Ver referencias anteriores">‹</button>
-                        <div class="vds-catalog-rail" data-catalog-rail aria-label="Referencias disponibles"></div>
-                        <button class="vds-rail-arrow vds-rail-arrow--right" type="button" data-scroll-catalog="1" aria-label="Ver más referencias">›</button>
+                        <button class="vds-rail-arrow vds-rail-arrow--left" type="button" data-scroll-catalog="-1" aria-label="View previous references">‹</button>
+                        <div class="vds-catalog-rail" data-catalog-rail aria-label="Available references"></div>
+                        <button class="vds-rail-arrow vds-rail-arrow--right" type="button" data-scroll-catalog="1" aria-label="View more references">›</button>
                     </div>
-                    <p class="vds-catalog-help" data-catalog-help>Arrastra una imagen o video hacia Start Frame o End Frame. También puedes cargar desde tu ordenador.</p>
+                    <p class="vds-catalog-help" data-catalog-help>Drag an image or video to Start Frame or End Frame. You can also upload from your computer.</p>
                 </section>
 
                 <section class="vds-sequences" aria-labelledby="vds-sequences-title">
@@ -148,9 +148,9 @@ function vds_h(mixed $value): string
                         <div>
                             <span>Clips cortos ordenables</span>
                             <h2 id="vds-sequences-title">Secuencias</h2>
-                            <p>Cada tablero genera un clip independiente y puede continuar el resultado anterior.</p>
+                            <p>Each board generates an independent clip and can continue the previous result.</p>
                         </div>
-                        <button type="button" data-add-sequence><span aria-hidden="true">＋</span> Agregar secuencia</button>
+                        <button type="button" data-add-sequence><span aria-hidden="true">＋</span> Add sequence</button>
                     </header>
                     <div class="vds-board-grid" data-sequence-boards></div>
                 </section>
@@ -158,13 +158,13 @@ function vds_h(mixed $value): string
 
             <div class="vds-modal-backdrop" data-generation-modal hidden>
                 <section class="vds-modal" role="dialog" aria-modal="true" aria-labelledby="vds-generation-title">
-                    <span class="vds-modal-kicker">Generación externa</span>
-                    <h2 id="vds-generation-title">¿Generar esta secuencia?</h2>
+                    <span class="vds-modal-kicker">External generation</span>
+                    <h2 id="vds-generation-title">Generate this sequence?</h2>
                     <div data-generation-summary></div>
-                    <p class="vds-modal-warning">El proveedor generará un clip nuevo con el prompt y las referencias compatibles. Un video colocado en Start Frame aporta su último fotograma; si Start Frame está vacío, puede usarse automáticamente el resultado anterior.</p>
+                    <p class="vds-modal-warning">The provider will generate a new clip from the prompt and compatible references. A video placed in Start Frame contributes its final frame; when Start Frame is empty, the previous result may be used automatically.</p>
                     <div class="vds-modal-actions">
-                        <button class="vds-secondary" type="button" data-cancel-generation>Cancelar</button>
-                        <button type="button" data-confirm-generation>Generar secuencia</button>
+                        <button class="vds-secondary" type="button" data-cancel-generation>Cancel</button>
+                        <button type="button" data-confirm-generation>Generate sequence</button>
                     </div>
                 </section>
             </div>
@@ -175,6 +175,6 @@ function vds_h(mixed $value): string
 </div>
 <script type="application/json" id="video-studio-data"><?= json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="video_studio.js?v=20"></script>
+<script src="video_studio.js?v=21"></script>
 </body>
 </html>

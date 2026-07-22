@@ -55,9 +55,9 @@
 
     const statusLabel = (entry) => {
         if (entry.status === 'uploading') return 'Subiendo';
-        if (entry.status === 'success') return 'Guardado';
+        if (entry.status === 'success') return 'Saved';
         if (entry.status === 'error') return 'Error';
-        return 'Listo';
+        return 'Ready';
     };
 
     const setNotice = (message = '', isError = false) => {
@@ -87,13 +87,13 @@
 
         const hasUnstoredFiles = state.files.some((entry) => entry.status !== 'success');
         if (!force && hasUnstoredFiles
-            && !window.confirm('Cambiar de obra quitará los archivos todavía no guardados de este tablero. ¿Continuar?')) {
+            && !window.confirm('Changing the artwork will remove files that have not been saved from this board. Continue?')) {
             return;
         }
         if (state.files.length) clearStagedFiles();
 
         state.artworkId = nextId;
-        state.artworkTitle = card.dataset.artworkTitle || 'Obra';
+        state.artworkTitle = card.dataset.artworkTitle || 'Artwork';
         state.artworkMeta = card.dataset.artworkMeta || '';
         state.artworkImage = card.dataset.artworkImage || '';
 
@@ -144,8 +144,8 @@
         remove.className = 'emu-remove-file';
         remove.type = 'button';
         remove.dataset.removeFile = entry.id;
-        remove.setAttribute('aria-label', `Quitar ${entry.file.name}`);
-        remove.title = 'Quitar del tablero';
+        remove.setAttribute('aria-label', `Remove ${entry.file.name}`);
+        remove.title = 'Remove from board';
         remove.textContent = '×';
         remove.disabled = state.uploading || entry.status === 'success';
 
@@ -156,7 +156,7 @@
         name.textContent = entry.file.name;
         const meta = document.createElement('span');
         meta.textContent = entry.status === 'error'
-            ? (entry.error || 'No se pudo guardar')
+            ? (entry.error || 'Could not save')
             : `${formatBytes(entry.file.size)} · ${statusLabel(entry)}`;
         copy.append(name, meta);
 
@@ -197,16 +197,16 @@
         const failed = state.files.filter((entry) => entry.status === 'error').length;
         const totalBytes = state.files.reduce((sum, entry) => sum + entry.file.size, 0);
 
-        if (boardCount) boardCount.textContent = `${total} ${plural(total, 'archivo', 'archivos')}`;
+        if (boardCount) boardCount.textContent = `${total} ${plural(total, 'file', 'files')}`;
         if (summary) {
             summary.textContent = state.uploading
                 ? `Guardando ${success + uploading} de ${total}`
                 : total
-                    ? `${total} ${plural(total, 'mockup listo', 'mockups listos')} para ${state.artworkTitle}`
-                    : 'Agrega los mockups de esta obra';
+                    ? `${total} ${plural(total, 'mockup ready', 'mockups ready')} for ${state.artworkTitle}`
+                    : 'Add mockups for this artwork';
         }
         if (detail) {
-            if (!total) detail.textContent = 'Ningún archivo seleccionado';
+            if (!total) detail.textContent = 'No files selected';
             else if (state.uploading) detail.textContent = `${success} guardados · ${uploading} subiendo · ${ready - failed} en espera`;
             else detail.textContent = `${formatBytes(totalBytes)} en total${failed ? ` · ${failed} con error` : ''}`;
         }
@@ -215,18 +215,18 @@
         if (uploadButton) uploadButton.disabled = state.uploading || ready === 0 || !state.artworkId;
         if (uploadLabel) {
             if (state.uploading) uploadLabel.textContent = `Guardando ${success} de ${total}`;
-            else if (failed) uploadLabel.textContent = `Reintentar ${failed}`;
+            else if (failed) uploadLabel.textContent = `Retry ${failed}`;
             else if (success === total && total > 0) uploadLabel.textContent = 'Mockups guardados';
-            else uploadLabel.textContent = `Guardar ${ready || ''} en la obra`.replace('  ', ' ');
+            else uploadLabel.textContent = `Save ${ready || ''} to artwork`.replace('  ', ' ');
         }
 
         if (successPanel) {
             successPanel.hidden = success === 0;
-            if (successTitle) successTitle.textContent = `${success} ${plural(success, 'mockup guardado', 'mockups guardados')}`;
+            if (successTitle) successTitle.textContent = `${success} ${plural(success, 'mockup saved', 'mockups saved')}`;
             if (successCopy) {
                 successCopy.textContent = failed
-                    ? `${failed} ${plural(failed, 'archivo necesita', 'archivos necesitan')} otro intento.`
-                    : `Ya están vinculados a ${state.artworkTitle}.`;
+                    ? `${failed} ${plural(failed, 'file needs', 'files need')} another attempt.`
+                    : `They are already linked to ${state.artworkTitle}.`;
             }
         }
     };
@@ -288,9 +288,9 @@
 
         const rejected = [];
         if (unsupported) rejected.push(`${unsupported} con formato no compatible`);
-        if (oversized) rejected.push(`${oversized} de más de 20 MB`);
+        if (oversized) rejected.push(`${oversized} over 20 MB`);
         if (duplicated) rejected.push(`${duplicated} repetidos`);
-        if (capped) rejected.push(`límite de ${config.maxFiles || 80} alcanzado`);
+        if (capped) rejected.push(`limit of ${config.maxFiles || 80} reached`);
         setNotice(rejected.length ? `No se agregaron: ${rejected.join(', ')}.` : 'Puedes arrastrar las miniaturas para ordenar el lote.');
         render();
     };
@@ -335,10 +335,10 @@
         try {
             payload = JSON.parse(text);
         } catch (error) {
-            if (response.status === 413) throw new Error('El archivo supera el límite aceptado por el servidor.');
+            if (response.status === 413) throw new Error('The file exceeds the server upload limit.');
             throw new Error('El servidor no pudo procesar la carga.');
         }
-        if (!response.ok || !payload.ok) throw new Error(payload.error || 'No se pudo guardar el mockup.');
+        if (!response.ok || !payload.ok) throw new Error(payload.error || 'The mockup could not be saved.');
         return payload;
     };
 
@@ -367,7 +367,7 @@
             entry.mockup = payload.mockup || null;
         } catch (error) {
             entry.status = 'error';
-            entry.error = error.message || 'No se pudo guardar';
+            entry.error = error.message || 'Could not save';
         }
         render();
     };
@@ -396,9 +396,9 @@
         state.uploading = false;
         const failures = state.files.filter((entry) => entry.status === 'error');
         if (failures.length) {
-            setNotice(`${failures.length} ${plural(failures.length, 'archivo no pudo', 'archivos no pudieron')} guardarse. Revisa las tarjetas y vuelve a intentarlo.`, true);
+            setNotice(`${failures.length} ${plural(failures.length, 'file could not', 'files could not')} be saved. Review the cards and try again.`, true);
         } else {
-            setNotice('Todos los mockups quedaron vinculados correctamente.');
+            setNotice('All mockups were linked successfully.');
         }
         render();
     };
@@ -471,7 +471,7 @@
         try {
             addFiles(await filesFromDrop(event.dataTransfer));
         } catch (error) {
-            setNotice('No se pudo leer esa carpeta. Prueba con el botón “Elegir carpeta”.', true);
+            setNotice('That folder could not be read. Try the “Choose folder” button.', true);
         }
     });
 
@@ -482,7 +482,7 @@
         if (index < 0) return;
         destroyPreview(state.files[index]);
         state.files.splice(index, 1);
-        setNotice(state.files.length ? 'Archivo quitado del tablero.' : '');
+        setNotice(state.files.length ? 'File removed from board.' : '');
         render();
     });
 
@@ -490,8 +490,8 @@
         if (!state.files.length || state.uploading) return;
         const hasSaved = state.files.some((entry) => entry.status === 'success');
         const prompt = hasSaved
-            ? '¿Limpiar el tablero? Los mockups ya guardados seguirán vinculados a la obra.'
-            : '¿Quitar todas las miniaturas de este tablero?';
+            ? 'Clear the board? Saved mockups will remain linked to the artwork.'
+            : 'Remove all thumbnails from this board?';
         if (window.confirm(prompt)) clearStagedFiles();
     });
     uploadButton?.addEventListener('click', uploadFiles);

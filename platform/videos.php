@@ -19,7 +19,7 @@ foreach ($videos as $video) {
     $artworkId = (int)($video['artworkId'] ?? 0);
     $seriesId = (int)($video['seriesId'] ?? 0);
     if ($artworkId > 0) $artworkOptions[$artworkId] = trim((string)($video['artworkTitle'] ?? '')) ?: 'Artwork #' . $artworkId;
-    if ($seriesId > 0) $seriesOptions[$seriesId] = trim((string)($video['seriesTitle'] ?? '')) ?: 'Serie #' . $seriesId;
+    if ($seriesId > 0) $seriesOptions[$seriesId] = trim((string)($video['seriesTitle'] ?? '')) ?: 'Series #' . $seriesId;
 }
 foreach ((array)($library['rootArtworks'] ?? []) as $artwork) {
     $artworkId = (int)($artwork['canonicalArtworkId'] ?? $artwork['artworkId'] ?? 0);
@@ -38,8 +38,8 @@ function videos_h(mixed $value): string
 function videos_scene_label(string $label): string
 {
     $label = trim($label);
-    if ($label === '') return 'Video generado';
-    return (string)(preg_replace('/^Sequence\s+/i', 'Secuencia ', $label) ?: $label);
+    if ($label === '') return 'Generated video';
+    return (string)(preg_replace('/^Sequence\s+/i', 'Sequence ', $label) ?: $label);
 }
 
 function videos_duration(float $seconds): string
@@ -56,14 +56,14 @@ function videos_date(string $value): string
 }
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Videos - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
-    <link rel="stylesheet" href="videos.css?v=8">
+    <link rel="stylesheet" href="videos.css?v=11">
     <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body>
@@ -75,33 +75,35 @@ function videos_date(string $value): string
             <a class="user-chip" href="account.php"><?= videos_h($user['email']) ?></a>
         </header>
 
-        <div class="alert-strip">Archivo privado de clips creados en Video Lab.</div>
+        <div class="alert-strip">Private archive of clips created in Video Lab.</div>
 
         <div class="videos-catalog">
             <header class="catalog-heading videos-heading">
                 <div>
-                    <span class="videos-kicker">Biblioteca</span>
+                    <span class="videos-kicker">Library</span>
                     <h1>Videos</h1>
-                    <p><?= count($videos) ?> <?= count($videos) === 1 ? 'video generado' : 'videos generados' ?>.</p>
+                    <p><?= count($videos) ?> <?= count($videos) === 1 ? 'generated video' : 'generated videos' ?>.</p>
                 </div>
-                <a class="button-link" href="video.php">Abrir Video Lab</a>
+                <div class="videos-primary-actions">
+                    <a class="videos-decision-block videos-decision-block--primary" href="video.php">Open Video Lab</a>
+                    <a class="videos-decision-block videos-decision-block--secondary" href="#upload-final-video" role="button" data-open-final-upload>Upload Final Video</a>
+                </div>
             </header>
 
             <section class="catalog-panel videos-panel videos-final-panel" aria-labelledby="videos-final-title">
                 <div class="videos-panel-heading">
                     <div>
-                        <span>Video completo</span>
-                        <h2 id="videos-final-title">Videos finales</h2>
-                    </div>
-                    <div class="videos-panel-actions">
-                        <span class="videos-count"><?= count($finals) ?></span>
-                        <button type="button" class="button-link" data-open-final-upload>Subir video final</button>
+                        <span>Full video</span>
+                        <div class="videos-panel-title-row">
+                            <h2 id="videos-final-title">Final videos</h2>
+                            <span class="videos-count"><?= count($finals) ?> <?= count($finals) === 1 ? 'video' : 'videos' ?></span>
+                        </div>
                     </div>
                 </div>
 
                 <?php if (!$finals): ?>
                     <div class="videos-final-empty">
-                        <p>Guarda aquí el montaje completo exportado desde tu editor de escritorio.</p>
+                        <p>Store the complete cut exported from your desktop editor here.</p>
                     </div>
                 <?php else: ?>
                     <div class="videos-final-grid">
@@ -109,19 +111,19 @@ function videos_date(string $value): string
                             <?php
                             $previewUrl = (string)$final['previewUrl'];
                             $thumbnailUrl = (string)($final['thumbnailUrl'] ?? '');
-                            $projectTitle = trim((string)($final['displayTitle'] ?? '')) ?: 'Video final';
+                            $projectTitle = trim((string)($final['displayTitle'] ?? '')) ?: 'Final video';
                             $associatedArtwork = trim((string)($final['artworkTitle'] ?? ''));
-                            $sourceLabel = ($final['source'] ?? '') === 'desktop' ? 'Subido desde ordenador' : 'Creado en Video Lab';
+                            $sourceLabel = ($final['source'] ?? '') === 'desktop' ? 'Uploaded from computer' : 'Created in Video Lab';
                             ?>
                             <article class="videos-final-card">
                                 <div class="videos-final-media-shell">
-                                    <button class="videos-final-media" type="button" data-video-preview="<?= videos_h($previewUrl) ?>" data-video-title="<?= videos_h($projectTitle) ?>" data-video-project="Video final">
-                                        <?php if ($thumbnailUrl !== ''): ?><img src="<?= videos_h($thumbnailUrl) ?>" alt="Fotograma de <?= videos_h($projectTitle) ?>" loading="<?= $index < 3 ? 'eager' : 'lazy' ?>"><?php endif; ?>
+                                    <button class="videos-final-media" type="button" data-video-preview="<?= videos_h($previewUrl) ?>" data-video-title="<?= videos_h($projectTitle) ?>" data-video-project="Final video">
+                                        <?php if ($thumbnailUrl !== ''): ?><img src="<?= videos_h($thumbnailUrl) ?>" alt="Frame from <?= videos_h($projectTitle) ?>" loading="<?= $index < 3 ? 'eager' : 'lazy' ?>"><?php endif; ?>
                                         <span class="videos-play media-play-control" aria-hidden="true"><i></i></span>
                                     </button>
-                                    <div class="media-thumb-action-cluster" aria-label="Acciones del video">
-                                        <a class="media-icon-button" href="video_editor.php?export_id=<?= (int)$final['id'] ?>" aria-label="Editar video" title="Editar video"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></a>
-                                        <a class="media-icon-button" href="<?= videos_h($previewUrl) ?>&download=1" aria-label="Descargar video" title="Descargar video"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg></a>
+                                    <div class="media-thumb-action-cluster" aria-label="Video actions">
+                                        <a class="media-icon-button" href="video_editor.php?export_id=<?= (int)$final['id'] ?>" aria-label="Edit video" title="Edit video"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></a>
+                                        <a class="media-icon-button" href="<?= videos_h($previewUrl) ?>&download=1" aria-label="Download video" title="Download video"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg></a>
                                     </div>
                                 </div>
                                 <div class="videos-final-copy">
@@ -129,17 +131,17 @@ function videos_date(string $value): string
                                     <h3><?= videos_h($projectTitle) ?></h3>
                                     <p><?= videos_h(videos_duration((float)$final['durationSeconds'])) ?> · <?= videos_h((string)$final['aspectRatio']) ?></p>
                                     <details class="videos-final-assignment">
-                                        <summary><?= videos_h($associatedArtwork !== '' ? 'Obra: ' . $associatedArtwork : 'Asignar obra') ?></summary>
+                                        <summary><?= videos_h($associatedArtwork !== '' ? 'Artwork: ' . $associatedArtwork : 'Assign artwork') ?></summary>
                                         <form data-final-artwork-form>
                                             <input type="hidden" name="csrf" value="<?= videos_h($csrf) ?>">
                                             <input type="hidden" name="exportId" value="<?= (int)$final['id'] ?>">
-                                            <select name="artworkId" required aria-label="Obra asociada">
-                                                <option value="">Seleccionar obra</option>
+                                            <select name="artworkId" required aria-label="Associated artwork">
+                                                <option value="">Select artwork</option>
                                                 <?php foreach ($finalArtworkOptions as $artworkId => $artworkTitle): ?>
                                                     <option value="<?= (int)$artworkId ?>" <?= (int)($final['canonicalArtworkId'] ?? 0) === (int)$artworkId ? 'selected' : '' ?>><?= videos_h($artworkTitle) ?></option>
                                                 <?php endforeach; ?>
                                             </select>
-                                            <button type="submit">Guardar</button>
+                                            <button type="submit">Save</button>
                                             <small data-final-artwork-error hidden></small>
                                         </form>
                                     </details>
@@ -153,8 +155,8 @@ function videos_date(string $value): string
             <section class="catalog-panel videos-panel" aria-labelledby="videos-generated-title">
                 <div class="videos-panel-heading">
                     <div>
-                        <span>Archivo de generación</span>
-                        <h2 id="videos-generated-title">Videos generados</h2>
+                        <span>Generation file</span>
+                        <h2 id="videos-generated-title">Generated videos</h2>
                     </div>
                     <span class="videos-count" data-video-visible-count><?= count($videos) ?></span>
                 </div>
@@ -162,25 +164,25 @@ function videos_date(string $value): string
                 <?php if (!$videos): ?>
                     <div class="videos-empty">
                         <span aria-hidden="true">▶</span>
-                        <h2>Aún no hay videos</h2>
-                        <p>Los clips generados correctamente aparecerán aquí.</p>
-                        <a class="button-link secondary" href="video.php">Crear en Video Lab</a>
+                        <h2>No videos yet</h2>
+                        <p>Successfully generated clips will appear here.</p>
+                        <a class="button-link secondary" href="video.php">Create in Video Lab</a>
                     </div>
                 <?php else: ?>
-                    <div class="videos-filters" aria-label="Filtros de videos">
+                    <div class="videos-filters" aria-label="Video filters">
                         <label>
-                            <span>Obra</span>
+                            <span>Artwork</span>
                             <select data-video-filter-artwork>
-                                <option value="">Todas las obras</option>
+                                <option value="">All artworks</option>
                                 <?php foreach ($artworkOptions as $artworkId => $artworkTitle): ?>
                                     <option value="<?= (int)$artworkId ?>"><?= videos_h($artworkTitle) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </label>
                         <label>
-                            <span>Serie</span>
+                            <span>Series</span>
                             <select data-video-filter-series>
-                                <option value="">Todas las series</option>
+                                <option value="">All series</option>
                                 <?php foreach ($seriesOptions as $seriesId => $seriesTitle): ?>
                                     <option value="<?= (int)$seriesId ?>"><?= videos_h($seriesTitle) ?></option>
                                 <?php endforeach; ?>
@@ -188,22 +190,22 @@ function videos_date(string $value): string
                         </label>
                     </div>
                     <div class="videos-carousel-shell" data-video-carousel-shell>
-                        <button class="videos-carousel-arrow videos-carousel-arrow--previous" type="button" data-video-carousel-arrow="-1" aria-label="Videos anteriores">‹</button>
-                        <div class="videos-carousel" data-video-carousel tabindex="0" aria-label="Videos generados">
+                        <button class="videos-carousel-arrow videos-carousel-arrow--previous" type="button" data-video-carousel-arrow="-1" aria-label="Previous videos">‹</button>
+                        <div class="videos-carousel" data-video-carousel tabindex="0" aria-label="Generated videos">
                             <?php foreach ($videos as $index => $video): ?>
                                 <?php
                                 $id = (int)$video['id'];
                                 $sceneTitle = videos_scene_label((string)$video['label']);
-                                $projectTitle = trim((string)($video['projectTitle'] ?? '')) ?: 'Proyecto de video';
+                                $projectTitle = trim((string)($video['projectTitle'] ?? '')) ?: 'Video project';
                                 $generationVersion = max(1, (int)($video['generationVersion'] ?? 1));
-                                $clipIdentity = $sceneTitle . ' · Versión ' . $generationVersion;
+                                $clipIdentity = $sceneTitle . ' · Version ' . $generationVersion;
                                 $previewUrl = 'video_media.php?generation_id=' . $id;
                                 $thumbnailUrl = $previewUrl . '&thumbnail=1';
                                 $downloadUrl = $previewUrl . '&download=1';
                                 $createdAt = videos_date((string)($video['createdAt'] ?? ''));
                                 $aspect = (string)($video['aspectRatio'] ?? '9:16');
                                 $artworkId = (int)($video['artworkId'] ?? 0);
-                                $artworkTitle = trim((string)($video['artworkTitle'] ?? '')) ?: 'Obra sin asociación';
+                                $artworkTitle = trim((string)($video['artworkTitle'] ?? '')) ?: 'Unassigned artwork';
                                 $seriesId = (int)($video['seriesId'] ?? 0);
                                 $seriesTitle = trim((string)($video['seriesTitle'] ?? ''));
                                 ?>
@@ -219,11 +221,11 @@ function videos_date(string $value): string
                                         >
                                             <img src="<?= videos_h($thumbnailUrl) ?>" alt="Fotograma de <?= videos_h($projectTitle) ?>" loading="<?= $index < 4 ? 'eager' : 'lazy' ?>" decoding="async">
                                             <span class="videos-play media-play-control" aria-hidden="true"><i></i></span>
-                                            <?php if (!empty($video['active'])): ?><em class="videos-current">Actual</em><?php endif; ?>
+                                            <?php if (!empty($video['active'])): ?><em class="videos-current">Current</em><?php endif; ?>
                                         </button>
-                                        <div class="media-thumb-action-cluster" aria-label="Acciones del video">
-                                            <a class="media-icon-button" href="video_editor.php?generation_id=<?= $id ?>" aria-label="Editar video" title="Editar video"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></a>
-                                            <a class="media-icon-button" href="<?= videos_h($downloadUrl) ?>" aria-label="Descargar video" title="Descargar video"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg></a>
+                                        <div class="media-thumb-action-cluster" aria-label="Video actions">
+                                            <a class="media-icon-button" href="video_editor.php?generation_id=<?= $id ?>" aria-label="Edit video" title="Edit video"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></a>
+                                            <a class="media-icon-button" href="<?= videos_h($downloadUrl) ?>" aria-label="Download video" title="Download video"><svg class="media-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg></a>
                                         </div>
                                     </div>
                                     <div class="videos-card-body">
@@ -242,11 +244,11 @@ function videos_date(string $value): string
                                 </article>
                             <?php endforeach; ?>
                         </div>
-                        <button class="videos-carousel-arrow videos-carousel-arrow--next" type="button" data-video-carousel-arrow="1" aria-label="Videos siguientes">›</button>
+                        <button class="videos-carousel-arrow videos-carousel-arrow--next" type="button" data-video-carousel-arrow="1" aria-label="Next videos">›</button>
                     </div>
                     <div class="videos-no-results" data-video-no-results hidden>
-                        <strong>No hay videos con estos filtros.</strong>
-                        <span>Prueba con otra obra o serie.</span>
+                        <strong>No videos match these filters.</strong>
+                        <span>Try another artwork or series.</span>
                     </div>
                 <?php endif; ?>
             </section>
@@ -260,7 +262,7 @@ function videos_date(string $value): string
                         <span data-video-modal-project></span>
                         <h2 id="videos-modal-title" data-video-modal-title>Video</h2>
                     </div>
-                    <button type="button" data-video-modal-close aria-label="Cerrar">×</button>
+                    <button type="button" data-video-modal-close aria-label="Close">×</button>
                 </header>
                 <video controls playsinline preload="metadata" data-video-modal-player></video>
             </section>
@@ -270,27 +272,27 @@ function videos_date(string $value): string
             <div class="videos-modal-backdrop" data-close-final-upload></div>
             <section class="videos-upload-dialog" role="dialog" aria-modal="true" aria-labelledby="videos-upload-title">
                 <header>
-                    <div><span>Video completo</span><h2 id="videos-upload-title">Subir video final</h2></div>
-                    <button type="button" data-close-final-upload aria-label="Cerrar">×</button>
+                    <div><span>Full video</span><h2 id="videos-upload-title">Upload final video</h2></div>
+                    <button type="button" data-close-final-upload aria-label="Close">×</button>
                 </header>
                 <form data-final-upload-form enctype="multipart/form-data">
                     <input type="hidden" name="csrf" value="<?= videos_h($csrf) ?>">
-                    <label><span>Obra</span><select name="artworkId" required>
-                        <option value="">Seleccionar obra</option>
+                    <label><span>Artwork</span><select name="artworkId" required>
+                        <option value="">Select artwork</option>
                         <?php foreach ($finalArtworkOptions as $artworkId => $artworkTitle): ?><option value="<?= (int)$artworkId ?>"><?= videos_h($artworkTitle) ?></option><?php endforeach; ?>
                     </select></label>
-                    <label><span>Proyecto</span><select name="projectId" required>
-                        <option value="">Seleccionar proyecto</option>
+                    <label><span>Project</span><select name="projectId" required>
+                        <option value="">Select project</option>
                         <?php foreach ($projects as $project): ?><option value="<?= (int)$project['id'] ?>"><?= videos_h($project['title']) ?></option><?php endforeach; ?>
                     </select></label>
-                    <label class="videos-upload-file"><span>Archivo</span><input type="file" name="video" accept="video/mp4,video/quicktime,video/webm" required><small>MP4, MOV o WebM · máximo 500 MB</small></label>
+                    <label class="videos-upload-file"><span>File</span><input type="file" name="video" accept="video/mp4,video/quicktime,video/webm" required><small>MP4, MOV, or WebM · maximum 500 MB</small></label>
                     <p data-final-upload-error role="alert" hidden></p>
-                    <footer><button type="button" class="button-link secondary" data-close-final-upload>Cancelar</button><button type="submit" class="button-link">Subir video</button></footer>
+                    <footer><button type="button" class="button-link secondary" data-close-final-upload>Cancel</button><button type="submit" class="button-link">Upload video</button></footer>
                 </form>
             </section>
         </div>
     </main>
 </div>
-<script src="videos.js?v=6"></script>
+<script src="videos.js?v=8"></script>
 </body>
 </html>

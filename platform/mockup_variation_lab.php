@@ -1764,7 +1764,7 @@ $lightingOptions = [
                                 <summary>Prompt instruction</summary>
                                 <label style="margin-top:10px;">
                                     Prompt instruction in Spanish
-                                    <textarea name="custom_instruction" placeholder="Optional. Example: la mujer tiene rasgos orientales, vestido negro sobrio y zapatos de lujo; mira la obra sin posar para la camara."></textarea>
+                                    <textarea name="custom_instruction" placeholder="Optional. Example: the woman has East Asian features, a restrained black dress, and luxury shoes; she looks at the artwork without posing for the camera."></textarea>
                                 </label>
                             </details>
                             <div class="lab-run-area">

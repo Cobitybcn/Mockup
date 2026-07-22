@@ -133,7 +133,7 @@
       image.src = screenCapture;
       image.alt = '';
       const copy = element('span');
-      copy.append(element('small', '', 'Imagen'), element('strong', '', screenCaptureLabel));
+      copy.append(element('small', '', 'Image'), element('strong', '', screenCaptureLabel));
       const remove = element('button', '', '×');
       remove.type = 'button';
       remove.setAttribute('aria-label', 'Quitar captura de pantalla');
@@ -160,9 +160,9 @@
     try {
       data = await response.json();
     } catch (_) {
-      throw new Error('El servidor no devolvió una respuesta válida.');
+      throw new Error('The server did not return a valid response.');
     }
-    if (!response.ok || !data.ok) throw new Error(data.message || 'No se pudo completar la operación.');
+    if (!response.ok || !data.ok) throw new Error(data.message || 'The operation could not be completed.');
     return data.result;
   };
 
@@ -180,7 +180,7 @@
 
   const emptyState = () => {
     const section = element('section', 'faithful-assistant-empty');
-    section.innerHTML = `${icon('assistant')}<h2>¿En qué trabajamos?</h2><p>Estoy conectado al contexto de esta pantalla. También puedes señalar un elemento visible o incluir voluntariamente la pantalla cuando necesites una evaluación visual.</p>`;
+    section.innerHTML = `${icon('assistant')}<h2>What are we working on?</h2><p>I am connected to the context of this screen. You can also point to a visible element or choose to include the screen when you need a visual assessment.</p>`;
     messages.append(section);
   };
 
@@ -205,7 +205,7 @@
     const mark = element('span');
     mark.innerHTML = icon('task');
     const copy = element('div');
-    copy.append(element('small', '', 'Tarea preparada para Codex'), element('strong', '', task.title || 'Tarea técnica'));
+    copy.append(element('small', '', 'Task prepared for Codex'), element('strong', '', task.title || 'Technical task'));
     header.append(mark, copy);
     card.append(header);
     if (task.description) card.append(element('p', '', task.description));
@@ -218,7 +218,7 @@
   const renderAction = (action) => {
     if (!action || action.action_type !== 'remember_memory') return;
     const status = element('div', 'faithful-assistant-inline-status');
-    status.innerHTML = `${icon('check')}<span>Decisión guardada en la memoria de Artwork</span>`;
+    status.innerHTML = `${icon('check')}<span>Decision saved to Artwork memory</span>`;
     messages.append(status);
   };
 
@@ -231,7 +231,7 @@
     conversationKey = history?.conversation_key || null;
     const conversationTitle = String(history?.title || '').trim();
     const firstUserMessage = items.find((item) => item.role === 'user')?.content || '';
-    const displayTitle = conversationTitle || firstUserMessage || 'Conversación nueva';
+    const displayTitle = conversationTitle || firstUserMessage || 'New conversation';
     title.textContent = displayTitle;
     title.title = displayTitle;
     thread.scrollTop = thread.scrollHeight;
@@ -244,7 +244,7 @@
       button.type = 'button';
       button.dataset.conversationKey = conversation.conversation_key;
       button.classList.toggle('is-active', conversation.conversation_key === conversationKey);
-      button.append(element('strong', '', conversation.title || 'Conversación sin título'), element('span', '', relativeDate(conversation.updated_at)));
+      button.append(element('strong', '', conversation.title || 'Untitled conversation'), element('span', '', relativeDate(conversation.updated_at)));
       button.addEventListener('click', () => openConversation(conversation.conversation_key));
       historyList.append(button);
     });
@@ -370,7 +370,7 @@
         provider: providerSelect ? providerSelect.value : null,
       });
       pending.remove();
-      appendMessage('assistant', result.message || 'No se recibió una respuesta.');
+      appendMessage('assistant', result.message || 'No response was received.');
       (result.technical_tasks || []).forEach(renderTask);
       (result.actions || []).forEach(renderAction);
       conversationKey = result.conversation_key || conversationKey;
@@ -593,11 +593,11 @@
 
   const readImageFile = (file) => new Promise((resolve, reject) => {
     if (!(file instanceof Blob) || !String(file.type || '').startsWith('image/')) {
-      reject(new Error('El portapapeles no contiene una imagen compatible.'));
+      reject(new Error('The clipboard does not contain a compatible image.'));
       return;
     }
     if (file.size > 15 * 1024 * 1024) {
-      reject(new Error('La imagen supera el límite de 15 MB.'));
+      reject(new Error('The image exceeds the 15 MB limit.'));
       return;
     }
     const objectUrl = URL.createObjectURL(file);
@@ -608,14 +608,14 @@
     };
     image.onerror = () => {
       URL.revokeObjectURL(objectUrl);
-      reject(new Error('No se pudo leer la imagen. Usa PNG, JPG o WEBP.'));
+      reject(new Error('The image could not be read. Use PNG, JPG, or WEBP.'));
     };
     image.src = objectUrl;
   });
 
   const normalizeImageFile = async (file) => {
     const source = await readImageFile(file);
-    if (!source.naturalWidth || !source.naturalHeight) throw new Error('La imagen está vacía o dañada.');
+    if (!source.naturalWidth || !source.naturalHeight) throw new Error('The image is empty or damaged.');
 
     let scale = Math.min(1, 1920 / source.naturalWidth, 1200 / source.naturalHeight);
     let quality = .86;
@@ -633,7 +633,7 @@
       if (quality > .58) quality -= .1;
       else scale *= .82;
     }
-    throw new Error('No se pudo reducir la captura al tamaño permitido.');
+    throw new Error('The screenshot could not be reduced to the allowed size.');
   };
 
   const acceptImageFile = async (file, label) => {
@@ -647,7 +647,7 @@
       screenCaptureLabel = label;
       renderVisualContext();
     } catch (error) {
-      showError(error.message || 'No se pudo adjuntar la captura.');
+      showError(error.message || 'The screenshot could not be attached.');
     } finally {
       imageProcessing = false;
       attachImageButton.disabled = false;
@@ -686,7 +686,7 @@
     canvas.height = sourceHeight;
     const canvasContext = canvas.getContext('2d', { alpha: false });
     if (!canvasContext) {
-      showError('No se pudo preparar el recorte seleccionado.');
+      showError('The selected crop could not be prepared.');
       closeCropper();
       return;
     }
@@ -698,7 +698,7 @@
     if (sending) return;
     showError('');
     if (!navigator.mediaDevices?.getDisplayMedia) {
-      showError('Este navegador no permite incluir la pantalla. Puedes señalar un elemento o usar un navegador compatible.');
+      showError('This browser cannot include the screen. You can point to an element or use a compatible browser.');
       return;
     }
     captureButton.disabled = true;
@@ -719,17 +719,17 @@
       await new Promise((resolve) => window.setTimeout(resolve, 400));
       const sourceWidth = video.videoWidth;
       const sourceHeight = video.videoHeight;
-      if (!sourceWidth || !sourceHeight) throw new Error('No se pudo leer la pantalla seleccionada.');
+      if (!sourceWidth || !sourceHeight) throw new Error('The selected screen could not be read.');
       const scale = Math.min(1, 1440 / sourceWidth, 900 / sourceHeight);
       const canvas = document.createElement('canvas');
       canvas.width = Math.max(1, Math.round(sourceWidth * scale));
       canvas.height = Math.max(1, Math.round(sourceHeight * scale));
       const canvasContext = canvas.getContext('2d', { alpha: false });
-      if (!canvasContext) throw new Error('No se pudo preparar la captura de pantalla.');
+      if (!canvasContext) throw new Error('The screenshot could not be prepared.');
       canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
       capturedScreen = canvas.toDataURL('image/jpeg', .72);
     } catch (error) {
-      if (error?.name !== 'NotAllowedError') showError(error.message || 'No se pudo incluir la pantalla.');
+      if (error?.name !== 'NotAllowedError') showError(error.message || 'The screen could not be included.');
     } finally {
       stream?.getTracks().forEach((track) => track.stop());
       root.classList.remove('is-capturing-screen');
@@ -746,7 +746,7 @@
   imageInput.addEventListener('change', () => {
     const file = Array.from(imageInput.files || []).find((candidate) => String(candidate.type || '').startsWith('image/'));
     imageInput.value = '';
-    if (file) acceptImageFile(file, file.name || 'Imagen adjunta');
+    if (file) acceptImageFile(file, file.name || 'Attached image');
   });
   captureButton.addEventListener('click', captureCurrentScreen);
   root.querySelector('[data-assistant-target-cancel]').addEventListener('click', () => finishTargetPicking(false));
@@ -776,7 +776,7 @@
   });
   form.addEventListener('submit', (event) => {
     event.preventDefault();
-    const value = input.value.trim() || (screenCapture ? 'Ayúdame con esta captura.' : '');
+    const value = input.value.trim() || (screenCapture ? 'Help me with this screenshot.' : '');
     if (!value || sending) return;
     input.value = '';
     resizeInput();

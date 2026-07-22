@@ -30,7 +30,7 @@ if ((int)($_GET['generation_id'] ?? 0) > 0) {
     $row = $stmt->fetch();
     if (is_array($row)) {
         $key = (string)$row['object_path'];
-        $baseName = video_download_slug((string)$row['project_title'] . '-' . (string)($row['scene_title'] ?? 'secuencia'))
+        $baseName = video_download_slug((string)$row['project_title'] . '-' . (string)($row['scene_title'] ?? 'sequence'))
             . '-v' . max(1, (int)($row['generation_version'] ?? 1));
         $downloadName = $baseName . (isset($_GET['thumbnail']) ? '.jpg' : '.mp4');
     }

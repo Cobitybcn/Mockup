@@ -47,7 +47,7 @@ if ($preAssignedJobId > 0) {
             $rootFile = basename((string)$job['artwork_file']);
             $imagePath = RESULTS_DIR . DIRECTORY_SEPARATOR . $rootFile;
             if (!is_file($imagePath)) {
-                throw new RuntimeException('No se encontro la imagen raiz para generar el mockup automatico.');
+                throw new RuntimeException('The root image for automatic mockup generation was not found.');
             }
 
             $existing = Database::connection()->prepare('
@@ -77,7 +77,7 @@ if ($preAssignedJobId > 0) {
             if (ProviderSettings::allowRealApi()) {
                 $reason = 'auto_mockup_generation:' . (string)$job['context_id'];
                 if (!Database::deductCredit((int)$job['user_id'], $reason)) {
-                    throw new RuntimeException('No hay creditos suficientes para generar este mockup automatico.');
+                    throw new RuntimeException('There are not enough credits to generate this automatic mockup.');
                 }
                 $creditDeducted = true;
             }
@@ -163,7 +163,7 @@ for ($i = 0; $i < $maxJobs; $i++) {
         $rootFile = basename((string)$job['artwork_file']);
         $imagePath = RESULTS_DIR . DIRECTORY_SEPARATOR . $rootFile;
         if (!is_file($imagePath)) {
-            throw new RuntimeException('No se encontro la imagen raiz para generar el mockup automatico.');
+            throw new RuntimeException('The root image for automatic mockup generation was not found.');
         }
 
         $existing = Database::connection()->prepare('
@@ -193,7 +193,7 @@ for ($i = 0; $i < $maxJobs; $i++) {
         if (ProviderSettings::allowRealApi()) {
             $reason = 'auto_mockup_generation:' . (string)$job['context_id'];
             if (!Database::deductCredit((int)$job['user_id'], $reason)) {
-                throw new RuntimeException('No hay creditos suficientes para generar este mockup automatico.');
+                throw new RuntimeException('There are not enough credits to generate this automatic mockup.');
             }
             $creditDeducted = true;
         }

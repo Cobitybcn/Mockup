@@ -17,17 +17,17 @@
         if (files.length > 10) {
             input.value = '';
             list.innerHTML = '';
-            showError('Puedes añadir hasta 10 imágenes.');
+            showError('You can add up to 10 images.');
             return;
         }
         hideError();
-        list.innerHTML = files.map((file, index) => `<figure><img src="${URL.createObjectURL(file)}" alt="Imagen ${index + 1}"><span>${index + 1}</span></figure>`).join('');
+        list.innerHTML = files.map((file, index) => `<figure><img src="${URL.createObjectURL(file)}" alt="Image ${index + 1}"><span>${index + 1}</span></figure>`).join('');
     });
 
     function showError(message) { if (errorBox) { errorBox.textContent = message; errorBox.hidden = false; } }
     function hideError() { if (errorBox) errorBox.hidden = true; }
     function setBusy(busy, label) {
-        if (submit) { submit.disabled = busy; submit.textContent = busy ? 'Procesando…' : 'Crear nueva versión'; }
+        if (submit) { submit.disabled = busy; submit.textContent = busy ? 'Processing…' : 'Create new version'; }
         if (state) state.textContent = label;
     }
 
@@ -36,10 +36,10 @@
         try {
             const response = await fetch(`video_editor_status.php?jobId=${jobId}`, { credentials: 'same-origin' });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || !payload.ok) throw new Error(payload.error || 'No se pudo consultar la edición.');
+            if (!response.ok || !payload.ok) throw new Error(payload.error || 'The edit status could not be retrieved.');
             const job = payload.job || {};
             if (job.status === 'succeeded') {
-                setBusy(false, 'Edición completada');
+                setBusy(false, 'Edit complete');
                 if (result && resultVideo && download) {
                     result.hidden = false;
                     resultVideo.src = job.previewUrl;
@@ -48,12 +48,12 @@
                 }
                 return;
             }
-            if (job.status === 'failed') throw new Error(job.error || 'Omni no pudo completar la edición.');
-            setBusy(true, 'Omni está creando la nueva versión…');
+            if (job.status === 'failed') throw new Error(job.error || 'Omni could not complete the edit.');
+            setBusy(true, 'Omni is creating the new version…');
             pollTimer = window.setTimeout(() => poll(jobId), 5000);
         } catch (error) {
-            setBusy(false, 'No se pudo completar');
-            showError(error instanceof Error ? error.message : 'No se pudo consultar la edición.');
+            setBusy(false, 'Could not complete');
+            showError(error instanceof Error ? error.message : 'The edit status could not be retrieved.');
         }
     }
 
@@ -64,11 +64,11 @@
         try {
             const response = await fetch('video_editor_start.php', { method: 'POST', body: new FormData(form), credentials: 'same-origin' });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || !payload.ok) throw new Error(payload.error || 'No se pudo iniciar la edición.');
+            if (!response.ok || !payload.ok) throw new Error(payload.error || 'The edit could not be started.');
             poll(Number(payload.job?.id || 0));
         } catch (error) {
-            setBusy(false, 'Listo para editar');
-            showError(error instanceof Error ? error.message : 'No se pudo iniciar la edición.');
+            setBusy(false, 'Ready to edit');
+            showError(error instanceof Error ? error.message : 'The edit could not be started.');
         }
     });
 })();

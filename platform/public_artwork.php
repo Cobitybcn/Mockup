@@ -3,7 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/app/bootstrap.php';
 function pubh($v): string { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 try { $publication=(new PublicationService(Database::connection()))->publicBySlug(trim((string)($_GET['slug']??''))); }
-catch(Throwable $e){ http_response_code(404); exit('Publicación no encontrada.'); }
+catch(Throwable $e){ http_response_code(404); exit('Publication not found.'); }
 $title=(string)$publication['title']; $desc=(string)($publication['short_description'] ?: $publication['description']);
 $cover=$publication['items'][0]['mockup_file'] ?? $publication['source_image_file'];
 $coverUrl='publication_media.php?slug='.rawurlencode((string)$publication['slug']).'&file='.rawurlencode(basename((string)$cover));

@@ -100,15 +100,15 @@
         try {
             const response = await fetch('video_final_upload.php', { method: 'POST', body: new FormData(uploadForm), credentials: 'same-origin' });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok || !payload.ok) throw new Error(payload.error || 'No se pudo subir el video final.');
+            if (!response.ok || !payload.ok) throw new Error(payload.error || 'The final video could not be uploaded.');
             window.location.reload();
         } catch (error) {
             if (uploadError) {
-                uploadError.textContent = error instanceof Error ? error.message : 'No se pudo subir el video final.';
+                uploadError.textContent = error instanceof Error ? error.message : 'The final video could not be uploaded.';
                 uploadError.hidden = false;
             }
         } finally {
-            if (submit) { submit.disabled = false; submit.textContent = 'Subir video'; }
+            if (submit) { submit.disabled = false; submit.textContent = 'Upload video'; }
         }
     });
 
@@ -124,21 +124,21 @@
                     method: 'POST', body: new FormData(form), credentials: 'same-origin'
                 });
                 const payload = await response.json().catch(() => ({}));
-                if (!response.ok || !payload.ok) throw new Error(payload.error || 'No se pudo asociar la obra.');
+                if (!response.ok || !payload.ok) throw new Error(payload.error || 'The artwork could not be associated.');
                 window.location.reload();
             } catch (cause) {
                 if (error) {
-                    error.textContent = cause instanceof Error ? cause.message : 'No se pudo asociar la obra.';
+                    error.textContent = cause instanceof Error ? cause.message : 'The artwork could not be associated.';
                     error.hidden = false;
                 }
             } finally {
-                if (submit) { submit.disabled = false; submit.textContent = 'Guardar'; }
+                if (submit) { submit.disabled = false; submit.textContent = 'Save'; }
             }
         });
     });
 
     document.addEventListener('click', event => {
-        if (event.target.closest('[data-open-final-upload]')) { openFinalUpload(); return; }
+        if (event.target.closest('[data-open-final-upload]')) { event.preventDefault(); openFinalUpload(); return; }
         if (event.target.closest('[data-close-final-upload]')) { closeFinalUpload(); return; }
         const preview = event.target.closest('[data-video-preview]');
         if (preview) {

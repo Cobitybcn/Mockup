@@ -73,7 +73,7 @@ function page_url(int $page, string $query): string
 }
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <title>Root Images - Artwork Mockups</title>

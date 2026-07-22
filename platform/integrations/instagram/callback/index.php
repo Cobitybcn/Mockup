@@ -20,7 +20,7 @@ try {
         trim((string)($_GET['code'] ?? '')),
         trim((string)($_GET['state'] ?? ''))
     );
-    $message = 'La cuenta profesional de Instagram quedó conectada.';
+    $message = 'The professional Instagram account is now connected.';
 } catch (Throwable $e) {
     $message = $e->getMessage();
 }

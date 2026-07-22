@@ -76,7 +76,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $id = max(0, (int)($_POST['draft_id'] ?? 0));
             $title = trim((string)($_POST['title'] ?? ''));
             $objective = trim((string)($_POST['objective'] ?? ''));
-            if ($title === '') throw new RuntimeException('El título es obligatorio.');
+            if ($title === '') throw new RuntimeException('The title is required.');
             $saved = $websiteBoard->saveNote($userId, $id, $title, $objective);
             $currentStatus = (string)($saved['status'] ?? 'draft');
             if ($action === 'publish_draft' && $currentStatus !== 'published') {
@@ -85,7 +85,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 $websiteBoard->noteAction($userId, $id, 'unpublish');
             }
             
-            $_SESSION['wsn_notice'] = $action === 'publish_draft' ? 'Nota de estudio publicada con éxito.' : 'Borrador guardado con éxito.';
+            $_SESSION['wsn_notice'] = $action === 'publish_draft' ? 'Studio Note published successfully.' : 'Draft saved successfully.';
             header('Location: website_studio_notes.php?draft=' . $id);
             exit;
         }

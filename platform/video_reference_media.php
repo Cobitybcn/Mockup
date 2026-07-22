@@ -62,7 +62,7 @@ if ($range !== '') {
 }
 
 $mime = (string)$asset['mime_type'];
-$downloadName = basename(str_replace('\\', '/', (string)$asset['original_name'])) ?: 'referencia';
+$downloadName = basename(str_replace('\\', '/', (string)$asset['original_name'])) ?: 'reference';
 http_response_code($status);
 header('Content-Type: ' . $mime);
 header('Accept-Ranges: bytes');

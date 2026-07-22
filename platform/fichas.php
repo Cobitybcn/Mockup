@@ -74,7 +74,7 @@ try {
         }
 
         (new ArtworkGroupService($pdo))->syncUser($userId);
-        $_SESSION['fichas_notice'] = "Sincronización: {$embedded} obras embebidas, {$assigned} asignadas a fichas automáticamente" . ($pendingReview > 0 ? ", {$pendingReview} necesitan revisión en el asistente." : '.');
+        $_SESSION['fichas_notice'] = "Synchronization: {$embedded} artworks embedded, {$assigned} assigned to sheets automatically" . ($pendingReview > 0 ? ", {$pendingReview} need review in the assistant." : '.');
         header('Location: fichas.php');
         exit;
     }
@@ -154,7 +154,7 @@ foreach ($sheets as $sheet) {
 }
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <title>Fichas - Artwork Mockups</title>
@@ -185,12 +185,12 @@ foreach ($sheets as $sheet) {
         <header class="app-header">
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
-        <div class="alert-strip">Una ficha por obra de arte real: sus vistas raíz, sus mockups y sus metadatos en un solo lugar.</div>
+        <div class="alert-strip">One sheet per real artwork: its root views, mockups, and metadata in one place.</div>
         <div class="workspace">
             <div class="workspace-header">
                 <div>
-                    <h1>Fichas de Obras</h1>
-                    <p><?= count($cards) ?> fichas · <?= $orphanCount ?> mockups sin ficha · <?= count($unsheeted) ?> obras raíz sin agrupar</p>
+                    <h1>Artwork Sheets</h1>
+                    <p><?= count($cards) ?> sheets · <?= $orphanCount ?> mockups without a sheet · <?= count($unsheeted) ?> ungrouped root artworks</p>
                 </div>
             </div>
 
@@ -199,31 +199,31 @@ foreach ($sheets as $sheet) {
 
             <div class="fichas-toolbar">
                 <form class="fichas-search" method="get">
-                    <input type="text" name="q" value="<?= h($query) ?>" placeholder="Buscar por título, tag, archivo...">
-                    <button class="button-link secondary" type="submit">Buscar</button>
+                    <input type="text" name="q" value="<?= h($query) ?>" placeholder="Search by title, tag, or file...">
+                    <button class="button-link secondary" type="submit">Search</button>
                     <?php if ($query !== ''): ?><a class="button-link secondary" href="fichas.php">Limpiar</a><?php endif; ?>
                 </form>
                 <div style="display:flex; gap:8px;">
                     <form method="post" style="display:inline;">
                         <input type="hidden" name="action" value="sync_new">
-                        <button type="submit" class="button-link secondary" title="Embebe obras nuevas y las asigna a su ficha por similitud visual" onclick="this.textContent='Sincronizando...';">⟳ Sincronizar obras nuevas</button>
+                        <button type="submit" class="button-link secondary" title="Embed new artworks and assign them to sheets by visual similarity" onclick="this.textContent='Synchronizing...';">⟳ Synchronize new artworks</button>
                     </form>
-                    <a class="button-link secondary" href="fichas_reconcile.php">Reagrupar obras (asistente IA)</a>
+                    <a class="button-link secondary" href="fichas_reconcile.php">Regroup artworks (AI assistant)</a>
                 </div>
             </div>
 
             <?php if (count($unsheeted) > 0 || $orphanCount > 0): ?>
                 <div class="orphan-strip">
                     <span class="meta">
-                        <?php if (count($unsheeted) > 0): ?><strong><?= count($unsheeted) ?> obras raíz</strong> todavía no pertenecen a ninguna ficha. <?php endif; ?>
+                        <?php if (count($unsheeted) > 0): ?><strong><?= count($unsheeted) ?> root artworks</strong> do not belong to a sheet yet. <?php endif; ?>
                         <?php if ($orphanCount > 0): ?><strong><?= $orphanCount ?> mockups</strong> sin ficha (sin linaje conocido).<?php endif; ?>
                     </span>
-                    <a class="button-link secondary" href="fichas_reconcile.php">Resolver en el asistente</a>
+                    <a class="button-link secondary" href="fichas_reconcile.php">Resolve in assistant</a>
                 </div>
             <?php endif; ?>
 
             <?php if (!$cards): ?>
-                <div class="notice">Aún no hay fichas. Usa el <a href="fichas_reconcile.php">asistente de agrupación</a> para crearlas a partir de tus obras.</div>
+                <div class="notice">There are no sheets yet. Use the <a href="fichas_reconcile.php">grouping assistant</a> to create them from your artworks.</div>
             <?php else: ?>
                 <div class="fichas-grid">
                     <?php foreach ($cards as $card): ?>
@@ -231,12 +231,12 @@ foreach ($sheets as $sheet) {
                             <?php if ($card['image'] !== ''): ?>
                                 <img src="<?= h($card['image']) ?>" alt="<?= h($card['title']) ?>" loading="lazy" decoding="async">
                             <?php else: ?>
-                                <div class="empty-img">Sin imagen</div>
+                                <div class="empty-img">No image</div>
                             <?php endif; ?>
                             <div class="ficha-body">
                                 <span class="ficha-title" title="<?= h($card['title']) ?>"><?= h($card['title']) ?></span>
                                 <div class="ficha-stats">
-                                    <span class="stat-pill"><?= $card['members'] ?> raíces</span>
+                                    <span class="stat-pill"><?= $card['members'] ?> roots</span>
                                     <span class="stat-pill"><?= $card['mockups'] ?> mockups</span>
                                     <span class="stat-pill <?= $card['meta_done'] === $card['meta_total'] ? 'meta-full' : 'meta-empty' ?>">
                                         Metadatos <?= $card['meta_done'] ?>/<?= $card['meta_total'] ?>

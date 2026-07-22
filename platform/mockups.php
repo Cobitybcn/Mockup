@@ -301,6 +301,34 @@ function mockup_album_label(array $mockup): string
             border-radius: var(--radius);
             padding: 24px 26px;
         }
+        .mockup-album-header .topbar-actions { align-items:flex-start; }
+        .mockup-import-decision-block {
+            display:inline-flex;
+            flex:0 0 140px;
+            width:140px;
+            min-width:140px;
+            height:140px;
+            min-height:140px;
+            align-items:center;
+            justify-content:center;
+            box-sizing:border-box;
+            margin:0;
+            padding:18px;
+            border:1px solid #a86f77;
+            border-radius:4px;
+            background:#b77f86;
+            color:#fffaf7;
+            box-shadow:0 8px 18px rgba(92,57,62,.12);
+            font-size:11px;
+            font-weight:800;
+            letter-spacing:.09em;
+            line-height:1.35;
+            text-align:center;
+            text-decoration:none;
+            text-transform:uppercase;
+        }
+        .mockup-import-decision-block:hover,
+        .mockup-import-decision-block:focus-visible { border-color:#965f67; background:#a86f77; color:#fff; transform:translateY(-1px); }
         .mockup-image-wrap {
             position: relative;
         }
@@ -432,15 +460,11 @@ function mockup_album_label(array $mockup): string
                 line-height: 1.45;
             }
             .mockup-album-header .topbar-actions {
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 8px;
+                display: flex;
+                justify-content: flex-end;
                 margin-top: 14px;
             }
-            .mockup-album-header .topbar-actions .button-link {
-                width: 100%;
-                min-height: 46px;
-            }
+            .mockup-import-decision-block { flex-basis:112px; width:112px; min-width:112px; height:112px; min-height:112px; padding:14px; }
             .toolbar-form {
                 display: grid;
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -617,8 +641,7 @@ function mockup_album_label(array $mockup): string
                     <p><?= h($total) ?> images saved in your private archive.</p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link secondary" href="create_scenes.php">Create Art</a>
-                    <a class="button-link" href="mockup_upload.php">Import Mockups</a>
+                    <a class="mockup-import-decision-block" href="mockup_upload.php">Import Mockups</a>
                 </div>
             </div>
 

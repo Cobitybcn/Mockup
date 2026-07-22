@@ -9,19 +9,19 @@ $file = basename(str_replace('\\', '/', trim((string)($_GET['file'] ?? ''))));
 
 if ($file === '' || preg_match('/^[A-Za-z0-9._-]+$/', $file) !== 1) {
     http_response_code(400);
-    exit('Archivo invalido.');
+    exit('Invalid file.');
 }
 
 $labDir = __DIR__ . '/storage/experiments/mockup-variation-lab';
 $path = $labDir . DIRECTORY_SEPARATOR . $file;
 if (!is_file($path)) {
     http_response_code(404);
-    exit('Archivo no encontrado.');
+    exit('File not found.');
 }
 
 if (!mockup_variation_lab_user_can_access_file((int)$user['id'], Auth::isAdmin($user), $file, $labDir)) {
     http_response_code(403);
-    exit('No tienes acceso a este archivo.');
+    exit('You do not have access to this file.');
 }
 
 if (session_status() === PHP_SESSION_ACTIVE) {

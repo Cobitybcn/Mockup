@@ -400,7 +400,7 @@ try {
         file_put_contents($auditPath, json_encode($audit, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
         http_response_code(500);
-        echo json_encode(['ok' => false, 'error' => 'No se pudo registrar la generación: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        echo json_encode(['ok' => false, 'error' => 'The generation could not be registered: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
     }
     exit;
 } catch (Throwable $e) {

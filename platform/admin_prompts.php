@@ -418,11 +418,11 @@ $rootViews = [
                 <div class="prompt-section">
                     <div class="prompt-section-header">
                         <div class="prompt-section-header-left">
-                            <h2 class="prompt-section-title">Obra Raíz</h2>
+                            <h2 class="prompt-section-title">Root Artwork</h2>
                             <span class="section-badge">Formulario 1</span>
                         </div>
                         <div class="prompt-section-meta">
-                            <label for="root_artwork_count">Versiones a generar</label>
+                            <label for="root_artwork_count">Versions to generate</label>
                             <input
                                 type="number"
                                 id="root_artwork_count"
@@ -446,7 +446,7 @@ $rootViews = [
                                     <span class="view-card-title"><?= h($view['label']) ?></span>
                                 </div>
                                 <div class="view-card-body">
-                                    <p class="view-card-help">Prompt completo y exclusivo para esta vista. Se envía a Vertex AI tal cual.</p>
+                                    <p class="view-card-help">Complete prompt used exclusively for this view. It is sent to Vertex AI unchanged.</p>
                                     <textarea
                                         id="<?= h($key) ?>"
                                         name="<?= h($key) ?>"
@@ -465,7 +465,7 @@ $rootViews = [
                                         Valor por defecto
                                     </button>
                                     <div class="default-editor-panel" id="panel-<?= h($key) ?>">
-                                        <span class="default-editor-label">Texto de restauración</span>
+                                        <span class="default-editor-label">Restore text</span>
                                         <textarea
                                             id="<?= h($key) ?>_default"
                                             name="default_directives[<?= h($key) ?>]"
@@ -489,8 +489,8 @@ $rootViews = [
 
                 <!-- ── Sticky save bar ── -->
                 <div class="save-bar">
-                    <span class="save-bar-hint">Los cambios se aplican a partir de la próxima generación.</span>
-                    <button type="submit">Guardar cambios</button>
+                    <span class="save-bar-hint">Changes apply from the next generation onward.</span>
+                    <button type="submit">Save changes</button>
                 </div>
 
             </form>

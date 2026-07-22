@@ -7,7 +7,7 @@ try{
     if(!FeatureAccess::allows($user,FeatureAccess::SOCIAL_MANAGE))throw new RuntimeException('Social Media requires Artist Pro.');
     if(isset($_GET['error']))throw new RuntimeException('Meta authorization was cancelled.');
     (new MetaIntegrationService(Database::connection()))->completeAuthorization((int)$user['id'],$purpose,trim((string)($_GET['code']??'')),trim((string)($_GET['state']??'')));
-    $message='Facebook autorizó la cuenta. Ahora elige la Página de artista.';
+    $message='Facebook authorized the account. Now choose the artist Page.';
 }catch(Throwable $e){$message=$e->getMessage();}
 if(isset($e))$_SESSION['connections_error']=$message;else $_SESSION['connections_notice']=$message;
 $_SESSION['connections_open']='facebook';

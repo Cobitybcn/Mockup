@@ -43,8 +43,8 @@
     };
 
     const emptyCopyFor = (container) => container === library
-        ? 'Todas las cámaras están asignadas. Arrastrá una desde un tablero para dejarla en espera.'
-        : 'Arrastrá cámaras aquí para activar este tablero.';
+        ? 'All cameras are assigned. Drag one back from a board to keep it available.'
+        : 'Drag cameras here to activate this board.';
 
     const updateEmptyState = (container) => {
         if (!container) return;
@@ -100,13 +100,13 @@
         const libraryCounter = document.querySelector('[data-library-count]');
         if (libraryCounter) libraryCounter.textContent = `${libraryCount} en espera`;
         const summary = document.querySelector('[data-save-summary]');
-        if (summary) summary.textContent = `${assignedCount} cámaras activas · ${libraryCount} en espera`;
+        if (summary) summary.textContent = `${assignedCount} active cameras · ${libraryCount} available`;
 
         if (markDirty) dirty = true;
         const saveBar = document.querySelector('.cmb-save-bar');
         saveBar?.classList.toggle('is-dirty', dirty);
         const saveTitle = document.querySelector('[data-save-title]');
-        if (saveTitle) saveTitle.textContent = dirty ? 'Cambios sin guardar' : 'Organización actual';
+        if (saveTitle) saveTitle.textContent = dirty ? 'Unsaved changes' : 'Current organization';
         syncBoardInputs();
     };
 
@@ -114,7 +114,7 @@
         const target = event.to;
         if (!target?.matches('[data-board-list]') || event.from === target) return true;
         if (directCards(target).length < maxPerBoard) return true;
-        showToast(`Este tablero ya tiene ${maxPerBoard} cámaras.`);
+        showToast(`This board already has ${maxPerBoard} cameras.`);
         return false;
     };
 
@@ -163,7 +163,7 @@
 
     const initializeSortables = () => {
         if (typeof window.Sortable !== 'function') {
-            showToast('No se pudo iniciar el sistema de arrastre.');
+            showToast('The drag-and-drop system could not be started.');
             return;
         }
         if (library) {
@@ -203,7 +203,7 @@
         if (!inspectorBackdrop || !editorForm) return;
         const camera = cameraId ? cameras.get(String(cameraId)) : null;
         if (cameraId && !camera) {
-            showToast('No se encontró esa cámara.');
+            showToast('That camera could not be found.');
             return;
         }
 
@@ -224,8 +224,8 @@
         if (nameInput) nameInput.value = camera?.name || '';
         if (promptInput) promptInput.value = camera?.prompt || '';
         if (actionInput) actionInput.value = isNew ? 'save_slot' : 'save_scene_quick';
-        if (title) title.textContent = isNew ? 'Nueva cámara' : String(camera.name || camera.id);
-        if (kicker) kicker.textContent = isNew ? 'Crear cámara' : 'Editor de cámara';
+        if (title) title.textContent = isNew ? 'New camera' : String(camera.name || camera.id);
+        if (kicker) kicker.textContent = isNew ? 'Create camera' : 'Camera editor';
         if (origin) origin.textContent = isNew ? 'Nueva' : String(camera.origin || 'Base');
         if (deleteButton) deleteButton.hidden = isNew;
 

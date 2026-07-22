@@ -1099,7 +1099,7 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                                         <?php if ($selectedArtworkSeriesId > 0): ?><span class="series-artwork-order" data-series-order-position><?= str_pad((string)$desktopSeriesOrder, 2, '0', STR_PAD_LEFT) ?></span><?php endif; ?>
                                     </a>
                                     <?php if (count($albumArtworks) > 1): ?>
-                                        <button class="artwork-merge-btn media-icon-button media-thumb-action media-thumb-action--right-secondary" type="button" title="Fusionar con otra obra" aria-label="Fusionar con otra obra"
+                                        <button class="artwork-merge-btn media-icon-button media-thumb-action media-thumb-action--right-secondary" type="button" title="Merge with another artwork" aria-label="Merge with another artwork"
                                             data-merge-source
                                             data-group-id="<?= (int)$albumArtwork['group_id'] ?>"
                                             data-artwork-id="<?= (int)$albumArtwork['id'] ?>"
@@ -1167,11 +1167,11 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
 <?php if ($id <= 0 && count($albumArtworks) > 1): ?>
 <div class="merge-artwork-backdrop" data-merge-dialog hidden>
     <section class="merge-artwork-dialog" role="dialog" aria-modal="true" aria-labelledby="merge-artwork-title">
-        <span class="merge-artwork-kicker">Resolver duplicado</span>
-        <h2 id="merge-artwork-title">Fusionar con otra obra</h2>
-        <p class="merge-artwork-intro">Elige la otra referencia y después cuál debe permanecer como obra principal. No se eliminarán imágenes raíz ni mockups.</p>
-        <input class="merge-artwork-search" type="search" data-merge-search placeholder="Buscar por título de obra…" autocomplete="off">
-        <div class="merge-artwork-picker" data-merge-picker aria-label="Elegir obra duplicada">
+        <span class="merge-artwork-kicker">Resolve duplicate</span>
+        <h2 id="merge-artwork-title">Merge with another artwork</h2>
+        <p class="merge-artwork-intro">Choose the other reference, then choose which one should remain the primary artwork. No root images or mockups will be deleted.</p>
+        <input class="merge-artwork-search" type="search" data-merge-search placeholder="Search by artwork title…" autocomplete="off">
+        <div class="merge-artwork-picker" data-merge-picker aria-label="Choose duplicate artwork">
             <?php foreach ($albumArtworks as $mergeCandidate): ?>
                 <?php
                 $mergeTitle = trim((string)($mergeCandidate['group_title'] ?? ''));
@@ -1190,16 +1190,16 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                     data-mockups="<?= (int)$mergeCandidate['mockup_count'] ?>"
                     data-roots="<?= (int)$mergeCandidate['root_count'] ?>"
                     data-width="<?= h($mergeWidth) ?>" data-height="<?= h($mergeHeight) ?>" data-unit="<?= h($mergeUnit) ?>">
-                    <span class="merge-likely-badge">Posible duplicado</span>
+                    <span class="merge-likely-badge">Possible duplicate</span>
                     <img src="<?= h(root_album_media_url((string)$mergeCandidate['root_file'])) ?>" alt="" loading="lazy">
                     <strong><?= h($mergeTitle) ?></strong>
-                    <small><?= (int)$mergeCandidate['root_count'] ?> raíces · <?= (int)$mergeCandidate['mockup_count'] ?> mockups</small>
+                    <small><?= (int)$mergeCandidate['root_count'] ?> roots · <?= (int)$mergeCandidate['mockup_count'] ?> mockups</small>
                 </button>
             <?php endforeach; ?>
         </div>
 
         <div class="merge-primary-panel" data-merge-primary-panel hidden>
-            <strong>¿Cuál debe quedar como obra principal?</strong>
+            <strong>Which one should remain the primary artwork?</strong>
             <div class="merge-primary-options">
                 <label class="merge-primary-option">
                     <input type="radio" name="merge_primary" value="source" checked>
@@ -1217,8 +1217,8 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
 
         <div class="merge-dialog-error" data-merge-error role="alert"></div>
         <div class="merge-dialog-actions">
-            <button class="button-link secondary" type="button" data-merge-cancel>Cancelar</button>
-            <button class="button-link merge-confirm" type="button" data-merge-confirm disabled>Fusionar obras</button>
+            <button class="button-link secondary" type="button" data-merge-cancel>Cancel</button>
+            <button class="button-link merge-confirm" type="button" data-merge-confirm disabled>Merge artworks</button>
         </div>
     </section>
 </div>
@@ -1260,7 +1260,7 @@ function fillPrimaryOption(role, artwork) {
     const meta = mergeDialog?.querySelector('[data-merge-primary-meta="' + role + '"]');
     if (image) image.src = artwork.image;
     if (title) title.textContent = artwork.title;
-    if (meta) meta.textContent = artwork.roots + ' raíces · ' + artwork.mockups + ' mockups';
+    if (meta) meta.textContent = artwork.roots + ' roots · ' + artwork.mockups + ' mockups';
 }
 
 function closeMergeDialog() {
@@ -1300,7 +1300,7 @@ function selectMergeCandidate(button) {
     fillPrimaryOption('candidate', mergeState.candidate);
     const totalRoots = mergeState.source.roots + mergeState.candidate.roots;
     const totalMockups = mergeState.source.mockups + mergeState.candidate.mockups;
-    mergeDialog.querySelector('[data-merge-preserves]').textContent = 'Se conservarán ' + totalRoots + ' imágenes raíz y ' + totalMockups + ' mockups. La referencia secundaria permanecerá internamente para conservar su procedencia.';
+    mergeDialog.querySelector('[data-merge-preserves]').textContent = totalRoots + ' root images and ' + totalMockups + ' mockups will be preserved. The secondary reference will remain internally to preserve provenance.';
     mergeDialog.querySelector('[data-merge-primary-panel]').hidden = false;
     mergeDialog.querySelector('[data-merge-confirm]').disabled = false;
 }
@@ -1341,13 +1341,13 @@ mergeDialog?.addEventListener('click', event => {
     fetch('merge_artwork_groups.php', { method: 'POST', body: form })
         .then(parseArtworkDeleteJson)
         .then(result => {
-            if (!result.ok) throw new Error(result.error || 'No se pudieron fusionar las obras.');
+            if (!result.ok) throw new Error(result.error || 'The artworks could not be merged.');
             window.location.href = result.redirect_url || 'root_album.php?merged=1';
         })
         .catch(err => {
             error.textContent = err.message;
             confirmButton.disabled = false;
-            confirmButton.textContent = 'Fusionar obras';
+            confirmButton.textContent = 'Merge artworks';
         });
 });
 

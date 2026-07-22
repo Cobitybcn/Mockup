@@ -93,13 +93,13 @@ function assert_root_owner(string $imagePath, array $user): void
     $metaPath = RESULTS_DIR . DIRECTORY_SEPARATOR . pathinfo(basename($imagePath), PATHINFO_FILENAME) . '.meta.json';
 
     if (!is_file($metaPath)) {
-        json_fail('No se encontro metadata de propiedad para esta obra.', 403);
+        json_fail('Ownership metadata was not found for this artwork.', 403);
     }
 
     $data = json_decode((string)file_get_contents($metaPath), true);
 
     if (is_array($data) && (int)($data['user_id'] ?? 0) !== (int)$user['id']) {
-        json_fail('No tienes acceso a esta obra.', 403);
+        json_fail('You do not have access to this artwork.', 403);
     }
 }
 
@@ -123,7 +123,7 @@ if (!$image) {
 $imagePath = resolve_image_path($image);
 
 if (!$imagePath) {
-    json_fail('No se encontro la imagen: ' . $image, 404);
+    json_fail('Image not found: ' . $image, 404);
 }
 
 assert_root_owner($imagePath, $currentUser);

@@ -12,10 +12,10 @@ try {
     $userId = (int)$user['id'];
     $purpose = strtolower(trim((string)($_GET['purpose'] ?? 'artist')));
     if (!in_array($purpose, ['artist', 'platform'], true)) {
-        throw new InvalidArgumentException('La identidad de Pinterest no es válida.');
+        throw new InvalidArgumentException('The Pinterest identity is not valid.');
     }
     if ($purpose === 'platform' && !Auth::isAdmin($user)) {
-        throw new RuntimeException('La cuenta de Artworks Mockups está disponible solo para administradores.');
+        throw new RuntimeException('The Artwork Mockups account is available to administrators only.');
     }
     $service = new PinterestIntegrationService(Database::connection());
     $connection = $service->connection($userId, $purpose);
@@ -24,7 +24,7 @@ try {
         echo json_encode([
             'ok' => false,
             'boards' => [],
-            'error' => 'Conecta Pinterest para cargar tus tableros.',
+            'error' => 'Connect Pinterest to load your boards.',
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         exit;
     }
@@ -46,6 +46,6 @@ try {
     echo json_encode([
         'ok' => false,
         'boards' => [],
-        'error' => 'No se pudieron cargar los tableros de Pinterest.',
+        'error' => 'Pinterest boards could not be loaded.',
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 }

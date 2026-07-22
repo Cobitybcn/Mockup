@@ -105,28 +105,49 @@ function run_uploaded_root_regression_tests(): void
     );
 
     $rootAlbumSource = (string)file_get_contents(dirname(__DIR__, 2) . '/root_album.php');
-    TestHarness::assertContains(
-        'href="create_scenes.php">Create Art</a>',
-        $rootAlbumSource,
-        'ArtWorks abre el flujo unificado de Create Art'
-    );
-    TestHarness::assertContains(
-        'class="artworks-decision-block"',
-        $rootAlbumSource,
-        'ArtWorks presenta Create Art como el unico Decision Block de la cabecera'
-    );
-    TestHarness::assertContains(
-        'width: 140px;',
-        $rootAlbumSource,
-        'la accion principal de ArtWorks conserva geometria cuadrada en escritorio'
-    );
     TestHarness::assertTrue(
         !str_contains($rootAlbumSource, '<a class="button-link secondary" href="account.php">Account</a>'),
         'ArtWorks no duplica Account junto a la accion creativa'
     );
+    TestHarness::assertContains(
+        'href="create_scenes.php">Create Art</a>',
+        $rootAlbumSource,
+        'ArtWorks conserva Create Art como su accion principal'
+    );
+    TestHarness::assertContains(
+        'class="artworks-decision-block"',
+        $rootAlbumSource,
+        'ArtWorks presenta Create Art como Decision Block cuadrado'
+    );
+    TestHarness::assertTrue(
+        !str_contains($rootAlbumSource, 'href="mockup_upload.php">Import Mockups</a>'),
+        'ArtWorks no presenta la importacion que pertenece a Mockup Album'
+    );
     TestHarness::assertTrue(
         !str_contains($rootAlbumSource, 'href="artwork_new.php"'),
         'ArtWorks no conserva enlaces al formulario antiguo'
+    );
+    $artworkPageSource = (string)file_get_contents(dirname(__DIR__, 2) . '/artwork.php');
+    TestHarness::assertContains(
+        'class="button-link artwork-studio-note-link"',
+        $artworkPageSource,
+        'la ficha de obra presenta Studio Notes como accion principal'
+    );
+    TestHarness::assertContains(
+        'width:140px;',
+        $artworkPageSource,
+        'la accion principal de Studio Notes usa el Decision Block cuadrado'
+    );
+    TestHarness::assertContains(
+        "this.form.classList.add('is-saving'); this.form.requestSubmit()",
+        $artworkPageSource,
+        'la asignacion de serie se guarda automaticamente al cambiarla'
+    );
+    TestHarness::assertTrue(
+        !str_contains($artworkPageSource, 'name="creation_number"')
+            && !str_contains($artworkPageSource, 'value="set_creation_number"')
+            && !str_contains($artworkPageSource, 'Beta mockup flow:'),
+        'la ficha elimina el identificador tecnico, el guardado manual y el aviso beta obsoleto'
     );
 
     $sceneReviewSource = (string)file_get_contents(dirname(__DIR__, 2) . '/mockup_combinations_review.php');
@@ -249,6 +270,15 @@ function run_uploaded_root_regression_tests(): void
         'los controles sobre thumbnails comparten una altura superior calibrada'
     );
     $mockupAlbumSource = (string)file_get_contents(dirname(__DIR__, 2) . '/mockups.php');
+    TestHarness::assertContains(
+        'class="mockup-import-decision-block"',
+        $mockupAlbumSource,
+        'Mockup Album presenta Import Mockups como Decision Block principal'
+    );
+    TestHarness::assertTrue(
+        !str_contains($mockupAlbumSource, 'href="create_scenes.php">Create Art</a>'),
+        'Mockup Album no duplica Create Art junto a la importacion'
+    );
     TestHarness::assertTrue(
         !str_contains($mockupAlbumSource, '<label class="pinterest-thumb-select"'),
         'Mockup Album ya no superpone el selector de Pinterest sobre las imagenes'
@@ -259,13 +289,51 @@ function run_uploaded_root_regression_tests(): void
         'la descarga del album comparte la fila superior con las demas acciones'
     );
     $videosSource = (string)file_get_contents(dirname(__DIR__, 2) . '/videos.php');
+    $videosStyles = (string)file_get_contents(dirname(__DIR__, 2) . '/videos.css');
+    TestHarness::assertContains(
+        'videos-decision-block videos-decision-block--primary',
+        $videosSource,
+        'Video Lab se presenta como Decision Block principal'
+    );
+    TestHarness::assertContains(
+        '<a class="videos-decision-block videos-decision-block--secondary"',
+        $videosSource,
+        'las dos acciones principales usan el mismo tipo de elemento y la misma geometria'
+    );
+    TestHarness::assertContains(
+        'class="videos-primary-actions"',
+        $videosSource,
+        'las dos acciones principales de Videos aparecen juntas en la cabecera'
+    );
+    TestHarness::assertContains(
+        'class="videos-panel-title-row"',
+        $videosSource,
+        'el contador de videos finales queda integrado junto a su titulo'
+    );
+    TestHarness::assertContains(
+        '.videos-decision-block--secondary { border-color: #94a88f; background: #9fb198; }',
+        $videosStyles,
+        'las acciones principales de Videos usan colores pastel complementarios'
+    );
+    TestHarness::assertContains(
+        'width: 140px;',
+        $videosStyles,
+        'las acciones principales de Videos conservan geometria cuadrada'
+    );
+    TestHarness::assertTrue(
+        !str_contains($videosSource, 'Biblioteca')
+            && !str_contains($videosSource, 'Videos finales')
+            && !str_contains($videosSource, 'Videos generados')
+            && !str_contains($videosSource, '>Obra<'),
+        'Videos mantiene sus rotulos visibles en ingles'
+    );
     TestHarness::assertContains(
         'videos-play media-play-control',
         $videosSource,
         'los botones de reproduccion usan el mismo tratamiento de vidrio'
     );
     TestHarness::assertContains(
-        'class="media-thumb-action-cluster" aria-label="Acciones del video"',
+        'class="media-thumb-action-cluster" aria-label="Video actions"',
         $videosSource,
         'editar y descargar video quedan alineados sobre el thumbnail'
     );
@@ -300,6 +368,11 @@ function run_uploaded_root_regression_tests(): void
         '<h1 id="vds-catalog-title">Video Lab</h1>',
         $videoStudioPageSource,
         'Video Studio usa como titulo principal el nombre real de la seccion'
+    );
+    TestHarness::assertTrue(
+        !str_contains($videoStudioPageSource, '>Formato<')
+            && !str_contains($videoStudioPageSource, '>Nuevo<'),
+        'Video Lab mantiene los controles de formato y proyecto en ingles'
     );
     TestHarness::assertContains(
         "font-family: Georgia, 'Times New Roman', serif;",
@@ -649,7 +722,7 @@ function run_uploaded_root_regression_tests(): void
         'el resultado de una regeneracion individual queda distinguido visualmente'
     );
     TestHarness::assertContains(
-        'Fusionar con otra obra',
+        'Merge with another artwork',
         $rootAlbumSource,
         'ArtWorks expone la fusion segura de duplicados'
     );
@@ -670,6 +743,21 @@ function run_uploaded_root_regression_tests(): void
         'la fusion exige una confirmacion CSRF valida'
     );
     $sidebarSource = (string)file_get_contents(dirname(__DIR__, 2) . '/sidebar.php');
+    $artistProfileSource = (string)file_get_contents(dirname(__DIR__, 2) . '/artist_profile.php');
+    TestHarness::assertContains(
+        'class="profile-connections-decision-block"',
+        $artistProfileSource,
+        'Artist Profile presenta Connections como Decision Block principal'
+    );
+    TestHarness::assertTrue(
+        !str_contains($artistProfileSource, '<a class="button-link secondary" href="root_album.php">ArtWorks</a>'),
+        'Artist Profile no duplica ArtWorks junto a Connections'
+    );
+    TestHarness::assertContains(
+        "['root_album.php', 'artwork.php', 'artwork_details.php']",
+        $sidebarSource,
+        'ArtWorks permanece activo al navegar dentro de la ficha de una obra'
+    );
     TestHarness::assertContains(
         'mockup_generation_activity.php',
         $sidebarSource,

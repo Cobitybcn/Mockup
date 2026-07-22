@@ -71,7 +71,7 @@ function wms_analysis_path(string $jobId): string
 function wms_upload_file(array $file): string
 {
     if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file((string)($file['tmp_name'] ?? ''))) {
-        throw new RuntimeException('No se pudo subir la imagen de referencia.');
+        throw new RuntimeException('The reference image could not be uploaded.');
     }
     $ext = strtolower(pathinfo((string)$file['name'], PATHINFO_EXTENSION));
     if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true)) {
@@ -79,18 +79,18 @@ function wms_upload_file(array $file): string
     }
     $dir = __DIR__ . '/storage/world_mother_uploads';
     if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
-        throw new RuntimeException('No se pudo crear la carpeta de uploads.');
+        throw new RuntimeException('The upload folder could not be created.');
     }
     $name = 'world_mother_ref_' . date('Ymd_His') . '_' . random_int(1000, 9999) . '.' . $ext;
     $path = $dir . DIRECTORY_SEPARATOR . $name;
     if (!move_uploaded_file((string)$file['tmp_name'], $path)) {
-        throw new RuntimeException('No se pudo guardar la imagen subida.');
+        throw new RuntimeException('The uploaded image could not be saved.');
     }
     if (StorageService::isGcsActive()) {
         $storageKey = 'storage/world_mother_uploads/' . $name;
         if (!StorageService::uploadFile($storageKey, $path)) {
             @unlink($path);
-            throw new RuntimeException('No se pudo guardar la referencia en el almacenamiento persistente.');
+            throw new RuntimeException('The reference could not be saved to persistent storage.');
         }
     }
     return $path;
@@ -105,7 +105,7 @@ function wms_upload_files(array $files): array
         $paths = [];
         $count = count($files['tmp_name']);
         if ($count < 1 || $count > 4) {
-            throw new RuntimeException('Sube entre 1 y 4 imagenes de referencia.');
+            throw new RuntimeException('Upload between 1 and 4 reference images.');
         }
         for ($i = 0; $i < $count; $i++) {
             $error = (int)($files['error'][$i] ?? UPLOAD_ERR_NO_FILE);
@@ -121,7 +121,7 @@ function wms_upload_files(array $files): array
             ]);
         }
         if (!$paths) {
-            throw new RuntimeException('Sube al menos una imagen de referencia.');
+            throw new RuntimeException('Upload at least one reference image.');
         }
         return $paths;
     }

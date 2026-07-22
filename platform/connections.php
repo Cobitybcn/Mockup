@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $network = preg_replace('/[^a-z]/', '', (string)($_POST['network'] ?? ''));
     try {
         if (!hash_equals((string)($_SESSION['connections_csrf'] ?? ''), (string)($_POST['csrf'] ?? ''))) {
-            throw new RuntimeException('La sesión expiró. Recarga Connections e inténtalo nuevamente.');
+            throw new RuntimeException('Your session expired. Reload Connections and try again.');
         }
 
         $action = (string)($_POST['action'] ?? '');
@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if ($action === 'select_facebook_page') {
             $metaService->selectPage($userId, 'artist', (string)($_POST['page_id'] ?? ''));
-            $_SESSION['connections_notice'] = 'Facebook quedó conectado con la Página seleccionada.';
+            $_SESSION['connections_notice'] = 'Facebook was connected to the selected Page.';
         } elseif ($action === 'disconnect_facebook') {
             $metaService->disconnect($userId, 'artist');
             $_SESSION['connections_notice'] = 'Facebook fue desconectado.';
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pinterestService->disconnect($userId, 'artist');
             $_SESSION['connections_notice'] = 'Pinterest fue desconectado.';
         } else {
-            throw new RuntimeException('La acción de conexión no es válida.');
+            throw new RuntimeException('The connection action is not valid.');
         }
 
         $_SESSION['connections_open'] = $network;
@@ -250,22 +250,22 @@ $artistConnections = [
             <dialog class="connection-dialog" id="connection-pinterest" aria-labelledby="connection-pinterest-title">
                 <div class="connection-dialog__head">
                     <div><span>Artist account</span><h2 id="connection-pinterest-title">Pinterest</h2></div>
-                    <button class="connection-dialog__close" type="button" data-connection-close aria-label="Cerrar">&times;</button>
+                    <button class="connection-dialog__close" type="button" data-connection-close aria-label="Close">&times;</button>
                 </div>
                 <div class="connection-dialog__body">
                     <?php if ($pinterestReady): ?>
                         <div class="connection-summary">
-                            <p><strong>Cuenta conectada</strong></p>
+                            <p><strong>Connected account</strong></p>
                             <p><?= connections_h((string)($pinterestArtist['pinterest_account_id'] ?? 'Pinterest')) ?></p>
                         </div>
-                        <p>Esta es la identidad que se usará cuando publiques como artista.</p>
+                        <p>This is the identity used when you publish as the artist.</p>
                         <form class="connection-form" method="post">
                             <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>">
                             <input type="hidden" name="network" value="pinterest">
                             <div class="connection-form__actions"><button class="button-link secondary" name="action" value="disconnect_pinterest">Desconectar Pinterest</button></div>
                         </form>
                     <?php else: ?>
-                        <p><?=($pinterestArtist['status']??'')==='connected'?'Pinterest necesita una autorización nueva que permita publicar.':'Entra en tu cuenta de Pinterest y autoriza Artwork Mockups.'?> No tendrás que copiar códigos ni tokens.</p>
+                        <p><?=($pinterestArtist['status']??'')==='connected'?'Pinterest needs a new authorization that allows publishing.':'Sign in to Pinterest and authorize Artwork Mockups.'?> You will not need to copy codes or tokens.</p>
                         <form class="connection-form" method="post">
                             <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>">
                             <input type="hidden" name="network" value="pinterest">
@@ -278,27 +278,27 @@ $artistConnections = [
             <dialog class="connection-dialog" id="connection-facebook" aria-labelledby="connection-facebook-title">
                 <div class="connection-dialog__head">
                     <div><span>Artist Page</span><h2 id="connection-facebook-title">Facebook</h2></div>
-                    <button class="connection-dialog__close" type="button" data-connection-close aria-label="Cerrar">&times;</button>
+                    <button class="connection-dialog__close" type="button" data-connection-close aria-label="Close">&times;</button>
                 </div>
                 <div class="connection-dialog__body">
                     <?php if (($facebookArtist['status'] ?? '') === 'connected'): ?>
-                        <div class="connection-summary"><p><strong>Página conectada</strong></p><p><?= connections_h((string)($facebookArtist['page_name'] ?? 'Facebook Page')) ?></p></div>
-                        <p>Las publicaciones de Facebook saldrán únicamente en esta Página.</p>
+                        <div class="connection-summary"><p><strong>Connected Page</strong></p><p><?= connections_h((string)($facebookArtist['page_name'] ?? 'Facebook Page')) ?></p></div>
+                        <p>Facebook publications will be posted to this Page only.</p>
                         <form class="connection-form" method="post">
                             <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>"><input type="hidden" name="network" value="facebook">
                             <div class="connection-form__actions"><button class="button-link secondary" name="action" value="disconnect_facebook">Desconectar Facebook</button></div>
                         </form>
                     <?php elseif (($facebookArtist['status'] ?? '') === 'awaiting_page'): ?>
-                        <p>Facebook ya autorizó la cuenta. Elige ahora la Página de artista.</p>
+                        <p>Facebook has authorized the account. Now choose the artist Page.</p>
                         <?php if ($facebookPages): ?>
                             <form class="connection-form" method="post">
                                 <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>"><input type="hidden" name="network" value="facebook">
                                 <?php foreach ($facebookPages as $page): ?><label class="connection-choice"><input type="radio" name="page_id" value="<?= connections_h((string)$page['id']) ?>" required><span><?= connections_h((string)($page['name'] ?? 'Facebook Page')) ?></span></label><?php endforeach; ?>
-                                <div class="connection-form__actions"><button class="button-link primary" name="action" value="select_facebook_page">Usar esta Página</button></div>
+                                <div class="connection-form__actions"><button class="button-link primary" name="action" value="select_facebook_page">Use this Page</button></div>
                             </form>
-                        <?php else: ?><p>No apareció ninguna Página administrada por esta cuenta.</p><?php endif; ?>
+                        <?php else: ?><p>No Pages managed by this account were found.</p><?php endif; ?>
                     <?php else: ?>
-                        <p>Conecta la Página profesional de Maurizio. Facebook pedirá permiso y luego volverás aquí para elegirla.</p>
+                        <p>Connect Maurizio’s professional Page. Facebook will request permission, then return here so you can choose it.</p>
                         <form class="connection-form" method="post">
                             <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>"><input type="hidden" name="network" value="facebook">
                             <div class="connection-form__actions"><button class="button-link primary" name="action" value="connect_facebook">Conectar Facebook</button></div>
@@ -310,25 +310,25 @@ $artistConnections = [
             <dialog class="connection-dialog" id="connection-instagram" aria-labelledby="connection-instagram-title">
                 <div class="connection-dialog__head">
                     <div><span>Professional artist account</span><h2 id="connection-instagram-title">Instagram</h2></div>
-                    <button class="connection-dialog__close" type="button" data-connection-close aria-label="Cerrar">&times;</button>
+                    <button class="connection-dialog__close" type="button" data-connection-close aria-label="Close">&times;</button>
                 </div>
                 <div class="connection-dialog__body">
                     <?php if (($instagramArtist['status'] ?? '') === 'connected'): ?>
-                        <div class="connection-summary"><p><strong>Cuenta conectada</strong></p><p>@<?= connections_h(ltrim((string)($instagramArtist['username'] ?? ''), '@')) ?></p></div>
-                        <p>Las publicaciones de Instagram saldrán con esta cuenta profesional.</p>
+                        <div class="connection-summary"><p><strong>Connected account</strong></p><p>@<?= connections_h(ltrim((string)($instagramArtist['username'] ?? ''), '@')) ?></p></div>
+                        <p>Instagram publications will use this professional account.</p>
                         <form class="connection-form" method="post">
                             <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>"><input type="hidden" name="network" value="instagram">
                             <div class="connection-form__actions"><button class="button-link secondary" name="action" value="disconnect_instagram">Desconectar Instagram</button></div>
                         </form>
                     <?php else: ?>
                         <?php if ($instagramService->oauthEnabled()): ?>
-                            <p>Conecta directamente la cuenta profesional de Instagram del artista. No se publicará nada durante la conexión.</p>
+                            <p>Connect the artist’s professional Instagram account directly. Nothing will be published during connection.</p>
                             <form class="connection-form" method="post">
                                 <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>"><input type="hidden" name="network" value="instagram">
                                 <div class="connection-form__actions"><button class="button-link primary" name="action" value="connect_instagram">Conectar Instagram</button></div>
                             </form>
                         <?php else: ?>
-                            <p><strong>Instagram se conectará en el sitio publicado.</strong> Localhost no contiene las credenciales privadas de Instagram y no modificará la conexión real de Maurizio.</p>
+                            <p><strong>Instagram will be connected on the published site.</strong> Localhost does not contain Instagram’s private credentials and will not modify Maurizio’s live connection.</p>
                         <?php endif; ?>
                     <?php endif; ?>
                 </div>

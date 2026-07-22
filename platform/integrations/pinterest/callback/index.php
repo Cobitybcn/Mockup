@@ -7,7 +7,7 @@ try{
     if(!FeatureAccess::allows($user,FeatureAccess::SOCIAL_MANAGE))throw new RuntimeException('Social Media requires Artist Pro.');
     if(isset($_GET['error']))throw new RuntimeException('Pinterest authorization was cancelled.');
     (new PinterestIntegrationService(Database::connection()))->completeAuthorization((int)$user['id'],trim((string)($_GET['code']??'')),trim((string)($_GET['state']??'')));
-    $message='La cuenta de Pinterest quedó conectada y lista para trabajar.'; $ok=true;
+    $message='The Pinterest account is connected and ready to use.'; $ok=true;
 }catch(Throwable $e){$message=$e->getMessage();}
 if($ok)$_SESSION['connections_notice']=$message;else $_SESSION['connections_error']=$message;
 $_SESSION['connections_open']='pinterest';

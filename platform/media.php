@@ -14,7 +14,7 @@ if (!$download && isset($_GET['thumb'])) {
 
 if ($file === '') {
     http_response_code(400);
-    exit('Falta archivo.');
+    exit('File is missing.');
 }
 
 $pdo = Database::connection();
@@ -35,7 +35,7 @@ if (str_ends_with($file, '.analysis.json')) {
 
 if (!Auth::isAdmin($user) && !user_can_access_result_file((int)$user['id'], $file)) {
     http_response_code(403);
-    exit('No tienes acceso a este archivo.');
+    exit('You do not have access to this file.');
 }
 
 if (!is_file($path) && $ownedSeriesHeader) {

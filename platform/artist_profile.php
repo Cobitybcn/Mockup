@@ -160,7 +160,7 @@ function admin_vars_hint(bool $isAdmin, string $field): void
 }
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <title>Artist Profile - Artwork Mockups</title>
@@ -205,6 +205,34 @@ function admin_vars_hint(bool $isAdmin, string $field): void
             border-radius: var(--radius);
             padding: 24px 26px;
         }
+        .artist-profile-header .topbar-actions { align-items:flex-start; }
+        .profile-connections-decision-block {
+            display:inline-flex;
+            flex:0 0 140px;
+            width:140px;
+            min-width:140px;
+            height:140px;
+            min-height:140px;
+            align-items:center;
+            justify-content:center;
+            box-sizing:border-box;
+            margin:0;
+            padding:18px;
+            border:1px solid #94a88f;
+            border-radius:4px;
+            background:#9fb198;
+            color:#fffdf8;
+            box-shadow:0 8px 18px rgba(68,83,63,.12);
+            font-size:11px;
+            font-weight:800;
+            letter-spacing:.09em;
+            line-height:1.35;
+            text-align:center;
+            text-decoration:none;
+            text-transform:uppercase;
+        }
+        .profile-connections-decision-block:hover,
+        .profile-connections-decision-block:focus-visible { border-color:#81987b; background:#8fa487; color:#fff; transform:translateY(-1px); }
         .form-group {
             display: flex;
             flex-direction: column;
@@ -444,8 +472,11 @@ function admin_vars_hint(bool $isAdmin, string $field): void
                 line-height: 1.45;
             }
             .artist-profile-header .topbar-actions {
-                display: none;
+                display: flex;
+                justify-content: flex-end;
+                margin-top: 16px;
             }
+            .profile-connections-decision-block { flex-basis:112px; width:112px; min-width:112px; height:112px; min-height:112px; padding:14px; }
             .profile-grid {
                 grid-template-columns: 1fr;
                 gap: 12px;
@@ -548,9 +579,8 @@ function admin_vars_hint(bool $isAdmin, string $field): void
                 </div>
                 <div class="topbar-actions">
                     <?php if ($canUseSocial): ?>
-                        <a class="button-link secondary" href="connections.php">Connections</a>
+                        <a class="profile-connections-decision-block" href="connections.php">Connections</a>
                     <?php endif; ?>
-                    <a class="button-link secondary" href="root_album.php">ArtWorks</a>
                 </div>
             </div>
 

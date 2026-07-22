@@ -532,16 +532,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'assig
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'set_creation_number') {
-    try {
-        ArtworkSeries::setCreationNumber($pdo, $artworkOwnerId, $id, (int)($_POST['creation_number'] ?? 0));
-        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&creation_id_updated=1');
-    } catch (Throwable $e) {
-        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&creation_id_error=' . rawurlencode($e->getMessage()));
-    }
-    exit;
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_artwork_title') {
     try {
         (new ArtworkSheetService($pdo))->saveArtworkTitle(
@@ -1271,11 +1261,7 @@ $displayTitle = trim((string)($artworkSheet['title'] ?? '')) !== '' ? trim((stri
 $displaySubtitle = trim((string)($artworkSheet['subtitle'] ?? '')) !== '' ? trim((string)$artworkSheet['subtitle']) : $selectedSubtitle;
 $displayDescription = trim((string)($artworkSheet['description'] ?? ''));
 $artworkSeriesRows = ArtworkSeries::seriesList($pdo, $artworkOwnerId);
-$creationNumberStmt = $pdo->prepare('SELECT series_creation_number FROM artworks WHERE id = ? AND user_id = ? LIMIT 1');
-$creationNumberStmt->execute([$id, $artworkOwnerId]);
-$artwork['series_creation_number'] = $creationNumberStmt->fetchColumn() ?: null;
 $artworkSeriesName = ArtworkSeries::display((string)($artwork['series'] ?? ''));
-$artworkCreationIdentifier = ArtworkSeries::creationIdentifier($artworkSeriesName, $artwork['series_creation_number'] ?? null);
 $publicationCopy = trim($selectedTitle . ($selectedSubtitle !== '' ? "\n" . $selectedSubtitle : '') . "\n\n" . $selectedPublicationDescription);
 
 $copyIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
@@ -1290,18 +1276,36 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
-        .artwork-series-form { flex-shrink:0; margin:0; }
+        .artwork-series-form { flex-shrink:0; margin:0; transition:opacity .18s ease; }
+        .artwork-series-form.is-saving { opacity:.55; }
+        .artwork-series-form label { margin:0; color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        .artwork-series-form label span { display:block; margin-bottom:5px; }
         .artwork-series-form select { width:auto; min-width:180px; min-height:auto; padding:8px 12px; }
-        .artwork-series-controls { display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:flex-end; gap:8px; }
-        .artwork-creation-form { display:flex; align-items:flex-end; gap:6px; margin:0; }
-        .artwork-creation-form label { margin:0; color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
-        .artwork-creation-form label span { display:block; margin-bottom:3px; }
-        .artwork-creation-form input { width:76px; min-height:auto; padding:8px; }
-        .artwork-creation-form button { min-height:35px; margin:0; padding:8px 11px; }
-        .artwork-creation-code { align-self:center; color:var(--ink); font-size:12px; font-weight:700; letter-spacing:.04em; }
+        .artwork-series-controls { display:flex; justify-content:flex-end; align-items:flex-end; }
         .artwork-title-block { width:min(920px, 100%); }
         .artwork-page-header { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; }
-        .artwork-studio-note-link { flex:0 0 auto; border-color:#c8d5c3; background:#e9f0e7; color:#354633; font-weight:700; }
+        .artwork-studio-note-link {
+            display:inline-flex;
+            flex:0 0 140px;
+            width:140px;
+            height:140px;
+            align-items:center;
+            justify-content:center;
+            padding:18px;
+            border:1px solid #94a88f;
+            border-radius:4px;
+            background:#9fb198;
+            color:#fffdf8;
+            box-shadow:0 8px 18px rgba(68, 83, 63, .12);
+            font-size:11px;
+            font-weight:800;
+            letter-spacing:.09em;
+            line-height:1.35;
+            text-align:center;
+            text-transform:uppercase;
+        }
+        .artwork-studio-note-link:hover,
+        .artwork-studio-note-link:focus-visible { border-color:#81987b; background:#8fa487; color:#fff; transform:translateY(-1px); }
         .artwork-studio-note-mobile { display:none; }
         .artwork-title-heading { display:flex; align-items:center; gap:10px; }
         .artwork-page-header h1 { display:inline-block; border-bottom:4px solid #b77f86; padding-bottom:10px; }
@@ -2877,8 +2881,8 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                 display: none !important;
             }
 
-            .artwork-studio-note-mobile { display:flex; margin:0 0 12px; }
-            .artwork-studio-note-mobile .artwork-studio-note-link { width:100%; justify-content:center; }
+            .artwork-studio-note-mobile { display:flex; justify-content:flex-end; margin:0 0 12px; }
+            .artwork-studio-note-mobile .artwork-studio-note-link { flex-basis:112px; width:112px; height:112px; padding:14px; }
 
             .artwork-page-header {
                 margin-bottom: 8px;
@@ -3071,10 +3075,6 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
 
-        <div class="alert-strip">
-            Beta mockup flow: choose one root artwork, choose one scene mother, then generate the camera-slot views.
-        </div>
-
         <div class="workspace">
             <div class="workspace-header artwork-page-header">
                 <div class="artwork-title-block">
@@ -3103,12 +3103,6 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
 
             <?php if (isset($_GET['series_updated'])): ?>
                 <div class="notice">Artwork series updated.</div>
-            <?php endif; ?>
-            <?php if (isset($_GET['creation_id_updated'])): ?>
-                <div class="notice">Artwork Creation ID updated.</div>
-            <?php endif; ?>
-            <?php if (isset($_GET['creation_id_error'])): ?>
-                <div class="notice error"><?= h((string)$_GET['creation_id_error']) ?></div>
             <?php endif; ?>
             <?php if (isset($_GET['saved'])): ?>
                 <div class="notice">Artwork sheet saved.</div>
@@ -3280,28 +3274,18 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                         <p>Root views, basic information, and direct access to the mockup workflow.</p>
                     </div>
                     <div class="artwork-series-controls">
-                        <?php if ($artworkCreationIdentifier !== ''): ?>
-                            <span class="artwork-creation-code"><?= h($artworkCreationIdentifier) ?></span>
-                        <?php endif; ?>
                         <form method="post" class="artwork-series-form">
                             <input type="hidden" name="action" value="assign_series">
-                            <select name="series_id" aria-label="Artwork series" onchange="this.form.requestSubmit()">
-                                <option value="">NO SERIE</option>
-                                <?php foreach ($artworkSeriesRows as $seriesRow): ?>
-                                    <option value="<?= (int)$seriesRow['id'] ?>" <?= (int)($artwork['series_id'] ?? 0) === (int)$seriesRow['id'] ? 'selected' : '' ?>><?= h($seriesRow['title']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                            <label>
+                                <span>Series</span>
+                                <select name="series_id" aria-label="Artwork series" onchange="this.form.classList.add('is-saving'); this.form.requestSubmit()">
+                                    <option value="">NO SERIE</option>
+                                    <?php foreach ($artworkSeriesRows as $seriesRow): ?>
+                                        <option value="<?= (int)$seriesRow['id'] ?>" <?= (int)($artwork['series_id'] ?? 0) === (int)$seriesRow['id'] ? 'selected' : '' ?>><?= h($seriesRow['title']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </label>
                         </form>
-                        <?php if ($artworkSeriesName !== ''): ?>
-                            <form method="post" class="artwork-creation-form">
-                                <input type="hidden" name="action" value="set_creation_number">
-                                <label>
-                                    <span>Creation ID · <?= h(ArtworkSeries::creationPrefix($artworkSeriesName)) ?></span>
-                                    <input type="number" name="creation_number" min="1" step="1" value="<?= (int)($artwork['series_creation_number'] ?? 0) ?>" required>
-                                </label>
-                                <button type="submit">Save</button>
-                            </form>
-                        <?php endif; ?>
                     </div>
                 </div>
                 <?php if ($rootFileAvailable): ?>

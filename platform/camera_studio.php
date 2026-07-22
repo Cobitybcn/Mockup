@@ -74,22 +74,22 @@ foreach ($sets as $setId => $set) {
 }
 
 $fieldHelp = [
-    'slot_id' => ['ID técnico', 'Identificador único en minúsculas, sin espacios. Si editás una cámara base, se guardará como override administrado.', 'vista_aerea_obra_piso_cenital'],
-    'slot_name' => ['Nombre visible', 'Nombre humano de la cámara en el admin.', 'Vista aérea cenital de obra sobre el piso'],
-    'fidelity_mode' => ['Modo de fidelidad', 'Etiqueta técnica para agrupar comportamiento de fidelidad o estrategia.', 'adaptacion_camara_world_mother'],
-    'size_classes_supported' => ['Tamaños soportados', 'Lista separada por comas. Usá los nombres que entiende el motor.', 'small, medium, large, xl_or_oversize, unknown'],
+    'slot_id' => ['Technical ID', 'Unique lowercase identifier without spaces. Editing a base camera stores a managed override.', 'overhead_artwork_floor_view'],
+    'slot_name' => ['Display name', 'Human-readable camera name shown in the admin.', 'Overhead artwork view on floor'],
+    'fidelity_mode' => ['Fidelity mode', 'Technical label used to group fidelity behavior or strategy.', 'world_mother_camera_adaptation'],
+    'size_classes_supported' => ['Supported sizes', 'Comma-separated list. Use the class names recognized by the engine.', 'small, medium, large, xl_or_oversize, unknown'],
     'orientation_supported' => ['Orientaciones soportadas', 'Lista separada por comas.', 'horizontal, landscape, vertical, portrait, square, unknown'],
-    'camera_height_block' => ['Altura de cámara', 'Define desde qué altura física mira la cámara.', 'La cámara está directamente encima de la obra, mirando hacia el piso en vista cenital.'],
-    'lens_block' => ['Lente', 'Define tipo de lente, compresión, distorsión y distancia visual.', 'Usar una lente gran angular moderada, sin distorsión extrema.'],
-    'vertical_tilt_block' => ['Inclinación vertical', 'Define si la cámara mira hacia arriba, hacia abajo o frontal.', 'Inclinación vertical de 85 a 90 grados hacia abajo, casi perpendicular al piso.'],
-    'lateral_rotation_block' => ['Rotación lateral', 'Define el ángulo lateral u orbital respecto de la obra.', 'Rotación lateral de 0 grados, cámara nivelada y equilibrada desde arriba.'],
-    'composition_block' => ['Composición', 'Define ubicación de la obra, crop, jerarquía visual y contexto.', 'La obra está centrada, completamente visible, ocupando 30-50% del encuadre, con piso visible alrededor.'],
-    'human_subject_block' => ['Política sobre humanos', 'Define si pueden aparecer personas, manos, cuerpos o siluetas.', 'Sin personas, sin manos, sin presencia humana. Interior vacío.'],
-    'scale_block' => ['Política de escala', 'Protege el tamaño físico real de la obra contra muebles, piso, puertas y arquitectura.', 'La obra conserva sus dimensiones reales y no debe verse como mural, billboard ni miniatura.'],
-    'depth_of_field_block' => ['Profundidad de campo', 'Define foco, nitidez y zonas que pueden suavizarse.', 'La obra y sus bordes deben estar nítidos; el fondo puede suavizarse levemente.'],
+    'camera_height_block' => ['Camera height', 'Defines the physical height from which the camera views the scene.', 'The camera is directly above the artwork, looking down at the floor in an overhead view.'],
+    'lens_block' => ['Lens', 'Defines lens type, compression, distortion, and visual distance.', 'Use a moderate wide-angle lens without extreme distortion.'],
+    'vertical_tilt_block' => ['Vertical tilt', 'Defines whether the camera looks up, down, or straight ahead.', 'Vertical tilt of 85 to 90 degrees downward, almost perpendicular to the floor.'],
+    'lateral_rotation_block' => ['Lateral rotation', 'Defines the lateral or orbital angle relative to the artwork.', 'Lateral rotation of 0 degrees, level and balanced from above.'],
+    'composition_block' => ['Composition', 'Defines artwork placement, crop, visual hierarchy, and context.', 'The artwork is centered and fully visible, occupying 30–50% of the frame, with floor visible around it.'],
+    'human_subject_block' => ['Human subject policy', 'Defines whether people, hands, bodies, or silhouettes may appear.', 'No people, hands, or human presence. Empty interior.'],
+    'scale_block' => ['Scale policy', 'Protects the artwork’s real physical size relative to furniture, floors, doors, and architecture.', 'The artwork preserves its real dimensions and must not appear as a mural, billboard, or miniature.'],
+    'depth_of_field_block' => ['Depth of field', 'Defines focus, sharpness, and areas that may be softened.', 'The artwork and its edges must remain sharp; the background may be softened slightly.'],
     'scene_affinity' => ['Afinidad de escena', 'Tags separados por comas para orientar familias ambientales.', 'interior moderno, piso pulido, galeria, living minimalista'],
-    'negative_directives' => ['Bloqueos / prompt negativo', 'Errores que esta cámara debe evitar. Separá por comas.', 'sin obra deformada, sin pintura inventada, sin escala mural, sin texto visible'],
-    'full_prompt_template' => ['Prompt completo', 'Prompt fuente de esta cámara. Escribilo en español y usá placeholders cuando haga falta.', 'Generar un mockup fotográfico premium usando únicamente este slot de cámara...'],
+    'negative_directives' => ['Restrictions / negative prompt', 'Errors this camera must avoid. Separate them with commas.', 'no deformed artwork, no invented painting, no mural scale, no visible text'],
+    'full_prompt_template' => ['Full prompt', 'Source prompt for this camera. Use placeholders where needed.', 'Generate a premium photographic mockup using only this camera slot...'],
 ];
 
 function csv_value($value): string
@@ -130,8 +130,8 @@ function render_camera_board_card(string $slotId, array $slot, bool $selected = 
     $name = camera_board_label($slot);
     $classes = 'cmb-camera-card cmb-sortable-item' . ($selected ? ' is-selected' : '');
     echo '<article class="' . h($classes) . '" data-camera-card data-camera-id="' . h($slotId) . '" tabindex="0">';
-    echo '<button class="cmb-card-drag" type="button" data-drag-handle aria-label="Arrastrar cámara" title="Arrastrar cámara">⋮⋮</button>';
-    echo '<button class="cmb-card-edit" type="button" data-edit-camera aria-label="Editar ' . h($name) . '" title="Editar cámara">Editar</button>';
+    echo '<button class="cmb-card-drag" type="button" data-drag-handle aria-label="Drag camera" title="Drag camera">⋮⋮</button>';
+    echo '<button class="cmb-card-edit" type="button" data-edit-camera aria-label="Edit ' . h($name) . '" title="Edit camera">Edit</button>';
     echo '<div class="cmb-card-visual" aria-hidden="true">';
     echo '<span class="cmb-viewfinder"><span></span></span>';
     echo '<span class="cmb-camera-mark">CAM</span>';
@@ -149,48 +149,48 @@ try {
             if (isset($_POST['board_slots_by_board']) && is_array($_POST['board_slots_by_board'])) {
                 $studio->saveSceneBoards((array)$_POST['board_slots_by_board']);
             }
-            $notice = 'Cámara guardada: ' . $selectedSlotId . '.';
+            $notice = 'Camera saved: ' . $selectedSlotId . '.';
         } elseif ($action === 'save_scene_quick') {
             $saved = $studio->saveSceneQuick($_POST);
             $selectedSlotId = (string)$saved['slot_id'];
             if (isset($_POST['board_slots_by_board']) && is_array($_POST['board_slots_by_board'])) {
                 $studio->saveSceneBoards((array)$_POST['board_slots_by_board']);
             }
-            $notice = 'Cámara guardada: ' . $selectedSlotId . '.';
+            $notice = 'Camera saved: ' . $selectedSlotId . '.';
         } elseif ($action === 'disable_slot') {
             $result = $studio->disableSlot((string)($_POST['slot_id'] ?? ''));
             $selectedSlotId = (string)$result['slot_id'];
-            $notice = 'Cámara desactivada por override: ' . $selectedSlotId . '.';
+            $notice = 'Camera deactivated by override: ' . $selectedSlotId . '.';
         } elseif ($action === 'set_slot_enabled') {
             $enabled = !empty($_POST['enabled']);
             $result = $studio->setSlotEnabled((string)($_POST['slot_id'] ?? ''), $enabled);
             $selectedSlotId = (string)$result['slot_id'];
-            $notice = ($enabled ? 'Cámara activada: ' : 'Cámara desactivada: ') . $selectedSlotId . '.';
+            $notice = ($enabled ? 'Camera activated: ' : 'Camera deactivated: ') . $selectedSlotId . '.';
         } elseif ($action === 'delete_slot') {
             $result = $studio->deleteSlot((string)($_POST['slot_id'] ?? ''));
             $selectedSlotId = '';
             $notice = $result['mode'] === 'deleted'
-                ? 'Cámara custom eliminada: ' . (string)$result['slot_id'] . '.'
-                : 'La cámara base no se borra físicamente; quedó desactivada por override: ' . (string)$result['slot_id'] . '.';
+                ? 'Custom camera deleted: ' . (string)$result['slot_id'] . '.'
+                : 'The base camera is not physically deleted; it was deactivated by override: ' . (string)$result['slot_id'] . '.';
         } elseif ($action === 'save_scene_board') {
             $result = $studio->saveSceneBoards((array)($_POST['board_slots_by_board'] ?? []));
             $selectedSlotId = trim((string)($_POST['selected_slot_id'] ?? $selectedSlotId));
-            $notice = 'Tableros guardados: ' . (int)$result['assigned_count'] . ' ubicaciones organizadas.';
+            $notice = 'Boards saved: ' . (int)$result['assigned_count'] . ' organized placements.';
         } elseif ($action === 'purge_inactive_slots') {
             $result = $studio->purgeInactiveSlots();
             $selectedSlotId = '';
-            $notice = 'Cámaras inactivas eliminadas/ocultas: ' . (int)$result['total'] . '.';
+            $notice = 'Inactive cameras deleted or hidden: ' . (int)$result['total'] . '.';
         } elseif ($action === 'test_prompt') {
             $saved = $studio->saveSlotFromForm($_POST);
             $selectedSlotId = (string)$saved['slot_id'];
             $testPrompt = $studio->quickTestPrompt($selectedSlotId, (int)($_POST['test_artwork_id'] ?? 0));
-            $notice = 'Cámara guardada y test rápido de prompt listo.';
+            $notice = 'Camera saved and quick prompt test ready.';
         } elseif ($action === 'test_image') {
             $saved = $studio->saveSlotFromForm($_POST);
             $selectedSlotId = (string)$saved['slot_id'];
             $testImage = $studio->generateQuickTestImage($selectedSlotId, (int)($_POST['test_artwork_id'] ?? 0));
             $testPrompt = (string)($testImage['prompt'] ?? '');
-            $notice = 'Cámara guardada e imagen de prueba generada.';
+            $notice = 'Camera saved and test image generated.';
         } elseif (in_array($action, ['draft', 'draft_publish'], true)) {
             $brief = trim((string)($_POST['brief'] ?? ''));
             $draft = $studio->draftSlot($brief, [
@@ -250,7 +250,7 @@ $customCameraConfig = $studio->customCameraConfig();
 $sceneBoards = is_array($customCameraConfig['scene_boards'] ?? null) ? $customCameraConfig['scene_boards'] : [];
 if (!isset($sceneBoards['1']) || !is_array($sceneBoards['1'])) {
     $sceneBoards['1'] = [
-        'label' => 'Tablero 1',
+        'label' => 'Board 1',
         'slots' => (array)($customCameraConfig['scene_board']['slots'] ?? []),
     ];
 }
@@ -315,10 +315,10 @@ require __DIR__ . '/camera_studio_view.php';
 exit;
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Cámaras - Artwork Mockups</title>
+    <title>Cameras - Artwork Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -510,18 +510,18 @@ exit;
         <header class="app-header">
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
-        <div class="alert-strip">Cámaras: tableros, nombres visibles, activación y prompt completo.</div>
+        <div class="alert-strip">Cameras: boards, display names, activation, and full prompts.</div>
         <div class="workspace">
             <div class="workspace-header">
                 <div>
-                    <h1>Cámaras</h1>
-                    <p>Tableros 4 × 3 para ordenar, activar y revisar cámaras sin abrir fichas gigantes.</p>
+                    <h1>Cameras</h1>
+                    <p>4 × 3 boards for organizing, activating, and reviewing cameras without oversized forms.</p>
                 </div>
                 <div class="topbar-actions">
-                    <a class="button-link secondary" href="camera_studio.php?mode=new">Nueva cámara</a>
+                    <a class="button-link secondary" href="camera_studio.php?mode=new">New camera</a>
                     <form method="post">
                         <input type="hidden" name="action" value="purge_inactive_slots">
-                        <button class="button-link secondary" type="submit" onclick="return confirm('¿Eliminar u ocultar todas las cámaras inactivas?');">Eliminar inactivas</button>
+                        <button class="button-link secondary" type="submit" onclick="return confirm('Delete or hide all inactive cameras?');">Remove inactive</button>
                     </form>
                     <a class="button-link secondary" href="world_mother_studio.php">Scene Studio</a>
                 </div>
@@ -533,18 +533,18 @@ exit;
             <section class="panel-box camera-admin-toolbar">
                 <div class="camera-admin-toolbar-row">
                     <div>
-                        <h2>Tableros de cámaras</h2>
-                        <p>Arrastrá cámaras entre tableros o hacia la biblioteca. Hacé clic para editar el nombre y el prompt.</p>
+                        <h2>Camera boards</h2>
+                        <p>Drag cameras between boards or back to the library. Click to edit the name and prompt.</p>
                     </div>
                     <div class="board-actions">
-                        <span class="status-pill is-enabled" data-board-total-count><?= $boardSlotCount ?> en tableros</span>
-                        <button class="button-link" type="submit" form="camera-board-form">Guardar tableros</button>
+                        <span class="status-pill is-enabled" data-board-total-count><?= $boardSlotCount ?> on boards</span>
+                        <button class="button-link" type="submit" form="camera-board-form">Save boards</button>
                     </div>
                 </div>
 
                 <aside class="board-pool <?= $availablePoolCount === 0 ? 'is-empty' : '' ?>" data-board-pool>
                     <div class="board-pool-head">
-                        <h3>Biblioteca de cámaras</h3>
+                        <h3>Camera library</h3>
                         <span class="status-pill is-enabled" data-pool-count><?= $availablePoolCount ?> en espera</span>
                     </div>
                     <div class="board-pool-list">
@@ -557,13 +557,13 @@ exit;
                                 draggable="true"
                                 data-camera-token
                                 data-slot-id="<?= h((string)$slotId) ?>"
-                                title="Hacé clic para editar. Arrastrá para ordenar."
+                                title="Click to edit. Drag to reorder."
                             >
                                 <strong><?= h(camera_board_label($listedSlot)) ?></strong>
                             </div>
                         <?php endforeach; ?>
                         <?php if ($poolCount === 0): ?>
-                            <div class="board-pool-empty">Todas las cámaras activas están ubicadas en los tableros.</div>
+                            <div class="board-pool-empty">All active cameras are placed on boards.</div>
                         <?php endif; ?>
                     </div>
                 </aside>
@@ -580,7 +580,7 @@ exit;
                                 <?php for ($boardNumber = 1; $boardNumber <= 3; $boardNumber++): ?>
                                     <section class="board-column">
                                         <div class="board-column-head">
-                                            <h3>Tablero <?= $boardNumber ?></h3>
+                                            <h3>Board <?= $boardNumber ?></h3>
                                             <span class="status-pill is-enabled" data-board-count><?= count($boardSlotsByBoard[$boardNumber] ?? []) ?>/12</span>
                                         </div>
                                         <div class="camera-board-grid">
@@ -603,7 +603,7 @@ exit;
                                                             draggable="true"
                                                             data-camera-token
                                                             data-slot-id="<?= h($assignedSlotId) ?>"
-                                                            title="Hacé clic para editar. Arrastrá para ordenar."
+                                                            title="Click to edit. Drag to reorder."
                                                         >
                                                             <strong><?= h(camera_board_label($assignedSlot)) ?></strong>
                                                         </div>
@@ -621,10 +621,10 @@ exit;
                 </section>
 
                 <section class="panel-box instruction-panel">
-                    <h2>Editor de cámara</h2>
-                    <p style="color:var(--muted);">Editá solo lo que importa. Origen: <strong><?= h($origin) ?></strong></p>
+                    <h2>Camera editor</h2>
+                    <p style="color:var(--muted);">Edit only what matters. Source: <strong><?= h($origin) ?></strong></p>
                     <?php if ((string)$slot['slot_id'] === ''): ?>
-                        <p class="empty-editor-note">Seleccioná una cámara de un tablero para editarla.</p>
+                        <p class="empty-editor-note">Select a camera from a board to edit it.</p>
                     <?php else: ?>
                         <form method="post" class="camera-quick-form">
                             <input type="hidden" name="action" value="save_scene_quick">
@@ -634,7 +634,7 @@ exit;
                                 <div class="field">
                                     <label>Nombre visible</label>
                                     <input type="text" name="slot_name" value="<?= h((string)$slot['slot_name']) ?>">
-                                    <small>La disponibilidad se controla moviendo esta cámara dentro o fuera de los tableros.</small>
+                                    <small>Availability is controlled by moving this camera into or out of the boards.</small>
                                 </div>
                             </div>
 
@@ -644,17 +644,17 @@ exit;
                             </details>
 
                             <div class="actions">
-                                <button class="button-link" type="submit">Guardar cámara</button>
-                                <button class="button-link secondary" type="submit" form="camera-board-form">Guardar tableros</button>
-                                <button class="button-link danger" type="submit" name="action" value="delete_slot" onclick="return confirm('¿Eliminar o desactivar esta cámara? Las cámaras base se desactivan por override.');">Eliminar</button>
+                                <button class="button-link" type="submit">Save camera</button>
+                                <button class="button-link secondary" type="submit" form="camera-board-form">Save boards</button>
+                                <button class="button-link danger" type="submit" name="action" value="delete_slot" onclick="return confirm('Delete or deactivate this camera? Base cameras are deactivated through an override.');">Delete</button>
                             </div>
                         </form>
                     <?php endif; ?>
 
                     <?php if ($testImage && is_file((string)($testImage['path'] ?? ''))): ?>
                         <hr style="border:0; border-top:1px dashed var(--line); margin:24px 0;">
-                        <h2>Imagen de prueba</h2>
-                        <img class="test-image" src="<?= h('results/' . basename((string)$testImage['path'])) ?>" alt="Imagen de prueba de cámara">
+                        <h2>Test image</h2>
+                        <img class="test-image" src="<?= h('results/' . basename((string)$testImage['path'])) ?>" alt="Camera test image">
                         <p style="color:var(--muted);"><code><?= h((string)$testImage['path']) ?></code></p>
                     <?php endif; ?>
 
@@ -704,7 +704,7 @@ function updateBoardState() {
 
     const totalCounter = document.querySelector('[data-board-total-count]');
     if (totalCounter) {
-        totalCounter.textContent = assignedCount + ' en tableros';
+        totalCounter.textContent = assignedCount + ' on boards';
     }
 }
 

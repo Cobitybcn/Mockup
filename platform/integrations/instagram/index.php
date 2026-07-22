@@ -14,7 +14,7 @@ $connection = $user ? $service->connection((int)$user['id']) : null;
 
 if ($user && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!hash_equals((string)($_SESSION['instagram_csrf'] ?? ''), (string)($_POST['csrf'] ?? ''))) {
-        $error = 'La sesión expiró. Recarga la página.';
+        $error = 'Your session expired. Reload the page.';
     } else {
         try {
             $action = (string)($_POST['action'] ?? '');

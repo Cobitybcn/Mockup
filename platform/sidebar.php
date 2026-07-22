@@ -212,7 +212,7 @@ $worldMotherActive = ($currentPage === 'world_mother_studio.php');
 $cameraStudioActive = ($currentPage === 'camera_studio.php');
 $variationLabActive = ($currentPage === 'mockup_variation_lab.php');
 $generatedResultsActive = ($currentPage === 'mockup_combination_results.php');
-$rootAlbumActive = ($currentPage === 'root_album.php');
+$rootAlbumActive = in_array($currentPage, ['root_album.php', 'artwork.php', 'artwork_details.php'], true);
 $seriesActive = ($currentPage === 'series.php');
 $profileActive = ($currentPage === 'artist_profile.php');
 $studioNotesActive = ($currentPage === 'website_studio_notes.php');

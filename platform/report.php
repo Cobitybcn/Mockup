@@ -522,7 +522,7 @@ $hasPublishing = $hasPublishingTitles;
 $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($analysisForPublishing);
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <title>Report - Curatorial Direction</title>
@@ -2001,7 +2001,7 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
             <?php if ($isAdmin && !empty($contexts)): ?>
                 <aside class="admin-mockup-prompts" aria-label="Admin mockup prompts">
                     <h3>Admin - Mockup Prompts</h3>
-                    <p>Prompts completos preparados para generar mockups desde esta obra raiz. Solo visible para administradores.</p>
+                    <p>Complete prompts prepared to generate mockups from this root artwork. Visible to administrators only.</p>
 
                     <?php foreach ($contexts as $promptIndex => $promptContext): ?>
                         <?php
@@ -3142,11 +3142,11 @@ $isNewSchemaRender = is_array($analysisForPublishing) && report_is_new_schema($a
                     }
                 }
             } else {
-                alert('Error: ' + (data.error || 'No se pudo eliminar el mockup.'));
+                alert('Error: ' + (data.error || 'The mockup could not be deleted.'));
                 deleteBtn.disabled = false;
             }
         } catch (err) {
-            alert('Error de red al intentar eliminar.');
+            alert('Network error while attempting to delete.');
             deleteBtn.disabled = false;
         }
     });

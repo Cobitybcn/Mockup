@@ -125,10 +125,10 @@ if ($mockupId > 0) {
 // HTML Web page rendering
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Auditoría de Composición de Prompts &mdash; Mockups</title>
+    <title>Prompt Composition Audit &mdash; Mockups</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -536,11 +536,11 @@ if ($mockupId > 0) {
 <div class="container">
     <header>
         <div>
-            <h1>Comparación y Diagnóstico de Composición de Prompts</h1>
-            <div class="subtitle">Herramienta de análisis detallado del composer y orígenes de textos</div>
+            <h1>Prompt Composition Comparison and Diagnostics</h1>
+            <div class="subtitle">Detailed analysis tool for the composer and text origins</div>
         </div>
         <div>
-            <span class="tag-read-only">Sólo Lectura &mdash; Diagnóstico</span>
+            <span class="tag-read-only">Read Only &mdash; Diagnostics</span>
         </div>
     </header>
 
@@ -548,9 +548,9 @@ if ($mockupId > 0) {
     <div class="selector-panel">
         <form class="selector-form" method="GET" action="compare_mockup_prompt_composition.php">
             <div class="form-group">
-                <label for="artwork_id">Seleccionar Artwork</label>
+                <label for="artwork_id">Select Artwork</label>
                 <select name="artwork_id" id="artwork_id" onchange="this.form.submit()">
-                    <option value="0">-- Selecciona una Obra --</option>
+                    <option value="0">-- Select an Artwork --</option>
                     <?php foreach ($artworks as $art): ?>
                         <option value="<?= $art['id'] ?>" <?= $art['id'] === $artworkId ? 'selected' : '' ?>>
                             [ID: <?= $art['id'] ?>] <?= htmlspecialchars($art['final_title'] ?: 'Untitled') ?> (<?= htmlspecialchars(basename((string)($art['root_file'] ?? ''))) ?>)
@@ -560,10 +560,10 @@ if ($mockupId > 0) {
             </div>
 
             <div class="form-group">
-                <label for="context_id">Seleccionar Contexto (Propuesta)</label>
+                <label for="context_id">Select Context (Proposal)</label>
                 <select name="context_id" id="context_id" onchange="this.form.submit()" <?= empty($contexts) ? 'disabled' : '' ?>>
                     <?php if (empty($contexts)): ?>
-                        <option value="0">-- No hay contextos disponibles --</option>
+                        <option value="0">-- No contexts available --</option>
                     <?php else: ?>
                         <?php foreach ($contexts as $ctx): ?>
                             <option value="<?= $ctx['id'] ?>" <?= $ctx['id'] === $contextId ? 'selected' : '' ?>>
@@ -577,7 +577,7 @@ if ($mockupId > 0) {
             <div class="form-group">
                 <label for="mockup_id">Mockup Generado (Historial Opcional)</label>
                 <select name="mockup_id" id="mockup_id" onchange="this.form.submit()" <?= empty($mockupsList) ? 'disabled' : '' ?>>
-                    <option value="0">-- Cargar desde contexto o seleccionar --</option>
+                    <option value="0">-- Load from context or select --</option>
                     <?php foreach ($mockupsList as $m): ?>
                         <option value="<?= $m['id'] ?>" <?= $m['id'] === $mockupId ? 'selected' : '' ?>>
                             [ID: <?= $m['id'] ?>] <?= htmlspecialchars($m['mockup_file']) ?> (Contexto: <?= $m['context_id'] ?>)
@@ -594,7 +594,7 @@ if ($mockupId > 0) {
 
     <?php if (!$selectedArtwork || !$selectedContext): ?>
         <div class="no-data-alert">
-            <p>Por favor selecciona un Artwork y un Contexto arriba para iniciar la auditoría del Composer.</p>
+            <p>Select an Artwork and Context above to start the Composer audit.</p>
         </div>
     <?php else: 
         // ----------------------------------------------------
@@ -928,7 +928,7 @@ if ($mockupId > 0) {
 
                 <div>
                     <h2 class="card-title">
-                        2. VARIABLES RESUELTAS (Escala Física)
+                        2. RESOLVED VARIABLES (Physical Scale)
                         <span class="card-badge">Dynamic Context</span>
                     </h2>
                     <table class="kv-table">
@@ -959,11 +959,11 @@ if ($mockupId > 0) {
                             <td class="kv-value highlight-val"><?= $depth ?> cm</td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Orientación (Resolución)</td>
+                            <td class="kv-label">Orientation (Resolution)</td>
                             <td class="kv-value"><?= htmlspecialchars($orientation) ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Obra de Referencia (File)</td>
+                            <td class="kv-label">Reference Artwork (File)</td>
                             <td class="kv-value"><code><?= htmlspecialchars($selectedArtwork['root_file'] ?? '') ?></code></td>
                         </tr>
                     </table>
@@ -984,19 +984,19 @@ if ($mockupId > 0) {
                             <td class="kv-value"><?= htmlspecialchars($contextJson['space_type'] ?? 'N/A') ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Atmósfera</td>
+                            <td class="kv-label">Atmosphere</td>
                             <td class="kv-value"><?= htmlspecialchars($contextJson['atmosphere'] ?? 'N/A') ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Cámara Producida (Gemini)</td>
+                            <td class="kv-label">Camera Produced (Gemini)</td>
                             <td class="kv-value"><?= htmlspecialchars($contextJson['camera_view_original'] ?? $contextJson['camera_view'] ?? $contextJson['camera_angle'] ?? 'N/A') ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Cámara Asignada Final</td>
+                            <td class="kv-label">Final Assigned Camera</td>
                             <td class="kv-value highlight-val"><?= htmlspecialchars($fields['camera_view']) ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Distancia de Cámara</td>
+                            <td class="kv-label">Camera Distance</td>
                             <td class="kv-value"><?= htmlspecialchars($fields['camera_distance']) ?></td>
                         </tr>
                         <tr>
@@ -1008,11 +1008,11 @@ if ($mockupId > 0) {
                             <td class="kv-value"><?= htmlspecialchars($contextJson['human_presence'] ?? 'N/A') ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Razón Curatorial</td>
+                            <td class="kv-label">Curatorial Rationale</td>
                             <td class="kv-value" style="font-size:12.5px; font-family:var(--font-sans);"><?= htmlspecialchars($contextJson['curatorial_reason'] ?? 'N/A') ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Razón Comercial</td>
+                            <td class="kv-label">Commercial Rationale</td>
                             <td class="kv-value" style="font-size:12.5px; font-family:var(--font-sans);"><?= htmlspecialchars($contextJson['commercial_reason'] ?? 'N/A') ?></td>
                         </tr>
                     </table>
@@ -1055,10 +1055,10 @@ if ($mockupId > 0) {
 
                 <!-- ALERTS PANEL -->
                 <div class="alerts-card">
-                    <h2 class="alerts-title">5. ALERTAS Y DETECCIONES (Auditoría Invariantes)</h2>
+                    <h2 class="alerts-title">5. ALERTS AND FINDINGS (Invariant Audit)</h2>
                     <?php if (empty($alerts)): ?>
                         <div class="alert-item" style="border-left-color: var(--success); color: var(--success);">
-                            <strong>Felicidades:</strong> Ninguna anomalía o alerta crítica detectada.
+                            <strong>All clear:</strong> No anomalies or critical alerts detected.
                         </div>
                     <?php else: ?>
                         <?php foreach ($alerts as $a): ?>
@@ -1087,14 +1087,14 @@ if ($mockupId > 0) {
                             <td class="kv-value highlight-val"><?= htmlspecialchars($envVars['GEMINI_IMAGE_MODEL']) ?></td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Proveedor de Imagen (IMAGE_PROVIDER)</td>
+                            <td class="kv-label">Image Provider (IMAGE_PROVIDER)</td>
                             <td class="kv-value"><code><?= htmlspecialchars($envVars['IMAGE_PROVIDER']) ?></code></td>
                         </tr>
                         <tr>
                             <td class="kv-label">MOCKUP_PROMPT_FIRST_MODE</td>
                             <td class="kv-value">
                                 <span class="tag-read-only" style="background: <?= $envVars['MOCKUP_PROMPT_FIRST_MODE'] ? 'var(--danger-soft); color: var(--danger); border-color: var(--danger);' : 'var(--line); color: var(--muted); border-color: var(--line);' ?>">
-                                    <?= $envVars['MOCKUP_PROMPT_FIRST_MODE'] ? 'ACTIVO (Desactiva Precomposición)' : 'INACTIVO' ?>
+                                    <?= $envVars['MOCKUP_PROMPT_FIRST_MODE'] ? 'ACTIVE (Disables Precomposition)' : 'INACTIVE' ?>
                                 </span>
                             </td>
                         </tr>
@@ -1102,7 +1102,7 @@ if ($mockupId > 0) {
                             <td class="kv-label">MOCKUP_PROMPT_FIRST_NO_MASK_MODE</td>
                             <td class="kv-value">
                                 <span class="tag-read-only" style="background: <?= $envVars['MOCKUP_PROMPT_FIRST_NO_MASK_MODE'] ? 'var(--danger-soft); color: var(--danger); border-color: var(--danger);' : 'var(--line); color: var(--muted); border-color: var(--line);' ?>">
-                                    <?= $envVars['MOCKUP_PROMPT_FIRST_NO_MASK_MODE'] ? 'ACTIVO (Desactiva Inpainting y Máscara)' : 'INACTIVO' ?>
+                                    <?= $envVars['MOCKUP_PROMPT_FIRST_NO_MASK_MODE'] ? 'ACTIVE (Disables Inpainting and Mask)' : 'INACTIVE' ?>
                                 </span>
                             </td>
                         </tr>
@@ -1110,7 +1110,7 @@ if ($mockupId > 0) {
                             <td class="kv-label">MOCKUP_USE_PRECOMPOSITION</td>
                             <td class="kv-value">
                                 <span class="tag-read-only" style="background: <?= $envVars['MOCKUP_USE_PRECOMPOSITION'] && !$envVars['MOCKUP_PROMPT_FIRST_MODE'] ? 'var(--success-soft); color: var(--success); border-color: var(--success);' : 'var(--danger-soft); color: var(--danger); border-color: var(--danger);' ?>">
-                                    <?= $envVars['MOCKUP_USE_PRECOMPOSITION'] && !$envVars['MOCKUP_PROMPT_FIRST_MODE'] ? 'ACTIVO (Aplica warping y escala física)' : 'DESACTIVADO O ANULADO' ?>
+                                    <?= $envVars['MOCKUP_USE_PRECOMPOSITION'] && !$envVars['MOCKUP_PROMPT_FIRST_MODE'] ? 'ACTIVE (Applies warping and physical scale)' : 'DISABLED OR OVERRIDDEN' ?>
                                 </span>
                             </td>
                         </tr>
@@ -1118,24 +1118,24 @@ if ($mockupId > 0) {
                             <td class="kv-label">MOCKUP_USE_BACKGROUND_EDIT</td>
                             <td class="kv-value">
                                 <span class="tag-read-only" style="background: <?= $envVars['MOCKUP_USE_BACKGROUND_EDIT'] && !$envVars['MOCKUP_PROMPT_FIRST_NO_MASK_MODE'] ? 'var(--success-soft); color: var(--success); border-color: var(--success);' : 'var(--danger-soft); color: var(--danger); border-color: var(--danger);' ?>">
-                                    <?= $envVars['MOCKUP_USE_BACKGROUND_EDIT'] && !$envVars['MOCKUP_PROMPT_FIRST_NO_MASK_MODE'] ? 'ACTIVO (Protege la obra mediante máscara)' : 'DESACTIVADO O ANULADO' ?>
+                                    <?= $envVars['MOCKUP_USE_BACKGROUND_EDIT'] && !$envVars['MOCKUP_PROMPT_FIRST_NO_MASK_MODE'] ? 'ACTIVE (Protects the artwork with a mask)' : 'DISABLED OR OVERRIDDEN' ?>
                                 </span>
                             </td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Imagen de Referencia Usada</td>
+                            <td class="kv-label">Reference Image Used</td>
                             <td class="kv-value">
                                 <code>results/<?= htmlspecialchars(basename($selectedArtwork['root_file'] ?? '')) ?></code>
                             </td>
                         </tr>
                         <tr>
-                            <td class="kv-label">Modo Ejecución Vertex</td>
+                            <td class="kv-label">Vertex Execution Mode</td>
                             <td class="kv-value highlight-val">
                                 <?php
                                 if ($envVars['MOCKUP_PROMPT_FIRST_NO_MASK_MODE'] && $envVars['MOCKUP_PROMPT_FIRST_MODE']) {
                                     echo "multimodal generate_content (SubjectReferenceImage - NO INPAINTING)";
                                 } else {
-                                    echo "edit_image (Imagen 3 - INPAINTING / INSERTION MASK)";
+                                    echo "edit_image (Image 3 - INPAINTING / INSERTION MASK)";
                                 }
                                 ?>
                             </td>

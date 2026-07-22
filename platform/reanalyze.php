@@ -68,7 +68,7 @@ if (!is_file($imagePath)) {
 if (is_file($metaPath)) {
     $metaData = json_decode((string)file_get_contents($metaPath), true);
     if (is_array($metaData) && (int)($metaData['user_id'] ?? 0) !== (int)$currentUser['id']) {
-        fail_json('No tienes acceso a esta obra.', 403);
+        fail_json('You do not have access to this artwork.', 403);
     }
 }
 

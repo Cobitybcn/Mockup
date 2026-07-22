@@ -294,7 +294,7 @@ try {
         if ($action === 'merge_groups' && $proposal) {
             $keys = array_values(array_filter(array_map('strval', (array)($_POST['group_keys'] ?? []))));
             if (count($keys) < 2) {
-                throw new RuntimeException('Selecciona al menos dos grupos para fusionar.');
+                throw new RuntimeException('Select at least two groups to merge.');
             }
             $target = null;
             foreach ($proposal['groups'] as &$group) {
@@ -339,7 +339,7 @@ try {
                 }
             }
             reconcile_save_proposal(reconcile_resequence($proposal));
-            $_SESSION['fichas_reconcile_notice'] = 'Obra #' . $artworkId . ' movida.';
+            $_SESSION['fichas_reconcile_notice'] = 'Artwork #' . $artworkId . ' moved.';
             header('Location: fichas_reconcile.php');
             exit;
         }
@@ -502,12 +502,12 @@ try {
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
             @unlink(FICHA_PROPOSAL_PATH);
 
-            $_SESSION['fichas_notice'] = "Reconciliación aplicada: {$sheetCount} fichas creadas, {$linked} mockups vinculados por linaje, {$orphans} archivos quedaron en bandeja de huérfanos.";
+            $_SESSION['fichas_notice'] = "Reconciliation applied: {$sheetCount} sheets created, {$linked} mockups linked by lineage, {$orphans} files remain in the orphan tray.";
             header('Location: fichas.php');
             exit;
         }
 
-        throw new RuntimeException('Acción inválida o propuesta inexistente.');
+        throw new RuntimeException('Invalid action or missing proposal.');
     }
 } catch (Throwable $e) {
     $_SESSION['fichas_reconcile_error'] = $e->getMessage();
@@ -529,7 +529,7 @@ $groups = $proposal['groups'];
 $totalArtworks = array_sum(array_map(fn($g) => count($g['artwork_ids']), $groups));
 ?>
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <title>Confirmar Fichas - Artwork Mockups</title>
@@ -559,12 +559,12 @@ $totalArtworks = array_sum(array_map(fn($g) => count($g['artwork_ids']), $groups
         <header class="app-header">
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
-        <div class="alert-strip">Revisión única: confirma cómo se agrupan tus obras. Los mockups se vinculan solos por linaje.</div>
+        <div class="alert-strip">One-time review: confirm how your artworks are grouped. Mockups are linked automatically by lineage.</div>
         <div class="workspace">
             <div class="workspace-header">
                 <div>
                     <h1>Confirmar Fichas Propuestas</h1>
-                    <p><?= count($groups) ?> fichas propuestas para <?= $totalArtworks ?> obras raíz (similitud visual IA + tus agrupaciones previas + duplicados exactos).</p>
+                    <p><?= count($groups) ?> sheets proposed for <?= $totalArtworks ?> root artworks (AI visual similarity + previous groupings + exact duplicates).</p>
                 </div>
             </div>
 
@@ -574,9 +574,9 @@ $totalArtworks = array_sum(array_map(fn($g) => count($g['artwork_ids']), $groups
             <form method="post" id="merge-form">
                 <input type="hidden" name="action" value="merge_groups">
                 <div class="reconcile-toolbar">
-                    <button type="submit" class="button-link secondary">Fusionar grupos marcados</button>
-                    <a class="button-link secondary" href="fichas_reconcile.php?rebuild=1" onclick="return confirm('¿Recalcular con el método rápido (sin verificación Gemini par a par)? Se pierden los ajustes manuales de esta pantalla. Para la propuesta completa con IA: php scripts/build_ficha_proposal.php');">Recalcular (rápido)</a>
-                    <span class="meta">★ = imagen de portada · para fusionar: marca 2+ grupos y pulsa Fusionar</span>
+                    <button type="submit" class="button-link secondary">Merge selected groups</button>
+                    <a class="button-link secondary" href="fichas_reconcile.php?rebuild=1" onclick="return confirm('Recalculate with the fast method without pair-by-pair Gemini verification? Manual adjustments on this screen will be lost. For the complete AI proposal: php scripts/build_ficha_proposal.php');">Recalculate (fast)</a>
+                    <span class="meta">★ = cover image · to merge: select 2+ groups and choose Merge</span>
                 </div>
 
                 <?php foreach ($groups as $group): ?>
@@ -585,7 +585,7 @@ $totalArtworks = array_sum(array_map(fn($g) => count($g['artwork_ids']), $groups
                         <div class="group-head">
                             <input type="checkbox" name="group_keys[]" value="<?= h($group['key']) ?>" title="Marcar para fusionar">
                             <h3>Ficha propuesta <?= h(strtoupper($group['key'])) ?></h3>
-                            <span class="meta"><?= count($group['artwork_ids']) ?> obras raíz · <?= $mockupTotal ?> mockups por linaje</span>
+                            <span class="meta"><?= count($group['artwork_ids']) ?> root artworks · <?= $mockupTotal ?> mockups by lineage</span>
                         </div>
                         <div class="group-thumbs">
                             <?php foreach ($group['artwork_ids'] as $memberId): ?>
@@ -598,9 +598,9 @@ $totalArtworks = array_sum(array_map(fn($g) => count($g['artwork_ids']), $groups
                                 ?>
                                 <div class="thumb-item <?= $isCanonical ? 'is-canonical' : '' ?>">
                                     <?php if ($url !== ''): ?>
-                                        <img src="<?= h($url) ?>" loading="lazy" decoding="async" title="Obra #<?= $memberId ?>">
+                                        <img src="<?= h($url) ?>" loading="lazy" decoding="async" title="Artwork #<?= $memberId ?>">
                                     <?php else: ?>
-                                        <div class="empty-img">Sin imagen</div>
+                                        <div class="empty-img">No image</div>
                                     <?php endif; ?>
                                     <span class="meta">#<?= $memberId ?><?= $isCanonical ? ' ★' : '' ?> · <?= (int)($mockupCounts[$memberId] ?? 0) ?> mk</span>
                                     <div class="thumb-actions">
@@ -624,10 +624,10 @@ $totalArtworks = array_sum(array_map(fn($g) => count($g['artwork_ids']), $groups
                 <?php endforeach; ?>
             </form>
 
-            <form method="post" class="confirm-bar" onsubmit="return confirm('Se reconstruirán las fichas con esta agrupación y se vincularán todos los mockups por linaje. ¿Confirmar?');">
+            <form method="post" class="confirm-bar" onsubmit="return confirm('Sheets will be rebuilt with this grouping and all mockups will be linked by lineage. Confirm?');">
                 <input type="hidden" name="action" value="confirm_all">
-                <span><strong><?= count($groups) ?> fichas</strong> quedarán creadas; los metadatos ya cargados se conservan.</span>
-                <button type="submit" class="button-link primary">Confirmar y crear fichas</button>
+                <span><strong><?= count($groups) ?> sheets</strong> will be created; existing metadata will be preserved.</span>
+                <button type="submit" class="button-link primary">Confirm and create sheets</button>
             </form>
         </div>
     </main>
