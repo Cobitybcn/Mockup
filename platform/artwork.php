@@ -529,7 +529,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'selec
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'assign_series') {
     $rawSeriesId = trim((string)($_POST['series_id'] ?? ''));
     ArtworkSeries::assignArtwork($pdo, $artworkOwnerId, $id, $rawSeriesId === '' ? null : (int)$rawSeriesId);
-    header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&series_updated=1');
+    $experimentQuery = (string)($_POST['bilingual_experiment'] ?? '') === '1' ? '&bilingual_experiment=1' : '';
+    header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&series_updated=1' . $experimentQuery);
     exit;
 }
 
@@ -1986,6 +1987,19 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             font-size: 16px;
         }
 
+        .artwork-root-views-heading {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:16px;
+            margin:0 0 10px;
+        }
+
+        .artwork-root-views-heading h3 { margin:0; }
+        .artwork-root-views-heading .artwork-series-form label { display:flex; align-items:center; gap:9px; }
+        .artwork-root-views-heading .artwork-series-form label span { margin:0; }
+        .artwork-root-views-heading .artwork-series-form select { min-width:145px; padding:6px 10px; }
+
         .artwork-sheet-card {
             background: var(--surface);
             border: 1px solid var(--line);
@@ -3396,6 +3410,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             <?php $artworkMetadataPanelHtml = ob_get_clean(); ?>
 
             <section class="panel artwork-overview-panel">
+                <?php if (!$bilingualExperiment): ?>
                 <div class="section-heading">
                     <div>
                         <h2><?= $artworkSeriesName !== '' ? h($artworkSeriesName) . ' Series' : 'NO SERIE' ?></h2>
@@ -3416,6 +3431,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                         </form>
                     </div>
                 </div>
+                <?php endif; ?>
                 <?php if ($rootFileAvailable): ?>
                     <form id="artwork-generate-metadata-form" class="artwork-metadata-action-form" method="post">
                         <input type="hidden" name="action" value="generate_v2_artwork_draft">
@@ -3423,7 +3439,26 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                     <div class="artwork-overview-grid">
                         <div class="artwork-overview-main">
                             <section class="artwork-root-views-card">
-                            <h3>Root Views</h3>
+                            <?php if ($bilingualExperiment): ?>
+                                <div class="artwork-root-views-heading">
+                                    <h3>Root Views</h3>
+                                    <form method="post" class="artwork-series-form">
+                                        <input type="hidden" name="action" value="assign_series">
+                                        <input type="hidden" name="bilingual_experiment" value="1">
+                                        <label>
+                                            <span>Series</span>
+                                            <select name="series_id" aria-label="Artwork series" onchange="this.form.classList.add('is-saving'); this.form.requestSubmit()">
+                                                <option value="">NO SERIE</option>
+                                                <?php foreach ($artworkSeriesRows as $seriesRow): ?>
+                                                    <option value="<?= (int)$seriesRow['id'] ?>" <?= (int)($artwork['series_id'] ?? 0) === (int)$seriesRow['id'] ? 'selected' : '' ?>><?= h($seriesRow['title']) ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </label>
+                                    </form>
+                                </div>
+                            <?php else: ?>
+                                <h3>Root Views</h3>
+                            <?php endif; ?>
                             <div class="root-overview-media-grid">
                                 <div class="mobile-root-artwork">
                                     <a href="<?= h('viewer.php?file=' . rawurlencode($rootFile) . '&back=' . rawurlencode('artwork.php?id=' . (int)$id)) ?>">
