@@ -359,6 +359,8 @@ class Database
         self::addColumnIfMissing($pdo, 'artist_profiles', 'social_strategy', "TEXT NOT NULL DEFAULT ''");
         self::addColumnIfMissing($pdo, 'artist_profiles', 'pinterest_strategy', "TEXT NOT NULL DEFAULT ''");
         self::addColumnIfMissing($pdo, 'artist_profiles', 'photo_file', "TEXT NOT NULL DEFAULT ''");
+        self::addColumnIfMissing($pdo, 'artist_profiles', 'subdomain', "TEXT NOT NULL DEFAULT ''");
+        self::addColumnIfMissing($pdo, 'artist_profiles', 'custom_domain', "TEXT NOT NULL DEFAULT ''");
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS credit_transactions (
