@@ -11,7 +11,6 @@ $canUseSocial = FeatureAccess::allows($user, FeatureAccess::SOCIAL_MANAGE);
 $id = (int)($_GET['id'] ?? 0);
 $file = basename((string)($_GET['file'] ?? ''));
 $bilingualExperiment = (string)($_GET['bilingual_experiment'] ?? '') === '1';
-$viewerFinal = (string)($_GET['viewer_final'] ?? '') === '1';
 
 if ($id > 0) {
     $sql = 'SELECT * FROM mockups WHERE id = :id';
@@ -157,7 +156,6 @@ function viewer_safe_back_url(string $candidate): string
         'mockup_combination_results.php' => true,
         'mockup_combinations_review.php' => true,
         'mockup_variation_lab.php' => true,
-        'mockup_bilingual_experiment.php' => true,
         'root_album.php' => true,
     ];
 
@@ -328,20 +326,6 @@ if (!$isStandaloneFile && !$hasScopedNavigation && $prevHref === '' && $nextHref
     $nextId = $nextStmt->fetchColumn();
     $nextHref = $nextId ? 'viewer.php?id=' . rawurlencode((string)$nextId) . $viewerBackParam : '';
 }
-if ($viewerFinal && !$isStandaloneFile && $artworkId > 0) {
-    $albumStatement = $pdo->prepare('SELECT id FROM mockups WHERE user_id = :user_id AND source_artwork_id = :artwork_id ORDER BY created_at DESC, id DESC');
-    $albumStatement->execute(['user_id' => (int)$user['id'], 'artwork_id' => $artworkId]);
-    $albumIds = array_map('intval', $albumStatement->fetchAll(PDO::FETCH_COLUMN));
-    $albumIndex = array_search((int)$mockup['id'], $albumIds, true);
-    if ($albumIndex !== false) {
-        $prevHref = isset($albumIds[$albumIndex - 1]) ? 'viewer.php?id=' . $albumIds[$albumIndex - 1] . $viewerBackParam : '';
-        $nextHref = isset($albumIds[$albumIndex + 1]) ? 'viewer.php?id=' . $albumIds[$albumIndex + 1] . $viewerBackParam : '';
-    }
-}
-if ($viewerFinal) {
-    if ($prevHref !== '') $prevHref .= '&viewer_final=1';
-    if ($nextHref !== '') $nextHref .= '&viewer_final=1';
-}
 
 function h($v): string
 {
@@ -398,7 +382,7 @@ $titleLine = $editorial['titleLine'];
 // y persistimos su copy actual para que el publicador use este mockup exacto.
 $publicationSheetId = 0;
 $publicationMockupSheetId = 0;
-if ($artworkId > 0 && $viewerMockupId > 0 && !$viewerFinal) {
+if ($artworkId > 0 && $viewerMockupId > 0) {
     try {
         $artworkSheetService = new ArtworkSheetService($pdo);
         $publicationArtworkSheet = $artworkSheetService->sheetForArtwork($artworkId, (int)$user['id']);
@@ -1092,7 +1076,7 @@ foreach ($mockupSocialSpecs as $channelKey => $channelSpec) {
         <nav class="viewer-actions">
             <a class="icon-link back" href="<?= h($backUrl) ?>" aria-label="Back to details" title="Back to details"></a>
             <a href="mockups.php">Mockups</a>
-            <?php if ($viewerMockupId > 0 && !$viewerFinal): ?>
+            <?php if ($viewerMockupId > 0): ?>
                 <a href="website_studio_notes.php?source=mockup:<?= $viewerMockupId ?>#new-studio-note">Create Studio Note</a>
             <?php endif; ?>
             <?php if ($viewerMockupId > 0): ?>
@@ -1126,7 +1110,6 @@ foreach ($mockupSocialSpecs as $channelKey => $channelSpec) {
         <span><?= h(date('m/d/Y H:i', strtotime((string)$mockup['created_at']))) ?></span>
     </footer>
 
-    <?php if (!$viewerFinal): ?>
     <section class="publication">
         <?php if(isset($_GET['mockup_v2_generated'])):?><div class="notice success">Mockup analysis v2 generated as a draft. Nothing was published.</div><?php endif;?>
         <?php if(isset($_GET['mockup_v2_error'])):?><div class="notice error"><?=h((string)$_GET['mockup_v2_error'])?></div><?php endif;?>
@@ -1320,7 +1303,6 @@ foreach ($mockupSocialSpecs as $channelKey => $channelSpec) {
         </section><?php endif; ?>
 
     </section>
-    <?php endif; ?>
 
     <script>
         document.querySelectorAll('[data-copy]').forEach((button) => {

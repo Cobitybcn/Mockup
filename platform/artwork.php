@@ -3771,9 +3771,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                             ?>
                                             <article class="related-mockup-card" data-mockup-card data-mockup-id="<?= (int)$sidebarMockup['id'] ?>">
                                                 <div class="related-mockup-image">
-                                                    <a href="<?= h($bilingualExperiment
-                                                        ? 'mockup_bilingual_experiment.php?id=' . (int)$sidebarMockup['id']
-                                                        : 'viewer.php?id=' . (int)$sidebarMockup['id'] . '&back=' . rawurlencode('artwork.php?id=' . (int)$id)) ?>">
+                                                    <a href="<?= h('viewer.php?id=' . (int)$sidebarMockup['id'] . '&back=' . rawurlencode('artwork.php?id=' . (int)$id)) ?>">
                                                         <img src="<?= h('media.php?file=' . rawurlencode($sidebarFile)) ?>" alt="<?= h($sidebarLabel) ?>">
                                                     </a>
                                                     <button
