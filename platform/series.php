@@ -230,20 +230,19 @@ $displayedArtworks = $selectedSeries
             ?>
             <div class="catalog-heading series-detail-heading">
                 <div class="series-detail-heading__copy">
-                    <span class="series-detail-kicker">Series</span>
                     <div class="series-detail-title-row">
-                        <h1><?= series_h($selectedSeries['title']) ?></h1>
+                        <h1><span class="series-title-label">Series</span><span class="series-title-name"><?= series_h($selectedSeries['title']) ?></span></h1>
                         <span class="status-pill <?= !empty($selectedSeries['published']) ? 'status-published' : 'status-pending' ?>">
                             <?= !empty($selectedSeries['published']) ? 'Published' : 'Draft' ?>
                         </span>
                     </div>
-                    <?php if (trim((string)($selectedSeries['subtitle'] ?? '')) !== ''): ?>
-                        <p class="series-detail-subtitle"><?= series_h($selectedSeries['subtitle']) ?></p>
-                    <?php endif; ?>
-                    <p class="series-detail-meta"><?php if ($seriesYearInline !== ''): ?><?= series_h($seriesYearInline) ?> · <?php endif; ?><?= (int)$selectedSeries['artwork_count'] ?> artworks · <?= (int)$selectedSeries['mockup_count'] ?> mockups</p>
+                    <p class="series-detail-summary">
+                        <?php if (trim((string)($selectedSeries['subtitle'] ?? '')) !== ''): ?><strong><?= series_h($selectedSeries['subtitle']) ?></strong><span aria-hidden="true">·</span><?php endif; ?>
+                        <?php if ($seriesYearInline !== ''): ?><span><?= series_h($seriesYearInline) ?></span><span aria-hidden="true">·</span><?php endif; ?>
+                        <span><?= (int)$selectedSeries['artwork_count'] ?> artworks</span><span aria-hidden="true">·</span><span><?= (int)$selectedSeries['mockup_count'] ?> mockups</span>
+                    </p>
                 </div>
                 <div class="catalog-heading__actions series-detail-actions">
-                    <a class="button-link secondary" href="website_studio_notes.php?source=series:<?= (int)$selectedSeries['id'] ?>#new-studio-note">Create Studio Note</a>
                     <a class="series-create-art-decision" href="create_scenes.php?series=<?= (int)$selectedSeries['id'] ?>"><span>Create Art</span></a>
                 </div>
             </div>
@@ -251,28 +250,6 @@ $displayedArtworks = $selectedSeries
 
             <?php if ($notice !== ''): ?><div class="notice-card notice-ok"><?= series_h($notice) ?></div><?php endif; ?>
             <?php if ($error !== ''): ?><div class="notice-card notice-error"><?= series_h($error) ?></div><?php endif; ?>
-
-            <?php if ($selectedSeries): ?>
-                <details class="series-website-panel" id="series-website">
-                    <summary>
-                        <span><strong>Website</strong><small>Publication settings only · content comes from Series Metadata</small></span>
-                        <b><?= !empty($selectedSeries['published']) ? 'Published' : 'Draft' ?></b>
-                    </summary>
-                    <div class="series-website-panel__body">
-                        <p>Title, descriptions, SEO text, keywords, tags and header image are used directly from this Series record.</p>
-                        <?php if ($seriesMissing): ?><div class="warning-list">Complete before publishing: <?= series_h(implode(' · ', $seriesMissing)) ?></div><?php endif; ?>
-                        <form method="post">
-                            <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
-                            <input type="hidden" name="series_id" value="<?= (int)$selectedSeries['id'] ?>">
-                            <?php if (!empty($selectedSeries['published'])): ?>
-                                <button class="button-link secondary" name="action" value="unpublish_series">Unpublish series</button>
-                            <?php else: ?>
-                                <button class="button-link" name="action" value="publish_series" <?= $seriesMissing ? 'disabled' : '' ?>>Publish series</button>
-                            <?php endif; ?>
-                        </form>
-                    </div>
-                </details>
-            <?php endif; ?>
 
             <section class="catalog-panel catalog-panel--compact catalog-panel--series-picker">
                 <?php if ($selectedSeries && $seriesMissing): ?>

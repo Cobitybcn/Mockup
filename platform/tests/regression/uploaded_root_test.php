@@ -476,13 +476,28 @@ function run_uploaded_root_regression_tests(): void
         'el detalle de Series inicia Create Art con la serie activa'
     );
     TestHarness::assertTrue(
-        !str_contains($seriesSource, '>Back to series</a>'),
-        'el detalle de Series elimina la accion redundante Back to series'
+        !str_contains($seriesSource, '>Back to series</a>')
+            && !str_contains($seriesSource, '>Create Studio Note</a>'),
+        'el detalle de Series conserva Create Art como unica accion principal'
     );
     TestHarness::assertContains(
         'class="series-detail-title-row"',
         $seriesSource,
         'el encabezado de Series separa titulo, estado y metadatos con jerarquia editorial'
+    );
+    TestHarness::assertContains(
+        'class="series-title-label">Series</span><span class="series-title-name"',
+        $seriesSource,
+        'Series y su nombre comparten tipografia y tamano dentro del mismo titulo'
+    );
+    TestHarness::assertTrue(
+        !str_contains($seriesSource, 'class="series-website-panel"'),
+        'el detalle de Series elimina la franja Website redundante'
+    );
+    TestHarness::assertContains(
+        'class="series-detail-summary"',
+        $seriesSource,
+        'el encabezado de Series resume subtitulo, periodo y cantidades en una sola linea'
     );
     TestHarness::assertContains(
         'name="series_id" value="<?= $createSeriesId ?>"',
