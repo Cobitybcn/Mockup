@@ -63,7 +63,7 @@ function videos_date(string $value): string
     <title>Videos - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
-    <link rel="stylesheet" href="videos.css?v=12">
+    <link rel="stylesheet" href="videos.css?v=13">
     <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body>
@@ -82,7 +82,10 @@ function videos_date(string $value): string
                 <div>
                     <span class="videos-kicker">Library</span>
                     <h1>Videos</h1>
-                    <p><?= count($videos) ?> <?= count($videos) === 1 ? 'generated video' : 'generated videos' ?>.</p>
+                    <p class="videos-page-desc">
+                        <span class="videos-desc-kicker"><?= count($videos) ?> <?= count($videos) === 1 ? 'generated video' : 'generated videos' ?> in your private library.</span>
+                        <span class="videos-desc-instructions">Use Video Lab to create motion studies from your mockups, then upload completed edits and keep every video linked to its artwork and project.</span>
+                    </p>
                 </div>
                 <div class="videos-primary-actions">
                     <a class="videos-decision-block videos-decision-block--primary" href="video.php">Open Video Lab</a>

@@ -325,6 +325,11 @@ function run_uploaded_root_regression_tests(): void
         $videosStyles,
         'Videos usa la jerarquia editorial prominente del patron de cabeceras'
     );
+    TestHarness::assertContains(
+        'class="videos-desc-instructions"',
+        $videosSource,
+        'Videos explica su flujo con la misma jerarquia editorial de Explore Scenes'
+    );
     TestHarness::assertTrue(
         !str_contains($videosSource, 'Biblioteca')
             && !str_contains($videosSource, 'Videos finales')

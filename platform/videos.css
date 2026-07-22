@@ -18,6 +18,28 @@
     line-height: .96;
 }
 
+.videos-heading .videos-page-desc {
+    display: block;
+    max-width: 900px;
+    margin: 14px 0 0;
+    line-height: 1.55;
+}
+
+.videos-desc-kicker {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.videos-desc-instructions {
+    display: block;
+    max-width: 900px;
+    color: var(--accent);
+    font-size: 16px;
+    font-weight: 600;
+}
+
 .videos-kicker,
 .videos-panel-heading > div > span {
     display: block;
@@ -681,6 +703,7 @@ body.has-video-modal { overflow: hidden; }
     .videos-catalog { padding: 16px 12px 24px; }
     .videos-heading { align-items: flex-start; padding-top:4px; }
     .videos-heading h1 { font-size:40px; }
+    .videos-desc-instructions { font-size:14px; }
     .videos-decision-block { padding:14px; }
     .videos-primary-actions { --videos-action-size:112px; width:100%; justify-content:flex-end; gap:10px; }
     .videos-panel { padding: 14px; }
