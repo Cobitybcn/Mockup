@@ -45,6 +45,10 @@ final class AppPublishedStudioNotes
 
                 $row['source'] = is_array($payload['source'] ?? null) ? $payload['source'] : null;
                 $row['media_files'] = $mediaFiles;
+                $objective = (string)$row['objective'];
+                $row['has_embedded_image'] = stripos($objective, 'data:image/jpeg;base64,') !== false
+                    || stripos($objective, 'data:image/png;base64,') !== false
+                    || stripos($objective, 'data:image/webp;base64,') !== false;
                 // The current public templates read mockup_files; expose the generic media list there too.
                 $row['mockup_files'] = $mediaFiles;
                 $slug = $this->slug($row['title']) . '-' . (int)$row['id'];

@@ -77,19 +77,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $title = trim((string)($_POST['title'] ?? ''));
             $objective = trim((string)($_POST['objective'] ?? ''));
             if ($title === '') throw new RuntimeException('El título es obligatorio.');
-            
-            $stmt = $pdo->prepare('SELECT * FROM social_campaigns WHERE id=? AND user_id=? LIMIT 1');
-            $stmt->execute([$id, $userId]);
-            $draft = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$draft) throw new RuntimeException('Borrador no encontrado.');
-            
-            $status = $action === 'publish_draft' ? 'published' : 'draft';
-            $payload = json_decode((string)$draft['payload_json'], true);
-            if (!is_array($payload)) $payload = [];
-            $payload['channel_status']['website_blog'] = $status;
-            
-            $stmt = $pdo->prepare('UPDATE social_campaigns SET title=?, objective=?, status=?, payload_json=?, updated_at=? WHERE id=? AND user_id=?');
-            $stmt->execute([$title, $objective, $status, json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), date('c'), $id, $userId]);
+            $saved = $websiteBoard->saveNote($userId, $id, $title, $objective);
+            $currentStatus = (string)($saved['status'] ?? 'draft');
+            if ($action === 'publish_draft' && $currentStatus !== 'published') {
+                $websiteBoard->noteAction($userId, $id, 'publish');
+            } elseif ($action === 'save_draft' && $currentStatus === 'published') {
+                $websiteBoard->noteAction($userId, $id, 'unpublish');
+            }
             
             $_SESSION['wsn_notice'] = $action === 'publish_draft' ? 'Nota de estudio publicada con éxito.' : 'Borrador guardado con éxito.';
             header('Location: website_studio_notes.php?draft=' . $id);

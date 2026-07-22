@@ -1392,6 +1392,21 @@ function app_studio_note_media_srcset(array $post, string $file): string
     ));
 }
 
+function app_studio_note_embedded_image_url(array $post, int $width = 0): string
+{
+    if ((int)($post['id'] ?? 0) <= 0) return '';
+    $url = artworkmockups_public_url() . '/studio_note_embedded_image.php?note=' . (int)$post['id'];
+    return $width > 0 ? $url . '&w=' . $width : $url;
+}
+
+function app_studio_note_embedded_image_srcset(array $post): string
+{
+    return implode(', ', array_map(
+        static fn(int $width): string => app_studio_note_embedded_image_url($post, $width) . ' ' . $width . 'w',
+        [480, 768, 1200]
+    ));
+}
+
 function first_html_image_src(string $html): string
 {
     if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $html, $matches)) {
@@ -2252,6 +2267,9 @@ function render_published_journal(array $notes): void
             if ($thumbFile !== '') {
                 $thumbUrl = app_studio_note_media_url($post, $thumbFile, 480);
                 $thumbSrcset = app_studio_note_media_srcset($post, $thumbFile);
+            } elseif (!empty($post['has_embedded_image'])) {
+                $thumbUrl = app_studio_note_embedded_image_url($post, 480);
+                $thumbSrcset = app_studio_note_embedded_image_srcset($post);
             } else {
                 $thumbUrl = first_html_image_src((string)$post['objective']);
             }
@@ -2293,7 +2311,17 @@ function render_published_journal_post(array $notes, string $slug): bool
     if ($coverFile !== '') {
         $coverUrl = app_studio_note_media_url($post, $coverFile, 768);
         $coverSrcset = app_studio_note_media_srcset($post, $coverFile);
+    } elseif (!empty($post['has_embedded_image'])) {
+        $coverUrl = app_studio_note_embedded_image_url($post, 768);
+        $coverSrcset = app_studio_note_embedded_image_srcset($post);
     }
+    $noteMediaFiles = array_values(array_filter(array_map('basename', (array)($post['media_files'] ?? []))));
+    $renderNoteBody = static fn(): string => safe_studio_note_rich_text(
+        (string)$post['objective'],
+        $noteMediaFiles,
+        static fn(string $file): string => app_studio_note_media_url($post, $file, 1200),
+        $coverFile !== '' ? [$coverFile] : []
+    );
     ?>
     <section class="page-hero artist-page-hero journal-post-hero__intro">
         <p class="eyebrow">Studio Notes</p>
@@ -2309,12 +2337,12 @@ function render_published_journal_post(array $notes, string $slug): bool
                     alt="<?= e($post['title']) ?>" fetchpriority="high" decoding="async">
             </figure>
             <div class="prose">
-                <?= safe_rich_text((string)$post['objective']) ?>
+                <?= $renderNoteBody() ?>
             </div>
         </section>
     <?php else: ?>
         <section class="section prose prose--wide" style="margin-top: 40px; margin-bottom: 80px;">
-            <?= safe_rich_text((string)$post['objective']) ?>
+            <?= $renderNoteBody() ?>
         </section>
     <?php endif; ?>
     

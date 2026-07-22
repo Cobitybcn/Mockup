@@ -17,6 +17,109 @@ function safe_rich_text(string $html): string
     return nl2br(e(trim($text)), false);
 }
 
+function studio_note_image_file(string $source): string
+{
+    $source = html_entity_decode(trim($source), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $query = parse_url($source, PHP_URL_QUERY);
+    if (!is_string($query) || $query === '') return '';
+    parse_str($query, $parameters);
+    return basename((string)($parameters['file'] ?? ''));
+}
+
+/**
+ * Renders the small rich-text vocabulary used by Studio Notes. Images are
+ * accepted only when their file is registered in the note payload.
+ *
+ * @param array<int,string> $allowedImageFiles
+ * @param callable(string):string $imageUrl
+ * @param array<int,string> $excludedImageFiles
+ */
+function safe_studio_note_rich_text(
+    string $html,
+    array $allowedImageFiles,
+    callable $imageUrl,
+    array $excludedImageFiles = []
+): string {
+    if (!class_exists(DOMDocument::class)) return safe_rich_text($html);
+
+    $allowed = [];
+    foreach ($allowedImageFiles as $file) {
+        $file = basename((string)$file);
+        if ($file !== '') $allowed[$file] = true;
+    }
+    $excluded = [];
+    foreach ($excludedImageFiles as $file) {
+        $file = basename((string)$file);
+        if ($file !== '') $excluded[$file] = true;
+    }
+
+    $document = new DOMDocument('1.0', 'UTF-8');
+    $previous = libxml_use_internal_errors(true);
+    $loaded = $document->loadHTML(
+        '<?xml encoding="UTF-8"><!doctype html><html><body><div data-studio-note-root="1">' . $html . '</div></body></html>',
+        LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+    );
+    libxml_clear_errors();
+    libxml_use_internal_errors($previous);
+    if (!$loaded) return safe_rich_text($html);
+
+    $root = null;
+    foreach ($document->getElementsByTagName('div') as $candidate) {
+        if ($candidate->getAttribute('data-studio-note-root') === '1') {
+            $root = $candidate;
+            break;
+        }
+    }
+    if (!$root) return safe_rich_text($html);
+
+    $render = null;
+    $renderChildren = static function (DOMNode $node) use (&$render): string {
+        $result = '';
+        foreach ($node->childNodes as $child) $result .= $render($child);
+        return $result;
+    };
+    $render = static function (DOMNode $node) use (&$render, $renderChildren, $allowed, $excluded, $imageUrl): string {
+        if ($node->nodeType === XML_TEXT_NODE) return e($node->nodeValue ?? '');
+        if ($node->nodeType !== XML_ELEMENT_NODE || !$node instanceof DOMElement) return '';
+
+        $tag = strtolower($node->tagName);
+        if ($tag === 'img') {
+            $file = studio_note_image_file($node->getAttribute('src'));
+            if ($file === '' || !isset($allowed[$file]) || isset($excluded[$file])) return '';
+            $url = $imageUrl($file);
+            if ($url === '') return '';
+            $size = strtolower($node->getAttribute('data-editor-size'));
+            if (!in_array($size, ['small', 'medium', 'large'], true)) $size = 'medium';
+            $align = strtolower($node->getAttribute('data-editor-align'));
+            if (!in_array($align, ['left', 'center', 'right'], true)) $align = 'center';
+            $class = 'studio-note-inline-image studio-note-inline-image--' . $size . ' studio-note-inline-image--' . $align;
+            return '<img class="' . e($class) . '" src="' . e($url) . '" alt="'
+                . e($node->getAttribute('alt')) . '" loading="lazy" decoding="async">';
+        }
+
+        $children = $renderChildren($node);
+        $simpleTags = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'blockquote', 'ul', 'ol', 'li', 'h2', 'h3'];
+        if (in_array($tag, $simpleTags, true)) {
+            if ($tag === 'br') return '<br>';
+            return '<' . $tag . '>' . $children . '</' . $tag . '>';
+        }
+        if ($tag === 'h1') return '<h2>' . $children . '</h2>';
+        if ($tag === 'a') {
+            $href = trim($node->getAttribute('href'));
+            if (preg_match('~^(?:https?://|mailto:|/|#)~i', $href) !== 1) return $children;
+            $external = preg_match('~^https?://~i', $href) === 1;
+            return '<a href="' . e($href) . '"' . ($external ? ' rel="noopener noreferrer"' : '') . '>' . $children . '</a>';
+        }
+        return $children;
+    };
+
+    $output = trim($renderChildren($root));
+    for ($pass = 0; $pass < 2; $pass++) {
+        $output = preg_replace('~<(p|h2|h3|blockquote|li)>\s*(?:<br>\s*)*</\1>~i', '', $output) ?? $output;
+    }
+    return trim($output);
+}
+
 function url_for(string $path = ''): string
 {
     if (preg_match('~^(?:https?:|mailto:|tel:|#)~', $path)) {

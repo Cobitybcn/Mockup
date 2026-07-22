@@ -803,6 +803,26 @@ p {
     object-fit: contain;
 }
 
+.journal .prose img.studio-note-inline-image--small {
+    max-width: min(100%, 300px) !important;
+    max-height: 260px;
+}
+
+.journal .prose img.studio-note-inline-image--large {
+    max-width: min(100%, 760px) !important;
+    max-height: 520px;
+}
+
+.journal .prose img.studio-note-inline-image--left {
+    margin-right: auto;
+    margin-left: 0;
+}
+
+.journal .prose img.studio-note-inline-image--right {
+    margin-right: 0;
+    margin-left: auto;
+}
+
 .journal-block-image {
     margin: 18px 0;
 }

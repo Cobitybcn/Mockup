@@ -436,9 +436,24 @@ final class WebsiteBoardService
     {
         $title = trim($title);
         if ($title === '') throw new RuntimeException('El título es obligatorio.');
-        $this->noteRow($userId, $noteId);
-        $stmt = $this->pdo->prepare('UPDATE social_campaigns SET title=?,objective=?,updated_at=? WHERE id=? AND user_id=?');
-        $stmt->execute([$title, $objective, date('c'), $noteId, $userId]);
+        [$row, $payload] = $this->noteRow($userId, $noteId);
+        $normalized = StudioNoteMediaService::normalize($userId, $noteId, $objective, $payload, $this->sources($userId));
+        $payload = $normalized['payload'];
+        $source = is_array($payload['source'] ?? null) ? $payload['source'] : [];
+        $sourceLabel = (string)($source['label'] ?? $row['source_label'] ?? '');
+        if ((string)($source['type'] ?? '') === 'studio_note') $sourceLabel = 'Studio Essay';
+        $stmt = $this->pdo->prepare('UPDATE social_campaigns SET title=?,objective=?,source_type=?,source_id=?,source_label=?,payload_json=?,updated_at=? WHERE id=? AND user_id=?');
+        $stmt->execute([
+            $title,
+            $normalized['html'],
+            (string)($source['type'] ?? $row['source_type'] ?? ''),
+            (string)($source['id'] ?? $row['source_id'] ?? ''),
+            $sourceLabel,
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            date('c'),
+            $noteId,
+            $userId,
+        ]);
         return $this->note($userId, $noteId);
     }
 
@@ -451,7 +466,6 @@ final class WebsiteBoardService
         }
         if ($action === 'publish') {
             if ((string)$row['status'] === 'published') throw new RuntimeException('Esta Nota de estudio ya está publicada.');
-            if (!is_array($payload['source'] ?? null) || !$this->normalizeNoteMedia($userId, $payload)) throw new RuntimeException('La nota necesita una imagen de origen.');
             if (trim((string)$row['title']) === '') throw new RuntimeException('La nota necesita un título.');
             if (trim(strip_tags((string)$row['objective'])) === '') throw new RuntimeException('La nota necesita contenido antes de publicarse.');
             $status = 'published';
@@ -565,6 +579,19 @@ final class WebsiteBoardService
         $media = [];
         foreach ((array)($payload['media'] ?? []) as $item) {
             if (!is_array($item)) continue;
+            if ((string)($item['type'] ?? '') === 'studio_note') {
+                $file = basename((string)($item['file'] ?? ''));
+                if ($file !== '' && str_starts_with($file, 'studio-note-' . $userId . '-')) {
+                    $media[] = [
+                        'key' => (string)($item['key'] ?? ('studio_note:' . ($item['id'] ?? $file))),
+                        'type' => 'studio_note',
+                        'id' => (string)($item['id'] ?? ''),
+                        'file' => $file,
+                        'label' => trim((string)($item['label'] ?? '')) ?: 'Studio Note image',
+                    ];
+                }
+                continue;
+            }
             $key = (string)($item['key'] ?? (($item['type'] ?? '') . ':' . ($item['id'] ?? '')));
             try { $media[] = $this->resolveSource($userId, $key); } catch (Throwable) { /* Source was removed; omit it. */ }
         }
