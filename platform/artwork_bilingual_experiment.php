@@ -291,6 +291,37 @@ $englishHasContent = $englishDescription !== '' || $englishShortDescription !== 
             padding-bottom: 4px;
         }
 
+        .bilingual-title-memo {
+            display: grid;
+            grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
+            gap: 16px;
+            align-items: center;
+            margin-top: 20px;
+            padding: 14px 16px;
+            border: 1px solid var(--line);
+            background: var(--surface-soft);
+        }
+
+        .bilingual-title-memo label {
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .bilingual-title-memo input {
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+            padding: 12px 13px;
+            border: 1px solid var(--line);
+            border-radius: 2px;
+            background: #fff;
+            color: var(--ink);
+            font: 500 15px/1.45 var(--font-serif);
+        }
+
         .bilingual-language-block {
             flex: 0 0 156px;
             width: 156px;
@@ -554,6 +585,7 @@ $englishHasContent = $englishDescription !== '' || $englishShortDescription !== 
             .bilingual-field--full { grid-column: auto; }
             .bilingual-flow-action button { width: 100%; }
             .bilingual-language-block { flex-basis: 132px; width: 132px; height: 132px; min-height: 132px; }
+            .bilingual-title-memo { grid-template-columns: 1fr; gap: 8px; }
         }
     </style>
 </head>
@@ -619,6 +651,11 @@ $englishHasContent = $englishDescription !== '' || $englishShortDescription !== 
                         <span class="bilingual-language-name">English</span>
                         <span class="bilingual-language-state"><?= $englishHasContent ? 'Contenido actual · protegido' : 'Sin preparar' ?></span>
                     </button>
+                </div>
+
+                <div class="bilingual-title-memo">
+                    <label for="title-system-memo">Memo privado de títulos</label>
+                    <input id="title-system-memo" type="text" value="STRATA X — LIMEN · STRATA XI — NUHRĀ (ܢܘܗܪܐ) · No traducir">
                 </div>
 
                 <div class="bilingual-editor-stage">
