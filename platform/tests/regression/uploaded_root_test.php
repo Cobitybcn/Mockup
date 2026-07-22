@@ -138,6 +138,11 @@ function run_uploaded_root_regression_tests(): void
         $artworkPageSource,
         'la accion principal de Studio Notes usa el Decision Block cuadrado'
     );
+    TestHarness::assertTrue(
+        str_contains($artworkPageSource, 'class="related-mockups-create-decision"')
+            && str_contains($artworkPageSource, 'href="mockup_combinations_review.php?id=<?= (int)$id ?>">Create Mockups</a>'),
+        'una obra sin mockups ofrece Create Mockups como Decision Block contextual'
+    );
     TestHarness::assertContains(
         "this.form.classList.add('is-saving'); this.form.requestSubmit()",
         $artworkPageSource,

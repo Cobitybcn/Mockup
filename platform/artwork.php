@@ -2349,6 +2349,51 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             text-align: center;
         }
 
+        .related-mockups-empty {
+            display: grid;
+            grid-template-columns: minmax(150px, 210px) 118px;
+            gap: 28px;
+            min-height: 176px;
+            padding: 18px 24px;
+        }
+
+        .related-mockups-empty p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.55;
+            text-align: left;
+        }
+
+        .related-mockups-create-decision {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 118px;
+            height: 118px;
+            padding: 16px;
+            border: 1px solid #ad747d;
+            border-radius: 4px;
+            background: #b77f86;
+            color: #fffaf7;
+            box-shadow: 0 8px 18px rgba(77, 51, 55, .12);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            line-height: 1.3;
+            text-align: center;
+            text-decoration: none;
+            text-transform: uppercase;
+        }
+
+        .related-mockups-create-decision:hover,
+        .related-mockups-create-decision:focus-visible {
+            border-color: #98636b;
+            background: #a97078;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
         .favorite-overlay-btn {
             position: absolute;
             top: 8px;
@@ -2883,6 +2928,8 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
 
             .artwork-studio-note-mobile { display:flex; justify-content:flex-end; margin:0 0 12px; }
             .artwork-studio-note-mobile .artwork-studio-note-link { flex-basis:112px; width:112px; height:112px; padding:14px; }
+            .related-mockups-empty { grid-template-columns:1fr 112px; gap:18px; padding:16px; }
+            .related-mockups-create-decision { width:112px; height:112px; padding:14px; }
 
             .artwork-page-header {
                 margin-bottom: 8px;
@@ -3637,7 +3684,10 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                         <?php endforeach; ?>
                                     </div>
                                 <?php else: ?>
-                                    <div class="favorite-empty">No related mockups have been generated for this selected root yet.</div>
+                                    <div class="favorite-empty related-mockups-empty">
+                                        <p>No mockups have been created for this artwork yet.</p>
+                                        <a class="related-mockups-create-decision" href="mockup_combinations_review.php?id=<?= (int)$id ?>">Create Mockups</a>
+                                    </div>
                                 <?php endif; ?>
                         </aside>
                     </div>
