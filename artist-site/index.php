@@ -804,16 +804,33 @@ function admin_handle_post(array &$site, array &$series, array &$artworks, array
 function render_home(array $site, array $series, array $artworks): void
 {
     $available = artworks_by_status($artworks, 'available');
-    $heroSlides = array_values(array_filter(array_map(
-        fn ($artwork) => !empty($artwork['image']) ? [
-            'image' => $artwork['image'],
-            'title' => $artwork['title'] ?? 'Maurizio Valch artwork',
-        ] : null,
-        $available
-    )));
+    $publishedItems = array_filter(
+        app_catalog()?->all() ?? [],
+        static fn (array $item): bool => ($item['visibility'] ?? '') === 'public'
+    );
+    $heroSlides = array_values(array_map(
+        static function (array $artwork): array {
+            $file = trim((string)($artwork['header_file'] ?? ''))
+                ?: basename((string)($artwork['source_image_file'] ?? ''));
+            return [
+                'image' => app_publication_media_url($artwork, $file),
+                'title' => $artwork['title'] ?? 'Maurizio Valch artwork',
+            ];
+        },
+        $publishedItems
+    ));
+    if (!$heroSlides) {
+        $heroSlides = array_values(array_filter(array_map(
+            fn ($artwork) => !empty($artwork['image']) ? [
+                'image' => asset_url($artwork['image']),
+                'title' => $artwork['title'] ?? 'Maurizio Valch artwork',
+            ] : null,
+            $available
+        )));
+    }
     if (!$heroSlides) {
         $heroSlides[] = [
-            'image' => $site['hero_image'] ?? '/assets/images/the-path-before-architecture.jpg',
+            'image' => asset_url('/assets/images/the-path-before-architecture.jpg'),
             'title' => 'Maurizio Valch artwork',
         ];
     }
@@ -822,7 +839,7 @@ function render_home(array $site, array $series, array $artworks): void
         <div class="hero__media" data-hero-slider>
             <div class="hero__slides">
                 <?php foreach ($heroSlides as $index => $slide): ?>
-                    <img class="hero__slide" src="<?= e(asset_url($slide['image'])) ?>" alt="<?= e($slide['title'] . ' root artwork image') ?>" data-hero-slide <?= $index === 0 ? 'data-active="true"' : '' ?>>
+                    <img class="hero__slide" src="<?= e($slide['image']) ?>" alt="<?= e($slide['title'] . ' root artwork image') ?>" data-hero-slide <?= $index === 0 ? 'data-active="true"' : '' ?>>
                 <?php endforeach; ?>
             </div>
             <?php if (count($heroSlides) > 1): ?>
@@ -886,7 +903,23 @@ function render_home(array $site, array $series, array $artworks): void
             <a href="<?= e(url_for('paintings')) ?>?status=available">Filter available works</a>
         </div>
         <div class="art-grid">
-            <?php foreach ($available as $slug => $artwork) render_artwork_card($slug, $artwork, $series); ?>
+            <?php if ($publishedItems): ?>
+                <?php foreach ($publishedItems as $slug => $artwork): ?>
+                    <?php $cardImageFile = trim((string)($artwork['header_file'] ?? '')) ?: (string)$artwork['source_image_file']; ?>
+                    <article class="art-card">
+                        <a class="art-card__image" href="<?= e(url_for('artworks/' . $slug)) ?>">
+                            <img src="<?= e(app_publication_media_url($artwork, $cardImageFile)) ?>" alt="<?= e($artwork['artwork_alt'] ?: $artwork['title'] . ' by Maurizio Valch') ?>">
+                        </a>
+                        <div class="art-card__body">
+                            <div class="eyebrow"><?= e($artwork['series'] ?: 'Original work') ?></div>
+                            <h3><a href="<?= e(url_for('artworks/' . $slug)) ?>"><?= e($artwork['title']) ?></a></h3>
+                            <p><?= e(implode(', ', array_filter([$artwork['medium'], published_dimensions($artwork)]))) ?></p>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <?php foreach ($available as $slug => $artwork) render_artwork_card($slug, $artwork, $series); ?>
+            <?php endif; ?>
         </div>
     </section>
 
