@@ -200,7 +200,7 @@ $displayedArtworks = $selectedSeries
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Series - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="ui-catalog.css?v=15">
+    <link rel="stylesheet" href="ui-catalog.css?v=16">
     <?php if ($seriesPreviewActive): ?>
         <link rel="stylesheet" href="visual-consistency-preview.css?v=2">
     <?php endif; ?>
@@ -260,7 +260,7 @@ $displayedArtworks = $selectedSeries
                         <?php foreach ($seriesRows as $index => $series): ?>
                             <?php $seriesArtworkCount = (int)($series['artwork_count'] ?? 0); ?>
                             <div class="series-series-option">
-                                <a class="social-square-button series-series-tile social-square-button--<?= series_tone($index) ?>" href="series.php?series=<?= (int)$series['id'] ?><?= $seriesPreviewActive ? '&amp;design_preview=series-catalog' : '' ?>" data-series-filter-trigger data-series-filter-id="<?= (int)$series['id'] ?>" aria-label="<?= series_h($series['title']) ?>, <?= $seriesArtworkCount ?> <?= $seriesArtworkCount === 1 ? 'artwork' : 'artworks' ?>, <?= !empty($series['published']) ? 'published' : 'draft' ?>">
+                                <a class="social-square-button series-series-tile social-square-button--<?= series_tone($index) ?>" href="series.php?series=<?= (int)$series['id'] ?><?= $seriesPreviewActive ? '&amp;design_preview=series-catalog' : '' ?>" data-series-filter-trigger data-series-filter-id="<?= (int)$series['id'] ?>"<?= !empty($series['header_file']) ? ' style="--series-tile-image: url(\'' . series_h(series_media_url($series['header_file'], 420)) . '\'); --series-tile-position: ' . (int)($series['header_focal_x'] ?? 50) . '% ' . (int)($series['header_focal_y'] ?? 50) . '%;"' : '' ?> aria-label="<?= series_h($series['title']) ?>, <?= $seriesArtworkCount ?> <?= $seriesArtworkCount === 1 ? 'artwork' : 'artworks' ?>, <?= !empty($series['published']) ? 'published' : 'draft' ?>">
                                     <span class="series-series-tile__title"><?= series_h($series['title']) ?></span>
                                     <small class="series-series-tile__meta">
                                         <?= $seriesArtworkCount > 0 ? $seriesArtworkCount . ' ' . ($seriesArtworkCount === 1 ? 'artwork' : 'artworks') : 'No artworks' ?>
@@ -319,6 +319,11 @@ $displayedArtworks = $selectedSeries
                                     var focalX = parseInt(stage.dataset.focalX, 10) || 50;
                                     var focalY = parseInt(stage.dataset.focalY, 10) || 50;
                                     var zoom = parseInt(stage.dataset.zoom, 10) || 115;
+                                    function useNaturalRatio() {
+                                        if (!img.naturalWidth || !img.naturalHeight) return;
+                                        stage.style.setProperty('--series-header-ratio', img.naturalWidth + ' / ' + img.naturalHeight);
+                                        stage.classList.toggle('is-landscape', img.naturalWidth > img.naturalHeight);
+                                    }
                                     function apply() {
                                         img.style.objectPosition = focalX + '% ' + focalY + '%';
                                         img.style.transform = 'scale(' + (zoom / 100) + ')';
@@ -326,6 +331,8 @@ $displayedArtworks = $selectedSeries
                                         focalYField.value = focalY;
                                         zoomField.value = zoom;
                                     }
+                                    if (img.complete) useNaturalRatio();
+                                    img.addEventListener('load', useNaturalRatio);
                                     zoomInput.addEventListener('input', function () { zoom = parseInt(this.value, 10); apply(); });
                                     var dragging = false;
                                     stage.addEventListener('mousedown', function () { dragging = true; });

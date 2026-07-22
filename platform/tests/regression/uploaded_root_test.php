@@ -500,6 +500,21 @@ function run_uploaded_root_regression_tests(): void
         'el encabezado de Series resume subtitulo, periodo y cantidades en una sola linea'
     );
     TestHarness::assertContains(
+        '--series-tile-image:',
+        $seriesSource,
+        'los bloques de Series reutilizan su portada como una impresion translucida'
+    );
+    TestHarness::assertContains(
+        "stage.style.setProperty('--series-header-ratio'",
+        $seriesSource,
+        'el visor de portada respeta automaticamente el formato horizontal o vertical de la imagen'
+    );
+    TestHarness::assertContains(
+        'ui-catalog.css?v=16',
+        $seriesSource,
+        'Series invalida la cache al publicar cambios visuales del visor y sus bloques'
+    );
+    TestHarness::assertContains(
         'name="series_id" value="<?= $createSeriesId ?>"',
         $createArtSource,
         'Create Art conserva la serie elegida como contexto de creacion'

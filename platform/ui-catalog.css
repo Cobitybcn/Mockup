@@ -1413,7 +1413,8 @@
 .series-header-framing__stage {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: var(--series-header-ratio, 4 / 5);
+  max-height: 520px;
   overflow: hidden;
   border-radius: 4px;
   border: 1px solid var(--line);
@@ -2070,8 +2071,38 @@
 }
 
 .series-series-tile {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   flex-direction: column !important;
   gap: 12px !important;
+}
+
+.series-series-tile::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background-image: var(--series-tile-image, none);
+  background-position: var(--series-tile-position, 50% 50%);
+  background-size: cover;
+  opacity: .18;
+  filter: saturate(.6) contrast(.86);
+  transform: scale(1.025);
+}
+
+.series-series-tile::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: linear-gradient(145deg, rgba(255, 255, 255, .09), rgba(58, 45, 40, .08));
+  pointer-events: none;
+}
+
+.series-series-tile > * {
+  position: relative;
+  z-index: 1;
 }
 
 .series-series-tile__title {
