@@ -181,10 +181,6 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
         }
 
         .editorial-title-memo {
-            display: grid;
-            grid-template-columns: 130px minmax(0, 1fr);
-            gap: 14px;
-            align-items: center;
             margin-top: 16px;
             padding-top: 13px;
             border-top: 1px solid var(--line);
@@ -212,7 +208,6 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
 
         .editorial-shared-title-text:focus { outline: 0; }
 
-        .editorial-title-memo label,
         .editorial-language-label {
             color: var(--muted);
             font-size: 9px;
@@ -222,12 +217,13 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
         }
 
         .editorial-title-memo [contenteditable] {
+            display: block;
             width: 100%;
             min-width: 0;
             box-sizing: border-box;
-            padding: 5px 0;
-            color: var(--ink);
-            font: 500 16px/1.45 var(--font-serif);
+            padding: 6px 0 2px;
+            color: var(--accent);
+            font: italic 500 21px/1.5 var(--font-serif);
         }
 
         .editorial-title-memo [contenteditable]:focus { outline: 0; }
@@ -358,7 +354,6 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
             .editorial-shared-title-text { font-size: 31px; }
             .editorial-artwork-facts { margin-top: 12px; font-size: 10px; }
             .editorial-workspace { padding: 12px; }
-            .editorial-title-memo { grid-template-columns: 1fr; gap: 4px; }
             .editorial-page { padding: 18px 15px; }
         }
     </style>
@@ -398,8 +393,7 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
                             </p>
                         <?php endif; ?>
                         <div class="editorial-title-memo">
-                            <label id="title-system-memo-label">Memo de títulos</label>
-                            <span contenteditable="true" role="textbox" aria-labelledby="title-system-memo-label">STRATA X — LIMEN · STRATA XI — NUHRĀ (ܢܘܗܪܐ) · no traducir</span>
+                            <span contenteditable="true" role="textbox" aria-label="Memo privado del sistema de títulos">STRATA X — LIMEN · STRATA XI — NUHRĀ (ܢܘܗܪܐ) · no traducir</span>
                         </div>
                     </div>
                 </div>
