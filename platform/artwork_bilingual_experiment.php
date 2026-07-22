@@ -285,6 +285,8 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
         }
 
         .editorial-page {
+            display: flex;
+            flex-direction: column;
             min-width: 0;
             min-height: 460px;
             padding: 20px 18px;
@@ -313,6 +315,11 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
             white-space: pre-wrap;
         }
 
+        .editorial-page > .editorial-source-copy,
+        .editorial-page > .editorial-existing-copy {
+            flex: 1 1 auto;
+        }
+
         .editorial-source-copy:empty::before {
             content: attr(data-placeholder);
             color: var(--muted);
@@ -334,14 +341,16 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
             font-style: italic;
         }
 
-        .editorial-secondary {
+        .editorial-short-section {
+            flex: 0 0 132px;
+            min-height: 132px;
             margin-top: 20px;
             padding-top: 14px;
             border-top: 1px solid var(--line);
         }
 
-        .editorial-secondary summary {
-            cursor: pointer;
+        .editorial-short-label {
+            display: block;
             color: var(--muted);
             font-size: 9px;
             font-weight: 700;
@@ -350,11 +359,11 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
         }
 
         .editorial-source-copy--short {
-            min-height: 100px;
+            min-height: 92px;
             margin-top: 14px;
         }
 
-        .editorial-secondary p {
+        .editorial-short-copy {
             margin: 14px 0 0;
             color: var(--ink);
             font-size: 14px;
@@ -362,7 +371,7 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
             white-space: pre-line;
         }
 
-        .editorial-secondary p.is-empty {
+        .editorial-short-copy.is-empty {
             color: var(--muted);
             font-style: italic;
         }
@@ -459,19 +468,19 @@ $facts = array_values(array_filter([$series, $year, $medium, $dimensions], stati
                     <article class="editorial-page editorial-page--source">
                         <span class="editorial-language-label">Español · fuente</span>
                         <div class="editorial-source-copy" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Descripción en español" data-placeholder="Escribí una descripción en español…"></div>
-                        <details class="editorial-secondary">
-                            <summary>Resumen breve · español</summary>
+                        <section class="editorial-short-section" aria-labelledby="spanish-short-label">
+                            <span class="editorial-short-label" id="spanish-short-label">Resumen breve · español</span>
                             <div class="editorial-source-copy editorial-source-copy--short" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Resumen breve en español" data-placeholder="Dos o tres frases para series, tarjetas y mockups…"></div>
-                        </details>
+                        </section>
                     </article>
 
                     <article class="editorial-page editorial-page--english">
                         <span class="editorial-language-label">English · current version</span>
                         <div class="editorial-existing-copy <?= $englishDescription === '' ? 'is-empty' : '' ?>"><?= bilingual_experiment_h($englishDescription !== '' ? $englishDescription : 'No English description is currently available.') ?></div>
-                        <details class="editorial-secondary">
-                            <summary>Short description · English</summary>
-                            <p class="<?= $englishShortDescription === '' ? 'is-empty' : '' ?>"><?= bilingual_experiment_h($englishShortDescription !== '' ? $englishShortDescription : 'No English short description is currently available.') ?></p>
-                        </details>
+                        <section class="editorial-short-section" aria-labelledby="english-short-label">
+                            <span class="editorial-short-label" id="english-short-label">Short description · English</span>
+                            <p class="editorial-short-copy <?= $englishShortDescription === '' ? 'is-empty' : '' ?>"><?= bilingual_experiment_h($englishShortDescription !== '' ? $englishShortDescription : 'No English short description is currently available.') ?></p>
+                        </section>
                     </article>
                 </div>
 
