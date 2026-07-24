@@ -1585,7 +1585,7 @@ function render_published_artwork(array $site, array $artwork): void
                     fetchpriority="high" decoding="async">
                 <?php if ($imageCaption !== ''): ?><figcaption><?= e($imageCaption) ?></figcaption><?php endif; ?>
             </figure>
-            <?php if ($artwork['artwork_views']): ?>
+            <?php if ($artwork['artwork_views'] && !$artwork['items']): ?>
                 <div class="mockup-gallery artwork-view-gallery" aria-label="<?= e($artwork['title'] . site_t(' additional artwork views', ' vistas adicionales de la obra')) ?>">
                     <?php foreach ($artwork['artwork_views'] as $view): ?>
                         <?php
