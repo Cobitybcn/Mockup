@@ -50,6 +50,22 @@ function run_uploaded_root_regression_tests(): void
         $source,
         "status.json marca generation_skipped=true (contrato: no se debe regenerar la obra raiz subida)"
     );
+    $completeRootViewsSource = (string)file_get_contents(dirname(__DIR__, 2) . '/complete_root_views.php');
+    TestHarness::assertContains(
+        "StorageService::uploadFile('results/' . basename((string)\$file), \$generatedPath)",
+        $completeRootViewsSource,
+        'las vistas root completadas se guardan en almacenamiento persistente'
+    );
+    TestHarness::assertContains(
+        'complete_root_views_result_available',
+        $completeRootViewsSource,
+        'las vistas registradas sin archivo persistente vuelven a considerarse faltantes'
+    );
+    TestHarness::assertContains(
+        'DELETE FROM root_artwork_candidates WHERE artwork_id=? AND id IN',
+        $completeRootViewsSource,
+        'una regeneracion correcta retira las referencias rotas anteriores'
+    );
 
     TestHarness::assertContains(
         "header('Location: mockup_combinations_review.php?id=' . \$artworkId . '&scene_select=1&scene_limit=4');",

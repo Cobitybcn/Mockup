@@ -1352,6 +1352,10 @@ $artworkSpanishEditorial = $bilingualExperiment
 $artworkEnglishEditorial = $bilingualExperiment
     ? $bilingualEditorialService->get($artworkOwnerId, 'artwork', $id, 'en')
     : ['content' => [], 'private_memo' => '', 'status' => 'unprepared'];
+$artworkSpanishHasContent = (bool)array_filter(
+    (array)($artworkSpanishEditorial['content'] ?? []),
+    static fn($value): bool => !is_array($value) && trim((string)$value) !== ''
+);
 $artworkEditorialStateLabel = ($artworkEnglishEditorial['status'] ?? '') === 'stale'
     ? 'English · actualizar'
     : (($artworkEnglishEditorial['status'] ?? '') === 'unprepared' ? 'English · pendiente' : 'ES + EN');
@@ -3447,7 +3451,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                         </article>
                     </div>
                     <div class="bilingual-reanalysis-actions" style="margin:0 20px 14px;">
-                        <button type="button" data-editorial-refresh>Preparar website</button>
+                        <button type="button" data-editorial-generate><?= $artworkSpanishHasContent ? 'Actualizar contenido ES + EN' : 'Generar contenido ES + EN' ?></button>
                     </div>
                     <?php $spanishComparisonContent = $spanishComparisonDraft ? ArtworkAnalysisV2::editorialContent($spanishComparisonDraft) : []; ?>
                     <details class="bilingual-reanalysis"<?= isset($_GET['spanish_reanalysis_ready']) || $metadataErrorMessage !== '' ? ' open' : '' ?>>

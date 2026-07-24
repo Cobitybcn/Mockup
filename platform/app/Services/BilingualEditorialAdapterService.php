@@ -146,7 +146,7 @@ final class BilingualEditorialAdapterService
     }
 
     /**
-     * Creates a reviewable Spanish proposal for Series and Mockups. Nothing is
+     * Creates a reviewable Spanish proposal for Series, Artworks and Mockups. Nothing is
      * persisted until the artist explicitly applies the proposal in the editor.
      *
      * @return array{content:array,status:string,target_locale:string}
@@ -162,8 +162,8 @@ final class BilingualEditorialAdapterService
         if (!$this->editorial->isEnabled($userId)) {
             throw new RuntimeException('The bilingual editorial pilot is not enabled for this account.');
         }
-        if (!in_array($entityType, ['series', 'mockup'], true) || $entityId <= 0) {
-            throw new InvalidArgumentException('Spanish proposal generation is available only for Series and Mockups.');
+        if (!in_array($entityType, ['series', 'artwork', 'mockup'], true) || $entityId <= 0) {
+            throw new InvalidArgumentException('Spanish proposal generation is available only for Series, Artworks and Mockups.');
         }
 
         $spanish = $this->editorial->get($userId, $entityType, $entityId, 'es');
@@ -186,7 +186,7 @@ final class BilingualEditorialAdapterService
             $privateMemoOverride ?? (string)$spanish['private_memo']
         );
         $parts = [$this->client->textPart($prompt)];
-        $imagePath = $entityType === 'mockup' ? $this->mockupImagePath($userId, $entityId) : '';
+        $imagePath = $this->entityImagePath($userId, $entityType, $entityId);
         if ($imagePath !== '') {
             $parts[] = $this->client->imagePart($imagePath);
         }
@@ -322,8 +322,8 @@ PROMPT;
         array $englishReference,
         string $privateMemo
     ): string {
-        $entityRules = $entityType === 'series'
-            ? <<<'RULES'
+        $entityRules = match ($entityType) {
+            'series' => <<<'RULES'
 - Write one coherent master description, not a collection of disconnected metadata sections.
 - Treat the artist-authored title, series explanation, conceptual direction, interpretive limits and artist profile as the complete authority for series meaning.
 - Treat CONFIRMED MATERIALS AND PROCESS as the technical authority for the artist's practice. Extract every explicitly named technique, material and support before writing.
@@ -344,7 +344,21 @@ PROMPT;
 - Every Spanish search phrase must be a grammatical phrase a person could say or type naturally. Use necessary articles, conjunctions and prepositions; never emit compressed noun stacks such as "pintura acrílico óleo lienzo" or "cuadro tonos tierra azul".
 - Keep the remaining search phrases only as SEO metadata. Never stuff the public text with the complete search set or end with a generic invitation to collectors.
 RULES
-            : <<<'RULES'
+            ,
+            'artwork' => <<<'RULES'
+- Treat this exact artwork, its universal title, confirmed analysis, artist profile and series direction as the authority.
+- Use the attached artwork image only for visible color, composition, texture, orientation and formal relationships. Never infer unsupported materials, process, symbolism or intention from pixels.
+- subtitle and short_description must identify the exact artwork clearly and naturally.
+- tags: ten to fourteen concise catalogue filters covering object type, recognized style, confirmed technique/material/support, visible color, surface, orientation, format or justified scale.
+- search_terms: twelve to sixteen distinct, natural buyer searches. Include at least six genuine long tails and cover broad category, original status, recognized style, confirmed medium/process, visible color/surface/format, purchase intent, collectors and professional interiors without duplication.
+- seo_title: use the universal artwork title once, one established descriptive category phrase and the artist name once. Keep it concise and natural.
+- seo_description: write a unique, human search summary for this exact artwork using supported category, medium/process and strongest visible attribute. Do not begin with "Descubre" or "Explora".
+- Integrate only a few descriptive buyer phrases naturally into short_description and description. Keep transactional phrases exclusively in SEO metadata.
+- alt_text must be visual, precise, accessible and non-commercial.
+- caption must be brief, editorial and use the current universal artwork title.
+RULES
+            ,
+            default => <<<'RULES'
 - Treat the mockup as an independent contextual image while preserving the linked artwork identity.
 - Analyze architecture, materials, light, camera, scale perception, atmosphere and the artwork-space relationship.
 - Never infer artwork pigments from mockup lighting. Inherit artwork facts from the approved artwork analysis.
@@ -352,7 +366,8 @@ RULES
 - Generate channel-specific social copy from the same validated reading; do not duplicate one caption across every channel.
 - Keep SEO compact: one catalogue classification, one set of real buyer searches, one SEO title and one SEO description.
 - The mockup's SEO may describe the supported architectural placement, but the linked artwork remains the object being discovered.
-RULES;
+RULES
+        };
         $contextJson = json_encode($context, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $shapeJson = json_encode($shape, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $spanishJson = json_encode($currentSpanish, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -365,9 +380,9 @@ RULES;
             $materialsAndProcess = 'No artist-authored materials or process information was supplied.';
         }
         $searchIntentRules = SearchIntentPrompt::forEntity($entityType);
-        $imageInstruction = $entityType === 'mockup'
-            ? 'The exact mockup image may be attached after this prompt. Use it as visual evidence.'
-            : 'No image is attached. Use only the supplied catalogue evidence.';
+        $imageInstruction = $entityType === 'series'
+            ? 'No image is attached. Use only the supplied catalogue evidence.'
+            : 'The exact image may be attached after this prompt. Use it only as visual evidence under the entity-specific rules.';
 
         return <<<PROMPT
 You are the Spanish-first editorial assistant for a contemporary artist's catalogue.
@@ -426,6 +441,19 @@ PROMPT;
                 'search_terms' => '',
                 'seo_title' => '',
                 'seo_description' => '',
+            ];
+        }
+        if ($entityType === 'artwork') {
+            return [
+                'subtitle' => '',
+                'description' => '',
+                'short_description' => '',
+                'tags' => '',
+                'search_terms' => '',
+                'seo_title' => '',
+                'seo_description' => '',
+                'alt_text' => '',
+                'caption' => '',
             ];
         }
 
@@ -532,13 +560,19 @@ PROMPT;
         return $row;
     }
 
-    private function mockupImagePath(int $userId, int $entityId): string
+    private function entityImagePath(int $userId, string $entityType, int $entityId): string
     {
-        $stmt = $this->pdo->prepare('SELECT mockup_file FROM mockups WHERE id=? AND user_id=? LIMIT 1');
+        if ($entityType === 'series') return '';
+        $stmt = $entityType === 'artwork'
+            ? $this->pdo->prepare('SELECT COALESCE(NULLIF(root_file,\'\'),main_file) FROM artworks WHERE id=? AND user_id=? LIMIT 1')
+            : $this->pdo->prepare('SELECT mockup_file FROM mockups WHERE id=? AND user_id=? LIMIT 1');
         $stmt->execute([$entityId, $userId]);
         $file = basename(trim((string)$stmt->fetchColumn()));
         if ($file === '' || !defined('RESULTS_DIR')) return '';
         $path = RESULTS_DIR . DIRECTORY_SEPARATOR . $file;
+        if (!is_file($path) && StorageService::isGcsActive()) {
+            StorageService::downloadFile('results/' . $file, $path);
+        }
         return is_file($path) ? $path : '';
     }
 

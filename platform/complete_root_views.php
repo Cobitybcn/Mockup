@@ -8,6 +8,17 @@ require_once __DIR__ . '/app/bootstrap.php';
 
 $user = Auth::requireUser();
 
+function complete_root_views_result_available(string $file): bool
+{
+    $file = basename($file);
+    if ($file === '') return false;
+    $path = RESULTS_DIR . DIRECTORY_SEPARATOR . $file;
+    if (is_file($path)) return true;
+    return StorageService::isGcsActive()
+        && StorageService::downloadFile('results/' . $file, $path)
+        && is_file($path);
+}
+
 function complete_root_views_store_candidates(PDO $pdo, int $artworkId, int $userId, string $jobId, array $files, string $selectedRootFile = ''): void
 {
     $viewMap = [
@@ -104,9 +115,17 @@ if (!is_array($artwork)) {
     exit;
 }
 
-$existingViewsStmt = $pdo->prepare('SELECT DISTINCT view_type FROM root_artwork_candidates WHERE artwork_id = :artwork_id');
+$existingViewsStmt = $pdo->prepare('SELECT id,file_name,view_type FROM root_artwork_candidates WHERE artwork_id = :artwork_id');
 $existingViewsStmt->execute(['artwork_id'=>$artworkId]);
-$existingViews = array_fill_keys(array_map('strval', $existingViewsStmt->fetchAll(PDO::FETCH_COLUMN) ?: []), true);
+$existingViews = [];
+$missingCandidateIds = [];
+foreach ($existingViewsStmt->fetchAll(PDO::FETCH_ASSOC) as $candidate) {
+    if (complete_root_views_result_available((string)($candidate['file_name'] ?? ''))) {
+        $existingViews[(string)($candidate['view_type'] ?? '')] = true;
+    } else {
+        $missingCandidateIds[] = (int)$candidate['id'];
+    }
+}
 $neededVersions = [];
 if (empty($existingViews['three-quarter-left'])) $neededVersions[] = 2;
 if (empty($existingViews['three-quarter-right'])) $neededVersions[] = 3;
@@ -125,6 +144,9 @@ foreach ([
         $sourcePath = $candidatePath;
         break;
     }
+}
+if ($sourcePath === '' && complete_root_views_result_available($sourceFile)) {
+    $sourcePath = RESULTS_DIR . DIRECTORY_SEPARATOR . $sourceFile;
 }
 
 if ($sourcePath === '') {
@@ -210,6 +232,15 @@ try {
     if (!$files) {
         throw new RuntimeException('The left and right root views were not generated.');
     }
+    if (StorageService::isGcsActive()) {
+        foreach ($files as $file) {
+            $generatedPath = RESULTS_DIR . DIRECTORY_SEPARATOR . basename((string)$file);
+            if (!is_file($generatedPath)
+                || !StorageService::uploadFile('results/' . basename((string)$file), $generatedPath)) {
+                throw new RuntimeException('A generated root view could not be saved to persistent storage.');
+            }
+        }
+    }
 
     $status['status'] = 'done';
     $status['updated_at'] = date('c');
@@ -220,6 +251,11 @@ try {
         json_encode($status, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
     );
     complete_root_views_store_candidates($pdo, $artworkId, (int)$user['id'], $jobId, $files, basename((string)($artwork['root_file'] ?? '')));
+    if ($missingCandidateIds !== []) {
+        $placeholders = implode(',', array_fill(0, count($missingCandidateIds), '?'));
+        $deleteMissing = $pdo->prepare("DELETE FROM root_artwork_candidates WHERE artwork_id=? AND id IN ({$placeholders})");
+        $deleteMissing->execute(array_merge([$artworkId], $missingCandidateIds));
+    }
 
     $pdo->prepare('UPDATE artworks SET updated_at = :updated_at WHERE id = :id AND user_id = :user_id')
         ->execute(['updated_at'=>date('c'),'id'=>$artworkId,'user_id'=>(int)$user['id']]);

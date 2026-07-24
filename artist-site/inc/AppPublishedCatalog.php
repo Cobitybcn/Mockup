@@ -48,6 +48,16 @@ final class AppPublishedCatalog
                 $row['artwork_tags'] = (string)($localized['tags'] ?? $row['artwork_tags']);
                 $row['seo_title'] = (string)($localized['seo_title'] ?? '');
                 $row['seo_description'] = (string)($localized['seo_description'] ?? '');
+            } elseif ($language === 'es') {
+                $row['subtitle'] = '';
+                $row['artwork_description'] = '';
+                $row['artwork_short_description'] = '';
+                $row['artwork_caption'] = '';
+                $row['artwork_alt'] = '';
+                $row['artwork_keywords'] = '';
+                $row['artwork_tags'] = '';
+                $row['seo_title'] = '';
+                $row['seo_description'] = '';
             }
             $row['title'] = (string)$row['artwork_title'];
             $row['description'] = (string)$row['artwork_description'];
@@ -66,7 +76,9 @@ final class AppPublishedCatalog
                 'generated_json' => (string)$row['artwork_generated_json'],
             ];
             $analysis = json_decode((string)$row['artwork_generated_json'], true);
-            $row['artwork_analysis'] = is_array($analysis) ? $analysis : [];
+            $row['artwork_analysis'] = $language === 'es'
+                ? []
+                : (is_array($analysis) ? $analysis : []);
             $row['items'] = $this->items((int)$row['id']);
             $row['artwork_views'] = $this->artworkViews((int)$row['canonical_artwork_id']);
             $row['header_file'] = $this->headerFileForArtwork((int)$row['user_id'], $row);
@@ -176,6 +188,14 @@ final class AppPublishedCatalog
                 $item['caption'] = (string)($localized['caption'] ?? $item['caption']);
                 $item['seo_title'] = (string)($localized['seo_title'] ?? '');
                 $item['seo_description'] = (string)($localized['seo_description'] ?? '');
+            } elseif ($language === 'es') {
+                $item['description'] = '';
+                $item['keywords'] = '';
+                $item['tags'] = '';
+                $item['alt_text'] = '';
+                $item['caption'] = '';
+                $item['seo_title'] = '';
+                $item['seo_description'] = '';
             }
             $base = self::slug((string)($item['title'] ?: 'mockup')) ?: 'mockup';
             $item['public_slug'] = $base . '-' . (int)$item['mockup_sheet_id'];

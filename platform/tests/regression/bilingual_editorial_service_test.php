@@ -362,6 +362,12 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertContains('result.spanish_content', $editorScript, 'la acción completa devuelve el master español validado');
     TestHarness::assertContains('result.english_content', $editorScript, 'la acción completa devuelve el inglés internacional validado');
     TestHarness::assertContains("assistantRequest('publish_spanish')", $editorScript, 'la preparación completa de obras y mockups publica el master español sin otro paso');
+    $artworkScreen = (string)file_get_contents($platformRoot . '/artwork.php');
+    TestHarness::assertContains('data-editorial-generate', $artworkScreen, 'Artwork puede generar el contenido completo ES y EN desde una sola acción');
+    TestHarness::assertContains('Generar contenido ES + EN', $artworkScreen, 'Artwork presenta la acción completa cuando el español está vacío');
+    $adapterSource = (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialAdapterService.php');
+    TestHarness::assertContains("['series', 'artwork', 'mockup']", $adapterSource, 'el generador español admite obras además de Series y Mockups');
+    TestHarness::assertContains("'short_description' => ''", $adapterSource, 'la propuesta de Artwork incluye la descripción breve');
     TestHarness::assertContains("editor.addEventListener('focusout'", $editorScript, 'el nombre universal se guarda al terminar la edición sin interrumpir el cursor');
     TestHarness::assertTrue(strpos($editorScript, "schedule('title'") === false, 'el autoguardado no reescribe el título mientras el artista está escribiendo');
     TestHarness::assertContains('grid-template-columns:minmax(280px, 1fr) auto', $editorStyles, 'la preparación reserva espacio estable para texto y decisión');
