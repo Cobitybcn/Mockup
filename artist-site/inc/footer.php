@@ -1,10 +1,8 @@
 <?php
-$footerDescription = artist_site_language() === 'es'
-    ? trim((string)($profile['short_bio'] ?? ''))
-    : trim((string)($site['description'] ?? ''));
-$footerDescription = $footerDescription !== ''
-    ? mb_substr($footerDescription, 0, 120) . (mb_strlen($footerDescription) > 120 ? '...' : '')
-    : site_t('Original paintings and artwork catalogue.', 'Pinturas originales y catálogo de obras.');
+$footerDescription = site_t(
+    trim((string)($site['tagline'] ?? '')) ?: 'Abstract Painting / Territory and Thought',
+    'Pintura abstracta / territorio y pensamiento'
+);
 $schema = [
     '@context' => 'https://schema.org',
     '@type' => 'VisualArtist',

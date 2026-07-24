@@ -15,6 +15,8 @@ $checks = [
     [str_contains($styles, '.has-js .site-header.is-menu-open .header-tools') && str_contains($styles, 'min-height: 44px;'), 'mobile navigation opens explicitly and preserves touch target size'],
     [str_contains($functions, "in_array(\$requested, ['es', 'en']") && str_contains($functions, "artist_site_language() === 'es'"), 'the public website resolves Spanish or international English explicitly'],
     [str_contains($site, "site_t('Available for acquisition', 'Disponible para adquisición')") && str_contains($site, "site_t('Acquire this work', 'Adquirir esta obra')"), 'artwork acquisition controls follow the selected public language'],
+    [str_contains($site, 'artwork-detail__supporting-image') && str_contains($site, '<figcaption><?= e($viewCaption) ?></figcaption>'), 'every published artwork view carries a visible caption'],
+    [!str_contains((string)file_get_contents($root . '/inc/footer.php'), "\$profile['short_bio']") && str_contains((string)file_get_contents($root . '/inc/footer.php'), 'Pintura abstracta / territorio y pensamiento'), 'the footer uses the concise site identity instead of truncating the artist biography'],
     [str_contains($script, "window.matchMedia('(min-width: 1181px)')") && !str_contains($script, 'setInterval('), 'navigation collapses before its tools overflow and the hero never auto-advances'],
     [str_contains($site, 'data-srcset=') && str_contains($site, 'app_publication_media_srcset'), 'home defers secondary hero images and publishes responsive candidates'],
     [str_contains($site, "preg_match('~^(?:data:|javascript:)~i'") && str_contains($site, 'loading="lazy"'), 'Studio Notes never emits embedded data images as listing thumbnails'],

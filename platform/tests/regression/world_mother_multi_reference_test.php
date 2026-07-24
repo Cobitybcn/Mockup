@@ -84,6 +84,7 @@ function run_world_mother_multi_reference_regression_tests(): void
     $workerSource = (string)file_get_contents($platformRoot . '/app/Services/MockupGenerationWorker.php');
     $generatorSource = (string)file_get_contents($platformRoot . '/app/Services/GeminiMockupGenerator.php');
     $reviewSource = (string)file_get_contents($platformRoot . '/mockup_combinations_review.php');
+    $mediaSource = (string)file_get_contents($platformRoot . '/world_mother_media.php');
     TestHarness::assertContains(
         "'world_mother_reference_images' => array_values(\$worldMotherReferences)",
         $engineSource,
@@ -166,6 +167,26 @@ function run_world_mother_multi_reference_regression_tests(): void
         'grid-auto-columns: clamp(198px, 11vw, 220px)',
         $reviewSource,
         'el carrusel de escenas conserva tarjetas editoriales grandes y legibles'
+    );
+    TestHarness::assertContains(
+        'data-preview-urls=',
+        $reviewSource,
+        'cada direccion conserva alternativas para recuperarse si falla una miniatura'
+    );
+    TestHarness::assertContains(
+        "primaryImage.addEventListener('error'",
+        $reviewSource,
+        'una miniatura rota prueba automaticamente la siguiente imagen de la misma escena'
+    );
+    TestHarness::assertContains(
+        'world_mother_is_valid_image($thumbPath)',
+        $mediaSource,
+        'el servidor valida la miniatura antes de reutilizar una copia temporal'
+    );
+    TestHarness::assertContains(
+        '@unlink($thumbPath)',
+        $mediaSource,
+        'una miniatura temporal invalida se elimina para poder reconstruirse'
     );
     TestHarness::assertContains(
         "'[data-combination-card][data-scene-board=\"' + ACTIVE_SCENE_BOARD + '\"] '",

@@ -1588,26 +1588,45 @@ function render_published_artwork(array $site, array $artwork): void
             <?php if ($artwork['artwork_views']): ?>
                 <div class="mockup-gallery artwork-view-gallery" aria-label="<?= e($artwork['title'] . site_t(' additional artwork views', ' vistas adicionales de la obra')) ?>">
                     <?php foreach ($artwork['artwork_views'] as $view): ?>
-                        <a href="<?= e(app_publication_media_url($artwork, $view['file_name'])) ?>" target="_blank" rel="noopener">
-                            <img src="<?= e(app_publication_media_url($artwork, $view['file_name'], 768)) ?>"
-                                srcset="<?= e(app_publication_media_srcset($artwork, $view['file_name'])) ?>"
-                                sizes="(max-width: 940px) calc(100vw - 36px), 62vw"
-                                alt="<?= e($artwork['title'] . ' ' . site_t(str_replace('-', ' ', $view['view_type']) . ' view', 'vista adicional')) ?>"
-                                loading="lazy" decoding="async">
-                        </a>
+                        <?php
+                        $viewLabel = match ((string)$view['view_type']) {
+                            'three-quarter-left' => site_t('Three-quarter left view', 'Vista 3/4 izquierda'),
+                            'three-quarter-right' => site_t('Three-quarter right view', 'Vista 3/4 derecha'),
+                            default => site_t('Additional view', 'Vista adicional'),
+                        };
+                        $viewCaption = implode(' · ', array_filter([
+                            (string)$site['name'],
+                            (string)$artwork['title'],
+                            published_dimensions($artwork),
+                            $viewLabel,
+                        ]));
+                        ?>
+                        <figure class="artwork-detail__supporting-image">
+                            <a href="<?= e(app_publication_media_url($artwork, $view['file_name'])) ?>" target="_blank" rel="noopener">
+                                <img src="<?= e(app_publication_media_url($artwork, $view['file_name'], 768)) ?>"
+                                    srcset="<?= e(app_publication_media_srcset($artwork, $view['file_name'])) ?>"
+                                    sizes="(max-width: 940px) calc(100vw - 36px), 62vw"
+                                    alt="<?= e($artwork['title'] . ' · ' . $viewLabel) ?>"
+                                    loading="lazy" decoding="async">
+                            </a>
+                            <figcaption><?= e($viewCaption) ?></figcaption>
+                        </figure>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
             <?php if ($artwork['items']): ?>
                 <div class="mockup-gallery" aria-label="<?= e($artwork['title'] . ' contextual mockups') ?>">
                     <?php foreach ($artwork['items'] as $mockup): ?>
-                        <a class="mockup-gallery__link" href="<?= e(url_for('artworks/' . $artwork['slug'] . '/mockups/' . $mockup['public_slug'])) ?>">
-                            <img src="<?= e(app_publication_media_url($artwork, $mockup['mockup_file'], 768)) ?>"
-                                srcset="<?= e(app_publication_media_srcset($artwork, $mockup['mockup_file'])) ?>"
-                                sizes="(max-width: 940px) calc(100vw - 36px), 62vw"
-                                alt="<?= e($mockup['alt_text'] ?: $mockup['title'] ?: $artwork['title'] . ' contextual mockup') ?>"
-                                loading="lazy" decoding="async">
-                        </a>
+                        <figure class="artwork-detail__supporting-image">
+                            <a class="mockup-gallery__link" href="<?= e(url_for('artworks/' . $artwork['slug'] . '/mockups/' . $mockup['public_slug'])) ?>">
+                                <img src="<?= e(app_publication_media_url($artwork, $mockup['mockup_file'], 768)) ?>"
+                                    srcset="<?= e(app_publication_media_srcset($artwork, $mockup['mockup_file'])) ?>"
+                                    sizes="(max-width: 940px) calc(100vw - 36px), 62vw"
+                                    alt="<?= e($mockup['alt_text'] ?: $mockup['title'] ?: $artwork['title'] . ' contextual mockup') ?>"
+                                    loading="lazy" decoding="async">
+                            </a>
+                            <figcaption><?= e($mockup['caption'] ?: $mockup['title'] ?: $artwork['title']) ?></figcaption>
+                        </figure>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>

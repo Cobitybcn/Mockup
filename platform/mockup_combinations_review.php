@@ -2250,9 +2250,13 @@ if (!$currentOptionKnown) {
                                 . $generationProviderQuery
                                 . ($sceneSelectionFlow ? '&scene_select=1&scene_limit=' . (int)$compactSceneLimit : '');
                             ?>
-                            <a class="scene-direction-card <?= $slug === $selectedWorldMotherCategory ? 'active' : '' ?>" href="<?= h($sceneUrl) ?>">
+                            <a
+                                class="scene-direction-card <?= $slug === $selectedWorldMotherCategory ? 'active' : '' ?>"
+                                href="<?= h($sceneUrl) ?>"
+                                data-preview-urls="<?= h(json_encode((array)$sceneOption['preview_urls'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '[]') ?>"
+                            >
                                 <?php if ((string)$sceneOption['preview_url'] !== ''): ?>
-                                    <img src="<?= h((string)$sceneOption['preview_url']) ?>" alt="">
+                                    <img class="scene-direction-primary-image" src="<?= h((string)$sceneOption['preview_url']) ?>" alt="">
                                 <?php endif; ?>
                                 <strong><?= h((string)$sceneOption['name']) ?></strong>
                                 <?php if (!empty($sceneOption['preview_urls'])): ?>
@@ -3219,6 +3223,26 @@ if (sceneSelect) {
 }
 
 document.querySelectorAll('.scene-direction-card').forEach(card => {
+    const primaryImage = card.querySelector('.scene-direction-primary-image');
+    if (primaryImage) {
+        let fallbackUrls = [];
+        try {
+            fallbackUrls = JSON.parse(card.getAttribute('data-preview-urls') || '[]');
+        } catch (error) {
+            fallbackUrls = [];
+        }
+        let fallbackIndex = Math.max(0, fallbackUrls.indexOf(primaryImage.getAttribute('src')) + 1);
+        primaryImage.addEventListener('error', () => {
+            while (fallbackIndex < fallbackUrls.length && fallbackUrls[fallbackIndex] === primaryImage.getAttribute('src')) {
+                fallbackIndex += 1;
+            }
+            if (fallbackIndex < fallbackUrls.length) {
+                primaryImage.src = fallbackUrls[fallbackIndex];
+                fallbackIndex += 1;
+            }
+        });
+    }
+
     const preview = card.querySelector('.scene-direction-preview-grid');
     if (!preview) return;
 

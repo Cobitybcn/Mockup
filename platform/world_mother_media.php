@@ -36,7 +36,10 @@ if (
 }
 
 $targetPath = __DIR__ . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $file);
-if (!is_file($targetPath)) {
+if (!world_mother_is_valid_image($targetPath)) {
+    if (is_file($targetPath)) {
+        @unlink($targetPath);
+    }
     if (StorageService::isGcsActive()) {
         $dir = dirname($targetPath);
         if (!is_dir($dir)) {
@@ -53,7 +56,12 @@ $path = realpath($targetPath);
 $basePathNormalized = $basePath !== false ? rtrim(str_replace('\\', '/', $basePath), '/') . '/' : '';
 $pathNormalized = $path !== false ? str_replace('\\', '/', $path) : '';
 
-if ($basePath === false || $path === false || !str_starts_with($pathNormalized, $basePathNormalized) || !is_file($path)) {
+if (
+    $basePath === false
+    || $path === false
+    || !str_starts_with($pathNormalized, $basePathNormalized)
+    || !world_mother_is_valid_image($path)
+) {
     http_response_code(404);
     exit('File not found.');
 }
@@ -72,18 +80,25 @@ if ($thumbWidth > 0) {
     $thumbPath = world_mother_thumbnail_path($file, $thumbWidth);
     $thumbKey = world_mother_thumbnail_key($file, $thumbWidth);
 
-    if (!is_file($thumbPath) && StorageService::isGcsActive()) {
+    if (!world_mother_is_valid_image($thumbPath) && is_file($thumbPath)) {
+        @unlink($thumbPath);
+    }
+
+    if (!world_mother_is_valid_image($thumbPath) && StorageService::isGcsActive()) {
         StorageService::downloadFile($thumbKey, $thumbPath);
     }
 
-    if (!is_file($thumbPath)) {
+    if (!world_mother_is_valid_image($thumbPath)) {
+        if (is_file($thumbPath)) {
+            @unlink($thumbPath);
+        }
         world_mother_create_thumbnail($path, $thumbPath, $thumbWidth);
-        if (is_file($thumbPath) && StorageService::isGcsActive()) {
+        if (world_mother_is_valid_image($thumbPath) && StorageService::isGcsActive()) {
             StorageService::uploadFile($thumbKey, $thumbPath);
         }
     }
 
-    if (is_file($thumbPath)) {
+    if (world_mother_is_valid_image($thumbPath)) {
         $path = $thumbPath;
         $mime = @mime_content_type($path) ?: $mime;
     }
@@ -97,6 +112,17 @@ header('Content-Disposition: inline; filename="' . addslashes(basename($path)) .
 
 readfile($path);
 exit;
+
+function world_mother_is_valid_image(string $path): bool
+{
+    if (!is_file($path) || filesize($path) < 1) {
+        return false;
+    }
+
+    $info = @getimagesize($path);
+    $mime = is_array($info) ? (string)($info['mime'] ?? '') : '';
+    return in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true);
+}
 
 function world_mother_thumbnail_path(string $file, int $width): string
 {

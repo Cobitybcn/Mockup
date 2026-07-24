@@ -1214,13 +1214,15 @@ p {
     background: var(--panel);
 }
 
-.artwork-detail__primary-image {
+.artwork-detail__primary-image,
+.artwork-detail__supporting-image {
     display: grid;
     gap: 9px;
     margin: 0;
 }
 
-.artwork-detail__primary-image figcaption {
+.artwork-detail__primary-image figcaption,
+.artwork-detail__supporting-image figcaption {
     color: var(--muted);
     font-size: 13px;
     line-height: 1.45;
