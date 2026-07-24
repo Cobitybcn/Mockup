@@ -61,8 +61,18 @@ function artist_site_url_with_language(string $url, string $language): string
 
 function artist_site_language_url(string $language): string
 {
+    $languageUrls = $GLOBALS['artist_site_language_urls'] ?? [];
+    if (is_array($languageUrls) && isset($languageUrls[$language])) {
+        return artist_site_url_with_language((string)$languageUrls[$language], $language);
+    }
     $uri = (string)($_SERVER['REQUEST_URI'] ?? '/');
     return artist_site_url_with_language($uri, $language);
+}
+
+/** @param array<string,string> $urls */
+function artist_site_set_language_urls(array $urls): void
+{
+    $GLOBALS['artist_site_language_urls'] = $urls;
 }
 
 function studio_note_image_file(string $source): string

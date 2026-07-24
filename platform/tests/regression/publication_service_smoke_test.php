@@ -39,6 +39,7 @@ $pdo->exec("CREATE TABLE artwork_sheets (
 )");
 $pdo->exec("CREATE TABLE artworks (
     id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, series_id INTEGER,
+    final_title TEXT NOT NULL DEFAULT '',
     series TEXT NOT NULL DEFAULT '', series_creation_number INTEGER,
     updated_at TEXT NOT NULL
 )");
@@ -63,8 +64,8 @@ $pdo->exec("INSERT INTO artwork_series (id,user_id,title,slug,description,status
     (1,7,'Published Series','published-series','Ready','active','cover.jpg',1,'2026-07-20','2026-07-20'),
     (2,7,'Draft Series','draft-series','','active','',0,'2026-07-20','2026-07-20')");
 $pdo->exec("INSERT INTO artworks VALUES
-    (101,7,1,'Published Series',10,'2026-07-20'),
-    (102,7,2,'Draft Series',10,'2026-07-20')");
+    (101,7,1,'Universal Work','Published Series',10,'2026-07-20'),
+    (102,7,2,'Draft Universal Work','Draft Series',10,'2026-07-20')");
 $pdo->exec("INSERT INTO artwork_sheets VALUES
     (1,7,101,'root.jpg','Test Work','Subtitle','Curatorial description','Short description','art, test','abstract','Original artwork','Test Work caption'),
     (2,7,102,'draft-root.jpg','Draft Series Work','Subtitle','Description','Short','art','abstract','Artwork','Caption')");
@@ -128,7 +129,7 @@ $checks = [
     count($publication['items']) === 1,
     $public['title'] === 'Test Work',
     $inheritedPublication['title'] === 'Canonical Updated',
-    $inheritedPublication['slug'] === 'canonical-updated',
+    $inheritedPublication['slug'] === 'universal-work',
     $inheritedPublic['short_description'] === 'Updated summary',
     count($publication['variants']) === 4,
     $publishBlocked,

@@ -25,4 +25,14 @@ if ($spanishUrl !== '/artist-site/artworks/?q=strata&lang=es') {
     exit(1);
 }
 
+artist_site_set_language_urls([
+    'en' => '/artist-site/artworks/test-work/mockups/test-work-in-modern-living-room',
+    'es' => '/artist-site/artworks/test-work/mockups/test-work-en-salon-moderno',
+]);
+if (artist_site_language_url('en') !== '/artist-site/artworks/test-work/mockups/test-work-in-modern-living-room?lang=en'
+    || artist_site_language_url('es') !== '/artist-site/artworks/test-work/mockups/test-work-en-salon-moderno?lang=es') {
+    fwrite(STDERR, "FAIL: mockup language switching does not use each language-specific slug.\n");
+    exit(1);
+}
+
 echo "PASS: public ES/EN selection and localized URLs.\n";

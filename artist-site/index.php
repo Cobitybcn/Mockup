@@ -3580,22 +3580,50 @@ switch ($segments[0] ?? '') {
             break;
         }
 
-        $publishedArtwork = $publishedItems[$segments[1]] ?? null;
+        $publishedArtwork = $publishedCatalog?->one($segments[1]);
         if (!$publishedArtwork) { $handled = false; break; }
         if (($segments[2] ?? '') === 'mockups' && isset($segments[3])) {
             $record = $publishedCatalog?->mockup($segments[1], $segments[3]);
             if (!$record) { $handled = false; break; }
+            $publishedArtwork = $record['artwork'];
             $mockup = $record['mockup'];
+            $currentMockupSlug = artist_site_language() === 'es'
+                ? (string)$mockup['public_slug_es']
+                : (string)$mockup['public_slug_en'];
+            if ($segments[1] !== (string)$publishedArtwork['slug'] || $segments[3] !== $currentMockupSlug) {
+                header('Location: ' . artist_site_url_with_language(
+                    url_for('artworks/' . $publishedArtwork['slug'] . '/mockups/' . $currentMockupSlug),
+                    artist_site_language()
+                ), true, 301);
+                exit;
+            }
+            $localLanguageUrls = [
+                'en' => url_for('artworks/' . $publishedArtwork['slug'] . '/mockups/' . $mockup['public_slug_en']),
+                'es' => url_for('artworks/' . $publishedArtwork['slug'] . '/mockups/' . $mockup['public_slug_es']),
+            ];
+            artist_site_set_language_urls($localLanguageUrls);
             $mockupTitle = trim((string)($mockup['title'] ?: $publishedArtwork['title'] . ' — Context Study'));
             $mockupDescription = trim((string)($mockup['description'] ?: $mockup['caption'] ?: site_t('A contextual presentation of ', 'Una presentación contextual de ') . $publishedArtwork['title'] . site_t(' by ', ' por ') . $artistName . '.'));
             $mockupSeoTitle = trim((string)($mockup['seo_title'] ?? '')) ?: $mockupTitle . ' | ' . $artistName;
             $mockupSeoDescription = trim((string)($mockup['seo_description'] ?? '')) ?: $mockupDescription;
-            $meta = page_meta($mockupSeoTitle, $mockupSeoDescription, $site['url'] . '/artworks/' . $segments[1] . '/mockups/' . $segments[3] . '/', app_publication_media_url($publishedArtwork, $mockup['mockup_file']));
+            $canonicalBase = rtrim((string)$site['url'], '/') . '/artworks/' . $publishedArtwork['slug'] . '/mockups/';
+            $meta = page_meta($mockupSeoTitle, $mockupSeoDescription, $canonicalBase . $currentMockupSlug . '/', app_publication_media_url($publishedArtwork, $mockup['mockup_file']));
+            $meta['language_urls'] = [
+                'en' => $canonicalBase . $mockup['public_slug_en'] . '/',
+                'es' => $canonicalBase . $mockup['public_slug_es'] . '/',
+            ];
             $meta['keywords'] = trim((string)$mockup['keywords']);
             render_published_mockup($site, $publishedArtwork, $mockup);
             break;
         }
         if (isset($segments[2])) { $handled = false; break; }
+        if ($segments[1] !== (string)$publishedArtwork['slug']) {
+            header('Location: ' . artist_site_url_with_language(
+                url_for('artworks/' . $publishedArtwork['slug']),
+                artist_site_language()
+            ), true, 301);
+            exit;
+        }
         $description = trim((string)($publishedArtwork['short_description'] ?: $publishedArtwork['description']));
         $artworkSeoTitle = trim((string)($publishedArtwork['seo_title'] ?? '')) ?: $publishedArtwork['title'] . ' | ' . $artistName;
         $artworkSeoDescription = trim((string)($publishedArtwork['seo_description'] ?? '')) ?: $description;

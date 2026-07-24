@@ -115,7 +115,22 @@ final class AppPublishedCatalog
 
     public function one(string $slug): ?array
     {
-        return $this->all()[$slug] ?? null;
+        $catalog = $this->all();
+        if (isset($catalog[$slug])) return $catalog[$slug];
+        try {
+            $statement = $this->pdo->prepare("SELECT p.slug
+                FROM publication_slug_aliases aliases
+                INNER JOIN publications p ON p.id=aliases.publication_id AND p.user_id=aliases.user_id
+                INNER JOIN users u ON u.id=p.user_id
+                WHERE LOWER(u.email)=? AND aliases.slug=?
+                    AND p.status='published' AND p.visibility IN ('public','unlisted')
+                ORDER BY p.id DESC LIMIT 1");
+            $statement->execute([strtolower(trim($this->artistEmail)), $slug]);
+            $canonicalSlug = (string)($statement->fetchColumn() ?: '');
+            return $canonicalSlug !== '' ? ($catalog[$canonicalSlug] ?? null) : null;
+        } catch (PDOException) {
+            return null;
+        }
     }
 
     /** @return array<int,array<string,mixed>> */
@@ -147,8 +162,19 @@ final class AppPublishedCatalog
     {
         $artwork = $this->one($artworkSlug);
         if (!$artwork) return null;
+        $canonicalArtworkSlug = (string)$artwork['slug'];
+        $canonicalizedMockupSlug = $mockupSlug;
+        if ($artworkSlug !== $canonicalArtworkSlug && str_starts_with($mockupSlug, $artworkSlug . '-')) {
+            $canonicalizedMockupSlug = $canonicalArtworkSlug . substr($mockupSlug, strlen($artworkSlug));
+        }
         foreach ($artwork['items'] as $item) {
-            if ($item['public_slug'] === $mockupSlug) return ['artwork' => $artwork, 'mockup' => $item];
+            if (in_array($canonicalizedMockupSlug, [
+                (string)$item['public_slug'],
+                (string)$item['public_slug_en'],
+                (string)$item['public_slug_es'],
+            ], true)) {
+                return ['artwork' => $artwork, 'mockup' => $item];
+            }
             $legacy = self::slug((string)($item['title'] ?: 'mockup')) . '-' . (int)$item['mockup_sheet_id'];
             if ($legacy === $mockupSlug) return ['artwork' => $artwork, 'mockup' => $item];
         }

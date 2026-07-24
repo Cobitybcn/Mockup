@@ -66,6 +66,15 @@ final class PublicationService
             scopes {$text} NOT NULL, credentials_json {$text} NOT NULL, expires_at VARCHAR(40) NULL,
             status VARCHAR(30) NOT NULL DEFAULT 'disconnected', created_at VARCHAR(40) NOT NULL, updated_at VARCHAR(40) NOT NULL
         )");
+        $this->pdo->exec("CREATE TABLE IF NOT EXISTS publication_slug_aliases (
+            id {$id}, user_id {$integer} NOT NULL, publication_id {$integer} NOT NULL,
+            slug VARCHAR(255) NOT NULL, created_at VARCHAR(40) NOT NULL
+        )");
+        try {
+            $this->pdo->exec('CREATE UNIQUE INDEX publication_slug_aliases_user_slug_unique ON publication_slug_aliases (user_id,slug)');
+        } catch (Throwable) {
+            // Index already exists.
+        }
     }
 
     public function createForSheet(int $sheetId, int $userId): int
@@ -75,14 +84,18 @@ final class PublicationService
         if ($existingId = $existing->fetchColumn()) {
             return (int)$existingId;
         }
-        $stmt = $this->pdo->prepare('SELECT * FROM artwork_sheets WHERE id = ? AND user_id = ?');
+        $stmt = $this->pdo->prepare('SELECT sh.*,a.final_title universal_title
+            FROM artwork_sheets sh
+            INNER JOIN artworks a ON a.id=sh.canonical_artwork_id AND a.user_id=sh.user_id
+            WHERE sh.id = ? AND sh.user_id = ?');
         $stmt->execute([$sheetId, $userId]);
         $sheet = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$sheet) {
             throw new RuntimeException('Ficha no encontrada.');
         }
         $profile = ArtistProfile::findForUser($userId);
-        $slug = $this->uniqueSlug(PublicSlug::universal((string)$sheet['title'], 'obra-' . $sheetId), $userId);
+        $universalTitle = trim((string)($sheet['universal_title'] ?? '')) ?: trim((string)$sheet['title']);
+        $slug = $this->uniqueSlug(PublicSlug::universal($universalTitle, 'obra-' . $sheetId), $userId);
         $now = date('c');
         $this->pdo->prepare('INSERT INTO publications
             (user_id, artwork_sheet_id, slug, title, description, short_description, language, objective, cta_label, cta_url, visibility, status, content_source, profile_snapshot_json, metadata_snapshot_json, created_at, updated_at)
@@ -148,18 +161,29 @@ final class PublicationService
 
     public function syncInheritedFromSheet(int $sheetId, int $userId): void
     {
-        $sheet = $this->pdo->prepare('SELECT title,description,short_description FROM artwork_sheets WHERE id=? AND user_id=?');
+        $sheet = $this->pdo->prepare('SELECT sh.title,sh.description,sh.short_description,a.final_title universal_title
+            FROM artwork_sheets sh
+            INNER JOIN artworks a ON a.id=sh.canonical_artwork_id AND a.user_id=sh.user_id
+            WHERE sh.id=? AND sh.user_id=?');
         $sheet->execute([$sheetId, $userId]);
         $content = $sheet->fetch(PDO::FETCH_ASSOC);
         if (!$content) return;
         $publicationIds = $this->pdo->prepare('SELECT id FROM publications WHERE artwork_sheet_id=? AND user_id=? ORDER BY id');
         $publicationIds->execute([$sheetId, $userId]);
         foreach ($publicationIds->fetchAll(PDO::FETCH_COLUMN) as $publicationId) {
+            $currentSlug = (string)$this->pdo->query(
+                'SELECT slug FROM publications WHERE id=' . (int)$publicationId
+            )->fetchColumn();
+            $universalTitle = trim((string)($content['universal_title'] ?? ''))
+                ?: trim((string)$content['title']);
             $slug = $this->uniqueSlug(
-                PublicSlug::universal((string)$content['title'], 'obra-' . $sheetId),
+                PublicSlug::universal($universalTitle, 'obra-' . $sheetId),
                 $userId,
                 (int)$publicationId
             );
+            if ($currentSlug !== '' && $currentSlug !== $slug) {
+                $this->rememberSlugAlias($userId, (int)$publicationId, $currentSlug);
+            }
             $this->pdo->prepare("UPDATE publications
             SET slug=?,title=?,description=?,short_description=?,updated_at=?
             WHERE id=? AND user_id=?")
@@ -398,6 +422,22 @@ final class PublicationService
             $stmt->execute($params);
             if (!$stmt->fetchColumn()) return $slug;
             $slug = $base . '-' . $n++;
+        }
+    }
+
+    private function rememberSlugAlias(int $userId, int $publicationId, string $slug): void
+    {
+        try {
+            $existing = $this->pdo->prepare(
+                'SELECT 1 FROM publication_slug_aliases WHERE user_id=? AND slug=? LIMIT 1'
+            );
+            $existing->execute([$userId, $slug]);
+            if ($existing->fetchColumn()) return;
+            $this->pdo->prepare('INSERT INTO publication_slug_aliases
+                (user_id,publication_id,slug,created_at) VALUES (?,?,?,?)')
+                ->execute([$userId, $publicationId, $slug, date('c')]);
+        } catch (PDOException) {
+            // Older isolated schemas can continue until the additive migration runs.
         }
     }
 

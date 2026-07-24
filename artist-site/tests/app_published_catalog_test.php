@@ -112,6 +112,13 @@ $pdo->exec("CREATE TABLE bilingual_editorial_content (
     published_content_json TEXT,
     PRIMARY KEY (user_id,entity_type,entity_id,locale)
 )");
+$pdo->exec("CREATE TABLE publication_slug_aliases (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    publication_id INTEGER NOT NULL,
+    slug TEXT NOT NULL,
+    created_at TEXT NOT NULL
+)");
 
 $pdo->exec("INSERT INTO users (id,email) VALUES (7,'artist@example.com')");
 $pdo->exec("INSERT INTO artwork_series (id,user_id,published,year_start,year_end,created_at)
@@ -134,6 +141,8 @@ $pdo->exec("INSERT INTO artwork_sheets (id,user_id,source_image_file,canonical_a
     VALUES (43,7,'duplicate.jpg',31,'','','','')");
 $pdo->exec("INSERT INTO publications (id,user_id,artwork_sheet_id,status,visibility,published_at,updated_at,display_order,metadata_snapshot_json,slug,header_file)
     VALUES (53,7,43,'published','public','2026-07-21','2026-07-21',1,'{}','test-work-current','related-cover.jpg')");
+$pdo->exec("INSERT INTO publication_slug_aliases (id,user_id,publication_id,slug,created_at)
+    VALUES (1,7,53,'obra-12','2026-07-24')");
 $pdo->exec("INSERT INTO root_artwork_candidates (id,artwork_id,file_name,view_type)
     VALUES (61,31,'detail.jpg','detail')");
 $pdo->exec("INSERT INTO mockup_sheets (id,user_id,artwork_id,artwork_sheet_id,artwork_group_id,mockup_file,title,description,keywords,tags)
@@ -158,6 +167,7 @@ $pdo->exec("INSERT INTO bilingual_editorial_content (user_id,entity_type,entity_
 
 $catalog = (new AppPublishedCatalog($pdo, 'artist@example.com'))->all();
 $artwork = $catalog['test-work-current'] ?? null;
+$catalogService = new AppPublishedCatalog($pdo, 'artist@example.com');
 
 if (array_keys($catalog) !== ['first-work', 'test-work-current']) {
     fwrite(STDERR, "FAIL: published catalog does not follow Root Album series order and canonical grouping.\n");
@@ -169,6 +179,18 @@ if (!is_array($artwork)
     || array_map(static fn (array $item): int => (int)($item['mockup_id'] ?? 0), $artwork['items']) !== [72, 73]
     || array_map(static fn (array $item): string => (string)($item['title'] ?? ''), $artwork['items']) !== ['Favorite context', 'Second context']) {
     fwrite(STDERR, "FAIL: published catalog cannot use a canonically related mockup as its cover.\n");
+    exit(1);
+}
+if (($catalogService->one('obra-12')['slug'] ?? '') !== 'test-work-current') {
+    fwrite(STDERR, "FAIL: legacy artwork slugs do not resolve to the canonical publication.\n");
+    exit(1);
+}
+$englishMockupSlug = (string)($artwork['items'][0]['public_slug_en'] ?? '');
+$spanishMockupSlug = (string)($artwork['items'][0]['public_slug_es'] ?? '');
+if (!$catalogService->mockup('test-work-current', $englishMockupSlug)
+    || !$catalogService->mockup('test-work-current', $spanishMockupSlug)
+    || !$catalogService->mockup('obra-12', 'obra-12' . substr($spanishMockupSlug, strlen('test-work-current')))) {
+    fwrite(STDERR, "FAIL: mockup routes do not resolve both language slugs and legacy artwork prefixes.\n");
     exit(1);
 }
 $localization = new AppPublishedLocalization($pdo, 'artist@example.com');

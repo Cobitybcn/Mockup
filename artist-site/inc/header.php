@@ -15,7 +15,11 @@ $faviconUrl = $artistPhotoFile !== ''
     ? app_artist_photo_url($artistPhotoFile)
     : artworkmockups_public_url() . '/favicon.svg?v=1';
 $currentLanguage = artist_site_language();
-$localizedCanonical = artist_site_url_with_language((string)$meta['canonical'], $currentLanguage);
+$languageCanonicals = is_array($meta['language_urls'] ?? null) ? $meta['language_urls'] : [];
+$localizedCanonical = artist_site_url_with_language(
+    (string)($languageCanonicals[$currentLanguage] ?? $meta['canonical']),
+    $currentLanguage
+);
 ?>
 <!doctype html>
 <html lang="<?= e($currentLanguage) ?>">
@@ -29,8 +33,8 @@ $localizedCanonical = artist_site_url_with_language((string)$meta['canonical'], 
     <?php if (!empty($meta['robots'])): ?><meta name="robots" content="<?= e($meta['robots']) ?>"><?php endif; ?>
     <?php if (!empty($meta['keywords'])): ?><meta name="keywords" content="<?= e($meta['keywords']) ?>"><?php endif; ?>
     <link rel="canonical" href="<?= e($localizedCanonical) ?>">
-    <link rel="alternate" hreflang="es" href="<?= e(artist_site_url_with_language((string)$meta['canonical'], 'es')) ?>">
-    <link rel="alternate" hreflang="en" href="<?= e(artist_site_url_with_language((string)$meta['canonical'], 'en')) ?>">
+    <link rel="alternate" hreflang="es" href="<?= e(artist_site_url_with_language((string)($languageCanonicals['es'] ?? $meta['canonical']), 'es')) ?>">
+    <link rel="alternate" hreflang="en" href="<?= e(artist_site_url_with_language((string)($languageCanonicals['en'] ?? $meta['canonical']), 'en')) ?>">
     <meta property="og:title" content="<?= e($meta['title']) ?>">
     <meta property="og:description" content="<?= e($meta['description']) ?>">
     <meta property="og:type" content="website">
