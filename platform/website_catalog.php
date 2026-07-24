@@ -44,21 +44,50 @@ function wc_header_file(PDO $pdo, int $userId): string
     $stmt->execute([wc_header_key($userId)]);
     return basename((string)($stmt->fetchColumn() ?: ''));
 }
-function wc_favorite_sheets(PDO $pdo, int $userId, int $artworkId, array $favoriteIds): array
+function wc_favorite_sheets(PDO $pdo, int $userId, int $artworkId, array $favoriteIds, string $artworkTitle = '', string $artworkSlug = ''): array
 {
     if (!$favoriteIds) return [];
     $marks = implode(',', array_fill(0, count($favoriteIds), '?'));
-    $sql = "SELECT m.id mockup_id,ms.* FROM mockups m
+    $sql = "SELECT m.id mockup_id,m.context_id,m.selector_state_json,ms.* FROM mockups m
         JOIN mockup_sheets ms ON ms.user_id=m.user_id AND ms.artwork_id=m.source_artwork_id AND ms.mockup_file=m.mockup_file
         WHERE m.user_id=? AND m.source_artwork_id=? AND m.id IN ($marks)
         ORDER BY FIELD(m.id,$marks)";
     $stmt = $pdo->prepare($sql);
     $stmt->execute(array_merge([$userId, $artworkId], $favoriteIds, $favoriteIds));
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $artworkSlug = PublicSlug::universal($artworkTitle, $artworkSlug ?: 'obra-' . $artworkId);
+    $usedEnglish = [];
+    $usedSpanish = [];
+    $bilingual = new BilingualEditorialService($pdo);
     foreach ($rows as &$row) {
-        $base = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', (string)($row['title'] ?: 'mockup')) ?: (string)($row['title'] ?: 'mockup');
-        $base = trim(strtolower((string)preg_replace('/[^a-zA-Z0-9]+/', '-', $base)), '-');
-        $row['public_slug'] = ($base ?: 'mockup') . '-' . (int)$row['id'];
+        $spanish = [];
+        $english = [];
+        try {
+            $spanish = (array)($bilingual->get($userId, 'mockup', (int)$row['mockup_id'], 'es')['content'] ?? []);
+            $english = (array)($bilingual->get($userId, 'mockup', (int)$row['mockup_id'], 'en')['content'] ?? []);
+        } catch (Throwable) {
+        }
+        $technicalContexts = PublicSlug::technicalMockupContexts(
+            (string)($row['selector_state_json'] ?? ''),
+            (string)($row['context_id'] ?? ''),
+            (string)($row['mockup_file'] ?? '')
+        );
+        $fallbackTitle = trim((string)($row['title'] ?? ''));
+        $row['public_slug_en'] = PublicSlug::uniqueMockup(
+            PublicSlug::mockup(
+                $artworkSlug,
+                PublicSlug::mockupContext(
+                    $artworkTitle,
+                    $english,
+                    $fallbackTitle !== '' ? $fallbackTitle : $technicalContexts['en']
+                )
+            ),
+            $usedEnglish
+        );
+        $row['public_slug_es'] = PublicSlug::uniqueMockup(
+            PublicSlug::mockup($artworkSlug, PublicSlug::mockupContext($artworkTitle, $spanish, $technicalContexts['es'])),
+            $usedSpanish
+        );
     }
     unset($row);
     return $rows;
@@ -90,7 +119,7 @@ function wc_perform(PDO $pdo, PublicationService $service, int $userId, string $
 
     switch ($action) {
         case 'publish':
-            $favoriteSheets = wc_favorite_sheets($pdo, $userId, (int)$sheet['artwork_id'], wc_favorites($userId));
+            $favoriteSheets = wc_favorite_sheets($pdo, $userId, (int)$sheet['artwork_id'], wc_favorites($userId), (string)$sheet['title']);
             $missing = [];
             if (trim((string)$sheet['title']) === '') $missing[] = 'title';
             if (trim((string)($sheet['short_description'] ?: $sheet['description'])) === '') $missing[] = 'description';
@@ -140,7 +169,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $views = $pdo->prepare('SELECT file_name FROM root_artwork_candidates WHERE artwork_id=? AND user_id=?');
             $views->execute([(int)$sheet['artwork_id'], $userId]);
             foreach ($views->fetchAll(PDO::FETCH_COLUMN) as $viewFile) $allowed[] = basename((string)$viewFile);
-            foreach (wc_favorite_sheets($pdo, $userId, (int)$sheet['artwork_id'], wc_favorites($userId)) as $mockup) $allowed[] = basename((string)$mockup['mockup_file']);
+            foreach (wc_favorite_sheets($pdo, $userId, (int)$sheet['artwork_id'], wc_favorites($userId), (string)$sheet['title']) as $mockup) $allowed[] = basename((string)$mockup['mockup_file']);
             $publication = wc_publication_for_sheet($pdo, $sheetId, $userId);
             $publicationId = $publication ? (int)$publication['id'] : $service->createForSheet($sheetId, $userId);
             $stmt = $pdo->prepare('UPDATE publications SET header_file = ?, updated_at = ? WHERE id = ? AND user_id = ?');
@@ -194,8 +223,15 @@ $stmt = $pdo->prepare("SELECT s.*,a.id artwork_id,a.root_file,a.width,a.height,a
 $stmt->execute([$userId]);
 $artworks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 foreach ($artworks as &$artwork) {
-    $artwork['favorite_sheets'] = wc_favorite_sheets($pdo, $userId, (int)$artwork['artwork_id'], $favoriteIds);
     $artwork['publication'] = wc_publication_for_sheet($pdo, (int)$artwork['id'], $userId);
+    $artwork['favorite_sheets'] = wc_favorite_sheets(
+        $pdo,
+        $userId,
+        (int)$artwork['artwork_id'],
+        $favoriteIds,
+        (string)$artwork['title'],
+        (string)($artwork['publication']['slug'] ?? '')
+    );
     $artwork['state'] = wc_state($artwork['publication']);
     $artwork['published'] = $artwork['state'] !== 'draft';
     $views = $pdo->prepare('SELECT file_name,view_type FROM root_artwork_candidates WHERE artwork_id=? AND user_id=? ORDER BY id');
@@ -346,7 +382,8 @@ $headerFile = $selectedArtwork ? ($selectedArtwork['publication']['header_file']
                                     <h3><?= wc_h($mockup['title']) ?></h3>
                                     <p><?= wc_h($mockup['description']) ?></p>
                                     <details class="mockup-meta"><summary>Metadata</summary><dl>
-                                        <dt>Slug</dt><dd><?= wc_h($mockup['public_slug']) ?></dd>
+                                        <dt>Slug EN</dt><dd><?= wc_h($mockup['public_slug_en']) ?></dd>
+                                        <dt>Slug ES</dt><dd><?= wc_h($mockup['public_slug_es']) ?></dd>
                                         <dt>Alt</dt><dd><?= wc_h($mockup['alt_text']) ?></dd>
                                         <dt>Tags</dt><dd><?= wc_h($mockup['tags']) ?></dd>
                                         <dt>Caption</dt><dd><?= wc_h($mockup['caption']) ?></dd>

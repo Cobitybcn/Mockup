@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/PublicSlug.php';
+
 class ArtworkSeries
 {
     public static function ensureSchema(PDO $pdo): void
@@ -83,10 +85,7 @@ class ArtworkSeries
 
     public static function slug(string $title): string
     {
-        $slug = strtolower(self::normalizeTitle($title));
-        $slug = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $slug) ?: $slug;
-        $slug = preg_replace('/[^a-z0-9]+/', '-', $slug) ?? '';
-        $slug = trim($slug, '-');
+        $slug = PublicSlug::universal(self::normalizeTitle($title));
         return $slug !== '' ? $slug : 'serie';
     }
 
@@ -140,8 +139,7 @@ class ArtworkSeries
         if ($title === '') {
             throw new RuntimeException('Series title is required.');
         }
-        $requestedSlug = trim((string)($fields['slug'] ?? ''));
-        $slug = self::uniqueSlug($pdo, $userId, $requestedSlug !== '' ? $requestedSlug : $title, $seriesId);
+        $slug = self::uniqueSlug($pdo, $userId, $title, $seriesId);
         [$yearStart, $yearEnd] = self::normalizeYearRange($fields['year_start'] ?? '', $fields['year_end'] ?? '');
         $now = date('c');
         $stmt = $pdo->prepare('UPDATE artwork_series SET title=?, slug=?, subtitle=?, description=?, long_description=?, tags=?, keywords=?, seo_description=?, conceptual_core=?, interpretive_limits=?, year_start=?, year_end=?, updated_at=? WHERE id=? AND user_id=?');

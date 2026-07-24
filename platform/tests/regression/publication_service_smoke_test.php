@@ -89,7 +89,7 @@ $public = $service->publicBySlug((string)$publication['slug']);
 $pdo->exec("UPDATE artwork_sheets SET title='Canonical Updated',description='Updated canonical description',short_description='Updated summary' WHERE id=1");
 $service->syncInheritedFromSheet(1, 7);
 $inheritedPublication = $service->get($publicationId, 7);
-$inheritedPublic = $service->publicBySlug((string)$publication['slug']);
+$inheritedPublic = $service->publicBySlug((string)$inheritedPublication['slug']);
 
 $blockedPublicationId = $service->createForSheet(2, 7);
 $publishBlocked = false;
@@ -128,6 +128,7 @@ $checks = [
     count($publication['items']) === 1,
     $public['title'] === 'Test Work',
     $inheritedPublication['title'] === 'Canonical Updated',
+    $inheritedPublication['slug'] === 'canonical-updated',
     $inheritedPublic['short_description'] === 'Updated summary',
     count($publication['variants']) === 4,
     $publishBlocked,

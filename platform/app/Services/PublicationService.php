@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../Support/PublicSlug.php';
+
 final class PublicationService
 {
     public function __construct(private PDO $pdo)
@@ -80,7 +82,7 @@ final class PublicationService
             throw new RuntimeException('Ficha no encontrada.');
         }
         $profile = ArtistProfile::findForUser($userId);
-        $slug = $this->uniqueSlug($this->slug((string)($sheet['title'] ?: 'obra-' . $sheetId)), $userId);
+        $slug = $this->uniqueSlug(PublicSlug::universal((string)$sheet['title'], 'obra-' . $sheetId), $userId);
         $now = date('c');
         $this->pdo->prepare('INSERT INTO publications
             (user_id, artwork_sheet_id, slug, title, description, short_description, language, objective, cta_label, cta_url, visibility, status, content_source, profile_snapshot_json, metadata_snapshot_json, created_at, updated_at)
@@ -150,15 +152,25 @@ final class PublicationService
         $sheet->execute([$sheetId, $userId]);
         $content = $sheet->fetch(PDO::FETCH_ASSOC);
         if (!$content) return;
-        $this->pdo->prepare("UPDATE publications
-            SET title=?,description=?,short_description=?,updated_at=?
-            WHERE artwork_sheet_id=? AND user_id=?")
+        $publicationIds = $this->pdo->prepare('SELECT id FROM publications WHERE artwork_sheet_id=? AND user_id=? ORDER BY id');
+        $publicationIds->execute([$sheetId, $userId]);
+        foreach ($publicationIds->fetchAll(PDO::FETCH_COLUMN) as $publicationId) {
+            $slug = $this->uniqueSlug(
+                PublicSlug::universal((string)$content['title'], 'obra-' . $sheetId),
+                $userId,
+                (int)$publicationId
+            );
+            $this->pdo->prepare("UPDATE publications
+            SET slug=?,title=?,description=?,short_description=?,updated_at=?
+            WHERE id=? AND user_id=?")
             ->execute([
+                $slug,
                 trim((string)$content['title']),
                 trim((string)$content['description']),
                 trim((string)$content['short_description']),
-                date('c'), $sheetId, $userId,
+                date('c'), (int)$publicationId, $userId,
             ]);
+        }
     }
 
     public function listForUser(int $userId): array
@@ -371,16 +383,26 @@ final class PublicationService
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    private function uniqueSlug(string $base, int $userId): string
+    private function uniqueSlug(string $base, int $userId, ?int $ignoreId = null): string
     {
         $base = $base ?: 'obra'; $slug = $base; $n = 2;
-        $stmt = $this->pdo->prepare('SELECT 1 FROM publications WHERE user_id=? AND slug=?');
-        while (true) { $stmt->execute([$userId,$slug]); if (!$stmt->fetchColumn()) return $slug; $slug=$base.'-'.$n++; }
+        $sql = 'SELECT 1 FROM publications WHERE user_id=? AND slug=?';
+        $params = [$userId, $slug];
+        if ($ignoreId !== null) {
+            $sql .= ' AND id<>?';
+            $params[] = $ignoreId;
+        }
+        $stmt = $this->pdo->prepare($sql);
+        while (true) {
+            $params[1] = $slug;
+            $stmt->execute($params);
+            if (!$stmt->fetchColumn()) return $slug;
+            $slug = $base . '-' . $n++;
+        }
     }
 
     private function slug(string $value): string
     {
-        $value = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value) ?: $value;
-        return trim(strtolower((string)preg_replace('/[^a-zA-Z0-9]+/', '-', $value)), '-');
+        return PublicSlug::normalize($value);
     }
 }

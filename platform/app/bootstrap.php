@@ -16,6 +16,7 @@ require_once __DIR__ . '/Support/UiPreview.php';
 require_once __DIR__ . '/Support/ArtistProfile.php';
 require_once __DIR__ . '/Support/ArtistDomainService.php';
 require_once __DIR__ . '/Support/Display.php';
+require_once __DIR__ . '/Support/PublicSlug.php';
 require_once __DIR__ . '/Support/PromptSettings.php';
 require_once __DIR__ . '/Support/RootArtworkCropper.php';
 require_once __DIR__ . '/Support/ManualArtworkFrameCropper.php';

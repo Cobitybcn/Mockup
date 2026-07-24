@@ -2,10 +2,13 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/AppPublishedLocalization.php';
+require_once __DIR__ . '/PublicSlug.php';
 
 final class AppPublishedCatalog
 {
     private AppPublishedLocalization $localization;
+    /** @var array<string,bool> */
+    private array $mockupColumns = [];
 
     public function __construct(private readonly PDO $pdo, private readonly string $artistEmail)
     {
@@ -102,7 +105,7 @@ final class AppPublishedCatalog
             $row['artwork_analysis'] = $language === 'es'
                 ? []
                 : (is_array($analysis) ? $analysis : []);
-            $row['items'] = $this->items((int)$row['id']);
+            $row['items'] = $this->items((int)$row['id'], (string)$row['slug'], (string)$row['artwork_title']);
             $row['artwork_views'] = $this->artworkViews((int)$row['canonical_artwork_id']);
             $row['header_file'] = $this->headerFileForArtwork((int)$row['user_id'], $row);
             $publications[(string)$row['slug']] = $row;
@@ -146,6 +149,8 @@ final class AppPublishedCatalog
         if (!$artwork) return null;
         foreach ($artwork['items'] as $item) {
             if ($item['public_slug'] === $mockupSlug) return ['artwork' => $artwork, 'mockup' => $item];
+            $legacy = self::slug((string)($item['title'] ?: 'mockup')) . '-' . (int)$item['mockup_sheet_id'];
+            if ($legacy === $mockupSlug) return ['artwork' => $artwork, 'mockup' => $item];
         }
         return null;
     }
@@ -188,15 +193,23 @@ final class AppPublishedCatalog
         }
     }
 
-    private function items(int $publicationId): array
+    private function items(int $publicationId, string $artworkSlug, string $artworkTitle): array
     {
-        $statement = $this->pdo->prepare('SELECT i.*,
-                COALESCE(NULLIF(i.title,\'\'),NULLIF(m.title,\'\'),\'\') resolved_title,
+        $contextSelect = $this->mockupColumnExists('context_id')
+            ? "COALESCE((SELECT source.context_id FROM mockups source WHERE source.user_id=m.user_id AND (source.id=m.mockup_id OR source.mockup_file=m.mockup_file) ORDER BY source.id DESC LIMIT 1),'')"
+            : "''";
+        $selectorSelect = $this->mockupColumnExists('selector_state_json')
+            ? "COALESCE((SELECT source.selector_state_json FROM mockups source WHERE source.user_id=m.user_id AND (source.id=m.mockup_id OR source.mockup_file=m.mockup_file) ORDER BY source.id DESC LIMIT 1),'')"
+            : "''";
+        $statement = $this->pdo->prepare("SELECT i.*,
+                COALESCE(NULLIF(i.title,''),NULLIF(m.title,''),'') resolved_title,
                 COALESCE(NULLIF(m.mockup_id,0),(
                     SELECT source.id FROM mockups source
                     WHERE source.user_id=m.user_id AND source.mockup_file=m.mockup_file
                     ORDER BY source.id DESC LIMIT 1
                 )) mockup_id,
+                {$contextSelect} mockup_context_id,
+                {$selectorSelect} mockup_selector_state_json,
                 m.mockup_file,m.description,m.keywords,m.tags,m.alt_text mockup_alt_text,m.caption mockup_caption
             FROM publication_items i JOIN mockup_sheets m ON m.id=i.mockup_sheet_id
             WHERE i.publication_id=? AND EXISTS (
@@ -205,7 +218,7 @@ final class AppPublishedCatalog
                     live.id=m.mockup_id OR live.mockup_file=m.mockup_file
                 )
             )
-            ORDER BY i.position,i.id');
+            ORDER BY i.position,i.id");
         $statement->execute([$publicationId]);
         $items = $statement->fetchAll();
         $seenMockupIds = [];
@@ -228,11 +241,14 @@ final class AppPublishedCatalog
             if ($file !== '') $seenFiles[$file] = true;
         }
 
+        $usedEnglish = [];
+        $usedSpanish = [];
         foreach ($items as &$item) {
             $item['title'] = (string)($item['resolved_title'] ?? $item['title'] ?? '');
             unset($item['resolved_title']);
             $language = function_exists('artist_site_language') ? artist_site_language() : 'es';
             $spanish = $this->localization->content('mockup', (int)($item['mockup_id'] ?? 0), 'es');
+            $english = $this->localization->content('mockup', (int)($item['mockup_id'] ?? 0), 'en');
             $localized = $this->localization->content('mockup', (int)($item['mockup_id'] ?? 0), $language);
             $item['spanish_available'] = $spanish !== [];
             if ($localized !== []) {
@@ -252,8 +268,27 @@ final class AppPublishedCatalog
                 $item['seo_title'] = '';
                 $item['seo_description'] = '';
             }
-            $base = self::slug((string)($item['title'] ?: 'mockup')) ?: 'mockup';
-            $item['public_slug'] = $base . '-' . (int)$item['mockup_sheet_id'];
+            $technicalContexts = PublicSlug::technicalMockupContexts(
+                (string)($item['mockup_selector_state_json'] ?? ''),
+                (string)($item['mockup_context_id'] ?? ''),
+                (string)($item['mockup_file'] ?? '')
+            );
+            $fallbackTitle = trim((string)($item['title'] ?? ''));
+            $englishContext = PublicSlug::mockupContext(
+                $artworkTitle,
+                $english,
+                $fallbackTitle !== '' ? $fallbackTitle : $technicalContexts['en']
+            );
+            $spanishContext = PublicSlug::mockupContext($artworkTitle, $spanish, $technicalContexts['es']);
+            $item['public_slug_en'] = PublicSlug::uniqueMockup(
+                PublicSlug::mockup($artworkSlug, $englishContext),
+                $usedEnglish
+            );
+            $item['public_slug_es'] = PublicSlug::uniqueMockup(
+                PublicSlug::mockup($artworkSlug, $spanishContext),
+                $usedSpanish
+            );
+            $item['public_slug'] = $language === 'es' ? $item['public_slug_es'] : $item['public_slug_en'];
         }
         unset($item);
         return $items;
@@ -268,14 +303,22 @@ final class AppPublishedCatalog
      */
     private function relatedItems(int $publicationId): array
     {
-        $statement = $this->pdo->prepare('SELECT
+        $contextSelect = $this->mockupColumnExists('context_id')
+            ? "COALESCE((SELECT source.context_id FROM mockups source WHERE source.user_id=m.user_id AND (source.id=m.mockup_id OR source.mockup_file=m.mockup_file) ORDER BY source.id DESC LIMIT 1),'')"
+            : "''";
+        $selectorSelect = $this->mockupColumnExists('selector_state_json')
+            ? "COALESCE((SELECT source.selector_state_json FROM mockups source WHERE source.user_id=m.user_id AND (source.id=m.mockup_id OR source.mockup_file=m.mockup_file) ORDER BY source.id DESC LIMIT 1),'')"
+            : "''";
+        $statement = $this->pdo->prepare("SELECT
                 0 id,p.id publication_id,m.id mockup_sheet_id,m.id position,
-                \'context\' role,m.title title,m.alt_text,m.caption,
+                'context' role,m.title title,m.alt_text,m.caption,
                 COALESCE(NULLIF(m.mockup_id,0),(
                     SELECT source.id FROM mockups source
                     WHERE source.user_id=m.user_id AND source.mockup_file=m.mockup_file
                     ORDER BY source.id DESC LIMIT 1
                 )) mockup_id,
+                {$contextSelect} mockup_context_id,
+                {$selectorSelect} mockup_selector_state_json,
                 m.mockup_file,m.description,m.keywords,m.tags,
                 m.alt_text mockup_alt_text,m.caption mockup_caption
             FROM publications p
@@ -297,9 +340,26 @@ final class AppPublishedCatalog
                     (COALESCE(m.mockup_id,0)=0 AND newer.mockup_file=m.mockup_file)
                 )
             )
-            ORDER BY m.id DESC');
+            ORDER BY m.id DESC");
         $statement->execute([$publicationId]);
         return $statement->fetchAll();
+    }
+
+    private function mockupColumnExists(string $column): bool
+    {
+        if (array_key_exists($column, $this->mockupColumns)) return $this->mockupColumns[$column];
+        try {
+            if ((string)$this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
+                $statement = $this->pdo->prepare('SHOW COLUMNS FROM mockups LIKE ?');
+                $statement->execute([$column]);
+                return $this->mockupColumns[$column] = (bool)$statement->fetchColumn();
+            }
+            foreach ($this->pdo->query('PRAGMA table_info(mockups)')->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                if ((string)($row['name'] ?? '') === $column) return $this->mockupColumns[$column] = true;
+            }
+        } catch (PDOException) {
+        }
+        return $this->mockupColumns[$column] = false;
     }
 
     private function artworkViews(int $artworkId): array

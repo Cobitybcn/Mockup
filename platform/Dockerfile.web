@@ -59,6 +59,7 @@ COPY artist-site/inc/AppStore.php /var/www/artist-site/inc/AppStore.php
 COPY artist-site/inc/StripeArtistCredentials.php /var/www/artist-site/inc/StripeArtistCredentials.php
 COPY artist-site/inc/StripeCheckout.php /var/www/artist-site/inc/StripeCheckout.php
 COPY artist-site/inc/AppPublishedSeriesCatalog.php /var/www/artist-site/inc/AppPublishedSeriesCatalog.php
+COPY artist-site/inc/PublicSlug.php /var/www/artist-site/inc/PublicSlug.php
 COPY artist-site/assets/css/styles.css /var/www/artist-site/assets/css/styles.css
 
 # Configure Apache port to 8080 (Cloud Run standard)

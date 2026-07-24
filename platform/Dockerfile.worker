@@ -42,6 +42,7 @@ RUN composer install --no-dev --no-interaction --prefer-dist --no-progress --cla
 
 # Copy codebase
 COPY platform/ /var/www/html/
+COPY artist-site/inc/PublicSlug.php /var/www/artist-site/inc/PublicSlug.php
 
 COPY platform/apache-worker.conf /etc/apache2/conf-available/artworkmockups-worker.conf
 RUN a2enconf artworkmockups-worker

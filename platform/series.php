@@ -83,7 +83,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'seo_description' => (string)($_POST['seo_description'] ?? ''),
                 'conceptual_core' => (string)($_POST['conceptual_core'] ?? ''),
                 'interpretive_limits' => (string)($_POST['interpretive_limits'] ?? ''),
-                'slug' => (string)($_POST['slug'] ?? ''),
                 'year_start' => (string)($_POST['year_start'] ?? ''),
                 'year_end' => (string)($_POST['year_end'] ?? ''),
             ]);
@@ -836,7 +835,7 @@ $seriesSearchFields = $selectedSeries ? [
                                 </div>
 
                                 <div class="catalog-edit-form__row">
-                                    <label>URL Slug<input type="text" name="slug" value="<?= series_h($series['slug']) ?>" placeholder="auto-generated-from-title"></label>
+                                    <label>Universal slug<input type="text" value="<?= series_h($series['slug']) ?>" readonly aria-describedby="series-slug-help"><small id="series-slug-help">Generated automatically from the universal title.</small></label>
                                     <label>Tags<input type="text" name="tags" value="<?= series_h($series['tags'] ?? '') ?>" placeholder="Comma separated, e.g. abstract, painting"></label>
                                 </div>
 

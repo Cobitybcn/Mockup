@@ -17,6 +17,7 @@ require_once __DIR__ . '/../app/bootstrap.php';
 require_once __DIR__ . '/TestHarness.php';
 require_once __DIR__ . '/regression/root_artwork_test.php';
 require_once __DIR__ . '/regression/seo_filename_test.php';
+require_once __DIR__ . '/regression/public_slug_test.php';
 require_once __DIR__ . '/regression/uploaded_root_test.php';
 require_once __DIR__ . '/regression/public_pages_test.php';
 require_once __DIR__ . '/regression/world_mother_library_admin_test.php';
@@ -41,6 +42,7 @@ require_once __DIR__ . '/regression/public_artist_showcase_test.php';
 
 run_root_artwork_regression_tests();
 run_seo_filename_regression_tests();
+run_public_slug_regression_tests();
 run_uploaded_root_regression_tests();
 run_public_pages_regression_tests();
 run_world_mother_library_admin_tests();
