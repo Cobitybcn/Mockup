@@ -213,6 +213,12 @@ function run_bilingual_editorial_service_tests(): void
         $service->get(7, 'series', 3, 'en')['content']['description'] ?? '',
         'la preparación completa guarda el inglés validado junto al español'
     );
+    TestHarness::assertSame(true, $service->get(7, 'series', 3, 'es')['is_published'], 'la preparación completa publica el master español en el website');
+    TestHarness::assertSame(
+        'Esta serie de arte abstracto contemporáneo trabaja la pintura acrílica y óleo sobre lienzo mediante una pintura abstracta estructural texturada.',
+        $service->get(7, 'series', 3, 'es')['published_content']['description'] ?? '',
+        'la preparación completa conserva una instantánea pública española'
+    );
     $mockupProposalClient = new BilingualEditorialFakeClient();
     $mockupProposal = (new BilingualEditorialAdapterService($pdo, $mockupProposalClient))->generateSpanishDraft(7, 'mockup', 21);
     TestHarness::assertSame('Una lectura contextual precisa de la obra dentro de un espacio arquitectónico contemporáneo.', $mockupProposal['content']['description'] ?? '', 'Mockups puede generar una propuesta editorial directamente en español');
@@ -259,6 +265,7 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertContains('painting, abstract, contemporary', $repairedEnglishMockup['content']['tags'] ?? '', 'la reparación inglesa conserva los tags del master');
     TestHarness::assertContains('geometric abstract painting for sale', $repairedEnglishMockup['content']['search_terms'] ?? '', 'la reparación inglesa conserva búsquedas y long tails');
 
+    $service->setSpanishPublished(7, 'series', 3, false);
     $service->save(7, 'series', 3, 'es', ['description' => 'Nuevo texto curatorial en español']);
     TestHarness::assertSame(false, $service->get(7, 'series', 3, 'es')['is_published'], 'el español nuevo permanece como borrador privado');
     TestHarness::assertSame('es-en', $service->adaptationDirection(['description' => 'Texto'], [])['direction'] ?? '', 'el master español abre la adaptación al inglés internacional');
@@ -352,6 +359,7 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertContains("'prepare_bilingual_series'", $editorScript, 'Series prepara ambos idiomas mediante una sola acción completa');
     TestHarness::assertContains('result.spanish_content', $editorScript, 'la acción completa devuelve el master español validado');
     TestHarness::assertContains('result.english_content', $editorScript, 'la acción completa devuelve el inglés internacional validado');
+    TestHarness::assertContains("assistantRequest('publish_spanish')", $editorScript, 'la preparación completa de obras y mockups publica el master español sin otro paso');
     TestHarness::assertContains("editor.addEventListener('focusout'", $editorScript, 'el nombre universal se guarda al terminar la edición sin interrumpir el cursor');
     TestHarness::assertTrue(strpos($editorScript, "schedule('title'") === false, 'el autoguardado no reescribe el título mientras el artista está escribiendo');
     TestHarness::assertContains('grid-template-columns:minmax(280px, 1fr) auto', $editorStyles, 'la preparación reserva espacio estable para texto y decisión');

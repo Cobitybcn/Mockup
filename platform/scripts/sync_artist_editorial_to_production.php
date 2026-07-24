@@ -352,9 +352,15 @@ try {
     $publicationAssignments = implode(',', array_map(static fn(string $field): string => "{$field}=?", $publicationFields));
     $updatePublication = $target->prepare("UPDATE publications SET {$publicationAssignments},updated_at=? WHERE id=? AND user_id=?");
     foreach ($sourcePublicationStmt->fetchAll() as $publication) {
-        $publication['title'] = trim((string)$publication['title']) !== '' ? $publication['title'] : $publication['sheet_title'];
-        $publication['description'] = trim((string)$publication['description']) !== '' ? $publication['description'] : $publication['sheet_description'];
-        $publication['short_description'] = trim((string)$publication['short_description']) !== '' ? $publication['short_description'] : $publication['sheet_short_description'];
+        if (trim((string)$publication['title']) === '' && trim((string)($publication['sheet_title'] ?? '')) !== '') {
+            $publication['title'] = $publication['sheet_title'];
+        }
+        if (trim((string)$publication['description']) === '' && trim((string)($publication['sheet_description'] ?? '')) !== '') {
+            $publication['description'] = $publication['sheet_description'];
+        }
+        if (trim((string)$publication['short_description']) === '' && trim((string)($publication['sheet_short_description'] ?? '')) !== '') {
+            $publication['short_description'] = $publication['sheet_short_description'];
+        }
         $targetPublicationStmt->execute([(int)$publication['id'], $targetUserId]);
         $targetPublication = $targetPublicationStmt->fetch();
         if (!is_array($targetPublication)) {

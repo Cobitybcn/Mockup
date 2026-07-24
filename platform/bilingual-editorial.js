@@ -429,6 +429,7 @@
                         target_locale: 'en',
                     });
                     fillLocale('en', englishResult.content || {});
+                    await assistantRequest('publish_spanish');
                 }
                 activeProposal = null;
                 activeProposalLocale = '';
