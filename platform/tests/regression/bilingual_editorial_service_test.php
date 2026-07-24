@@ -153,7 +153,8 @@ function run_bilingual_editorial_service_tests(): void
     $pdo->exec("CREATE TABLE artwork_series (
         id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, title TEXT NOT NULL, subtitle TEXT NOT NULL DEFAULT '',
         description TEXT NOT NULL DEFAULT '', long_description TEXT NOT NULL DEFAULT '', tags TEXT NOT NULL DEFAULT '',
-        keywords TEXT NOT NULL DEFAULT '', seo_description TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL DEFAULT ''
+        keywords TEXT NOT NULL DEFAULT '', seo_description TEXT NOT NULL DEFAULT '',
+        year_start INTEGER NULL, year_end INTEGER NULL, updated_at TEXT NOT NULL DEFAULT ''
     )");
     $pdo->exec("CREATE TABLE artworks (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, artwork_group_id INTEGER, series_id INTEGER, series TEXT NOT NULL DEFAULT '', final_title TEXT NOT NULL DEFAULT '', subtitle TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL DEFAULT '')");
     $pdo->exec("CREATE TABLE artwork_groups (
@@ -273,13 +274,29 @@ function run_bilingual_editorial_service_tests(): void
         'la preparación completa conserva una instantánea pública española'
     );
     $mockupProposalClient = new BilingualEditorialFakeClient();
-    $mockupProposal = (new BilingualEditorialAdapterService($pdo, $mockupProposalClient))->generateSpanishDraft(7, 'mockup', 21);
+    $mockupAdapter = new BilingualEditorialAdapterService($pdo, $mockupProposalClient);
+    $mockupProposal = $mockupAdapter->generateSpanishDraft(7, 'mockup', 21);
     TestHarness::assertSame('Una lectura contextual precisa de la obra dentro de un espacio arquitectónico contemporáneo.', $mockupProposal['content']['description'] ?? '', 'Mockups puede generar una propuesta editorial directamente en español');
     TestHarness::assertContains('independent contextual image', $mockupProposalClient->lastPrompt, 'la propuesta del mockup conserva su lectura contextual propia');
     TestHarness::assertContains('Never infer artwork pigments from mockup lighting', $mockupProposalClient->lastPrompt, 'el mockup no reinterpreta pigmentos alterados por la escena');
     TestHarness::assertContains('DESCRIPTIVE DIVERSITY PROTOCOL', $mockupProposalClient->lastPrompt, 'el mockup compara su narrativa con el historial editorial reciente');
     TestHarness::assertContains('La luz lateral ordena la sala', $mockupProposalClient->lastPrompt, 'el protocolo entrega referencias recientes para evitar aperturas repetidas');
     TestHarness::assertContains('SEO CONTROLLED REPETITION', $mockupProposalClient->lastPrompt, 'la diversidad editorial no elimina la repetición SEO necesaria');
+    $listBounds = new ReflectionMethod(BilingualEditorialAdapterService::class, 'boundMockupListCounts');
+    $boundedLists = $listBounds->invoke($mockupAdapter, [
+        'tags' => implode(', ', array_map(static fn(int $index): string => 'tag ' . $index, range(1, 16))),
+        'search_terms' => implode(', ', array_map(static fn(int $index): string => 'buyer search phrase ' . $index, range(1, 18))),
+    ]);
+    TestHarness::assertSame(
+        14,
+        count(array_filter(array_map('trim', explode(',', (string)($boundedLists['tags'] ?? ''))))),
+        'un exceso de tags se limita de forma determinista sin perder toda la generación'
+    );
+    TestHarness::assertSame(
+        16,
+        count(array_filter(array_map('trim', explode(',', (string)($boundedLists['search_terms'] ?? ''))))),
+        'un exceso de búsquedas se limita de forma determinista sin perder toda la generación'
+    );
     $staleArtworkAnalysis = [
         'confirmed_facts' => ['series' => 'Core'],
         'canonical_editorial' => [
@@ -388,6 +405,13 @@ function run_bilingual_editorial_service_tests(): void
     $service->setSpanishPublished(7, 'series', 3, false);
     TestHarness::assertSame(false, $service->get(7, 'series', 3, 'es')['is_published'], 'retirar español no borra el borrador ni su instantánea');
 
+    $curatorialBeforePeriod = (string)$pdo->query('SELECT long_description FROM artwork_series WHERE id=3')->fetchColumn();
+    ArtworkSeries::updatePeriod($pdo, 7, 3, '2019', '2024');
+    TestHarness::assertSame('2019|2024', implode('|', (array)$pdo->query('SELECT year_start,year_end FROM artwork_series WHERE id=3')->fetch(PDO::FETCH_NUM)), 'el período de la serie se guarda desde la mesa bilingüe');
+    TestHarness::assertSame($curatorialBeforePeriod, (string)$pdo->query('SELECT long_description FROM artwork_series WHERE id=3')->fetchColumn(), 'guardar el período no reescribe el texto editorial de la serie');
+    ArtworkSeries::updatePeriod($pdo, 7, 3, '2019', '');
+    TestHarness::assertSame(null, $pdo->query('SELECT year_end FROM artwork_series WHERE id=3')->fetchColumn() ?: null, 'una serie abierta puede quedar sin año de cierre');
+
     $service->fillSourceFromAnalysis(7, 'artwork', 11, ['description' => 'Análisis original pensado en español']);
     TestHarness::assertSame('Análisis original pensado en español', $service->get(7, 'artwork', 11, 'es')['content']['description'] ?? '', 'el nuevo análisis alimenta primero la edición española');
 
@@ -441,6 +465,20 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertContains('grid-row:1 / span 9', $seriesScreen, 'todos los campos SEO permanecen en la misma línea visual');
     TestHarness::assertContains('data-current-series-delete', $seriesScreen, 'la ficha bilingüe conserva una acción visible para eliminar la serie actual');
     TestHarness::assertContains('Sus obras y mockups pasarán a NO SERIE', $seriesScreen, 'eliminar una serie explica el destino de sus obras y mockups');
+    TestHarness::assertContains('series-website-decision', $seriesScreen, 'la mesa bilingüe conserva el bloque de decisión cuadrado para publicar la serie');
+    TestHarness::assertContains('value="publish_series"', $seriesScreen, 'la ficha bilingüe puede llevar la serie al sitio del artista');
+    TestHarness::assertContains('value="unpublish_series"', $seriesScreen, 'la ficha bilingüe puede retirar la serie del sitio del artista');
+    TestHarness::assertContains("series_year_select('year_start'", $seriesScreen, 'la ficha bilingüe expone el año de inicio de la serie');
+    TestHarness::assertContains("series_year_select('year_end'", $seriesScreen, 'la ficha bilingüe expone el año de cierre de la serie');
+    TestHarness::assertContains('value="update_series_period"', $seriesScreen, 'el período se guarda sin reescribir los textos editoriales');
+    TestHarness::assertTrue(
+        strpos($seriesScreen, 'class="series-bilingual-actions"') < strpos($seriesScreen, 'class="series-bilingual-spread"'),
+        'la decisión de publicar encabeza la mesa, junto al título universal'
+    );
+    TestHarness::assertTrue(
+        strpos($seriesScreen, 'class="series-bilingual-period"') < strpos($seriesScreen, 'class="series-bilingual-spread"'),
+        'el período acompaña al título en lugar de abrir un formulario aparte'
+    );
     TestHarness::assertTrue(
         !str_contains(substr(
             $seriesScreen,

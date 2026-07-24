@@ -6,6 +6,8 @@ require_once __DIR__ . '/AppPublishedLocalization.php';
 final class AppPublishedSeriesCatalog
 {
     private AppPublishedLocalization $localization;
+    /** @var array<string,array<string,array<string,mixed>>> */
+    private array $catalogCache = [];
 
     public function __construct(private readonly PDO $pdo, private readonly string $artistEmail)
     {
@@ -19,6 +21,9 @@ final class AppPublishedSeriesCatalog
 
     public function all(): array
     {
+        $language = function_exists('artist_site_language') ? artist_site_language() : 'es';
+        if (isset($this->catalogCache[$language])) return $this->catalogCache[$language];
+
         $statement = $this->pdo->prepare('SELECT s.*,
                 (SELECT COUNT(*) FROM artworks a WHERE a.user_id = s.user_id AND a.series_id = s.id) AS artwork_count
             FROM artwork_series s
@@ -33,7 +38,6 @@ final class AppPublishedSeriesCatalog
         $statement->execute([$this->artistEmail]);
         $rows = [];
         foreach ($statement as $row) {
-            $language = function_exists('artist_site_language') ? artist_site_language() : 'es';
             $spanish = $this->localization->content('series', (int)$row['id'], 'es');
             $english = $this->localization->content('series', (int)$row['id'], 'en');
             $localized = $language === 'es' ? $spanish : $english;
@@ -50,7 +54,7 @@ final class AppPublishedSeriesCatalog
             }
             $rows[(string)$row['slug']] = $row;
         }
-        return $rows;
+        return $this->catalogCache[$language] = $rows;
     }
 
     public function one(string $slug): ?array

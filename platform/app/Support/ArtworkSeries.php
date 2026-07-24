@@ -180,6 +180,19 @@ class ArtworkSeries
         ]);
     }
 
+    /** Saves only the series period so the bilingual workspace never overwrites editorial text. */
+    public static function updatePeriod(PDO $pdo, int $userId, int $seriesId, mixed $yearStart, mixed $yearEnd): void
+    {
+        $current = $pdo->prepare('SELECT id FROM artwork_series WHERE id=? AND user_id=? LIMIT 1');
+        $current->execute([$seriesId, $userId]);
+        if (!$current->fetchColumn()) {
+            throw new RuntimeException('Series not found.');
+        }
+        [$normalizedStart, $normalizedEnd] = self::normalizeYearRange($yearStart, $yearEnd);
+        $pdo->prepare('UPDATE artwork_series SET year_start=?, year_end=?, updated_at=? WHERE id=? AND user_id=?')
+            ->execute([$normalizedStart, $normalizedEnd, date('c'), $seriesId, $userId]);
+    }
+
     public const YEAR_RANGE_START = 2010;
 
     /** @return array{0: ?int, 1: ?int} */

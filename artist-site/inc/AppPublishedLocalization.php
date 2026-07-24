@@ -4,6 +4,8 @@ declare(strict_types=1);
 final class AppPublishedLocalization
 {
     private ?int $userId = null;
+    /** @var array<string,array<string,array<string,mixed>>> */
+    private array $contentCache = [];
 
     public function __construct(private readonly PDO $pdo, private readonly string $artistEmail) {}
 
@@ -48,17 +50,44 @@ final class AppPublishedLocalization
         if ($entityId <= 0 || !in_array($entityType, ['series', 'artwork', 'mockup'], true)) return [];
         $locale = strtolower(trim($locale));
         if (!in_array($locale, ['es', 'en'], true)) return [];
+        return $this->cachedContent()[$entityType . '|' . $entityId . '|' . $locale] ?? [];
+    }
+
+    /**
+     * The public site resolves editorial text for every artwork and mockup it renders,
+     * so a per-entity query turns one page into thousands of round trips. Read the
+     * artist's editorial rows once and serve every lookup from memory instead.
+     *
+     * @return array<string,array<string,mixed>>
+     */
+    private function cachedContent(): array
+    {
+        $mode = $this->allowsLocalDraftMaster() ? 'draft' : 'published';
+        if (isset($this->contentCache[$mode])) return $this->contentCache[$mode];
+
+        $entries = [];
         try {
-            $useSpanishDraft = $locale === 'es' && $this->allowsLocalDraftMaster();
-            $column = $locale === 'es' && !$useSpanishDraft ? 'published_content_json' : 'content_json';
-            $publishedCondition = $locale === 'es' && !$useSpanishDraft ? ' AND is_published=1' : '';
-            $stmt = $this->pdo->prepare("SELECT {$column} FROM bilingual_editorial_content WHERE user_id=? AND entity_type=? AND entity_id=? AND locale=?{$publishedCondition} LIMIT 1");
-            $stmt->execute([$this->userId(), $entityType, $entityId, $locale]);
-            $decoded = json_decode((string)$stmt->fetchColumn(), true);
-            return is_array($decoded) ? $decoded : [];
+            $stmt = $this->pdo->prepare('SELECT entity_type,entity_id,locale,content_json,published_content_json,is_published
+                FROM bilingual_editorial_content
+                WHERE user_id=? AND entity_type IN (\'series\',\'artwork\',\'mockup\') AND locale IN (\'es\',\'en\')');
+            $stmt->execute([$this->userId()]);
+            foreach ($stmt as $row) {
+                $locale = strtolower(trim((string)$row['locale']));
+                $useSpanishDraft = $locale === 'es' && $mode === 'draft';
+                if ($locale === 'es' && !$useSpanishDraft) {
+                    if (!(int)$row['is_published']) continue;
+                    $payload = (string)$row['published_content_json'];
+                } else {
+                    $payload = (string)$row['content_json'];
+                }
+                $decoded = json_decode($payload, true);
+                if (!is_array($decoded)) continue;
+                $entries[(string)$row['entity_type'] . '|' . (int)$row['entity_id'] . '|' . $locale] = $decoded;
+            }
         } catch (PDOException) {
-            return [];
+            return $this->contentCache[$mode] = [];
         }
+        return $this->contentCache[$mode] = $entries;
     }
 
     private function allowsLocalDraftMaster(): bool

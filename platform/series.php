@@ -37,11 +37,14 @@ function series_media_url(?string $file, int $width = 360): string
     return $file !== '' ? 'media.php?file=' . rawurlencode($file) . '&thumb=1&w=' . max(240, min(900, $width)) : '';
 }
 
-function series_year_select(string $name, mixed $selected): string
+function series_year_select(string $name, mixed $selected, bool $submitOnChange = false, string $ariaLabel = ''): string
 {
     $selected = $selected !== null && $selected !== '' ? (int)$selected : null;
     $currentYear = (int)date('Y');
-    $html = '<select name="' . series_h($name) . '"><option value="">—</option>';
+    $html = '<select name="' . series_h($name) . '"'
+        . ($ariaLabel !== '' ? ' aria-label="' . series_h($ariaLabel) . '"' : '')
+        . ($submitOnChange ? ' onchange="this.form.requestSubmit()"' : '')
+        . '><option value="">—</option>';
     for ($year = $currentYear + 1; $year >= ArtworkSeries::YEAR_RANGE_START; $year--) {
         $html .= '<option value="' . $year . '"' . ($selected === $year ? ' selected' : '') . '>' . $year . '</option>';
     }
@@ -56,6 +59,17 @@ function series_year_range_label(mixed $start, mixed $end): string
     if ($start !== null && $end !== null) return ($start === $end ? (string)$start : "$start–$end") . ' · ';
     if ($start !== null) return "{$start}–Present · ";
     return (string)$end . ' · ';
+}
+
+function series_editorial_has_text(mixed $value): bool
+{
+    if (is_array($value)) {
+        foreach ($value as $item) {
+            if (series_editorial_has_text($item)) return true;
+        }
+        return false;
+    }
+    return trim((string)$value) !== '';
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -96,6 +110,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 (string)($_POST['interpretive_limits'] ?? '')
             );
             $notice = 'Dirección conceptual de la serie actualizada.';
+        } elseif ($action === 'update_series_period') {
+            ArtworkSeries::updatePeriod(
+                $pdo,
+                $userId,
+                (int)($_POST['series_id'] ?? 0),
+                (string)($_POST['year_start'] ?? ''),
+                (string)($_POST['year_end'] ?? '')
+            );
+            $notice = 'Período de la serie actualizado.';
         } elseif ($action === 'set_series_header') {
             ArtworkSeries::setHeader($pdo, $userId, (int)($_POST['series_id'] ?? 0), (string)($_POST['file'] ?? ''));
             $notice = 'Series header image updated.';
@@ -109,8 +132,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             $notice = 'Header framing updated.';
         } elseif ($action === 'publish_series') {
-            ArtworkSeries::setPublished($pdo, $userId, (int)($_POST['series_id'] ?? 0), true);
-            $notice = 'Series published to the website.';
+            $publishSeriesId = (int)($_POST['series_id'] ?? 0);
+            ArtworkSeries::setPublished($pdo, $userId, $publishSeriesId, true);
+            $notice = 'Serie publicada en el sitio del artista.';
+            if ($seriesBilingualExperiment) {
+                // El español maestro se aprueba con la misma decisión: la mesa bilingüe
+                // no expone una publicación de idioma separada.
+                $publishSpanish = $bilingualEditorialService->get($userId, 'series', $publishSeriesId, 'es');
+                if (series_editorial_has_text((array)($publishSpanish['content'] ?? []))) {
+                    $bilingualEditorialService->setSpanishPublished($userId, 'series', $publishSeriesId, true);
+                    $notice = 'Serie publicada con el español aprobado.';
+                }
+            }
         } elseif ($action === 'unpublish_series') {
             ArtworkSeries::setPublished($pdo, $userId, (int)($_POST['series_id'] ?? 0), false);
             $notice = 'Series removed from the website.';
@@ -211,16 +244,16 @@ $seriesSpanishEditorial = $selectedSeries && $seriesBilingualExperiment
 $seriesEnglishEditorial = $selectedSeries && $seriesBilingualExperiment
     ? $bilingualEditorialService->get($userId, 'series', (int)$selectedSeries['id'], 'en')
     : ['content' => [], 'private_memo' => '', 'status' => 'unprepared'];
-$seriesEditorialHasText = static function (mixed $value) use (&$seriesEditorialHasText): bool {
-    if (is_array($value)) {
-        foreach ($value as $item) {
-            if ($seriesEditorialHasText($item)) return true;
-        }
-        return false;
-    }
-    return trim((string)$value) !== '';
-};
-$seriesHasSpanishContent = $seriesEditorialHasText((array)($seriesSpanishEditorial['content'] ?? []));
+$seriesHasSpanishContent = series_editorial_has_text((array)($seriesSpanishEditorial['content'] ?? []));
+$seriesMissing = $selectedSeries ? ArtworkSeries::missingForPublish($selectedSeries) : [];
+$seriesMissingLabelsEs = ['header image' => 'imagen de portada', 'description' => 'texto de la serie'];
+$seriesMissingEs = array_map(
+    static fn(string $item): string => $seriesMissingLabelsEs[$item] ?? $item,
+    $seriesMissing
+);
+$seriesIsPublished = $selectedSeries && !empty($selectedSeries['published']);
+$seriesSpanishPending = $seriesIsPublished && !empty($seriesSpanishEditorial['has_unpublished_changes']);
+$seriesPublicationAnchor = $selectedSeries ? 'series.php?series=' . (int)$selectedSeries['id'] : 'series.php';
 $seriesEditorialStateLabel = ($seriesEnglishEditorial['status'] ?? '') === 'stale'
     ? 'English · actualizar'
     : (($seriesEnglishEditorial['status'] ?? '') === 'unprepared' ? 'English · pendiente' : 'ES + EN');
@@ -251,8 +284,8 @@ $seriesSearchFields = $selectedSeries ? [
     <style>
         .series-bilingual-title {
             display:grid;
-            grid-template-columns:160px minmax(0,1fr);
-            gap:22px;
+            grid-template-columns:160px minmax(0,1fr) auto;
+            gap:22px clamp(22px,3vw,44px);
             align-items:stretch;
             width:100%;
             box-sizing:border-box;
@@ -334,6 +367,37 @@ $seriesSearchFields = $selectedSeries ? [
             color:var(--accent);
             font:italic 500 21px/1.5 var(--font-serif);
         }
+
+        /* El período se lee como una línea editorial más del título, nunca como un formulario. */
+        .series-bilingual-period { display:flex; align-items:baseline; flex-wrap:wrap; gap:6px; margin:12px 0 0; }
+        .series-bilingual-period select {
+            width:auto;
+            padding:2px 18px 2px 4px;
+            border:0;
+            border-bottom:1px solid transparent;
+            border-radius:0;
+            background:transparent
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238b8378' stroke-width='1.4'/%3E%3C/svg%3E")
+                no-repeat right 4px center/9px 5px;
+            box-shadow:none;
+            color:var(--muted);
+            font-size:13px;
+            letter-spacing:.02em;
+            -webkit-appearance:none;
+            appearance:none;
+            cursor:pointer;
+        }
+        .series-bilingual-period select:hover { border-bottom-color:var(--line-dark,#c8beb4); color:var(--ink); }
+        .series-bilingual-period select:focus { border-bottom-color:var(--accent); box-shadow:none; color:var(--ink); outline:0; }
+        .series-bilingual-period span { color:var(--muted); font-size:13px; }
+        .series-bilingual-period__note { color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+
+        .series-bilingual-actions { display:grid; align-content:center; justify-items:center; gap:10px; }
+        .series-bilingual-actions form { margin:0; }
+        .series-bilingual-actions .status-pill { margin:0; }
+        .series-bilingual-actions__missing { max-width:160px; margin:0; color:var(--muted); font-size:10px; line-height:1.45; text-align:center; }
+        .series-bilingual-actions__missing a { color:var(--accent); text-decoration:underline; }
+        .series-bilingual-actions__retire button { width:auto; min-height:0; margin:0; padding:8px 12px; box-shadow:none; font-size:9px; }
 
         .series-bilingual-editorial {
             margin-top:18px;
@@ -447,8 +511,38 @@ $seriesSearchFields = $selectedSeries ? [
         .bilingual-publication-bar span { color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
         .bilingual-publication-bar button { min-height:38px; margin:0; padding:9px 16px; border:1px solid #d8c17e; border-radius:3px; background:#ead99f; color:#554a30; box-shadow:none; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
 
+        .series-website-decision {
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            width:150px;
+            min-width:150px;
+            height:150px;
+            min-height:150px;
+            margin:0;
+            padding:20px;
+            border-radius:4px;
+            box-shadow:0 8px 20px rgba(58,52,43,.10);
+            font-size:11px;
+            font-weight:700;
+            letter-spacing:.08em;
+            line-height:1.35;
+            text-align:center;
+            text-transform:uppercase;
+        }
+
+        .series-website-decision--publish { border:1px solid #d6c27d; background:#ead99f; color:#554a30; }
+        .series-website-decision--publish:hover,
+        .series-website-decision--publish:focus-visible { border-color:#c7ae5e; background:#e2cd86; }
+        .series-website-decision--retire { border:1px solid #c9a0a7; background:#ddbfc3; color:#5d363d; }
+        .series-website-decision--retire:hover,
+        .series-website-decision--retire:focus-visible { border-color:#b9858e; background:#d3adb3; }
+        .series-website-decision:disabled { box-shadow:none; opacity:.55; }
+
         @media (max-width:800px) {
             .series-bilingual-title { grid-template-columns:100px minmax(0,1fr); gap:14px; padding:14px; }
+            .series-bilingual-actions { grid-column:1 / -1; grid-auto-flow:column; align-items:center; justify-content:start; justify-items:start; gap:14px; padding-top:4px; border-top:1px solid var(--line); }
+            .series-website-decision { width:124px; min-width:124px; height:124px; min-height:124px; padding:14px; }
             .series-bilingual-cover { min-height:112px; }
             .series-bilingual-heading { font-size:36px; }
             .series-bilingual-title-memo { font-size:17px; }
@@ -530,6 +624,41 @@ $seriesSearchFields = $selectedSeries ? [
                     <span class="series-bilingual-label">Título universal</span>
                     <h1 class="series-bilingual-heading" aria-label="Título de la serie"><span contenteditable="true" role="textbox" data-universal-title><?= series_h($selectedSeries['title']) ?></span> <span contenteditable="false">Series</span></h1>
                     <p class="series-bilingual-title-memo">STRATA — LIMEN · SERIES X — NUHRĀ (ܢܘܗܪܐ) · no traducir</p>
+                    <form class="series-bilingual-period" method="post" action="<?= series_h($seriesPublicationAnchor) ?>">
+                        <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
+                        <input type="hidden" name="action" value="update_series_period">
+                        <input type="hidden" name="series_id" value="<?= (int)$selectedSeries['id'] ?>">
+                        <?= series_year_select('year_start', $selectedSeries['year_start'] ?? null, true, 'Año de inicio de la serie') ?>
+                        <span aria-hidden="true">—</span>
+                        <?= series_year_select('year_end', $selectedSeries['year_end'] ?? null, true, 'Año de cierre de la serie') ?>
+                        <span class="series-bilingual-period__note"><?= empty($selectedSeries['year_end']) ? 'serie abierta' : 'serie cerrada' ?></span>
+                    </form>
+                </div>
+                <div class="series-bilingual-actions">
+                    <span class="status-pill <?= $seriesIsPublished ? 'status-published' : 'status-pending' ?>"><?= $seriesIsPublished ? 'Publicada' : 'Borrador' ?></span>
+                    <form method="post" action="<?= series_h($seriesPublicationAnchor) ?>">
+                        <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
+                        <input type="hidden" name="series_id" value="<?= (int)$selectedSeries['id'] ?>">
+                        <?php if (!$seriesIsPublished): ?>
+                            <button class="series-website-decision series-website-decision--publish" type="submit" name="action" value="publish_series" <?= $seriesMissing ? 'disabled' : '' ?>><span>Publicar<br>serie</span></button>
+                        <?php elseif ($seriesSpanishPending): ?>
+                            <button class="series-website-decision series-website-decision--publish" type="submit" name="action" value="publish_series"><span>Publicar<br>cambios</span></button>
+                        <?php else: ?>
+                            <button class="series-website-decision series-website-decision--retire" type="submit" name="action" value="unpublish_series"><span>Retirar<br>serie</span></button>
+                        <?php endif; ?>
+                    </form>
+                    <?php if ($seriesMissingEs): ?>
+                        <p class="series-bilingual-actions__missing">
+                            Falta <?= series_h(implode(' · ', $seriesMissingEs)) ?>
+                            <?php if (in_array('texto de la serie', $seriesMissingEs, true)): ?><a href="#series-language-editorial">completar</a><?php endif; ?>
+                        </p>
+                    <?php elseif ($seriesIsPublished && $seriesSpanishPending): ?>
+                        <form method="post" action="<?= series_h($seriesPublicationAnchor) ?>" class="series-bilingual-actions__retire">
+                            <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
+                            <input type="hidden" name="series_id" value="<?= (int)$selectedSeries['id'] ?>">
+                            <button class="button-link secondary" type="submit" name="action" value="unpublish_series">Retirar del sitio</button>
+                        </form>
+                    <?php endif; ?>
                 </div>
             </div>
             <details class="series-direction-editor"<?= trim((string)($selectedSeries['conceptual_core'] ?? '')) === '' && trim((string)($selectedSeries['interpretive_limits'] ?? '')) === '' ? ' open' : '' ?>>
@@ -626,7 +755,6 @@ $seriesSearchFields = $selectedSeries ? [
                 </details>
             </details>
             <?php else:
-                $seriesMissing = ArtworkSeries::missingForPublish($selectedSeries);
                 $seriesYearInline = trim(series_year_range_label($selectedSeries['year_start'] ?? null, $selectedSeries['year_end'] ?? null), " \xC2\xB7");
             ?>
             <div class="catalog-heading series-detail-heading">

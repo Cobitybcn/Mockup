@@ -1119,6 +1119,7 @@ PROMPT;
         string $language,
         ?array $reference = null
     ): array {
+        $content = $this->boundMockupListCounts($content, $reference);
         $issues = $this->mockupContentIssues($content, $reference);
         if ($issues === []) return $content;
 
@@ -1173,6 +1174,7 @@ PROMPT;
                 'gemini-2.5-flash'
             ));
             $content = $this->projectToSourceShape($shape, $decoded);
+            $content = $this->boundMockupListCounts($content, $reference);
             $issues = $this->mockupContentIssues($content, $reference);
             if ($issues === []) return $content;
         }
@@ -1181,6 +1183,30 @@ PROMPT;
             'La IA no completó todos los campos obligatorios del mockup después de dos correcciones automáticas: '
             . implode('; ', $issues)
         );
+    }
+
+    private function boundMockupListCounts(array $content, ?array $reference = null): array
+    {
+        $referenceTags = $reference === null
+            ? []
+            : $this->listItems((string)($reference['tags'] ?? ''));
+        $referenceSearchTerms = $reference === null
+            ? []
+            : $this->listItems((string)($reference['search_terms'] ?? ''));
+        $maximumTags = $referenceTags !== [] ? count($referenceTags) : 14;
+        $maximumSearchTerms = $referenceSearchTerms !== [] ? count($referenceSearchTerms) : 16;
+
+        foreach ([
+            'tags' => $maximumTags,
+            'search_terms' => $maximumSearchTerms,
+        ] as $field => $maximum) {
+            $items = $this->listItems((string)($content[$field] ?? ''));
+            if ($maximum > 0 && count($items) > $maximum) {
+                $content[$field] = implode(', ', array_slice($items, 0, $maximum));
+            }
+        }
+
+        return $content;
     }
 
     private function mockupContentIssues(array $content, ?array $reference = null): array

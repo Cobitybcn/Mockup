@@ -9,6 +9,8 @@ final class AppPublishedCatalog
     private AppPublishedLocalization $localization;
     /** @var array<string,bool> */
     private array $mockupColumns = [];
+    /** @var array<string,array<string,array<string,mixed>>> */
+    private array $catalogCache = [];
 
     public function __construct(private readonly PDO $pdo, private readonly string $artistEmail)
     {
@@ -22,6 +24,11 @@ final class AppPublishedCatalog
 
     public function all(): array
     {
+        // A single mockup page resolves the catalog through all(), one() and mockup().
+        // Rebuilding it each time multiplied an already heavy read by three.
+        $language = function_exists('artist_site_language') ? artist_site_language() : 'es';
+        if (isset($this->catalogCache[$language])) return $this->catalogCache[$language];
+
         $statement = $this->pdo->prepare("SELECT p.*, a.source_image_file, a.canonical_artwork_id, a.subtitle,
                 a.title artwork_title,a.description artwork_description,a.short_description artwork_short_description,
                 a.caption artwork_caption,a.generated_json artwork_generated_json,aw.medium,
@@ -60,7 +67,6 @@ final class AppPublishedCatalog
         $statement->execute([$this->artistEmail]);
         $publications = [];
         foreach ($statement as $row) {
-            $language = function_exists('artist_site_language') ? artist_site_language() : 'es';
             $spanish = $this->localization->content('artwork', (int)$row['canonical_artwork_id'], 'es');
             $localized = $this->localization->content('artwork', (int)$row['canonical_artwork_id'], $language);
             $row['spanish_available'] = $spanish !== [];
@@ -110,7 +116,7 @@ final class AppPublishedCatalog
             $row['header_file'] = $this->headerFileForArtwork((int)$row['user_id'], $row);
             $publications[(string)$row['slug']] = $row;
         }
-        return $publications;
+        return $this->catalogCache[$language] = $publications;
     }
 
     public function one(string $slug): ?array
