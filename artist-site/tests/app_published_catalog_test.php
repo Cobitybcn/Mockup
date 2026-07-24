@@ -67,6 +67,7 @@ $pdo->exec("CREATE TABLE mockup_sheets (
     artwork_group_id INTEGER NOT NULL DEFAULT 0,
     mockup_id INTEGER,
     mockup_file TEXT NOT NULL,
+    title TEXT NOT NULL DEFAULT '',
     description TEXT NOT NULL,
     keywords TEXT NOT NULL,
     tags TEXT NOT NULL,
@@ -115,12 +116,12 @@ $pdo->exec("INSERT INTO publications (id,user_id,artwork_sheet_id,status,visibil
     VALUES (52,7,42,'published','public','2026-07-01','2026-07-01',10,'{}','first-work','first.jpg')");
 $pdo->exec("INSERT INTO root_artwork_candidates (id,artwork_id,file_name,view_type)
     VALUES (61,31,'detail.jpg','detail')");
-$pdo->exec("INSERT INTO mockup_sheets (id,user_id,artwork_id,artwork_sheet_id,artwork_group_id,mockup_file,description,keywords,tags)
-    VALUES (62,7,31,41,71,'related-cover.jpg','','','')");
-$pdo->exec("INSERT INTO mockup_sheets (id,user_id,artwork_id,artwork_sheet_id,artwork_group_id,mockup_file,description,keywords,tags)
-    VALUES (64,7,31,41,71,'related-context.jpg','','','')");
-$pdo->exec("INSERT INTO mockup_sheets (id,user_id,artwork_id,artwork_sheet_id,artwork_group_id,mockup_file,description,keywords,tags)
-    VALUES (65,7,32,42,0,'unrelated-context.jpg','','','')");
+$pdo->exec("INSERT INTO mockup_sheets (id,user_id,artwork_id,artwork_sheet_id,artwork_group_id,mockup_file,title,description,keywords,tags)
+    VALUES (62,7,31,41,71,'related-cover.jpg','Favorite context','','','')");
+$pdo->exec("INSERT INTO mockup_sheets (id,user_id,artwork_id,artwork_sheet_id,artwork_group_id,mockup_file,title,description,keywords,tags)
+    VALUES (64,7,31,41,71,'related-context.jpg','Second context','','','')");
+$pdo->exec("INSERT INTO mockup_sheets (id,user_id,artwork_id,artwork_sheet_id,artwork_group_id,mockup_file,title,description,keywords,tags)
+    VALUES (65,7,32,42,0,'unrelated-context.jpg','Unrelated context','','','')");
 $pdo->exec("INSERT INTO mockups (id,user_id,mockup_file) VALUES (72,7,'related-cover.jpg')");
 $pdo->exec("INSERT INTO mockups (id,user_id,mockup_file) VALUES (73,7,'related-context.jpg')");
 $pdo->exec("INSERT INTO mockups (id,user_id,mockup_file) VALUES (74,7,'unrelated-context.jpg')");
@@ -139,7 +140,8 @@ if (array_keys($catalog) !== ['first-work', 'test-work']) {
 if (!is_array($artwork)
     || ($artwork['artwork_views'][0]['file_name'] ?? '') !== 'detail.jpg'
     || ($artwork['header_file'] ?? '') !== 'related-cover.jpg'
-    || array_map(static fn (array $item): int => (int)($item['mockup_id'] ?? 0), $artwork['items']) !== [72, 73]) {
+    || array_map(static fn (array $item): int => (int)($item['mockup_id'] ?? 0), $artwork['items']) !== [72, 73]
+    || array_map(static fn (array $item): string => (string)($item['title'] ?? ''), $artwork['items']) !== ['Favorite context', 'Second context']) {
     fwrite(STDERR, "FAIL: published catalog cannot use a canonically related mockup as its cover.\n");
     exit(1);
 }

@@ -1620,7 +1620,16 @@ function render_published_artwork(array $site, array $artwork): void
             <?php endif; ?>
             <?php if ($galleryMockups): ?>
                 <div class="mockup-gallery" aria-label="<?= e($artwork['title'] . ' contextual mockups') ?>">
-                    <?php foreach ($galleryMockups as $mockup): ?>
+                    <?php foreach ($galleryMockups as $mockupIndex => $mockup): ?>
+                        <?php
+                        $mockupCaption = trim((string)($mockup['caption'] ?? ''));
+                        $mockupTitle = trim((string)($mockup['title'] ?? ''));
+                        if ($mockupCaption === '') {
+                            $mockupCaption = $mockupTitle !== '' && strcasecmp($mockupTitle, (string)$artwork['title']) !== 0
+                                ? $mockupTitle
+                                : (string)$artwork['title'] . ' · ' . site_t('Context study ', 'Estudio de contexto ') . ((int)$mockupIndex + 1);
+                        }
+                        ?>
                         <figure class="artwork-detail__supporting-image">
                             <a class="mockup-gallery__link" href="<?= e(url_for('artworks/' . $artwork['slug'] . '/mockups/' . $mockup['public_slug'])) ?>">
                                 <img src="<?= e(app_publication_media_url($artwork, $mockup['mockup_file'], 768)) ?>"
@@ -1629,7 +1638,7 @@ function render_published_artwork(array $site, array $artwork): void
                                     alt="<?= e($mockup['alt_text'] ?: $mockup['title'] ?: $artwork['title'] . ' contextual mockup') ?>"
                                     loading="lazy" decoding="async">
                             </a>
-                            <figcaption><?= e($mockup['caption'] ?: $mockup['title'] ?: $artwork['title']) ?></figcaption>
+                            <figcaption><?= e($mockupCaption) ?></figcaption>
                         </figure>
                     <?php endforeach; ?>
                 </div>
@@ -1918,7 +1927,10 @@ function render_stripe_payment_result(): void
 
 function render_published_mockup(array $site, array $artwork, array $mockup): void
 {
-    $title = trim((string)($mockup['title'] ?: $artwork['title'] . ' — ' . site_t('Context Study', 'Estudio de contexto')));
+    $mockupTitle = trim((string)($mockup['title'] ?? ''));
+    $title = $mockupTitle !== '' && strcasecmp($mockupTitle, (string)$artwork['title']) !== 0
+        ? $mockupTitle
+        : $artwork['title'] . ' — ' . site_t('Context Study', 'Estudio de contexto');
     $description = trim((string)($mockup['description'] ?: $mockup['caption'] ?: site_t('A contextual presentation of ', 'Una presentación contextual de ') . $artwork['title'] . site_t(' by Maurizio Valch.', ' por Maurizio Valch.')));
     $imageCaption = trim((string)($mockup['caption'] ?? ''));
     $storeOffer = app_store()?->offerForArtwork((int)($artwork['canonical_artwork_id'] ?? 0));

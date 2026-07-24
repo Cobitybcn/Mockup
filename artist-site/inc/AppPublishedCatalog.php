@@ -165,6 +165,7 @@ final class AppPublishedCatalog
     private function items(int $publicationId): array
     {
         $statement = $this->pdo->prepare('SELECT i.*,
+                COALESCE(NULLIF(i.title,\'\'),NULLIF(m.title,\'\'),\'\') resolved_title,
                 COALESCE(NULLIF(m.mockup_id,0),(
                     SELECT source.id FROM mockups source
                     WHERE source.user_id=m.user_id AND source.mockup_file=m.mockup_file
@@ -196,6 +197,8 @@ final class AppPublishedCatalog
         }
 
         foreach ($items as &$item) {
+            $item['title'] = (string)($item['resolved_title'] ?? $item['title'] ?? '');
+            unset($item['resolved_title']);
             $language = function_exists('artist_site_language') ? artist_site_language() : 'es';
             $spanish = $this->localization->content('mockup', (int)($item['mockup_id'] ?? 0), 'es');
             $localized = $this->localization->content('mockup', (int)($item['mockup_id'] ?? 0), $language);
@@ -235,7 +238,7 @@ final class AppPublishedCatalog
     {
         $statement = $this->pdo->prepare('SELECT
                 0 id,p.id publication_id,m.id mockup_sheet_id,m.id position,
-                \'context\' role,\'\' title,m.alt_text,m.caption,
+                \'context\' role,m.title title,m.alt_text,m.caption,
                 COALESCE(NULLIF(m.mockup_id,0),(
                     SELECT source.id FROM mockups source
                     WHERE source.user_id=m.user_id AND source.mockup_file=m.mockup_file
