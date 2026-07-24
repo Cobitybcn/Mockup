@@ -245,7 +245,7 @@ $seriesSearchFields = $selectedSeries ? [
     <title>Series - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css?v=18">
-    <?php if ($selectedSeries && $seriesBilingualExperiment): ?><link rel="stylesheet" href="bilingual-editorial.css?v=20260723-7"><?php endif; ?>
+    <?php if ($selectedSeries && $seriesBilingualExperiment): ?><link rel="stylesheet" href="bilingual-editorial.css?v=20260723-8"><?php endif; ?>
     <?php if ($seriesPreviewActive): ?>
         <link rel="stylesheet" href="visual-consistency-preview.css?v=2">
     <?php endif; ?>
@@ -949,6 +949,19 @@ $seriesSearchFields = $selectedSeries ? [
                     <?php endif; ?>
                 <?php endif; ?>
             </section>
+            <?php if ($selectedSeries && $seriesBilingualExperiment): ?>
+                <form
+                    class="series-delete-action"
+                    method="post"
+                    data-current-series-delete
+                    onsubmit="return confirm('¿Eliminar esta serie? Sus obras y mockups pasarán a NO SERIE.');"
+                >
+                    <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
+                    <input type="hidden" name="action" value="delete_series">
+                    <input type="hidden" name="series_id" value="<?= (int)$selectedSeries['id'] ?>">
+                    <button class="button-link secondary danger" type="submit">Eliminar serie</button>
+                </form>
+            <?php endif; ?>
         </div>
     </main>
 </div>

@@ -292,6 +292,22 @@
 .series-keyword-market input[type="checkbox"] { width:17px; height:17px; accent-color:#8fa487; }
 .series-keyword-selection footer { margin-top:18px; }
 
+.series-delete-action {
+    display:flex;
+    justify-content:flex-end;
+    margin-top:-4px;
+    padding:0 24px 30px;
+}
+
+.series-delete-action .button-link {
+    width:auto !important;
+    min-height:40px;
+    margin:0;
+    padding:9px 14px;
+    box-shadow:none;
+    font-size:10px;
+}
+
 @media (max-width:800px) {
     .series-keyword-research > summary { align-items:flex-start; }
     .series-keyword-research__state { white-space:normal; text-align:right; }
@@ -302,4 +318,5 @@
     .series-keyword-selection footer { grid-template-columns:1fr; align-items:stretch; }
     .series-keyword-import button,
     .series-keyword-selection button { width:100% !important; min-width:0; }
+    .series-delete-action { padding-right:0; padding-left:0; }
 }

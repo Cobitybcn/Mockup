@@ -339,6 +339,8 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertContains('series-bilingual-field series-bilingual-field--large', $seriesScreen, 'la dirección reutiliza exactamente el componente del texto curatorial');
     TestHarness::assertContains('grid-template-rows:subgrid', $seriesScreen, 'los tableros editoriales comparten filas reales para comparar ES y EN');
     TestHarness::assertContains('grid-row:1 / span 9', $seriesScreen, 'todos los campos SEO permanecen en la misma línea visual');
+    TestHarness::assertContains('data-current-series-delete', $seriesScreen, 'la ficha bilingüe conserva una acción visible para eliminar la serie actual');
+    TestHarness::assertContains('Sus obras y mockups pasarán a NO SERIE', $seriesScreen, 'eliminar una serie explica el destino de sus obras y mockups');
     TestHarness::assertTrue(
         !str_contains(substr(
             $seriesScreen,
