@@ -24,7 +24,7 @@ try {
         }
         $service->save($id, $userId, [
             'title' => $_POST['title'] ?? '', 'description' => $_POST['description'] ?? '',
-            'short_description' => $_POST['short_description'] ?? '', 'language' => $_POST['language'] ?? 'en',
+            'short_description' => $_POST['short_description'] ?? '', 'language' => 'en',
             'objective' => $_POST['objective'] ?? 'portfolio', 'cta_label' => $_POST['cta_label'] ?? '',
             'cta_url' => $_POST['cta_url'] ?? '', 'visibility' => $_POST['visibility'] ?? 'private',
             'publish' => $action === 'publish', 'unpublish' => $action === 'unpublish',
@@ -67,7 +67,7 @@ if ($requestedMockupId > 0) {
 $notice = (string)($_SESSION['publication_notice'] ?? ''); unset($_SESSION['publication_notice']);
 function hp($v): string { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 ?>
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Publish artwork</title><link rel="stylesheet" href="style.css"><style>
 .publish-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px}.publish-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:18px}.publish-card label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);margin:12px 0 4px}.publish-card input,.publish-card textarea,.publish-card select{width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-soft)}.publish-card textarea{min-height:90px}.mockup-picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px}.mockup-choice{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface);position:relative}.mockup-choice:has(input:checked){outline:3px solid var(--accent)}.mockup-choice img{width:100%;aspect-ratio:4/5;object-fit:cover}.mockup-choice input{position:absolute;top:8px;left:8px;width:20px;height:20px}.mockup-copy{padding:8px;font-size:11px}.channels{display:grid;gap:8px}.channel{padding:10px;border:1px solid var(--line);border-radius:6px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}@media(max-width:900px){.publish-grid{grid-template-columns:1fr}}
 </style></head><body><div class="app-shell"><?php include __DIR__.'/sidebar.php'; ?><main class="main-area"><header class="app-header"><a class="user-chip" href="account.php"><?=hp($user['email'])?></a></header><div class="workspace">

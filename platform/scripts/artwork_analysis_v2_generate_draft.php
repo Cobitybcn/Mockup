@@ -36,6 +36,9 @@ $catalogueConstraint = $catalogueTitles
     : '- No existing titles were available.';
 
 $prompt = strtr(ArtworkAnalysisV2::prompt(), [
+    '{analysis_language_instruction}' => 'Think, analyze and formulate the editorial reading directly in natural Spanish. Do not draft in English and translate afterward.',
+    '{analysis_language_name}' => 'Spanish',
+    '{analysis_language}' => 'es',
     '{artist_profile_prompt}' => ArtistProfile::hasContent($artistProfile) ? ArtistProfile::forPrompt($artistProfile) : '',
     '{catalogue_title_constraints}' => $catalogueConstraint,
     '{description_opening_type}' => (string)$strategy['description_opening_type'],

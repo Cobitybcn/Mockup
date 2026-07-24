@@ -410,6 +410,10 @@
     touch-action: none;
 }
 
+.smb-pin-media {
+    position: relative;
+}
+
 .smb-pin-card img {
     width: 100%;
     aspect-ratio: 4 / 5;
@@ -430,6 +434,13 @@
 .smb-pin-field { display: none; }
 .smb-pin-field--board { display: block; }
 .smb-pin-field > span { display: none; }
+.smb-pin-language {
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
+    display: block;
+}
+.smb-pin-language > span { display: none; }
 .smb-pin-card input,
 .smb-pin-card select,
 .smb-pin-card textarea {
@@ -444,6 +455,20 @@
     background: #fffefd;
     font: inherit;
     font-size: 10.5px;
+}
+
+.smb-pin-card .smb-pin-language select {
+    width: 45px;
+    height: 23px;
+    padding: 0 4px;
+    border: 1px solid var(--smb-line);
+    border-radius: 5px;
+    color: #6e6259;
+    background: rgba(255, 254, 253, .94);
+    box-shadow: 0 1px 4px rgba(52, 43, 36, .12);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .06em;
 }
 
 .smb-pin-card textarea {
@@ -644,6 +669,25 @@
     font-size: 9px;
 }
 .smb-publication-label small em { color: #587052; font-style: normal; font-weight: 700; }
+
+.smb-publication-language {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.smb-publication-language select {
+    width: 54px;
+    height: 27px;
+    padding: 0 6px;
+    border: 1px solid var(--smb-line);
+    border-radius: 7px;
+    color: #6e6259;
+    background: #fff;
+    font: inherit;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .06em;
+}
 
 .smb-publication-head button {
     display: grid;

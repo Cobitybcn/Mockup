@@ -11,9 +11,11 @@ require_once __DIR__ . '/app/Video/VideoStudioRepository.php';
 $user = Auth::requireUser();
 $isAdmin = Auth::isAdmin($user);
 $pdo = Database::connection();
+$bilingualEditorialService = new BilingualEditorialService($pdo);
 ArtworkSeries::ensureSchema($pdo);
 $id = max(0, (int)($_GET['id'] ?? 0));
-$bilingualExperiment = (string)($_GET['bilingual_experiment'] ?? '') === '1';
+$bilingualExperiment = $bilingualEditorialService->isEnabled((int)$user['id'])
+    || ($isAdmin && (string)($_GET['bilingual_experiment'] ?? '') === '1');
 $metadataErrorMessage = trim((string)($_GET['metadata_error'] ?? ''));
 
 function h($v): string
@@ -490,6 +492,7 @@ $artworkOwnerId = (int)($artwork['user_id'] ?? 0);
 if ($artworkOwnerId <= 0) {
     $artworkOwnerId = (int)$user['id'];
 }
+$artworkAnalysisLocale = $bilingualEditorialService->sourceLocale($artworkOwnerId);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'select_root_candidate') {
     $candidateId = max(0, (int)($_POST['candidate_id'] ?? 0));
@@ -513,7 +516,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'selec
         if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && ProviderSettings::imageProvider() === 'gemini') {
             try {
                 $artworkForV2=$artwork;$artworkForV2['root_file']=$candidateFile;
-                $generated=(new ArtworkAnalysisV2Service(new GeminiImageClient()))->generateDraft($artworkForV2,ArtistProfile::findForUser($artworkOwnerId),RESULTS_DIR.DIRECTORY_SEPARATOR.$candidateFile,'Automatic v2 analysis after root selection.');
+                $generated=(new ArtworkAnalysisV2Service(new GeminiImageClient(), $pdo))->generateDraft($artworkForV2,ArtistProfile::findForUser($artworkOwnerId),RESULTS_DIR.DIRECTORY_SEPARATOR.$candidateFile,'Automatic v2 analysis after root selection.',$artworkAnalysisLocale);
                 artwork_apply_v2_metadata($pdo,$id,$artworkOwnerId,(array)$generated['draft']);
                 header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&root_selected=1&v2_generated=1');exit;
             } catch (Throwable $v2Error) {
@@ -570,6 +573,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
         'id' => $id,
         'user_id' => $artworkOwnerId,
     ]);
+    $savedTitle = trim((string)($_POST['final_title'] ?? ''));
+    if ($savedTitle !== '') {
+        (new ArtworkSheetService($pdo))->saveArtworkTitle($id, $artworkOwnerId, $savedTitle);
+    }
 
     header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&saved=1');
     exit;
@@ -635,7 +642,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
         'id' => $id,
         'user_id' => $artworkOwnerId,
     ]);
-    (new PublicationService($pdo))->syncInheritedFromSheet((int)$sheet['id'], $artworkOwnerId);
+    $savedTitle = trim((string)($_POST['title'] ?? ''));
+    if ($savedTitle !== '') {
+        $sheetService->saveArtworkTitle($id, $artworkOwnerId, $savedTitle);
+    } else {
+        (new PublicationService($pdo))->syncInheritedFromSheet((int)$sheet['id'], $artworkOwnerId);
+    }
 
     header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&metadata_saved=1');
     exit;
@@ -771,6 +783,71 @@ if (!function_exists('artwork_latest_root_view_job_candidates')) {
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'generate_spanish_reanalysis_comparison') {
+    try {
+        Auth::requireValidCsrf((string)($_POST['csrf'] ?? ''), 'bilingual_editorial');
+        if (!$bilingualExperiment) throw new RuntimeException('The bilingual editorial pilot is not enabled for this artwork.');
+        if (!ProviderSettings::isRealMode() || !ProviderSettings::allowRealApi() || ProviderSettings::imageProvider() !== 'gemini') {
+            throw new RuntimeException('Gemini real analysis is not enabled in this environment.');
+        }
+        $imageFile = basename((string)($artwork['root_file'] ?? ''));
+        $imagePath = $imageFile !== '' ? RESULTS_DIR . DIRECTORY_SEPARATOR . $imageFile : '';
+        if ($imageFile === '' || !artwork_result_file_available($imageFile) || !is_file($imagePath)) {
+            throw new RuntimeException('Selected root artwork image was not found.');
+        }
+        $profileForComparison = ArtistProfile::findForUser($artworkOwnerId);
+        $sheetForComparison = (new ArtworkSheetService($pdo))->sheetForArtwork($id, $artworkOwnerId);
+        $generated = (new ArtworkAnalysisV2Service(new GeminiImageClient(), $pdo))->generateDraft(
+            $artwork,
+            $profileForComparison,
+            $imagePath,
+            (string)($sheetForComparison['user_notes'] ?? ''),
+            'es'
+        );
+        $comparisonDraft = (array)$generated['draft'];
+        $comparisonDraft['review'] = is_array($comparisonDraft['review'] ?? null) ? $comparisonDraft['review'] : [];
+        $comparisonDraft['review']['comparison_only'] = true;
+        $comparisonDraft['review']['comparison_created_at'] = date(DATE_ATOM);
+        if (file_put_contents(
+            (string)$generated['file'],
+            json_encode($comparisonDraft, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL
+        ) === false) {
+            throw new RuntimeException('The independent Spanish analysis could not be saved.');
+        }
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&spanish_reanalysis_ready=1#artwork-metadata');
+        exit;
+    } catch (Throwable $e) {
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&metadata_error=' . rawurlencode($e->getMessage()) . '#artwork-metadata');
+        exit;
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'use_spanish_reanalysis_comparison') {
+    try {
+        Auth::requireValidCsrf((string)($_POST['csrf'] ?? ''), 'bilingual_editorial');
+        if (!$bilingualExperiment) throw new RuntimeException('The bilingual editorial pilot is not enabled for this artwork.');
+        $comparison = artwork_v2_draft_for_image((string)($artwork['root_file'] ?? ''));
+        $comparisonDraft = is_array($comparison['data'] ?? null) ? (array)$comparison['data'] : [];
+        if (($comparisonDraft['analysis_language'] ?? '') !== 'es' || empty($comparisonDraft['review']['comparison_only'])) {
+            throw new RuntimeException('No independent Spanish reanalysis is available.');
+        }
+        $spanishState = $bilingualEditorialService->get($artworkOwnerId, 'artwork', $id, 'es');
+        $bilingualEditorialService->save(
+            $artworkOwnerId,
+            'artwork',
+            $id,
+            'es',
+            ArtworkAnalysisV2::editorialContent($comparisonDraft),
+            (string)$spanishState['private_memo']
+        );
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&spanish_reanalysis_used=1#artwork-metadata');
+        exit;
+    } catch (Throwable $e) {
+        header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&metadata_error=' . rawurlencode($e->getMessage()) . '#artwork-metadata');
+        exit;
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'apply_v2_artwork_draft') {
     try {
         $draftMatch = artwork_v2_draft_for_image((string)($artwork['root_file'] ?? ''));
@@ -792,8 +869,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         if ($imagePath === '' || !is_file($imagePath)) throw new RuntimeException('Selected root artwork image was not found.');
         $profileForV2 = ArtistProfile::findForUser($artworkOwnerId);
         $sheetForNotes = (new ArtworkSheetService($pdo))->sheetForArtwork($id, $artworkOwnerId);
-        $v2Service = new ArtworkAnalysisV2Service(new GeminiImageClient());
-        $generated=$v2Service->generateDraft($artwork, $profileForV2, $imagePath, (string)($sheetForNotes['user_notes']??''));
+        $v2Service = new ArtworkAnalysisV2Service(new GeminiImageClient(), $pdo);
+        $generated=$v2Service->generateDraft($artwork, $profileForV2, $imagePath, (string)($sheetForNotes['user_notes']??''), $artworkAnalysisLocale);
         artwork_apply_v2_metadata($pdo,$id,$artworkOwnerId,(array)$generated['draft']);
         header('Location: artwork.php?id=' . rawurlencode((string)$id) . '&v2_applied=1#artwork-metadata');
         exit;
@@ -1204,7 +1281,12 @@ $v2DraftMatch = artwork_v2_draft_for_image($rootFile);
 $v2Draft = is_array($v2DraftMatch['data'] ?? null)
     ? $v2DraftMatch['data']
     : (($artworkSheetGenerated['schema_version'] ?? '') === ArtworkAnalysisV2::SCHEMA_VERSION ? $artworkSheetGenerated : null);
-if ($v2Draft && !in_array((string)($artworkSheet['status'] ?? ''), ['validated', 'approved'], true)) {
+$spanishComparisonDraft = $v2Draft
+    && (string)($v2Draft['analysis_language'] ?? '') === 'es'
+    && !empty($v2Draft['review']['comparison_only'])
+        ? $v2Draft
+        : null;
+if ($v2Draft && !$spanishComparisonDraft && !in_array((string)($artworkSheet['status'] ?? ''), ['validated', 'approved'], true)) {
     try {
         artwork_apply_v2_metadata($pdo, $id, $artworkOwnerId, $v2Draft);
         $artwork = $sheetService->artwork($id, $artworkOwnerId);
@@ -1264,6 +1346,15 @@ $displaySubtitle = trim((string)($artworkSheet['subtitle'] ?? '')) !== '' ? trim
 $displayDescription = trim((string)($artworkSheet['description'] ?? ''));
 $artworkSeriesRows = ArtworkSeries::seriesList($pdo, $artworkOwnerId);
 $artworkSeriesName = ArtworkSeries::display((string)($artwork['series'] ?? ''));
+$artworkSpanishEditorial = $bilingualExperiment
+    ? $bilingualEditorialService->get($artworkOwnerId, 'artwork', $id, 'es')
+    : ['content' => [], 'private_memo' => '', 'status' => 'unprepared'];
+$artworkEnglishEditorial = $bilingualExperiment
+    ? $bilingualEditorialService->get($artworkOwnerId, 'artwork', $id, 'en')
+    : ['content' => [], 'private_memo' => '', 'status' => 'unprepared'];
+$artworkEditorialStateLabel = ($artworkEnglishEditorial['status'] ?? '') === 'stale'
+    ? 'English · actualizar'
+    : (($artworkEnglishEditorial['status'] ?? '') === 'unprepared' ? 'English · pendiente' : 'ES + EN');
 $publicationCopy = trim($selectedTitle . ($selectedSubtitle !== '' ? "\n" . $selectedSubtitle : '') . "\n\n" . $selectedPublicationDescription);
 
 $copyIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
@@ -1271,7 +1362,7 @@ $downloadIconSvg = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="curr
 $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"></path></svg>';
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="utf-8">
     <title>Permanent Artwork Sheet - Artwork Mockups</title>
@@ -1389,7 +1480,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .artwork-metadata-edit { width:100%; max-width:none; box-sizing:border-box; margin:12px 0 0; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-soft); }
         .artwork-metadata-edit > summary { cursor:pointer; padding:13px 16px; color:var(--accent); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
         .artwork-metadata-edit .artwork-metadata-v2-form { margin:0; max-width:none; border:0; border-top:1px solid var(--line); border-radius:0; box-shadow:none; }
-        .artwork-page-header--bilingual .artwork-title-block { width:min(1120px,100%); }
+        .artwork-page-header--bilingual .artwork-title-block { flex:1 1 auto; width:auto; max-width:none; min-width:0; }
         .artwork-page-header--bilingual .artwork-title-heading { padding-bottom:14px; border-bottom:1px solid var(--line); }
         .artwork-page-header--bilingual h1 { display:block; margin:0; padding:0; border:0; font:500 clamp(42px,4.5vw,58px)/1.05 var(--font-serif); letter-spacing:-.01em; }
         .artwork-page-header--bilingual .artwork-title-edit-button { display:none; }
@@ -1403,10 +1494,16 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .bilingual-editorial-state { color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
         .bilingual-editorial-state::after { content:'+'; display:inline-block; margin-left:14px; color:var(--accent); font:500 22px/1 var(--font-serif); vertical-align:-2px; }
         .bilingual-editorial-panel[open] .bilingual-editorial-state::after { content:'−'; }
-        .bilingual-editorial-spread { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:auto repeat(8,auto); column-gap:12px; row-gap:0; padding:14px; border-top:1px solid var(--line); }
-        .bilingual-editorial-page { display:grid; grid-row:1 / span 9; grid-template-rows:subgrid; min-width:0; padding:18px; border:1px solid var(--line); border-top:3px solid #c89aa1; background:var(--surface-soft); }
+        .bilingual-editorial-spread { display:grid; grid-template-columns:minmax(0,1fr) 72px minmax(0,1fr); grid-template-rows:auto repeat(9,auto); row-gap:0; padding:14px; border-top:1px solid var(--line); }
+        .bilingual-editorial-page { display:grid; grid-row:1 / span 10; grid-template-rows:subgrid; min-width:0; padding:18px; border:1px solid var(--line); border-top:3px solid #c89aa1; background:var(--surface-soft); }
         .bilingual-editorial-page--source { grid-column:1; }
-        .bilingual-editorial-page--english { grid-column:2; border-top-color:#9fb19a; }
+        .bilingual-editorial-page--english { grid-column:3; border-top-color:#9fb19a; }
+        .bilingual-adaptation-arrow { grid-column:2; grid-row:1; align-self:start; justify-self:center; display:flex; align-items:center; justify-content:center; gap:4px; width:64px !important; min-width:64px; height:40px; min-height:40px; margin:8px 0 0 !important; padding:0 7px; border:1px solid #d8c17e; border-radius:20px; background:#f1e4b5; color:#665735; box-shadow:none; cursor:pointer; }
+        .bilingual-adaptation-arrow[hidden] { display:none !important; }
+        .bilingual-adaptation-arrow span:not(.bilingual-adaptation-label) { font-size:8px; font-weight:700; letter-spacing:.06em; }
+        .bilingual-adaptation-arrow svg { width:14px; height:14px; flex:0 0 14px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+        .bilingual-adaptation-arrow:disabled { cursor:wait; opacity:.55; }
+        .bilingual-adaptation-label { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
         .bilingual-editorial-language { display:block; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
         .bilingual-editorial-field { min-height:96px; margin-top:16px; padding-top:13px; border-top:1px solid var(--line); }
         .bilingual-editorial-field--description { min-height:230px; }
@@ -1418,6 +1515,28 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .bilingual-editorial-memo { margin:0 14px 14px; padding:14px 6px 2px; border-top:1px solid var(--line); }
         .bilingual-editorial-memo summary { cursor:pointer; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
         .bilingual-editorial-memo .bilingual-editorial-copy { min-height:82px; }
+        .bilingual-publication-bar { display:flex; align-items:center; justify-content:space-between; gap:18px; margin:0 14px 14px; padding:14px 18px; border-top:1px solid var(--line); background:#fbf7e8; }
+        .bilingual-publication-bar span { color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
+        .bilingual-publication-bar button { min-height:38px; margin:0; padding:9px 16px; border:1px solid #d8c17e; border-radius:3px; background:#ead99f; color:#554a30; box-shadow:none; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
+        .bilingual-reanalysis { margin:0 14px 14px; border-top:1px solid var(--line); }
+        .bilingual-reanalysis > summary { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:16px 6px; cursor:pointer; list-style:none; }
+        .bilingual-reanalysis > summary::-webkit-details-marker { display:none; }
+        .bilingual-reanalysis-title strong { display:block; color:var(--ink); font:500 19px/1.2 var(--font-serif); }
+        .bilingual-reanalysis-title span { display:block; margin-top:4px; color:var(--muted); font-size:11px; }
+        .bilingual-reanalysis-state { color:#9a7b56; font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
+        .bilingual-reanalysis-state::after { content:'+'; margin-left:12px; font:500 18px/1 var(--font-serif); }
+        .bilingual-reanalysis[open] .bilingual-reanalysis-state::after { content:'−'; }
+        .bilingual-reanalysis-body { padding:0 6px 16px; }
+        .bilingual-reanalysis-intro { max-width:780px; margin:0 0 14px; color:var(--muted); font-size:13px; line-height:1.6; }
+        .bilingual-reanalysis-proposal { padding:18px; border:1px solid var(--line); border-top:3px solid #d8c17e; background:#fbf7e8; }
+        .bilingual-reanalysis-proposal > span { display:block; color:#8c7440; font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        .bilingual-reanalysis-field { margin-top:15px; padding-top:13px; border-top:1px solid rgba(140,116,64,.2); }
+        .bilingual-reanalysis-field label { display:block; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
+        .bilingual-reanalysis-field div { margin-top:9px; color:var(--ink); font-size:14px; line-height:1.65; white-space:pre-wrap; }
+        .bilingual-reanalysis-actions { display:flex; align-items:center; gap:10px; margin-top:14px; }
+        .bilingual-reanalysis-actions form { margin:0; }
+        .bilingual-reanalysis-actions button { min-height:38px; margin:0; padding:9px 16px; border:1px solid #d8c17e; border-radius:3px; background:#ead99f; color:#554a30; box-shadow:none; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
+        .bilingual-reanalysis-actions button.secondary { border-color:var(--line); background:var(--surface); color:var(--muted); }
         .artwork-website-panel { margin:22px 0 0; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
         .artwork-website-panel > summary { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 20px; cursor:pointer; list-style:none; }
         .artwork-website-panel > summary::-webkit-details-marker { display:none; }
@@ -1461,12 +1580,36 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .artwork-cover-option:hover { border-color:var(--line-dark); }
         .artwork-cover-option.is-selected { border-color:rgba(224,104,76,.72); box-shadow:inset 0 -3px rgba(224,104,76,.48); }
         .artwork-cover-option.is-selected .artwork-cover-option-copy small { color:#a65a47; }
-        .artwork-website-actions { grid-column:1 / -1; display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px; }
-        .artwork-website-actions button { min-height:44px; padding:10px 18px; }
-        .artwork-website-actions .website-publish { border-color:#bdcdb8; background:#e8f0e5; color:#354633; font-weight:700; }
+        .artwork-website-actions { grid-column:1 / -1; display:flex; justify-content:flex-end; align-items:flex-start; flex-wrap:wrap; gap:14px; padding-top:8px; }
+        .artwork-website-actions .website-decision {
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            width:136px;
+            min-width:136px;
+            height:136px;
+            min-height:136px;
+            margin:0;
+            padding:18px;
+            border-radius:4px;
+            box-shadow:0 8px 20px rgba(58,52,43,.10);
+            font-size:11px;
+            font-weight:700;
+            letter-spacing:.08em;
+            line-height:1.35;
+            text-align:center;
+            text-transform:uppercase;
+        }
+        .artwork-website-actions .website-save { border-color:#a8b9a3; background:#b9c9b4; color:#2f4231; }
+        .artwork-website-actions .website-publish { border-color:#d6c27d; background:#ead99f; color:#554a30; }
+        .artwork-website-actions .website-unpublish { border-color:#c9a0a7; background:#ddbfc3; color:#5d363d; }
+        .artwork-website-actions .website-save:hover,.artwork-website-actions .website-save:focus-visible { border-color:#91a88b; background:#a8bca2; }
+        .artwork-website-actions .website-publish:hover,.artwork-website-actions .website-publish:focus-visible { border-color:#c7ae5e; background:#e2cd86; }
+        .artwork-website-actions .website-unpublish:hover,.artwork-website-actions .website-unpublish:focus-visible { border-color:#b9858e; background:#d3adb3; }
         @media (max-width:800px) {
             .v2-admin-grid,.bilingual-editorial-spread { grid-template-columns:1fr; grid-template-rows:none; }
             .bilingual-editorial-page { display:block; grid-column:auto; grid-row:auto; }
+            .bilingual-adaptation-arrow { grid-column:1; grid-row:auto; margin:10px 0 !important; }
         }
         .artwork-sheet {
             display: grid;
@@ -2958,8 +3101,8 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             .artwork-cover-option { flex-basis:126px; grid-template-rows:136px auto; }
             .artwork-cover-option img { height:136px; }
             .artwork-website-shipping { align-items:flex-start; flex-direction:column; }
-            .artwork-website-actions { justify-content:stretch; }
-            .artwork-website-actions button { flex:1 1 100%; width:100%; }
+            .artwork-website-actions { justify-content:flex-end; }
+            .artwork-website-actions .website-decision { width:112px; min-width:112px; height:112px; min-height:112px; padding:14px; font-size:10px; }
 
             .artwork-session-header,
             .artwork-page-header {
@@ -3169,12 +3312,16 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             <a class="user-chip" href="account.php"><?= h($user['email']) ?></a>
         </header>
 
-        <div class="workspace">
+        <div class="workspace"<?= $bilingualExperiment ? ' data-bilingual-editor data-entity-type="artwork" data-entity-id="' . (int)$id . '" data-english-status="' . h((string)($artworkEnglishEditorial['status'] ?? 'unprepared')) . '" data-csrf="' . h(Auth::csrfToken('bilingual_editorial')) . '" data-endpoint="bilingual_editorial.php"' : '' ?>>
             <div class="workspace-header artwork-page-header <?= $bilingualExperiment ? 'artwork-page-header--bilingual' : '' ?>">
                 <div class="artwork-title-block">
                     <?php if ($bilingualExperiment): ?><span class="artwork-title-universal-label">Título universal</span><?php endif; ?>
                     <div class="artwork-title-heading">
-                        <h1><?= h($displayTitle) ?></h1>
+                        <?php if ($bilingualExperiment): ?>
+                            <h1><span contenteditable="true" role="textbox" data-universal-title><?= h($displayTitle) ?></span><?php if ($artworkSeriesName !== ''): ?> <span contenteditable="false">- <?= h($artworkSeriesName) ?> Series</span><?php endif; ?></h1>
+                        <?php else: ?>
+                            <h1><?= h($displayTitle) ?></h1>
+                        <?php endif; ?>
                         <button
                             class="artwork-title-edit-button"
                             type="button"
@@ -3254,23 +3401,24 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             <?php if ($bilingualExperiment): ?>
                 <?php
                 $bilingualEditorialFields = [
-                    ['es' => 'Subtítulo', 'en' => 'Subtitle', 'value' => $displaySubtitle, 'description' => false, 'es_placeholder' => 'Subtítulo editorial en español…', 'en_placeholder' => 'No English subtitle is currently available.'],
-                    ['es' => 'Descripción', 'en' => 'Description', 'value' => $displayDescription, 'description' => true, 'es_placeholder' => 'Escribí la descripción original en español…', 'en_placeholder' => 'No English description is currently available.'],
-                    ['es' => 'Resumen breve', 'en' => 'Short description', 'value' => (string)($artworkSheet['short_description'] ?? ''), 'description' => false, 'es_placeholder' => 'Dos o tres frases para series, tarjetas y mockups…', 'en_placeholder' => 'No English short description is currently available.'],
-                    ['es' => 'Palabras clave', 'en' => 'Keywords', 'value' => (string)($artworkSheet['keywords'] ?? ''), 'description' => false, 'es_placeholder' => 'Conceptos, temas y materiales…', 'en_placeholder' => 'No English keywords are currently available.'],
-                    ['es' => 'Etiquetas', 'en' => 'Tags', 'value' => (string)($artworkSheet['tags'] ?? ''), 'description' => false, 'es_placeholder' => 'Etiquetas editoriales…', 'en_placeholder' => 'No English tags are currently available.'],
-                    ['es' => 'Términos de búsqueda', 'en' => 'Long-tail terms', 'value' => implode("\n", array_map('strval', $artworkSheetLongTail)), 'description' => false, 'es_placeholder' => 'Frases de búsqueda en español…', 'en_placeholder' => 'No English search terms are currently available.'],
-                    ['es' => 'Texto alternativo', 'en' => 'Alt text', 'value' => (string)($artworkSheet['alt_text'] ?? ''), 'description' => false, 'es_placeholder' => 'Descripción visual accesible…', 'en_placeholder' => 'No English alt text is currently available.'],
-                    ['es' => 'Caption', 'en' => 'Caption', 'value' => (string)($artworkSheet['caption'] ?? ''), 'description' => false, 'es_placeholder' => 'Texto breve para publicación…', 'en_placeholder' => 'No English caption is currently available.'],
+                    ['key' => 'subtitle', 'es' => 'Subtítulo', 'en' => 'Subtitle', 'description' => false, 'es_placeholder' => 'Subtítulo editorial en español…', 'en_placeholder' => 'International English subtitle…'],
+                    ['key' => 'description', 'es' => 'Descripción', 'en' => 'Description', 'description' => true, 'es_placeholder' => 'Escribí la descripción original en español…', 'en_placeholder' => 'International English description…'],
+                    ['key' => 'short_description', 'es' => 'Resumen breve', 'en' => 'Short description', 'description' => false, 'es_placeholder' => 'Dos o tres frases para series, tarjetas y mockups…', 'en_placeholder' => 'Short international description…'],
+                    ['key' => 'tags', 'es' => 'Tags de catálogo', 'en' => 'Catalogue tags', 'description' => false, 'es_placeholder' => 'Tipo, estilos, técnicas, materiales, soporte, color, superficie y formato…', 'en_placeholder' => 'Type, styles, techniques, materials, support, color, surface and format…'],
+                    ['key' => 'search_terms', 'es' => 'Búsquedas y long tails', 'en' => 'Searches and long tails', 'description' => false, 'es_placeholder' => 'Búsquedas amplias y específicas que usaría un comprador…', 'en_placeholder' => 'Broad and specific searches an international buyer would use…'],
+                    ['key' => 'seo_title', 'es' => 'Título SEO', 'en' => 'SEO title', 'description' => false, 'es_placeholder' => 'Título de la obra + categoría clara + artista…', 'en_placeholder' => 'Artwork title + clear category + artist…'],
+                    ['key' => 'seo_description', 'es' => 'Descripción SEO', 'en' => 'SEO description', 'description' => false, 'es_placeholder' => 'Descripción breve y útil para buscadores…', 'en_placeholder' => 'Useful international search-result description…'],
+                    ['key' => 'alt_text', 'es' => 'Texto alternativo', 'en' => 'Alt text', 'description' => false, 'es_placeholder' => 'Descripción visual accesible…', 'en_placeholder' => 'Accessible English visual description…'],
+                    ['key' => 'caption', 'es' => 'Pie de imagen', 'en' => 'Caption', 'description' => false, 'es_placeholder' => 'Texto breve para publicación…', 'en_placeholder' => 'International publication caption…'],
                 ];
                 ?>
-                <details class="bilingual-editorial-panel" id="artwork-metadata">
+                <details class="bilingual-editorial-panel" id="artwork-metadata"<?= isset($_GET['spanish_reanalysis_ready']) || isset($_GET['spanish_reanalysis_used']) || $metadataErrorMessage !== '' ? ' open' : '' ?>>
                     <summary>
                         <span class="bilingual-editorial-summary">
                             <strong>Espacio editorial</strong>
-                            <span>Contenido original en español y versión publicada en inglés.</span>
+                            <span>Español maestro e inglés internacional para publicación.</span>
                         </span>
-                        <span class="bilingual-editorial-state">Español + English</span>
+                        <span class="bilingual-editorial-state" data-bilingual-save-state><?= h($artworkEditorialStateLabel) ?></span>
                     </summary>
                     <div class="bilingual-editorial-spread">
                         <article class="bilingual-editorial-page bilingual-editorial-page--source">
@@ -3278,23 +3426,81 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                             <?php foreach ($bilingualEditorialFields as $field): ?>
                                 <section class="bilingual-editorial-field <?= $field['description'] ? 'bilingual-editorial-field--description' : '' ?>">
                                     <label><?= h($field['es']) ?></label>
-                                    <div class="bilingual-editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="<?= h($field['es_placeholder']) ?>"></div>
+                                    <div class="bilingual-editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-editorial-locale="es" data-editorial-field="<?= h($field['key']) ?>" data-placeholder="<?= h($field['es_placeholder']) ?>"><?= h($artworkSpanishEditorial['content'][$field['key']] ?? '') ?></div>
                                 </section>
                             <?php endforeach; ?>
                         </article>
+                        <button class="bilingual-adaptation-arrow" type="button" data-editorial-adapt hidden>
+                            <span data-adaptation-source-short>ES</span>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M14 7l5 5-5 5"/></svg>
+                            <span data-adaptation-target-short>EN</span>
+                            <span class="bilingual-adaptation-label" data-adaptation-label>Adaptar al inglés internacional sin traducción literal</span>
+                        </button>
                         <article class="bilingual-editorial-page bilingual-editorial-page--english">
-                            <span class="bilingual-editorial-language">English · current version</span>
+                            <span class="bilingual-editorial-language">English · publicación internacional</span>
                             <?php foreach ($bilingualEditorialFields as $field): ?>
                                 <section class="bilingual-editorial-field <?= $field['description'] ? 'bilingual-editorial-field--description' : '' ?>">
                                     <label><?= h($field['en']) ?></label>
-                                    <div class="bilingual-editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="<?= h($field['en_placeholder']) ?>"><?= h($field['value']) ?></div>
+                                    <div class="bilingual-editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-editorial-locale="en" data-editorial-field="<?= h($field['key']) ?>" data-placeholder="<?= h($field['en_placeholder']) ?>"><?= h($artworkEnglishEditorial['content'][$field['key']] ?? '') ?></div>
                                 </section>
                             <?php endforeach; ?>
                         </article>
                     </div>
+                    <div class="bilingual-reanalysis-actions" style="margin:0 20px 14px;">
+                        <button type="button" data-editorial-refresh>Preparar website</button>
+                    </div>
+                    <?php $spanishComparisonContent = $spanishComparisonDraft ? ArtworkAnalysisV2::editorialContent($spanishComparisonDraft) : []; ?>
+                    <details class="bilingual-reanalysis"<?= isset($_GET['spanish_reanalysis_ready']) || $metadataErrorMessage !== '' ? ' open' : '' ?>>
+                        <summary>
+                            <span class="bilingual-reanalysis-title">
+                                <strong>Reanalizar obra en español</strong>
+                                <span>Una segunda lectura creada directamente desde la imagen.</span>
+                            </span>
+                            <span class="bilingual-reanalysis-state"><?= $spanishComparisonDraft ? 'Propuesta disponible' : 'Comparar' ?></span>
+                        </summary>
+                        <div class="bilingual-reanalysis-body">
+                            <?php if ($metadataErrorMessage !== ''): ?><div class="notice error"><?= h($metadataErrorMessage) ?></div><?php endif; ?>
+                            <p class="bilingual-reanalysis-intro">Esta opción vuelve a observar la imagen con tu perfil y la dirección actual de su serie. Genera una propuesta española independiente sin modificar los campos de arriba.</p>
+                            <?php if ($spanishComparisonDraft): ?>
+                                <article class="bilingual-reanalysis-proposal">
+                                    <span>Análisis nuevo desde la imagen · español</span>
+                                    <?php foreach ($bilingualEditorialFields as $field): ?>
+                                        <?php $comparisonValue = trim((string)($spanishComparisonContent[$field['key']] ?? '')); ?>
+                                        <?php if ($comparisonValue !== ''): ?>
+                                            <section class="bilingual-reanalysis-field">
+                                                <label><?= h($field['es']) ?></label>
+                                                <div><?= h($comparisonValue) ?></div>
+                                            </section>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </article>
+                                <p class="bilingual-reanalysis-intro" style="margin-top:12px;">“Usar esta propuesta” reemplaza el español maestro editable. Después, “Preparar website” reconstruye el inglés internacional.</p>
+                                <div class="bilingual-reanalysis-actions">
+                                    <form method="post">
+                                        <input type="hidden" name="action" value="use_spanish_reanalysis_comparison">
+                                        <input type="hidden" name="csrf" value="<?= h(Auth::csrfToken('bilingual_editorial')) ?>">
+                                        <button type="submit">Usar esta propuesta</button>
+                                    </form>
+                                    <form method="post" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent='Analizando…';">
+                                        <input type="hidden" name="action" value="generate_spanish_reanalysis_comparison">
+                                        <input type="hidden" name="csrf" value="<?= h(Auth::csrfToken('bilingual_editorial')) ?>">
+                                        <button type="submit" class="secondary">Generar otra</button>
+                                    </form>
+                                </div>
+                            <?php else: ?>
+                                <div class="bilingual-reanalysis-actions">
+                                    <form method="post" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent='Analizando…';">
+                                        <input type="hidden" name="action" value="generate_spanish_reanalysis_comparison">
+                                        <input type="hidden" name="csrf" value="<?= h(Auth::csrfToken('bilingual_editorial')) ?>">
+                                        <button type="submit">Generar análisis español</button>
+                                    </form>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </details>
                     <details class="bilingual-editorial-memo">
                         <summary>Memo privado de la obra</summary>
-                        <div class="bilingual-editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Ideas, decisiones y recordatorios que no se publican…"></div>
+                        <div class="bilingual-editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-private-memo data-editorial-locale="es" data-placeholder="Ideas, decisiones y recordatorios que no se publican…"><?= h($artworkSpanishEditorial['private_memo'] ?? '') ?></div>
                     </details>
                 </details>
             <?php elseif (true): ?>
@@ -3639,11 +3845,11 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                             </details>
                                         </div>
                                         <div class="artwork-website-actions">
-                                            <button type="submit" name="website_intent" value="save">Save website settings</button>
+                                            <button class="website-decision website-save" type="submit" name="website_intent" value="save"><span>Save Website<br>Settings</span></button>
                                             <?php if ($websiteStatus === 'published'): ?>
-                                                <button type="submit" name="website_intent" value="unpublish">Unpublish</button>
+                                                <button class="website-decision website-unpublish" type="submit" name="website_intent" value="unpublish"><span>Unpublish<br>Artwork</span></button>
                                             <?php else: ?>
-                                                <button class="website-publish" type="submit" name="website_intent" value="publish">Publish artwork</button>
+                                                <button class="website-decision website-publish" type="submit" name="website_intent" value="publish"><span>Publish<br>Artwork</span></button>
                                             <?php endif; ?>
                                         </div>
                                     </div>
@@ -4623,5 +4829,6 @@ document.querySelectorAll('[data-website-cover-picker]').forEach((picker) => {
     });
 });
 </script>
+<?php if ($bilingualExperiment): ?><script src="bilingual-editorial.js?v=20260723-17"></script><?php endif; ?>
 </body>
 </html>

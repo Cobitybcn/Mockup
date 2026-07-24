@@ -12,11 +12,13 @@ final class MetaSocialDraftService
         array $user,
         string $channel,
         string $destinationUrl = '',
-        string $purpose = 'artist'
+        string $purpose = 'artist',
+        string $locale = 'en'
     ): int {
         $userId = (int)($user['id'] ?? 0);
         $channel = $this->channel($channel);
         $purpose = $this->purpose($purpose, $user);
+        $locale = $locale === 'es' ? 'es' : 'en';
         $this->assertDestination($destinationUrl);
 
         $stmt = $this->pdo->prepare(
@@ -31,17 +33,32 @@ final class MetaSocialDraftService
             throw new RuntimeException('Mockup not found.');
         }
 
-        $generated = json_decode((string)($row['generated_json'] ?? ''), true);
-        $v2 = (array)($generated['mockup_analysis_v2'] ?? []);
-        $variant = (array)($v2['channels'][$channel] ?? []);
+        $reviewed = (new MockupSocialContentService($this->pdo))->forMockup($userId, $mockupId, $locale);
+        $reviewedContent = (array)($reviewed['content'] ?? []);
+        $variant = (array)($reviewedContent['social'][$channel] ?? []);
+        $neutral = $reviewedContent;
         if (!$variant) {
-            throw new RuntimeException('Generate mockup analysis v2 before preparing Meta content.');
+            $generated = json_decode((string)($row['generated_json'] ?? ''), true);
+            $v2 = (array)($generated['mockup_analysis_v2'] ?? []);
+            if ((string)($v2['analysis_language'] ?? '') !== 'es') {
+                throw new RuntimeException('Generá y revisá primero el contenido bilingüe del mockup.');
+            }
+            $variant = (array)($v2['channels'][$channel] ?? []);
+            $neutral = (array)($v2['neutral'] ?? []);
+        }
+        if (!$variant) {
+            throw new RuntimeException('El contenido del mockup no contiene material para este canal de Meta.');
         }
 
-        $neutral = (array)($v2['neutral'] ?? []);
         $title = trim((string)($variant['headline'] ?? $variant['hook'] ?? ''));
-        $description = trim((string)($variant['post_text'] ?? $variant['caption'] ?? ''));
-        $hashtags = $this->normalizeHashtags((array)($variant['hashtags'] ?? []));
+        $copyParts = $channel === 'facebook'
+            ? [$variant['post_text'] ?? '', $variant['link_description'] ?? '', $variant['cta'] ?? '']
+            : [$variant['caption'] ?? '', $variant['cta'] ?? ''];
+        $description = implode("\n\n", array_values(array_filter(array_map(
+            static fn (mixed $part): string => trim((string)$part),
+            $copyParts
+        ))));
+        $hashtags = $this->normalizeHashtags(MockupSocialContentService::list($variant['hashtags'] ?? []));
         $altText = trim((string)($neutral['alt_text'] ?? $row['sheet_alt_text'] ?? ''));
         if ($description === '') {
             throw new RuntimeException('The Meta analysis did not produce publication copy.');
@@ -52,6 +69,7 @@ final class MetaSocialDraftService
             'mockup_id' => $mockupId,
             'channel' => $channel,
             'purpose' => $purpose,
+            'locale' => $locale,
             'source' => $variant,
         ];
         $now = date('c');

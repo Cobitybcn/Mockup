@@ -20,7 +20,7 @@ final class AssistantView
         $userInitial = mb_strtoupper(mb_substr($userName, 0, 1));
         $provider = $config->provider();
         ?>
-        <link rel="stylesheet" href="assets/assistant.css?v=20260715r">
+        <link rel="stylesheet" href="assets/assistant.css?v=20260722title1">
         <div class="faithful-assistant" data-assistant-root data-assistant-mode="connected" data-endpoint="assistant_api.php" data-csrf="<?=$h($_SESSION['assistant_csrf'])?>" data-context="<?=$h($encoded)?>" data-user-name="<?=$h($userName)?>">
             <button type="button" class="faithful-assistant-launcher" data-assistant-open aria-label="Abrir Artwork Assistant" aria-expanded="false">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.8 13.7 9l5.2 1.7-5.2 1.7-1.7 5.2-1.7-5.2-5.2-1.7L10.3 9 12 3.8Z"/><path d="m18.2 16 .8 2.3 2.3.8-2.3.8-.8 2.3-.8-2.3-2.3-.8 2.3-.8.8-2.3Z"/></svg>
@@ -146,7 +146,7 @@ final class AssistantView
                 </main>
             </section>
         </div>
-        <script src="assets/assistant.js?v=20260722en" defer></script>
+        <script src="assets/assistant.js?v=20260722title1" defer></script>
         <?php
     }
 }

@@ -28,6 +28,8 @@ class ArtworkSeries
             self::addColumnIfMissing($pdo, 'artwork_series', 'keywords', 'TEXT NULL');
             self::addColumnIfMissing($pdo, 'artwork_series', 'tags', 'TEXT NULL');
             self::addColumnIfMissing($pdo, 'artwork_series', 'seo_description', 'VARCHAR(500) NOT NULL DEFAULT \'\'');
+            self::addColumnIfMissing($pdo, 'artwork_series', 'conceptual_core', 'MEDIUMTEXT NULL');
+            self::addColumnIfMissing($pdo, 'artwork_series', 'interpretive_limits', 'MEDIUMTEXT NULL');
             self::addColumnIfMissing($pdo, 'artwork_series', 'year_start', 'SMALLINT UNSIGNED NULL');
             self::addColumnIfMissing($pdo, 'artwork_series', 'year_end', 'SMALLINT UNSIGNED NULL');
             self::addColumnIfMissing($pdo, 'artwork_series', 'header_file', 'VARCHAR(255) NOT NULL DEFAULT \'\'');
@@ -61,6 +63,8 @@ class ArtworkSeries
         self::addColumnIfMissing($pdo, 'artwork_series', 'keywords', 'TEXT');
         self::addColumnIfMissing($pdo, 'artwork_series', 'tags', 'TEXT');
         self::addColumnIfMissing($pdo, 'artwork_series', 'seo_description', "TEXT NOT NULL DEFAULT ''");
+        self::addColumnIfMissing($pdo, 'artwork_series', 'conceptual_core', 'TEXT');
+        self::addColumnIfMissing($pdo, 'artwork_series', 'interpretive_limits', 'TEXT');
         self::addColumnIfMissing($pdo, 'artwork_series', 'year_start', 'INTEGER NULL');
         self::addColumnIfMissing($pdo, 'artwork_series', 'year_end', 'INTEGER NULL');
         self::addColumnIfMissing($pdo, 'artwork_series', 'header_file', "TEXT NOT NULL DEFAULT ''");
@@ -140,7 +144,7 @@ class ArtworkSeries
         $slug = self::uniqueSlug($pdo, $userId, $requestedSlug !== '' ? $requestedSlug : $title, $seriesId);
         [$yearStart, $yearEnd] = self::normalizeYearRange($fields['year_start'] ?? '', $fields['year_end'] ?? '');
         $now = date('c');
-        $stmt = $pdo->prepare('UPDATE artwork_series SET title=?, slug=?, subtitle=?, description=?, long_description=?, tags=?, keywords=?, seo_description=?, year_start=?, year_end=?, updated_at=? WHERE id=? AND user_id=?');
+        $stmt = $pdo->prepare('UPDATE artwork_series SET title=?, slug=?, subtitle=?, description=?, long_description=?, tags=?, keywords=?, seo_description=?, conceptual_core=?, interpretive_limits=?, year_start=?, year_end=?, updated_at=? WHERE id=? AND user_id=?');
         $stmt->execute([
             $title, $slug,
             trim((string)($fields['subtitle'] ?? '')),
@@ -149,11 +153,33 @@ class ArtworkSeries
             trim((string)($fields['tags'] ?? '')),
             trim((string)($fields['keywords'] ?? '')),
             trim((string)($fields['seo_description'] ?? '')),
+            trim((string)($fields['conceptual_core'] ?? '')),
+            trim((string)($fields['interpretive_limits'] ?? '')),
             $yearStart, $yearEnd,
             $now, $seriesId, $userId,
         ]);
         $stmt = $pdo->prepare('UPDATE artworks SET series = ? WHERE user_id = ? AND series_id = ?');
         $stmt->execute([$title, $userId, $seriesId]);
+    }
+
+    public static function updateDirection(PDO $pdo, int $userId, int $seriesId, string $conceptualCore, string $interpretiveLimits): void
+    {
+        $conceptualCore = trim($conceptualCore);
+        $interpretiveLimits = trim($interpretiveLimits);
+        $current = $pdo->prepare('SELECT conceptual_core,interpretive_limits FROM artwork_series WHERE id=? AND user_id=? LIMIT 1');
+        $current->execute([$seriesId, $userId]);
+        $previous = $current->fetch(PDO::FETCH_ASSOC);
+        if (!$previous) {
+            throw new RuntimeException('Series not found.');
+        }
+        $stmt = $pdo->prepare('UPDATE artwork_series SET conceptual_core=?, interpretive_limits=?, updated_at=? WHERE id=? AND user_id=?');
+        $stmt->execute([
+            $conceptualCore,
+            $interpretiveLimits,
+            date('c'),
+            $seriesId,
+            $userId,
+        ]);
     }
 
     public const YEAR_RANGE_START = 2010;

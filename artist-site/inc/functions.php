@@ -17,6 +17,54 @@ function safe_rich_text(string $html): string
     return nl2br(e(trim($text)), false);
 }
 
+function artist_site_language(): string
+{
+    static $resolved = null;
+    if (is_string($resolved)) return $resolved;
+
+    $requested = strtolower(trim((string)($_GET['lang'] ?? '')));
+    $stored = strtolower(trim((string)($_COOKIE['artist_site_language'] ?? '')));
+    $resolved = in_array($requested, ['es', 'en'], true)
+        ? $requested
+        : (in_array($stored, ['es', 'en'], true) ? $stored : 'en');
+
+    if ($requested === $resolved && !headers_sent()) {
+        $cookiePath = rtrim(base_path(), '/') . '/';
+        setcookie('artist_site_language', $resolved, [
+            'expires' => time() + 31536000,
+            'path' => $cookiePath === '//' ? '/' : $cookiePath,
+            'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+        $_COOKIE['artist_site_language'] = $resolved;
+    }
+
+    return $resolved;
+}
+
+function site_t(string $english, string $spanish): string
+{
+    return artist_site_language() === 'es' ? $spanish : $english;
+}
+
+function artist_site_url_with_language(string $url, string $language): string
+{
+    $language = in_array($language, ['es', 'en'], true) ? $language : 'en';
+    [$urlWithoutFragment, $fragment] = array_pad(explode('#', $url, 2), 2, null);
+    [$base, $queryString] = array_pad(explode('?', $urlWithoutFragment, 2), 2, '');
+    parse_str($queryString, $query);
+    $query['lang'] = $language;
+    $localized = $base . '?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986);
+    return $localized . ($fragment !== null ? '#' . $fragment : '');
+}
+
+function artist_site_language_url(string $language): string
+{
+    $uri = (string)($_SERVER['REQUEST_URI'] ?? '/');
+    return artist_site_url_with_language($uri, $language);
+}
+
 function studio_note_image_file(string $source): string
 {
     $source = html_entity_decode(trim($source), ENT_QUOTES | ENT_HTML5, 'UTF-8');
@@ -249,6 +297,25 @@ function page_meta(string $title, string $description, string $canonical, string
         'canonical' => $canonical,
         'image' => $image,
     ];
+}
+
+function site_absolute_asset_url(string $url, string $siteUrl): string
+{
+    $url = trim($url);
+    if ($url === '' || preg_match('~^https?://~i', $url)) return $url;
+
+    $siteUrl = rtrim(trim($siteUrl), '/');
+    if (str_starts_with($url, '//')) {
+        $scheme = strtolower((string)(parse_url($siteUrl, PHP_URL_SCHEME) ?: 'https'));
+        return $scheme . ':' . $url;
+    }
+    if (str_starts_with($url, '/')) {
+        $scheme = (string)(parse_url($siteUrl, PHP_URL_SCHEME) ?: 'https');
+        $host = (string)(parse_url($siteUrl, PHP_URL_HOST) ?: '');
+        $port = parse_url($siteUrl, PHP_URL_PORT);
+        if ($host !== '') return $scheme . '://' . $host . ($port ? ':' . $port : '') . $url;
+    }
+    return $siteUrl . '/' . ltrim($url, '/');
 }
 
 function render_artwork_card(string $slug, array $artwork, array $series): void

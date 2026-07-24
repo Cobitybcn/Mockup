@@ -3,9 +3,12 @@ declare(strict_types=1);
 
 final class ArtworkAnalysisV2Service
 {
-    public function __construct(private GeminiImageClient $client) {}
+    public function __construct(
+        private GeminiImageClient $client,
+        private readonly ?PDO $pdo = null
+    ) {}
 
-    public function generateDraft(array $artwork, array $artistProfile, string $imagePath, string $notes = ''): array
+    public function generateDraft(array $artwork, array $artistProfile, string $imagePath, string $notes = '', string $analysisLocale = 'es'): array
     {
         if (!is_file($imagePath)) throw new RuntimeException('Root artwork image not found for v2 analysis.');
         $artworkId = (int)($artwork['id'] ?? 0);
@@ -18,13 +21,21 @@ final class ArtworkAnalysisV2Service
             basename($imagePath)
         );
         $titles = ArtworkOriginalityChecker::catalogueTitles(__DIR__ . '/../../analysis', $excludeBase);
+        $analysisLocale = 'es';
+        $analysisLanguageName = 'Spanish';
+        $analysisLanguageInstruction = 'Think, analyze and formulate the editorial reading directly in natural Spanish. Do not draft in English and translate afterward.';
         $prompt = strtr(ArtworkAnalysisV2::prompt(), [
+            '{analysis_language_instruction}'=>$analysisLanguageInstruction,
+            '{analysis_language_name}'=>$analysisLanguageName,
+            '{analysis_language}'=>$analysisLocale,
             '{artist_profile_prompt}'=>ArtistProfile::hasContent($artistProfile) ? ArtistProfile::forPrompt($artistProfile) : '',
+            '{series_context}'=>$this->seriesContext($artwork),
             '{catalogue_title_constraints}'=>$titles ? implode("\n", array_map(static fn(string $v): string=>'- '.$v, $titles)) : '- No existing titles were available.',
             '{description_opening_type}'=>(string)$strategy['description_opening_type'],
             '{description_opening_rhythm}'=>(string)$strategy['description_opening_rhythm'],
             '{description_structure_type}'=>(string)$strategy['description_structure_type'],
             '{recent_opening_types_to_avoid}'=>implode(', ', (array)$strategy['recent_opening_types_to_avoid']) ?: 'none recorded',
+            '{search_intent_rules}'=>SearchIntentPrompt::forEntity('artwork'),
             '{artwork_id}'=>(string)$artworkId,
             '{title}'=>(string)($artwork['final_title']??''),
             '{artist}'=>(string)($artistProfile['artist_name']??''),
@@ -46,7 +57,7 @@ final class ArtworkAnalysisV2Service
         while ($attempts < 3) {
             $attempts++;
             $draft = $this->request($prompt, $imagePath);
-            $this->finalize($draft, $artworkId, $imagePath, $strategy, $excludeBase, $attempts);
+            $this->finalize($draft, $artworkId, $imagePath, $strategy, $excludeBase, $attempts, $analysisLocale);
             $errors = ArtworkAnalysisV2::validate($draft, false);
             $titleRejected = ($draft['originality_check']['title_unique'] ?? false) !== true;
             if (!$titleRejected && !$errors) break;
@@ -72,6 +83,51 @@ final class ArtworkAnalysisV2Service
         return ['draft'=>$draft, 'file'=>$output];
     }
 
+    private function seriesContext(array $artwork): string
+    {
+        $fallbackTitle = trim((string)($artwork['series'] ?? ''));
+        $seriesId = (int)($artwork['series_id'] ?? 0);
+        $userId = (int)($artwork['user_id'] ?? 0);
+        if (!$this->pdo || $seriesId <= 0 || $userId <= 0) {
+            return $fallbackTitle !== ''
+                ? "Series title: {$fallbackTitle}\nNo additional artist-authored series context was supplied."
+                : 'This artwork has no supplied series context.';
+        }
+
+        try {
+            $statement = $this->pdo->prepare(
+                'SELECT title,subtitle,description,long_description,conceptual_core,interpretive_limits
+                 FROM artwork_series WHERE id=? AND user_id=? LIMIT 1'
+            );
+            $statement->execute([$seriesId, $userId]);
+            $series = $statement->fetch(PDO::FETCH_ASSOC);
+        } catch (Throwable) {
+            $series = false;
+        }
+        if (!is_array($series)) {
+            return $fallbackTitle !== ''
+                ? "Series title: {$fallbackTitle}\nNo additional artist-authored series context was found."
+                : 'This artwork has no supplied series context.';
+        }
+
+        $labels = [
+            'title' => 'Series title',
+            'subtitle' => 'Series subtitle',
+            'description' => 'Series presentation',
+            'long_description' => 'Series curatorial text',
+            'conceptual_core' => 'Artist direction',
+            'interpretive_limits' => 'Interpretive limits',
+        ];
+        $lines = [];
+        foreach ($labels as $field => $label) {
+            $value = trim((string)($series[$field] ?? ''));
+            if ($value !== '') {
+                $lines[] = "{$label}: {$value}";
+            }
+        }
+        return $lines !== [] ? implode("\n", $lines) : 'The linked series has no artist-authored context yet.';
+    }
+
     private function request(string $prompt, string $imagePath): array
     {
         $raw = $this->client->generateText([$this->client->textPart($prompt), $this->client->imagePart($imagePath)], 'gemini-2.5-flash');
@@ -84,10 +140,11 @@ final class ArtworkAnalysisV2Service
         return $decoded;
     }
 
-    private function finalize(array &$draft, int $artworkId, string $imagePath, array $strategy, string $excludeBase, int $attempts): void
+    private function finalize(array &$draft, int $artworkId, string $imagePath, array $strategy, string $excludeBase, int $attempts, string $analysisLocale): void
     {
         $draft['schema_version'] = ArtworkAnalysisV2::SCHEMA_VERSION;
         $draft['artwork_id'] = $artworkId;
+        $draft['analysis_language'] = $analysisLocale;
         $draft['source']['image_file'] = basename($imagePath);
         $draft['source']['analysis_prompt_version'] = 'v2';
         $draft['source']['analyzed_at'] = date(DATE_ATOM);

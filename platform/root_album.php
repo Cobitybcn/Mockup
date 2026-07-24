@@ -1075,9 +1075,9 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
                             <?php foreach ($albumArtworks as $albumArtwork): ?>
                                 <?php
                                 if ($selectedArtworkSeriesId > 0) $desktopSeriesOrder++;
-                                $title = trim((string)($albumArtwork['group_title'] ?? ''));
+                                $title = trim((string)($albumArtwork['final_title'] ?? ''));
                                 if ($title === '') {
-                                    $title = trim((string)($albumArtwork['final_title'] ?? ''));
+                                    $title = trim((string)($albumArtwork['group_title'] ?? ''));
                                 }
                                 if ($title === '') {
                                     $title = 'Untitled';
@@ -1174,8 +1174,8 @@ function root_album_adopt_root_artwork(PDO $pdo, int $userId, string $rootFile):
         <div class="merge-artwork-picker" data-merge-picker aria-label="Choose duplicate artwork">
             <?php foreach ($albumArtworks as $mergeCandidate): ?>
                 <?php
-                $mergeTitle = trim((string)($mergeCandidate['group_title'] ?? ''));
-                if ($mergeTitle === '') $mergeTitle = trim((string)($mergeCandidate['final_title'] ?? ''));
+                $mergeTitle = trim((string)($mergeCandidate['final_title'] ?? ''));
+                if ($mergeTitle === '') $mergeTitle = trim((string)($mergeCandidate['group_title'] ?? ''));
                 if ($mergeTitle === '') $mergeTitle = 'Untitled';
                 $mergeWidth = trim((string)($mergeCandidate['width'] ?? ''));
                 $mergeHeight = trim((string)($mergeCandidate['height'] ?? ''));

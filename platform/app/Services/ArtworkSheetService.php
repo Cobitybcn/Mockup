@@ -144,10 +144,7 @@ final class ArtworkSheetService
         $sheet = $this->sheetForArtwork($artworkId, $userId);
         $editorial = (array)($draft['canonical_editorial'] ?? []);
         $search = (array)($draft['search_metadata'] ?? []);
-        $keywords = array_values(array_unique(array_filter(array_map('trim', array_merge(
-            (array)($search['core_keywords'] ?? []),
-            (array)($search['specific_keywords'] ?? [])
-        )))));
+        $keywords = array_values(array_unique(array_filter(array_map('trim', (array)($search['search_terms'] ?? [])))));
 
         $existingTitle = trim((string)($artwork['final_title'] ?? ''));
         $existingSubtitle = trim((string)($artwork['subtitle'] ?? ''));
@@ -155,6 +152,41 @@ final class ArtworkSheetService
         $suggestedSubtitle = trim((string)($editorial['subtitle'] ?? ''));
         $title = $existingTitle !== '' ? $existingTitle : $suggestedTitle;
         $subtitle = $existingSubtitle !== '' ? $existingSubtitle : $suggestedSubtitle;
+
+        $bilingual = new BilingualEditorialService($this->pdo);
+        $spanishFirst = $bilingual->isEnabled($userId)
+            && $bilingual->sourceLocale($userId) === 'es'
+            && (string)($draft['analysis_language'] ?? '') === 'es';
+        if ($spanishFirst) {
+            $bilingual->fillSourceFromAnalysis($userId, 'artwork', $artworkId, ArtworkAnalysisV2::editorialContent($draft));
+            $now = date('c');
+            $this->pdo->prepare("
+                UPDATE artwork_sheets
+                SET title=CASE WHEN TRIM(COALESCE(title,''))='' THEN :title ELSE title END,
+                    generated_json=:generated_json,status='draft',updated_at=:updated_at
+                WHERE id=:id AND user_id=:user_id
+            ")->execute([
+                'title' => $title,
+                'generated_json' => json_encode($draft, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+                'updated_at' => $now,
+                'id' => (int)$sheet['id'],
+                'user_id' => $userId,
+            ]);
+            if ($title !== '') {
+                $this->pdo->prepare("
+                    UPDATE artworks
+                    SET final_title=CASE WHEN TRIM(COALESCE(final_title,''))='' THEN :title ELSE final_title END,
+                        updated_at=:updated_at
+                    WHERE id=:id AND user_id=:user_id
+                ")->execute([
+                    'title' => $title,
+                    'updated_at' => $now,
+                    'id' => $artworkId,
+                    'user_id' => $userId,
+                ]);
+            }
+            return $this->artwork($artworkId, $userId);
+        }
 
         $this->saveArtworkSheet((int)$sheet['id'], $userId, [
             'related_artwork_ids' => (string)$sheet['related_artwork_ids'],
@@ -202,28 +234,64 @@ final class ArtworkSheetService
             throw new InvalidArgumentException('The artwork title cannot be empty.');
         }
 
+        $artwork = $this->artwork($artworkId, $userId);
         $sheet = $this->sheetForArtwork($artworkId, $userId);
+        $groupId = (int)($artwork['artwork_group_id'] ?? 0);
         $now = date('c');
-        $this->pdo->prepare('
-            UPDATE artworks
-            SET final_title = :title, updated_at = :updated_at
-            WHERE id = :id AND user_id = :user_id
-        ')->execute([
-            'title' => $title,
-            'updated_at' => $now,
-            'id' => $artworkId,
-            'user_id' => $userId,
-        ]);
-        $this->pdo->prepare('
-            UPDATE artwork_sheets
-            SET title = :title, updated_at = :updated_at
-            WHERE id = :id AND user_id = :user_id
-        ')->execute([
-            'title' => $title,
-            'updated_at' => $now,
-            'id' => (int)$sheet['id'],
-            'user_id' => $userId,
-        ]);
+
+        Database::withBusyRetry(function () use ($artworkId, $userId, $title, $sheet, $groupId, $now): void {
+            $ownsTransaction = !$this->pdo->inTransaction();
+            if ($ownsTransaction) {
+                Database::beginWriteTransaction($this->pdo);
+            }
+            try {
+                $this->pdo->prepare('
+                    UPDATE artworks
+                    SET final_title = :title, updated_at = :updated_at
+                    WHERE user_id = :user_id
+                    AND (id = :id OR (:group_id > 0 AND artwork_group_id = :group_id_match))
+                ')->execute([
+                    'title' => $title,
+                    'updated_at' => $now,
+                    'user_id' => $userId,
+                    'id' => $artworkId,
+                    'group_id' => $groupId,
+                    'group_id_match' => $groupId,
+                ]);
+                $this->pdo->prepare('
+                    UPDATE artwork_sheets
+                    SET title = :title, updated_at = :updated_at
+                    WHERE id = :id AND user_id = :user_id
+                ')->execute([
+                    'title' => $title,
+                    'updated_at' => $now,
+                    'id' => (int)$sheet['id'],
+                    'user_id' => $userId,
+                ]);
+                $this->pdo->prepare("
+                    UPDATE artwork_groups
+                    SET title = :title, updated_at = :updated_at
+                    WHERE user_id = :user_id
+                    AND status = 'active'
+                    AND (canonical_artwork_id = :artwork_id OR (:group_id > 0 AND id = :group_id_match))
+                ")->execute([
+                    'title' => $title,
+                    'updated_at' => $now,
+                    'user_id' => $userId,
+                    'artwork_id' => $artworkId,
+                    'group_id' => $groupId,
+                    'group_id_match' => $groupId,
+                ]);
+                if ($ownsTransaction) {
+                    $this->pdo->commit();
+                }
+            } catch (Throwable $error) {
+                if ($ownsTransaction && $this->pdo->inTransaction()) {
+                    $this->pdo->rollBack();
+                }
+                throw $error;
+            }
+        });
         (new PublicationService($this->pdo))->syncInheritedFromSheet((int)$sheet['id'], $userId);
     }
 
@@ -560,15 +628,22 @@ final class ArtworkSheetService
         $imagePath = $this->resolveImagePath($mockupFile);
         $fallback = $this->fallbackMockupCopy($artworkSheet, $mockupFile, $notes);
         $generated = $fallback;
+        $analysisGenerated = false;
+        $bilingual = new BilingualEditorialService($this->pdo);
+        $spanishFirst = $bilingual->isEnabled($userId) && $bilingual->sourceLocale($userId) === 'es';
+        $analysisLocale = 'es';
+        $languageInstruction = 'Think, analyze and write directly in natural Spanish. Do not draft in English and translate afterward. Every user-facing string in the JSON must be Spanish.';
 
         if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && ProviderSettings::imageProvider() === 'gemini' && $imagePath !== '') {
             $artworkIdentity = json_decode((string)($artworkSheet['generated_json'] ?? ''), true);
             $artworkIdentity = is_array($artworkIdentity) ? $artworkIdentity : [];
-            $prompt = "Analyze this exact mockup image. The approved artwork identity is authoritative; analyze the scene without renaming, reinterpreting, or inventing facts about the artwork. Return strict JSON only.\n"
+            $prompt = "Analyze this exact mockup image. {$languageInstruction} The approved artwork identity is authoritative; analyze the scene without renaming, reinterpreting, or inventing facts about the artwork. Return strict JSON only.\n"
                 . "APPROVED ARTWORK IDENTITY:\n" . json_encode($artworkIdentity ?: ['title'=>$artworkSheet['title'],'subtitle'=>$artworkSheet['subtitle'],'description'=>$artworkSheet['description']], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) . "\n"
                 . "MOCKUP RULES: describe space type, architecture, materials, lighting, camera, scale perception, atmosphere, and artwork-space relationship. Keywords, long tails, tags, captions and channel copy must be justified by the visible image. Never use generic repeated copy. Never call the artwork framed unless a real frame is visible. Exclude home decor, wall art, perfect for any room, elevate your space, decor inspiration, and generic interior-marketing filler. Do not invent furniture, materials, colors, light, artwork facts, or destination links. Website is detailed and collector-facing; Pinterest is shorter and traffic-oriented; Instagram is visual/community-oriented; Facebook is conversational; TikTok is future preparation only.\n"
+                . SearchIntentPrompt::forEntity('mockup') . "\n"
+                . "SEARCH FIELD MAPPING: neutral.tags contains ten to fourteen standardized catalogue filters when supported; neutral.search_terms contains twelve to sixteen distinct searches a real buyer could type, including at least six genuine long tails; neutral.seo_title and neutral.seo_description are the page metadata. Do not create parallel keyword buckets or poetic search phrases. Derive channel search fields from this same compact evidence without duplication.\n"
                 . "USER NOTES: {$notes}\n"
-                . 'Return: {"schema_version":"mockup-analysis.v2","neutral":{"context_title":"","contextual_description":"","alt_text":"","caption":"","keywords":[],"long_tail_keywords":[],"tags":[],"scene":{"space_type":"","architecture":"","materials":[],"lighting":"","camera":"","scale_reading":"","atmosphere":[],"artwork_space_relationship":"","distinctive_features":[]}},"channels":{"website":{"description":"","caption":"","alt_text":"","seo_keywords":[],"long_tail_keywords":[]},"pinterest":{"title":"","description":"","board_suggestions":[],"topic_suggestions":[],"keywords":[]},"instagram":{"caption":"","hook":"","hashtags":[],"cta":""},"facebook":{"headline":"","post_text":"","link_description":"","cta":""},"tiktok":{"status":"future","tiktok_ready":false,"visual_hook":"","suggested_motion":"","sequence_role":"","caption_seed":"","video_notes":""}},"review":{"status":"draft","warnings":[]}}';
+                . 'Return: {"schema_version":"mockup-analysis.v2","analysis_language":"' . $analysisLocale . '","neutral":{"context_title":"","contextual_description":"","alt_text":"","caption":"","tags":[],"search_terms":[],"seo_title":"","seo_description":"","scene":{"space_type":"","architecture":"","materials":[],"lighting":"","camera":"","scale_reading":"","atmosphere":[],"artwork_space_relationship":"","distinctive_features":[]}},"channels":{"website":{"description":"","caption":"","alt_text":""},"pinterest":{"title":"","description":"","board_suggestions":[],"topic_suggestions":[],"keywords":[]},"instagram":{"caption":"","hook":"","hashtags":[],"cta":""},"facebook":{"headline":"","post_text":"","link_description":"","cta":""},"tiktok":{"status":"future","tiktok_ready":false,"visual_hook":"","suggested_motion":"","sequence_role":"","caption_seed":"","video_notes":""}},"review":{"status":"draft","warnings":[]}}';
             try {
                 $text = $this->client->generateText([
                     $this->client->textPart($prompt),
@@ -576,17 +651,21 @@ final class ArtworkSheetService
                 ], 'gemini-2.5-flash');
                 $decoded = json_decode($this->extractJson($text), true);
                 if (is_array($decoded)) {
+                    $decoded['analysis_language'] = $analysisLocale;
                     $neutral = is_array($decoded['neutral'] ?? null) ? $decoded['neutral'] : [];
                     $generated = array_merge($fallback, [
                         'title'=>(string)($neutral['context_title']??''),
                         'description'=>(string)($neutral['contextual_description']??''),
-                        'keywords'=>(array)($neutral['keywords']??[]),
                         'tags'=>(array)($neutral['tags']??[]),
+                        'search_terms'=>(array)($neutral['search_terms']??[]),
+                        'seo_title'=>(string)($neutral['seo_title']??''),
+                        'seo_description'=>(string)($neutral['seo_description']??''),
                         'alt_text'=>(string)($neutral['alt_text']??''),
                         'caption'=>(string)($neutral['caption']??''),
-                        'long_tail_keywords'=>(array)($neutral['long_tail_keywords']??[]),
                         'mockup_analysis_v2'=>$decoded,
                     ]);
+                    unset($generated['mockup_analysis_v2_en']);
+                    $analysisGenerated = true;
                 }
             } catch (Throwable $e) {
                 $generated = $fallback;
@@ -594,7 +673,24 @@ final class ArtworkSheetService
             }
         }
 
-        $this->updateMockupSheet((int)$sheet['id'], $userId, $notes, $generated);
+        if ($spanishFirst && $analysisGenerated) {
+            $this->updateMockupAnalysisDraft((int)$sheet['id'], $userId, $notes, $generated);
+            $mockupId = $this->mockupIdForFile($userId, $mockupFile);
+            if ($mockupId > 0) {
+                $bilingual->fillSourceFromAnalysis($userId, 'mockup', $mockupId, [
+                    'description' => trim((string)($generated['description'] ?? '')),
+                    'tags' => $this->csv($generated['tags'] ?? ''),
+                    'search_terms' => $this->csv($generated['search_terms'] ?? ''),
+                    'seo_title' => trim((string)($generated['seo_title'] ?? '')),
+                    'seo_description' => trim((string)($generated['seo_description'] ?? '')),
+                    'alt_text' => trim((string)($generated['alt_text'] ?? '')),
+                    'caption' => trim((string)($generated['caption'] ?? '')),
+                    'social' => (array)($generated['mockup_analysis_v2']['channels'] ?? []),
+                ]);
+            }
+        } else {
+            $this->updateMockupSheet((int)$sheet['id'], $userId, $notes, $generated);
+        }
         return $generated;
     }
 
@@ -781,6 +877,36 @@ final class ArtworkSheetService
     }
 
     /**
+     * Stores a Spanish-first analysis without copying it into the legacy
+     * English publication columns.
+     *
+     * @param array<string,mixed> $generated
+     */
+    private function updateMockupAnalysisDraft(int $mockupSheetId, int $userId, string $notes, array $generated): void
+    {
+        $this->pdo->prepare('
+            UPDATE mockup_sheets
+            SET user_notes = :user_notes,
+                generated_json = :generated_json,
+                updated_at = :updated_at
+            WHERE id = :id AND user_id = :user_id
+        ')->execute([
+            'user_notes' => $notes,
+            'generated_json' => json_encode($generated, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+            'updated_at' => date('c'),
+            'id' => $mockupSheetId,
+            'user_id' => $userId,
+        ]);
+    }
+
+    private function mockupIdForFile(int $userId, string $mockupFile): int
+    {
+        $stmt = $this->pdo->prepare('SELECT id FROM mockups WHERE user_id=? AND mockup_file=? ORDER BY id DESC LIMIT 1');
+        $stmt->execute([$userId, basename($mockupFile)]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
      * @return array<int,int>
      */
     private function relatedIdsFromSheet(array $sheet): array
@@ -854,22 +980,22 @@ final class ArtworkSheetService
     {
         $title = trim((string)($artwork['final_title'] ?? ''));
         if ($title === '') {
-            $title = 'Untitled Artwork';
+            $title = 'Obra sin título';
         }
         $subtitle = trim((string)($artwork['subtitle'] ?? ''));
-        $medium = trim((string)($artwork['medium'] ?? 'original artwork'));
+        $medium = trim((string)($artwork['medium'] ?? 'obra original'));
         $dimensions = trim((string)($artwork['width'] ?? '') . ' x ' . (string)($artwork['height'] ?? '') . ' ' . (string)($artwork['unit'] ?? 'cm'));
         $description = $notes !== ''
-            ? 'Draft artwork description based on the curator notes. Translate and refine before publishing: ' . $notes
-            : 'Draft metadata for an original artwork. Review the source image and refine the curatorial reading before publishing.';
+            ? 'Borrador de la obra basado en las notas curatoriales. Revisar antes de publicar: ' . $notes
+            : 'Borrador editorial de una obra original. Revisar la imagen y afinar la lectura antes de publicar.';
         return [
             'title' => $title,
             'subtitle' => $subtitle,
             'description' => $description,
             'short_description' => substr($description, 0, 180),
-            'keywords' => array_values(array_filter([$medium, 'contemporary art', 'original artwork'])),
-            'tags' => ['artwork', 'catalog', 'contemporary-art'],
-            'alt_text' => 'Image of the artwork ' . $title . ($dimensions !== ' x  cm' ? ', ' . $dimensions : '') . '.',
+            'keywords' => array_values(array_filter([$medium, 'arte contemporáneo', 'obra original'])),
+            'tags' => ['obra', 'catálogo', 'arte-contemporáneo'],
+            'alt_text' => 'Imagen de la obra ' . $title . ($dimensions !== ' x  cm' ? ', ' . $dimensions : '') . '.',
             'caption' => $title . ($subtitle !== '' ? ' — ' . $subtitle : ''),
         ];
     }
@@ -879,20 +1005,20 @@ final class ArtworkSheetService
      */
     private function fallbackMockupCopy(array $artworkSheet, string $mockupFile, string $notes): array
     {
-        $title = trim((string)($artworkSheet['title'] ?? 'Artwork'));
+        $title = trim((string)($artworkSheet['title'] ?? 'Obra'));
         if ($title === '') {
-            $title = 'Artwork';
+            $title = 'Obra';
         }
-        $mockupTitle = $title . ' in a styled interior mockup';
+        $mockupTitle = $title . ' en un mockup de interior';
         $description = $notes !== ''
-            ? 'Artwork mockup draft based on the user notes. Translate and refine before publishing: ' . $notes
-            : 'Artwork mockup draft pending a specific description of the visual setting and presentation context.';
+            ? 'Borrador del mockup basado en las notas del artista. Revisar antes de publicar: ' . $notes
+            : 'Borrador del mockup pendiente de una descripción específica del entorno y del contexto de presentación.';
         return [
             'title' => $mockupTitle,
             'description' => $description,
-            'keywords' => ['artwork mockup', 'contemporary art', 'interior styling', 'visual presentation'],
-            'tags' => ['mockup', 'artwork', 'interior-context'],
-            'alt_text' => 'Mockup of ' . $title . ' shown in a styled presentation context.',
+            'keywords' => ['mockup de obra', 'arte contemporáneo', 'interior', 'presentación visual'],
+            'tags' => ['mockup', 'obra', 'contexto-interior'],
+            'alt_text' => 'Mockup de ' . $title . ' mostrado en un contexto de presentación interior.',
             'caption' => $mockupTitle,
         ];
     }

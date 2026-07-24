@@ -244,7 +244,10 @@
       button.type = 'button';
       button.dataset.conversationKey = conversation.conversation_key;
       button.classList.toggle('is-active', conversation.conversation_key === conversationKey);
-      button.append(element('strong', '', conversation.title || 'Untitled conversation'), element('span', '', relativeDate(conversation.updated_at)));
+      const conversationTitle = conversation.title || 'Untitled conversation';
+      const conversationTitleNode = element('strong', '', conversationTitle);
+      conversationTitleNode.title = conversationTitle;
+      button.append(conversationTitleNode, element('span', '', relativeDate(conversation.updated_at)));
       button.addEventListener('click', () => openConversation(conversation.conversation_key));
       historyList.append(button);
     });

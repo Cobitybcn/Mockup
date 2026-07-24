@@ -1,9 +1,16 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/AppPublishedLocalization.php';
+
 final class AppPublishedSeriesCatalog
 {
-    public function __construct(private readonly PDO $pdo, private readonly string $artistEmail) {}
+    private AppPublishedLocalization $localization;
+
+    public function __construct(private readonly PDO $pdo, private readonly string $artistEmail)
+    {
+        $this->localization = new AppPublishedLocalization($pdo, $artistEmail);
+    }
 
     public static function fromApp(string $appRoot, string $artistEmail): self
     {
@@ -26,6 +33,21 @@ final class AppPublishedSeriesCatalog
         $statement->execute([$this->artistEmail]);
         $rows = [];
         foreach ($statement as $row) {
+            $language = function_exists('artist_site_language') ? artist_site_language() : 'es';
+            $spanish = $this->localization->content('series', (int)$row['id'], 'es');
+            $english = $this->localization->content('series', (int)$row['id'], 'en');
+            $localized = $language === 'es' ? $spanish : $english;
+            $row['spanish_available'] = $spanish !== [];
+            $row['english_available'] = $english !== [];
+            if ($localized !== []) {
+                $row['subtitle'] = (string)($localized['subtitle'] ?? $row['subtitle']);
+                $row['description'] = (string)($localized['short_description'] ?? $row['description']);
+                $row['long_description'] = (string)($localized['description'] ?? $row['long_description']);
+                $row['tags'] = (string)($localized['tags'] ?? $row['tags']);
+                $row['keywords'] = $this->searchTerms($localized, (string)$row['keywords']);
+                $row['seo_title'] = (string)($localized['seo_title'] ?? '');
+                $row['seo_description'] = (string)($localized['seo_description'] ?? $row['seo_description']);
+            }
             $rows[(string)$row['slug']] = $row;
         }
         return $rows;
@@ -34,6 +56,13 @@ final class AppPublishedSeriesCatalog
     public function one(string $slug): ?array
     {
         return $this->all()[$slug] ?? null;
+    }
+
+    private function searchTerms(array $content, string $fallback): string
+    {
+        $explicit = trim((string)($content['search_terms'] ?? ''));
+        if ($explicit !== '') return $explicit;
+        return $fallback;
     }
 
 }

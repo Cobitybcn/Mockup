@@ -10,6 +10,7 @@ require __DIR__ . '/data/site.php';
 require __DIR__ . '/inc/functions.php';
 require __DIR__ . '/inc/AppDatabase.php';
 require __DIR__ . '/inc/TenantResolver.php';
+require __DIR__ . '/inc/AppPublishedLocalization.php';
 require __DIR__ . '/inc/AppPublishedCatalog.php';
 require __DIR__ . '/inc/AppPublishedSeriesCatalog.php';
 require __DIR__ . '/inc/AppPublishedArtistProfile.php';
@@ -21,6 +22,7 @@ require __DIR__ . '/inc/ArtistContactMailer.php';
 
 $path = current_path();
 $segments = array_values(array_filter(explode('/', trim($path, '/'))));
+$siteLanguage = artist_site_language();
 
 $resolvedArtistEmail = '';
 try {
@@ -1550,10 +1552,10 @@ function render_published_artwork(array $site, array $artwork): void
     $facts = $analysis['confirmed_facts'] ?? [];
     $interpretation = $analysis['interpretation'] ?? [];
     $conceptualNote = trim((string)$artwork['description']);
-    $studioInformation = trim(implode("\n\n", array_filter([
-        (string)($interpretation['central_reading'] ?? ''),
-        (string)($metadata['caption'] ?? ''),
-    ])));
+    $imageCaption = trim((string)($metadata['caption'] ?? ''));
+    $studioInformation = artist_site_language() === 'en'
+        ? trim((string)($interpretation['central_reading'] ?? ''))
+        : '';
     $medium = trim((string)($artwork['medium'] ?: ($facts['medium'] ?? '')));
     $year = trim((string)($artwork['artwork_year'] ?: ($facts['year'] ?? '')));
     $mainImageFile = trim((string)($artwork['header_file'] ?? '')) ?: (string)$artwork['source_image_file'];
@@ -1571,11 +1573,14 @@ function render_published_artwork(array $site, array $artwork): void
     ?>
     <section class="artwork-detail">
         <div class="artwork-detail__image">
-            <img src="<?= e(app_publication_media_url($artwork, $mainImageFile, 1200)) ?>"
-                srcset="<?= e(app_publication_media_srcset($artwork, $mainImageFile)) ?>"
-                sizes="(max-width: 940px) calc(100vw - 36px), 62vw"
-                alt="<?= e($artwork['artwork_alt'] ?: $artwork['title'] . ' original painting by Maurizio Valch') ?>"
-                fetchpriority="high" decoding="async">
+            <figure class="artwork-detail__primary-image">
+                <img src="<?= e(app_publication_media_url($artwork, $mainImageFile, 1200)) ?>"
+                    srcset="<?= e(app_publication_media_srcset($artwork, $mainImageFile)) ?>"
+                    sizes="(max-width: 940px) calc(100vw - 36px), 62vw"
+                    alt="<?= e($artwork['artwork_alt'] ?: $artwork['title'] . ' original painting by Maurizio Valch') ?>"
+                    fetchpriority="high" decoding="async">
+                <?php if ($imageCaption !== ''): ?><figcaption><?= e($imageCaption) ?></figcaption><?php endif; ?>
+            </figure>
             <?php if ($artwork['artwork_views']): ?>
                 <div class="mockup-gallery artwork-view-gallery" aria-label="<?= e($artwork['title'] . ' additional artwork views') ?>">
                     <?php foreach ($artwork['artwork_views'] as $view): ?>
@@ -1604,13 +1609,13 @@ function render_published_artwork(array $site, array $artwork): void
             <?php endif; ?>
         </div>
         <div class="artwork-detail__content">
-            <p class="eyebrow">Published work<?= $artwork['series'] ? ' / ' . e($artwork['series']) : '' ?></p>
+            <p class="eyebrow"><?= e(site_t('Published work', 'Obra publicada')) ?><?= $artwork['series'] ? ' / ' . e($artwork['series']) : '' ?></p>
             <h1><?= e($artwork['title']) ?></h1>
             <?php if ($artwork['subtitle']): ?><p class="lead"><?= e($artwork['subtitle']) ?></p><?php endif; ?>
             <dl class="specs">
-                <?php if ($year): ?><div><dt>Year</dt><dd><?= e($year) ?></dd></div><?php endif; ?>
-                <?php if ($medium): ?><div><dt>Medium</dt><dd><?= e($medium) ?></dd></div><?php endif; ?>
-                <?php if (published_dimensions($artwork)): ?><div><dt>Size</dt><dd><?= e(published_dimensions($artwork)) ?></dd></div><?php endif; ?>
+                <?php if ($year): ?><div><dt><?= e(site_t('Year', 'Año')) ?></dt><dd><?= e($year) ?></dd></div><?php endif; ?>
+                <?php if ($medium): ?><div><dt><?= e(site_t('Medium', 'Técnica')) ?></dt><dd><?= e($medium) ?></dd></div><?php endif; ?>
+                <?php if (published_dimensions($artwork)): ?><div><dt><?= e(site_t('Size', 'Medidas')) ?></dt><dd><?= e(published_dimensions($artwork)) ?></dd></div><?php endif; ?>
                 <?php if ($artworkSeriesTitle !== ''): ?>
                     <div>
                         <dt>Series</dt>
@@ -1634,13 +1639,13 @@ function render_published_artwork(array $site, array $artwork): void
                                             </span>
                                         <?php endif; ?>
                                         <span class="artwork-series-preview__content">
-                                            <span class="artwork-series-preview__eyebrow">Painting series</span>
+                                            <span class="artwork-series-preview__eyebrow"><?= e(site_t('Painting series', 'Serie pictórica')) ?></span>
                                             <strong><?= e((string)$publishedSeries['title']) ?></strong>
                                             <span class="artwork-series-preview__meta">
-                                                <?= $seriesYear !== '' ? e($seriesYear) . ' · ' : '' ?><?= (int)($publishedSeries['artwork_count'] ?? 0) ?> <?= (int)($publishedSeries['artwork_count'] ?? 0) === 1 ? 'work' : 'works' ?>
+                                                <?= $seriesYear !== '' ? e($seriesYear) . ' · ' : '' ?><?= (int)($publishedSeries['artwork_count'] ?? 0) ?> <?= (int)($publishedSeries['artwork_count'] ?? 0) === 1 ? e(site_t('work', 'obra')) : e(site_t('works', 'obras')) ?>
                                             </span>
                                             <?php if ($seriesDescription !== ''): ?><span class="artwork-series-preview__description"><?= e($seriesDescription) ?></span><?php endif; ?>
-                                            <span class="artwork-series-preview__action">View series</span>
+                                            <span class="artwork-series-preview__action"><?= e(site_t('View series', 'Ver serie')) ?></span>
                                         </span>
                                     </span>
                                 </span>
@@ -1652,11 +1657,11 @@ function render_published_artwork(array $site, array $artwork): void
                 <?php endif; ?>
                 <?php if (!empty($facts['orientation'])): ?><div><dt>Orientation</dt><dd><?= e(ucfirst((string)$facts['orientation'])) ?></dd></div><?php endif; ?>
                 <?php if (!empty($facts['certificate_of_authenticity'])): ?><div><dt>Certificate</dt><dd><?= e($facts['certificate_of_authenticity']) ?></dd></div><?php endif; ?>
-                <div><dt>Context studies</dt><dd><?= count($artwork['items']) ?></dd></div>
+                <div><dt><?= e(site_t('Context studies', 'Estudios de contexto')) ?></dt><dd><?= count($artwork['items']) ?></dd></div>
             </dl>
             <div class="prose">
-                <?php if ($conceptualNote): ?><h2>Conceptual Note</h2><p><?= nl2br(e($conceptualNote)) ?></p><?php endif; ?>
-                <?php if ($studioInformation): ?><h2>Studio Information</h2><p><?= nl2br(e($studioInformation)) ?></p><?php endif; ?>
+                <?php if ($conceptualNote): ?><h2><?= e(site_t('Conceptual Note', 'Nota conceptual')) ?></h2><p><?= nl2br(e($conceptualNote)) ?></p><?php endif; ?>
+                <?php if ($studioInformation): ?><h2><?= e(site_t('Studio Information', 'Información de estudio')) ?></h2><p><?= nl2br(e($studioInformation)) ?></p><?php endif; ?>
                 <?php if (!empty($facts['shipping_notes'])): ?><h2>Shipping</h2><p><?= nl2br(e($facts['shipping_notes'])) ?></p><?php endif; ?>
             </div>
             <?php if ($storeOffer && !empty($storeOffer['is_purchasable'])): ?>
@@ -1669,12 +1674,12 @@ function render_published_artwork(array $site, array $artwork): void
             <?php elseif ($storeOffer && ((string)$storeOffer['status'] === 'sold_out' || (int)$storeOffer['stock_available'] <= 0)): ?>
                 <aside class="store-offer store-offer--unavailable"><p class="eyebrow">No longer available</p><p>This work is currently reserved or sold.</p><div class="actions"><a class="button button--quiet" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>">Ask the studio</a></div></aside>
             <?php else: ?>
-                <div class="actions"><a class="button" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>">Inquire about this work</a></div>
+                <div class="actions"><a class="button" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>"><?= e(site_t('Inquire about this work', 'Consultar por esta obra')) ?></a></div>
             <?php endif; ?>
         </div>
     </section>
     <?php
-    echo json_ld(['@context'=>'https://schema.org','@type'=>'VisualArtwork','name'=>$artwork['title'],'creator'=>['@type'=>'Person','name'=>$site['name']],'artMedium'=>$artwork['medium'],'dateCreated'=>$artwork['artwork_year'],'image'=>app_publication_media_url($artwork,$artwork['source_image_file']),'description'=>$summary]);
+    echo json_ld(['@context'=>'https://schema.org','@type'=>'VisualArtwork','name'=>$artwork['title'],'creator'=>['@type'=>'Person','name'=>$site['name']],'artMedium'=>$artwork['medium'],'dateCreated'=>$artwork['artwork_year'],'image'=>site_absolute_asset_url(app_publication_media_url($artwork,$mainImageFile),(string)$site['url']),'description'=>$summary]);
 }
 
 function render_acquisition(array $site, array $artwork): void
@@ -1883,38 +1888,62 @@ function render_stripe_payment_result(): void
 
 function render_published_mockup(array $site, array $artwork, array $mockup): void
 {
-    $title = trim((string)($mockup['title'] ?: $artwork['title'] . ' — Context Study'));
-    $description = trim((string)($mockup['description'] ?: $mockup['caption'] ?: 'A contextual presentation of ' . $artwork['title'] . ' by Maurizio Valch.'));
+    $title = trim((string)($mockup['title'] ?: $artwork['title'] . ' — ' . site_t('Context Study', 'Estudio de contexto')));
+    $description = trim((string)($mockup['description'] ?: $mockup['caption'] ?: site_t('A contextual presentation of ', 'Una presentación contextual de ') . $artwork['title'] . site_t(' by Maurizio Valch.', ' por Maurizio Valch.')));
+    $imageCaption = trim((string)($mockup['caption'] ?? ''));
+    $storeOffer = app_store()?->offerForArtwork((int)($artwork['canonical_artwork_id'] ?? 0));
     ?>
     <section class="artwork-detail mockup-landing">
         <div class="artwork-detail__image">
-            <img src="<?= e(app_publication_media_url($artwork, $mockup['mockup_file'], 1200)) ?>"
-                srcset="<?= e(app_publication_media_srcset($artwork, $mockup['mockup_file'])) ?>"
-                sizes="(max-width: 940px) calc(100vw - 36px), 62vw"
-                alt="<?= e($mockup['alt_text'] ?: $title) ?>" fetchpriority="high" decoding="async">
+            <figure class="artwork-detail__primary-image">
+                <img src="<?= e(app_publication_media_url($artwork, $mockup['mockup_file'], 1200)) ?>"
+                    srcset="<?= e(app_publication_media_srcset($artwork, $mockup['mockup_file'])) ?>"
+                    sizes="(max-width: 940px) calc(100vw - 36px), 62vw"
+                    alt="<?= e($mockup['alt_text'] ?: $title) ?>" fetchpriority="high" decoding="async">
+                <?php if ($imageCaption !== ''): ?><figcaption><?= e($imageCaption) ?></figcaption><?php endif; ?>
+            </figure>
         </div>
         <div class="artwork-detail__content">
-            <p class="eyebrow">Context study / <?= e($artwork['title']) ?></p>
+            <p class="eyebrow"><?= e(site_t('Context study', 'Estudio de contexto')) ?> / <?= e($artwork['title']) ?></p>
             <h1><?= e($title) ?></h1>
             <div class="prose"><p><?= nl2br(e($description)) ?></p></div>
-            <?php if ($mockup['caption']): ?><p class="lead"><?= e($mockup['caption']) ?></p><?php endif; ?>
             <dl class="specs">
-                <div><dt>Original artwork</dt><dd><?= e($artwork['title']) ?></dd></div>
-                <?php if ($artwork['medium']): ?><div><dt>Medium</dt><dd><?= e($artwork['medium']) ?></dd></div><?php endif; ?>
-                <?php if (published_dimensions($artwork)): ?><div><dt>Actual dimensions</dt><dd><?= e(published_dimensions($artwork)) ?></dd></div><?php endif; ?>
-                <?php if ($artwork['artwork_year']): ?><div><dt>Year</dt><dd><?= e($artwork['artwork_year']) ?></dd></div><?php endif; ?>
-                <div><dt>Presentation</dt><dd>Digital contextual visualization</dd></div>
+                <div><dt><?= e(site_t('Original artwork', 'Obra original')) ?></dt><dd><?= e($artwork['title']) ?></dd></div>
+                <?php if ($artwork['medium']): ?><div><dt><?= e(site_t('Medium', 'Técnica')) ?></dt><dd><?= e($artwork['medium']) ?></dd></div><?php endif; ?>
+                <?php if (published_dimensions($artwork)): ?><div><dt><?= e(site_t('Actual dimensions', 'Medidas reales')) ?></dt><dd><?= e(published_dimensions($artwork)) ?></dd></div><?php endif; ?>
+                <?php if ($artwork['artwork_year']): ?><div><dt><?= e(site_t('Year', 'Año')) ?></dt><dd><?= e($artwork['artwork_year']) ?></dd></div><?php endif; ?>
+                <div><dt><?= e(site_t('Presentation', 'Presentación')) ?></dt><dd><?= e(site_t('Digital contextual visualization', 'Visualización contextual digital')) ?></dd></div>
             </dl>
             <?php if (trim((string)$mockup['keywords'])): ?>
-                <div class="prose"><h2>Context references</h2><p><?= e(str_replace(',', ' · ', (string)$mockup['keywords'])) ?></p></div>
+                <div class="prose"><h2><?= e(site_t('Context references', 'Referencias de contexto')) ?></h2><p><?= e(str_replace(',', ' · ', (string)$mockup['keywords'])) ?></p></div>
             <?php endif; ?>
             <div class="prose">
-                <h2>Collector note</h2>
-                <p>This visualization presents the artwork at its declared physical scale in an architectural context. The original work remains the authority for color, surface, dimensions and material presence.</p>
+                <h2><?= e(site_t('Collector note', 'Nota para coleccionistas')) ?></h2>
+                <p><?= e(site_t('This visualization presents the artwork at its declared physical scale in an architectural context. The original work remains the authority for color, surface, dimensions and material presence.', 'Esta visualización presenta la obra a su escala física declarada dentro de un contexto arquitectónico. La obra original conserva la autoridad sobre el color, la superficie, las dimensiones y la presencia material.')) ?></p>
             </div>
-            <div class="actions" style="display:flex;flex-direction:column;gap:10px">
-                <a class="button" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>">Inquire about the original work</a>
-                <a class="button button--quiet" href="<?= e(url_for('artworks/' . $artwork['slug'])) ?>">Return to the artwork</a>
+            <?php if ($storeOffer && !empty($storeOffer['is_purchasable'])): ?>
+                <aside class="store-offer" aria-label="<?= e(site_t('Acquisition information', 'Información de compra')) ?>">
+                    <p class="eyebrow"><?= e(site_t('Original artwork available for acquisition', 'Obra original disponible para compra')) ?></p>
+                    <strong class="store-offer__price"><?= e(AppStore::money((int)$storeOffer['price_minor'], (string)$storeOffer['currency'])) ?></strong>
+                    <p><?= e(site_t('The price and purchase option apply to the original artwork shown in this contextual visualization. Shipping is calculated from the destination country.', 'El precio y la opción de compra corresponden a la obra original mostrada en esta visualización contextual. El envío se calcula según el país de destino.')) ?></p>
+                    <div class="actions">
+                        <a class="button" href="<?= e(url_for('acquire/' . $artwork['slug'])) ?>"><?= e(site_t('Acquire this work', 'Comprar esta obra')) ?></a>
+                        <a class="button button--quiet" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>"><?= e(site_t('Ask the studio', 'Consultar al estudio')) ?></a>
+                    </div>
+                </aside>
+            <?php elseif ($storeOffer && ((string)$storeOffer['status'] === 'sold_out' || (int)$storeOffer['stock_available'] <= 0)): ?>
+                <aside class="store-offer store-offer--unavailable">
+                    <p class="eyebrow"><?= e(site_t('Original artwork no longer available', 'Obra original no disponible')) ?></p>
+                    <p><?= e(site_t('This work is currently reserved or sold.', 'Esta obra está reservada o vendida actualmente.')) ?></p>
+                    <div class="actions"><a class="button button--quiet" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>"><?= e(site_t('Ask the studio', 'Consultar al estudio')) ?></a></div>
+                </aside>
+            <?php else: ?>
+                <div class="actions">
+                    <a class="button" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>"><?= e(site_t('Inquire about the original work', 'Consultar por la obra original')) ?></a>
+                </div>
+            <?php endif; ?>
+            <div class="actions mockup-landing__return">
+                <a class="button button--quiet" href="<?= e(url_for('artworks/' . $artwork['slug'])) ?>"><?= e(site_t('Return to the artwork', 'Volver a la obra')) ?></a>
             </div>
         </div>
     </section>
@@ -2043,13 +2072,13 @@ function render_published_series_index(array $items): void
     }
     ?>
     <section class="page-hero">
-        <p class="eyebrow">Concept clusters · preview</p>
-        <h1>Painting Series</h1>
-        <p>Series managed from Artwork Mockups, published here for review before they replace the main Series page.</p>
+        <p class="eyebrow"><?= e(site_t('Concept clusters', 'Núcleos conceptuales')) ?></p>
+        <h1><?= e(site_t('Painting Series', 'Series pictóricas')) ?></h1>
+        <p><?= e(site_t('Series managed from Artwork Mockups and published as part of the artist catalogue.', 'Series gestionadas desde Artwork Mockups y publicadas como parte del catálogo del artista.')) ?></p>
     </section>
     <section class="section">
         <?php if (!$items): ?>
-            <p>No series have been published yet.</p>
+            <p><?= e(site_t('No series have been published yet.', 'Todavía no se han publicado series.')) ?></p>
         <?php else: ?>
             <div class="series-grid series-grid--primary">
                 <?php foreach ($current as $slug => $item): ?>
@@ -2070,7 +2099,7 @@ function render_published_series_index(array $items): void
 
                 <?php if ($earlier): ?>
                     <article class="series-card series-card--earlier">
-                        <span>Earlier Works</span>
+                        <span><?= e(site_t('Earlier Works', 'Obras anteriores')) ?></span>
                         <?php foreach ($earlier as $slug => $item): ?>
                             <?php $yearLabel = series_year_label($item); ?>
                             <a class="earlier-work" href="<?= e(url_for('series2/' . $slug)) ?>">
@@ -2107,7 +2136,7 @@ function render_published_series_detail(array $item): void
     );
     ?>
     <section class="page-hero">
-        <p class="eyebrow">Series · preview<?= $yearLabel !== '' ? ' · ' . e($yearLabel) : '' ?></p>
+        <p class="eyebrow">Series<?= $yearLabel !== '' ? ' · ' . e($yearLabel) : '' ?></p>
         <h1><?= e($item['title']) ?></h1>
         <?php if (trim((string)($item['subtitle'] ?? '')) !== ''): ?><p><?= e($item['subtitle']) ?></p><?php endif; ?>
     </section>
@@ -2121,7 +2150,7 @@ function render_published_series_detail(array $item): void
     <?php endif; ?>
     <section class="section section--split">
         <div>
-            <h2>About this series</h2>
+            <h2><?= e(site_t('About this series', 'Sobre esta serie')) ?></h2>
             <p><?= nl2br(e((string)($item['description'] ?? ''))) ?></p>
         </div>
         <?php if (trim((string)($item['long_description'] ?? '')) !== ''): ?>
@@ -2130,7 +2159,7 @@ function render_published_series_detail(array $item): void
     </section>
     <?php if (trim((string)($item['tags'] ?? '')) !== ''): ?>
         <section class="section">
-            <div class="section-head"><h2>Tags</h2></div>
+            <div class="section-head"><h2><?= e(site_t('Tags', 'Etiquetas')) ?></h2></div>
             <div class="keyword-list">
                 <?php foreach (array_filter(array_map('trim', explode(',', (string)$item['tags']))) as $tag): ?>
                     <span><?= e($tag) ?></span>
@@ -2141,8 +2170,8 @@ function render_published_series_detail(array $item): void
     <section class="section catalog-grid-section series-dependent-artworks">
         <div class="section-head">
             <div>
-                <p class="eyebrow">Series works</p>
-                <h2>Works in this series</h2>
+                <p class="eyebrow"><?= e(site_t('Series works', 'Obras de la serie')) ?></p>
+                <h2><?= e(site_t('Works in this series', 'Obras de esta serie')) ?></h2>
             </div>
         </div>
         <?php if ($dependentArtworks): ?>
@@ -2165,7 +2194,7 @@ function render_published_series_detail(array $item): void
                 <?php endforeach; ?>
             </div>
         <?php else: ?>
-            <p>No works have been published in this series yet.</p>
+            <p><?= e(site_t('No works have been published in this series yet.', 'Todavía no se han publicado obras en esta serie.')) ?></p>
         <?php endif; ?>
     </section>
     <p><a href="<?= e(url_for('series2')) ?>">Back to Series preview</a></p>
@@ -3508,7 +3537,12 @@ switch ($segments[0] ?? '') {
                 });
             }
             
-            render_published_catalog($publicItems, 'Artworks', 'Selected works published by ' . $artistName . ', with their contextual studies and visual records.', 'Artwork Catalog');
+            render_published_catalog(
+                $publicItems,
+                site_t('Artworks', 'Obras'),
+                site_t('Selected works published by ', 'Obras seleccionadas publicadas por ') . $artistName . site_t(', with their contextual studies and visual records.', ', con sus estudios de contexto y registros visuales.'),
+                site_t('Artwork Catalog', 'Catálogo de obras')
+            );
             break;
         }
 
@@ -3519,15 +3553,20 @@ switch ($segments[0] ?? '') {
             if (!$record) { $handled = false; break; }
             $mockup = $record['mockup'];
             $mockupTitle = trim((string)($mockup['title'] ?: $publishedArtwork['title'] . ' — Context Study'));
-            $mockupDescription = trim((string)($mockup['description'] ?: $mockup['caption'] ?: 'A contextual presentation of ' . $publishedArtwork['title'] . ' by ' . $artistName . '.'));
-            $meta = page_meta($mockupTitle . ' | ' . $artistName, $mockupDescription, $site['url'] . '/artworks/' . $segments[1] . '/mockups/' . $segments[3] . '/', app_publication_media_url($publishedArtwork, $mockup['mockup_file']));
+            $mockupDescription = trim((string)($mockup['description'] ?: $mockup['caption'] ?: site_t('A contextual presentation of ', 'Una presentación contextual de ') . $publishedArtwork['title'] . site_t(' by ', ' por ') . $artistName . '.'));
+            $mockupSeoTitle = trim((string)($mockup['seo_title'] ?? '')) ?: $mockupTitle . ' | ' . $artistName;
+            $mockupSeoDescription = trim((string)($mockup['seo_description'] ?? '')) ?: $mockupDescription;
+            $meta = page_meta($mockupSeoTitle, $mockupSeoDescription, $site['url'] . '/artworks/' . $segments[1] . '/mockups/' . $segments[3] . '/', app_publication_media_url($publishedArtwork, $mockup['mockup_file']));
             $meta['keywords'] = trim((string)$mockup['keywords']);
             render_published_mockup($site, $publishedArtwork, $mockup);
             break;
         }
         if (isset($segments[2])) { $handled = false; break; }
         $description = trim((string)($publishedArtwork['short_description'] ?: $publishedArtwork['description']));
-        $meta = page_meta($publishedArtwork['title'] . ' | ' . $artistName, $description, $site['url'] . '/artworks/' . $segments[1] . '/', app_publication_media_url($publishedArtwork, $publishedArtwork['source_image_file']));
+        $artworkSeoTitle = trim((string)($publishedArtwork['seo_title'] ?? '')) ?: $publishedArtwork['title'] . ' | ' . $artistName;
+        $artworkSeoDescription = trim((string)($publishedArtwork['seo_description'] ?? '')) ?: $description;
+        $artworkMetaImage = trim((string)($publishedArtwork['header_file'] ?? '')) ?: (string)$publishedArtwork['source_image_file'];
+        $meta = page_meta($artworkSeoTitle, $artworkSeoDescription, $site['url'] . '/artworks/' . $segments[1] . '/', app_publication_media_url($publishedArtwork, $artworkMetaImage));
         $meta['keywords'] = trim(implode(', ', array_filter([
             (string)($publishedArtwork['artwork_keywords'] ?? ''),
             (string)($publishedArtwork['artwork_tags'] ?? ''),
@@ -3654,10 +3693,16 @@ switch ($segments[0] ?? '') {
         if (isset($segments[1])) {
             $seriesItem = $publishedSeries[$segments[1]] ?? null;
             if (!$seriesItem) { $handled = false; break; }
-            $meta = page_meta($seriesItem['title'] . ' | ' . $artistName, (string)$seriesItem['description'], $site['url'] . '/series/' . $segments[1] . '/');
+            $seriesMetaTitle = trim((string)($seriesItem['seo_title'] ?? ''));
+            $seriesMetaDescription = trim((string)($seriesItem['seo_description'] ?? ''));
+            $meta = page_meta(
+                $seriesMetaTitle !== '' ? $seriesMetaTitle : $seriesItem['title'] . ' | ' . $artistName,
+                $seriesMetaDescription !== '' ? $seriesMetaDescription : (string)$seriesItem['description'],
+                $site['url'] . '/series/' . $segments[1] . '/'
+            );
             render_published_series_detail($seriesItem);
         } else {
-            $meta = page_meta('Painting Series | ' . $artistName, 'Artwork series and concept clusters managed from Artwork Mockups.', $site['url'] . '/series/');
+            $meta = page_meta(site_t('Painting Series', 'Series pictóricas') . ' | ' . $artistName, site_t('Artwork series and concept clusters managed from Artwork Mockups.', 'Series y núcleos conceptuales gestionados desde Artwork Mockups.'), $site['url'] . '/series/');
             render_published_series_index($publishedSeries);
         }
         break;

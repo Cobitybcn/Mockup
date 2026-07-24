@@ -74,6 +74,60 @@ function smb_string_list(mixed $value): array
     return array_values(array_unique($items));
 }
 
+function smb_social_locale_payload(
+    array $editorialRow,
+    array $legacyNeutral,
+    array $legacyChannels,
+    array $sheet,
+    string $editorialTitle,
+    bool $allowLegacy
+): array {
+    $content = is_array($editorialRow['content'] ?? null) ? $editorialRow['content'] : [];
+    $hasEditorial = $content !== [];
+    $social = is_array($content['social'] ?? null) ? $content['social'] : [];
+    $legacy = $allowLegacy ? $legacyChannels : [];
+    $pinterest = is_array($social['pinterest'] ?? null) ? $social['pinterest'] : [];
+    $instagram = is_array($social['instagram'] ?? null) ? $social['instagram'] : [];
+    $facebook = is_array($social['facebook'] ?? null) ? $social['facebook'] : [];
+    $legacyPinterest = is_array($legacy['pinterest'] ?? null) ? $legacy['pinterest'] : [];
+    $legacyInstagram = is_array($legacy['instagram'] ?? null) ? $legacy['instagram'] : [];
+    $legacyFacebook = is_array($legacy['facebook'] ?? null) ? $legacy['facebook'] : [];
+    $legacyNeutral = $allowLegacy ? $legacyNeutral : [];
+    $pinterestTitle = MockupSocialContentService::text($pinterest['title'] ?? '', $legacyPinterest['title'] ?? '');
+    if ($pinterestTitle === '') $pinterestTitle = $editorialTitle;
+
+    $payload = [
+        'available' => $hasEditorial || ($allowLegacy && ($legacyNeutral !== [] || $legacy !== [])),
+        'status' => $hasEditorial ? (string)($editorialRow['status'] ?? 'unprepared') : 'legacy',
+        'metadata' => [
+            'description' => MockupSocialContentService::text($content['description'] ?? '', $legacyNeutral['contextual_description'] ?? $sheet['description'] ?? ''),
+            'caption' => MockupSocialContentService::text($content['caption'] ?? '', $legacyNeutral['caption'] ?? $sheet['caption'] ?? ''),
+            'altText' => MockupSocialContentService::text($content['alt_text'] ?? '', $legacyNeutral['alt_text'] ?? $sheet['alt_text'] ?? ''),
+            'keywords' => MockupSocialContentService::list($content['search_terms'] ?? [], $legacyNeutral['keywords'] ?? $sheet['keywords'] ?? []),
+            'tags' => MockupSocialContentService::list($content['tags'] ?? [], $legacyNeutral['tags'] ?? $sheet['tags'] ?? []),
+        ],
+        'pinterest' => [
+            'title' => $pinterestTitle,
+            'description' => MockupSocialContentService::text($pinterest['description'] ?? '', $legacyPinterest['description'] ?? $sheet['description'] ?? ''),
+            'boards' => MockupSocialContentService::list($pinterest['board_suggestions'] ?? [], $legacyPinterest['board_suggestions'] ?? []),
+            'keywords' => MockupSocialContentService::list($pinterest['keywords'] ?? [], $legacyPinterest['keywords'] ?? $sheet['keywords'] ?? []),
+        ],
+        'instagram' => [
+            'hook' => MockupSocialContentService::text($instagram['hook'] ?? '', $legacyInstagram['hook'] ?? ''),
+            'caption' => MockupSocialContentService::text($instagram['caption'] ?? '', $legacyInstagram['caption'] ?? $sheet['caption'] ?? ''),
+            'hashtags' => MockupSocialContentService::list($instagram['hashtags'] ?? [], $legacyInstagram['hashtags'] ?? []),
+            'cta' => MockupSocialContentService::text($instagram['cta'] ?? '', $legacyInstagram['cta'] ?? ''),
+        ],
+        'facebook' => [
+            'headline' => MockupSocialContentService::text($facebook['headline'] ?? '', $legacyFacebook['headline'] ?? $editorialTitle),
+            'postText' => MockupSocialContentService::text($facebook['post_text'] ?? '', $legacyFacebook['post_text'] ?? $sheet['caption'] ?? ''),
+            'linkDescription' => MockupSocialContentService::text($facebook['link_description'] ?? '', $legacyFacebook['link_description'] ?? ''),
+            'cta' => MockupSocialContentService::text($facebook['cta'] ?? '', $legacyFacebook['cta'] ?? ''),
+        ],
+    ];
+    return $payload;
+}
+
 $artworkStmt = $pdo->prepare("
     SELECT a.id,
            COALESCE(NULLIF(ag.title,''),NULLIF(a.final_title,''),CONCAT('Artwork #',a.id)) AS display_title
@@ -124,6 +178,12 @@ $mockupStmt = $pdo->prepare("
 ");
 $mockupStmt->execute([$userId]);
 $mockups = $mockupStmt->fetchAll(PDO::FETCH_ASSOC);
+$socialContent = new MockupSocialContentService($pdo);
+$mockupIds = array_column($mockups, 'id');
+$bilingualMockups = [
+    'es' => $socialContent->forMockups($userId, $mockupIds, 'es'),
+    'en' => $socialContent->forMockups($userId, $mockupIds, 'en'),
+];
 usort($mockups, static function (array $left, array $right) use ($favoriteLookup, $favoritePosition): int {
     $leftId = (int)$left['id'];
     $rightId = (int)$right['id'];
@@ -143,15 +203,16 @@ foreach ($mockups as $mockup) {
     $v2 = is_array($generated['mockup_analysis_v2'] ?? null) ? $generated['mockup_analysis_v2'] : [];
     $neutral = is_array($v2['neutral'] ?? null) ? $v2['neutral'] : [];
     $channels = is_array($v2['channels'] ?? null) ? $v2['channels'] : [];
-    $pinterest = is_array($channels['pinterest'] ?? null) ? $channels['pinterest'] : [];
-    $instagram = is_array($channels['instagram'] ?? null) ? $channels['instagram'] : [];
-    $facebook = is_array($channels['facebook'] ?? null) ? $channels['facebook'] : [];
     $contextTitle = trim((string)($neutral['context_title'] ?? $sheet['title'] ?? ''));
     if ($contextTitle === '') $contextTitle = Display::contextTitle((string)$mockup['context_id']);
     $editorialTitle = trim((string)($sheet['title'] ?? ''));
     if ($editorialTitle === '') $editorialTitle = trim((string)$mockup['artwork_title']) . ' — ' . $contextTitle;
-    $pinterestTitle = trim((string)($pinterest['title'] ?? ''));
-    if ($pinterestTitle === '') $pinterestTitle = $editorialTitle;
+    $locales = [
+        'es' => smb_social_locale_payload($bilingualMockups['es'][$id] ?? [], $neutral, $channels, $sheet, $editorialTitle, true),
+        'en' => smb_social_locale_payload($bilingualMockups['en'][$id] ?? [], [], [], [], $editorialTitle, false),
+    ];
+    $defaultLocale = $locales['en']['available'] ? 'en' : 'es';
+    $defaultContent = $locales[$defaultLocale];
     $mockupPayload[] = [
         'id' => $id,
         'image' => smb_media_url($file, 900),
@@ -162,31 +223,16 @@ foreach ($mockups as $mockup) {
         'contextTitle' => $contextTitle,
         'editorialTitle' => $editorialTitle,
         'favorite' => isset($favoriteLookup[$id]),
-        'metadata' => [
-            'description' => trim((string)($neutral['contextual_description'] ?? $sheet['description'] ?? '')),
-            'caption' => trim((string)($neutral['caption'] ?? $sheet['caption'] ?? '')),
-            'altText' => trim((string)($neutral['alt_text'] ?? $sheet['alt_text'] ?? '')),
-            'keywords' => smb_string_list($neutral['keywords'] ?? $sheet['keywords'] ?? []),
-            'tags' => smb_string_list($neutral['tags'] ?? $sheet['tags'] ?? []),
+        'defaultLocale' => $defaultLocale,
+        'locales' => $locales,
+        'editorialSource' => [
+            'locale' => $defaultLocale,
+            'status' => (string)$defaultContent['status'],
         ],
-        'pinterest' => [
-            'title' => $pinterestTitle,
-            'description' => trim((string)($pinterest['description'] ?? $sheet['description'] ?? '')),
-            'boards' => smb_string_list($pinterest['board_suggestions'] ?? []),
-            'keywords' => smb_string_list($pinterest['keywords'] ?? $sheet['keywords'] ?? []),
-        ],
-        'instagram' => [
-            'hook' => trim((string)($instagram['hook'] ?? '')),
-            'caption' => trim((string)($instagram['caption'] ?? $sheet['caption'] ?? '')),
-            'hashtags' => smb_string_list($instagram['hashtags'] ?? []),
-            'cta' => trim((string)($instagram['cta'] ?? '')),
-        ],
-        'facebook' => [
-            'headline' => trim((string)($facebook['headline'] ?? $editorialTitle)),
-            'postText' => trim((string)($facebook['post_text'] ?? $sheet['caption'] ?? '')),
-            'linkDescription' => trim((string)($facebook['link_description'] ?? '')),
-            'cta' => trim((string)($facebook['cta'] ?? '')),
-        ],
+        'metadata' => $defaultContent['metadata'],
+        'pinterest' => $defaultContent['pinterest'],
+        'instagram' => $defaultContent['instagram'],
+        'facebook' => $defaultContent['facebook'],
     ];
 }
 ?>
@@ -197,7 +243,7 @@ foreach ($mockups as $mockup) {
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Social Media Board - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="social_media_board.css?v=19">
+    <link rel="stylesheet" href="social_media_board.css?v=23">
     <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body data-social-board-user="<?= $userId ?>">
@@ -377,6 +423,6 @@ foreach ($mockups as $mockup) {
 <script type="application/json" id="social-board-mockups"><?= json_encode($mockupPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <script type="application/json" id="social-board-config"><?= json_encode($socialBoardConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="social_media_board.js?v=18"></script>
+<script src="social_media_board.js?v=23"></script>
 </body>
 </html>

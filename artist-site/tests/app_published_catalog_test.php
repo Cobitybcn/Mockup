@@ -65,16 +65,39 @@ $pdo->exec("CREATE TABLE mockup_sheets (
     artwork_id INTEGER NOT NULL,
     artwork_sheet_id INTEGER NOT NULL,
     artwork_group_id INTEGER NOT NULL DEFAULT 0,
+    mockup_id INTEGER,
     mockup_file TEXT NOT NULL,
     description TEXT NOT NULL,
     keywords TEXT NOT NULL,
-    tags TEXT NOT NULL
+    tags TEXT NOT NULL,
+    alt_text TEXT NOT NULL DEFAULT '',
+    caption TEXT NOT NULL DEFAULT ''
+)");
+$pdo->exec("CREATE TABLE mockups (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    mockup_file TEXT NOT NULL
+)");
+$pdo->exec("CREATE TABLE artwork_series (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    published INTEGER NOT NULL DEFAULT 0
 )");
 $pdo->exec("CREATE TABLE root_artwork_candidates (
     id INTEGER PRIMARY KEY,
     artwork_id INTEGER NOT NULL,
     file_name TEXT NOT NULL,
     view_type TEXT NOT NULL
+)");
+$pdo->exec("CREATE TABLE bilingual_editorial_content (
+    user_id INTEGER NOT NULL,
+    entity_type TEXT NOT NULL,
+    entity_id INTEGER NOT NULL,
+    locale TEXT NOT NULL,
+    content_json TEXT NOT NULL DEFAULT '{}',
+    is_published INTEGER NOT NULL DEFAULT 0,
+    published_content_json TEXT,
+    PRIMARY KEY (user_id,entity_type,entity_id,locale)
 )");
 
 $pdo->exec("INSERT INTO users (id,email) VALUES (7,'artist@example.com')");
@@ -94,6 +117,11 @@ $pdo->exec("INSERT INTO root_artwork_candidates (id,artwork_id,file_name,view_ty
     VALUES (61,31,'detail.jpg','detail')");
 $pdo->exec("INSERT INTO mockup_sheets (id,user_id,artwork_id,artwork_sheet_id,artwork_group_id,mockup_file,description,keywords,tags)
     VALUES (62,7,31,41,71,'related-cover.jpg','','','')");
+$pdo->exec("INSERT INTO mockups (id,user_id,mockup_file) VALUES (72,7,'related-cover.jpg')");
+$pdo->exec("INSERT INTO publication_items (id,publication_id,mockup_sheet_id,position,title)
+    VALUES (63,51,62,0,'')");
+$pdo->exec("INSERT INTO bilingual_editorial_content (user_id,entity_type,entity_id,locale,content_json,is_published,published_content_json)
+    VALUES (7,'artwork',31,'es','{\"description\":\"Borrador posterior\"}',1,'{\"description\":\"Texto español aprobado\"}')");
 
 $catalog = (new AppPublishedCatalog($pdo, 'artist@example.com'))->all();
 $artwork = $catalog['test-work'] ?? null;
@@ -104,9 +132,23 @@ if (array_keys($catalog) !== ['first-work', 'test-work']) {
 }
 if (!is_array($artwork)
     || ($artwork['artwork_views'][0]['file_name'] ?? '') !== 'detail.jpg'
-    || ($artwork['header_file'] ?? '') !== 'related-cover.jpg') {
+    || ($artwork['header_file'] ?? '') !== 'related-cover.jpg'
+    || (int)($artwork['items'][0]['mockup_id'] ?? 0) !== 72) {
     fwrite(STDERR, "FAIL: published catalog cannot use a canonically related mockup as its cover.\n");
     exit(1);
 }
+$localization = new AppPublishedLocalization($pdo, 'artist@example.com');
+putenv('APP_ENV=production');
+if (!$localization->hasPublishedSpanish()
+    || ($localization->content('artwork', 31)['description'] ?? '') !== 'Texto español aprobado') {
+    fwrite(STDERR, "FAIL: the public language switch does not use the approved Spanish snapshot.\n");
+    exit(1);
+}
+putenv('APP_ENV=local');
+if (($localization->content('artwork', 31)['description'] ?? '') !== 'Borrador posterior') {
+    fwrite(STDERR, "FAIL: localhost does not expose the current Spanish master for bilingual preview.\n");
+    exit(1);
+}
+putenv('APP_ENV');
 
-echo "PASS: published catalog respects manual order and accepts canonical artwork views and related mockup covers.\n";
+echo "PASS: published catalog order, related covers, production snapshots and local Spanish master preview.\n";

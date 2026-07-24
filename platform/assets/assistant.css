@@ -554,12 +554,17 @@
 }
 
 .faithful-assistant-history button strong {
-  overflow: visible;
+  min-width: 0;
+  overflow: hidden;
   font-size: 16px;
   font-weight: 500;
   line-height: 1.4;
   overflow-wrap: anywhere;
-  text-overflow: clip;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  text-overflow: ellipsis;
   white-space: normal;
 }
 
@@ -641,13 +646,14 @@
 }
 
 .faithful-assistant-heading > strong {
-  overflow: visible;
+  min-width: 0;
+  overflow: hidden;
   font-size: 18px;
   font-weight: 620;
   line-height: 1.35;
-  overflow-wrap: anywhere;
-  text-overflow: clip;
-  white-space: normal;
+  overflow-wrap: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .faithful-assistant-heading > span {

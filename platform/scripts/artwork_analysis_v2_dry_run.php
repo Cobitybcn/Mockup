@@ -26,7 +26,7 @@ $description = trim((string)($first['description'] ?? $first['curatorial_descrip
 $draft = [
     'schema_version' => ArtworkAnalysisV2::SCHEMA_VERSION,
     'artwork_id' => (int)($legacy['artwork_id'] ?? 0),
-    'analysis_language' => 'en',
+    'analysis_language' => 'es',
     'source' => ['image_file'=>basename($source, '.analysis.json'),'artist_profile_version'=>'legacy','analysis_prompt_version'=>'legacy-import','analyzed_at'=>date(DATE_ATOM)],
     'confirmed_facts' => ['working_title'=>(string)($first['title']??''),'artist'=>'','year'=>null,'series'=>null,'medium'=>null,'materials'=>[],'width_cm'=>null,'height_cm'=>null,'depth_cm'=>null,'orientation'=>'','signature'=>null,'certificate_of_authenticity'=>null,'presentation'=>null,'shipping_notes'=>null],
     'evidence_sources' => ['artist_or_record_facts'=>[],'visual_observations'=>[],'interpretive_claims'=>[]],
@@ -37,8 +37,8 @@ $draft = [
         'visible_elements'=>(array)($profile['visible_elements']??[]),'visible_marks_or_process'=>[],'spatial_presence'=>(string)($profile['spatial_presence']??''),'emotional_atmosphere'=>(array)($profile['emotional_energy']??[]),'distinctive_features'=>[]
     ],
     'interpretation' => ['central_reading'=>(string)($profile['one_line_curatorial_read']??''),'supporting_readings'=>[],'relationship_to_artist_profile'=>'','relationship_to_series'=>'','open_questions'=>[],'claims_to_avoid'=>[]],
-    'canonical_editorial' => ['title'=>(string)($first['title']??''),'subtitle'=>(string)($first['subtitle']??''),'short_description'=>(string)($profile['one_line_curatorial_read']??''),'master_description'=>$description,'artist_vocabulary'=>[],'buyer_facing_terms'=>[],'alt_text'=>(string)($rootMeta['alt_text']??''),'caption'=>(string)($rootMeta['caption']??'')],
-    'search_metadata' => ['core_keywords'=>(array)($publishing['keywords']??[]),'specific_keywords'=>[],'long_tail_terms'=>(array)($publishing['long_tail_keywords']??[])],
+    'canonical_editorial' => ['title'=>(string)($first['title']??''),'subtitle'=>(string)($first['subtitle']??''),'short_description'=>(string)($profile['one_line_curatorial_read']??''),'master_description'=>$description,'artist_vocabulary'=>[],'alt_text'=>(string)($rootMeta['alt_text']??''),'caption'=>(string)($rootMeta['caption']??'')],
+    'search_metadata' => ['catalogue_tags'=>(array)($publishing['keywords']??[]),'search_terms'=>(array)($publishing['long_tail_keywords']??[]),'seo_title'=>'','seo_description'=>''],
     'originality_check' => ['catalogue_checked'=>false,'title_unique'=>null,'closest_title'=>null,'title_similarity'=>null,'closest_description_artwork_id'=>null,'description_similarity'=>null,'repeated_openings'=>[],'repeated_phrases'=>[],'structure_used'=>'legacy import','warnings'=>['Catalogue comparison has not been run.'],'passed'=>false],
     'review' => ['analysis_status'=>'draft','editorial_status'=>'draft','reviewed_by'=>null,'reviewed_at'=>null,'notes'=>'Imported locally from a legacy analysis; no content was published.'],
 ];

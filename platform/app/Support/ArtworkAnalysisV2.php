@@ -13,8 +13,15 @@ Analyze one artwork and return only one valid JSON object. Do not use markdown.
 GOAL
 Create one canonical, evidence-based artwork analysis. Produce one title, one subtitle and one master description. Do not generate alternatives, mockup scenes, Pinterest copy or marketplace-specific copy.
 
+LANGUAGE OF ANALYSIS
+{analysis_language_instruction}
+Keep JSON property names, enum codes, confidence values, strategy identifiers and status values exactly as specified in English. Write all prose and public-facing editorial values in {analysis_language_name}.
+
 ARTIST PROFILE
 {artist_profile_prompt}
+
+ARTIST-AUTHORED SERIES CONTEXT
+{series_context}
 
 CONFIRMED ARTWORK DATA
 - Artwork ID: {artwork_id}
@@ -48,6 +55,9 @@ RULES
 2. Keep observation and interpretation separate.
 3. Every conceptual or symbolic reading must cite visible evidence and use high, medium or low confidence.
 4. Do not invent technique, material, symbol, intention, year, series, shipping information or artist biography. Technique or process explicitly declared by the artist is confirmed information and may guide visual analysis.
+4a. Use ARTIST-AUTHORED SERIES CONTEXT to understand the work's identity, continuity and interpretive boundaries. Do not copy its conceptual vocabulary mechanically into buyer-facing search phrases.
+4b. Read Materials and process in ARTIST PROFILE as confirmed studio-practice evidence. Preserve every explicitly declared technique, material and support when it is consistent with the artwork record. Exact CONFIRMED ARTWORK DATA overrides general studio practice.
+4c. Never collapse a mixed process to its first medium. If the artist states acrylic with oil finishes, retain both acrylic and oil and preserve that relationship; do not relabel it as only acrylic or as pure oil painting.
 5. Unknown confirmed facts must be null, not inferred.
 6. Use the artist profile only as context. Never copy it into public text.
 7. The title must be unique in intention, sober, evocative, memorable and no longer than 65 characters.
@@ -66,11 +76,20 @@ RULES
 19. Do not repeat the same observation in the short description, opening paragraph and closing paragraph.
 20. Fill editorial_strategy.paragraph_functions with one concise function label for every paragraph in master_description, in the same order.
 
+{search_intent_rules}
+
+SEARCH FIELD MAPPING
+- canonical_editorial.artist_vocabulary: artist-authored conceptual vocabulary used only by the editorial layer.
+- search_metadata.catalogue_tags: ten to fourteen standardized discovery filters when supported, covering object type, subject, recognized styles, every confirmed technique/material/support, surface, color, orientation, format or justified scale.
+- search_metadata.search_terms: twelve to sixteen distinct natural phrases a buyer could genuinely use to find or acquire this exact kind of artwork; at least six must be supported long tails.
+- search_metadata.seo_title: the exact artwork title plus the strongest plain-language category phrase and artist name.
+- search_metadata.seo_description: a concise search-result description of this exact artwork using one or two useful phrases naturally.
+
 Return exactly this structure:
 {
   "schema_version": "artwork-analysis.v2",
   "artwork_id": 0,
-  "analysis_language": "en",
+  "analysis_language": "{analysis_language}",
   "source": {
     "image_file": "",
     "artist_profile_version": "",
@@ -133,11 +152,15 @@ Return exactly this structure:
     "short_description": "",
     "master_description": "",
     "artist_vocabulary": [],
-    "buyer_facing_terms": [],
     "alt_text": "",
     "caption": ""
   },
-  "search_metadata": {"core_keywords":[],"specific_keywords":[],"long_tail_terms":[]},
+  "search_metadata": {
+    "catalogue_tags": [],
+    "search_terms": [],
+    "seo_title": "",
+    "seo_description": ""
+  },
   "originality_check": {
     "catalogue_checked": false,
     "title_unique": null,
@@ -160,6 +183,7 @@ PROMPT;
     {
         $errors = [];
         if (($data['schema_version'] ?? '') !== self::SCHEMA_VERSION) $errors[] = 'Invalid schema_version.';
+        if (!in_array((string)($data['analysis_language'] ?? ''), ['es', 'en'], true)) $errors[] = 'Invalid analysis_language.';
         foreach (['confirmed_facts', 'evidence_sources', 'editorial_strategy', 'visual_analysis', 'interpretation', 'canonical_editorial', 'search_metadata', 'originality_check', 'review'] as $key) {
             if (!is_array($data[$key] ?? null)) $errors[] = "Missing object: {$key}.";
         }
@@ -179,7 +203,11 @@ PROMPT;
         $allowedStructures = ['visual_material_conceptual_spatial','atmosphere_composition_symbol_process','detail_expansion_interpretation','process_surface_depth_presence','contrast_tension_viewer','color_rhythm_territory_contemplation','legacy_unknown'];
         if (!in_array((string)($strategy['description_structure_type'] ?? ''), $allowedStructures, true)) $errors[] = 'Invalid description_structure_type.';
         if (($strategy['description_structure_type'] ?? '') !== 'legacy_unknown' && count((array)($strategy['paragraph_functions'] ?? [])) < 3) $errors[] = 'At least three paragraph functions must be recorded.';
-        $terms = array_merge((array)($editorial['buyer_facing_terms'] ?? []), (array)($data['search_metadata']['core_keywords'] ?? []), (array)($data['search_metadata']['specific_keywords'] ?? []));
+        $search = is_array($data['search_metadata'] ?? null) ? $data['search_metadata'] : [];
+        foreach (['seo_title', 'seo_description'] as $key) {
+            if (!array_key_exists($key, $search) || is_array($search[$key])) $errors[] = "search_metadata.{$key} must be a singular value.";
+        }
+        $terms = (array)($search['search_terms'] ?? []);
         $joined = mb_strtolower(implode(' | ', array_map('strval', $terms)));
         foreach (['gallery wall art', 'wall art', 'home decor', 'statement decor', 'perfect for any room'] as $forbidden) {
             if (str_contains($joined, $forbidden)) $errors[] = "Forbidden decorative term: {$forbidden}.";
@@ -190,5 +218,25 @@ PROMPT;
         if ($requireUncheckedOriginality && ($data['originality_check']['catalogue_checked'] ?? null) !== false) $errors[] = 'Dry-run originality check must remain false.';
         if (($data['review']['analysis_status'] ?? '') !== 'draft' || ($data['review']['editorial_status'] ?? '') !== 'draft') $errors[] = 'Dry-run review status must remain draft.';
         return $errors;
+    }
+
+    /** @return array<string,string> */
+    public static function editorialContent(array $data): array
+    {
+        $editorial = is_array($data['canonical_editorial'] ?? null) ? $data['canonical_editorial'] : [];
+        $search = is_array($data['search_metadata'] ?? null) ? $data['search_metadata'] : [];
+        $tags = array_values(array_unique(array_filter(array_map('trim', (array)($search['catalogue_tags'] ?? [])))));
+        $searchTerms = array_values(array_unique(array_filter(array_map('trim', (array)($search['search_terms'] ?? [])))));
+        return [
+            'subtitle' => trim((string)($editorial['subtitle'] ?? '')),
+            'description' => trim((string)($editorial['master_description'] ?? '')),
+            'short_description' => trim((string)($editorial['short_description'] ?? '')),
+            'tags' => implode(', ', $tags),
+            'search_terms' => implode(', ', $searchTerms),
+            'seo_title' => trim((string)($search['seo_title'] ?? '')),
+            'seo_description' => trim((string)($search['seo_description'] ?? '')),
+            'alt_text' => trim((string)($editorial['alt_text'] ?? '')),
+            'caption' => trim((string)($editorial['caption'] ?? '')),
+        ];
     }
 }

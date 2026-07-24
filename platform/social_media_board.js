@@ -76,6 +76,14 @@
         id: String(group?.id || uniqueId(platform)),
         items: validIds(group?.items, groupLimits[platform]),
         copy: String(group?.copy || ''),
+        locale: ['es', 'en'].includes(String(group?.locale || '')) ? String(group.locale) : 'en',
+        copyByLocale: group?.copyByLocale && typeof group.copyByLocale === 'object'
+            ? { ...group.copyByLocale }
+            : {},
+        copyCustomizedByLocale: group?.copyCustomizedByLocale && typeof group.copyCustomizedByLocale === 'object'
+            ? { ...group.copyCustomizedByLocale }
+            : {},
+        legacyCopyCustomized: group?.copyCustomized === true,
         link: group?.link === 'saatchi' ? 'saatchi' : 'website',
         linkUrl: String(group?.linkUrl || configuredDestinations[group?.link === 'saatchi' ? 'saatchi' : 'website'] || ''),
         date: String(group?.date || ''),
@@ -142,7 +150,49 @@
         .replaceAll("'", '&#039;');
     const platformLabels = { pinterest: 'Pinterest', instagram: 'Instagram', facebook: 'Facebook' };
     const cleanList = (values) => (Array.isArray(values) ? values : []).map(String).filter(Boolean);
-    const defaultPinTitle = (mockup) => String(mockup?.pinterest?.title || mockup?.editorialTitle || mockup?.artworkTitle || '');
+    const normalizedLocale = (locale) => locale === 'es' ? 'es' : 'en';
+    const localeAvailable = (mockup, locale) => Boolean(mockup?.locales?.[normalizedLocale(locale)]?.available);
+    const defaultMockupLocale = (mockup) => {
+        const preferred = normalizedLocale(mockup?.defaultLocale);
+        if (localeAvailable(mockup, preferred)) return preferred;
+        return localeAvailable(mockup, 'en') ? 'en' : 'es';
+    };
+    const localizedMockup = (mockup, locale) => {
+        const selected = localeAvailable(mockup, locale) ? normalizedLocale(locale) : defaultMockupLocale(mockup);
+        const content = mockup?.locales?.[selected] || {};
+        return {
+            locale: selected,
+            available: Boolean(content.available),
+            metadata: content.metadata || mockup?.metadata || {},
+            pinterest: content.pinterest || mockup?.pinterest || {},
+            instagram: content.instagram || mockup?.instagram || {},
+            facebook: content.facebook || mockup?.facebook || {},
+        };
+    };
+    const localeOptions = (mockup, selectedLocale) => {
+        const selected = localizedMockup(mockup, selectedLocale).locale;
+        return ['es', 'en'].map((locale) => {
+            const label = locale.toUpperCase();
+            const available = localeAvailable(mockup, locale);
+            return `<option value="${locale}"${selected === locale ? ' selected' : ''}${available ? '' : ' disabled'}>${label}${available ? '' : ' · pendiente'}</option>`;
+        }).join('');
+    };
+    const defaultPinTitle = (mockup, locale = 'en') => {
+        const localized = localizedMockup(mockup, locale);
+        return String(localized.pinterest?.title || mockup?.editorialTitle || mockup?.artworkTitle || '');
+    };
+    const pinText = (mockup, pin, field) => {
+        const locale = pinLocale(mockup, pin);
+        const customized = pin?.[`${field}CustomizedByLocale`]?.[locale] === true
+            || (pin?.[`${field}Customized`] === true && !pin?.[`${field}CustomizedByLocale`]);
+        if (customized) {
+            return String(pin?.[`${field}ByLocale`]?.[locale] ?? pin?.[field] ?? '');
+        }
+        const localized = localizedMockup(mockup, locale);
+        return field === 'title'
+            ? defaultPinTitle(mockup, locale)
+            : String(localized.pinterest?.description || localized.metadata?.description || '');
+    };
     const normalizedLabel = (value) => String(value || '')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
@@ -156,8 +206,10 @@
             || pinterestBoards.find((board) => normalizedLabel(board.name) === normalized)
             || null;
     };
-    const defaultPinBoard = (mockup) => {
-        const suggestions = cleanList(mockup?.pinterest?.boards);
+    const pinLocale = (mockup, pin = {}) => localizedMockup(mockup, pin?.locale || mockup?.defaultLocale).locale;
+    const defaultPinBoard = (mockup, pin = {}) => {
+        const localized = localizedMockup(mockup, pinLocale(mockup, pin));
+        const suggestions = cleanList(localized.pinterest?.boards);
         for (const suggestion of suggestions) {
             const exact = matchingPinterestBoard(suggestion);
             if (exact) return exact.id;
@@ -171,7 +223,7 @@
         }
         return '';
     };
-    const selectedPinBoard = (mockup, pin) => matchingPinterestBoard(pin?.board)?.id || defaultPinBoard(mockup);
+    const selectedPinBoard = (mockup, pin) => matchingPinterestBoard(pin?.board)?.id || defaultPinBoard(mockup, pin);
     const selectedPinBoardName = (mockup, pin) => {
         const id = selectedPinBoard(mockup, pin);
         return pinterestBoards.find((board) => board.id === id)?.name || '';
@@ -183,24 +235,64 @@
             <option value=""${selected === '' ? ' selected' : ''}>Select board</option>
             ${pinterestBoards.map((board) => `<option value="${escapeHtml(board.id)}"${selected === board.id ? ' selected' : ''}>${escapeHtml(board.name)}</option>`).join('')}`;
     };
-    const defaultGroupCopy = (platform, id) => {
+    const defaultGroupCopy = (platform, id, locale = 'en') => {
         const mockup = mockupById.get(String(id));
         if (!mockup) return '';
+        const localized = localizedMockup(mockup, locale);
         if (platform === 'instagram') {
-            return [mockup.instagram?.caption, cleanList(mockup.instagram?.hashtags).join(' ')]
+            const caption = String(localized.instagram?.caption || '').trim();
+            const missingHashtags = cleanList(localized.instagram?.hashtags)
+                .filter((hashtag) => !caption.toLocaleLowerCase().includes(String(hashtag).toLocaleLowerCase()));
+            return [
+                localized.instagram?.hook,
+                caption,
+                missingHashtags.join(' '),
+                localized.instagram?.cta,
+            ]
                 .map((value) => String(value || '').trim()).filter(Boolean).join('\n\n');
         }
-        return String(mockup.facebook?.postText || mockup.metadata?.caption || '').trim();
+        return [
+            localized.facebook?.postText || localized.metadata?.caption,
+            localized.facebook?.linkDescription,
+            localized.facebook?.cta,
+        ].map((value) => String(value || '').trim()).filter(Boolean).join('\n\n');
     };
     const groupDisplayTitle = (platform, group) => {
         const mockup = mockupById.get(String(group?.items?.[0] || ''));
         if (!mockup) return 'No images';
-        if (platform === 'instagram') return String(mockup.instagram?.hook || mockup.editorialTitle || mockup.contextTitle || '');
-        return String(mockup.facebook?.headline || mockup.editorialTitle || mockup.contextTitle || '');
+        const localized = localizedMockup(mockup, group?.locale || mockup.defaultLocale);
+        if (platform === 'instagram') return String(localized.instagram?.hook || mockup.editorialTitle || mockup.contextTitle || '');
+        return String(localized.facebook?.headline || mockup.editorialTitle || mockup.contextTitle || '');
     };
+    state.pinterest.forEach((id) => {
+        const mockup = mockupById.get(String(id));
+        if (!mockup) return;
+        const pin = state.pinData[String(id)] || {};
+        pin.locale = pinLocale(mockup, pin);
+        ['title', 'description'].forEach((field) => {
+            if (pin[`${field}Customized`] !== true || pin[`${field}CustomizedByLocale`]) return;
+            pin[`${field}ByLocale`] = { [pin.locale]: String(pin[field] || '') };
+            pin[`${field}CustomizedByLocale`] = { [pin.locale]: true };
+            delete pin[field];
+            delete pin[`${field}Customized`];
+        });
+        state.pinData[String(id)] = pin;
+    });
     publicationPlatforms.forEach((platform) => {
         state.publications[platform].forEach((group) => {
-            if (!group.copy.trim() && group.items[0]) group.copy = defaultGroupCopy(platform, group.items[0]);
+            const mockup = mockupById.get(String(group.items[0] || ''));
+            if (!mockup) return;
+            group.locale = localizedMockup(mockup, group.locale).locale;
+            if (group.legacyCopyCustomized) {
+                group.copyByLocale[group.locale] = group.copy;
+                group.copyCustomizedByLocale[group.locale] = true;
+                group.legacyCopyCustomized = false;
+            }
+            const customized = group.copyCustomizedByLocale[group.locale] === true;
+            group.copy = customized
+                ? String(group.copyByLocale[group.locale] || '')
+                : defaultGroupCopy(platform, group.items[0], group.locale);
+            group.copyByLocale[group.locale] = group.copy;
         });
     });
 
@@ -440,12 +532,15 @@
             pinterest: include('pinterest') ? state.pinterest.map((id, index) => {
                 const mockup = mockupById.get(String(id));
                 const pin = state.pinData[String(id)] || {};
+                const locale = pinLocale(mockup, pin);
+                const localized = localizedMockup(mockup, locale);
                 return {
                     client_key: `pinterest-${id}`,
                     mockup_id: Number(id),
-                    title: String(pin.title ?? defaultPinTitle(mockup)),
-                    description: String(pin.description ?? mockup?.pinterest?.description ?? mockup?.metadata?.description ?? ''),
-                    alt_text: String(mockup?.metadata?.altText || ''),
+                    locale,
+                    title: pinText(mockup, pin, 'title'),
+                    description: pinText(mockup, pin, 'description'),
+                    alt_text: String(localized.metadata?.altText || ''),
                     board_id: selectedPinBoard(mockup, pin),
                     destination_url: exactPinUrl(pin),
                     schedule: scheduleFor(pin),
@@ -455,6 +550,8 @@
             instagram: include('instagram') ? state.publications.instagram.map((group, index) => ({
                 client_key: group.id,
                 mockup_ids: group.items.map(Number),
+                locale: normalizedLocale(group.locale),
+                title: groupDisplayTitle('instagram', group),
                 copy: String(group.copy || ''),
                 destination_url: exactGroupUrl(group),
                 schedule: scheduleFor(group),
@@ -463,6 +560,8 @@
             facebook: include('facebook') ? state.publications.facebook.map((group, index) => ({
                 client_key: group.id,
                 mockup_ids: group.items.map(Number),
+                locale: normalizedLocale(group.locale),
+                title: groupDisplayTitle('facebook', group),
                 copy: String(group.copy || ''),
                 destination_url: exactGroupUrl(group),
                 schedule: scheduleFor(group),
@@ -683,60 +782,64 @@
         if (!mockup || !backdrop || !kicker || !title || !body) return;
 
         let currentPublication = '';
+        let locale = defaultMockupLocale(mockup);
         if (platform === 'pinterest') {
             const pin = state.pinData[String(id)] || {};
+            locale = pinLocale(mockup, pin);
             const boardName = selectedPinBoardName(mockup, pin);
             currentPublication = `
                 <section class="smb-inspector-current smb-inspector-current--pinterest">
-                    <span>Contenido actual en Pinterest</span>
-                    <strong>${escapeHtml(pin.title ?? defaultPinTitle(mockup))}</strong>
+                    <div class="smb-inspector-current-head"><span>Contenido actual en Pinterest</span><label><span class="sr-only">Idioma</span><select data-inspector-locale data-platform="pinterest" data-mockup-id="${escapeHtml(id)}">${localeOptions(mockup, locale)}</select></label></div>
+                    <strong>${escapeHtml(pinText(mockup, pin, 'title'))}</strong>
                     <p>Board: ${escapeHtml(boardName || 'Not selected')}</p>
                 </section>`;
         } else if (publicationPlatforms.includes(platform)) {
             const group = findGroup(platform, groupId);
+            locale = localizedMockup(mockup, group?.locale || mockup.defaultLocale).locale;
             currentPublication = `
                 <section class="smb-inspector-current smb-inspector-current--${platform}">
-                    <span>Contenido actual en ${escapeHtml(platformLabels[platform])}</span>
+                    <div class="smb-inspector-current-head"><span>Contenido actual en ${escapeHtml(platformLabels[platform])}</span><label><span class="sr-only">Idioma</span><select data-inspector-locale data-platform="${escapeHtml(platform)}" data-group-id="${escapeHtml(groupId)}" data-mockup-id="${escapeHtml(id)}">${localeOptions(mockup, locale)}</select></label></div>
                     <strong>${escapeHtml(groupDisplayTitle(platform, group))}</strong>
-                    <p>${escapeHtml(group?.copy || defaultGroupCopy(platform, id)).replaceAll('\n', '<br>')}</p>
+                    <p>${escapeHtml(group?.copy || defaultGroupCopy(platform, id, locale)).replaceAll('\n', '<br>')}</p>
                 </section>`;
         }
+        const localized = localizedMockup(mockup, locale);
 
         const pinterestSection = `
             <section class="smb-inspector-section smb-inspector-section--pinterest">
-                <h3>Pinterest</h3><dl>
-                    ${inspectorValue('Title', mockup.pinterest?.title)}
-                    ${inspectorValue('Description', mockup.pinterest?.description)}
-                    ${inspectorTerms('Boards sugeridos', mockup.pinterest?.boards)}
-                    ${inspectorTerms('Keywords', mockup.pinterest?.keywords)}
+                <h3>Pinterest · ${locale.toUpperCase()}</h3><dl>
+                    ${inspectorValue('Title', localized.pinterest?.title)}
+                    ${inspectorValue('Description', localized.pinterest?.description)}
+                    ${inspectorTerms('Boards sugeridos', localized.pinterest?.boards)}
+                    ${inspectorTerms('Keywords', localized.pinterest?.keywords)}
                 </dl>
             </section>`;
         const instagramSection = `
             <section class="smb-inspector-section smb-inspector-section--instagram">
-                <h3>Instagram</h3><dl>
-                    ${inspectorValue('Hook', mockup.instagram?.hook)}
-                    ${inspectorValue('Caption', mockup.instagram?.caption)}
-                    ${inspectorTerms('Hashtags', mockup.instagram?.hashtags)}
-                    ${inspectorValue('CTA', mockup.instagram?.cta)}
+                <h3>Instagram · ${locale.toUpperCase()}</h3><dl>
+                    ${inspectorValue('Hook', localized.instagram?.hook)}
+                    ${inspectorValue('Caption', localized.instagram?.caption)}
+                    ${inspectorTerms('Hashtags', localized.instagram?.hashtags)}
+                    ${inspectorValue('CTA', localized.instagram?.cta)}
                 </dl>
             </section>`;
         const facebookSection = `
             <section class="smb-inspector-section smb-inspector-section--facebook">
-                <h3>Facebook</h3><dl>
-                    ${inspectorValue('Titular', mockup.facebook?.headline)}
-                    ${inspectorValue('Texto', mockup.facebook?.postText)}
-                    ${inspectorValue('Link description', mockup.facebook?.linkDescription)}
-                    ${inspectorValue('CTA', mockup.facebook?.cta)}
+                <h3>Facebook · ${locale.toUpperCase()}</h3><dl>
+                    ${inspectorValue('Titular', localized.facebook?.headline)}
+                    ${inspectorValue('Texto', localized.facebook?.postText)}
+                    ${inspectorValue('Link description', localized.facebook?.linkDescription)}
+                    ${inspectorValue('CTA', localized.facebook?.cta)}
                 </dl>
             </section>`;
         const metadataSection = `
             <section class="smb-inspector-section">
                 <h3>Metadata visual</h3><dl>
-                    ${inspectorValue('Description', mockup.metadata?.description)}
-                    ${inspectorValue('Caption', mockup.metadata?.caption)}
-                    ${inspectorValue('Alt text', mockup.metadata?.altText)}
-                    ${inspectorTerms('Keywords', mockup.metadata?.keywords)}
-                    ${inspectorTerms('Tags', mockup.metadata?.tags)}
+                    ${inspectorValue('Description', localized.metadata?.description)}
+                    ${inspectorValue('Caption', localized.metadata?.caption)}
+                    ${inspectorValue('Alt text', localized.metadata?.altText)}
+                    ${inspectorTerms('Keywords', localized.metadata?.keywords)}
+                    ${inspectorTerms('Tags', localized.metadata?.tags)}
                 </dl>
             </section>`;
         const channelSections = platform === 'pinterest'
@@ -766,8 +869,9 @@
         const mockup = mockupById.get(id);
         if (!mockup) return '';
         const pin = state.pinData[id] || {};
-        const title = pin.title ?? defaultPinTitle(mockup);
-        const description = pin.description ?? String(mockup.pinterest?.description || mockup.metadata?.description || '');
+        const locale = pinLocale(mockup, pin);
+        const title = pinText(mockup, pin, 'title');
+        const description = pinText(mockup, pin, 'description');
         const destination = pin.destination === 'saatchi' ? 'saatchi' : 'website';
         const destinationUrl = String(pin.destinationUrl || configuredDestinations[destination] || '');
         const board = selectedPinBoard(mockup, pin);
@@ -782,7 +886,10 @@
                 <span class="smb-pin-drag" data-drag-handle aria-label="Mover Pin" role="button">⋮⋮</span>
                 ${scheduledChip(scheduled)}
                 <button class="smb-remove-media" type="button" data-remove-media aria-label="Remove from Pinterest">×</button>
-                <img src="${escapeHtml(mockup.image)}" alt="${escapeHtml(mockup.artworkTitle)}" data-inspect-mockup draggable="false">
+                <div class="smb-pin-media">
+                    <img src="${escapeHtml(mockup.image)}" alt="${escapeHtml(mockup.artworkTitle)}" data-inspect-mockup draggable="false">
+                    <label class="smb-pin-language"><span>Idioma</span><select data-pin-locale aria-label="Idioma de esta publicación">${localeOptions(mockup, locale)}</select></label>
+                </div>
                 <label class="smb-pin-field smb-pin-field--title"><span>Title</span><input type="text" value="${escapeHtml(title)}" data-pin-title placeholder="Pin title"></label>
                 <label class="smb-pin-field smb-pin-field--description"><span>Description</span><textarea data-pin-description placeholder="Pin description">${escapeHtml(description)}</textarea></label>
                 <label class="smb-pin-field smb-pin-field--board"><span>Board</span><select data-pin-board aria-label="Destination board on Pinterest">${pinterestBoardOptions(board)}</select></label>
@@ -805,6 +912,8 @@
     const publicationMarkup = (platform, group, index) => {
         const isInstagram = platform === 'instagram';
         const displayTitle = groupDisplayTitle(platform, group);
+        const firstMockup = mockupById.get(String(group.items[0] || ''));
+        const locale = firstMockup ? localizedMockup(firstMockup, group.locale).locale : normalizedLocale(group.locale);
         const copyLabel = isInstagram ? 'Caption and hashtags' : 'Publication copy';
         const websiteLabel = isInstagram ? 'Website · enlace en bio' : 'Website';
         const saatchiLabel = isInstagram ? 'Saatchi Art · enlace en bio' : 'Saatchi Art';
@@ -823,6 +932,7 @@
             <article class="smb-publication-card${state.schedule.mode === 'scheduled' && state.schedule.perPublication ? ' has-schedule' : ''}" data-publication-group="${platform}" data-group-id="${escapeHtml(group.id)}">
                 <header class="smb-publication-head">
                     <div class="smb-publication-label"><strong>Publication ${index + 1}</strong><span title="${escapeHtml(displayTitle)}">${escapeHtml(displayTitle)}</span><small>${plural(group.items.length, 'image', 'images')}</small></div>
+                    ${firstMockup ? `<label class="smb-publication-language"><span class="sr-only">Idioma de esta publicación</span><select data-group-locale aria-label="Idioma de esta publicación">${localeOptions(firstMockup, locale)}</select></label>` : ''}
                     ${scheduledChip(scheduled)}
                     <button type="button" data-remove-publication aria-label="Remove publication">×</button>
                 </header>
@@ -923,6 +1033,11 @@
 
     const addToPinterest = (id, insertAt = null, shouldRender = true) => {
         clearScheduled('pinterest', `pinterest-${id}`);
+        const mockup = mockupById.get(String(id));
+        state.pinData[String(id)] = state.pinData[String(id)] || {};
+        if (mockup && !['es', 'en'].includes(String(state.pinData[String(id)].locale || ''))) {
+            state.pinData[String(id)].locale = defaultMockupLocale(mockup);
+        }
         const existingIndex = state.pinterest.indexOf(id);
         const adjustedInsertAt = Number.isInteger(insertAt) && existingIndex >= 0 && existingIndex < insertAt
             ? insertAt - 1
@@ -940,6 +1055,7 @@
         if (!targetGroup) targetGroup = state.publications[platform].at(-1) || createPublication(platform, false);
         clearScheduled(platform, targetGroup.id);
         const targetWasEmpty = targetGroup.items.length === 0;
+        const mockup = mockupById.get(String(id));
 
         const existingIndex = targetGroup.items.indexOf(id);
         const adjustedInsertAt = Number.isInteger(insertAt) && existingIndex >= 0 && existingIndex < insertAt
@@ -965,7 +1081,14 @@
             ? Math.max(0, Math.min(adjustedInsertAt, targetGroup.items.length))
             : targetGroup.items.length;
         targetGroup.items.splice(targetIndex, 0, id);
-        if (targetWasEmpty && !targetGroup.copy.trim()) targetGroup.copy = defaultGroupCopy(platform, id);
+        if (targetWasEmpty && mockup) {
+            targetGroup.locale = defaultMockupLocale(mockup);
+            const customized = targetGroup.copyCustomizedByLocale[targetGroup.locale] === true;
+            targetGroup.copy = customized
+                ? String(targetGroup.copyByLocale[targetGroup.locale] || '')
+                : defaultGroupCopy(platform, id, targetGroup.locale);
+            targetGroup.copyByLocale[targetGroup.locale] = targetGroup.copy;
+        }
         state.publications[platform] = state.publications[platform].filter((group) => group.items.length > 0);
         if (shouldRender) renderAll();
         return true;
@@ -1358,19 +1481,32 @@
             const id = pinItem.dataset.mockupId;
             clearScheduled('pinterest', `pinterest-${id}`);
             state.pinData[id] = state.pinData[id] || {};
-            if (event.target.matches('[data-pin-title]')) state.pinData[id].title = event.target.value;
-            if (event.target.matches('[data-pin-description]')) state.pinData[id].description = event.target.value;
+            const pin = state.pinData[id];
+            const mockup = mockupById.get(String(id));
+            const locale = pinLocale(mockup, pin);
+            if (event.target.matches('[data-pin-title]')) {
+                pin.titleByLocale = pin.titleByLocale && typeof pin.titleByLocale === 'object' ? pin.titleByLocale : {};
+                pin.titleCustomizedByLocale = pin.titleCustomizedByLocale && typeof pin.titleCustomizedByLocale === 'object' ? pin.titleCustomizedByLocale : {};
+                pin.titleByLocale[locale] = event.target.value;
+                pin.titleCustomizedByLocale[locale] = true;
+            }
+            if (event.target.matches('[data-pin-description]')) {
+                pin.descriptionByLocale = pin.descriptionByLocale && typeof pin.descriptionByLocale === 'object' ? pin.descriptionByLocale : {};
+                pin.descriptionCustomizedByLocale = pin.descriptionCustomizedByLocale && typeof pin.descriptionCustomizedByLocale === 'object' ? pin.descriptionCustomizedByLocale : {};
+                pin.descriptionByLocale[locale] = event.target.value;
+                pin.descriptionCustomizedByLocale[locale] = true;
+            }
             if (event.target.matches('[data-pin-board]')) {
-                state.pinData[id].board = event.target.value;
-                state.pinData[id].boardName = event.target.selectedOptions[0]?.textContent || '';
+                pin.board = event.target.value;
+                pin.boardName = event.target.selectedOptions[0]?.textContent || '';
             }
             if (event.target.matches('[data-pin-destination]')) {
-                state.pinData[id].destination = event.target.value;
-                state.pinData[id].destinationUrl = configuredDestinations[event.target.value] || '';
+                pin.destination = event.target.value;
+                pin.destinationUrl = configuredDestinations[event.target.value] || '';
                 renderAll();
                 return;
             }
-            if (event.target.matches('[data-pin-destination-url]')) state.pinData[id].destinationUrl = event.target.value;
+            if (event.target.matches('[data-pin-destination-url]')) pin.destinationUrl = event.target.value;
             saveState();
             return;
         }
@@ -1383,6 +1519,8 @@
                 if (group) {
                     clearScheduled(groupElement.dataset.publicationGroup, group.id);
                     group.copy = copy.value;
+                    group.copyByLocale[group.locale] = copy.value;
+                    group.copyCustomizedByLocale[group.locale] = true;
                 }
             }
             saveState();
@@ -1407,6 +1545,71 @@
         const catalogFilter = event.target.closest('[data-artwork-filter], [data-series-filter]');
         if (catalogFilter) {
             applyCatalogFilters();
+            return;
+        }
+
+        const inspectorLanguage = event.target.closest('[data-inspector-locale]');
+        if (inspectorLanguage) {
+            const platform = String(inspectorLanguage.dataset.platform || '');
+            const id = String(inspectorLanguage.dataset.mockupId || '');
+            const locale = normalizedLocale(inspectorLanguage.value);
+            if (platform === 'pinterest') {
+                state.pinData[id] = state.pinData[id] || {};
+                state.pinData[id].locale = locale;
+                clearScheduled('pinterest', `pinterest-${id}`);
+                renderAll();
+                openInspector(id, platform);
+                return;
+            }
+            const group = findGroup(platform, String(inspectorLanguage.dataset.groupId || ''));
+            const mockup = mockupById.get(id);
+            if (group && mockup) {
+                clearScheduled(platform, group.id);
+                group.copyByLocale[group.locale] = group.copy;
+                group.locale = localizedMockup(mockup, locale).locale;
+                const customized = group.copyCustomizedByLocale[group.locale] === true;
+                group.copy = customized
+                    ? String(group.copyByLocale[group.locale] || '')
+                    : defaultGroupCopy(platform, group.items[0], group.locale);
+                group.copyByLocale[group.locale] = group.copy;
+                renderAll();
+                openInspector(id, platform, group.id);
+            }
+            return;
+        }
+
+        const pinLanguage = event.target.closest('[data-pin-locale]');
+        if (pinLanguage) {
+            const item = pinLanguage.closest('[data-board-item][data-platform="pinterest"]');
+            if (item) {
+                const id = item.dataset.mockupId;
+                clearScheduled('pinterest', `pinterest-${id}`);
+                state.pinData[id] = state.pinData[id] || {};
+                state.pinData[id].locale = normalizedLocale(pinLanguage.value);
+                renderAll();
+            }
+            return;
+        }
+
+        const groupLanguage = event.target.closest('[data-group-locale]');
+        if (groupLanguage) {
+            const groupElement = groupLanguage.closest('[data-publication-group]');
+            if (groupElement) {
+                const platform = groupElement.dataset.publicationGroup;
+                const group = findGroup(platform, groupElement.dataset.groupId);
+                const mockup = mockupById.get(String(group?.items?.[0] || ''));
+                if (group && mockup) {
+                    clearScheduled(platform, group.id);
+                    group.copyByLocale[group.locale] = group.copy;
+                    group.locale = localizedMockup(mockup, groupLanguage.value).locale;
+                    const customized = group.copyCustomizedByLocale[group.locale] === true;
+                    group.copy = customized
+                        ? String(group.copyByLocale[group.locale] || '')
+                        : defaultGroupCopy(platform, group.items[0], group.locale);
+                    group.copyByLocale[group.locale] = group.copy;
+                    renderAll();
+                }
+            }
             return;
         }
 

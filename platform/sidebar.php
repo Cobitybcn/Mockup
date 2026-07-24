@@ -10,6 +10,10 @@ $sidebarEnvironmentDatabase = trim(app_env('DB_DATABASE', ''));
 
 $currentPage = basename($_SERVER['PHP_SELF']);
 $queryString = $_SERVER['QUERY_STRING'] ?? '';
+$sidebarBilingualExperiment = ($sidebarUser && (new BilingualEditorialService(Database::connection()))->isEnabled((int)$sidebarUser['id']))
+    || (string)($_GET['bilingual_experiment'] ?? '') === '1'
+    || $currentPage === 'mockup_bilingual_experiment.php';
+$sidebarMockupAlbumUrl = 'mockups.php' . ($sidebarBilingualExperiment ? '?bilingual_experiment=1' : '');
 $currentImageParam = basename((string)($_GET['image'] ?? $_POST['image'] ?? ''));
 $currentArtworkIdParam = (int)($_GET['id'] ?? $_GET['artwork_id'] ?? $_POST['id'] ?? $_POST['artwork_id'] ?? 0);
 $currentMockupIdParam = (int)($_GET['mockup_id'] ?? $_POST['mockup_id'] ?? ($selectedMockupId ?? 0));
@@ -207,13 +211,13 @@ $step5Active = ($currentPage === 'report.php' || $currentPage === 'curated_mocku
 
 // Menu active states
 $dashboardActive = ($currentPage === 'dashboard.php');
-$mockupsActive = ($currentPage === 'mockups.php' || $currentPage === 'viewer.php' || $currentPage === 'mockup_upload.php');
+$mockupsActive = ($currentPage === 'mockups.php' || $currentPage === 'mockup_bilingual_experiment.php' || $currentPage === 'viewer.php' || $currentPage === 'mockup_upload.php');
 $worldMotherActive = ($currentPage === 'world_mother_studio.php');
 $cameraStudioActive = ($currentPage === 'camera_studio.php');
 $variationLabActive = ($currentPage === 'mockup_variation_lab.php');
 $generatedResultsActive = ($currentPage === 'mockup_combination_results.php');
 $rootAlbumActive = in_array($currentPage, ['root_album.php', 'artwork.php', 'artwork_details.php'], true);
-$seriesActive = ($currentPage === 'series.php');
+$seriesActive = $currentPage === 'series.php';
 $profileActive = ($currentPage === 'artist_profile.php');
 $studioNotesActive = ($currentPage === 'website_studio_notes.php');
 $socialMediaCatalogActive = in_array($currentPage, ['social_media_catalog.php', 'social_media_board.php'], true);
@@ -859,7 +863,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                     <span>Library</span>
                     <a class="<?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
                     <a class="<?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
-                    <a class="<?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
+                    <a class="<?= $mockupsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarMockupAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">Mockup Album</a>
                     <?php if ($sidebarCanUseVideo): ?>
                         <a class="<?= $videosActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideosUrl, ENT_QUOTES, 'UTF-8') ?>">Videos</a>
                     <?php endif; ?>
@@ -939,7 +943,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <div class="sidebar-tab-row">
                     <a class="sidebar-tab <?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
                     <a class="sidebar-tab <?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
-                    <a class="sidebar-tab <?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
+                    <a class="sidebar-tab <?= $mockupsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarMockupAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">Mockup Album</a>
                 </div>
             </section>
         <?php endif; ?>
@@ -959,7 +963,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <div class="sidebar-tab-row">
                     <a class="sidebar-tab <?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
                     <a class="sidebar-tab <?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
-                    <a class="sidebar-tab <?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
+                    <a class="sidebar-tab <?= $mockupsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarMockupAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">Mockup Album</a>
                     <?php if ($sidebarCanUseVideo): ?>
                         <a class="sidebar-tab <?= $videosActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideosUrl, ENT_QUOTES, 'UTF-8') ?>">Videos</a>
                     <?php endif; ?>
@@ -1028,7 +1032,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <span>Library</span>
                 <a class="<?= $seriesActive ? 'active' : '' ?>" href="series.php">Series</a>
                 <a class="<?= $rootAlbumActive ? 'active' : '' ?>" href="<?= htmlspecialchars($rootAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">ArtWorks</a>
-                <a class="<?= $mockupsActive ? 'active' : '' ?>" href="mockups.php">Mockup Album</a>
+                <a class="<?= $mockupsActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarMockupAlbumUrl, ENT_QUOTES, 'UTF-8') ?>">Mockup Album</a>
                 <?php if ($sidebarCanUseVideo): ?>
                     <a class="<?= $videosActive ? 'active' : '' ?>" href="<?= htmlspecialchars($sidebarVideosUrl, ENT_QUOTES, 'UTF-8') ?>">Videos</a>
                 <?php endif; ?>
@@ -1612,7 +1616,9 @@ if ($sidebarUser) {
         'current_route' => $currentPage,
         'artwork_id' => $sidebarContextArtworkId ?: $currentArtworkIdParam,
         'mockup_id' => $currentMockupIdParam,
-        'series_id' => $currentPage === 'series.php' ? (int)($_GET['id'] ?? 0) : 0,
+        'series_id' => $currentPage === 'series.php'
+            ? (int)($_GET['series'] ?? $_GET['id'] ?? 0)
+            : 0,
         'generation_id' => (int)($_GET['generation_id'] ?? $_GET['job_id'] ?? 0),
         'publication_id' => (int)($_GET['publication_id'] ?? 0),
     ]);

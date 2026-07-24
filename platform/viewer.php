@@ -10,7 +10,7 @@ $canUseSocial = FeatureAccess::allows($user, FeatureAccess::SOCIAL_MANAGE);
 
 $id = (int)($_GET['id'] ?? 0);
 $file = basename((string)($_GET['file'] ?? ''));
-$bilingualExperiment = (string)($_GET['bilingual_experiment'] ?? '') === '1';
+$bilingualExperiment = false;
 
 if ($id > 0) {
     $sql = 'SELECT * FROM mockups WHERE id = :id';
@@ -517,7 +517,7 @@ foreach ($mockupSocialSpecs as $channelKey => $channelSpec) {
 }
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="utf-8">
     <title>Mockup Viewer - Artwork Mockups</title>
@@ -1193,7 +1193,7 @@ foreach ($mockupSocialSpecs as $channelKey => $channelSpec) {
                 </div>
             </details>
         <?php endif; ?>
-        <?php if($viewerMockupId>0 && !$bilingualExperiment): ?>
+        <?php if($viewerMockupId>0): ?>
             <section class="panel">
                 <div class="section-heading">
                     <div><h2>Admin · Mockup Analysis v2</h2><p>Neutral scene analysis derived from the approved artwork identity and this exact mockup.</p></div>
@@ -1241,7 +1241,7 @@ foreach ($mockupSocialSpecs as $channelKey => $channelSpec) {
                 <?php else: ?><p>No v2 draft exists for this mockup yet.</p><?php endif; ?>
             </section>
         <?php endif; ?>
-        <?php if($mockupV2 && $canUseSocial && !$bilingualExperiment): ?><section class="panel pinterest">
+        <?php if($mockupV2 && $canUseSocial): ?><section class="panel pinterest">
             <div class="section-heading">
                 <div>
                     <h2>Pinterest Pin Content</h2>

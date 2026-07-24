@@ -58,6 +58,11 @@ $ownerId = (int)$mockup['user_id'];
 $artworkId = (int)($mockup['source_artwork_id'] ?? 0);
 $mockupFile = basename((string)$mockup['mockup_file']);
 $contextTitle = Display::contextTitle((string)($mockup['context_id'] ?? 'Mockup'));
+$bilingualEditorialService = new BilingualEditorialService($pdo);
+if (!$bilingualEditorialService->isEnabled($ownerId) && !$isAdmin) {
+    header('Location: viewer.php?id=' . $mockupId);
+    exit;
+}
 
 $sheetStatement = $pdo->prepare('
     SELECT * FROM mockup_sheets
@@ -72,24 +77,42 @@ $sheetStatement->execute([
 $sheet = $sheetStatement->fetch(PDO::FETCH_ASSOC) ?: [];
 
 $artworkTitle = trim((string)($mockup['artwork_title'] ?? ''));
+$seriesTitle = trim((string)($mockup['series_title'] ?? ''));
 $title = trim((string)($sheet['title'] ?? ''));
 if ($title === '') $title = $artworkTitle !== '' ? $artworkTitle . ' · ' . $contextTitle : $contextTitle;
+$mockupRelationshipParts = [];
+if ($artworkTitle !== '') $mockupRelationshipParts[] = $artworkTitle;
+if ($seriesTitle !== '') $mockupRelationshipParts[] = 'Serie ' . $seriesTitle;
+$mockupRelationshipLine = implode(' · ', $mockupRelationshipParts);
 
-$generated = json_decode((string)($sheet['generated_json'] ?? ''), true);
-$generated = is_array($generated) ? $generated : [];
-$analysis = is_array($generated['mockup_analysis_v2'] ?? null) ? (array)$generated['mockup_analysis_v2'] : [];
-$channels = is_array($analysis['channels'] ?? null) ? (array)$analysis['channels'] : [];
+$mockupSpanishEditorial = $bilingualEditorialService->get($ownerId, 'mockup', $mockupId, 'es');
+$mockupSpanishContent = $mockupSpanishEditorial['content'];
+$mockupEnglishEditorial = $bilingualEditorialService->get($ownerId, 'mockup', $mockupId, 'en');
+$mockupEnglishContent = $mockupEnglishEditorial['content'];
+$mockupEditorialHasText = static function (mixed $value) use (&$mockupEditorialHasText): bool {
+    if (is_array($value)) {
+        foreach ($value as $item) {
+            if ($mockupEditorialHasText($item)) return true;
+        }
+        return false;
+    }
+    return trim((string)$value) !== '';
+};
+$mockupHasSpanishContent = $mockupEditorialHasText((array)$mockupSpanishContent);
+$mockupEditorialStateLabel = ($mockupEnglishEditorial['status'] ?? '') === 'stale' ? 'English · actualizar' : (($mockupEnglishEditorial['status'] ?? '') === 'unprepared' ? 'English · pendiente' : 'ES + EN');
 
 $editorialFields = [
-    ['es'=>'Descripción','en'=>'Description','value'=>(string)($sheet['description'] ?? ''),'large'=>true,'placeholder'=>'Escribí la descripción editorial de este mockup…'],
-    ['es'=>'Palabras clave','en'=>'Keywords','value'=>(string)($sheet['keywords'] ?? ''),'large'=>false,'placeholder'=>'Escena, arquitectura, luz y atmósfera…'],
-    ['es'=>'Etiquetas','en'=>'Tags','value'=>(string)($sheet['tags'] ?? ''),'large'=>false,'placeholder'=>'Etiquetas editoriales…'],
-    ['es'=>'Texto alternativo','en'=>'Alt text','value'=>(string)($sheet['alt_text'] ?? ''),'large'=>false,'placeholder'=>'Descripción visual accesible del mockup…'],
-    ['es'=>'Caption','en'=>'Caption','value'=>(string)($sheet['caption'] ?? ''),'large'=>false,'placeholder'=>'Texto breve para publicar este mockup…'],
+    ['key'=>'description','es'=>'Descripción','en'=>'Description','large'=>true,'placeholder'=>'Escribí la descripción editorial de este mockup…','en_placeholder'=>'International English mockup description…'],
+    ['key'=>'tags','es'=>'Tags de catálogo','en'=>'Catalogue tags','large'=>false,'placeholder'=>'Tipo, estilos, técnicas, materiales, soporte, color, superficie, formato y contexto…','en_placeholder'=>'Type, styles, techniques, materials, support, color, surface, format and context…'],
+    ['key'=>'search_terms','es'=>'Búsquedas y long tails','en'=>'Searches and long tails','large'=>false,'placeholder'=>'Búsquedas amplias y específicas que usaría un comprador…','en_placeholder'=>'Broad and specific searches an international buyer would use…'],
+    ['key'=>'seo_title','es'=>'Título SEO','en'=>'SEO title','large'=>false,'placeholder'=>'Obra + contexto claro + artista…','en_placeholder'=>'Artwork + clear context + artist…'],
+    ['key'=>'seo_description','es'=>'Descripción SEO','en'=>'SEO description','large'=>false,'placeholder'=>'Descripción breve y útil para buscadores…','en_placeholder'=>'Useful international search-result description…'],
+    ['key'=>'alt_text','es'=>'Texto alternativo','en'=>'Alt text','large'=>false,'placeholder'=>'Descripción visual accesible del mockup…','en_placeholder'=>'Accessible English visual description…'],
+    ['key'=>'caption','es'=>'Pie de imagen','en'=>'Caption','large'=>false,'placeholder'=>'Texto breve para publicar este mockup…','en_placeholder'=>'International publication caption…'],
 ];
 
 $socialSpecs = [
-    'website'=>['Website',['description'=>['Descripción','Description'],'caption'=>['Caption','Caption'],'alt_text'=>['Texto alternativo','Alt text'],'seo_keywords'=>['Palabras clave SEO','SEO keywords'],'long_tail_keywords'=>['Términos de búsqueda','Long-tail keywords']]],
+    'website'=>['Website',['description'=>['Descripción','Description'],'caption'=>['Caption','Caption'],'alt_text'=>['Texto alternativo','Alt text']]],
     'instagram'=>['Instagram',['hook'=>['Apertura','Hook'],'caption'=>['Caption','Caption'],'hashtags'=>['Hashtags','Hashtags'],'cta'=>['Llamada a la acción','Call to action']]],
     'facebook'=>['Facebook',['headline'=>['Titular','Headline'],'post_text'=>['Texto de publicación','Post text'],'link_description'=>['Descripción del enlace','Link description'],'cta'=>['Llamada a la acción','Call to action']]],
     'pinterest'=>['Pinterest',['title'=>['Título del pin','Pin title'],'description'=>['Descripción del pin','Pin description'],'board_suggestions'=>['Tableros sugeridos','Board suggestions'],'topic_suggestions'=>['Temas sugeridos','Topic suggestions'],'keywords'=>['Palabras clave','Keywords']]],
@@ -97,12 +120,13 @@ $socialSpecs = [
 ];
 $socialChannels = [];
 foreach ($socialSpecs as $key => [$label, $specs]) {
-    $channel = (array)($channels[$key] ?? []);
+    $spanishChannel = (array)($mockupSpanishContent['social'][$key] ?? []);
+    $englishChannel = (array)($mockupEnglishContent['social'][$key] ?? []);
     $fields = [];
     foreach ($specs as $fieldKey => [$es, $en]) {
-        $fields[] = ['es'=>$es,'en'=>$en,'value'=>mbe_text($channel[$fieldKey] ?? '')];
+        $fields[] = ['key'=>$fieldKey,'es'=>$es,'en'=>$en,'es_value'=>mbe_text($spanishChannel[$fieldKey] ?? ''),'en_value'=>mbe_text($englishChannel[$fieldKey] ?? '')];
     }
-    $socialChannels[] = ['label'=>$label,'fields'=>$fields];
+    $socialChannels[] = ['key'=>$key,'label'=>$label,'fields'=>$fields];
 }
 
 $relatedSql = '
@@ -111,12 +135,22 @@ $relatedSql = '
     WHERE m.user_id=:user_id
 ';
 $relatedParams = ['user_id' => $ownerId];
+if ($artworkId > 0) {
+    $relatedSql .= ' AND m.source_artwork_id=:artwork_id';
+    $relatedParams['artwork_id'] = $artworkId;
+}
 $relatedSql .= ' ORDER BY m.created_at DESC,m.id DESC LIMIT 60';
 $relatedStatement = $pdo->prepare($relatedSql);
 $relatedStatement->execute($relatedParams);
 $relatedMockups = $relatedStatement->fetchAll(PDO::FETCH_ASSOC);
-$albumCountStatement = $pdo->prepare('SELECT COUNT(*) FROM mockups WHERE user_id=:user_id');
-$albumCountStatement->execute(['user_id' => $ownerId]);
+$albumCountSql = 'SELECT COUNT(*) FROM mockups WHERE user_id=:user_id';
+$albumCountParams = ['user_id' => $ownerId];
+if ($artworkId > 0) {
+    $albumCountSql .= ' AND source_artwork_id=:artwork_id';
+    $albumCountParams['artwork_id'] = $artworkId;
+}
+$albumCountStatement = $pdo->prepare($albumCountSql);
+$albumCountStatement->execute($albumCountParams);
 $albumCount = (int)$albumCountStatement->fetchColumn();
 
 $favoriteIds = MockupFavorites::idsForUser($ownerId);
@@ -130,10 +164,15 @@ if ($favoriteIds) {
         $favoriteParams[$key] = $favoriteId;
         $favoritePlaceholders[] = ':' . $key;
     }
+    $favoriteArtworkFilter = '';
+    if ($artworkId > 0) {
+        $favoriteArtworkFilter = ' AND source_artwork_id=:artwork_id';
+        $favoriteParams['artwork_id'] = $artworkId;
+    }
     $favoriteStatement = $pdo->prepare('
         SELECT id,mockup_file,context_id,created_at
         FROM mockups
-        WHERE user_id=:user_id AND id IN (' . implode(',', $favoritePlaceholders) . ')
+        WHERE user_id=:user_id AND id IN (' . implode(',', $favoritePlaceholders) . ')' . $favoriteArtworkFilter . '
     ');
     foreach ($favoriteParams as $key => $value) {
         $favoriteStatement->bindValue(':' . $key, $value, PDO::PARAM_INT);
@@ -143,8 +182,9 @@ if ($favoriteIds) {
     foreach ($favoriteStatement->fetchAll(PDO::FETCH_ASSOC) as $favoriteRow) {
         $favoriteRows[(int)$favoriteRow['id']] = $favoriteRow;
     }
-    foreach (array_slice($favoriteIds, 0, 3) as $favoriteId) {
+    foreach ($favoriteIds as $favoriteId) {
         if (isset($favoriteRows[$favoriteId])) $favoriteMockups[] = $favoriteRows[$favoriteId];
+        if (count($favoriteMockups) >= 3) break;
     }
 }
 $viewerBack = 'mockup_bilingual_experiment.php?id=' . $mockupId;
@@ -158,19 +198,25 @@ $viewerBack = 'mockup_bilingual_experiment.php?id=' . $mockupId;
     <title><?= mbe_h($title) ?> · Mockup Sheet</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="media-controls.css?v=2">
+    <link rel="stylesheet" href="bilingual-editorial.css?v=20260723-5">
     <style>
         .mockup-experiment-workspace{display:grid;gap:22px}
+        .mockup-heading-group{min-width:0}
+        .mockup-heading-group .mockup-page-header{margin-bottom:0}
         .mockup-page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
         .mockup-title-block{width:min(1120px,100%)}
         .mockup-title-label{display:block;margin:0 0 15px;color:var(--muted);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
         .mockup-title-heading{margin:0;padding:0 0 14px;border-bottom:1px solid var(--line);color:var(--ink);font:500 clamp(42px,4.5vw,58px)/1.05 var(--font-serif);letter-spacing:-.01em;overflow-wrap:anywhere}
         .mockup-title-heading:focus{outline:0}
         .mockup-title-memo{margin:15px 0 0;color:var(--accent);font:italic 500 21px/1.5 var(--font-serif)}
-        .mockup-studio-note{display:inline-flex;flex:0 0 140px;width:140px;height:140px;box-sizing:border-box;align-items:center;justify-content:center;padding:18px;border:1px solid #94a88f;border-radius:4px;background:#9fb198;color:#fffdf8;box-shadow:0 8px 18px rgba(68,83,63,.12);font-size:11px;font-weight:800;letter-spacing:.09em;line-height:1.35;text-align:center;text-transform:uppercase}
+        .mockup-title-relationship{margin:12px 0 0;color:#c4a15f;font:italic 500 26px/1.4 var(--font-serif)}
+        .mockup-studio-note{display:inline-flex;flex:0 0 140px;width:140px;height:140px;box-sizing:border-box;align-items:center;justify-content:center;padding:18px;border:1px solid #94a88f;border-radius:4px;background:#9fb198;color:#fffdf8;box-shadow:0 8px 18px rgba(68,83,63,.12);font-size:11px;font-weight:800;letter-spacing:.09em;line-height:1.35;text-align:center;text-decoration:none;text-transform:uppercase}
         .mockup-studio-note:hover{border-color:#81987b;background:#8fa487;color:#fff}
         .mockup-overview-panel{padding:20px 22px}
         .mockup-overview-grid{display:grid;grid-template-columns:minmax(700px,1.65fr) minmax(420px,.95fr);gap:14px;align-items:start}
+        .mockup-overview-main{display:grid;gap:14px;min-width:0;align-content:start}
         .mockup-favorites-card,.mockup-related-panel{min-width:0;padding:14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-soft)}
+        .mockup-related-panel{align-self:start}
         .mockup-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
         .mockup-section-heading h2,.mockup-section-heading h3{margin:0}
         .mockup-section-heading h2{font:500 16px/1.2 var(--font-serif)}
@@ -205,9 +251,16 @@ $viewerBack = 'mockup_bilingual_experiment.php?id=' . $mockupId;
         .editorial-state{color:var(--muted);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
         .editorial-state:after{content:'+';display:inline-block;margin-left:14px;color:var(--accent);font:500 22px/1 var(--font-serif);vertical-align:-2px}
         .editorial-drawer[open] .editorial-state:after{content:'−'}
-        .editorial-spread{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto repeat(5,auto);column-gap:12px;padding:14px;border-top:1px solid var(--line)}
-        .editorial-page{display:grid;grid-row:1/span 6;grid-template-rows:subgrid;min-width:0;padding:18px;border:1px solid var(--line);border-top:3px solid #c89aa1;background:var(--surface-soft)}
-        .editorial-page--source{grid-column:1}.editorial-page--english{grid-column:2;border-top-color:#9fb19a}
+        .editorial-spread{display:grid;grid-template-columns:minmax(0,1fr) 72px minmax(0,1fr);grid-template-rows:auto repeat(7,auto);padding:14px;border-top:1px solid var(--line)}
+        .editorial-page{display:grid;grid-row:1/span 8;grid-template-rows:subgrid;min-width:0;padding:18px;border:1px solid var(--line);border-top:3px solid #c89aa1;background:var(--surface-soft)}
+        .editorial-page--source{grid-column:1}
+        .editorial-page--english{grid-column:3;border-top-color:#9fb19a}
+        .bilingual-adaptation-arrow{grid-column:2;grid-row:1;align-self:start;justify-self:center;display:flex;align-items:center;justify-content:center;gap:4px;width:64px!important;min-width:64px;height:40px;min-height:40px;margin:8px 0 0!important;padding:0 7px;border:1px solid #d8c17e;border-radius:20px;background:#f1e4b5;color:#665735;box-shadow:none;cursor:pointer}
+        .bilingual-adaptation-arrow[hidden]{display:none!important}
+        .bilingual-adaptation-arrow span:not(.bilingual-adaptation-label){font-size:8px;font-weight:700;letter-spacing:.06em}
+        .bilingual-adaptation-arrow svg{width:14px;height:14px;flex:0 0 14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+        .bilingual-adaptation-arrow:disabled{cursor:wait;opacity:.55}
+        .bilingual-adaptation-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
         .editorial-language{display:block;color:var(--muted);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
         .editorial-field{min-height:96px;margin-top:16px;padding-top:13px;border-top:1px solid var(--line)}
         .editorial-field--large{min-height:230px}
@@ -218,6 +271,9 @@ $viewerBack = 'mockup_bilingual_experiment.php?id=' . $mockupId;
         .editorial-copy:focus,.social-copy:focus{outline:0}
         .editorial-memo{margin:0 14px 14px;padding:14px 6px 2px;border-top:1px solid var(--line)}
         .editorial-memo summary{cursor:pointer;color:var(--muted);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+        .bilingual-publication-bar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 14px 14px;padding:14px 18px;border-top:1px solid var(--line);background:#fbf7e8}
+        .bilingual-publication-bar span{color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+        .bilingual-publication-bar button{min-height:38px;margin:0;padding:9px 16px;border:1px solid #d8c17e;border-radius:3px;background:#ead99f;color:#554a30;box-shadow:none;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
         .social-channels{padding:0 14px 14px;border-top:1px solid var(--line)}
         .social-channel{border-bottom:1px solid var(--line)}
         .social-channel>summary{display:flex;justify-content:space-between;gap:16px;padding:16px 6px;cursor:pointer;list-style:none}
@@ -226,11 +282,11 @@ $viewerBack = 'mockup_bilingual_experiment.php?id=' . $mockupId;
         .social-channel-note{color:var(--muted);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
         .social-channel-note:after{content:'+';margin-left:12px;color:var(--accent);font:500 18px/1 var(--font-serif)}
         .social-channel[open] .social-channel-note:after{content:'−'}
-        .social-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px;padding-bottom:14px}
+        .social-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding-bottom:14px}
         .social-cell{min-width:0;padding:14px 18px;border:1px solid var(--line);border-bottom:0;background:var(--surface-soft)}
-        .social-cell--source{grid-column:1}.social-cell--english{grid-column:2}.social-language{border-top:3px solid #c89aa1}.social-language.social-cell--english{border-top-color:#9fb19a}.social-cell--last{border-bottom:1px solid var(--line)}
+        .social-cell--source{grid-column:1}.social-cell--english{grid-column:2}.social-language{border-top:3px solid #c89aa1}.social-cell--english.social-language{border-top-color:#9fb19a}.social-cell--last{border-bottom:1px solid var(--line)}
         @media(max-width:1100px){.mockup-overview-grid{grid-template-columns:1fr}.mockup-related-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
-        @media(max-width:760px){.mockup-page-header{display:block}.mockup-studio-note{width:112px;height:112px;margin-top:18px}.mockup-favorites-grid{grid-template-columns:1fr}.mockup-related-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.editorial-spread,.social-grid{grid-template-columns:1fr;grid-template-rows:none}.editorial-page{display:block;grid-column:auto;grid-row:auto}.social-cell{grid-column:1}}
+        @media(max-width:760px){.mockup-page-header{display:block}.mockup-studio-note{width:112px;height:112px;margin-top:18px}.mockup-favorites-grid{grid-template-columns:1fr}.mockup-related-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.editorial-spread,.social-grid{grid-template-columns:1fr;grid-template-rows:none}.editorial-page{display:block;grid-column:auto;grid-row:auto}.bilingual-adaptation-arrow{grid-column:1;grid-row:auto;margin:10px 0!important}.social-cell{grid-column:1}}
     </style>
 </head>
 <body>
@@ -238,18 +294,22 @@ $viewerBack = 'mockup_bilingual_experiment.php?id=' . $mockupId;
     <?php include __DIR__ . '/sidebar.php'; ?>
     <main class="main-area">
         <header class="app-header"><a class="user-chip" href="account.php"><?= mbe_h($user['email'] ?? '') ?></a></header>
-        <div class="workspace mockup-experiment-workspace">
+        <div class="workspace mockup-experiment-workspace" data-bilingual-editor data-entity-type="mockup" data-entity-id="<?= $mockupId ?>" data-english-status="<?= mbe_h((string)($mockupEnglishEditorial['status'] ?? 'unprepared')) ?>" data-csrf="<?= mbe_h(Auth::csrfToken('bilingual_editorial')) ?>" data-endpoint="bilingual_editorial.php">
+            <div class="mockup-heading-group">
             <div class="workspace-header mockup-page-header">
                 <div class="mockup-title-block">
                     <span class="mockup-title-label">Título universal</span>
-                    <h1 class="mockup-title-heading" contenteditable="true" role="textbox" aria-label="Título del mockup"><?= mbe_h($title) ?></h1>
+                    <h1 class="mockup-title-heading" contenteditable="true" role="textbox" data-universal-title aria-label="Título del mockup"><?= mbe_h($title) ?></h1>
                     <p class="mockup-title-memo">STRATA X — LIMEN · MOCKUP I — NUHRĀ (ܢܘܗܪܐ) · no traducir</p>
                 </div>
-                <a class="mockup-studio-note" href="website_studio_notes.php?source=mockup:<?= $mockupId ?>#new-studio-note">Create Studio Note</a>
+                <a class="mockup-studio-note" href="viewer.php?id=<?= $mockupId ?>&amp;back=<?= rawurlencode($viewerBack) ?>">Open Viewer</a>
+            </div>
+            <?php if ($mockupRelationshipLine !== ''): ?><p class="mockup-title-relationship"><?= mbe_h($mockupRelationshipLine) ?></p><?php endif; ?>
             </div>
 
             <section class="panel mockup-overview-panel" aria-label="Mockup album">
                 <div class="mockup-overview-grid">
+                    <div class="mockup-overview-main">
                     <section class="mockup-favorites-card">
                         <div class="mockup-section-heading"><h2>Favorite Mockups</h2><span class="mockup-section-count"><?= count($favoriteMockups) ?> selected</span></div>
                         <?php if ($favoriteMockups): ?>
@@ -272,6 +332,40 @@ $viewerBack = 'mockup_bilingual_experiment.php?id=' . $mockupId;
                         <?php endif; ?>
                     </section>
 
+            <details class="editorial-drawer">
+                <summary><span class="editorial-summary"><strong>Espacio editorial</strong><span>Español maestro e inglés internacional para publicación.</span></span><span class="editorial-state" data-bilingual-save-state><?= mbe_h($mockupEditorialStateLabel) ?></span></summary>
+                <div class="editorial-spread">
+                    <article class="editorial-page editorial-page--source"><span class="editorial-language">Español · fuente</span><?php foreach($editorialFields as $field): ?><section class="editorial-field <?= $field['large']?'editorial-field--large':'' ?>"><label><?= mbe_h($field['es']) ?></label><div class="editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-editorial-locale="es" data-editorial-field="<?= mbe_h($field['key']) ?>" data-placeholder="<?= mbe_h($field['placeholder']) ?>"><?= mbe_h($mockupSpanishContent[$field['key']] ?? '') ?></div></section><?php endforeach; ?></article>
+                    <button class="bilingual-adaptation-arrow" type="button" data-editorial-adapt hidden>
+                        <span data-adaptation-source-short>ES</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M14 7l5 5-5 5"/></svg>
+                        <span data-adaptation-target-short>EN</span>
+                        <span class="bilingual-adaptation-label" data-adaptation-label>Adaptar al inglés internacional sin traducción literal</span>
+                    </button>
+                    <article class="editorial-page editorial-page--english"><span class="editorial-language">English · publicación internacional</span><?php foreach($editorialFields as $field): ?><section class="editorial-field <?= $field['large']?'editorial-field--large':'' ?>"><label><?= mbe_h($field['en']) ?></label><div class="editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-editorial-locale="en" data-editorial-field="<?= mbe_h($field['key']) ?>" data-placeholder="<?= mbe_h($field['en_placeholder']) ?>"><?= mbe_h($mockupEnglishContent[$field['key']] ?? '') ?></div></section><?php endforeach; ?></article>
+                </div>
+                <div class="bilingual-preparation-bar">
+                    <div>
+                        <strong><?= $mockupHasSpanishContent ? 'Preparar website y canales' : 'Preparar contenido' ?></strong>
+                        <span><?= $mockupHasSpanishContent ? 'Regenera y guarda el inglés internacional desde el español maestro.' : 'Genera el español maestro, los canales y el inglés internacional en una sola acción.' ?></span>
+                    </div>
+                    <?php if ($mockupHasSpanishContent): ?>
+                        <button type="button" data-editorial-refresh>Preparar website y canales</button>
+                    <?php else: ?>
+                        <button type="button" data-editorial-generate>Preparar contenido</button>
+                    <?php endif; ?>
+                </div>
+                <details class="editorial-memo"><summary>Memo privado del mockup</summary><div class="editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-private-memo data-editorial-locale="es" data-placeholder="Ideas y decisiones específicas de esta escena…"><?= mbe_h($mockupSpanishEditorial['private_memo'] ?? '') ?></div></details>
+            </details>
+
+            <details class="editorial-drawer">
+                <summary><span class="editorial-summary"><strong>Publicación y redes</strong><span>Adaptaciones específicas de este mockup para cada canal.</span></span><span class="editorial-state">5 canales</span></summary>
+                <div class="social-channels">
+                    <?php foreach($socialChannels as $socialChannel): ?><details class="social-channel"><summary><span class="social-channel-title"><?= mbe_h($socialChannel['label']) ?></span><span class="social-channel-note">ES + EN</span></summary><div class="social-grid"><div class="social-cell social-cell--source social-language"><span class="editorial-language">Español · fuente</span></div><div class="social-cell social-cell--english social-language"><span class="editorial-language">English · publicación</span></div><?php foreach($socialChannel['fields'] as $index=>$field): ?><?php $last=$index===array_key_last($socialChannel['fields']); $path='social.'.$socialChannel['key'].'.'.$field['key']; ?><section class="social-cell social-cell--source <?= $last?'social-cell--last':'' ?>"><label><?= mbe_h($field['es']) ?></label><div class="social-copy" contenteditable="true" role="textbox" data-editorial-locale="es" data-editorial-field="<?= mbe_h($path) ?>" data-placeholder="Escribí la versión en español…"><?= mbe_h($field['es_value']) ?></div></section><section class="social-cell social-cell--english <?= $last?'social-cell--last':'' ?>"><label><?= mbe_h($field['en']) ?></label><div class="social-copy" contenteditable="true" role="textbox" data-editorial-locale="en" data-editorial-field="<?= mbe_h($path) ?>" data-placeholder="International English version…"><?= mbe_h($field['en_value']) ?></div></section><?php endforeach; ?></div></details><?php endforeach; ?>
+                </div>
+            </details>
+                    </div>
+
                     <aside class="mockup-related-panel">
                         <div class="mockup-section-heading"><h3>Mockup Album <span class="mockup-section-count">· <?= $albumCount ?></span></h3><a class="related-mockups-upload-link" href="mockup_upload.php?id=<?= $artworkId ?>">+ Import</a></div>
                         <div class="mockup-related-grid">
@@ -287,25 +381,10 @@ $viewerBack = 'mockup_bilingual_experiment.php?id=' . $mockupId;
                     </aside>
                 </div>
             </section>
-
-            <details class="editorial-drawer">
-                <summary><span class="editorial-summary"><strong>Espacio editorial</strong><span>Contenido original en español y versión publicada en inglés.</span></span><span class="editorial-state">Español + English</span></summary>
-                <div class="editorial-spread">
-                    <article class="editorial-page editorial-page--source"><span class="editorial-language">Español · fuente</span><?php foreach($editorialFields as $field): ?><section class="editorial-field <?= $field['large']?'editorial-field--large':'' ?>"><label><?= mbe_h($field['es']) ?></label><div class="editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="<?= mbe_h($field['placeholder']) ?>"></div></section><?php endforeach; ?></article>
-                    <article class="editorial-page editorial-page--english"><span class="editorial-language">English · current version</span><?php foreach($editorialFields as $field): ?><section class="editorial-field <?= $field['large']?'editorial-field--large':'' ?>"><label><?= mbe_h($field['en']) ?></label><div class="editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="No English content is currently available."><?= mbe_h($field['value']) ?></div></section><?php endforeach; ?></article>
-                </div>
-                <details class="editorial-memo"><summary>Memo privado del mockup</summary><div class="editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Ideas y decisiones específicas de esta escena…"></div></details>
-            </details>
-
-            <details class="editorial-drawer">
-                <summary><span class="editorial-summary"><strong>Publicación y redes</strong><span>Adaptaciones específicas de este mockup para cada canal.</span></span><span class="editorial-state">5 canales</span></summary>
-                <div class="social-channels">
-                    <?php foreach($socialChannels as $socialChannel): ?><details class="social-channel"><summary><span class="social-channel-title"><?= mbe_h($socialChannel['label']) ?></span><span class="social-channel-note">Español + English</span></summary><div class="social-grid"><div class="social-cell social-cell--source social-language"><span class="editorial-language">Español · fuente</span></div><div class="social-cell social-cell--english social-language"><span class="editorial-language">English · current version</span></div><?php foreach($socialChannel['fields'] as $index=>$field): ?><?php $last=$index===array_key_last($socialChannel['fields']); ?><section class="social-cell social-cell--source <?= $last?'social-cell--last':'' ?>"><label><?= mbe_h($field['es']) ?></label><div class="social-copy" contenteditable="true" role="textbox" data-placeholder="Escribí la versión en español…"></div></section><section class="social-cell social-cell--english <?= $last?'social-cell--last':'' ?>"><label><?= mbe_h($field['en']) ?></label><div class="social-copy" contenteditable="true" role="textbox" data-placeholder="No English content is currently available."><?= mbe_h($field['value']) ?></div></section><?php endforeach; ?></div></details><?php endforeach; ?>
-                </div>
-            </details>
         </div>
     </main>
 </div>
+<script src="bilingual-editorial.js?v=20260723-17"></script>
 <script>
 document.addEventListener('click', async (event) => {
     const button = event.target.closest('[data-favorite-mockup]');

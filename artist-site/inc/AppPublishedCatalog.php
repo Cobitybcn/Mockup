@@ -1,9 +1,16 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/AppPublishedLocalization.php';
+
 final class AppPublishedCatalog
 {
-    public function __construct(private readonly PDO $pdo, private readonly string $artistEmail) {}
+    private AppPublishedLocalization $localization;
+
+    public function __construct(private readonly PDO $pdo, private readonly string $artistEmail)
+    {
+        $this->localization = new AppPublishedLocalization($pdo, $artistEmail);
+    }
 
     public static function fromApp(string $appRoot, string $artistEmail): self
     {
@@ -27,6 +34,21 @@ final class AppPublishedCatalog
         $statement->execute([$this->artistEmail]);
         $publications = [];
         foreach ($statement as $row) {
+            $language = function_exists('artist_site_language') ? artist_site_language() : 'es';
+            $spanish = $this->localization->content('artwork', (int)$row['canonical_artwork_id'], 'es');
+            $localized = $this->localization->content('artwork', (int)$row['canonical_artwork_id'], $language);
+            $row['spanish_available'] = $spanish !== [];
+            if ($localized !== []) {
+                $row['subtitle'] = (string)($localized['subtitle'] ?? $row['subtitle']);
+                $row['artwork_description'] = (string)($localized['description'] ?? $row['artwork_description']);
+                $row['artwork_short_description'] = (string)($localized['short_description'] ?? $row['artwork_short_description']);
+                $row['artwork_caption'] = (string)($localized['caption'] ?? $row['artwork_caption']);
+                $row['artwork_alt'] = (string)($localized['alt_text'] ?? $row['artwork_alt']);
+                $row['artwork_keywords'] = (string)($localized['search_terms'] ?? $localized['keywords'] ?? $row['artwork_keywords']);
+                $row['artwork_tags'] = (string)($localized['tags'] ?? $row['artwork_tags']);
+                $row['seo_title'] = (string)($localized['seo_title'] ?? '');
+                $row['seo_description'] = (string)($localized['seo_description'] ?? '');
+            }
             $row['title'] = (string)$row['artwork_title'];
             $row['description'] = (string)$row['artwork_description'];
             $row['short_description'] = (string)$row['artwork_short_description'];
@@ -39,6 +61,8 @@ final class AppPublishedCatalog
                 'alt_text' => (string)$row['artwork_alt'],
                 'keywords' => (string)$row['artwork_keywords'],
                 'tags' => (string)$row['artwork_tags'],
+                'seo_title' => (string)($row['seo_title'] ?? ''),
+                'seo_description' => (string)($row['seo_description'] ?? ''),
                 'generated_json' => (string)$row['artwork_generated_json'],
             ];
             $analysis = json_decode((string)$row['artwork_generated_json'], true);
@@ -128,12 +152,31 @@ final class AppPublishedCatalog
 
     private function items(int $publicationId): array
     {
-        $statement = $this->pdo->prepare('SELECT i.*,m.mockup_file,m.description,m.keywords,m.tags
+        $statement = $this->pdo->prepare('SELECT i.*,
+                COALESCE(NULLIF(m.mockup_id,0),(
+                    SELECT source.id FROM mockups source
+                    WHERE source.user_id=m.user_id AND source.mockup_file=m.mockup_file
+                    ORDER BY source.id DESC LIMIT 1
+                )) mockup_id,
+                m.mockup_file,m.description,m.keywords,m.tags,m.alt_text mockup_alt_text,m.caption mockup_caption
             FROM publication_items i JOIN mockup_sheets m ON m.id=i.mockup_sheet_id
             WHERE i.publication_id=? ORDER BY i.position,i.id');
         $statement->execute([$publicationId]);
         $items = $statement->fetchAll();
         foreach ($items as &$item) {
+            $language = function_exists('artist_site_language') ? artist_site_language() : 'es';
+            $spanish = $this->localization->content('mockup', (int)($item['mockup_id'] ?? 0), 'es');
+            $localized = $this->localization->content('mockup', (int)($item['mockup_id'] ?? 0), $language);
+            $item['spanish_available'] = $spanish !== [];
+            if ($localized !== []) {
+                $item['description'] = (string)($localized['description'] ?? $item['description']);
+                $item['keywords'] = (string)($localized['search_terms'] ?? $localized['keywords'] ?? $item['keywords']);
+                $item['tags'] = (string)($localized['tags'] ?? $item['tags']);
+                $item['alt_text'] = (string)($localized['alt_text'] ?? $item['alt_text']);
+                $item['caption'] = (string)($localized['caption'] ?? $item['caption']);
+                $item['seo_title'] = (string)($localized['seo_title'] ?? '');
+                $item['seo_description'] = (string)($localized['seo_description'] ?? '');
+            }
             $base = self::slug((string)($item['title'] ?: 'mockup')) ?: 'mockup';
             $item['public_slug'] = $base . '-' . (int)$item['mockup_sheet_id'];
         }

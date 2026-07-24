@@ -5,9 +5,9 @@ final class MockupPinterestDraftService
 {
     public function __construct(private readonly PDO $pdo) {}
 
-    public function create(int $mockupId,array $user,string $purpose,string $destinationUrl): array
+    public function create(int $mockupId,array $user,string $purpose,string $destinationUrl,string $locale='en'): array
     {
-        $userId=(int)$user['id'];$purpose=$this->purpose($purpose,$user);
+        $userId=(int)$user['id'];$purpose=$this->purpose($purpose,$user);$locale=$locale==='es'?'es':'en';
         if(!filter_var($destinationUrl,FILTER_VALIDATE_URL)||strtolower((string)parse_url($destinationUrl,PHP_URL_SCHEME))!=='https')throw new InvalidArgumentException('Pinterest destination must be a public HTTPS URL.');
         $stmt=$this->pdo->prepare('SELECT * FROM mockups WHERE id=? AND user_id=? LIMIT 1');$stmt->execute([$mockupId,$userId]);$mockup=$stmt->fetch(PDO::FETCH_ASSOC);if(!$mockup)throw new RuntimeException('Mockup not found.');
         $artworkId=(int)($mockup['source_artwork_id']??0);$artwork=null;
@@ -18,23 +18,32 @@ final class MockupPinterestDraftService
         if(!$analysis){$stmt=$this->pdo->prepare('SELECT analysis_json FROM artwork_analysis WHERE artwork_id=? ORDER BY id DESC LIMIT 1');$stmt->execute([(int)$artwork['id']]);$decoded=json_decode((string)($stmt->fetchColumn()?:''),true);if(is_array($decoded))$analysis=array_key_exists('suggested_titles',$decoded)||array_key_exists('contextual_proposals',$decoded)?$decoded:['artwork_profile'=>$decoded];}
         $profile=is_array($analysis['artwork_profile']??null)?$analysis['artwork_profile']:[];$artistProfile=is_array($profile['_artist_profile']??null)?$profile['_artist_profile']:ArtistProfile::findForUser($userId);
         $content=MockupEditorialContent::build($artwork,$analysis,$artistProfile,Display::contextTitle((string)$mockup['context_id']));
-        $sheetStmt=$this->pdo->prepare("SELECT title,description,keywords,tags,alt_text,caption,generated_json FROM mockup_sheets WHERE user_id=? AND mockup_file=? AND (title<>'' OR description<>'') ORDER BY id DESC LIMIT 1");$sheetStmt->execute([$userId,basename((string)$mockup['mockup_file'])]);$sheet=$sheetStmt->fetch(PDO::FETCH_ASSOC);
-        if(is_array($sheet)){
-            if(trim((string)$sheet['title'])!=='')$content['title']=trim((string)$sheet['title']);
-            if(trim((string)$sheet['description'])!=='')$content['description']=trim((string)$sheet['description']);
-            if(trim((string)$sheet['alt_text'])!=='')$content['altText']=trim((string)$sheet['alt_text']);
-            $storedKeywords=preg_split('/[,;|\n]+/',(string)($sheet['keywords']??''))?:[];if(array_filter($storedKeywords,'trim'))$content['keywords']=array_values(array_filter(array_map('trim',$storedKeywords)));
-            $storedTags=preg_split('/[,;|\n]+/',(string)($sheet['tags']??''))?:[];if(array_filter($storedTags,'trim'))$content['board']=trim((string)reset($storedTags));
-            $storedGenerated=json_decode((string)($sheet['generated_json']??''),true);$v2=is_array($storedGenerated['mockup_analysis_v2']??null)?$storedGenerated['mockup_analysis_v2']:[];$v2Pinterest=(array)($v2['channels']['pinterest']??[]);$v2Neutral=(array)($v2['neutral']??[]);
+        $reviewed=(new MockupSocialContentService($this->pdo))->forMockup($userId,$mockupId,$locale);
+        $reviewedContent=(array)($reviewed['content']??[]);
+        $reviewedPinterest=(array)($reviewedContent['social']['pinterest']??[]);
+        $hasReviewed=trim((string)($reviewedPinterest['title']??''))!==''&&trim((string)($reviewedPinterest['description']??''))!=='';
+        if($hasReviewed){
+            $content['title']=(string)$reviewedPinterest['title'];
+            $content['description']=(string)$reviewedPinterest['description'];
+            $content['altText']=MockupSocialContentService::text($reviewedContent['alt_text']??'',$content['altText']??'');
+            $content['keywords']=MockupSocialContentService::list($reviewedPinterest['keywords']??[],$reviewedContent['search_terms']??[]);
+            $boards=MockupSocialContentService::list($reviewedPinterest['board_suggestions']??[]);
+            if($boards)$content['board']=$boards[0];
+        }
+        $sheetStmt=$this->pdo->prepare("SELECT title,description,keywords,tags,alt_text,caption,generated_json FROM mockup_sheets WHERE user_id=? AND mockup_file=? ORDER BY id DESC LIMIT 1");$sheetStmt->execute([$userId,basename((string)$mockup['mockup_file'])]);$sheet=$sheetStmt->fetch(PDO::FETCH_ASSOC);
+        if(!$hasReviewed&&is_array($sheet)){
+            $storedGenerated=json_decode((string)($sheet['generated_json']??''),true);$v2=is_array($storedGenerated['mockup_analysis_v2']??null)?$storedGenerated['mockup_analysis_v2']:[];
+            if((string)($v2['analysis_language']??'')!=='es')throw new RuntimeException('Generá y revisá primero el análisis español del mockup.');
+            $v2Pinterest=(array)($v2['channels']['pinterest']??[]);$v2Neutral=(array)($v2['neutral']??[]);
             if(trim((string)($v2Pinterest['title']??''))!=='')$content['title']=(string)$v2Pinterest['title'];
             if(trim((string)($v2Pinterest['description']??''))!=='')$content['description']=(string)$v2Pinterest['description'];
             if(trim((string)($v2Neutral['alt_text']??''))!=='')$content['altText']=(string)$v2Neutral['alt_text'];
             if(array_filter((array)($v2Pinterest['keywords']??[]),'trim'))$content['keywords']=array_values(array_filter(array_map('trim',(array)$v2Pinterest['keywords'])));
             $boards=array_values(array_filter(array_map('trim',(array)($v2Pinterest['board_suggestions']??[]))));if($boards)$content['board']=$boards[0];
-        }else{
-            $contextTitle=Display::contextTitle((string)$mockup['context_id']);$content['title']=mb_substr($content['baseTitle'].' — '.$contextTitle,0,100);
+        }elseif(!$hasReviewed){
+            throw new RuntimeException('Generá y revisá primero el análisis español del mockup.');
         }
-        $payload=['mockup_id'=>$mockupId,'purpose'=>$purpose,'board_suggestion'=>$content['board'],'title'=>$content['title'],'description'=>$content['description'],'alt_text'=>$content['altText'],'keywords'=>$content['keywords'],'hashtags'=>$content['hashtags'],'destination_url'=>$destinationUrl];$now=date('c');
+        $payload=['mockup_id'=>$mockupId,'purpose'=>$purpose,'locale'=>$locale,'board_suggestion'=>$content['board'],'title'=>$content['title'],'description'=>$content['description'],'alt_text'=>$content['altText'],'keywords'=>$content['keywords'],'hashtags'=>$content['hashtags'],'destination_url'=>$destinationUrl];$now=date('c');
         $token=bin2hex(random_bytes(32));$this->pdo->prepare('INSERT INTO pinterest_pin_drafts (user_id,mockup_id,purpose,board_suggestion,title,description,alt_text,keywords,hashtags,destination_url,status,payload_json,media_token,external_url,error,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')->execute([$userId,$mockupId,$purpose,$content['board'],mb_substr($content['title'],0,100),mb_substr($content['description'],0,500),mb_substr($content['altText'],0,500),json_encode($content['keywords'],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),json_encode($content['hashtags'],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),$destinationUrl,'draft',json_encode($payload,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),$token,'','',$now,$now]);
         return ['id'=>(int)$this->pdo->lastInsertId()]+$payload;
     }

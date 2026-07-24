@@ -60,6 +60,7 @@ final class SocialBoardPublishService
         $boardId = trim((string)($item['board_id'] ?? ''));
         $title = trim((string)($item['title'] ?? ''));
         $description = trim((string)($item['description'] ?? ''));
+        $locale = (string)($item['locale'] ?? 'en') === 'es' ? 'es' : 'en';
         $destinationUrl = $this->httpsUrl((string)($item['destination_url'] ?? ''), 'Pinterest destination');
         if ($mockupId <= 0) throw new InvalidArgumentException('A Pinterest Pin has no mockup.');
         if ($boardId === '') throw new InvalidArgumentException('Select a Pinterest board for every Pin.');
@@ -69,6 +70,7 @@ final class SocialBoardPublishService
         $normalized = [
             'client_key' => trim((string)($item['client_key'] ?? 'pin-' . $mockupId . '-' . $position)),
             'mockup_id' => $mockupId,
+            'locale' => $locale,
             'board_id' => $boardId,
             'title' => mb_substr($title, 0, 100),
             'description' => mb_substr($description, 0, 500),
@@ -81,7 +83,7 @@ final class SocialBoardPublishService
         if ($existing) return $existing;
 
         $drafts = new MockupPinterestDraftService($this->pdo);
-        $draft = $drafts->create($mockupId, $user, $purpose, $destinationUrl);
+        $draft = $drafts->create($mockupId, $user, $purpose, $destinationUrl, $locale);
         $draftId = (int)$draft['id'];
         $drafts->updateContent($draftId, $userId, $title, $description, (string)($item['alt_text'] ?? ''));
         $drafts->selectBoard($draftId, $userId, $boardId, $boards);
@@ -91,6 +93,7 @@ final class SocialBoardPublishService
             'schema_version' => 'social-board-job.v1',
             'draft_ids' => [$draftId],
             'client_key' => $normalized['client_key'],
+            'locale' => $locale,
         ], $key);
     }
 
@@ -104,6 +107,8 @@ final class SocialBoardPublishService
             throw new InvalidArgumentException(ucfirst($channel) . ' accepts at most ' . $limit . ' images in one publication.');
         }
         $copy = trim((string)($group['copy'] ?? ''));
+        $title = trim((string)($group['title'] ?? ''));
+        $locale = (string)($group['locale'] ?? 'en') === 'es' ? 'es' : 'en';
         if ($copy === '') throw new InvalidArgumentException('Every ' . ucfirst($channel) . ' publication needs text.');
         if ($channel === 'instagram' && mb_strlen($copy) > 2200) {
             throw new InvalidArgumentException('Instagram captions accept at most 2200 characters.');
@@ -117,6 +122,8 @@ final class SocialBoardPublishService
         $normalized = [
             'client_key' => trim((string)($group['client_key'] ?? $channel . '-' . $position)),
             'mockup_ids' => $mockupIds,
+            'locale' => $locale,
+            'title' => $title,
             'copy' => $copy,
             'destination_url' => $destinationUrl,
             'scheduled_at' => $when->setTimezone(new DateTimeZone('UTC'))->format(DateTimeInterface::ATOM),
@@ -128,12 +135,12 @@ final class SocialBoardPublishService
         $drafts = new MetaSocialDraftService($this->pdo);
         $draftIds = [];
         foreach ($mockupIds as $mockupId) {
-            $draftId = $drafts->create($mockupId, $user, $channel, $destinationUrl, 'artist');
+            $draftId = $drafts->create($mockupId, $user, $channel, $destinationUrl, 'artist', $locale);
             $draft = $drafts->draft($draftId, $userId);
             $drafts->updateContent(
                 $draftId,
                 $userId,
-                (string)($draft['title'] ?? ''),
+                $title !== '' ? $title : (string)($draft['title'] ?? ''),
                 $copy,
                 [],
                 (string)($draft['alt_text'] ?? ''),
@@ -146,6 +153,7 @@ final class SocialBoardPublishService
             'schema_version' => 'social-board-job.v1',
             'draft_ids' => $draftIds,
             'client_key' => $normalized['client_key'],
+            'locale' => $locale,
         ], $key);
     }
 

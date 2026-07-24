@@ -17,6 +17,14 @@ final class Database
     }
 }
 
+final class MockupFavorites
+{
+    public static function idsForUser(int $userId): array
+    {
+        return $userId === 7 ? [71] : [];
+    }
+}
+
 require_once __DIR__ . '/../../app/Services/PublicationService.php';
 require_once __DIR__ . '/../../app/Support/ArtworkSeries.php';
 
@@ -42,10 +50,12 @@ $pdo->exec("CREATE TABLE artwork_series (
 )");
 $pdo->exec("CREATE TABLE mockups (
     id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, source_artwork_id INTEGER,
-    artwork_file TEXT NOT NULL DEFAULT '', artwork_group_id INTEGER
+    artwork_file TEXT NOT NULL DEFAULT '', artwork_group_id INTEGER,
+    mockup_file TEXT NOT NULL DEFAULT ''
 )");
 $pdo->exec("CREATE TABLE mockup_sheets (
     id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, artwork_sheet_id INTEGER NOT NULL,
+    mockup_id INTEGER,
     mockup_file TEXT NOT NULL, title TEXT NOT NULL, description TEXT NOT NULL,
     keywords TEXT NOT NULL, tags TEXT NOT NULL, alt_text TEXT NOT NULL, caption TEXT NOT NULL
 )");
@@ -58,10 +68,15 @@ $pdo->exec("INSERT INTO artworks VALUES
 $pdo->exec("INSERT INTO artwork_sheets VALUES
     (1,7,101,'root.jpg','Test Work','Subtitle','Curatorial description','Short description','art, test','abstract','Original artwork','Test Work caption'),
     (2,7,102,'draft-root.jpg','Draft Series Work','Subtitle','Description','Short','art','abstract','Artwork','Caption')");
-$pdo->exec("INSERT INTO mockup_sheets VALUES (11,7,1,'mockup.jpg','Test Pin','Pin description','interior, art','art','Accessible mockup description','Caption')");
-
+$pdo->exec("INSERT INTO mockups (id,user_id,source_artwork_id,artwork_file,artwork_group_id,mockup_file) VALUES (71,7,101,'root.jpg',NULL,'favorite.jpg')");
+$pdo->exec("INSERT INTO mockup_sheets VALUES
+    (11,7,1,NULL,'mockup.jpg','Test Pin','Pin description','interior, art','art','Accessible mockup description','Caption'),
+    (12,7,1,NULL,'favorite.jpg','Favorite Pin','Favorite description','favorite interior','favorite','Favorite accessible description','Favorite caption')");
 $service = new PublicationService($pdo);
 $publicationId = $service->createForSheet(1, 7);
+$favoriteWebsitePublication = $service->saveWebsiteSettings(1, 7, ['visibility' => 'public'], 'save');
+$favoriteWebsiteItems = $favoriteWebsitePublication['items'];
+$favoriteSheetMockupId = (int)$pdo->query('SELECT COALESCE(mockup_id,0) FROM mockup_sheets WHERE id=12')->fetchColumn();
 $service->save($publicationId, 7, [
     'title' => 'Test Work', 'description' => 'Curatorial description',
     'short_description' => 'Short description', 'language' => 'en',
@@ -105,6 +120,9 @@ $derivedSeries = $pdo->query('SELECT description,published FROM artwork_series W
 
 $checks = [
     $publicationId > 0,
+    count($favoriteWebsiteItems) === 1,
+    (int)$favoriteWebsiteItems[0]['mockup_sheet_id'] === 12,
+    $favoriteSheetMockupId === 71,
     $jobId > 0,
     $publication['status'] === 'published',
     count($publication['items']) === 1,

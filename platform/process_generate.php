@@ -182,7 +182,8 @@ try {
                 $v2Stmt=Database::connection()->prepare('SELECT * FROM artworks WHERE job_id=? LIMIT 1');$v2Stmt->execute([(string)$diskStatus['job_id']]);$v2Artwork=$v2Stmt->fetch(PDO::FETCH_ASSOC);
                 if(is_array($v2Artwork)){
                     $v2Profile=ArtistProfile::findForUser((int)$v2Artwork['user_id']);
-                    $v2Generated=(new ArtworkAnalysisV2Service(new GeminiImageClient()))->generateDraft($v2Artwork,$v2Profile,RESULTS_DIR.DIRECTORY_SEPARATOR.$selectedRootFile,(string)($diskStatus['artist_notes']??'Automatic v2 analysis for new artwork.'));
+                    $v2AnalysisLocale=(new BilingualEditorialService(Database::connection()))->sourceLocale((int)$v2Artwork['user_id']);
+                    $v2Generated=(new ArtworkAnalysisV2Service(new GeminiImageClient(), $pdo))->generateDraft($v2Artwork,$v2Profile,RESULTS_DIR.DIRECTORY_SEPARATOR.$selectedRootFile,(string)($diskStatus['artist_notes']??'Automatic v2 analysis for new artwork.'),$v2AnalysisLocale);
                     (new ArtworkSheetService(Database::connection()))->applyAnalysisV2Draft(
                         (int)$v2Artwork['id'],
                         (int)$v2Artwork['user_id'],

@@ -486,10 +486,15 @@ function run_uploaded_root_regression_tests(): void
         $seriesSource,
         'el detalle de Series inicia Create Art con la serie activa'
     );
+    TestHarness::assertContains(
+        'href="series.php?series=',
+        $seriesSource,
+        'el catálogo abre la edición directa de cada serie'
+    );
     TestHarness::assertTrue(
         !str_contains($seriesSource, '>Back to series</a>')
             && !str_contains($seriesSource, '>Create Studio Note</a>'),
-        'el detalle de Series conserva Create Art como unica accion principal'
+        'el detalle de Series evita utilidades competidoras en el encabezado'
     );
     TestHarness::assertContains(
         'class="series-detail-title-row"',
@@ -521,7 +526,7 @@ function run_uploaded_root_regression_tests(): void
         'el visor de portada respeta automaticamente el formato horizontal o vertical de la imagen'
     );
     TestHarness::assertContains(
-        'ui-catalog.css?v=17',
+        'ui-catalog.css?v=18',
         $seriesSource,
         'Series invalida la cache al publicar cambios visuales del visor y sus bloques'
     );

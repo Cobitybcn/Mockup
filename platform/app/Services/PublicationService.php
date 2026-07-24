@@ -86,7 +86,7 @@ final class PublicationService
             (user_id, artwork_sheet_id, slug, title, description, short_description, language, objective, cta_label, cta_url, visibility, status, content_source, profile_snapshot_json, metadata_snapshot_json, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')->execute([
                 $userId, $sheetId, $slug, (string)$sheet['title'], (string)$sheet['description'],
-                (string)$sheet['short_description'], 'en', 'portfolio', 'Enquire about this artwork', '',
+                (string)$sheet['short_description'], 'en', 'portfolio', 'Inquire about this artwork', '',
                 'private', 'draft', 'inherit', json_encode($profile, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 json_encode($sheet, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $now, $now,
             ]);
@@ -140,7 +140,7 @@ final class PublicationService
             'visibility' => (string)($input['visibility'] ?? 'public'),
             'publish' => $intent === 'publish',
             'unpublish' => $intent === 'unpublish',
-        ], null);
+        ], $this->favoriteMockupSheetIds($sheetId, $userId));
         return $this->get($publicationId, $userId);
     }
 
@@ -220,7 +220,7 @@ final class PublicationService
         $publishedAt = $status === 'published' ? ($publication['published_at'] ?: date('c')) : null;
         $this->pdo->prepare('UPDATE publications SET title=?, description=?, short_description=?, language=?, objective=?, cta_label=?, cta_url=?, visibility=?, status=?, published_at=?, updated_at=? WHERE id=? AND user_id=?')->execute([
             trim((string)($input['title'] ?? $publication['title'])), trim((string)($input['description'] ?? $publication['description'])), trim((string)($input['short_description'] ?? $publication['short_description'])),
-            trim((string)($input['language'] ?? $publication['language'])), trim((string)($input['objective'] ?? $publication['objective'])),
+            'en', trim((string)($input['objective'] ?? $publication['objective'])),
             trim((string)($input['cta_label'] ?? $publication['cta_label'])), trim((string)($input['cta_url'] ?? $publication['cta_url'])), $visibility, $status, $publishedAt, date('c'), $id, $userId,
         ]);
         if ($status === 'published' && (int)($publication['display_order'] ?? 0) <= 0) {
@@ -329,6 +329,39 @@ final class PublicationService
         $stmt = $this->pdo->prepare('SELECT i.*, m.mockup_file, m.description, m.keywords, m.tags FROM publication_items i JOIN mockup_sheets m ON m.id=i.mockup_sheet_id WHERE i.publication_id=? ORDER BY i.position,i.id');
         $stmt->execute([$id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /** @return array<int,int> */
+    private function favoriteMockupSheetIds(int $sheetId, int $userId): array
+    {
+        if (!class_exists('MockupFavorites')) return [];
+        $favoriteIds = MockupFavorites::idsForUser($userId);
+        if (!$favoriteIds) return [];
+
+        $marks = implode(',', array_fill(0, count($favoriteIds), '?'));
+        $stmt = $this->pdo->prepare("SELECT m.id mockup_id,MAX(ms.id) mockup_sheet_id
+            FROM mockups m
+            INNER JOIN mockup_sheets ms ON ms.user_id=m.user_id
+                AND (ms.mockup_id=m.id OR ms.mockup_file=m.mockup_file)
+            WHERE m.user_id=? AND ms.artwork_sheet_id=? AND m.id IN ($marks)
+            GROUP BY m.id");
+        $stmt->execute(array_merge([$userId, $sheetId], $favoriteIds));
+
+        $found = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $mockupId = (int)$row['mockup_id'];
+            $mockupSheetId = (int)$row['mockup_sheet_id'];
+            if ($mockupId <= 0 || $mockupSheetId <= 0) continue;
+            $found[$mockupId] = $mockupSheetId;
+            $this->pdo->prepare('UPDATE mockup_sheets SET mockup_id=? WHERE id=? AND user_id=? AND (mockup_id IS NULL OR mockup_id=0)')
+                ->execute([$mockupId, $mockupSheetId, $userId]);
+        }
+
+        $ordered = [];
+        foreach ($favoriteIds as $favoriteId) {
+            if (isset($found[$favoriteId])) $ordered[] = $found[$favoriteId];
+        }
+        return $ordered;
     }
 
     private function variants(int $id): array

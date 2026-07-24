@@ -40,8 +40,8 @@ function run_public_pages_regression_tests(): void {
     TestHarness::assertContains("app_artist_photo_url(\$artistPhotoFile)",$artistHeader,'the artist website uses the published profile photo as its favicon');
     TestHarness::assertContains('<link rel="icon" href="<?= e($faviconUrl) ?>">',$artistHeader,'the artist website exposes the resolved artist favicon in every page head');
     TestHarness::assertTrue(
-        strpos($artistHeader, '>Artworks</a>') < strpos($artistHeader, '>Series</a>')
-            && strpos($artistHeader, '>Series</a>') < strpos($artistHeader, '>Constellations</a>'),
+        strpos($artistHeader, "url_for('artworks/')") < strpos($artistHeader, "url_for('series')")
+            && strpos($artistHeader, "url_for('series')") < strpos($artistHeader, "url_for('sold-works')"),
         'the artist website navigation places Series immediately after Artworks'
     );
     TestHarness::assertContains("strcasecmp(trim((string)(\$artwork['series'] ?? '')), \$seriesTitle) === 0",$artistSite,'public series details select their dependent published artworks');
@@ -57,6 +57,11 @@ function run_public_pages_regression_tests(): void {
     TestHarness::assertTrue(!str_contains($stripeCheckout,"'stripe_account' =>"),'Stripe Checkout uses the artist account key directly without a Connect account header');
     TestHarness::assertContains("hash_equals((string)\$order['provider_account_id'], \$this->accountId)",$stripeCheckout,'Stripe webhooks cannot settle an order belonging to another artist account');
     TestHarness::assertContains('checkout.session.expired',$stripeCheckout,'expired Stripe sessions release temporary artwork reservations');
+    $mockupLandingStart=strpos($artistSite,'function render_published_mockup');
+    $mockupLanding=$mockupLandingStart===false?'':substr($artistSite,$mockupLandingStart,strpos($artistSite,'function render_series_index',$mockupLandingStart)-$mockupLandingStart);
+    TestHarness::assertContains("offerForArtwork((int)(\$artwork['canonical_artwork_id'] ?? 0))",$mockupLanding,'published mockup pages resolve the offer belonging to their original artwork');
+    TestHarness::assertContains("AppStore::money((int)\$storeOffer['price_minor']",$mockupLanding,'published mockup pages show the original artwork price');
+    TestHarness::assertContains("url_for('acquire/' . \$artwork['slug'])",$mockupLanding,'published mockup pages link available works to the canonical acquisition flow');
     $stripeWebhook=(string)file_get_contents($root.'/integrations/stripe/webhook/index.php');
     TestHarness::assertContains("['metadata']['order_id']",$stripeWebhook,'the shared webhook routes each signed event to the order owner');
     $apiSettings=(string)file_get_contents($root.'/admin_api_keys.php');

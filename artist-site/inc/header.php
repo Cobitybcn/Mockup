@@ -8,15 +8,17 @@ $isActive = function (string $section) use ($activeSection): string {
     return $activeSection === $section ? ' class="is-active" aria-current="page"' : '';
 };
 $metaImage = !empty($meta['image'])
-    ? (preg_match('~^https?://~', (string)$meta['image']) ? (string)$meta['image'] : rtrim($site['url'], '/') . '/' . ltrim((string)$meta['image'], '/'))
+    ? site_absolute_asset_url((string)$meta['image'], (string)$site['url'])
     : '';
 $artistPhotoFile = trim((string)($profile['photo_file'] ?? ''));
 $faviconUrl = $artistPhotoFile !== ''
     ? app_artist_photo_url($artistPhotoFile)
     : artworkmockups_public_url() . '/favicon.svg?v=1';
+$currentLanguage = artist_site_language();
+$localizedCanonical = artist_site_url_with_language((string)$meta['canonical'], $currentLanguage);
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= e($currentLanguage) ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -26,11 +28,14 @@ $faviconUrl = $artistPhotoFile !== ''
     <meta name="description" content="<?= e($meta['description']) ?>">
     <?php if (!empty($meta['robots'])): ?><meta name="robots" content="<?= e($meta['robots']) ?>"><?php endif; ?>
     <?php if (!empty($meta['keywords'])): ?><meta name="keywords" content="<?= e($meta['keywords']) ?>"><?php endif; ?>
-    <link rel="canonical" href="<?= e($meta['canonical']) ?>">
+    <link rel="canonical" href="<?= e($localizedCanonical) ?>">
+    <link rel="alternate" hreflang="es" href="<?= e(artist_site_url_with_language((string)$meta['canonical'], 'es')) ?>">
+    <link rel="alternate" hreflang="en" href="<?= e(artist_site_url_with_language((string)$meta['canonical'], 'en')) ?>">
     <meta property="og:title" content="<?= e($meta['title']) ?>">
     <meta property="og:description" content="<?= e($meta['description']) ?>">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="<?= e($meta['canonical']) ?>">
+    <meta property="og:url" content="<?= e($localizedCanonical) ?>">
+    <meta property="og:locale" content="<?= $currentLanguage === 'es' ? 'es_ES' : 'en_US' ?>">
     <?php if ($metaImage): ?>
         <meta property="og:image" content="<?= e($metaImage) ?>">
     <?php endif; ?>
@@ -58,22 +63,27 @@ $faviconUrl = $artistPhotoFile !== ''
     </a>
     <button class="mobile-nav-toggle" type="button" aria-expanded="false" aria-controls="header-tools" data-mobile-nav-toggle>
         <span class="mobile-nav-toggle__icon" aria-hidden="true"><i></i><i></i></span>
-        <span>Menu</span>
+        <span><?= e(site_t('Menu', 'Menú')) ?></span>
     </button>
     <div class="header-tools" id="header-tools" data-header-tools>
         <nav class="main-nav" aria-label="Main navigation">
-            <a<?= $isActive('artworks') ?> href="<?= e(url_for('artworks/')) ?>">Artworks</a>
-            <a<?= $isActive('series') ?> href="<?= e(url_for('series')) ?>">Series</a>
-            <a<?= $isActive('sold-works') ?> href="<?= e(url_for('sold-works')) ?>">Constellations</a>
-            <a<?= $isJournalSection ? ' class="is-active" aria-current="page"' : '' ?> href="<?= e(url_for('studio-notes')) ?>">Studio Notes</a>
-            <a<?= $isActive('artist') ?> href="<?= e(url_for('artist')) ?>">Artist</a>
-            <a class="nav-cta<?= $activeSection === 'contact' ? ' is-active' : '' ?>" <?= $activeSection === 'contact' ? 'aria-current="page"' : '' ?> href="<?= e(url_for('contact')) ?>">Inquire</a>
+            <a<?= $isActive('artworks') ?> href="<?= e(url_for('artworks/')) ?>"><?= e(site_t('Artworks', 'Obras')) ?></a>
+            <a<?= $isActive('series') ?> href="<?= e(url_for('series')) ?>"><?= e(site_t('Series', 'Series')) ?></a>
+            <a<?= $isActive('sold-works') ?> href="<?= e(url_for('sold-works')) ?>"><?= e(site_t('Constellations', 'Constelaciones')) ?></a>
+            <a<?= $isJournalSection ? ' class="is-active" aria-current="page"' : '' ?> href="<?= e(url_for('studio-notes')) ?>"><?= e(site_t('Studio Notes', 'Notas de estudio')) ?></a>
+            <a<?= $isActive('artist') ?> href="<?= e(url_for('artist')) ?>"><?= e(site_t('Artist', 'Artista')) ?></a>
+            <a class="nav-cta<?= $activeSection === 'contact' ? ' is-active' : '' ?>" <?= $activeSection === 'contact' ? 'aria-current="page"' : '' ?> href="<?= e(url_for('contact')) ?>"><?= e(site_t('Inquire', 'Consultar')) ?></a>
         </nav>
         <form class="site-search" action="<?= e(url_for('artworks/')) ?>" method="get" role="search">
-            <label class="sr-only" for="site-search-input">Search paintings</label>
-            <input id="site-search-input" name="q" type="search" placeholder="Search works or series" autocomplete="off">
-            <button type="submit">Search</button>
+            <label class="sr-only" for="site-search-input"><?= e(site_t('Search paintings', 'Buscar pinturas')) ?></label>
+            <input id="site-search-input" name="q" type="search" placeholder="<?= e(site_t('Search works or series', 'Buscar obras o series')) ?>" autocomplete="off">
+            <button type="submit"><?= e(site_t('Search', 'Buscar')) ?></button>
         </form>
+        <nav class="language-switch" aria-label="<?= e(site_t('Language', 'Idioma')) ?>">
+            <a href="<?= e(artist_site_language_url('es')) ?>" lang="es" hreflang="es"<?= $currentLanguage === 'es' ? ' class="is-active" aria-current="true"' : '' ?>>ES</a>
+            <span aria-hidden="true">/</span>
+            <a href="<?= e(artist_site_language_url('en')) ?>" lang="en" hreflang="en"<?= $currentLanguage === 'en' ? ' class="is-active" aria-current="true"' : '' ?>>EN</a>
+        </nav>
     </div>
 </header>
 <main>

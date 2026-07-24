@@ -7,6 +7,7 @@ $user = Auth::requireUser();
 $isAdmin = Auth::isAdmin($user);
 $canUseSocial = FeatureAccess::allows($user, FeatureAccess::SOCIAL_MANAGE);
 $pdo = Database::connection();
+$bilingualEditorialService = new BilingualEditorialService($pdo);
 ArtworkSeries::ensureSchema($pdo);
 ArtworkSeries::syncUser($pdo, (int)$user['id']);
 Auth::start();
@@ -14,6 +15,8 @@ $pinterestBatchError=(string)($_SESSION['pinterest_batch_error']??'');unset($_SE
 $_SESSION['pinterest_batch_create_csrf']=bin2hex(random_bytes(24));
 
 $query = trim((string)($_GET['q'] ?? ''));
+$bilingualExperiment = $bilingualEditorialService->isEnabled((int)$user['id'])
+    || ($isAdmin && (string)($_GET['bilingual_experiment'] ?? '') === '1');
 $page = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 60;
 $offset = ($page - 1) * $perPage;
@@ -121,12 +124,15 @@ function download_url(?string $file): string
     return $file ? 'media.php?file=' . rawurlencode(basename($file)) . '&download=1' : '';
 }
 
-function page_url(int $page, string $query): string
+function page_url(int $page, string $query, bool $bilingualExperiment = false): string
 {
     $params = ['page' => $page];
 
     if ($query !== '') {
         $params['q'] = $query;
+    }
+    if ($bilingualExperiment) {
+        $params['bilingual_experiment'] = 1;
     }
 
     return 'mockups.php?' . http_build_query($params);
@@ -646,10 +652,11 @@ function mockup_album_label(array $mockup): string
             </div>
 
             <form class="toolbar-form<?= $query !== '' ? ' has-clear' : '' ?>" method="get">
+                <?php if ($bilingualExperiment): ?><input type="hidden" name="bilingual_experiment" value="1"><?php endif; ?>
                 <input type="text" name="q" value="<?= h($query) ?>" placeholder="Search by context, file or artwork title">
                 <button type="submit">Search</button>
                 <?php if ($query !== ''): ?>
-                    <a class="button-link secondary" href="mockups.php">Clear</a>
+                    <a class="button-link secondary" href="mockups.php<?= $bilingualExperiment ? '?bilingual_experiment=1' : '' ?>">Clear</a>
                 <?php endif; ?>
             </form>
             <?php if($canUseSocial && $pinterestBatchError!==''):?><div class="notice error"><?=h($pinterestBatchError)?></div><?php endif;?>
@@ -677,9 +684,12 @@ function mockup_album_label(array $mockup): string
                         <?php foreach ($favoriteMockups as $favoriteMockup): ?>
                             <?php
                             $favoriteLabel = mockup_album_label($favoriteMockup);
-                            $favoriteBackUrl = 'mockups.php' . ($query !== '' || $page > 1 ? '?' . http_build_query(array_filter(['page' => $page, 'q' => $query], static fn ($value) => $value !== '' && $value !== null)) : '');
+                            $favoriteBackUrl = page_url($page, $query, $bilingualExperiment);
+                            $favoriteHref = $bilingualExperiment
+                                ? 'mockup_bilingual_experiment.php?id=' . (int)$favoriteMockup['id']
+                                : 'viewer.php?id=' . (int)$favoriteMockup['id'] . '&back=' . rawurlencode($favoriteBackUrl);
                             ?>
-                            <a class="favorite-mockup-card" href="viewer.php?id=<?= (int)$favoriteMockup['id'] ?>&back=<?= rawurlencode($favoriteBackUrl) ?>">
+                            <a class="favorite-mockup-card" href="<?= h($favoriteHref) ?>">
                                 <img src="<?= h(result_url($favoriteMockup['mockup_file'], 640)) ?>" alt="<?= h($favoriteLabel) ?>" loading="lazy" decoding="async">
                                 <strong><?= h($favoriteLabel) ?><?php $favoriteSeriesTitle = ArtworkSeries::display((string)($favoriteMockup['series_title'] ?? '')); if ($favoriteSeriesTitle !== ''): ?> <span class="title-series-soft">(<?= h($favoriteSeriesTitle) ?>)</span><?php endif; ?></strong>
                                 <small>#<?= (int)$favoriteMockup['id'] ?></small>
@@ -702,9 +712,14 @@ function mockup_album_label(array $mockup): string
                 <?php else: ?>
                     <div class="grid">
                         <?php foreach ($mockups as $mockup): ?>
+                            <?php
+                            $mockupHref = $bilingualExperiment
+                                ? 'mockup_bilingual_experiment.php?id=' . (int)$mockup['id']
+                                : 'viewer.php?id=' . (int)$mockup['id'] . '&back=' . rawurlencode(page_url($page, $query));
+                            ?>
                             <article class="item-card">
                                 <div class="mockup-image-wrap">
-                                    <a href="viewer.php?id=<?= h($mockup['id']) ?>&back=<?= rawurlencode(page_url($page, $query)) ?>" aria-label="Open mockup">
+                                    <a href="<?= h($mockupHref) ?>" aria-label="Open mockup">
                                         <img src="<?= h(result_url($mockup['mockup_file'], 520)) ?>" alt="Mockup" loading="lazy" decoding="async">
                                     </a>
                                     <button
@@ -733,8 +748,8 @@ function mockup_album_label(array $mockup): string
                 <?php if ($totalPages > 1): ?>
                     <nav class="pagination" aria-label="Pagination">
                         <?php if ($page > 1): ?>
-                            <a class="button-link secondary" href="<?= h(page_url(1, $query)) ?>">First</a>
-                            <a class="button-link secondary" href="<?= h(page_url($page - 1, $query)) ?>">Previous</a>
+                            <a class="button-link secondary" href="<?= h(page_url(1, $query, $bilingualExperiment)) ?>">First</a>
+                            <a class="button-link secondary" href="<?= h(page_url($page - 1, $query, $bilingualExperiment)) ?>">Previous</a>
                         <?php endif; ?>
 
                         <?php $visiblePages = pagination_pages($page, $totalPages); ?>
@@ -746,14 +761,14 @@ function mockup_album_label(array $mockup): string
                             <?php if ($visiblePage === $page): ?>
                                 <span class="button-link" aria-current="page"><?= h($visiblePage) ?></span>
                             <?php else: ?>
-                                <a class="button-link secondary" href="<?= h(page_url($visiblePage, $query)) ?>"><?= h($visiblePage) ?></a>
+                                <a class="button-link secondary" href="<?= h(page_url($visiblePage, $query, $bilingualExperiment)) ?>"><?= h($visiblePage) ?></a>
                             <?php endif; ?>
                             <?php $previousVisible = $visiblePage; ?>
                         <?php endforeach; ?>
 
                         <?php if ($page < $totalPages): ?>
-                            <a class="button-link secondary" href="<?= h(page_url($page + 1, $query)) ?>">Next</a>
-                            <a class="button-link secondary" href="<?= h(page_url($totalPages, $query)) ?>">Last</a>
+                            <a class="button-link secondary" href="<?= h(page_url($page + 1, $query, $bilingualExperiment)) ?>">Next</a>
+                            <a class="button-link secondary" href="<?= h(page_url($totalPages, $query, $bilingualExperiment)) ?>">Last</a>
                         <?php endif; ?>
                         <form method="get" style="display:inline-flex; gap:6px; align-items:center; margin:0;">
                             <?php if ($query !== ''): ?>

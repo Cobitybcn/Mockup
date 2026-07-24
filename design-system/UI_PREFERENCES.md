@@ -6,6 +6,8 @@ These inherited preferences remain part of the Visual Constitution and apply whe
 
 - Writing areas should be broad and comfortable.
 - Avoid text areas that force immediate scrolling.
+- Do not expose native bordered `textarea` controls for artist-facing writing. Use calm, borderless editorial writing surfaces integrated into the panel.
+- Keep any form controls needed for submission hidden and synchronize them from the visible editorial surface.
 - Prioritize comfort during extended studio sessions.
 
 ## Panels

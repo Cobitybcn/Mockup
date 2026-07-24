@@ -10,8 +10,10 @@ $user = Auth::requireUser();
 $pdo = Database::connection();
 Auth::start();
 $userId = (int)$user['id'];
+$bilingualEditorialService = new BilingualEditorialService($pdo);
 $seriesPreviewActive = UiPreview::isActive($user, 'series-catalog');
-$seriesBilingualExperiment = (string)($_GET['bilingual_experiment'] ?? '') === '1';
+$seriesBilingualExperiment = $bilingualEditorialService->isEnabled($userId)
+    || (Auth::isAdmin($user) && (string)($_GET['bilingual_experiment'] ?? '') === '1');
 
 ArtworkSeries::ensureSchema($pdo);
 (new ArtworkGroupService($pdo))->syncUser($userId);
@@ -79,11 +81,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'tags' => (string)($_POST['tags'] ?? ''),
                 'keywords' => (string)($_POST['keywords'] ?? ''),
                 'seo_description' => (string)($_POST['seo_description'] ?? ''),
+                'conceptual_core' => (string)($_POST['conceptual_core'] ?? ''),
+                'interpretive_limits' => (string)($_POST['interpretive_limits'] ?? ''),
                 'slug' => (string)($_POST['slug'] ?? ''),
                 'year_start' => (string)($_POST['year_start'] ?? ''),
                 'year_end' => (string)($_POST['year_end'] ?? ''),
             ]);
             $notice = 'Series updated.';
+        } elseif ($action === 'update_series_direction') {
+            ArtworkSeries::updateDirection(
+                $pdo,
+                $userId,
+                (int)($_POST['series_id'] ?? 0),
+                (string)($_POST['conceptual_core'] ?? ''),
+                (string)($_POST['interpretive_limits'] ?? '')
+            );
+            $notice = 'Dirección conceptual de la serie actualizada.';
         } elseif ($action === 'set_series_header') {
             ArtworkSeries::setHeader($pdo, $userId, (int)($_POST['series_id'] ?? 0), (string)($_POST['file'] ?? ''));
             $notice = 'Series header image updated.';
@@ -193,30 +206,53 @@ $displayedArtworks = $selectedSeries
         static fn(array $artwork): bool => (int)($artwork['series_id'] ?? 0) === (int)$selectedSeries['id']
     ))
     : $artworks;
+$seriesSpanishEditorial = $selectedSeries && $seriesBilingualExperiment
+    ? $bilingualEditorialService->get($userId, 'series', (int)$selectedSeries['id'], 'es')
+    : ['content' => [], 'private_memo' => '', 'status' => 'unprepared'];
+$seriesEnglishEditorial = $selectedSeries && $seriesBilingualExperiment
+    ? $bilingualEditorialService->get($userId, 'series', (int)$selectedSeries['id'], 'en')
+    : ['content' => [], 'private_memo' => '', 'status' => 'unprepared'];
+$seriesEditorialHasText = static function (mixed $value) use (&$seriesEditorialHasText): bool {
+    if (is_array($value)) {
+        foreach ($value as $item) {
+            if ($seriesEditorialHasText($item)) return true;
+        }
+        return false;
+    }
+    return trim((string)$value) !== '';
+};
+$seriesHasSpanishContent = $seriesEditorialHasText((array)($seriesSpanishEditorial['content'] ?? []));
+$seriesEditorialStateLabel = ($seriesEnglishEditorial['status'] ?? '') === 'stale'
+    ? 'English · actualizar'
+    : (($seriesEnglishEditorial['status'] ?? '') === 'unprepared' ? 'English · pendiente' : 'ES + EN');
 $seriesEditorialFields = $selectedSeries ? [
-    ['es' => 'Subtítulo', 'en' => 'Subtitle', 'value' => (string)($selectedSeries['subtitle'] ?? ''), 'large' => false, 'es_placeholder' => 'Subtítulo editorial de la serie…', 'en_placeholder' => 'No English subtitle is currently available.'],
-    ['es' => 'Descripción breve', 'en' => 'Short description', 'value' => (string)($selectedSeries['description'] ?? ''), 'large' => false, 'es_placeholder' => 'Una o dos frases para presentar la serie…', 'en_placeholder' => 'No English short description is currently available.'],
-    ['es' => 'Texto curatorial', 'en' => 'Long description', 'value' => (string)($selectedSeries['long_description'] ?? ''), 'large' => true, 'es_placeholder' => 'Escribí el texto curatorial completo de la serie…', 'en_placeholder' => 'No English long description is currently available.'],
-    ['es' => 'Etiquetas', 'en' => 'Tags', 'value' => (string)($selectedSeries['tags'] ?? ''), 'large' => false, 'es_placeholder' => 'Etiquetas editoriales…', 'en_placeholder' => 'No English tags are currently available.'],
-    ['es' => 'Términos de búsqueda', 'en' => 'Long-tail keywords', 'value' => (string)($selectedSeries['keywords'] ?? ''), 'large' => false, 'es_placeholder' => 'Frases de búsqueda en español…', 'en_placeholder' => 'No English search terms are currently available.'],
-    ['es' => 'Descripción SEO', 'en' => 'SEO description', 'value' => (string)($selectedSeries['seo_description'] ?? ''), 'large' => false, 'es_placeholder' => 'Descripción breve para buscadores…', 'en_placeholder' => 'No English SEO description is currently available.'],
+    ['key' => 'subtitle', 'es' => 'Subtítulo', 'en' => 'Subtitle', 'large' => false, 'es_placeholder' => 'Subtítulo editorial de la serie…', 'en_placeholder' => 'International English subtitle…'],
+    ['key' => 'short_description', 'es' => 'Descripción breve', 'en' => 'Short description', 'large' => false, 'es_placeholder' => 'Una o dos frases para presentar la serie…', 'en_placeholder' => 'Short international presentation…'],
+    ['key' => 'description', 'es' => 'Texto curatorial', 'en' => 'Curatorial text', 'large' => true, 'es_placeholder' => 'Escribí el texto curatorial completo de la serie…', 'en_placeholder' => 'International English curatorial text…'],
+] : [];
+$seriesSearchFields = $selectedSeries ? [
+    ['key' => 'tags', 'es' => 'Tags de catálogo', 'en' => 'Catalogue tags', 'large' => false, 'es_placeholder' => 'Tipo, estilos, técnicas, materiales, soporte, color, superficie y formato…', 'en_placeholder' => 'Type, styles, techniques, materials, support, color, surface and format…'],
+    ['key' => 'search_terms', 'es' => 'Búsquedas y long tails', 'en' => 'Searches and long tails', 'large' => false, 'es_placeholder' => 'Búsquedas amplias y específicas que usaría un comprador…', 'en_placeholder' => 'Broad and specific searches an international buyer would use…'],
+    ['key' => 'seo_title', 'es' => 'Título SEO', 'en' => 'SEO title', 'large' => false, 'es_placeholder' => 'Nombre de serie + descripción clara + artista…', 'en_placeholder' => 'Series name + clear descriptor + artist…'],
+    ['key' => 'seo_description', 'es' => 'Descripción SEO', 'en' => 'SEO description', 'large' => false, 'es_placeholder' => 'Descripción breve para buscadores…', 'en_placeholder' => 'International English SEO description…'],
 ] : [];
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Series - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="ui-catalog.css?v=17">
+    <link rel="stylesheet" href="ui-catalog.css?v=18">
+    <?php if ($selectedSeries && $seriesBilingualExperiment): ?><link rel="stylesheet" href="bilingual-editorial.css?v=20260723-7"><?php endif; ?>
     <?php if ($seriesPreviewActive): ?>
         <link rel="stylesheet" href="visual-consistency-preview.css?v=2">
     <?php endif; ?>
     <style>
         .series-bilingual-title {
             display:grid;
-            grid-template-columns:160px minmax(0,1fr);
+            grid-template-columns:160px minmax(0,1fr) 150px;
             gap:22px;
             align-items:stretch;
             width:100%;
@@ -226,7 +262,7 @@ $seriesEditorialFields = $selectedSeries ? [
             background:var(--surface);
         }
 
-        .series-bilingual-title--without-cover { grid-template-columns:1fr; }
+        .series-bilingual-title--without-cover { grid-template-columns:minmax(0,1fr) 150px; }
 
         .series-bilingual-cover {
             position:relative;
@@ -268,7 +304,10 @@ $seriesEditorialFields = $selectedSeries ? [
             overflow-wrap:anywhere;
         }
 
-        .series-bilingual-heading:focus { outline:0; }
+        .series-bilingual-heading:focus,
+        .series-bilingual-heading [data-universal-title] { color:inherit; font:inherit !important; font-family:inherit !important; font-size:inherit !important; font-weight:inherit !important; letter-spacing:inherit !important; line-height:inherit !important; text-transform:inherit; }
+        .series-bilingual-heading [data-universal-title] { cursor:text; }
+        .series-bilingual-heading [data-universal-title]:focus { outline:0; }
 
         .series-bilingual-title-memo {
             margin:15px 0 0;
@@ -281,6 +320,33 @@ $seriesEditorialFields = $selectedSeries ? [
             border:1px solid var(--line);
             background:var(--surface);
         }
+
+        .series-direction-editor {
+            margin-top:18px;
+            border:1px solid var(--line);
+            background:var(--surface);
+        }
+
+        .series-direction-editor > summary {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:20px;
+            padding:18px 20px;
+            cursor:pointer;
+            list-style:none;
+        }
+
+        .series-direction-editor > summary::-webkit-details-marker { display:none; }
+        .series-direction-editor > summary strong { display:block; color:var(--ink); font:500 23px/1.1 var(--font-serif); }
+        .series-direction-editor > summary small { display:block; margin-top:5px; color:var(--muted); font-size:12px; }
+        .series-direction-editor > summary::after { content:'+'; color:var(--accent); font:500 22px/1 var(--font-serif); }
+        .series-direction-editor[open] > summary::after { content:'−'; }
+        .series-direction-editor form { border-top:1px solid var(--line); background:var(--surface); }
+        .series-direction-editor .series-bilingual-spread { border-top:0; }
+        .series-direction-editor footer { display:flex; align-items:center; justify-content:space-between; gap:20px; margin:0 14px 14px; padding:14px 18px; border-top:1px solid var(--line); background:#fbf7e8; }
+        .series-direction-editor footer p { max-width:650px; margin:0; color:var(--muted); font-size:11px; line-height:1.5; }
+        .series-direction-editor button { width:auto; min-height:40px; margin:0; padding:10px 16px; border:1px solid #d8c17e; border-radius:3px; background:#ead99f; color:#554a30; box-shadow:none; font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
 
         .series-bilingual-editorial > summary {
             display:flex;
@@ -302,17 +368,12 @@ $seriesEditorialFields = $selectedSeries ? [
         .series-bilingual-spread {
             display:grid;
             grid-template-columns:repeat(2,minmax(0,1fr));
-            grid-template-rows:auto repeat(6,auto);
-            column-gap:12px;
+            column-gap:6px;
             row-gap:0;
             padding:14px;
             border-top:1px solid var(--line);
         }
-
         .series-bilingual-page {
-            display:grid;
-            grid-row:1 / span 7;
-            grid-template-rows:subgrid;
             min-width:0;
             padding:18px;
             border:1px solid var(--line);
@@ -330,18 +391,75 @@ $seriesEditorialFields = $selectedSeries ? [
         .series-bilingual-field--large .series-bilingual-copy { min-height:210px; }
         .series-bilingual-copy:empty::before { content:attr(data-placeholder); color:var(--muted); font-style:italic; }
         .series-bilingual-copy:focus { outline:0; }
+        .series-search-architecture { margin-top:18px; border-top:1px solid var(--line); }
+        .series-search-architecture > summary { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 0; cursor:pointer; list-style:none; }
+        .series-search-architecture > summary::-webkit-details-marker { display:none; }
+        .series-search-architecture > summary span { color:var(--ink); font:500 20px/1.2 var(--font-serif); }
+        .series-search-architecture > summary small { color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
+        .series-search-architecture > summary small::after { content:'+'; margin-left:10px; color:var(--accent); font:500 19px/1 var(--font-serif); }
+        .series-search-architecture[open] > summary small::after { content:'−'; }
+        .series-search-architecture .series-bilingual-field:first-of-type { margin-top:0; }
+
+        @supports (grid-template-rows:subgrid) {
+            .series-bilingual-editorial > .series-bilingual-spread {
+                grid-template-rows:repeat(9,auto);
+            }
+
+            .series-bilingual-editorial > .series-bilingual-spread > .series-bilingual-page {
+                display:grid;
+                grid-template-rows:subgrid;
+                grid-row:1 / span 9;
+            }
+
+            .series-bilingual-editorial > .series-bilingual-spread .series-search-architecture {
+                display:contents;
+            }
+
+            .series-bilingual-editorial > .series-bilingual-spread .series-search-architecture > summary {
+                margin-top:18px;
+                border-top:1px solid var(--line);
+            }
+        }
         .series-bilingual-memo { margin:0 14px 14px; padding:14px 6px 2px; border-top:1px solid var(--line); }
         .series-bilingual-memo summary { cursor:pointer; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
         .series-bilingual-memo .series-bilingual-copy { min-height:82px; }
+        .bilingual-publication-bar { display:flex; align-items:center; justify-content:space-between; gap:18px; margin:0 14px 14px; padding:14px 18px; border-top:1px solid var(--line); background:#fbf7e8; }
+        .bilingual-publication-bar span { color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
+        .bilingual-publication-bar button { min-height:38px; margin:0; padding:9px 16px; border:1px solid #d8c17e; border-radius:3px; background:#ead99f; color:#554a30; box-shadow:none; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
 
         @media (max-width:800px) {
-            .series-bilingual-title { grid-template-columns:100px minmax(0,1fr); gap:14px; padding:14px; }
-            .series-bilingual-title--without-cover { grid-template-columns:1fr; }
+            .series-bilingual-title { grid-template-columns:100px minmax(0,1fr) 112px; gap:14px; padding:14px; }
+            .series-bilingual-title--without-cover { grid-template-columns:minmax(0,1fr) 112px; }
             .series-bilingual-cover { min-height:112px; }
             .series-bilingual-heading { font-size:36px; }
             .series-bilingual-title-memo { font-size:17px; }
-            .series-bilingual-spread { grid-template-columns:1fr; grid-template-rows:none; }
-            .series-bilingual-page { display:block; grid-column:auto; grid-row:auto; }
+            .series-direction-editor form { grid-template-columns:1fr; }
+            .series-bilingual-spread { grid-template-columns:1fr; }
+            .series-bilingual-page { grid-column:auto; }
+
+            @supports (grid-template-rows:subgrid) {
+                .series-bilingual-editorial > .series-bilingual-spread {
+                    grid-template-rows:none;
+                }
+
+                .series-bilingual-editorial > .series-bilingual-spread > .series-bilingual-page {
+                    display:block;
+                    grid-row:auto;
+                }
+
+                .series-bilingual-editorial > .series-bilingual-spread .series-search-architecture {
+                    display:block;
+                }
+
+                .series-bilingual-editorial > .series-bilingual-spread .series-search-architecture > summary {
+                    margin-top:0;
+                }
+            }
+        }
+
+        @media (max-width:560px) {
+            .series-bilingual-title { grid-template-columns:86px minmax(0,1fr); }
+            .series-bilingual-title--without-cover { grid-template-columns:1fr; }
         }
     </style>
 </head>
@@ -350,7 +468,7 @@ $seriesEditorialFields = $selectedSeries ? [
     <?php include __DIR__ . '/sidebar.php'; ?>
     <main class="main-area">
         <header class="app-header"><a class="user-chip" href="account.php"><?= series_h($user['email']) ?></a></header>
-        <div class="series-catalog">
+        <div class="series-catalog"<?= $selectedSeries && $seriesBilingualExperiment ? ' data-bilingual-editor data-entity-type="series" data-entity-id="' . (int)$selectedSeries['id'] . '" data-csrf="' . series_h(Auth::csrfToken('bilingual_editorial')) . '" data-endpoint="bilingual_editorial.php"' : '' ?>>
             <?php if ($seriesPreviewActive): ?>
                 <aside class="ui-preview-notice" aria-label="Visual consistency preview">
                     <span><strong>Preview</strong> Series workspace</span>
@@ -377,17 +495,52 @@ $seriesEditorialFields = $selectedSeries ? [
                 <?php endif; ?>
                 <div class="series-bilingual-title-copy">
                     <span class="series-bilingual-label">Título universal</span>
-                    <h1 class="series-bilingual-heading" contenteditable="true" role="textbox" aria-label="Título de la serie"><?= series_h($selectedSeries['title']) ?></h1>
+                    <h1 class="series-bilingual-heading" aria-label="Título de la serie"><span contenteditable="true" role="textbox" data-universal-title><?= series_h($selectedSeries['title']) ?></span> <span contenteditable="false">Series</span></h1>
                     <p class="series-bilingual-title-memo">STRATA — LIMEN · SERIES X — NUHRĀ (ܢܘܗܪܐ) · no traducir</p>
                 </div>
             </div>
-            <details class="series-bilingual-editorial">
+            <details class="series-direction-editor"<?= trim((string)($selectedSeries['conceptual_core'] ?? '')) === '' && trim((string)($selectedSeries['interpretive_limits'] ?? '')) === '' ? ' open' : '' ?>>
+                <summary>
+                    <span>
+                        <strong>Dirección de la serie</strong>
+                        <small>Explicación del artista para definir la identidad y los textos de la serie.</small>
+                    </span>
+                </summary>
+                <form method="post" data-series-direction-form>
+                    <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
+                    <input type="hidden" name="action" value="update_series_direction">
+                    <input type="hidden" name="series_id" value="<?= (int)$selectedSeries['id'] ?>">
+                    <input type="hidden" name="conceptual_core" value="<?= series_h($selectedSeries['conceptual_core'] ?? '') ?>">
+                    <input type="hidden" name="interpretive_limits" value="<?= series_h($selectedSeries['interpretive_limits'] ?? '') ?>">
+                    <div class="series-bilingual-spread">
+                        <article class="series-bilingual-page series-bilingual-page--source">
+                            <span class="series-bilingual-language">Fuente del artista</span>
+                            <section class="series-bilingual-field series-bilingual-field--large">
+                                <label>Núcleo conceptual</label>
+                                <div class="series-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-series-direction-copy="conceptual_core" data-placeholder="Qué territorio conceptual abre esta serie; qué relaciones, tensiones o imágenes deben permanecer abiertas."><?= series_h($selectedSeries['conceptual_core'] ?? '') ?></div>
+                            </section>
+                        </article>
+                        <article class="series-bilingual-page series-bilingual-page--english">
+                            <span class="series-bilingual-language">Límites del texto</span>
+                            <section class="series-bilingual-field series-bilingual-field--large">
+                                <label>Límites interpretativos</label>
+                                <div class="series-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-series-direction-copy="interpretive_limits" data-placeholder="Qué no debe reducir, afirmar ni convertir en conclusión el texto."><?= series_h($selectedSeries['interpretive_limits'] ?? '') ?></div>
+                            </section>
+                        </article>
+                    </div>
+                    <footer>
+                        <p>Estas notas no se publican: son la fuente del contenido español de la serie.</p>
+                        <button type="submit">Guardar dirección</button>
+                    </footer>
+                </form>
+            </details>
+            <details class="series-bilingual-editorial" id="series-language-editorial">
                 <summary>
                     <span class="series-bilingual-summary">
                         <strong>Espacio editorial</strong>
-                        <span>Contenido original en español y versión publicada en inglés.</span>
+                        <span>Español maestro e inglés internacional para publicación.</span>
                     </span>
-                    <span class="series-bilingual-state">Español + English</span>
+                    <span class="series-bilingual-state" data-bilingual-save-state><?= series_h($seriesEditorialStateLabel) ?></span>
                 </summary>
                 <div class="series-bilingual-spread">
                     <article class="series-bilingual-page series-bilingual-page--source">
@@ -395,23 +548,48 @@ $seriesEditorialFields = $selectedSeries ? [
                         <?php foreach ($seriesEditorialFields as $field): ?>
                             <section class="series-bilingual-field <?= $field['large'] ? 'series-bilingual-field--large' : '' ?>">
                                 <label><?= series_h($field['es']) ?></label>
-                                <div class="series-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="<?= series_h($field['es_placeholder']) ?>"></div>
+                                <div class="series-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-editorial-locale="es" data-editorial-field="<?= series_h($field['key']) ?>" data-placeholder="<?= series_h($field['es_placeholder']) ?>"><?= series_h($seriesSpanishEditorial['content'][$field['key']] ?? '') ?></div>
                             </section>
                         <?php endforeach; ?>
+                        <details class="series-search-architecture">
+                            <summary><span>SEO de catálogo</span><small>Cómo te encuentran</small></summary>
+                            <?php foreach ($seriesSearchFields as $field): ?>
+                                <section class="series-bilingual-field">
+                                    <label><?= series_h($field['es']) ?></label>
+                                    <div class="series-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-editorial-locale="es" data-editorial-field="<?= series_h($field['key']) ?>" data-placeholder="<?= series_h($field['es_placeholder']) ?>"><?= series_h($seriesSpanishEditorial['content'][$field['key']] ?? '') ?></div>
+                                </section>
+                            <?php endforeach; ?>
+                        </details>
                     </article>
                     <article class="series-bilingual-page series-bilingual-page--english">
-                        <span class="series-bilingual-language">English · current version</span>
+                        <span class="series-bilingual-language">English · publicación internacional</span>
                         <?php foreach ($seriesEditorialFields as $field): ?>
                             <section class="series-bilingual-field <?= $field['large'] ? 'series-bilingual-field--large' : '' ?>">
                                 <label><?= series_h($field['en']) ?></label>
-                                <div class="series-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="<?= series_h($field['en_placeholder']) ?>"><?= series_h($field['value']) ?></div>
+                                <div class="series-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-editorial-locale="en" data-editorial-field="<?= series_h($field['key']) ?>" data-placeholder="<?= series_h($field['en_placeholder']) ?>"><?= series_h($seriesEnglishEditorial['content'][$field['key']] ?? '') ?></div>
                             </section>
                         <?php endforeach; ?>
+                        <details class="series-search-architecture">
+                            <summary><span>Catalogue SEO</span><small>How buyers find it</small></summary>
+                            <?php foreach ($seriesSearchFields as $field): ?>
+                                <section class="series-bilingual-field">
+                                    <label><?= series_h($field['en']) ?></label>
+                                    <div class="series-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-editorial-locale="en" data-editorial-field="<?= series_h($field['key']) ?>" data-placeholder="<?= series_h($field['en_placeholder']) ?>"><?= series_h($seriesEnglishEditorial['content'][$field['key']] ?? '') ?></div>
+                                </section>
+                            <?php endforeach; ?>
+                        </details>
                     </article>
+                </div>
+                <div class="bilingual-preparation-bar">
+                    <div>
+                        <strong>Generar contenido ES + EN</strong>
+                        <span>Crea las descripciones y el SEO útil de catálogo en ambos idiomas.</span>
+                    </div>
+                    <button type="button" data-editorial-generate><?= $seriesHasSpanishContent ? 'Actualizar contenido ES + EN' : 'Generar contenido ES + EN' ?></button>
                 </div>
                 <details class="series-bilingual-memo">
                     <summary>Memo privado de la serie</summary>
-                    <div class="series-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Ideas, decisiones y evolución conceptual de la serie…"></div>
+                    <div class="series-bilingual-copy" contenteditable="true" role="textbox" aria-multiline="true" data-private-memo data-editorial-locale="es" data-placeholder="Ideas, decisiones y evolución conceptual de la serie…"><?= series_h($seriesSpanishEditorial['private_memo'] ?? '') ?></div>
                 </details>
             </details>
             <?php else:
@@ -451,14 +629,14 @@ $seriesEditorialFields = $selectedSeries ? [
                         <?php foreach ($seriesRows as $index => $series): ?>
                             <?php $seriesArtworkCount = (int)($series['artwork_count'] ?? 0); ?>
                             <div class="series-series-option">
-                                <a class="social-square-button series-series-tile social-square-button--<?= series_tone($index) ?>" href="series.php?series=<?= (int)$series['id'] ?><?= $seriesPreviewActive ? '&amp;design_preview=series-catalog' : '' ?>" data-series-filter-trigger data-series-filter-id="<?= (int)$series['id'] ?>"<?= !empty($series['header_file']) ? ' style="--series-tile-image: url(\'' . series_h(series_media_url($series['header_file'], 420)) . '\'); --series-tile-position: ' . (int)($series['header_focal_x'] ?? 50) . '% ' . (int)($series['header_focal_y'] ?? 50) . '%;"' : '' ?> aria-label="<?= series_h($series['title']) ?>, <?= $seriesArtworkCount ?> <?= $seriesArtworkCount === 1 ? 'artwork' : 'artworks' ?>, <?= !empty($series['published']) ? 'published' : 'draft' ?>">
+                                <a class="social-square-button series-series-tile social-square-button--<?= series_tone($index) ?>" href="series.php?series=<?= (int)$series['id'] ?>" data-series-filter-id="<?= (int)$series['id'] ?>"<?= !empty($series['header_file']) ? ' style="--series-tile-image: url(\'' . series_h(series_media_url($series['header_file'], 420)) . '\'); --series-tile-position: ' . (int)($series['header_focal_x'] ?? 50) . '% ' . (int)($series['header_focal_y'] ?? 50) . '%;"' : '' ?> aria-label="Abrir mesa de trabajo de <?= series_h($series['title']) ?>, <?= $seriesArtworkCount ?> <?= $seriesArtworkCount === 1 ? 'artwork' : 'artworks' ?>, <?= !empty($series['published']) ? 'published' : 'draft' ?>">
                                     <span class="series-series-tile__title"><?= series_h($series['title']) ?></span>
                                     <small class="series-series-tile__meta">
                                         <?= $seriesArtworkCount > 0 ? $seriesArtworkCount . ' ' . ($seriesArtworkCount === 1 ? 'artwork' : 'artworks') : 'No artworks' ?>
                                         · <?= !empty($series['published']) ? 'Published' : 'Draft' ?>
                                     </small>
                                 </a>
-                                <a class="series-series-option__edit" href="series.php?series=<?= (int)$series['id'] ?><?= $seriesPreviewActive ? '&amp;design_preview=series-catalog' : '' ?>" aria-label="Edit <?= series_h($series['title']) ?>" title="Edit series">
+                                <a class="series-series-option__edit" href="series.php?series=<?= (int)$series['id'] ?>#series-language-editorial" aria-label="Editar texto de <?= series_h($series['title']) ?>" title="Editar texto editorial">
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16v4Zm9.7-13.7 4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                                 </a>
                             </div>
@@ -669,6 +847,8 @@ $seriesEditorialFields = $selectedSeries ? [
 
                                 <label>Long Description<textarea name="long_description" rows="8" placeholder="Full curatorial text for the series page"><?= series_h($series['long_description'] ?? '') ?></textarea></label>
                                 <label>Long-Tail Keywords<textarea name="keywords" rows="2" placeholder="Comma separated, e.g. structural abstract painting large scale"><?= series_h($series['keywords'] ?? '') ?></textarea></label>
+                                <label>Conceptual Core<textarea name="conceptual_core" rows="6" placeholder="Artist-authored conceptual direction for this series"><?= series_h($series['conceptual_core'] ?? '') ?></textarea></label>
+                                <label>Interpretive Limits<textarea name="interpretive_limits" rows="5" placeholder="What analysis and editorial text must not reduce, claim or infer"><?= series_h($series['interpretive_limits'] ?? '') ?></textarea></label>
 
                                 <p><?= series_h(series_year_range_label($series['year_start'] ?? null, $series['year_end'] ?? null)) ?><?= (int)$series['artwork_count'] ?> artworks · <?= (int)$series['mockup_count'] ?> mockups</p>
                                 
@@ -774,5 +954,6 @@ $seriesEditorialFields = $selectedSeries ? [
 </div>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
 <script src="series_artwork_order.js?v=20260720-4"></script>
+<?php if ($selectedSeries && $seriesBilingualExperiment): ?><script src="bilingual-editorial.js?v=20260723-17"></script><?php endif; ?>
 </body>
 </html>
