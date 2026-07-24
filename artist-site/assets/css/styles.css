@@ -1234,8 +1234,6 @@ p {
 }
 
 .artwork-detail__content {
-    position: sticky;
-    top: 100px;
     align-self: start;
 }
 

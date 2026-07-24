@@ -74,6 +74,11 @@ function run_public_pages_regression_tests(): void {
     TestHarness::assertTrue(!str_contains($publishedSeriesCatalog,'ORDER BY s.year_start DESC, s.title ASC'),'the public series catalog no longer replaces editorial order with alphabetical order');
     $artistStyles=(string)file_get_contents(dirname($root).'/artist-site/assets/css/styles.css');
     TestHarness::assertContains('grid-template-columns: repeat(4, minmax(0, 1fr));',$artistStyles,'the published series overview uses four equal desktop columns');
+    preg_match('/\\.artwork-detail__content\\s*\\{([^}]*)\\}/s',$artistStyles,$artworkDetailContentRules);
+    TestHarness::assertTrue(
+        !str_contains((string)($artworkDetailContentRules[1] ?? ''),'position: sticky'),
+        'artwork images and editorial content scroll together'
+    );
     TestHarness::assertContains('.artwork-series-reference:hover .artwork-series-preview',$artistStyles,'series previews appear on pointer hover');
     TestHarness::assertContains('.artwork-series-reference:focus-within .artwork-series-preview',$artistStyles,'series previews appear for keyboard focus');
 }
