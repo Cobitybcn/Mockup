@@ -129,6 +129,22 @@ function wms_upload_files(array $files): array
     return [wms_upload_file($files)];
 }
 
+function wms_resolve_scene_slug(WorldMotherLibrary $library, string $value): string
+{
+    $value = trim(str_replace(['\\', '/'], '', $value));
+    if ($value === '') {
+        return '';
+    }
+    $normalized = WorldMotherGenerator::safeSlug($value);
+    foreach ($library->categories() as $category) {
+        $slug = (string)($category['category_slug'] ?? '');
+        if ($slug === $value || WorldMotherGenerator::safeSlug($slug) === $normalized) {
+            return $slug;
+        }
+    }
+    return '';
+}
+
 $library = new WorldMotherLibrary();
 $generator = new WorldMotherGenerator($library);
 $sceneRanking = new SceneRankingService(Database::connection());
@@ -146,10 +162,12 @@ $jobId = trim((string)($_POST['job_id'] ?? $_GET['job_id'] ?? ''));
 $referencePath = '';
 $referencePaths = [];
 $generated = null;
+$requestedSceneSlug = trim(str_replace(['\\', '/'], '', (string)($_POST['return_scene'] ?? $_GET['scene'] ?? '')));
+$redirectSceneSlug = $requestedSceneSlug;
 
 try {
     $action = trim((string)($_POST['action'] ?? ''));
-    $adminActions = ['create_category', 'rename_category', 'merge_category', 'delete_category', 'rebuild_index', 'upload_variant', 'update_ranking', 'update_similarity_groups'];
+    $adminActions = ['create_category', 'rename_category', 'merge_category', 'delete_category', 'delete_variant', 'generate_similar', 'transform_reference', 'rebuild_index', 'upload_variant', 'update_ranking', 'update_similarity_groups'];
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, $adminActions, true)) {
         if (!Auth::isAdmin($user)) {
             throw new RuntimeException('Only an administrator can manage the scene library.');
@@ -193,8 +211,9 @@ try {
                 $sourceCategory,
                 (string)($_POST['new_category_name'] ?? '')
             );
-            $sceneRanking->renameCategory($sourceCategory, (string)($renamedCategory['category_slug'] ?? ''));
-            $sceneDiversity->renameCategory($sourceCategory, (string)($renamedCategory['category_slug'] ?? ''));
+            $redirectSceneSlug = (string)($renamedCategory['category_slug'] ?? '');
+            $sceneRanking->renameCategory($sourceCategory, $redirectSceneSlug);
+            $sceneDiversity->renameCategory($sourceCategory, $redirectSceneSlug);
             $notice = 'Scene renamed to ' . (string)($renamedCategory['category_name'] ?? $renamedCategory['category_slug'] ?? '') . '.';
         } elseif ($action === 'merge_category') {
             $merge = $library->mergeCategory(
@@ -220,6 +239,69 @@ try {
                 (string)($deleted['category_slug'] ?? ''),
                 (int)($deleted['deleted_images'] ?? 0)
             );
+            $redirectSceneSlug = '';
+        } elseif ($action === 'delete_variant') {
+            $deleted = $library->deleteImage(
+                (string)($_POST['source_category'] ?? ''),
+                (string)($_POST['file_name'] ?? '')
+            );
+            $notice = 'Scene reference removed: ' . (string)($deleted['file_name'] ?? '') . '.';
+        } elseif ($action === 'generate_similar') {
+            $target = wms_resolve_scene_slug($library, (string)($_POST['target_category'] ?? ''));
+            $prompt = trim((string)($_POST['similar_prompt'] ?? ''));
+            $count = max(1, min(4, (int)($_POST['variant_count'] ?? 1)));
+            $sceneImages = $library->imagesForCategory($target);
+            if (!$sceneImages) {
+                throw new RuntimeException('Add at least one visual reference before creating similar styles.');
+            }
+            if ($prompt === '') {
+                throw new RuntimeException('Describe the variation you want to explore.');
+            }
+            $referencePaths = [];
+            foreach (array_slice($sceneImages, 0, 4) as $sceneImage) {
+                $localReference = wms_ensure_local_storage_file((string)($sceneImage['absolute_path'] ?? $sceneImage['relative_path'] ?? ''));
+                if (is_file($localReference)) {
+                    $referencePaths[] = $localReference;
+                }
+            }
+            if (!$referencePaths) {
+                throw new RuntimeException('The scene references could not be prepared for generation.');
+            }
+            $generated = $generator->generateOriginalWorldMotherSet($referencePaths, $target, [
+                'scene_type' => ucwords(str_replace('_', ' ', $target)),
+                'architecture_language' => 'Preserve the established architectural identity visible in the supplied scene references.',
+                'wall_language' => 'Preserve the scene family while creating a distinct artwork-ready spatial interpretation.',
+                'negative_risks' => ['no existing artwork', 'no logos', 'no readable text', 'no people', 'no visual clone'],
+            ], [
+                'notes' => $prompt,
+                'count' => $count,
+            ]);
+            $notice = $count === 1
+                ? 'A new related scene style was created.'
+                : $count . ' new related scene styles were created.';
+        } elseif ($action === 'transform_reference') {
+            $target = wms_resolve_scene_slug($library, (string)($_POST['target_category'] ?? ''));
+            $prompt = trim((string)($_POST['transform_prompt'] ?? ''));
+            if ($target === '') {
+                throw new RuntimeException('Select an existing scene before transforming an image.');
+            }
+            if ($prompt === '') {
+                throw new RuntimeException('Describe how the uploaded image should become a new scene source.');
+            }
+            if (!isset($_FILES['source_image'])) {
+                throw new RuntimeException('Choose the source image you want to transform.');
+            }
+            $sourcePath = wms_upload_file((array)$_FILES['source_image']);
+            $sourceAnalysis = [
+                'scene_type' => ucwords(str_replace('_', ' ', $target)),
+                'architecture_language' => 'Use the uploaded image as visual evidence, then rebuild it according to the transformation prompt.',
+                'wall_language' => 'Create a credible artwork-ready wall or architectural plane.',
+                'negative_risks' => ['no existing artwork', 'no logos', 'no readable text', 'no people', 'no literal copy'],
+            ];
+            $generated = $generator->generateOriginalWorldMother($sourcePath, $target, $sourceAnalysis, [
+                'notes' => $prompt,
+            ]);
+            $notice = 'The uploaded image was transformed into a new source for this scene.';
         } elseif ($action === 'upload_variant') {
             $requestedTarget = trim((string)($_POST['target_category'] ?? ''));
             $target = '';
@@ -234,28 +316,59 @@ try {
                 throw new RuntimeException('Select a valid scene category.');
             }
             $destDirectory = $library->basePath() . DIRECTORY_SEPARATOR . $target;
-            if (!is_dir($destDirectory)) {
-                throw new RuntimeException('The target scene folder does not exist.');
+            if (!is_dir($destDirectory) && !mkdir($destDirectory, 0775, true) && !is_dir($destDirectory)) {
+                throw new RuntimeException('The target scene workspace could not be created.');
             }
-            if (!isset($_FILES['variant_image']) || ($_FILES['variant_image']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            $variantUpload = (array)($_FILES['variant_images'] ?? $_FILES['variant_image'] ?? []);
+            if (!$variantUpload) {
                 throw new RuntimeException('No image was uploaded.');
             }
-            $tempPath = wms_upload_file($_FILES['variant_image']);
-            $finalPath = $destDirectory . DIRECTORY_SEPARATOR . basename($tempPath);
-            if (!rename($tempPath, $finalPath)) {
-                @unlink($tempPath);
-                throw new RuntimeException('Failed to move uploaded variant to the scene folder.');
-            }
-            if (StorageService::isGcsActive()) {
-                $finalStorageKey = 'storage/world_mothers/' . $target . '/' . basename($finalPath);
-                if (!StorageService::uploadFile($finalStorageKey, $finalPath)) {
-                    @unlink($finalPath);
-                    throw new RuntimeException('The new variant could not be saved to persistent storage.');
+            $variantFiles = [];
+            if (isset($variantUpload['tmp_name']) && is_array($variantUpload['tmp_name'])) {
+                $uploadCount = count($variantUpload['tmp_name']);
+                if ($uploadCount < 1 || $uploadCount > 24) {
+                    throw new RuntimeException('Upload between 1 and 24 images at a time.');
                 }
-                StorageService::delete('storage/world_mother_uploads/' . basename($tempPath));
+                for ($uploadIndex = 0; $uploadIndex < $uploadCount; $uploadIndex++) {
+                    if ((int)($variantUpload['error'][$uploadIndex] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+                        continue;
+                    }
+                    $variantFiles[] = [
+                        'name' => $variantUpload['name'][$uploadIndex] ?? '',
+                        'type' => $variantUpload['type'][$uploadIndex] ?? '',
+                        'tmp_name' => $variantUpload['tmp_name'][$uploadIndex] ?? '',
+                        'error' => $variantUpload['error'][$uploadIndex] ?? UPLOAD_ERR_NO_FILE,
+                        'size' => $variantUpload['size'][$uploadIndex] ?? 0,
+                    ];
+                }
+            } else {
+                $variantFiles[] = $variantUpload;
+            }
+            if (!$variantFiles) {
+                throw new RuntimeException('No image was uploaded.');
+            }
+            $uploadedVariantCount = 0;
+            foreach ($variantFiles as $variantFile) {
+                $tempPath = wms_upload_file($variantFile);
+                $finalPath = $destDirectory . DIRECTORY_SEPARATOR . basename($tempPath);
+                if (!rename($tempPath, $finalPath)) {
+                    @unlink($tempPath);
+                    throw new RuntimeException('Failed to move an uploaded image to the scene folder.');
+                }
+                if (StorageService::isGcsActive()) {
+                    $finalStorageKey = 'storage/world_mothers/' . $target . '/' . basename($finalPath);
+                    if (!StorageService::uploadFile($finalStorageKey, $finalPath)) {
+                        @unlink($finalPath);
+                        throw new RuntimeException('A new scene image could not be saved to persistent storage.');
+                    }
+                    StorageService::delete('storage/world_mother_uploads/' . basename($tempPath));
+                }
+                $uploadedVariantCount++;
             }
             $library->rebuildIndex();
-            $notice = 'New variant uploaded directly to scene: ' . $target;
+            $notice = $uploadedVariantCount === 1
+                ? 'Image added to the scene.'
+                : $uploadedVariantCount . ' images added to the scene.';
             if (!empty($_POST['ajax'])) {
                 header('Content-Type: application/json');
                 echo json_encode(['success' => true, 'notice' => $notice]);
@@ -270,7 +383,10 @@ try {
         }
 
         $_SESSION['world_mother_studio_notice'] = $notice;
-        header('Location: world_mother_studio.php#scene-library');
+        $redirectTarget = $redirectSceneSlug !== ''
+            ? 'world_mother_studio.php?scene=' . rawurlencode($redirectSceneSlug) . '#scene-detail'
+            : 'world_mother_studio.php#scene-library';
+        header('Location: ' . $redirectTarget);
         exit;
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'analyze') {
         $uploadField = isset($_FILES['reference_images']) ? (array)$_FILES['reference_images'] : (array)($_FILES['reference_image'] ?? []);
@@ -365,6 +481,21 @@ $totalSceneVariants = array_sum(array_map(
     static fn (array $sceneCard): int => count((array)($sceneCard['images'] ?? [])),
     $sceneCards
 ));
+$selectedSceneCard = null;
+foreach ($sceneCards as $sceneCard) {
+    $candidateSceneSlug = (string)($sceneCard['category']['category_slug'] ?? '');
+    if (
+        $candidateSceneSlug === $requestedSceneSlug
+        || (
+            $requestedSceneSlug !== ''
+            && WorldMotherGenerator::safeSlug($candidateSceneSlug) === WorldMotherGenerator::safeSlug($requestedSceneSlug)
+        )
+    ) {
+        $selectedSceneCard = $sceneCard;
+        $requestedSceneSlug = $candidateSceneSlug;
+        break;
+    }
+}
 $creatorOpen = is_array($analysis)
     || is_array($generated)
     || ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array(trim((string)($_POST['action'] ?? '')), ['analyze', 'generate'], true));
@@ -432,11 +563,33 @@ $creatorOpen = is_array($analysis)
             overflow: hidden;
             transition: all 0.25s ease;
             position: relative;
+            color:inherit;
+            text-decoration:none;
         }
+        .scene-card:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }
         .scene-card h3 { margin:0; font-family:var(--font-serif), Georgia, serif; font-size:18px; font-weight: 600; line-height:1.25; color: var(--ink); }
         .scene-card code { color:var(--muted); font-size:11px; word-break:break-word; }
+        .scene-card-title-link { color:inherit; text-decoration:none; }
+        .scene-card-title-link:focus-visible,
+        .scene-card-thumbs-link:focus-visible,
+        .scene-card-open:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+        .scene-card-open {
+            align-self:flex-start;
+            display:inline-flex;
+            padding:6px 9px;
+            border:1px solid var(--line);
+            border-radius:var(--radius);
+            background:var(--surface-soft);
+            color:var(--accent);
+            font-size:10px;
+            font-weight:700;
+            letter-spacing:.07em;
+            text-decoration:none;
+            text-transform:uppercase;
+        }
+        .scene-card-thumbs-link { display:block; color:inherit; text-decoration:none; }
         .scene-card-thumbs { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:5px; min-height:72px; margin:8px 0; }
-        .scene-card-thumb-item { aspect-ratio:4 / 3; overflow:hidden; border:1px solid var(--line); border-radius:4px; background:var(--surface-soft); cursor:zoom-in; }
+        .scene-card-thumb-item { aspect-ratio:4 / 3; overflow:hidden; border:1px solid var(--line); border-radius:4px; background:var(--surface-soft); }
         .scene-card-thumb-item img { width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.2s ease; }
         .scene-card-empty { display:grid; place-items:center; min-height:120px; border:1px dashed var(--line); border-radius:4px; color:var(--muted); font-size:12px; }
         .scene-card-meta { display:flex; flex-wrap:wrap; gap:6px; margin-top:2px; }
@@ -544,12 +697,82 @@ $creatorOpen = is_array($analysis)
         .scene-card-admin .danger-button:hover { background:#fff5f5; border-color:var(--danger); color:var(--danger); }
         .scene-empty-library { grid-column:1 / -1; padding:32px; border:1px dashed var(--line); border-radius:var(--radius); color:var(--muted); text-align:center; }
         .scene-empty-library[hidden] { display:none; }
+        .scene-detail { margin:24px 0 40px; padding:28px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
+        .scene-detail-header { display:flex; justify-content:space-between; align-items:flex-start; gap:24px; padding-bottom:22px; border-bottom:1px solid var(--line); }
+        .scene-detail-back { display:inline-flex; margin-bottom:12px; color:var(--accent); font-size:11px; font-weight:700; letter-spacing:.06em; text-decoration:none; text-transform:uppercase; }
+        .scene-detail-header h2 { margin:0; font-size:36px; }
+        .scene-detail-header p { margin:7px 0 0; color:var(--muted); font-size:13px; }
+        .scene-detail-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:18px; margin-top:24px; }
+        .scene-detail-image { position:relative; min-width:0; margin:0; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; background:var(--surface-soft); }
+        .scene-detail-image img { display:block; width:100%; aspect-ratio:4 / 3; object-fit:cover; }
+        .scene-detail-image figcaption { padding:10px 12px; color:var(--muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .scene-detail-edit { display:block; color:inherit; text-decoration:none; }
+        .scene-detail-edit:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+        .scene-detail-edit-label { position:absolute; left:10px; bottom:42px; padding:7px 9px; border:1px solid rgba(255,255,255,.72); border-radius:999px; background:rgba(250,248,244,.84); color:var(--accent); font-size:9px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; backdrop-filter:blur(8px); }
+        .scene-detail-delete { position:absolute; top:10px; right:10px; }
+        .scene-detail-delete button { display:grid; place-items:center; width:36px; height:36px; padding:0; border:1px solid rgba(255,255,255,.72); border-radius:50%; background:rgba(250,248,244,.82); color:var(--danger); box-shadow:0 2px 10px rgba(30,25,20,.12); backdrop-filter:blur(8px); }
+        .scene-detail-delete svg { width:17px; height:17px; }
+        .scene-source-uploader { margin-top:22px; }
+        .scene-source-uploader input[type="file"] {
+            position:absolute;
+            width:1px;
+            height:1px;
+            opacity:0;
+            pointer-events:none;
+        }
+        .scene-source-dropzone {
+            min-height:150px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:24px;
+            border:1px dashed var(--line);
+            border-radius:var(--radius);
+            box-sizing:border-box;
+            background:var(--surface-soft);
+            color:var(--muted);
+            cursor:pointer;
+            transition:border-color .18s ease, background .18s ease, color .18s ease;
+        }
+        .scene-source-dropzone:hover,
+        .scene-source-dropzone.is-dragging {
+            border-color:var(--accent);
+            background:var(--accent-light);
+            color:var(--accent);
+        }
+        .scene-source-dropzone.is-uploading { cursor:wait; opacity:.7; }
+        .scene-source-dropzone-inner { display:grid; justify-items:center; gap:10px; text-align:center; }
+        .scene-source-dropzone svg {
+            width:30px;
+            height:30px;
+            fill:none;
+            stroke:currentColor;
+            stroke-width:1.4;
+            stroke-linecap:round;
+            stroke-linejoin:round;
+        }
+        .scene-source-dropzone span { font-size:13px; line-height:1.45; }
+        .scene-source-dropzone small { font-size:10px; letter-spacing:.04em; text-transform:uppercase; }
+        .scene-detail-panel { padding:22px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface-soft); }
+        .scene-detail-panel h3 { margin:0 0 7px; font-size:24px; }
+        .scene-detail-panel > p { margin:0 0 18px; color:var(--muted); font-size:13px; line-height:1.55; }
+        .scene-detail-panel form { display:grid; gap:14px; }
+        .scene-detail-panel label { display:grid; gap:7px; color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
+        .scene-detail-panel textarea { min-height:150px; resize:vertical; border:0; border-radius:var(--radius); background:var(--surface); color:var(--ink); padding:16px; font:inherit; line-height:1.55; }
+        .scene-detail-panel input, .scene-detail-panel select { width:100%; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); color:var(--ink); padding:11px; }
+        .scene-detail-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+        .scene-detail-actions button { width:auto; margin:0; }
+        .scene-detail-settings { margin-top:22px; padding-top:18px; border-top:1px dashed var(--line); }
+        .scene-detail-settings summary { cursor:pointer; color:var(--accent); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+        .scene-detail-settings-body { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:20px; padding-top:18px; }
+        .scene-detail-danger { grid-column:1 / -1; padding-top:18px; border-top:1px solid var(--line); }
+        .scene-detail-danger button { width:auto; border-color:var(--danger); background:transparent; color:var(--danger); box-shadow:none; }
         @media (min-width: 2400px) { .scene-card-grid { grid-template-columns:repeat(6, minmax(0, 1fr)); } }
         @media (max-width: 1740px) { .scene-card-grid { grid-template-columns:repeat(4, minmax(0, 1fr)); } }
         @media (max-width: 1350px) { .scene-card-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); } }
-        @media (max-width: 1050px) { .scene-card-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 1050px) { .scene-card-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } .scene-detail-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
         @media (max-width: 980px) { .studio-grid { grid-template-columns: 1fr; } }
-        @media (max-width: 720px) { .scene-card-grid { grid-template-columns:1fr; } .scene-library-head, .scene-library-heading { display:block; } .scene-library-controls { justify-content:stretch; margin-top:14px; } .scene-library-control, .scene-library-control.scene-library-search { width:100%; } .scene-library-result { justify-content:flex-start; height:auto; } .scene-admin-bar, .scene-admin-bar form, .scene-score-grid { grid-template-columns:1fr; } .scene-score-grid .featured-until-field { grid-column:auto; } }
+        @media (max-width: 720px) { .scene-card-grid, .scene-detail-grid, .scene-detail-settings-body { grid-template-columns:1fr; } .scene-detail { padding:20px; } .scene-detail-header { display:block; } .scene-library-head, .scene-library-heading { display:block; } .scene-library-controls { justify-content:stretch; margin-top:14px; } .scene-library-control, .scene-library-control.scene-library-search { width:100%; } .scene-library-result { justify-content:flex-start; height:auto; } .scene-admin-bar, .scene-admin-bar form, .scene-score-grid { grid-template-columns:1fr; } .scene-score-grid .featured-until-field { grid-column:auto; } }
 
         /* Modern layout and drag and drop enhancements */
         /* Scene Studio follows the generous editorial hierarchy used by Mockup Lab. */
@@ -642,87 +865,6 @@ $creatorOpen = is_array($analysis)
             box-shadow:none;
             transform:none;
         }
-        .scene-sync-form {
-            position: absolute;
-            top: 37.5px;
-            right: calc(100% + 50px);
-            margin: 0;
-        }
-        .scene-sync-action {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            width: 75px;
-            min-width: 75px;
-            height: 75px;
-            min-height: 75px;
-            margin: 0;
-            padding: 0;
-            border: 1px solid #9fbd99;
-            border-radius: 50%;
-            background:
-                radial-gradient(circle at 31% 24%, rgba(255,255,255,.88) 0 5%, rgba(255,255,255,0) 27%),
-                linear-gradient(145deg, #eef7eb 0%, #d9ead5 46%, #bad3b5 100%);
-            color: #4f744b;
-            box-shadow:
-                0 12px 24px rgba(67, 100, 63, .18),
-                0 3px 7px rgba(67, 100, 63, .12),
-                inset 3px 3px 6px rgba(255, 255, 255, .8),
-                inset -4px -4px 8px rgba(79, 116, 75, .16);
-            overflow: hidden;
-            transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
-        }
-        .scene-sync-action::before {
-            content: '';
-            position: absolute;
-            inset: 6px;
-            border: 1px solid rgba(92, 132, 87, .34);
-            border-radius: 50%;
-            box-shadow:
-                inset 1px 1px 2px rgba(255,255,255,.9),
-                inset -1px -1px 2px rgba(71,105,67,.18),
-                0 0 0 2px rgba(255,255,255,.32);
-            pointer-events: none;
-        }
-        .scene-sync-action::after {
-            content: '';
-            position: absolute;
-            inset: 17px;
-            border: 1px solid rgba(91, 128, 86, .2);
-            border-radius: 50%;
-            background: linear-gradient(145deg, rgba(255,255,255,.32), rgba(95,137,89,.08));
-            box-shadow: inset 1px 1px 3px rgba(255,255,255,.55), inset -2px -2px 4px rgba(75,111,71,.1);
-            pointer-events: none;
-        }
-        .scene-sync-action:hover {
-            border-color: #8eaf88 !important;
-            background:
-                radial-gradient(circle at 31% 24%, rgba(255,255,255,.92) 0 5%, rgba(255,255,255,0) 27%),
-                linear-gradient(145deg, #f1f9ee 0%, #dcecd8 46%, #b7d1b2 100%) !important;
-            color: #426a3f !important;
-            filter: saturate(1.05);
-            box-shadow:
-                0 16px 30px rgba(67, 100, 63, .23),
-                0 4px 9px rgba(67, 100, 63, .13),
-                inset 3px 3px 7px rgba(255,255,255,.86),
-                inset -4px -4px 9px rgba(79,116,75,.18);
-            transform: translateY(-2px);
-        }
-        .scene-sync-action:active {
-            transform: translateY(1px);
-            box-shadow: 0 4px 10px rgba(67,100,63,.14), inset 2px 2px 6px rgba(67,100,63,.15);
-        }
-        .scene-sync-action:focus-visible { outline: 2px solid #6f9669; outline-offset: 4px; }
-        .scene-sync-action svg {
-            position: relative;
-            z-index: 2;
-            width: 30px;
-            height: 30px;
-            filter: drop-shadow(0 1px 0 rgba(255,255,255,.72));
-            transition: transform .45s cubic-bezier(.2, .8, .2, 1);
-        }
-        .scene-sync-action:hover svg { transform: rotate(180deg); }
         .scene-artworks-link {
             grid-column: 1;
             grid-row: 2;
@@ -801,9 +943,6 @@ $creatorOpen = is_array($analysis)
             .scene-header-v3 h1 { font-size: 38px; }
             .scene-page-desc .desc-instructions { font-size: 15px; }
             .scene-header-actions { flex-basis:128px; grid-template-columns:128px; margin-right:32px; }
-            .scene-sync-form { top:32px; right:calc(100% + 52px); }
-            .scene-sync-action { width:64px; min-width:64px; height:64px; min-height:64px; }
-            .scene-sync-action::after { inset:14px; }
             .scene-primary-action { width:128px; min-width:128px; height:128px; min-height:128px; }
         }
         @media (max-width: 720px) {
@@ -812,15 +951,10 @@ $creatorOpen = is_array($analysis)
             .scene-header-v3 h1 { margin-bottom:12px; font-size:34px; }
             .scene-page-desc .desc-kicker { font-size:13px; }
             .scene-page-desc .desc-instructions { font-size:14px; }
-            .scene-header-actions { grid-template-columns:46px minmax(0, 1fr); width:100%; margin:18px 0 0; }
-            .scene-sync-form { position:static; grid-column:1; grid-row:1; }
-            .scene-sync-action { width:46px; min-width:46px; height:46px; min-height:46px; }
-            .scene-sync-action::before { inset:4px; }
-            .scene-sync-action::after { inset:10px; }
-            .scene-sync-action svg { width:21px; height:21px; }
-            .scene-primary-action { grid-column:2; }
+            .scene-header-actions { grid-template-columns:minmax(0, 1fr); width:100%; margin:18px 0 0; }
+            .scene-primary-action { grid-column:1; }
             .scene-primary-action { width:100%; min-width:0; height:52px; min-height:52px; padding:10px 16px; }
-            .scene-artworks-link { grid-column:2; align-self:center; padding:0 8px; }
+            .scene-artworks-link { grid-column:1; align-self:center; padding:0 8px; }
             .scene-creator-panel { margin-top:18px; }
             .scene-creator-drawer { padding:18px; }
             .analysis-thumbs-grid { grid-template-columns:repeat(auto-fill, 82px); }
@@ -902,9 +1036,7 @@ $creatorOpen = is_array($analysis)
             background: var(--accent-light);
             box-shadow: 0 0 10px rgba(154, 123, 86, 0.2);
         }
-        .scene-card-thumb-item:hover img {
-            transform: scale(1.15);
-        }
+        .scene-card:hover .scene-card-thumb-item img { opacity:.92; }
         .scene-card-thumb-item.more-badge {
             background: var(--surface-soft);
             display: flex;
@@ -989,26 +1121,6 @@ $creatorOpen = is_array($analysis)
             object-fit: cover;
         }
 
-        .popover-preview {
-            position: fixed;
-            z-index: 10000;
-            background: var(--surface);
-            border: 1px solid var(--line);
-            border-radius: var(--radius);
-            box-shadow: 0 10px 30px rgba(20, 20, 18, 0.15);
-            padding: 6px;
-            max-width: 320px;
-            pointer-events: none;
-            display: none;
-        }
-        .popover-preview img {
-            width: 100%;
-            height: auto;
-            max-height: 240px;
-            object-fit: contain;
-            display: block;
-            border-radius: 4px;
-        }
     </style>
 </head>
 <body>
@@ -1029,18 +1141,6 @@ $creatorOpen = is_array($analysis)
                     </p>
                 </div>
                 <div class="scene-header-actions">
-                    <?php if ($canManageScenes): ?>
-                        <form class="scene-sync-form" method="post" onsubmit="return confirm('Rebuild the scene index from the folders currently on disk?');">
-                            <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
-                            <input type="hidden" name="action" value="rebuild_index">
-                            <button class="scene-sync-action" type="submit" aria-label="Sync scene folders" title="Sync scene folders">
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <path fill="currentColor" d="M12 4V1L8 5l4 4V6a6 6 0 0 1 5.3 8.8l1.46 1.46A7.93 7.93 0 0 0 20 12a8 8 0 0 0-8-8ZM6 10c0-1.01.25-1.97.7-2.8L5.24 5.74A7.93 7.93 0 0 0 4 10a8 8 0 0 0 8 8v3l4-4-4-4v3a6 6 0 0 1-6-6Z"></path>
-                                    <circle cx="12" cy="12" r="1.25" fill="currentColor" opacity=".34"></circle>
-                                </svg>
-                            </button>
-                        </form>
-                    <?php endif; ?>
                     <button class="scene-primary-action" id="scene-new-action" type="button" aria-controls="scene-creator-panel" aria-expanded="<?= $creatorOpen ? 'true' : 'false' ?>">Create Scene</button>
                 </div>
             </div>
@@ -1120,7 +1220,7 @@ $creatorOpen = is_array($analysis)
                             <?php foreach (($referencePaths ?: ($referencePath !== '' ? [$referencePath] : [])) as $refPath): ?>
                                 <?php if (is_file($refPath)): ?>
                                     <?php $webPath = h(wms_media_url($refPath)); ?>
-                                    <div class="analysis-thumb-item" data-full-url="<?= $webPath ?>">
+                                    <div class="analysis-thumb-item">
                                         <img src="<?= $webPath ?>" alt="Reference preview">
                                     </div>
                                 <?php endif; ?>
@@ -1154,13 +1254,13 @@ $creatorOpen = is_array($analysis)
                             <div class="analysis-thumbs-grid">
                                 <?php foreach ((array)($generated['images'] ?? []) as $image): ?>
                                     <?php $genUrl = h(wms_media_url((string)($image['relative_path'] ?? ''))); ?>
-                                    <div class="analysis-thumb-item" data-full-url="<?= $genUrl ?>">
+                                    <div class="analysis-thumb-item">
                                         <img src="<?= $genUrl ?>" alt="Generated variant">
                                     </div>
                                 <?php endforeach; ?>
                                 <?php if (empty($generated['images']) && !empty($generated['relative_path'])): ?>
                                     <?php $genUrl = h(wms_media_url((string)($generated['relative_path'] ?? ''))); ?>
-                                    <div class="analysis-thumb-item" data-full-url="<?= $genUrl ?>">
+                                    <div class="analysis-thumb-item">
                                         <img src="<?= $genUrl ?>" alt="Generated variant">
                                     </div>
                                 <?php endif; ?>
@@ -1171,6 +1271,147 @@ $creatorOpen = is_array($analysis)
                 </div>
                 </section>
             </div>
+
+            <?php if (is_array($selectedSceneCard)): ?>
+                <?php
+                $detailCategory = (array)($selectedSceneCard['category'] ?? []);
+                $detailImages = (array)($selectedSceneCard['images'] ?? []);
+                $detailSimilarityGroups = (array)($selectedSceneCard['similarity_groups'] ?? []);
+                $detailSlug = (string)($detailCategory['category_slug'] ?? '');
+                $detailName = (string)($detailCategory['category_name'] ?? $detailSlug);
+                ?>
+                <section class="scene-detail" id="scene-detail" aria-labelledby="scene-detail-title">
+                    <header class="scene-detail-header">
+                        <div>
+                            <a class="scene-detail-back" href="world_mother_studio.php#scene-library">← Scene Library</a>
+                            <span class="scene-library-kicker">Scene workspace</span>
+                            <h2 id="scene-detail-title"><?= h($detailName) ?></h2>
+                            <p><?= count($detailImages) ?> visual sources · <code><?= h($detailSlug) ?></code></p>
+                        </div>
+                    </header>
+
+                    <?php if ($detailImages): ?>
+                        <div class="scene-detail-grid">
+                            <?php foreach ($detailImages as $detailImage): ?>
+                                <?php
+                                $detailRelativePath = (string)($detailImage['relative_path'] ?? '');
+                                $detailFileName = (string)($detailImage['file_name'] ?? '');
+                                ?>
+                                <figure class="scene-detail-image">
+                                    <a class="scene-detail-edit" href="world_mother_variation_lab.php?scene=<?= rawurlencode($detailSlug) ?>&source=<?= rawurlencode($detailFileName) ?>">
+                                        <img src="<?= h(wms_media_url($detailRelativePath, 960)) ?>" alt="<?= h((string)($detailImage['title'] ?? 'Scene source')) ?>">
+                                        <span class="scene-detail-edit-label">Edit Source</span>
+                                        <figcaption><?= h((string)($detailImage['title'] ?? $detailFileName)) ?></figcaption>
+                                    </a>
+                                    <?php if ($canManageScenes): ?>
+                                        <form class="scene-detail-delete" method="post" onsubmit="return confirm('Remove this visual source from the scene?');">
+                                            <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
+                                            <input type="hidden" name="action" value="delete_variant">
+                                            <input type="hidden" name="source_category" value="<?= h($detailSlug) ?>">
+                                            <input type="hidden" name="return_scene" value="<?= h($detailSlug) ?>">
+                                            <input type="hidden" name="file_name" value="<?= h($detailFileName) ?>">
+                                            <button type="submit" aria-label="Remove scene source" title="Remove scene source">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-2 6h10l-1 11H8L7 9Zm3 2v7h2v-7h-2Zm4 0v7h2v-7h-2Z"/></svg>
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
+                                </figure>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="scene-empty-library">This scene has no visual sources yet. Add or transform an image below.</div>
+                    <?php endif; ?>
+
+                    <?php if ($canManageScenes): ?>
+                        <form class="scene-source-uploader" method="post" enctype="multipart/form-data" data-scene-source-uploader>
+                            <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
+                            <input type="hidden" name="action" value="upload_variant">
+                            <input type="hidden" name="target_category" value="<?= h($detailSlug) ?>">
+                            <input type="hidden" name="return_scene" value="<?= h($detailSlug) ?>">
+                            <label class="scene-source-dropzone" data-scene-source-dropzone>
+                                <input type="file" name="variant_images[]" accept="image/jpeg,image/png,image/webp" multiple required data-scene-source-input>
+                                <span class="scene-source-dropzone-inner">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"></path>
+                                        <path d="M4 15.5V20h16v-4.5"></path>
+                                    </svg>
+                                    <span data-scene-source-label>Drop images here or choose files</span>
+                                    <small>JPG · PNG · WEBP</small>
+                                </span>
+                            </label>
+                        </form>
+
+                        <details class="scene-detail-settings">
+                            <summary>Scene settings</summary>
+                            <div class="scene-detail-settings-body">
+                                <form class="scene-detail-panel" method="post">
+                                    <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
+                                    <input type="hidden" name="action" value="rename_category">
+                                    <input type="hidden" name="source_category" value="<?= h($detailSlug) ?>">
+                                    <input type="hidden" name="return_scene" value="<?= h($detailSlug) ?>">
+                                    <h3>Rename scene</h3>
+                                    <label>
+                                        Scene name
+                                        <input type="text" name="new_category_name" value="<?= h($detailName) ?>" maxlength="80" required>
+                                    </label>
+                                    <div class="scene-detail-actions"><button class="button-link secondary" type="submit">Rename</button></div>
+                                </form>
+
+                                <form class="scene-detail-panel" method="post">
+                                    <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
+                                    <input type="hidden" name="action" value="update_ranking">
+                                    <input type="hidden" name="source_category" value="<?= h($detailSlug) ?>">
+                                    <input type="hidden" name="return_scene" value="<?= h($detailSlug) ?>">
+                                    <h3>Editorial priority</h3>
+                                    <label>Featured score <input type="number" name="featured_score" min="0" max="100" value="<?= (int)($detailCategory['featured_score'] ?? 0) ?>"></label>
+                                    <label>Editorial score <input type="number" name="editorial_score" min="0" max="100" value="<?= (int)($detailCategory['editorial_score'] ?? 50) ?>"></label>
+                                    <label>Featured until <input type="date" name="featured_until" value="<?= h((string)($detailCategory['featured_until'] ?? '')) ?>"></label>
+                                    <div class="scene-detail-actions"><button class="button-link secondary" type="submit">Save Priority</button></div>
+                                </form>
+
+                                <?php if ($detailImages): ?>
+                                    <details class="scene-detail-panel scene-diversity-admin">
+                                        <summary>Reference Diversity</summary>
+                                        <form method="post">
+                                            <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
+                                            <input type="hidden" name="action" value="update_similarity_groups">
+                                            <input type="hidden" name="source_category" value="<?= h($detailSlug) ?>">
+                                            <input type="hidden" name="return_scene" value="<?= h($detailSlug) ?>">
+                                            <p class="scene-diversity-note">Use the same group name for visually equivalent references, or leave the field empty for automatic analysis.</p>
+                                            <div class="scene-diversity-list">
+                                                <?php foreach ($detailImages as $detailImage): ?>
+                                                    <?php
+                                                    $detailReferenceKey = (string)($detailImage['world_mother_id'] ?? '');
+                                                    $detailRelativePath = (string)($detailImage['relative_path'] ?? '');
+                                                    ?>
+                                                    <label class="scene-diversity-row">
+                                                        <img src="<?= h(wms_media_url($detailRelativePath, 320)) ?>" alt="">
+                                                        <span>
+                                                            <input type="hidden" name="reference_key[]" value="<?= h($detailReferenceKey) ?>">
+                                                            <input type="text" name="similarity_group[]" value="<?= h((string)($detailSimilarityGroups[$detailReferenceKey] ?? '')) ?>" maxlength="80" placeholder="Automatic">
+                                                        </span>
+                                                    </label>
+                                                <?php endforeach; ?>
+                                            </div>
+                                            <div class="scene-detail-actions"><button class="button-link secondary" type="submit">Save Groups</button></div>
+                                        </form>
+                                    </details>
+                                <?php endif; ?>
+
+                                <form class="scene-detail-danger" method="post" onsubmit="return confirm('Delete this scene and every visual source it contains? This cannot be undone.');">
+                                    <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
+                                    <input type="hidden" name="action" value="delete_category">
+                                    <input type="hidden" name="source_category" value="<?= h($detailSlug) ?>">
+                                    <input type="hidden" name="confirm_delete" value="yes">
+                                    <button type="submit">Delete Scene</button>
+                                </form>
+                            </div>
+                        </details>
+                    <?php endif; ?>
+                </section>
+            <?php elseif ($requestedSceneSlug !== ''): ?>
+                <div class="notice error">The selected scene was not found.</div>
+            <?php endif; ?>
 
             <section class="scene-library" id="scene-library">
                     <div class="scene-library-heading">
@@ -1217,10 +1458,10 @@ $creatorOpen = is_array($analysis)
                             <?php
                             $category = (array)$sceneCard['category'];
                             $images = (array)$sceneCard['images'];
-                            $similarityGroups = (array)($sceneCard['similarity_groups'] ?? []);
                             $slug = (string)($category['category_slug'] ?? '');
                             ?>
-                            <article class="scene-card" draggable="<?= $canManageScenes ? 'true' : 'false' ?>"
+                            <?php $sceneDetailUrl = 'world_mother_studio.php?scene=' . rawurlencode($slug) . '#scene-detail'; ?>
+                            <article class="scene-card"
                                 data-slug="<?= h($slug) ?>"
                                 data-name="<?= h((string)($category['category_name'] ?? $slug)) ?>"
                                 data-recommended-score="<?= (int)($category['recommended_score'] ?? 0) ?>"
@@ -1234,25 +1475,25 @@ $creatorOpen = is_array($analysis)
                                 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap: 8px;">
                                     <div>
                                         <div style="display:flex; align-items:center; gap: 4px;">
-                                            <?php if ($canManageScenes): ?><span class="scene-drag-handle" title="Drag this scene onto another one to merge">☰</span><?php endif; ?>
-                                            <h3><?= h((string)($category['category_name'] ?? $slug)) ?></h3>
+                                            <h3><a class="scene-card-title-link" href="<?= h($sceneDetailUrl) ?>"><?= h((string)($category['category_name'] ?? $slug)) ?></a></h3>
                                         </div>
-                                        <code style="<?= $canManageScenes ? 'margin-left: 20px;' : '' ?>"><?= h($slug) ?></code>
+                                        <code><?= h($slug) ?></code>
                                     </div>
                                 </div>
                                 <?php if ($images): ?>
-                                    <div class="scene-card-thumbs">
-                                        <?php foreach (array_slice($images, 0, 3) as $image): ?>
-                                            <?php
-                                            $relativePath = (string)($image['relative_path'] ?? '');
-                                            $thumbnailUrl = h(wms_media_url($relativePath, 320));
-                                            $previewUrl = h(wms_media_url($relativePath, 960));
-                                            ?>
-                                            <div class="scene-card-thumb-item" data-full-url="<?= $previewUrl ?>">
-                                                <img src="<?= $thumbnailUrl ?>" alt="<?= h((string)($image['title'] ?? 'Scene variant')) ?>" loading="lazy">
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
+                                    <a class="scene-card-thumbs-link" href="<?= h($sceneDetailUrl) ?>" aria-label="Manage <?= h((string)($category['category_name'] ?? $slug)) ?> scene">
+                                        <div class="scene-card-thumbs">
+                                            <?php foreach (array_slice($images, 0, 3) as $image): ?>
+                                                <?php
+                                                $relativePath = (string)($image['relative_path'] ?? '');
+                                                $thumbnailUrl = h(wms_media_url($relativePath, 320));
+                                                ?>
+                                                <div class="scene-card-thumb-item">
+                                                    <img src="<?= $thumbnailUrl ?>" alt="<?= h((string)($image['title'] ?? 'Scene variant')) ?>" loading="lazy" draggable="false">
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </a>
                                 <?php else: ?>
                                     <div class="scene-card-empty">Drop an image here to add a variant</div>
                                 <?php endif; ?>
@@ -1266,110 +1507,7 @@ $creatorOpen = is_array($analysis)
                                         <span class="scene-pill featured-score">Featured <?= (int)($category['featured_score_effective'] ?? 0) ?></span>
                                     <?php endif; ?>
                                 </div>
-                                <?php if ($canManageScenes): ?>
-                                    <details class="scene-card-admin">
-                                        <summary>Manage Scene</summary>
-                                        <div class="scene-card-admin-body">
-                                            <form method="post" class="scene-ranking-form">
-                                                <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
-                                                <input type="hidden" name="action" value="update_ranking">
-                                                <input type="hidden" name="source_category" value="<?= h($slug) ?>">
-                                                <div class="scene-score-grid">
-                                                    <label>
-                                                        Featured score
-                                                        <input type="number" name="featured_score" min="0" max="100" step="1" value="<?= (int)($category['featured_score'] ?? 0) ?>">
-                                                    </label>
-                                                    <label>
-                                                        Editorial score
-                                                        <input type="number" name="editorial_score" min="0" max="100" step="1" value="<?= (int)($category['editorial_score'] ?? 50) ?>">
-                                                    </label>
-                                                    <label class="featured-until-field">
-                                                        Featured until (optional)
-                                                        <input type="date" name="featured_until" value="<?= h((string)($category['featured_until'] ?? '')) ?>">
-                                                    </label>
-                                                </div>
-                                                <p class="scene-ranking-note">Recommended combines Editorial 30%, Versatility 25%, Popularity 20%, Featured 15%, and Usage 10%.</p>
-                                                <div class="button-row">
-                                                    <button class="button-link secondary" type="submit">Save Ranking</button>
-                                                </div>
-                                            </form>
-
-                                            <?php if ($images): ?>
-                                                <details class="scene-diversity-admin">
-                                                    <summary>Reference Diversity</summary>
-                                                    <form method="post">
-                                                        <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
-                                                        <input type="hidden" name="action" value="update_similarity_groups">
-                                                        <input type="hidden" name="source_category" value="<?= h($slug) ?>">
-                                                        <p class="scene-diversity-note">Automatic analysis avoids visually redundant references. Use the same group name to force images to be treated as similar; use different names to force them apart.</p>
-                                                        <div class="scene-diversity-list">
-                                                            <?php foreach ($images as $image): ?>
-                                                                <?php
-                                                                $referenceKey = (string)($image['world_mother_id'] ?? '');
-                                                                $relativePath = (string)($image['relative_path'] ?? '');
-                                                                ?>
-                                                                <label class="scene-diversity-row">
-                                                                    <img src="<?= h(wms_media_url($relativePath, 320)) ?>" alt="">
-                                                                    <span>
-                                                                        <input type="hidden" name="reference_key[]" value="<?= h($referenceKey) ?>">
-                                                                        <input type="text" name="similarity_group[]" value="<?= h((string)($similarityGroups[$referenceKey] ?? '')) ?>" maxlength="80" placeholder="Automatic">
-                                                                    </span>
-                                                                </label>
-                                                            <?php endforeach; ?>
-                                                        </div>
-                                                        <div class="button-row">
-                                                            <button class="button-link secondary" type="submit">Save Diversity Groups</button>
-                                                        </div>
-                                                    </form>
-                                                </details>
-                                            <?php endif; ?>
-
-                                            <form method="post">
-                                                <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
-                                                <input type="hidden" name="action" value="rename_category">
-                                                <input type="hidden" name="source_category" value="<?= h($slug) ?>">
-                                                <label for="rename-<?= h(md5($slug)) ?>">Rename Scene</label>
-                                                <input id="rename-<?= h(md5($slug)) ?>" type="text" name="new_category_name" value="<?= h((string)($category['category_name'] ?? $slug)) ?>" maxlength="80" required>
-                                                <div class="button-row">
-                                                    <button class="button-link secondary" type="submit">Rename</button>
-                                                </div>
-                                            </form>
-
-                                            <form method="post" onsubmit="return confirm('Move every image into the selected destination and remove this source scene?');">
-                                                <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
-                                                <input type="hidden" name="action" value="merge_category">
-                                                <input type="hidden" name="source_category" value="<?= h($slug) ?>">
-                                                <label for="merge-<?= h(md5($slug)) ?>">Merge Into</label>
-                                                <select id="merge-<?= h(md5($slug)) ?>" name="target_category" required <?= count($sceneCards) < 2 ? 'disabled' : '' ?>>
-                                                    <option value="">Choose destination scene</option>
-                                                    <?php foreach ($sceneCards as $targetSceneCard): ?>
-                                                        <?php
-                                                        $targetCategory = (array)($targetSceneCard['category'] ?? []);
-                                                        $targetSlug = (string)($targetCategory['category_slug'] ?? '');
-                                                        if ($targetSlug === '' || $targetSlug === $slug) {
-                                                            continue;
-                                                        }
-                                                        ?>
-                                                        <option value="<?= h($targetSlug) ?>"><?= h((string)($targetCategory['category_name'] ?? $targetSlug)) ?> · <?= count((array)($targetSceneCard['images'] ?? [])) ?> variants</option>
-                                                    <?php endforeach; ?>
-                                                </select>
-                                                <div class="button-row">
-                                                    <button class="button-link secondary" type="submit" <?= count($sceneCards) < 2 ? 'disabled' : '' ?>>Merge Scene</button>
-                                                </div>
-                                            </form>
-
-                                            <form method="post" onsubmit="return confirm('Delete the scene &quot;<?= h(addslashes($slug)) ?>&quot; and all of its <?= count($images) ?> images? This cannot be undone.');">
-                                                <input type="hidden" name="csrf" value="<?= h($sceneAdminCsrf) ?>">
-                                                <input type="hidden" name="action" value="delete_category">
-                                                <input type="hidden" name="source_category" value="<?= h($slug) ?>">
-                                                <input type="hidden" name="confirm_delete" value="yes">
-                                                <div class="button-row">
-                                                    <button class="danger-button" type="submit">Delete Scene</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </details>
-                                <?php endif; ?>
+                                <a class="scene-card-open" href="<?= h($sceneDetailUrl) ?>">Manage Scene</a>
                             </article>
                         <?php endforeach; ?>
                         <?php if ($sceneCards): ?>
@@ -1411,6 +1549,50 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.key === 'Escape' && creatorPanel?.classList.contains('is-open')) {
             setCreatorOpen(false);
         }
+    });
+
+    const sourceUploader = document.querySelector('[data-scene-source-uploader]');
+    const sourceDropzone = sourceUploader?.querySelector('[data-scene-source-dropzone]');
+    const sourceInput = sourceUploader?.querySelector('[data-scene-source-input]');
+    const sourceLabel = sourceUploader?.querySelector('[data-scene-source-label]');
+    const acceptedImage = file => (
+        ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
+        || /\.(?:jpe?g|png|webp)$/i.test(file.name || '')
+    );
+    const uploadSelectedSources = (files, assignToInput = false) => {
+        const supplied = Array.from(files || []);
+        const selected = supplied.filter(acceptedImage);
+        if (!sourceUploader || !sourceInput || selected.length === 0) return;
+        if (selected.length !== supplied.length || selected.length > 24) {
+            alert('Only JPG, PNG or WEBP images can be added. Maximum 24 images at a time.');
+            return;
+        }
+        if (assignToInput && files) {
+            sourceInput.files = files;
+        }
+        sourceDropzone?.classList.add('is-uploading');
+        if (sourceLabel) {
+            sourceLabel.textContent = selected.length === 1
+                ? 'Adding image…'
+                : `Adding ${selected.length} images…`;
+        }
+        sourceUploader.requestSubmit();
+    };
+    sourceInput?.addEventListener('change', () => uploadSelectedSources(sourceInput.files));
+    ['dragenter', 'dragover'].forEach(type => {
+        sourceDropzone?.addEventListener(type, event => {
+            event.preventDefault();
+            sourceDropzone.classList.add('is-dragging');
+        });
+    });
+    ['dragleave', 'drop'].forEach(type => {
+        sourceDropzone?.addEventListener(type, event => {
+            event.preventDefault();
+            sourceDropzone.classList.remove('is-dragging');
+        });
+    });
+    sourceDropzone?.addEventListener('drop', event => {
+        uploadSelectedSources(event.dataTransfer?.files, true);
     });
 
     const sceneSearch = document.getElementById('scene-library-search');
@@ -1467,49 +1649,7 @@ document.addEventListener('DOMContentLoaded', () => {
     applySceneLibraryControls();
 
     // -------------------------------------------------------------
-    // 2. POPOVER PREVIEW FOR COMPACT THUMBNAILS
-    // -------------------------------------------------------------
-    const popover = document.createElement('div');
-    popover.className = 'popover-preview';
-    document.body.appendChild(popover);
-
-    document.addEventListener('mouseover', e => {
-        const thumbItem = e.target.closest('.analysis-thumb-item, .scene-card-thumb-item');
-        if (thumbItem) {
-            const img = thumbItem.querySelector('img');
-            if (img) {
-                const fullUrl = thumbItem.getAttribute('data-full-url') || img.src;
-                popover.innerHTML = `<img src="${fullUrl}" alt="Preview">`;
-                popover.style.display = 'block';
-            }
-        }
-    });
-
-    document.addEventListener('mousemove', e => {
-        if (popover.style.display === 'block') {
-            const offset = 15;
-            let left = e.clientX + offset;
-            let top = e.clientY + offset;
-            if (left + 330 > window.innerWidth) {
-                left = e.clientX - 335;
-            }
-            if (top + 250 > window.innerHeight) {
-                top = e.clientY - 255;
-            }
-            popover.style.left = `${left}px`;
-            popover.style.top = `${top}px`;
-        }
-    });
-
-    document.addEventListener('mouseout', e => {
-        const thumbItem = e.target.closest('.analysis-thumb-item, .scene-card-thumb-item');
-        if (thumbItem) {
-            popover.style.display = 'none';
-        }
-    });
-
-    // -------------------------------------------------------------
-    // 3. DROPZONE FOR REFERENCE UPLOAD
+    // 2. DROPZONE FOR REFERENCE UPLOAD
     // -------------------------------------------------------------
     const dropzone = document.getElementById('upload-dropzone');
     const fileInput = document.getElementById('dropzone-file-input');
@@ -1587,7 +1727,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const dt = new DataTransfer();
             uploadedFiles.forEach(file => dt.items.add(file));
             fileInput.files = dt.files;
-            if (laboratoryAction && laboratoryAction.getAttribute('form') === 'main-upload-form') {
+            if (laboratoryAction) {
                 laboratoryAction.disabled = uploadedFiles.length === 0;
             }
         }

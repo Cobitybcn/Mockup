@@ -212,7 +212,7 @@ $step5Active = ($currentPage === 'report.php' || $currentPage === 'curated_mocku
 // Menu active states
 $dashboardActive = ($currentPage === 'dashboard.php');
 $mockupsActive = ($currentPage === 'mockups.php' || $currentPage === 'mockup_bilingual_experiment.php' || $currentPage === 'viewer.php' || $currentPage === 'mockup_upload.php');
-$worldMotherActive = ($currentPage === 'world_mother_studio.php');
+$worldMotherActive = in_array($currentPage, ['world_mother_studio.php', 'world_mother_variation_lab.php'], true);
 $cameraStudioActive = ($currentPage === 'camera_studio.php');
 $variationLabActive = ($currentPage === 'mockup_variation_lab.php');
 $generatedResultsActive = ($currentPage === 'mockup_combination_results.php');

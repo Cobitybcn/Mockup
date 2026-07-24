@@ -74,13 +74,23 @@ final class WorldMotherGenerator
      * @param array<string,mixed> $analysis
      * @return array<string,mixed>
      */
+    public function editWorldMother(string $referencePath, string $categorySlug, array $analysis, array $options = []): array
+    {
+        $options['edit_mode'] = true;
+        return $this->generateOriginalWorldMother($referencePath, $categorySlug, $analysis, $options);
+    }
+
+    /**
+     * @param array<string,mixed> $analysis
+     * @return array<string,mixed>
+     */
     public function generateOriginalWorldMother(string $referencePath, string $categorySlug, array $analysis, array $options = []): array
     {
         if (!is_file($referencePath)) {
             throw new RuntimeException('Reference image not found.');
         }
 
-        $categorySlug = self::safeSlug($categorySlug);
+        $categorySlug = $this->resolveCategorySlug($categorySlug);
         if ($categorySlug === '') {
             throw new RuntimeException('A category is required.');
         }
@@ -93,13 +103,21 @@ final class WorldMotherGenerator
         $stamp = date('Ymd_His') . '_' . random_int(1000, 9999);
         $fileName = 'world_mother_' . $stamp . '.png';
         $outputPath = $categoryDir . DIRECTORY_SEPARATOR . $fileName;
-        $prompt = $this->buildGenerationPrompt($analysis, $categorySlug, $options);
+        $editMode = !empty($options['edit_mode']);
+        $prompt = $editMode
+            ? $this->buildEditPrompt($categorySlug, $options)
+            : $this->buildGenerationPrompt($analysis, $categorySlug, $options);
 
         if (ProviderSettings::isRealMode() && ProviderSettings::imageProvider() === 'gemini') {
+            $generationOverrides = $this->precompositionOverride();
+            if ($editMode) {
+                $generationOverrides['GEMINI_OUTPUT_ASPECT_RATIO'] = $this->closestSupportedAspectRatio($referencePath);
+                $generationOverrides['GEMINI_SKIP_OUTPUT_FRAME_CONTRACT'] = 'true';
+            }
             $b64 = $this->client->generateImage([
                 $this->client->textPart($prompt),
                 $this->client->imagePart($referencePath),
-            ], null, $this->precompositionOverride());
+            ], null, $generationOverrides);
             $bytes = base64_decode($b64);
             if ($bytes === false) {
                 throw new RuntimeException('Gemini did not return a valid image.');
@@ -127,6 +145,7 @@ final class WorldMotherGenerator
             'analysis' => $analysis,
             'prompt' => $prompt,
             'options' => $options,
+            'generation_kind' => $editMode ? 'conservative_edit' : 'original_world_mother',
         ];
         file_put_contents($auditPath, json_encode($audit, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
@@ -157,7 +176,7 @@ final class WorldMotherGenerator
             throw new RuntimeException('World Mother Studio accepts up to 4 reference images.');
         }
 
-        $categorySlug = self::safeSlug($categorySlug);
+        $categorySlug = $this->resolveCategorySlug($categorySlug);
         if ($categorySlug === '') {
             throw new RuntimeException('A category is required.');
         }
@@ -251,7 +270,7 @@ final class WorldMotherGenerator
      */
     public function generateOriginalWorldMotherForCategory(string $categorySlug, array $analysis = [], array $options = []): array
     {
-        $categorySlug = self::safeSlug($categorySlug);
+        $categorySlug = $this->resolveCategorySlug($categorySlug);
         if ($categorySlug === '') {
             throw new RuntimeException('A category is required.');
         }
@@ -344,6 +363,22 @@ final class WorldMotherGenerator
         $value = preg_replace('/[^a-z0-9]+/', '_', $value) ?: '';
         $value = trim($value, '_');
         return substr($value, 0, 80);
+    }
+
+    private function resolveCategorySlug(string $value): string
+    {
+        $value = trim(str_replace(['\\', '/'], '', $value));
+        $normalized = self::safeSlug($value);
+        if ($normalized === '') {
+            return '';
+        }
+        foreach ($this->library->categories() as $category) {
+            $existingSlug = (string)($category['category_slug'] ?? '');
+            if ($existingSlug === $value || self::safeSlug($existingSlug) === $normalized) {
+                return $existingSlug;
+            }
+        }
+        return $normalized;
     }
 
     /**
@@ -539,6 +574,53 @@ final class WorldMotherGenerator
 
         $slug = self::safeSlug(implode('_', $selected));
         return $slug !== '' ? $slug : 'new_world_mother';
+    }
+
+    private function buildEditPrompt(string $categorySlug, array $options): string
+    {
+        $notes = trim((string)($options['notes'] ?? ''));
+        return "EDIT IMAGE 1. IMAGE 1 is the mandatory source of truth.\n"
+            . "Scene family: {$categorySlug}\n"
+            . "Produce a conservative image edit, not a new scene and not a reinterpretation.\n"
+            . "Apply only the requested change written below. Everything not explicitly requested must remain visually unchanged.\n"
+            . "LOCKED unless the requested change explicitly targets it: camera position, focal length, crop, perspective, architecture, room geometry, openings, windows, walls, floor, ceiling, furniture, object placement, materials, textures, palette, illumination, shadows, atmosphere, and spatial relationships.\n"
+            . "Preserve the recognizable identity and exact composition of IMAGE 1. Do not redesign, enrich, restyle, simplify, extend, relocate, or rebuild the environment.\n"
+            . "Do not add or remove people, artwork, furniture, decoration, architecture, text, or objects unless the requested change explicitly asks for it.\n"
+            . "Where the edited area must be reconstructed, continue the immediately surrounding material, texture, light, perspective, and geometry seamlessly.\n"
+            . "The result must look like IMAGE 1 after one precise local or controlled modification.\n"
+            . "REQUESTED CHANGE:\n{$notes}\n";
+    }
+
+    private function closestSupportedAspectRatio(string $imagePath): string
+    {
+        $size = @getimagesize($imagePath);
+        if (!is_array($size) || (int)($size[0] ?? 0) < 1 || (int)($size[1] ?? 0) < 1) {
+            return '1:1';
+        }
+
+        $sourceRatio = (int)$size[0] / (int)$size[1];
+        $supported = [
+            '1:1' => 1.0,
+            '2:3' => 2 / 3,
+            '3:2' => 3 / 2,
+            '3:4' => 3 / 4,
+            '4:3' => 4 / 3,
+            '4:5' => 4 / 5,
+            '5:4' => 5 / 4,
+            '9:16' => 9 / 16,
+            '16:9' => 16 / 9,
+            '21:9' => 21 / 9,
+        ];
+        $selected = '1:1';
+        $distance = PHP_FLOAT_MAX;
+        foreach ($supported as $label => $ratio) {
+            $candidateDistance = abs(log($sourceRatio / $ratio));
+            if ($candidateDistance < $distance) {
+                $selected = $label;
+                $distance = $candidateDistance;
+            }
+        }
+        return $selected;
     }
 
     /**

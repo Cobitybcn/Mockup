@@ -26,3 +26,15 @@ Aplica siempre estas preferencias:
 - Paneles desplegables plegados por defecto cuando sea posible.
 - Botones principales de acción con colores pastel suaves, apariencia elegante y gran presencia visual.
 - Reutilizar componentes existentes antes de crear otros nuevos.
+
+## Cierre obligatorio en producción
+
+Salvo que el usuario pida explícitamente trabajar solo en localhost, una modificación terminada no se considera entregada hasta:
+
+1. ejecutar las verificaciones proporcionales al cambio;
+2. desplegar el servicio de producción afectado (`mockups-web`, `mockups-worker` o ambos);
+3. comprobar que la nueva revisión está lista y recibe el 100% del tráfico;
+4. persistir el código correspondiente en `main`;
+5. informar el identificador de la revisión publicada.
+
+No responder “listo” basándose únicamente en el resultado local.

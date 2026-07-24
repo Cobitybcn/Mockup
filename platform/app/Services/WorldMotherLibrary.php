@@ -70,7 +70,6 @@ final class WorldMotherLibrary
      */
     public function createCategory(string $name): array
     {
-        $this->assertLocalManagementAvailable();
         $slug = self::safeCategorySlug($name);
         if ($slug === '') {
             throw new RuntimeException('Write a valid scene name.');
@@ -93,7 +92,6 @@ final class WorldMotherLibrary
      */
     public function renameCategory(string $sourceSlug, string $newName): array
     {
-        $this->assertLocalManagementAvailable();
         $sourceSlug = $this->requireCategorySlug($sourceSlug);
         $targetSlug = self::safeCategorySlug($newName);
         if ($targetSlug === '') {
@@ -106,6 +104,10 @@ final class WorldMotherLibrary
         $existingTarget = $this->resolveCategorySlug($targetSlug);
         if ($existingTarget !== '' && $existingTarget !== $sourceSlug) {
             throw new RuntimeException('That scene already exists. Use Merge instead of Rename.');
+        }
+
+        if (StorageService::isGcsActive()) {
+            return $this->renameCloudCategory($sourceSlug, $targetSlug);
         }
 
         $sourcePath = $this->categoryPath($sourceSlug);
@@ -212,9 +214,32 @@ final class WorldMotherLibrary
      */
     public function deleteCategory(string $value): array
     {
-        $this->assertLocalManagementAvailable();
         $slug = $this->requireCategorySlug($value);
         $path = $this->categoryPath($slug);
+        if (StorageService::isGcsActive()) {
+            $images = $this->imagesForCategory($slug);
+            foreach ($images as $image) {
+                $relativePath = (string)($image['relative_path'] ?? '');
+                if ($relativePath !== '' && !StorageService::delete($relativePath)) {
+                    throw new RuntimeException('A scene image could not be removed from persistent storage.');
+                }
+                $localPath = $path . DIRECTORY_SEPARATOR . (string)($image['file_name'] ?? '');
+                if (is_file($localPath)) {
+                    @unlink($localPath);
+                }
+            }
+            if (is_dir($path)) {
+                @rmdir($path);
+            }
+            $this->loadIndex();
+            $this->indexData['categories'] = array_values(array_filter(
+                (array)($this->indexData['categories'] ?? []),
+                static fn (array $category): bool => (string)($category['category_slug'] ?? '') !== $slug
+            ));
+            unset($this->indexData['images'][$slug]);
+            $this->persistIndexData();
+            return ['category_slug' => $slug, 'deleted_images' => count($images)];
+        }
         $files = $this->categoryFiles($path);
 
         foreach ($files as $file) {
@@ -238,6 +263,10 @@ final class WorldMotherLibrary
      */
     public function rebuildIndex(): array
     {
+        $cloudStorageActive = StorageService::isGcsActive();
+        if ($cloudStorageActive) {
+            $this->loadIndex();
+        }
         $categories = [];
         $images = [];
         foreach ($this->categorySlugs() as $slug) {
@@ -250,22 +279,84 @@ final class WorldMotherLibrary
             $images[$slug] = $this->scanImagesForCategory($slug);
         }
 
+        if ($cloudStorageActive) {
+            $categoriesBySlug = [];
+            foreach ((array)($this->indexData['categories'] ?? []) as $category) {
+                $existingSlug = (string)($category['category_slug'] ?? '');
+                if ($existingSlug !== '') {
+                    $categoriesBySlug[$existingSlug] = $category;
+                }
+            }
+            foreach ($categories as $category) {
+                $categoriesBySlug[(string)$category['category_slug']] = $category;
+            }
+            $categories = array_values($categoriesBySlug);
+            usort($categories, static fn (array $a, array $b): int => strcmp((string)$a['category_slug'], (string)$b['category_slug']));
+
+            $mergedImages = (array)($this->indexData['images'] ?? []);
+            foreach ($images as $slug => $localImages) {
+                $byFileName = [];
+                foreach ((array)($mergedImages[$slug] ?? []) as $image) {
+                    $fileName = (string)($image['file_name'] ?? '');
+                    if ($fileName !== '') {
+                        $byFileName[$fileName] = $image;
+                    }
+                }
+                foreach ($localImages as $image) {
+                    $byFileName[(string)$image['file_name']] = $image;
+                }
+                $mergedImages[$slug] = array_values($byFileName);
+            }
+            $images = $mergedImages;
+        }
+
         $data = [
             'generated_at' => date(DATE_ATOM),
             'categories' => $categories,
             'images' => $images,
         ];
-        $encoded = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        if (!is_string($encoded) || file_put_contents($this->indexPath(), $encoded, LOCK_EX) === false) {
-            throw new RuntimeException('The scene library index could not be updated.');
-        }
-        if (StorageService::isGcsActive() && !StorageService::uploadFile($this->baseRelativePath . '/index.json', $this->indexPath())) {
-            throw new RuntimeException('The scene library index could not be saved to persistent storage.');
-        }
-
         $this->indexData = $data;
         $this->indexLoaded = true;
+        $this->persistIndexData();
         return $data;
+    }
+
+    /**
+     * @return array{category_slug:string,file_name:string}
+     */
+    public function deleteImage(string $categoryValue, string $fileName): array
+    {
+        $slug = $this->requireCategorySlug($categoryValue);
+        $fileName = basename(trim($fileName));
+        $allowedFiles = [];
+        foreach ($this->imagesForCategory($slug) as $image) {
+            $allowedFiles[(string)($image['file_name'] ?? '')] = (string)($image['relative_path'] ?? '');
+        }
+        if ($fileName === '' || !isset($allowedFiles[$fileName])) {
+            throw new RuntimeException('The selected scene image no longer exists.');
+        }
+
+        $relativePath = $allowedFiles[$fileName];
+        if (StorageService::isGcsActive() && !StorageService::delete($relativePath)) {
+            throw new RuntimeException('The scene image could not be removed from persistent storage.');
+        }
+        $localPath = $this->categoryPath($slug) . DIRECTORY_SEPARATOR . $fileName;
+        if (is_file($localPath) && !unlink($localPath)) {
+            throw new RuntimeException('The local scene image could not be removed.');
+        }
+
+        if (StorageService::isGcsActive()) {
+            $this->loadIndex();
+            $this->indexData['images'][$slug] = array_values(array_filter(
+                (array)($this->indexData['images'][$slug] ?? []),
+                static fn (array $image): bool => (string)($image['file_name'] ?? '') !== $fileName
+            ));
+            $this->persistIndexData();
+        } else {
+            $this->rebuildIndex();
+        }
+
+        return ['category_slug' => $slug, 'file_name' => $fileName];
     }
 
     /**
@@ -450,7 +541,7 @@ final class WorldMotherLibrary
     private function assertLocalManagementAvailable(): void
     {
         if (StorageService::isGcsActive()) {
-            throw new RuntimeException('Folder administration is disabled while cloud storage is active. Manage the persistent scene library locally and deploy the updated index.');
+            throw new RuntimeException('Merging complete scene folders is not available while cloud storage is active.');
         }
     }
 
@@ -471,7 +562,12 @@ final class WorldMotherLibrary
             return '';
         }
         $normalized = self::safeCategorySlug($value);
-        foreach ($this->categorySlugs() as $slug) {
+        $this->loadIndex();
+        $knownSlugs = $this->categorySlugs();
+        foreach ((array)($this->indexData['categories'] ?? []) as $category) {
+            $knownSlugs[] = (string)($category['category_slug'] ?? '');
+        }
+        foreach (array_values(array_unique(array_filter($knownSlugs))) as $slug) {
             if ($slug === $value || self::safeCategorySlug($slug) === $normalized) {
                 return $slug;
             }
@@ -499,6 +595,93 @@ final class WorldMotherLibrary
             }
         }
         return [];
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function renameCloudCategory(string $sourceSlug, string $targetSlug): array
+    {
+        $sourceImages = $this->imagesForCategory($sourceSlug);
+        $targetPath = $this->categoryPath($targetSlug);
+        if (!is_dir($targetPath) && !mkdir($targetPath, 0775, true) && !is_dir($targetPath)) {
+            throw new RuntimeException('The renamed scene workspace could not be created.');
+        }
+
+        $renamedImages = [];
+        $uploadedTargets = [];
+        try {
+            foreach ($sourceImages as $image) {
+                $fileName = (string)($image['file_name'] ?? '');
+                $sourceRelativePath = (string)($image['relative_path'] ?? '');
+                $sourceLocalPath = $this->categoryPath($sourceSlug) . DIRECTORY_SEPARATOR . $fileName;
+                if (!is_file($sourceLocalPath) && !StorageService::downloadFile($sourceRelativePath, $sourceLocalPath)) {
+                    throw new RuntimeException('A scene image could not be prepared for renaming.');
+                }
+                $targetLocalPath = $targetPath . DIRECTORY_SEPARATOR . $fileName;
+                if (!copy($sourceLocalPath, $targetLocalPath)) {
+                    throw new RuntimeException('A scene image could not be copied into the renamed scene.');
+                }
+                $targetRelativePath = $this->baseRelativePath . '/' . $targetSlug . '/' . $fileName;
+                if (!StorageService::uploadFile($targetRelativePath, $targetLocalPath)) {
+                    throw new RuntimeException('A renamed scene image could not be saved to persistent storage.');
+                }
+                $uploadedTargets[] = $targetRelativePath;
+                $image['category_slug'] = $targetSlug;
+                $image['category_name'] = self::titleFromSlug($targetSlug);
+                $image['world_mother_id'] = $targetSlug . '/' . pathinfo($fileName, PATHINFO_FILENAME);
+                $image['relative_path'] = $targetRelativePath;
+                $renamedImages[] = $image;
+            }
+        } catch (Throwable $e) {
+            foreach ($uploadedTargets as $targetRelativePath) {
+                StorageService::delete($targetRelativePath);
+            }
+            throw $e;
+        }
+
+        foreach ($sourceImages as $image) {
+            StorageService::delete((string)($image['relative_path'] ?? ''));
+        }
+
+        $this->loadIndex();
+        $categories = (array)($this->indexData['categories'] ?? []);
+        foreach ($categories as &$category) {
+            if ((string)($category['category_slug'] ?? '') === $sourceSlug) {
+                $category['category_slug'] = $targetSlug;
+                $category['category_name'] = self::titleFromSlug($targetSlug);
+                $category['relative_path'] = $this->baseRelativePath . '/' . $targetSlug;
+            }
+        }
+        unset($category);
+        $this->indexData['categories'] = $categories;
+        unset($this->indexData['images'][$sourceSlug]);
+        $this->indexData['images'][$targetSlug] = $renamedImages;
+        $this->persistIndexData();
+
+        $sourcePath = $this->categoryPath($sourceSlug);
+        if (is_dir($sourcePath)) {
+            foreach (glob($sourcePath . DIRECTORY_SEPARATOR . '*') ?: [] as $sourceFile) {
+                if (is_file($sourceFile)) {
+                    @unlink($sourceFile);
+                }
+            }
+            @rmdir($sourcePath);
+        }
+        return $this->categoryBySlug($targetSlug);
+    }
+
+    private function persistIndexData(): void
+    {
+        $this->indexData['generated_at'] = date(DATE_ATOM);
+        $encoded = json_encode($this->indexData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if (!is_string($encoded) || file_put_contents($this->indexPath(), $encoded, LOCK_EX) === false) {
+            throw new RuntimeException('The scene library index could not be updated.');
+        }
+        if (StorageService::isGcsActive() && !StorageService::uploadFile($this->baseRelativePath . '/index.json', $this->indexPath())) {
+            throw new RuntimeException('The scene library index could not be saved to persistent storage.');
+        }
+        $this->indexLoaded = true;
     }
 
     /**

@@ -1,5 +1,5 @@
 {
-    "generated_at": "2026-07-19T10:50:22+00:00",
+    "generated_at": "2026-07-24T09:04:56+00:00",
     "categories": [
         {
             "category_slug": "Architecture Studios",
@@ -1231,21 +1231,93 @@
         ],
         "Quiet Luxury": [
             {
-                "world_mother_id": "Quiet Luxury/la obra en el piso con figura humana femenina imponente-Esta es una fotografia artística en cualquier contexto-Hay sujeto y obra en contacto y conexion-Figura de dominancia y deseo-Funciona comercial",
-                "category_slug": "Quiet Luxury",
-                "category_name": "Quiet Luxury",
-                "file_name": "la obra en el piso con figura humana femenina imponente-Esta es una fotografia artística en cualquier contexto-Hay sujeto y obra en contacto y conexion-Figura de dominancia y deseo-Funciona comercial.jpg",
-                "title": "La Obra En El Piso Con Figura Humana Femenina Imponente Esta Es Una Fotografia Artística En Cualquier Contexto Hay Sujeto Y Obra En Contacto Y Conexion Figura De Dominancia Y Deseo Funciona Comercial",
-                "relative_path": "storage/world_mothers/Quiet Luxury/la obra en el piso con figura humana femenina imponente-Esta es una fotografia artística en cualquier contexto-Hay sujeto y obra en contacto y conexion-Figura de dominancia y deseo-Funciona comercial.jpg",
-                "extension": "jpg"
-            },
-            {
                 "world_mother_id": "Quiet Luxury/permitier 1 opcion que tape parte de la obra de forma artistica es util- esto crea deseo",
                 "category_slug": "Quiet Luxury",
                 "category_name": "Quiet Luxury",
                 "file_name": "permitier 1 opcion que tape parte de la obra de forma artistica es util- esto crea deseo.jpg",
                 "title": "Permitier 1 Opcion Que Tape Parte De La Obra De Forma Artistica Es Util Esto Crea Deseo",
                 "relative_path": "storage/world_mothers/Quiet Luxury/permitier 1 opcion que tape parte de la obra de forma artistica es util- esto crea deseo.jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Quiet Luxury/world_mother_20260724_085324_7453",
+                "category_slug": "Quiet Luxury",
+                "category_name": "Quiet Luxury",
+                "file_name": "world_mother_20260724_085324_7453.png",
+                "title": "World Mother 20260724 085324 7453",
+                "relative_path": "storage/world_mothers/Quiet Luxury/world_mother_20260724_085324_7453.png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Quiet Luxury/world_mother_20260724_090208_5029",
+                "category_slug": "Quiet Luxury",
+                "category_name": "Quiet Luxury",
+                "file_name": "world_mother_20260724_090208_5029.png",
+                "title": "World Mother 20260724 090208 5029",
+                "relative_path": "storage/world_mothers/Quiet Luxury/world_mother_20260724_090208_5029.png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Quiet Luxury/world_mother_20260724_090345_8240",
+                "category_slug": "Quiet Luxury",
+                "category_name": "Quiet Luxury",
+                "file_name": "world_mother_20260724_090345_8240.png",
+                "title": "World Mother 20260724 090345 8240",
+                "relative_path": "storage/world_mothers/Quiet Luxury/world_mother_20260724_090345_8240.png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Quiet Luxury/world_mother_20260724_090439_8296",
+                "category_slug": "Quiet Luxury",
+                "category_name": "Quiet Luxury",
+                "file_name": "world_mother_20260724_090439_8296.png",
+                "title": "World Mother 20260724 090439 8296",
+                "relative_path": "storage/world_mothers/Quiet Luxury/world_mother_20260724_090439_8296.png",
+                "extension": "png"
+            },
+            {
+                "world_mother_id": "Quiet Luxury/world_mother_ref_20260724_090124_4130",
+                "category_slug": "Quiet Luxury",
+                "category_name": "Quiet Luxury",
+                "file_name": "world_mother_ref_20260724_090124_4130.jpg",
+                "title": "World Mother Ref 20260724 090124 4130",
+                "relative_path": "storage/world_mothers/Quiet Luxury/world_mother_ref_20260724_090124_4130.jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Quiet Luxury/world_mother_ref_20260724_090124_6550",
+                "category_slug": "Quiet Luxury",
+                "category_name": "Quiet Luxury",
+                "file_name": "world_mother_ref_20260724_090124_6550.jpg",
+                "title": "World Mother Ref 20260724 090124 6550",
+                "relative_path": "storage/world_mothers/Quiet Luxury/world_mother_ref_20260724_090124_6550.jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Quiet Luxury/world_mother_ref_20260724_090124_7627",
+                "category_slug": "Quiet Luxury",
+                "category_name": "Quiet Luxury",
+                "file_name": "world_mother_ref_20260724_090124_7627.jpg",
+                "title": "World Mother Ref 20260724 090124 7627",
+                "relative_path": "storage/world_mothers/Quiet Luxury/world_mother_ref_20260724_090124_7627.jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Quiet Luxury/world_mother_ref_20260724_090124_7664",
+                "category_slug": "Quiet Luxury",
+                "category_name": "Quiet Luxury",
+                "file_name": "world_mother_ref_20260724_090124_7664.jpg",
+                "title": "World Mother Ref 20260724 090124 7664",
+                "relative_path": "storage/world_mothers/Quiet Luxury/world_mother_ref_20260724_090124_7664.jpg",
+                "extension": "jpg"
+            },
+            {
+                "world_mother_id": "Quiet Luxury/world_mother_ref_20260724_090124_9145",
+                "category_slug": "Quiet Luxury",
+                "category_name": "Quiet Luxury",
+                "file_name": "world_mother_ref_20260724_090124_9145.jpg",
+                "title": "World Mother Ref 20260724 090124 9145",
+                "relative_path": "storage/world_mothers/Quiet Luxury/world_mother_ref_20260724_090124_9145.jpg",
                 "extension": "jpg"
             }
         ]
