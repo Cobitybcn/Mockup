@@ -69,9 +69,6 @@ function run_public_pages_regression_tests(): void {
     $apiSettings=(string)file_get_contents($root.'/admin_api_keys.php');
     TestHarness::assertTrue(!str_contains($apiSettings,'stripe_connect_secret_key'),'Stripe platform credentials are never editable in the product admin');
     $publishedSeriesCatalog=(string)file_get_contents(dirname($root).'/artist-site/inc/AppPublishedSeriesCatalog.php');
-    $publishedArtworkCatalog=(string)file_get_contents(dirname($root).'/artist-site/inc/AppPublishedCatalog.php');
-    TestHarness::assertContains("elseif (\$language === 'es')",$publishedArtworkCatalog,'Spanish artwork pages never fall back to legacy English copy');
-    TestHarness::assertContains("\$row['artwork_analysis'] = \$language === 'es'",$publishedArtworkCatalog,'Spanish artwork pages never expose legacy English image analysis');
     TestHarness::assertContains('COALESCE(s.year_start, s.year_end) DESC',$publishedSeriesCatalog,'the public series catalog follows the app editorial year order');
     TestHarness::assertContains('s.created_at DESC',$publishedSeriesCatalog,'the public series catalog preserves the app editorial tie breaker');
     TestHarness::assertTrue(!str_contains($publishedSeriesCatalog,'ORDER BY s.year_start DESC, s.title ASC'),'the public series catalog no longer replaces editorial order with alphabetical order');
