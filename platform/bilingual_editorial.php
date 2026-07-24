@@ -32,6 +32,73 @@ try {
         echo json_encode(['ok' => true] + $result, JSON_UNESCAPED_UNICODE);
         exit;
     }
+    if ($action === 'generation_status') {
+        $jobs = new BilingualEditorialJobService(Database::connection());
+        $jobId = max(0, (int)($_POST['job_id'] ?? 0));
+        $job = $jobId > 0
+            ? $jobs->job($jobId, $userId)
+            : $jobs->activeForEntity($userId, $entityType, $entityId);
+        $spanish = $service->get($userId, $entityType, $entityId, 'es');
+        $english = $service->get($userId, $entityType, $entityId, 'en');
+        echo json_encode([
+            'ok' => true,
+            'job' => $job ? $jobs->publicState($job) : null,
+            'spanish_content' => (array)($spanish['content'] ?? []),
+            'english_content' => (array)($english['content'] ?? []),
+            'english_status' => (string)($english['status'] ?? 'unprepared'),
+            'spanish_published' => (bool)($spanish['is_published'] ?? false),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+    if ($action === 'enqueue_prepare' || $action === 'enqueue_adaptation') {
+        $payload = [];
+        if ($action === 'enqueue_prepare') {
+            $currentSpanishJson = (string)($_POST['current_content_json'] ?? '{}');
+            if (strlen($currentSpanishJson) > 500000) throw new RuntimeException('Editorial content is too large.');
+            $currentSpanish = json_decode($currentSpanishJson, true, 64, JSON_THROW_ON_ERROR);
+            if (!is_array($currentSpanish)) throw new RuntimeException('Invalid current Spanish content.');
+            $payload = [
+                'current_spanish' => $currentSpanish,
+                'private_memo' => (string)($_POST['private_memo'] ?? ''),
+            ];
+        }
+
+        $jobs = new BilingualEditorialJobService(Database::connection());
+        $job = $jobs->createOrReuse(
+            $userId,
+            $entityType,
+            $entityId,
+            $action === 'enqueue_prepare' ? 'prepare' : 'adapt',
+            $payload
+        );
+
+        if ((string)$job['status'] === 'queued' && trim((string)$job['task_name']) === '') {
+            if (CloudTasksService::isAvailable()) {
+                try {
+                    $taskName = CloudTasksService::enqueueEditorialGeneration((int)$job['id']);
+                    $jobs->attachTask((int)$job['id'], $userId, $taskName);
+                } catch (Throwable $dispatchError) {
+                    $jobs->markEnqueueFailed((int)$job['id'], $userId, $dispatchError->getMessage());
+                    throw new RuntimeException('No se pudo dejar la generación en segundo plano: ' . $dispatchError->getMessage(), 0, $dispatchError);
+                }
+            } else {
+                (new BilingualEditorialGenerationWorker(Database::connection()))->process((int)$job['id']);
+            }
+        }
+
+        $job = $jobs->job((int)$job['id'], $userId);
+        $spanish = $service->get($userId, $entityType, $entityId, 'es');
+        $english = $service->get($userId, $entityType, $entityId, 'en');
+        echo json_encode([
+            'ok' => true,
+            'job' => $jobs->publicState($job),
+            'spanish_content' => (array)($spanish['content'] ?? []),
+            'english_content' => (array)($english['content'] ?? []),
+            'english_status' => (string)($english['status'] ?? 'unprepared'),
+            'spanish_published' => (bool)($spanish['is_published'] ?? false),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
     if ($action === 'adapt_missing' || $action === 'propose_adaptation') {
         $sourceLocale = trim((string)($_POST['source_locale'] ?? ''));
         $targetLocale = trim((string)($_POST['target_locale'] ?? ''));

@@ -129,6 +129,19 @@
     opacity:.55;
 }
 
+[data-bilingual-editor].is-editorial-generating .editorial-page--english,
+[data-bilingual-editor].is-editorial-generating .bilingual-editorial-page--english,
+[data-bilingual-editor].is-editorial-generating .series-bilingual-page--english,
+[data-bilingual-editor].is-editorial-generating .social-cell--english {
+    opacity:.42;
+    background:#f4f2ed;
+    transition:opacity .18s ease, background .18s ease;
+}
+
+[data-bilingual-editor].is-editorial-generating [data-editorial-locale="en"] {
+    pointer-events:none;
+}
+
 @media (max-width:700px) {
     .bilingual-preparation-bar { grid-template-columns:1fr; align-items:stretch; }
     .bilingual-preparation-bar button { width:100% !important; min-width:0; }

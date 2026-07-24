@@ -145,10 +145,22 @@ function run_bilingual_editorial_service_tests(): void
     ($migration['up'])($pdo);
     $publicationMigration = require dirname(__DIR__, 2) . '/migrations/schema/20260722_000003_bilingual_spanish_publication.php';
     ($publicationMigration['up'])($pdo);
+    $jobMigration = require dirname(__DIR__, 2) . '/migrations/schema/20260724_000001_bilingual_editorial_jobs.php';
+    ($jobMigration['up'])($pdo);
     $service = new BilingualEditorialService($pdo);
     $service->setEnabled(7, true);
     TestHarness::assertTrue($service->isEnabled(7), 'el piloto se habilita solo para el artista elegido');
     TestHarness::assertSame('es', $service->sourceLocale(7), 'el idioma mental del análisis piloto es español');
+    $jobs = new BilingualEditorialJobService($pdo);
+    $queuedJob = $jobs->createOrReuse(7, 'mockup', 21, 'adapt');
+    $sameQueuedJob = $jobs->createOrReuse(7, 'mockup', 21, 'prepare');
+    TestHarness::assertSame((int)$queuedJob['id'], (int)$sameQueuedJob['id'], 'una navegación repetida reutiliza la generación editorial activa');
+    $claimedJob = $jobs->claim((int)$queuedJob['id']);
+    TestHarness::assertSame('processing', (string)($claimedJob['status'] ?? ''), 'el worker reclama la generación persistente una sola vez');
+    $jobs->complete((int)$queuedJob['id'], ['english_content' => ['description' => 'Background English']]);
+    $completedJob = $jobs->publicState($jobs->job((int)$queuedJob['id'], 7));
+    TestHarness::assertSame('completed', $completedJob['status'], 'la generación terminada queda disponible después de abandonar la ficha');
+    TestHarness::assertSame('Background English', $completedJob['result']['english_content']['description'] ?? '', 'el resultado persistente puede recuperarse al volver');
     $analysisClient = new BilingualEditorialFakeClient();
     $analysisImage = tempnam(sys_get_temp_dir(), 'analysis_locale_');
     file_put_contents($analysisImage, 'test-image');
@@ -264,6 +276,22 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertSame('current', $repairedEnglishMockup['english_status'] ?? '', 'el inglés solo queda current después de completar todos los campos');
     TestHarness::assertContains('painting, abstract, contemporary', $repairedEnglishMockup['content']['tags'] ?? '', 'la reparación inglesa conserva los tags del master');
     TestHarness::assertContains('geometric abstract painting for sale', $repairedEnglishMockup['content']['search_terms'] ?? '', 'la reparación inglesa conserva búsquedas y long tails');
+    $backgroundPrepare = $jobs->createOrReuse(7, 'mockup', 21, 'prepare', [
+        'current_spanish' => $service->get(7, 'mockup', 21, 'es')['content'],
+        'private_memo' => 'Preparación persistente',
+    ]);
+    $backgroundResult = (new BilingualEditorialGenerationWorker(
+        $pdo,
+        new BilingualEditorialAdapterService($pdo, new BilingualEditorialFakeClient())
+    ))->process((int)$backgroundPrepare['id']);
+    TestHarness::assertSame(true, $backgroundResult['ok'] ?? false, 'el worker completa español e inglés fuera de la ficha');
+    TestHarness::assertSame('completed', $backgroundResult['job']['status'] ?? '', 'el resultado del worker queda persistido para recuperarlo al volver');
+    TestHarness::assertSame(true, $service->get(7, 'mockup', 21, 'es')['is_published'], 'el worker publica el texto español del mockup antes de finalizar');
+    TestHarness::assertSame(
+        'Una lectura contextual precisa de la obra dentro de un espacio arquitectónico contemporáneo.',
+        $service->get(7, 'mockup', 21, 'es')['published_content']['description'] ?? '',
+        'el website recibe la nueva descripción española generada'
+    );
 
     $service->setSpanishPublished(7, 'series', 3, false);
     $service->save(7, 'series', 3, 'es', ['description' => 'Nuevo texto curatorial en español']);
@@ -358,9 +386,11 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertContains('field.textContent.trim()', $editorScript, 'la detección de idioma funciona aunque el espacio editorial esté plegado');
     TestHarness::assertContains('syncComparisonRows', $editorScript, 'las filas españolas e inglesas se alinean para comparación visual');
     TestHarness::assertContains("window.matchMedia('(max-width: 800px)')", $editorScript, 'la alineación comparativa se retira cuando los tableros se apilan');
-    TestHarness::assertContains("'prepare_bilingual_series'", $editorScript, 'Series prepara ambos idiomas mediante una sola acción completa');
-    TestHarness::assertContains('result.spanish_content', $editorScript, 'la acción completa devuelve el master español validado');
-    TestHarness::assertContains('result.english_content', $editorScript, 'la acción completa devuelve el inglés internacional validado');
+    TestHarness::assertContains("'enqueue_prepare'", $editorScript, 'Series, Artworks y Mockups registran la preparación antes de llamar a la IA');
+    TestHarness::assertContains("'generation_status'", $editorScript, 'la ficha recupera una generación aunque el artista haya navegado a otra pantalla');
+    TestHarness::assertContains('Generación guardada en cola · podés salir de esta ficha', $editorScript, 'la interfaz explica que el trabajo continúa fuera de la ficha');
+    TestHarness::assertContains('snapshot.spanish_content', $editorScript, 'la acción persistente recupera el master español validado');
+    TestHarness::assertContains('snapshot.english_content', $editorScript, 'la acción persistente recupera el inglés internacional validado');
     TestHarness::assertContains("assistantRequest('publish_spanish')", $editorScript, 'la preparación completa de obras y mockups publica el master español sin otro paso');
     $artworkScreen = (string)file_get_contents($platformRoot . '/artwork.php');
     TestHarness::assertContains('data-editorial-generate', $artworkScreen, 'Artwork puede generar el contenido completo ES y EN desde una sola acción');
@@ -372,10 +402,17 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertTrue(strpos($editorScript, "schedule('title'") === false, 'el autoguardado no reescribe el título mientras el artista está escribiendo');
     TestHarness::assertContains('grid-template-columns:minmax(280px, 1fr) auto', $editorStyles, 'la preparación reserva espacio estable para texto y decisión');
     TestHarness::assertContains('width:auto !important', $editorStyles, 'el botón de preparación no hereda el ancho global completo');
+    TestHarness::assertContains('.is-editorial-generating .editorial-page--english', $editorStyles, 'el tablero inglés queda atenuado mientras la generación continúa');
     $editorEndpoint = (string)file_get_contents($platformRoot . '/bilingual_editorial.php');
     TestHarness::assertContains("in_array(\$locale, ['es', 'en']", $editorEndpoint, 'el endpoint acepta únicamente los dos tableros editoriales previstos');
     TestHarness::assertContains("adaptMissing", $editorEndpoint, 'el endpoint permite generar inglés internacional nuevo desde el español');
     TestHarness::assertContains("prepareBilingualSeries", $editorEndpoint, 'el endpoint guarda Series solo después de validar ambos idiomas');
+    TestHarness::assertContains("CloudTasksService::enqueueEditorialGeneration", $editorEndpoint, 'la traducción se entrega a la cola persistente de producción');
+    $editorWorker = (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialGenerationWorker.php');
+    TestHarness::assertTrue(
+        strpos($editorWorker, 'setSpanishPublished') < strpos($editorWorker, 'adaptMissing'),
+        'el master español llega al website antes de comenzar la adaptación inglesa'
+    );
     $sheetServiceSource = (string)file_get_contents($platformRoot . '/app/Services/ArtworkSheetService.php');
     TestHarness::assertContains('Think, analyze and write directly in natural Spanish', $sheetServiceSource, 'mockup_analysis_v2 puede pensar directamente en español');
     TestHarness::assertContains("\$decoded['analysis_language'] = \$analysisLocale", $sheetServiceSource, 'el análisis automático registra explícitamente su idioma');

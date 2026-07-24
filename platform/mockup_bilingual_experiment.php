@@ -198,7 +198,7 @@ $viewerBack = 'mockup_bilingual_experiment.php?id=' . $mockupId;
     <title><?= mbe_h($title) ?> · Mockup Sheet</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="media-controls.css?v=2">
-    <link rel="stylesheet" href="bilingual-editorial.css?v=20260723-5">
+    <link rel="stylesheet" href="bilingual-editorial.css?v=20260724-1">
     <style>
         .mockup-experiment-workspace{display:grid;gap:22px}
         .mockup-heading-group{min-width:0}
@@ -384,7 +384,7 @@ $viewerBack = 'mockup_bilingual_experiment.php?id=' . $mockupId;
         </div>
     </main>
 </div>
-<script src="bilingual-editorial.js?v=20260723-17"></script>
+<script src="bilingual-editorial.js?v=20260724-1"></script>
 <script>
 document.addEventListener('click', async (event) => {
     const button = event.target.closest('[data-favorite-mockup]');

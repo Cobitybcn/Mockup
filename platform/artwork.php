@@ -4833,6 +4833,6 @@ document.querySelectorAll('[data-website-cover-picker]').forEach((picker) => {
     });
 });
 </script>
-<?php if ($bilingualExperiment): ?><script src="bilingual-editorial.js?v=20260723-17"></script><?php endif; ?>
+<?php if ($bilingualExperiment): ?><script src="bilingual-editorial.js?v=20260724-1"></script><?php endif; ?>
 </body>
 </html>

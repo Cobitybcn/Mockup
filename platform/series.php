@@ -967,6 +967,6 @@ $seriesSearchFields = $selectedSeries ? [
 </div>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
 <script src="series_artwork_order.js?v=20260720-4"></script>
-<?php if ($selectedSeries && $seriesBilingualExperiment): ?><script src="bilingual-editorial.js?v=20260723-17"></script><?php endif; ?>
+<?php if ($selectedSeries && $seriesBilingualExperiment): ?><script src="bilingual-editorial.js?v=20260724-1"></script><?php endif; ?>
 </body>
 </html>

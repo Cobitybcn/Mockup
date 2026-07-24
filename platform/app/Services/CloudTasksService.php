@@ -49,6 +49,14 @@ class CloudTasksService
         ], $scheduledAt, app_env('GCP_SOCIAL_QUEUE_NAME', app_env('GCP_QUEUE_NAME', 'mockups-generation-queue')));
     }
 
+    public static function enqueueEditorialGeneration(int $jobId): string
+    {
+        return self::enqueue('editorial_worker.php', [
+            'job_id' => $jobId,
+            'timestamp' => date('c'),
+        ]);
+    }
+
     public static function deleteTask(string $taskName): void
     {
         $taskName = trim($taskName);

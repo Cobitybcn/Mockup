@@ -23,6 +23,8 @@
     let activeProposal = null;
     let activeProposalLocale = '';
     let comparisonFrame = 0;
+    let activeGenerationJobId = 0;
+    let generationPollTimer = 0;
 
     const syncComparisonRows = () => {
         comparisonFrame = 0;
@@ -253,6 +255,90 @@
         return result;
     };
 
+    const setGenerationBusy = (busy, message = '') => {
+        editor.classList.toggle('is-editorial-generating', busy);
+        editor.setAttribute('aria-busy', busy ? 'true' : 'false');
+        [adaptationButton, generationButton, refreshButton].filter(Boolean).forEach((button) => {
+            button.disabled = busy;
+        });
+        if (busy && message) setState(message);
+    };
+
+    const applyGenerationSnapshot = (snapshot) => {
+        if (snapshot?.spanish_content) fillLocale('es', snapshot.spanish_content);
+        if (snapshot?.english_content) fillLocale('en', snapshot.english_content);
+        if (snapshot?.english_status) editor.dataset.englishStatus = snapshot.english_status;
+        updateAdaptationButton();
+        queueComparisonRows();
+    };
+
+    const pollGeneration = async (jobId) => {
+        clearTimeout(generationPollTimer);
+        try {
+            const snapshot = await assistantRequest('generation_status', {job_id: String(jobId)});
+            const job = snapshot.job || null;
+            applyGenerationSnapshot(snapshot);
+            if (!job) {
+                activeGenerationJobId = 0;
+                setGenerationBusy(false);
+                return;
+            }
+            activeGenerationJobId = Number(job.id || 0);
+            if (job.status === 'queued' || job.status === 'processing') {
+                setGenerationBusy(
+                    true,
+                    job.status === 'queued'
+                        ? 'Generación guardada en cola · podés salir de esta ficha'
+                        : 'Generando en segundo plano · podés salir de esta ficha'
+                );
+                generationPollTimer = window.setTimeout(() => pollGeneration(activeGenerationJobId), 2500);
+                return;
+            }
+            setGenerationBusy(false);
+            if (job.status === 'completed') {
+                setState('Contenido generado y guardado', 'saved');
+                return;
+            }
+            setState(job.error || 'La generación en segundo plano no pudo completarse.', 'error');
+        } catch (error) {
+            setGenerationBusy(false);
+            setState(error.message || 'No se pudo consultar la generación.', 'error');
+        }
+    };
+
+    const enqueueGeneration = async (action, extra = {}) => {
+        const snapshot = await assistantRequest(action, extra);
+        applyGenerationSnapshot(snapshot);
+        const job = snapshot.job || null;
+        if (!job) throw new Error('No se pudo registrar la generación.');
+        activeGenerationJobId = Number(job.id || 0);
+        if (job.status === 'completed') {
+            setGenerationBusy(false);
+            setState('Contenido generado y guardado', 'saved');
+            return;
+        }
+        if (job.status === 'failed' || job.status === 'enqueue_failed') {
+            setGenerationBusy(false);
+            throw new Error(job.error || 'No se pudo iniciar la generación.');
+        }
+        setGenerationBusy(true, 'Generación guardada en cola · podés salir de esta ficha');
+        generationPollTimer = window.setTimeout(() => pollGeneration(activeGenerationJobId), 800);
+    };
+
+    const resumeGeneration = async () => {
+        try {
+            const snapshot = await assistantRequest('generation_status');
+            applyGenerationSnapshot(snapshot);
+            const job = snapshot.job || null;
+            if (!job || !['queued', 'processing'].includes(job.status)) return;
+            activeGenerationJobId = Number(job.id || 0);
+            setGenerationBusy(true, 'Generación en segundo plano · podés salir de esta ficha');
+            generationPollTimer = window.setTimeout(() => pollGeneration(activeGenerationJobId), 600);
+        } catch (_) {
+            // Saving and manual editing remain available if status recovery is unavailable.
+        }
+    };
+
     const keywordResearchRequest = async (form) => {
         const endpointUrl = form.dataset.endpoint || 'series_keyword_research.php';
         const response = await fetch(endpointUrl, {
@@ -404,44 +490,21 @@
         const generate = event.target.closest('[data-editorial-generate]');
         if (generate && !generate.disabled) {
             event.preventDefault();
-            generate.disabled = true;
-            const originalLabel = generate.textContent;
-            generate.textContent = 'Preparando…';
-            setState('Preparando contenido español…');
+            setGenerationBusy(true, 'Registrando generación…');
             try {
                 const memo = editor.querySelector('[data-private-memo][data-editorial-locale="es"]');
-                if (entityType === 'series') {
-                    const result = await assistantRequest('prepare_bilingual_series', {
-                        current_content_json: JSON.stringify(localeContent('es')),
-                        private_memo: memo ? memo.innerText.trim() : '',
-                    });
-                    fillLocale('es', result.spanish_content || {});
-                    fillLocale('en', result.english_content || {});
-                } else {
-                    const result = await assistantRequest('generate_spanish_draft', {
-                        current_content_json: JSON.stringify(localeContent('es')),
-                        private_memo: memo ? memo.innerText.trim() : '',
-                    });
-                    fillLocale('es', result.content || {});
-                    await saveLocale('es');
-                    const englishResult = await assistantRequest('adapt_missing', {
-                        source_locale: 'es',
-                        target_locale: 'en',
-                    });
-                    fillLocale('en', englishResult.content || {});
-                    await assistantRequest('publish_spanish');
-                }
+                await enqueueGeneration('enqueue_prepare', {
+                    current_content_json: JSON.stringify(localeContent('es')),
+                    private_memo: memo ? memo.innerText.trim() : '',
+                });
                 activeProposal = null;
                 activeProposalLocale = '';
                 if (proposalPanel) proposalPanel.hidden = true;
                 if (useProposalButton) useProposalButton.hidden = true;
-                if (proposalState) proposalState.textContent = 'Contenido preparado';
-                setState('Contenido y website preparados', 'saved');
+                if (proposalState) proposalState.textContent = 'Generación en curso';
             } catch (error) {
+                setGenerationBusy(false);
                 setState(error.message || 'No se pudo preparar el contenido.', 'error');
-            } finally {
-                generate.disabled = false;
-                generate.textContent = originalLabel;
             }
             return;
         }
@@ -449,28 +512,19 @@
         const refresh = event.target.closest('[data-editorial-refresh]');
         if (refresh && !refresh.disabled) {
             event.preventDefault();
-            refresh.disabled = true;
-            const originalLabel = refresh.textContent;
-            refresh.textContent = 'Preparando…';
-            setState('Preparando website…');
+            setGenerationBusy(true, 'Guardando el español maestro…');
             try {
                 clearTimeout(timers.get('locale:es'));
                 await saveLocale('es');
-                const result = await assistantRequest('adapt_missing', {
-                    source_locale: 'es',
-                    target_locale: 'en',
-                });
-                fillLocale('en', result.content || {});
+                await assistantRequest('publish_spanish');
+                await enqueueGeneration('enqueue_adaptation');
                 activeProposal = null;
                 activeProposalLocale = '';
                 if (proposalPanel) proposalPanel.hidden = true;
                 if (useProposalButton) useProposalButton.hidden = true;
-                setState('Website preparado', 'saved');
             } catch (error) {
+                setGenerationBusy(false);
                 setState(error.message || 'No se pudo preparar el website.', 'error');
-            } finally {
-                refresh.disabled = false;
-                refresh.textContent = originalLabel;
             }
             return;
         }
@@ -503,30 +557,15 @@
             const sourceLocale = adapt.dataset.sourceLocale || '';
             const targetLocale = adapt.dataset.targetLocale || '';
             if (!sourceLocale || !targetLocale) return;
-            adapt.disabled = true;
+            setGenerationBusy(true, 'Guardando el español maestro…');
             clearTimeout(timers.get(`locale:${sourceLocale}`));
-            setState(sourceLocale === 'es' ? 'Adaptando al inglés…' : 'Adaptando al español…');
             try {
                 await saveLocale(sourceLocale);
-                setState(sourceLocale === 'es' ? 'Adaptando al inglés…' : 'Adaptando al español…');
-                const body = new FormData();
-                body.append('csrf', csrf);
-                body.append('action', 'adapt_missing');
-                body.append('entity_type', entityType);
-                body.append('entity_id', entityId);
-                body.append('source_locale', sourceLocale);
-                body.append('target_locale', targetLocale);
-                const response = await fetch(endpoint, {method: 'POST', body, headers: {'Accept': 'application/json'}});
-                const result = await response.json();
-                if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo adaptar el contenido.');
-                fillLocale(targetLocale, result.content || {});
-                if (result.english_status) editor.dataset.englishStatus = result.english_status;
-                setState(targetLocale === 'en' ? 'Inglés adaptado · revisar' : 'Español adaptado · revisar', 'saved');
-                updateAdaptationButton();
+                await assistantRequest('publish_spanish');
+                await enqueueGeneration('enqueue_adaptation');
             } catch (error) {
+                setGenerationBusy(false);
                 setState(error.message || 'No se pudo adaptar el contenido.', 'error');
-            } finally {
-                adapt.disabled = false;
             }
             return;
         }
@@ -567,4 +606,5 @@
     });
 
     updateAdaptationButton();
+    resumeGeneration();
 })();

@@ -54,6 +54,7 @@ function run_schema_migration_governance_tests(): void
     TestHarness::assertTrue(true, 'Reference Sets y sus referencias ordenadas pertenecen al esquema versionado');
     $pdo->query('SELECT enabled, source_locale, publication_locale FROM bilingual_editorial_settings WHERE 1=0');
     $pdo->query('SELECT entity_type, entity_id, locale, content_json, status, source_hash, is_published, published_content_json, published_at FROM bilingual_editorial_content WHERE 1=0');
+    $pdo->query('SELECT entity_type,entity_id,action,status,payload_json,result_json,task_name,attempts FROM bilingual_editorial_jobs WHERE 1=0');
     TestHarness::assertTrue(true, 'el contenido bilingue experimental queda aislado por usuario, entidad e idioma');
     $pdo->query('SELECT series_id,locale,market,keyword_text,avg_monthly_searches,competition,selected FROM series_keyword_research WHERE 1=0');
     TestHarness::assertTrue(true, 'la investigación de búsqueda de Series queda separada por idioma y mercado');
