@@ -4028,7 +4028,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                 <h2>Prepare the editorial package</h2>
                                 <p>Complete the series, artwork and mockup texts together after the visual work has been approved.</p>
                             </div>
-                            <p class="editorial-package-publication-note">Creates editable drafts. Nothing is published automatically.</p>
+                            <p class="editorial-package-publication-note">Prepares Spanish and international English. Website visibility remains controlled separately.</p>
                         </header>
 
                         <div class="editorial-package-layout">

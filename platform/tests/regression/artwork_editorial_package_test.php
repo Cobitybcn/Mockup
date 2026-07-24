@@ -110,5 +110,7 @@ function run_artwork_editorial_package_tests(): void
     $artworkPage = (string)file_get_contents(dirname(__DIR__, 2) . '/artwork.php');
     TestHarness::assertContains('data-editorial-package', $artworkPage, 'artwork.php integra el panel editorial avanzado');
     TestHarness::assertTrue(!str_contains($artworkPage, 'Create Studio Note'), 'el Decision Block anterior de Studio Notes fue retirado');
-    TestHarness::assertContains('Nothing is published automatically.', $artworkPage, 'la interfaz declara el contrato de borradores sin publicacion');
+    TestHarness::assertContains('Website visibility remains controlled separately.', $artworkPage, 'la preparación bilingüe no cambia la visibilidad de la obra');
+    $packageService = (string)file_get_contents(dirname(__DIR__, 2) . '/app/Services/ArtworkEditorialPackageService.php');
+    TestHarness::assertContains("'publish_spanish' => true", $packageService, 'el paquete deja el español preparado para el website junto con el inglés');
 }

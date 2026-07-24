@@ -541,7 +541,7 @@ final class ArtworkEditorialPackageService
                     [
                         'current_spanish' => (array)$spanish['content'],
                         'private_memo' => (string)$spanish['private_memo'],
-                        'publish_spanish' => false,
+                        'publish_spanish' => true,
                         'editorial_package_id' => $packageId,
                     ]
                 );

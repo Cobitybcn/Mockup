@@ -57,8 +57,8 @@ final class BilingualEditorialGenerationWorker
                     $spanishContent,
                     (string)($payload['private_memo'] ?? '')
                 );
-                // Existing single-entity actions preserve their publication
-                // behavior; coordinated packages explicitly create drafts.
+                // Complete bilingual preparation keeps the Spanish master and
+                // international English ready for the website in one action.
                 if ($publishSpanish) {
                     $editorial->setSpanishPublished($userId, $entityType, $entityId, true);
                 }
