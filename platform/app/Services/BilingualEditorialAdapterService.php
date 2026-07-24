@@ -198,6 +198,7 @@ final class BilingualEditorialAdapterService
         $prompt = $this->generationPrompt(
             $userId,
             $entityType,
+            $entityId,
             $context,
             $shape,
             $currentSpanishOverride ?? (array)$spanish['content'],
@@ -341,6 +342,8 @@ EDITORIAL RULES
 - Do not translate the universal series title. When an SEO title contains it, keep that title unchanged and adapt only the descriptive search language around it.
 - Avoid calques, false friends, mechanical syntax and generic AI or marketplace language.
 - Adapt keywords, search phrases, captions, alt text and social copy according to their function; do not merely substitute words.
+- Preserve the Spanish source's chosen visual entry point, narrative order, tone and closing instead of homogenizing it into a standard English catalogue formula.
+- Descriptive diversity does not prohibit accurate SEO repetition. Keep canonical category, style, technique, material, support, color, format, artist and series terms stable when they remain relevant.
 - Never invent search volume, competition, ranking difficulty, buyer demand or regional performance.
 - Alt text remains visual and non-interpretive.
 - When the source value is empty, return an empty value.
@@ -368,6 +371,7 @@ PROMPT;
     private function generationPrompt(
         int $userId,
         string $entityType,
+        int $entityId,
         array $context,
         array $shape,
         array $currentSpanish,
@@ -435,6 +439,11 @@ RULES
         $integrityRules = in_array($entityType, ['artwork', 'mockup'], true)
             ? EditorialIntegrityPolicy::promptRules($entityType)
             : '';
+        $diversityRules = $this->descriptionDiversityPrompt(
+            $userId,
+            $entityType,
+            $entityId
+        );
         $imageInstruction = $entityType === 'series'
             ? 'No image is attached. Use only the supplied catalogue evidence.'
             : 'The exact image may be attached after this prompt. Use it only as visual evidence under the entity-specific rules.';
@@ -460,6 +469,7 @@ CORE RULES
 - Return exactly the keys and nesting in OUTPUT SHAPE. Return strings for every terminal value.
 {$integrityRules}
 {$searchIntentRules}
+{$diversityRules}
 {$entityRules}
 
 ARTIST PROFILE
@@ -484,6 +494,138 @@ Use only as factual evidence. Do not translate it literally.
 OUTPUT SHAPE
 {$shapeJson}
 PROMPT;
+    }
+
+    private function descriptionDiversityPrompt(
+        int $userId,
+        string $entityType,
+        int $entityId
+    ): string {
+        if (!in_array($entityType, ['artwork', 'mockup'], true)) {
+            return '';
+        }
+
+        $recent = $this->recentDescriptiveReferences($userId, $entityType, $entityId);
+        $seed = abs((int)crc32($userId . ':' . $entityType . ':' . $entityId . ':' . count($recent)));
+        $entryPoints = [
+            'the dominant compositional division',
+            'a specific color relationship',
+            'surface, texture and material presence',
+            'the construction of depth and spatial tension',
+            'one precise visible detail and its relation to the whole',
+            'the strongest contrast in the image',
+            'the direction and quality of light',
+            'visual rhythm, repetition or interruption',
+            'negative space and the areas left quiet',
+            'the relationship between artwork and architecture',
+            'scale perception grounded in confirmed dimensions',
+            'the viewer position and camera point of view',
+        ];
+        $structures = [
+            'visible observation → spatial organization → material evidence → restrained interpretation',
+            'specific detail → expansion to the whole → atmosphere → factual closing',
+            'light and color → composition → artwork-space relationship → quiet closing',
+            'contrast → visual tension → surface → viewer relationship',
+            'material evidence → process marks → depth → compositional presence',
+            'architecture → scale relationship → focal movement → return to the artwork',
+        ];
+        $tones = [
+            'descriptive and precise',
+            'spatial and architectural',
+            'material and tactile',
+            'atmospheric but evidence-led',
+            'technical and accessible',
+            'contemplative and restrained',
+        ];
+        $closings = [
+            'close on one concrete material observation',
+            'close on the final spatial relationship',
+            'close by returning to the initial visible detail',
+            'close on how the eye moves through the image',
+            'close with a restrained atmospheric observation',
+            'close with the artwork-space relationship, without a sales claim',
+        ];
+
+        $entry = $entryPoints[$seed % count($entryPoints)];
+        $structure = $structures[intdiv($seed, 7) % count($structures)];
+        $tone = $tones[intdiv($seed, 13) % count($tones)];
+        $closing = $closings[intdiv($seed, 19) % count($closings)];
+        $interpretation = ($seed % 4) === 0
+            ? 'Level 2: a limited evocative reading is allowed only with cautious language and visible support.'
+            : 'Level 1: remain primarily descriptive and visual.';
+        $references = $recent === []
+            ? 'No recent descriptive references are available. Still avoid formulaic catalogue openings.'
+            : implode("\n", array_map(
+                static fn (string $reference, int $index): string => ($index + 1) . '. ' . $reference,
+                $recent,
+                array_keys($recent)
+            ));
+
+        return <<<RULES
+DESCRIPTIVE DIVERSITY PROTOCOL
+This protocol applies only to visible descriptive and editorial prose: description, short_description, caption and channel-specific social copy.
+- Compare the new prose with the recent references below before writing.
+- Make the new text differ in at least five dimensions: opening, entry point, visual focus, narrative order, tone and closing.
+- Diversity must come from a different observation and hierarchy, not synonym substitution.
+- Describe supported visible evidence before interpretation. The artist profile and series direction provide coherence but must not be copied or allowed to dominate every mockup.
+- Do not begin with formulae such as "Esta obra explora", "En esta pintura", "Parte de la serie", "This artwork explores", "In this painting" or "Part of the series".
+- Do not repeat one observation in several phrasings merely to lengthen the text.
+
+ASSIGNED EDITORIAL PLAN
+- Entry point: {$entry}.
+- Narrative structure: {$structure}.
+- Tone: {$tone}.
+- Closing: {$closing}.
+- Interpretation: {$interpretation}
+
+RECENT DESCRIPTIVE REFERENCES TO DIFFERENTIATE FROM
+{$references}
+
+SEO CONTROLLED REPETITION — EXPLICIT EXCEPTION
+- Do not apply the diversity penalty to tags, search_terms, seo_title or seo_description.
+- Repeat stable and accurate commercial vocabulary when relevant: object category, recognized style, technique, material, support, color, format, confirmed scale, artist and series.
+- Do not replace established buyer terms with unusual synonyms merely to look different.
+- Keep every SEO title page-specific and every SEO description natural, but preserve the strongest canonical search language.
+RULES;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function recentDescriptiveReferences(
+        int $userId,
+        string $entityType,
+        int $entityId
+    ): array {
+        $stmt = $this->pdo->prepare(
+            "SELECT content_json
+             FROM bilingual_editorial_content
+             WHERE user_id=? AND entity_type=? AND locale='es' AND entity_id<>?
+             ORDER BY updated_at DESC,id DESC
+             LIMIT 8"
+        );
+        $stmt->execute([$userId, $entityType, $entityId]);
+        $references = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $content = json_decode((string)($row['content_json'] ?? ''), true);
+            if (!is_array($content)) {
+                continue;
+            }
+            $parts = [];
+            foreach (['short_description', 'description', 'caption'] as $key) {
+                $value = trim((string)($content[$key] ?? ''));
+                if ($value !== '') {
+                    $parts[] = $value;
+                }
+            }
+            $combined = trim(implode(' ', $parts));
+            if ($combined === '') {
+                continue;
+            }
+            $combined = preg_replace('/\s+/u', ' ', $combined) ?? $combined;
+            $references[] = mb_substr($combined, 0, 700);
+        }
+        return array_values(array_unique($references));
     }
 
     private function generationShape(string $entityType): array

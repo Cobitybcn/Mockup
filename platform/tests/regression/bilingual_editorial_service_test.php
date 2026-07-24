@@ -168,7 +168,9 @@ function run_bilingual_editorial_service_tests(): void
     $pdo->exec("INSERT INTO artworks (id,user_id,artwork_group_id,series_id,series,final_title) VALUES (11,7,31,3,'STRATA','Old artwork title')");
     $pdo->exec("INSERT INTO artwork_groups (id,user_id,canonical_artwork_id,title,status) VALUES (31,7,11,'Stale group title','active')");
     $pdo->exec("INSERT INTO artwork_sheets (id,user_id,canonical_artwork_id,title,status) VALUES (41,7,11,'Old sheet title','draft')");
-    $pdo->exec("INSERT INTO mockups (id,user_id,source_artwork_id,mockup_file) VALUES (21,7,11,'mockup-test.jpg')");
+    $pdo->exec("INSERT INTO mockups (id,user_id,source_artwork_id,mockup_file) VALUES
+        (21,7,11,'mockup-test.jpg'),
+        (22,7,11,'mockup-history.jpg')");
     $migration = require dirname(__DIR__, 2) . '/migrations/schema/20260722_000002_bilingual_editorial_content.php';
     ($migration['up'])($pdo);
     $publicationMigration = require dirname(__DIR__, 2) . '/migrations/schema/20260722_000003_bilingual_spanish_publication.php';
@@ -177,6 +179,10 @@ function run_bilingual_editorial_service_tests(): void
     ($jobMigration['up'])($pdo);
     $service = new BilingualEditorialService($pdo);
     $service->setEnabled(7, true);
+    $service->save(7, 'mockup', 22, 'es', [
+        'description' => 'La luz lateral ordena la sala y conduce la mirada hacia la superficie de la pintura.',
+        'caption' => 'SOL DIVISUS en una sala iluminada lateralmente.',
+    ]);
     TestHarness::assertTrue($service->isEnabled(7), 'el piloto se habilita solo para el artista elegido');
     TestHarness::assertSame('es', $service->sourceLocale(7), 'el idioma mental del análisis piloto es español');
     $jobs = new BilingualEditorialJobService($pdo);
@@ -271,6 +277,9 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertSame('Una lectura contextual precisa de la obra dentro de un espacio arquitectónico contemporáneo.', $mockupProposal['content']['description'] ?? '', 'Mockups puede generar una propuesta editorial directamente en español');
     TestHarness::assertContains('independent contextual image', $mockupProposalClient->lastPrompt, 'la propuesta del mockup conserva su lectura contextual propia');
     TestHarness::assertContains('Never infer artwork pigments from mockup lighting', $mockupProposalClient->lastPrompt, 'el mockup no reinterpreta pigmentos alterados por la escena');
+    TestHarness::assertContains('DESCRIPTIVE DIVERSITY PROTOCOL', $mockupProposalClient->lastPrompt, 'el mockup compara su narrativa con el historial editorial reciente');
+    TestHarness::assertContains('La luz lateral ordena la sala', $mockupProposalClient->lastPrompt, 'el protocolo entrega referencias recientes para evitar aperturas repetidas');
+    TestHarness::assertContains('SEO CONTROLLED REPETITION', $mockupProposalClient->lastPrompt, 'la diversidad editorial no elimina la repetición SEO necesaria');
     $staleArtworkAnalysis = [
         'confirmed_facts' => ['series' => 'Core'],
         'canonical_editorial' => [
