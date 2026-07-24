@@ -71,6 +71,31 @@ function run_world_mother_library_admin_tests(): void
             'legacy scene folder names resolve from normalized card URLs without creating a duplicate category'
         );
 
+        $preferredIndex = new ReflectionMethod(WorldMotherLibrary::class, 'preferredIndexData');
+        $preferredIndex->setAccessible(true);
+        $newerPackagedIndex = [
+            'generated_at' => '2099-01-01T00:00:00Z',
+            'categories' => [['category_slug' => 'local_only']],
+            'images' => ['local_only' => [['file_name' => 'missing.jpg']]],
+        ];
+        $olderCloudIndex = [
+            'generated_at' => '2020-01-01T00:00:00Z',
+            'categories' => [['category_slug' => 'persisted_scene']],
+            'images' => ['persisted_scene' => [['file_name' => 'persisted.jpg']]],
+        ];
+        $productionIndex = $preferredIndex->invoke(null, $newerPackagedIndex, $olderCloudIndex, true);
+        TestHarness::assertSame(
+            'persisted_scene',
+            (string)($productionIndex['categories'][0]['category_slug'] ?? ''),
+            'production trusts the persistent cloud index instead of a newer deployment copy'
+        );
+        $localIndex = $preferredIndex->invoke(null, $newerPackagedIndex, $olderCloudIndex, false);
+        TestHarness::assertSame(
+            'local_only',
+            (string)($localIndex['categories'][0]['category_slug'] ?? ''),
+            'local development keeps using its local scene index'
+        );
+
         $appRoot = dirname(__DIR__, 2);
         $studioSource = (string)file_get_contents($appRoot . '/world_mother_studio.php');
         $variationLabSource = (string)file_get_contents($appRoot . '/world_mother_variation_lab.php');

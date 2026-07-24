@@ -31,26 +31,58 @@ final class WorldMotherLibrary
             return;
         }
         $indexPath = $this->basePath . DIRECTORY_SEPARATOR . 'index.json';
+        $localData = is_file($indexPath)
+            ? json_decode((string)file_get_contents($indexPath), true)
+            : [];
+        $localData = is_array($localData) ? $localData : [];
+        $remoteData = [];
         if (StorageService::isGcsActive()) {
             $remoteIndexPath = $indexPath . '.remote';
             if (StorageService::downloadFile($this->baseRelativePath . '/index.json', $remoteIndexPath)) {
-                $localData = is_file($indexPath) ? json_decode((string)file_get_contents($indexPath), true) : [];
-                $remoteData = json_decode((string)file_get_contents($remoteIndexPath), true);
-                $localTime = is_array($localData) ? strtotime((string)($localData['generated_at'] ?? '')) : false;
-                $remoteTime = is_array($remoteData) ? strtotime((string)($remoteData['generated_at'] ?? '')) : false;
-                if (is_array($remoteData) && ($localTime === false || ($remoteTime !== false && $remoteTime > $localTime))) {
-                    @file_put_contents($indexPath, (string)file_get_contents($remoteIndexPath), LOCK_EX);
-                }
+                $decodedRemote = json_decode((string)file_get_contents($remoteIndexPath), true);
+                $remoteData = is_array($decodedRemote) ? $decodedRemote : [];
                 @unlink($remoteIndexPath);
             }
         }
-        if (is_file($indexPath)) {
-            $data = json_decode((string)file_get_contents($indexPath), true);
-            if (is_array($data)) {
-                $this->indexData = $data;
+
+        $this->indexData = self::preferredIndexData(
+            $localData,
+            $remoteData,
+            StorageService::isGcsActive()
+        );
+        if (self::isValidIndexData($remoteData)) {
+            $encodedRemote = json_encode($remoteData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            if (is_string($encodedRemote)) {
+                @file_put_contents($indexPath, $encodedRemote, LOCK_EX);
             }
         }
         $this->indexLoaded = true;
+    }
+
+    /**
+     * Cloud storage is the production source of truth. A newer index bundled
+     * into a deployment may reference local images that were never uploaded.
+     *
+     * @param array<string,mixed> $localData
+     * @param array<string,mixed> $remoteData
+     * @return array<string,mixed>
+     */
+    private static function preferredIndexData(array $localData, array $remoteData, bool $cloudStorageActive): array
+    {
+        if ($cloudStorageActive && self::isValidIndexData($remoteData)) {
+            return $remoteData;
+        }
+        return self::isValidIndexData($localData) ? $localData : [];
+    }
+
+    /**
+     * @param array<string,mixed> $data
+     */
+    private static function isValidIndexData(array $data): bool
+    {
+        return isset($data['categories'], $data['images'])
+            && is_array($data['categories'])
+            && is_array($data['images']);
     }
 
     public function createdBaseDirectory(): bool
