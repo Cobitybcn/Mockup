@@ -50,14 +50,18 @@ if ($path === '/sitemap.xml') {
     foreach (array_keys($artworks) as $slug) {
         $urls[] = '/paintings/' . $slug . '/';
     }
-    foreach (array_keys($series) as $slug) {
-        $urls[] = '/series/' . $slug . '/';
-    }
     foreach (array_keys($journal) as $slug) {
         $urls[] = '/studio-notes/' . $slug . '/';
     }
     foreach (array_keys($blog ?? []) as $slug) {
         $urls[] = '/blog/' . $slug . '/';
+    }
+    try {
+        foreach (array_keys(app_series_catalog()?->all() ?? []) as $slug) {
+            $urls[] = '/series/' . $slug . '/';
+        }
+    } catch (Throwable $error) {
+        error_log('Published series sitemap unavailable: ' . $error->getMessage());
     }
     try {
         foreach (app_catalog()?->all() ?? [] as $slug => $publishedArtwork) {

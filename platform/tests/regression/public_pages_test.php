@@ -48,6 +48,8 @@ function run_public_pages_regression_tests(): void {
     TestHarness::assertContains('<h2>Works in this series</h2>',$artistSite,'public series details render their dependent artwork collection');
     TestHarness::assertContains('class="artwork-series-link"',$artistSite,'published artwork details link their series to its public detail page');
     TestHarness::assertContains('class="artwork-series-preview"',$artistSite,'published artwork details provide an accessible series preview');
+    TestHarness::assertContains("array_keys(app_series_catalog()?->all() ?? [])",$artistSite,'the sitemap reads the currently published managed series');
+    TestHarness::assertTrue(!str_contains($artistSite,"array_keys(\$series) as \$slug"),'the sitemap does not advertise legacy static series');
     TestHarness::assertContains("url_for('acquire/' . \$artwork['slug'])",$artistSite,'available published artworks open the private acquisition flow');
     TestHarness::assertContains("case 'acquire':",$artistSite,'the artist website routes acquisition requests separately from editorial content');
     TestHarness::assertContains("'order.created'",$artistStore,'public acquisition requests create auditable Store orders');
