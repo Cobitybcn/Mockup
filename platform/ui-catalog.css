@@ -1385,7 +1385,7 @@
 }
 
 .series-header-empty:focus-visible,
-.series-header-replace:focus-visible {
+.series-header-framing__stage:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--accent) 36%, transparent);
   outline-offset: 3px;
 }
@@ -1411,6 +1411,7 @@
 }
 
 .series-header-framing__stage {
+  display: block;
   position: relative;
   width: 100%;
   aspect-ratio: var(--series-header-ratio, 4 / 5);
@@ -1420,6 +1421,24 @@
   border: 1px solid var(--line);
   cursor: move;
   background: var(--surface-soft);
+}
+
+.series-header-framing__replace {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1;
+  padding: 9px 12px;
+  border: 1px solid #d6bd72;
+  border-radius: 3px;
+  background: #f2e1a8;
+  color: #594612;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  line-height: 1;
+  text-transform: uppercase;
+  pointer-events: none;
 }
 
 .series-header-framing__stage img {
@@ -1506,20 +1525,8 @@
   white-space: nowrap;
 }
 
-.series-header-replace {
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-  color: var(--accent);
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-}
-
 .series-header-empty.is-dragging,
-.series-header-replace.is-dragging {
+.series-header-framing__stage.is-dragging {
   border-color: var(--accent);
   color: var(--accent);
 }

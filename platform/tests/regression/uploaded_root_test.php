@@ -542,7 +542,7 @@ function run_uploaded_root_regression_tests(): void
         'el visor de portada respeta automaticamente el formato horizontal o vertical de la imagen'
     );
     TestHarness::assertContains(
-        'ui-catalog.css?v=18',
+        'ui-catalog.css?v=19',
         $seriesSource,
         'Series invalida la cache al publicar cambios visuales del visor y sus bloques'
     );
@@ -565,6 +565,16 @@ function run_uploaded_root_regression_tests(): void
         'data-series-header-dropzone',
         $seriesSource,
         'la portada de Series reutiliza una unica superficie para seleccionar o soltar la imagen'
+    );
+    TestHarness::assertContains(
+        'for="series-header-upload-input"',
+        $seriesSource,
+        'la portada visible de una serie abre directamente el selector de reemplazo'
+    );
+    TestHarness::assertContains(
+        'if (!dragMoved) return;',
+        $seriesSource,
+        'arrastrar la portada para reencuadrar no abre accidentalmente el selector de archivo'
     );
     TestHarness::assertTrue(
         !str_contains($seriesSource, 'data-series-header-submit')

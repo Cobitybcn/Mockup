@@ -244,7 +244,7 @@ $seriesSearchFields = $selectedSeries ? [
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Series - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="ui-catalog.css?v=18">
+    <link rel="stylesheet" href="ui-catalog.css?v=19">
     <?php if ($selectedSeries && $seriesBilingualExperiment): ?><link rel="stylesheet" href="bilingual-editorial.css?v=20260723-8"><?php endif; ?>
     <?php if ($seriesPreviewActive): ?>
         <link rel="stylesheet" href="visual-consistency-preview.css?v=2">
@@ -657,14 +657,20 @@ $seriesSearchFields = $selectedSeries ? [
                         <div class="series-header-picker">
                             <?php if (!empty($series['header_file'])): ?>
                                 <div class="series-header-framing">
-                                    <div class="series-header-framing__stage" id="series-framing-stage"
+                                    <label class="series-header-framing__stage" id="series-framing-stage"
+                                         for="series-header-upload-input"
+                                         data-series-header-dropzone
+                                         tabindex="0"
+                                         role="button"
+                                         aria-label="Cambiar imagen de la serie"
                                          data-focal-x="<?= (int)($series['header_focal_x'] ?? 50) ?>"
                                          data-focal-y="<?= (int)($series['header_focal_y'] ?? 50) ?>"
                                          data-zoom="<?= (int)($series['header_zoom'] ?? 115) ?>">
                                         <img src="<?= series_h(series_media_url($series['header_file'], 900)) ?>" alt="Header preview" id="series-framing-img"
                                              style="object-position: <?= (int)($series['header_focal_x'] ?? 50) ?>% <?= (int)($series['header_focal_y'] ?? 50) ?>%; transform: scale(<?= ((int)($series['header_zoom'] ?? 115)) / 100 ?>);">
-                                    </div>
-                                    <p class="series-header-framing__hint">Drag on the image to reposition it. Use the slider to zoom. <span>(this crop only affects the website, not the admin previews)</span></p>
+                                        <span class="series-header-framing__replace" data-series-header-label>Cambiar imagen</span>
+                                    </label>
+                                    <p class="series-header-framing__hint">Haz clic para cambiar la imagen. Arrastra para reencuadrarla y usa el control para ampliar. <span>El recorte solo afecta al website.</span></p>
                                     <label class="series-header-framing__zoom">Zoom<input type="range" id="series-framing-zoom" min="115" max="400" value="<?= (int)($series['header_zoom'] ?? 115) ?>"></label>
                                     <form method="post" id="series-framing-form">
                                         <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
@@ -704,14 +710,31 @@ $seriesSearchFields = $selectedSeries ? [
                                     img.addEventListener('load', useNaturalRatio);
                                     zoomInput.addEventListener('input', function () { zoom = parseInt(this.value, 10); apply(); });
                                     var dragging = false;
-                                    stage.addEventListener('mousedown', function () { dragging = true; });
+                                    var dragMoved = false;
+                                    var dragStartX = 0;
+                                    var dragStartY = 0;
+                                    stage.addEventListener('mousedown', function (event) {
+                                        if (event.button !== 0) return;
+                                        dragging = true;
+                                        dragMoved = false;
+                                        dragStartX = event.clientX;
+                                        dragStartY = event.clientY;
+                                    });
                                     window.addEventListener('mouseup', function () { dragging = false; });
                                     stage.addEventListener('mousemove', function (event) {
                                         if (!dragging) return;
+                                        if (Math.abs(event.clientX - dragStartX) > 4 || Math.abs(event.clientY - dragStartY) > 4) {
+                                            dragMoved = true;
+                                        }
                                         var rect = stage.getBoundingClientRect();
                                         focalX = Math.max(0, Math.min(100, Math.round(((event.clientX - rect.left) / rect.width) * 100)));
                                         focalY = Math.max(0, Math.min(100, Math.round(((event.clientY - rect.top) / rect.height) * 100)));
                                         apply();
+                                    });
+                                    stage.addEventListener('click', function (event) {
+                                        if (!dragMoved) return;
+                                        event.preventDefault();
+                                        dragMoved = false;
                                     });
                                 })();
                                 </script>
@@ -721,11 +744,13 @@ $seriesSearchFields = $selectedSeries ? [
                                 <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
                                 <input type="hidden" name="action" value="upload_series_header">
                                 <input type="hidden" name="series_id" value="<?= (int)$series['id'] ?>">
-                                <label class="<?= empty($series['header_file']) ? 'series-header-empty' : 'series-header-replace' ?>" data-series-header-dropzone tabindex="0" role="button">
+                                <?php if (empty($series['header_file'])): ?>
+                                <label class="series-header-empty" for="series-header-upload-input" data-series-header-dropzone tabindex="0" role="button">
                                     <span data-series-header-label><?= empty($series['header_file']) ? 'Upload header image' : 'Replace header image' ?></span>
-                                    <?php if (empty($series['header_file'])): ?><small>Click or drop a JPG, PNG or WebP · 15 MB maximum</small><?php endif; ?>
-                                    <input class="series-header-upload__input" type="file" name="header_upload" accept="image/png,image/jpeg,image/webp" required data-series-header-file>
+                                    <small>Click or drop a JPG, PNG or WebP · 15 MB maximum</small>
                                 </label>
+                                <?php endif; ?>
+                                <input id="series-header-upload-input" class="series-header-upload__input" type="file" name="header_upload" accept="image/png,image/jpeg,image/webp" required data-series-header-file>
                                 <span class="series-header-upload__status" data-series-header-status aria-live="polite"></span>
                             </form>
 
@@ -757,8 +782,8 @@ $seriesSearchFields = $selectedSeries ? [
                             (function () {
                                 var form = document.querySelector('[data-series-header-upload]');
                                 var input = form && form.querySelector('[data-series-header-file]');
-                                var dropzone = form && form.querySelector('[data-series-header-dropzone]');
-                                var label = form && form.querySelector('[data-series-header-label]');
+                                var dropzone = document.querySelector('[data-series-header-dropzone]');
+                                var label = document.querySelector('[data-series-header-label]');
                                 var status = form && form.querySelector('[data-series-header-status]');
                                 if (!form || !input || !dropzone || !label) return;
 
