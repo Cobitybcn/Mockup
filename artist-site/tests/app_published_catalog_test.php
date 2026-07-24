@@ -122,11 +122,15 @@ $pdo->exec("INSERT INTO mockup_sheets (id,user_id,artwork_id,artwork_sheet_id,ar
     VALUES (64,7,31,41,71,'related-context.jpg','Second context','','','')");
 $pdo->exec("INSERT INTO mockup_sheets (id,user_id,artwork_id,artwork_sheet_id,artwork_group_id,mockup_file,title,description,keywords,tags)
     VALUES (65,7,32,42,0,'unrelated-context.jpg','Unrelated context','','','')");
+$pdo->exec("INSERT INTO mockup_sheets (id,user_id,artwork_id,artwork_sheet_id,artwork_group_id,mockup_file,title,description,keywords,tags)
+    VALUES (66,7,31,41,71,'deleted-context.jpg','Deleted context','','','')");
 $pdo->exec("INSERT INTO mockups (id,user_id,mockup_file) VALUES (72,7,'related-cover.jpg')");
 $pdo->exec("INSERT INTO mockups (id,user_id,mockup_file) VALUES (73,7,'related-context.jpg')");
 $pdo->exec("INSERT INTO mockups (id,user_id,mockup_file) VALUES (74,7,'unrelated-context.jpg')");
 $pdo->exec("INSERT INTO publication_items (id,publication_id,mockup_sheet_id,position,title)
     VALUES (63,51,62,0,'')");
+$pdo->exec("INSERT INTO publication_items (id,publication_id,mockup_sheet_id,position,title)
+    VALUES (67,51,66,1,'')");
 $pdo->exec("INSERT INTO bilingual_editorial_content (user_id,entity_type,entity_id,locale,content_json,is_published,published_content_json)
     VALUES (7,'artwork',31,'es','{\"description\":\"Borrador posterior\"}',1,'{\"description\":\"Texto español aprobado\"}')");
 

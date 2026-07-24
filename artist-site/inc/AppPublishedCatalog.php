@@ -153,6 +153,9 @@ final class AppPublishedCatalog
                     m.artwork_id=a.id OR m.artwork_sheet_id=sh.id OR
                     (COALESCE(a.artwork_group_id,0)>0 AND m.artwork_group_id=a.artwork_group_id)
                 )
+                INNER JOIN mockups live ON live.user_id=m.user_id AND (
+                    live.id=m.mockup_id OR live.mockup_file=m.mockup_file
+                )
                 WHERE sh.id=? AND sh.user_id=? AND m.mockup_file=?
                 LIMIT 1');
             $statement->execute([$artworkSheetId, $userId, $file]);
@@ -173,7 +176,13 @@ final class AppPublishedCatalog
                 )) mockup_id,
                 m.mockup_file,m.description,m.keywords,m.tags,m.alt_text mockup_alt_text,m.caption mockup_caption
             FROM publication_items i JOIN mockup_sheets m ON m.id=i.mockup_sheet_id
-            WHERE i.publication_id=? ORDER BY i.position,i.id');
+            WHERE i.publication_id=? AND EXISTS (
+                SELECT 1 FROM mockups live
+                WHERE live.user_id=m.user_id AND (
+                    live.id=m.mockup_id OR live.mockup_file=m.mockup_file
+                )
+            )
+            ORDER BY i.position,i.id');
         $statement->execute([$publicationId]);
         $items = $statement->fetchAll();
         $seenMockupIds = [];
@@ -253,7 +262,12 @@ final class AppPublishedCatalog
                 m.artwork_id=a.id OR m.artwork_sheet_id=sh.id OR
                 (COALESCE(a.artwork_group_id,0)>0 AND m.artwork_group_id=a.artwork_group_id)
             )
-            WHERE p.id=? AND NOT EXISTS (
+            WHERE p.id=? AND EXISTS (
+                SELECT 1 FROM mockups live
+                WHERE live.user_id=m.user_id AND (
+                    live.id=m.mockup_id OR live.mockup_file=m.mockup_file
+                )
+            ) AND NOT EXISTS (
                 SELECT 1 FROM mockup_sheets newer
                 WHERE newer.user_id=m.user_id AND newer.id>m.id AND (
                     (COALESCE(m.mockup_id,0)>0 AND newer.mockup_id=m.mockup_id) OR

@@ -76,11 +76,46 @@ if (!empty($mockup['prompt_file'])) {
     }
 }
 
-$deleteStmt = $pdo->prepare('DELETE FROM mockups WHERE id = :id');
-$deleteStmt->execute(['id' => $mockupId]);
+$mockupFile = basename((string)($mockup['mockup_file'] ?? ''));
+$sheetStmt = $pdo->prepare('SELECT id FROM mockup_sheets
+    WHERE user_id = :user_id AND (mockup_id = :mockup_id OR mockup_file = :mockup_file)');
+$sheetStmt->execute([
+    'user_id' => (int)$currentUser['id'],
+    'mockup_id' => $mockupId,
+    'mockup_file' => $mockupFile,
+]);
+$sheetIds = array_values(array_filter(array_map('intval', $sheetStmt->fetchAll(PDO::FETCH_COLUMN))));
 
-$deleteJobStmt = $pdo->prepare('DELETE FROM mockup_generation_jobs WHERE mockup_id = :mockup_id');
-$deleteJobStmt->execute(['mockup_id' => $mockupId]);
+$pdo->beginTransaction();
+try {
+    if ($sheetIds) {
+        $marks = implode(',', array_fill(0, count($sheetIds), '?'));
+        $pdo->prepare("DELETE FROM publication_items WHERE mockup_sheet_id IN ($marks)")->execute($sheetIds);
+    }
+
+    $deleteSheets = $pdo->prepare('DELETE FROM mockup_sheets
+        WHERE user_id = :user_id AND (mockup_id = :mockup_id OR mockup_file = :mockup_file)');
+    $deleteSheets->execute([
+        'user_id' => (int)$currentUser['id'],
+        'mockup_id' => $mockupId,
+        'mockup_file' => $mockupFile,
+    ]);
+
+    $deleteStmt = $pdo->prepare('DELETE FROM mockups WHERE id = :id AND user_id = :user_id');
+    $deleteStmt->execute([
+        'id' => $mockupId,
+        'user_id' => (int)$currentUser['id'],
+    ]);
+
+    $deleteJobStmt = $pdo->prepare('DELETE FROM mockup_generation_jobs WHERE mockup_id = :mockup_id');
+    $deleteJobStmt->execute(['mockup_id' => $mockupId]);
+    $pdo->commit();
+} catch (Throwable $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    throw $e;
+}
 
 echo json_encode(['ok' => true]);
 exit;
