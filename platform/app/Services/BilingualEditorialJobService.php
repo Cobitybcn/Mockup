@@ -6,6 +6,9 @@ final class BilingualEditorialJobService
     private const ENTITY_TYPES = ['series', 'artwork', 'mockup'];
     private const ACTIONS = ['prepare', 'adapt'];
     private const ACTIVE_STATUSES = ['queued', 'processing'];
+    private const QUEUED_REDISPATCH_AFTER_SECONDS = 300;
+    private const PROCESSING_TIMEOUT_SECONDS = 2700;
+    private const MAX_DISPATCH_ATTEMPTS = 3;
 
     public function __construct(private readonly PDO $pdo) {}
 
@@ -64,6 +67,47 @@ final class BilingualEditorialJobService
             "UPDATE bilingual_editorial_jobs SET task_name=?,error='',updated_at=?
              WHERE id=? AND user_id=? AND status='queued'"
         )->execute([mb_substr(trim($taskName), 0, 512), date(DATE_ATOM), $jobId, $userId]);
+    }
+
+    public function recoverStalledJob(array $job): array
+    {
+        $status = (string)($job['status'] ?? '');
+        if ($status === 'queued' && $this->isOlderThan($job, self::QUEUED_REDISPATCH_AFTER_SECONDS)) {
+            $jobId = (int)($job['id'] ?? 0);
+            $userId = (int)($job['user_id'] ?? 0);
+            if ((int)($job['attempts'] ?? 0) >= self::MAX_DISPATCH_ATTEMPTS) {
+                $this->markEnqueueFailed(
+                    $jobId,
+                    $userId,
+                    'La generación no pudo iniciar después de varios intentos. Volvé a pulsar la acción para intentarlo otra vez.'
+                );
+                return $this->job($jobId, $userId);
+            }
+
+            $now = date(DATE_ATOM);
+            $this->pdo->prepare(
+                "UPDATE bilingual_editorial_jobs
+                 SET task_name='',attempts=attempts+1,error='Reintentando generación…',updated_at=?
+                 WHERE id=? AND user_id=? AND status='queued'"
+            )->execute([$now, $jobId, $userId]);
+            return $this->job($jobId, $userId);
+        }
+
+        if ($status === 'processing' && $this->isOlderThan($job, self::PROCESSING_TIMEOUT_SECONDS)) {
+            $this->fail(
+                (int)$job['id'],
+                'La generación quedó interrumpida. Volvé a pulsar la acción para intentarlo otra vez.'
+            );
+            return $this->job((int)$job['id'], (int)$job['user_id']);
+        }
+
+        return $job;
+    }
+
+    public function needsDispatch(array $job): bool
+    {
+        return (string)($job['status'] ?? '') === 'queued'
+            && trim((string)($job['task_name'] ?? '')) === '';
     }
 
     public function markEnqueueFailed(int $jobId, int $userId, string $error): void
@@ -135,5 +179,11 @@ final class BilingualEditorialJobService
             || !in_array($action, self::ACTIONS, true)) {
             throw new InvalidArgumentException('Invalid editorial generation job.');
         }
+    }
+
+    private function isOlderThan(array $job, int $seconds): bool
+    {
+        $updatedAt = strtotime((string)($job['updated_at'] ?? ''));
+        return $updatedAt !== false && $updatedAt <= time() - $seconds;
     }
 }

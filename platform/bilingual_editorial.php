@@ -38,6 +38,22 @@ try {
         $job = $jobId > 0
             ? $jobs->job($jobId, $userId)
             : $jobs->activeForEntity($userId, $entityType, $entityId);
+        if ($job) {
+            $job = $jobs->recoverStalledJob($job);
+            if ($jobs->needsDispatch($job)) {
+                if (CloudTasksService::isAvailable()) {
+                    try {
+                        $taskName = CloudTasksService::enqueueEditorialGeneration((int)$job['id']);
+                        $jobs->attachTask((int)$job['id'], $userId, $taskName);
+                    } catch (Throwable $dispatchError) {
+                        $jobs->markEnqueueFailed((int)$job['id'], $userId, $dispatchError->getMessage());
+                    }
+                } else {
+                    (new BilingualEditorialGenerationWorker(Database::connection()))->process((int)$job['id']);
+                }
+                $job = $jobs->job((int)$job['id'], $userId);
+            }
+        }
         $spanish = $service->get($userId, $entityType, $entityId, 'es');
         $english = $service->get($userId, $entityType, $entityId, 'en');
         echo json_encode([

@@ -189,6 +189,13 @@ function run_bilingual_editorial_service_tests(): void
     $completedJob = $jobs->publicState($jobs->job((int)$queuedJob['id'], 7));
     TestHarness::assertSame('completed', $completedJob['status'], 'la generación terminada queda disponible después de abandonar la ficha');
     TestHarness::assertSame('Background English', $completedJob['result']['english_content']['description'] ?? '', 'el resultado persistente puede recuperarse al volver');
+    $stalledJob = $jobs->createOrReuse(7, 'artwork', 11, 'adapt');
+    $pdo->prepare("UPDATE bilingual_editorial_jobs SET task_name='old-cloud-task',updated_at=? WHERE id=?")
+        ->execute([date(DATE_ATOM, time() - 600), (int)$stalledJob['id']]);
+    $stalledJob = $jobs->recoverStalledJob($jobs->job((int)$stalledJob['id'], 7));
+    TestHarness::assertSame('', (string)$stalledJob['task_name'], 'una tarea editorial en cola y detenida queda lista para reenviarse');
+    TestHarness::assertSame(1, (int)$stalledJob['attempts'], 'la recuperación contabiliza el reenvío para evitar un bloqueo infinito');
+    TestHarness::assertSame(true, $jobs->needsDispatch($stalledJob), 'el endpoint reconoce que la tarea recuperada necesita una nueva entrega');
     $analysisClient = new BilingualEditorialFakeClient();
     $analysisImage = tempnam(sys_get_temp_dir(), 'analysis_locale_');
     file_put_contents($analysisImage, 'test-image');
@@ -454,6 +461,16 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertContains("adaptMissing", $editorEndpoint, 'el endpoint permite generar inglés internacional nuevo desde el español');
     TestHarness::assertContains("prepareBilingualSeries", $editorEndpoint, 'el endpoint guarda Series solo después de validar ambos idiomas');
     TestHarness::assertContains("CloudTasksService::enqueueEditorialGeneration", $editorEndpoint, 'la traducción se entrega a la cola persistente de producción');
+    TestHarness::assertContains('recoverStalledJob', $editorEndpoint, 'una traducción detenida se recupera sin bloquear para siempre la ficha');
+    $cloudTasksSource = (string)file_get_contents($platformRoot . '/app/Services/CloudTasksService.php');
+    TestHarness::assertContains('$oidcToken->setAudience($oidcAudience)', $cloudTasksSource, 'Cloud Tasks autentica contra el origen del worker y no contra la ruta PHP');
+    $audienceMethod = new ReflectionMethod(CloudTasksService::class, 'oidcAudience');
+    $audienceMethod->setAccessible(true);
+    TestHarness::assertSame(
+        'https://mockups-worker-example-uc.a.run.app',
+        $audienceMethod->invoke(null, 'https://mockups-worker-example-uc.a.run.app/editorial_worker.php'),
+        'la audiencia OIDC elimina la ruta que Cloud Run rechaza con HTTP 403'
+    );
     $editorWorker = (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialGenerationWorker.php');
     TestHarness::assertTrue(
         strpos($editorWorker, 'setSpanishPublished') < strpos($editorWorker, 'adaptMissing'),

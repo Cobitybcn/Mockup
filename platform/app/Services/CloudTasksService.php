@@ -99,13 +99,17 @@ class CloudTasksService
         }
 
         $targetUrl = self::targetUrl($workerUrl, $workerScript);
+        $oidcAudience = self::oidcAudience($workerUrl);
 
         $client = new CloudTasksClient();
         $queueName = $client->queueName($projectId, $location, $queue);
 
         $oidcToken = new OidcToken();
         $oidcToken->setServiceAccountEmail($invokerSa);
-        $oidcToken->setAudience($targetUrl);
+        // Cloud Run validates the service origin as the OIDC audience. Using
+        // the endpoint path here makes an otherwise authorized task fail with
+        // HTTP 403 before the worker script can claim the persisted job.
+        $oidcToken->setAudience($oidcAudience);
 
         $httpRequest = new HttpRequest();
         $httpRequest->setUrl($targetUrl);
@@ -139,5 +143,19 @@ class CloudTasksService
         }
 
         return rtrim($workerUrl, '/') . '/' . $workerScript;
+    }
+
+    private static function oidcAudience(string $workerUrl): string
+    {
+        $parts = parse_url(trim($workerUrl));
+        if (!is_array($parts) || empty($parts['scheme']) || empty($parts['host'])) {
+            return rtrim(trim($workerUrl), '/');
+        }
+
+        $audience = strtolower((string)$parts['scheme']) . '://' . (string)$parts['host'];
+        if (isset($parts['port'])) {
+            $audience .= ':' . (int)$parts['port'];
+        }
+        return $audience;
     }
 }
