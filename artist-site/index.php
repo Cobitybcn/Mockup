@@ -1563,6 +1563,10 @@ function render_published_artwork(array $site, array $artwork): void
     $medium = trim((string)($artwork['medium'] ?: ($facts['medium'] ?? '')));
     $year = trim((string)($artwork['artwork_year'] ?: ($facts['year'] ?? '')));
     $mainImageFile = trim((string)($artwork['header_file'] ?? '')) ?: (string)$artwork['source_image_file'];
+    $galleryMockups = array_values(array_filter(
+        (array)$artwork['items'],
+        static fn (array $mockup): bool => basename((string)($mockup['mockup_file'] ?? '')) !== basename($mainImageFile)
+    ));
     $artworkSeriesTitle = trim((string)($artwork['series'] ?? ''));
     $storeOffer = app_store()?->offerForArtwork((int)($artwork['canonical_artwork_id'] ?? 0));
     $publishedSeries = null;
@@ -1614,9 +1618,9 @@ function render_published_artwork(array $site, array $artwork): void
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
-            <?php if ($artwork['items']): ?>
+            <?php if ($galleryMockups): ?>
                 <div class="mockup-gallery" aria-label="<?= e($artwork['title'] . ' contextual mockups') ?>">
-                    <?php foreach ($artwork['items'] as $mockup): ?>
+                    <?php foreach ($galleryMockups as $mockup): ?>
                         <figure class="artwork-detail__supporting-image">
                             <a class="mockup-gallery__link" href="<?= e(url_for('artworks/' . $artwork['slug'] . '/mockups/' . $mockup['public_slug'])) ?>">
                                 <img src="<?= e(app_publication_media_url($artwork, $mockup['mockup_file'], 768)) ?>"
