@@ -241,7 +241,8 @@ $viewerBack = 'mockup_bilingual_experiment.php?id=' . $mockupId;
         .mockup-favorite-toggle{position:absolute;z-index:4;top:8px;left:8px;width:28px;height:28px;min-height:28px;margin:0;padding:0;display:grid;place-items:center;border:1px solid rgba(255,255,255,.62);border-radius:50%;background:rgba(25,25,23,.38);color:#fff;box-shadow:none;backdrop-filter:blur(7px)}
         .mockup-related-card .mockup-favorite-toggle{top:9px;left:9px;width:22px;height:22px;min-height:22px}
         .mockup-favorite-toggle svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.6}
-        .mockup-favorite-toggle.active{background:rgba(154,123,86,.82);color:#fff}
+        .mockup-favorite-toggle.active{border-color:rgba(255,250,218,.96);background:linear-gradient(145deg,rgba(255,251,223,.9),rgba(218,198,119,.62)),rgba(239,226,172,.76);color:#806b24;box-shadow:inset 0 1px 0 rgba(255,255,255,.98),inset 0 -3px 7px rgba(129,108,37,.13),0 5px 12px rgba(111,94,39,.17),0 0 0 1px rgba(157,133,51,.17)}
+        .mockup-favorite-toggle.active svg{fill:currentColor}
         .mockup-empty{min-height:300px;display:grid;place-items:center;border:1px dashed var(--line);color:var(--muted);font-size:13px;font-style:italic;text-align:center}
         .editorial-drawer{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
         .editorial-drawer>summary{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 20px;cursor:pointer;list-style:none}

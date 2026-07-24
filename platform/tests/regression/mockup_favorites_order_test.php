@@ -29,4 +29,11 @@ function run_mockup_favorites_order_regression_tests(): void
         $artworkPage,
         'an unselected favorite leaves the leading group immediately'
     );
+
+    $mockupSheet = (string)file_get_contents(__DIR__ . '/../../mockup_bilingual_experiment.php');
+    TestHarness::assertContains(
+        '.mockup-favorite-toggle.active svg{fill:currentColor}',
+        $mockupSheet,
+        'the mockup sheet distinguishes favorites with a filled star'
+    );
 }
