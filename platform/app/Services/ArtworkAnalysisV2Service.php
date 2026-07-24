@@ -35,6 +35,7 @@ final class ArtworkAnalysisV2Service
             '{description_opening_rhythm}'=>(string)$strategy['description_opening_rhythm'],
             '{description_structure_type}'=>(string)$strategy['description_structure_type'],
             '{recent_opening_types_to_avoid}'=>implode(', ', (array)$strategy['recent_opening_types_to_avoid']) ?: 'none recorded',
+            '{editorial_integrity_rules}'=>EditorialIntegrityPolicy::promptRules('artwork'),
             '{search_intent_rules}'=>SearchIntentPrompt::forEntity('artwork'),
             '{artwork_id}'=>(string)$artworkId,
             '{title}'=>(string)($artwork['final_title']??''),

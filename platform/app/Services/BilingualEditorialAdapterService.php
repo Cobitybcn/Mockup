@@ -143,6 +143,21 @@ final class BilingualEditorialAdapterService
                 $this->entityContext($userId, $entityType, $entityId)
             );
         }
+        if (in_array($entityType, ['artwork', 'mockup'], true)) {
+            $adapted = $this->repairEditorialIntegrityIfNeeded(
+                $prompt,
+                $sourceContent,
+                $adapted,
+                $entityType,
+                'international English'
+            );
+        }
+        if ($entityType === 'mockup') {
+            $adapted = $this->enforceCurrentMockupIdentity(
+                $adapted,
+                $this->entityContext($userId, $entityType, $entityId)
+            );
+        }
         if (!$this->hasMeaningfulContent($adapted)) {
             throw new RuntimeException('La adaptación no produjo contenido utilizable.');
         }
@@ -209,6 +224,18 @@ final class BilingualEditorialAdapterService
             );
             $proposal = $this->enforceCurrentMockupIdentity($proposal, $context);
         }
+        if (in_array($entityType, ['artwork', 'mockup'], true)) {
+            $proposal = $this->repairEditorialIntegrityIfNeeded(
+                $prompt,
+                $shape,
+                $proposal,
+                $entityType,
+                'natural Spanish'
+            );
+        }
+        if ($entityType === 'mockup') {
+            $proposal = $this->enforceCurrentMockupIdentity($proposal, $context);
+        }
         if (!$this->hasMeaningfulContent($proposal)) {
             throw new RuntimeException('The editorial assistant did not produce a usable Spanish proposal.');
         }
@@ -241,6 +268,21 @@ final class BilingualEditorialAdapterService
         $prompt = $this->prompt($userId, $entityType, $entityId, 'es', 'en', (array)$source['content'], (array)$target['content'], false);
         $decoded = $this->decodeJson($this->client->generateText([$this->client->textPart($prompt)], 'gemini-2.5-flash'));
         $proposal = $this->projectToSourceShape((array)$source['content'], $decoded);
+        if (in_array($entityType, ['artwork', 'mockup'], true)) {
+            $proposal = $this->repairEditorialIntegrityIfNeeded(
+                $prompt,
+                (array)$source['content'],
+                $proposal,
+                $entityType,
+                'international English'
+            );
+        }
+        if ($entityType === 'mockup') {
+            $proposal = $this->enforceCurrentMockupIdentity(
+                $proposal,
+                $this->entityContext($userId, $entityType, $entityId)
+            );
+        }
         if (!$this->hasMeaningfulContent($proposal)) throw new RuntimeException('La adaptación no produjo contenido utilizable.');
         return ['content' => $proposal, 'status' => 'proposal', 'source_locale' => 'es', 'target_locale' => 'en'];
     }
@@ -279,6 +321,9 @@ final class BilingualEditorialAdapterService
             ? 'Existing target content is protected. Generate the complete adaptation, but the application will fill only target fields that are currently empty.'
             : 'Generate a complete replacement proposal for editorial review. Do not save or merge it; the application will apply it only after an explicit artist decision.';
         $searchIntentRules = SearchIntentPrompt::forEntity($entityType);
+        $integrityRules = in_array($entityType, ['artwork', 'mockup'], true)
+            ? EditorialIntegrityPolicy::promptRules($entityType)
+            : '';
 
         return <<<PROMPT
 You are an editorial language adapter for a contemporary artist's international catalogue.
@@ -301,6 +346,8 @@ EDITORIAL RULES
 - When the source value is empty, return an empty value.
 - Return exactly the same JSON keys and nesting as SOURCE_CONTENT.
 - {$targetPolicy}
+
+{$integrityRules}
 
 {$searchIntentRules}
 
@@ -385,6 +432,9 @@ RULES
             $materialsAndProcess = 'No artist-authored materials or process information was supplied.';
         }
         $searchIntentRules = SearchIntentPrompt::forEntity($entityType);
+        $integrityRules = in_array($entityType, ['artwork', 'mockup'], true)
+            ? EditorialIntegrityPolicy::promptRules($entityType)
+            : '';
         $imageInstruction = $entityType === 'series'
             ? 'No image is attached. Use only the supplied catalogue evidence.'
             : 'The exact image may be attached after this prompt. Use it only as visual evidence under the entity-specific rules.';
@@ -408,6 +458,7 @@ CORE RULES
 - CURRENT SPANISH DRAFT may be stale. Use it only as factual evidence. Rebuild the proposal from the current artist-authored context, profile, materials and search architecture instead of preserving its wording or paragraph structure.
 - Do not translate the universal title. It may appear unchanged inside seo_title.
 - Return exactly the keys and nesting in OUTPUT SHAPE. Return strings for every terminal value.
+{$integrityRules}
 {$searchIntentRules}
 {$entityRules}
 
@@ -733,6 +784,57 @@ PROMPT;
         $value = preg_replace('/`([^`\r\n]+)`/u', '$1', $value) ?? $value;
         $value = preg_replace('/^\s*#{1,6}\s+/mu', '', $value) ?? $value;
         return trim(str_replace(['**', '__'], '', $value));
+    }
+
+    private function repairEditorialIntegrityIfNeeded(
+        string $basePrompt,
+        array $shape,
+        array $content,
+        string $entityType,
+        string $language
+    ): array {
+        $issues = EditorialIntegrityPolicy::issues($content, $entityType);
+        if ($issues === []) {
+            return $content;
+        }
+
+        $shapeJson = json_encode($shape, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        for ($attempt = 1; $attempt <= 2; $attempt++) {
+            $contentJson = json_encode($content, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $issuesJson = json_encode($issues, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $rules = EditorialIntegrityPolicy::promptRules($entityType);
+            $repairPrompt = $basePrompt . <<<PROMPT
+
+EDITORIAL INTEGRITY REPAIR — ATTEMPT {$attempt}
+The previous {$language} JSON violated the non-negotiable editorial policy.
+Return the complete JSON again with exactly the keys and nesting in OUTPUT SHAPE.
+Remove or rewrite every unsupported claim and reduce every overlong field without losing confirmed facts, visual specificity, search usefulness or the artwork's identity.
+Do not replace a forbidden prestige claim with a synonym or a softer version of the same unsupported claim.
+
+{$rules}
+
+OUTPUT SHAPE
+{$shapeJson}
+
+PREVIOUS OUTPUT
+{$contentJson}
+
+ISSUES TO CORRECT
+{$issuesJson}
+PROMPT;
+            $decoded = $this->decodeJson(
+                $this->client->generateText([$this->client->textPart($repairPrompt)], 'gemini-2.5-flash')
+            );
+            $content = $this->projectToSourceShape($shape, $decoded);
+            $issues = EditorialIntegrityPolicy::issues($content, $entityType);
+            if ($issues === []) {
+                return $content;
+            }
+        }
+
+        throw new RuntimeException(
+            'La propuesta no superó la política editorial: ' . implode('; ', $issues)
+        );
     }
 
     private function hasMeaningfulContent(array $content): bool

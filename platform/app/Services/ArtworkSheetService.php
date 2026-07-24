@@ -363,8 +363,12 @@ final class ArtworkSheetService
                 ], 'gemini-2.5-flash');
                 $decoded = json_decode($this->extractJson($text), true);
                 if (is_array($decoded)) {
-                    $this->saveArtworkAnalysisArtifacts((int)$artwork['id'], $imagePath, $decoded, $prompt, $text);
                     $generated = $this->metadataFromAdminAnalysis($decoded, $fallback);
+                    $integrityIssues = EditorialIntegrityPolicy::issues($generated, 'artwork');
+                    if ($integrityIssues !== []) {
+                        throw new RuntimeException('Artwork editorial integrity failed: ' . implode('; ', $integrityIssues));
+                    }
+                    $this->saveArtworkAnalysisArtifacts((int)$artwork['id'], $imagePath, $decoded, $prompt, $text);
                 }
             } catch (Throwable $e) {
                 $generated = $fallback;
@@ -385,8 +389,7 @@ final class ArtworkSheetService
             $orientation = (float)$width > (float)$height ? 'horizontal' : (((float)$height > (float)$width) ? 'vertical' : 'square');
         }
 
-        $prompt = PromptSettings::artworkAnalysisPrompt();
-        return strtr($prompt, [
+        $prompt = strtr(PromptSettings::artworkAnalysisPrompt(), [
             '{artist_profile_prompt}' => ArtistProfile::hasContent($artistProfile) ? ArtistProfile::forPrompt($artistProfile) : '',
             '{artist_statement}' => (string)($artistProfile['statement'] ?? ''),
             '{visual_language}' => (string)($artistProfile['visual_language'] ?? ''),
@@ -404,6 +407,7 @@ final class ArtworkSheetService
             '{scale_text}' => trim($width . ' x ' . $height . ' ' . (string)($artwork['unit'] ?? 'cm')),
             '{context_count}' => (string)PromptSettings::mockupContextCount(),
         ]);
+        return $prompt . "\n\n" . EditorialIntegrityPolicy::promptRules('artwork');
     }
 
     /**
@@ -640,6 +644,7 @@ final class ArtworkSheetService
             $prompt = "Analyze this exact mockup image. {$languageInstruction} The approved artwork identity is authoritative; analyze the scene without renaming, reinterpreting, or inventing facts about the artwork. Return strict JSON only.\n"
                 . "APPROVED ARTWORK IDENTITY:\n" . json_encode($artworkIdentity ?: ['title'=>$artworkSheet['title'],'subtitle'=>$artworkSheet['subtitle'],'description'=>$artworkSheet['description']], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) . "\n"
                 . "MOCKUP RULES: describe space type, architecture, materials, lighting, camera, scale perception, atmosphere, and artwork-space relationship. Keywords, long tails, tags, captions and channel copy must be justified by the visible image. Never use generic repeated copy. Never call the artwork framed unless a real frame is visible. Exclude home decor, wall art, perfect for any room, elevate your space, decor inspiration, and generic interior-marketing filler. Do not invent furniture, materials, colors, light, artwork facts, or destination links. Website is detailed and collector-facing; Pinterest is shorter and traffic-oriented; Instagram is visual/community-oriented; Facebook is conversational; TikTok is future preparation only.\n"
+                . EditorialIntegrityPolicy::promptRules('mockup') . "\n"
                 . SearchIntentPrompt::forEntity('mockup') . "\n"
                 . "SEARCH FIELD MAPPING: neutral.tags contains ten to fourteen standardized catalogue filters when supported; neutral.search_terms contains twelve to sixteen distinct searches a real buyer could type, including at least six genuine long tails; neutral.seo_title and neutral.seo_description are the page metadata. Do not create parallel keyword buckets or poetic search phrases. Derive channel search fields from this same compact evidence without duplication.\n"
                 . "USER NOTES: {$notes}\n"
@@ -664,6 +669,10 @@ final class ArtworkSheetService
                         'caption'=>(string)($neutral['caption']??''),
                         'mockup_analysis_v2'=>$decoded,
                     ]);
+                    $integrityIssues = EditorialIntegrityPolicy::issues($generated, 'mockup');
+                    if ($integrityIssues !== []) {
+                        throw new RuntimeException('Mockup editorial integrity failed: ' . implode('; ', $integrityIssues));
+                    }
                     unset($generated['mockup_analysis_v2_en']);
                     $analysisGenerated = true;
                 }

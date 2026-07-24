@@ -26,6 +26,7 @@ require_once __DIR__ . '/Support/ResponsiveImage.php';
 require_once __DIR__ . '/Support/JsonStringNormalizer.php';
 require_once __DIR__ . '/Support/ArtworkPhysicalIntegrityPolicy.php';
 require_once __DIR__ . '/Support/SearchIntentPrompt.php';
+require_once __DIR__ . '/Support/EditorialIntegrityPolicy.php';
 require_once __DIR__ . '/Support/ArtworkAnalysisV2.php';
 require_once __DIR__ . '/Support/ArtworkOriginalityChecker.php';
 require_once __DIR__ . '/Support/DescriptionDiversityEngine.php';

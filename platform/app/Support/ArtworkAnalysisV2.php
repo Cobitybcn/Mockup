@@ -76,6 +76,8 @@ RULES
 19. Do not repeat the same observation in the short description, opening paragraph and closing paragraph.
 20. Fill editorial_strategy.paragraph_functions with one concise function label for every paragraph in master_description, in the same order.
 
+{editorial_integrity_rules}
+
 {search_intent_rules}
 
 SEARCH FIELD MAPPING
@@ -215,6 +217,9 @@ PROMPT;
         $facts = is_array($data['confirmed_facts'] ?? null) ? $data['confirmed_facts'] : [];
         $hasDimensions = (float)($facts['width_cm'] ?? 0) > 0 && (float)($facts['height_cm'] ?? 0) > 0;
         if (!$hasDimensions && preg_match('/\b(large|large-scale|oversized|monumental)\b/i', $joined)) $errors[] = 'Scale language requires confirmed dimensions.';
+        foreach (EditorialIntegrityPolicy::issues($data, 'artwork') as $issue) {
+            $errors[] = 'Editorial integrity: ' . $issue;
+        }
         if ($requireUncheckedOriginality && ($data['originality_check']['catalogue_checked'] ?? null) !== false) $errors[] = 'Dry-run originality check must remain false.';
         if (($data['review']['analysis_status'] ?? '') !== 'draft' || ($data['review']['editorial_status'] ?? '') !== 'draft') $errors[] = 'Dry-run review status must remain draft.';
         return $errors;
