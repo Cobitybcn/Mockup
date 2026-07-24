@@ -22,13 +22,16 @@ function artist_site_language(): string
     static $resolved = null;
     if (is_string($resolved)) return $resolved;
 
+    $pathLanguage = artist_site_path_language();
     $requested = strtolower(trim((string)($_GET['lang'] ?? '')));
     $stored = strtolower(trim((string)($_COOKIE['artist_site_language'] ?? '')));
-    $resolved = in_array($requested, ['es', 'en'], true)
-        ? $requested
-        : (in_array($stored, ['es', 'en'], true) ? $stored : 'en');
+    $resolved = $pathLanguage !== ''
+        ? $pathLanguage
+        : (in_array($requested, ['es', 'en'], true)
+            ? $requested
+            : (in_array($stored, ['es', 'en'], true) ? $stored : 'en'));
 
-    if ($requested === $resolved && !headers_sent()) {
+    if (($pathLanguage === $resolved || $requested === $resolved) && !headers_sent()) {
         $cookiePath = rtrim(base_path(), '/') . '/';
         setcookie('artist_site_language', $resolved, [
             'expires' => time() + 31536000,
@@ -54,8 +57,38 @@ function artist_site_url_with_language(string $url, string $language): string
     [$urlWithoutFragment, $fragment] = array_pad(explode('#', $url, 2), 2, null);
     [$base, $queryString] = array_pad(explode('?', $urlWithoutFragment, 2), 2, '');
     parse_str($queryString, $query);
-    $query['lang'] = $language;
-    $localized = $base . '?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986);
+    unset($query['lang']);
+
+    $parts = parse_url($base);
+    $path = is_array($parts) ? (string)($parts['path'] ?? '/') : $base;
+    $prefix = '';
+    if (is_array($parts) && isset($parts['scheme'], $parts['host'])) {
+        $prefix = (string)$parts['scheme'] . '://';
+        if (isset($parts['user'])) {
+            $prefix .= (string)$parts['user'];
+            if (isset($parts['pass'])) $prefix .= ':' . (string)$parts['pass'];
+            $prefix .= '@';
+        }
+        $prefix .= (string)$parts['host'];
+        if (isset($parts['port'])) $prefix .= ':' . (int)$parts['port'];
+    }
+
+    $applicationBase = base_path();
+    $routePath = $path;
+    $pathBase = '';
+    if ($applicationBase !== '' && ($path === $applicationBase || str_starts_with($path, $applicationBase . '/'))) {
+        $pathBase = $applicationBase;
+        $routePath = substr($path, strlen($applicationBase)) ?: '/';
+    }
+    $segments = array_values(array_filter(explode('/', trim($routePath, '/')), 'strlen'));
+    if (in_array($segments[0] ?? '', ['en', 'es'], true)) array_shift($segments);
+    $trailingSlash = $routePath === '/' || str_ends_with($routePath, '/');
+    $localizedPath = '/' . $language;
+    if ($segments !== []) $localizedPath .= '/' . implode('/', $segments);
+    if ($trailingSlash) $localizedPath .= '/';
+    $localized = $prefix . $pathBase . $localizedPath;
+    $localizedQuery = http_build_query($query, '', '&', PHP_QUERY_RFC3986);
+    if ($localizedQuery !== '') $localized .= '?' . $localizedQuery;
     return $localized . ($fragment !== null ? '#' . $fragment : '');
 }
 
@@ -186,7 +219,12 @@ function url_for(string $path = ''): string
     $base = base_path();
     $path = '/' . ltrim($path, '/');
     $path = $path === '//' ? '/' : $path;
-    return rtrim($base, '/') . $path;
+    $url = rtrim($base, '/') . $path;
+    $route = strtolower((string)(parse_url($path, PHP_URL_PATH) ?: '/'));
+    $unlocalized = preg_match('~^/(?:assets|admin|admin-v2|api|data|inc|tests|tools|scripts|docs)(?:/|$)~', $route) === 1
+        || in_array($route, ['/sitemap.xml', '/robots.txt', '/favicon.ico', '/favicon.svg'], true)
+        || preg_match('~^/(?:draft-media|draft-preview|audit_migration_web|run_migration[^/]*)\.php$~', $route) === 1;
+    return $unlocalized ? $url : artist_site_url_with_language($url, artist_site_language());
 }
 
 function base_path(): string
@@ -256,6 +294,20 @@ function current_path(): string
         $uri = substr($uri, 10) ?: '/';
     }
     return '/' . trim($uri, '/');
+}
+
+function artist_site_path_language(?string $path = null): string
+{
+    $path ??= current_path();
+    $first = strtolower((string)(explode('/', trim($path, '/'))[0] ?? ''));
+    return in_array($first, ['en', 'es'], true) ? $first : '';
+}
+
+function artist_site_path_without_language(string $path): string
+{
+    $segments = array_values(array_filter(explode('/', trim($path, '/')), 'strlen'));
+    if (in_array(strtolower((string)($segments[0] ?? '')), ['en', 'es'], true)) array_shift($segments);
+    return '/' . implode('/', $segments);
 }
 
 function format_artwork_price(mixed $price, string $currency = 'EUR'): string

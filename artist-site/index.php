@@ -20,9 +20,24 @@ require __DIR__ . '/inc/AppStore.php';
 require __DIR__ . '/inc/StripeCheckout.php';
 require __DIR__ . '/inc/ArtistContactMailer.php';
 
-$path = current_path();
+$requestPath = current_path();
+$pathLanguage = artist_site_path_language($requestPath);
+$path = artist_site_path_without_language($requestPath);
 $segments = array_values(array_filter(explode('/', trim($path, '/'))));
 $siteLanguage = artist_site_language();
+
+$isPublicDocument = !in_array(($segments[0] ?? ''), ['admin', 'admin-v2', 'api'], true)
+    && !in_array($path, ['/sitemap.xml', '/robots.txt'], true);
+if ($isPublicDocument && in_array(strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET')), ['GET', 'HEAD'], true)) {
+    $canonicalRequest = artist_site_url_with_language((string)($_SERVER['REQUEST_URI'] ?? '/'), $siteLanguage);
+    $currentRequest = (string)($_SERVER['REQUEST_URI'] ?? '/');
+    if ($pathLanguage === '' || isset($_GET['lang'])) {
+        if ($canonicalRequest !== $currentRequest) {
+            header('Location: ' . $canonicalRequest, true, 301);
+            exit;
+        }
+    }
+}
 
 $resolvedArtistEmail = '';
 try {
@@ -46,19 +61,22 @@ try {
 
 if ($path === '/sitemap.xml') {
     header('Content-Type: application/xml; charset=utf-8');
-    $urls = ['/', '/paintings/', '/artworks/', '/sold-works/', '/series/', '/artist/', '/artist-statement/', '/studio-process/', '/exhibitions-collections/', '/studio-notes/', '/blog/', '/contact/', '/privacy-policy/'];
-    foreach (array_keys($artworks) as $slug) {
-        $urls[] = '/paintings/' . $slug . '/';
+    $routes = [];
+    $addLocalizedRoute = static function (string $english, ?string $spanish = null) use (&$routes): void {
+        $routes[$english . "\n" . ($spanish ?? $english)] = [
+            'en' => $english,
+            'es' => $spanish ?? $english,
+        ];
+    };
+    foreach (['/', '/artworks/', '/sold-works/', '/series/', '/artist/', '/artist-statement/', '/studio-process/', '/exhibitions-collections/', '/studio-notes/', '/contact/', '/privacy-policy/'] as $route) {
+        $addLocalizedRoute($route);
     }
     foreach (array_keys($journal) as $slug) {
-        $urls[] = '/studio-notes/' . $slug . '/';
-    }
-    foreach (array_keys($blog ?? []) as $slug) {
-        $urls[] = '/blog/' . $slug . '/';
+        $addLocalizedRoute('/studio-notes/' . $slug . '/');
     }
     try {
         foreach (array_keys(app_series_catalog()?->all() ?? []) as $slug) {
-            $urls[] = '/series/' . $slug . '/';
+            $addLocalizedRoute('/series/' . $slug . '/');
         }
     } catch (Throwable $error) {
         error_log('Published series sitemap unavailable: ' . $error->getMessage());
@@ -66,18 +84,26 @@ if ($path === '/sitemap.xml') {
     try {
         foreach (app_catalog()?->all() ?? [] as $slug => $publishedArtwork) {
             if ($publishedArtwork['visibility'] !== 'public') continue;
-            $urls[] = '/artworks/' . $slug . '/';
+            $addLocalizedRoute('/artworks/' . $slug . '/');
             foreach ($publishedArtwork['items'] as $mockup) {
-                $urls[] = '/artworks/' . $slug . '/mockups/' . $mockup['public_slug'] . '/';
+                $addLocalizedRoute(
+                    '/artworks/' . $slug . '/mockups/' . $mockup['public_slug_en'] . '/',
+                    '/artworks/' . $slug . '/mockups/' . $mockup['public_slug_es'] . '/'
+                );
             }
         }
     } catch (Throwable $error) {
         error_log('Published artwork sitemap unavailable: ' . $error->getMessage());
     }
+    $urls = [];
+    foreach ($routes as $route) {
+        $urls[] = artist_site_url_with_language($site['url'] . $route['en'], 'en');
+        $urls[] = artist_site_url_with_language($site['url'] . $route['es'], 'es');
+    }
     echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     echo "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
     foreach ($urls as $url) {
-        echo "  <url><loc>" . e($site['url'] . $url) . "</loc></url>\n";
+        echo "  <url><loc>" . e($url) . "</loc></url>\n";
     }
     echo "</urlset>";
     exit;
@@ -3606,7 +3632,8 @@ switch ($segments[0] ?? '') {
             $mockupDescription = trim((string)($mockup['description'] ?: $mockup['caption'] ?: site_t('A contextual presentation of ', 'Una presentación contextual de ') . $publishedArtwork['title'] . site_t(' by ', ' por ') . $artistName . '.'));
             $mockupSeoTitle = trim((string)($mockup['seo_title'] ?? '')) ?: $mockupTitle . ' | ' . $artistName;
             $mockupSeoDescription = trim((string)($mockup['seo_description'] ?? '')) ?: $mockupDescription;
-            $canonicalBase = rtrim((string)$site['url'], '/') . '/artworks/' . $publishedArtwork['slug'] . '/mockups/';
+            $canonicalBase = preg_replace('~/(?:en|es)$~', '', rtrim((string)$site['url'], '/'))
+                . '/artworks/' . $publishedArtwork['slug'] . '/mockups/';
             $meta = page_meta($mockupSeoTitle, $mockupSeoDescription, $canonicalBase . $currentMockupSlug . '/', app_publication_media_url($publishedArtwork, $mockup['mockup_file']));
             $meta['language_urls'] = [
                 'en' => $canonicalBase . $mockup['public_slug_en'] . '/',

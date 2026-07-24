@@ -35,6 +35,7 @@ $localizedCanonical = artist_site_url_with_language(
     <link rel="canonical" href="<?= e($localizedCanonical) ?>">
     <link rel="alternate" hreflang="es" href="<?= e(artist_site_url_with_language((string)($languageCanonicals['es'] ?? $meta['canonical']), 'es')) ?>">
     <link rel="alternate" hreflang="en" href="<?= e(artist_site_url_with_language((string)($languageCanonicals['en'] ?? $meta['canonical']), 'en')) ?>">
+    <link rel="alternate" hreflang="x-default" href="<?= e(artist_site_url_with_language((string)($languageCanonicals['en'] ?? $meta['canonical']), 'en')) ?>">
     <meta property="og:title" content="<?= e($meta['title']) ?>">
     <meta property="og:description" content="<?= e($meta['description']) ?>">
     <meta property="og:type" content="website">
