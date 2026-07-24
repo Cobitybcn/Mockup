@@ -346,14 +346,10 @@ $viewerBack = 'mockup_bilingual_experiment.php?id=' . $mockupId;
                 </div>
                 <div class="bilingual-preparation-bar">
                     <div>
-                        <strong><?= $mockupHasSpanishContent ? 'Preparar website y canales' : 'Preparar contenido' ?></strong>
-                        <span><?= $mockupHasSpanishContent ? 'Regenera y guarda el inglés internacional desde el español maestro.' : 'Genera el español maestro, los canales y el inglés internacional en una sola acción.' ?></span>
+                        <strong><?= $mockupHasSpanishContent ? 'Regenerar análisis y contenido' : 'Preparar contenido' ?></strong>
+                        <span><?= $mockupHasSpanishContent ? 'Regenera el análisis español y reconstruye el inglés internacional y los canales.' : 'Genera el español maestro, los canales y el inglés internacional en una sola acción.' ?></span>
                     </div>
-                    <?php if ($mockupHasSpanishContent): ?>
-                        <button type="button" data-editorial-refresh>Preparar website y canales</button>
-                    <?php else: ?>
-                        <button type="button" data-editorial-generate>Preparar contenido</button>
-                    <?php endif; ?>
+                    <button type="button" data-editorial-generate><?= $mockupHasSpanishContent ? 'Regenerar análisis ES + EN' : 'Preparar contenido' ?></button>
                 </div>
                 <details class="editorial-memo"><summary>Memo privado del mockup</summary><div class="editorial-copy" contenteditable="true" role="textbox" aria-multiline="true" data-private-memo data-editorial-locale="es" data-placeholder="Ideas y decisiones específicas de esta escena…"><?= mbe_h($mockupSpanishEditorial['private_memo'] ?? '') ?></div></details>
             </details>

@@ -416,6 +416,16 @@ function run_bilingual_editorial_service_tests(): void
         strpos($seriesScreen, 'data-editorial-refresh') === false,
         'actualizar Series regenera el español antes de reconstruir el inglés'
     );
+    $mockupScreen = (string)file_get_contents($platformRoot . '/mockup_bilingual_experiment.php');
+    TestHarness::assertTrue(
+        strpos($mockupScreen, 'data-editorial-refresh') === false,
+        'actualizar Mockups regenera el análisis español antes de reconstruir el inglés'
+    );
+    TestHarness::assertContains(
+        'Regenerar análisis ES + EN',
+        $mockupScreen,
+        'Mockups conserva una acción explícita para regenerar el análisis completo'
+    );
     TestHarness::assertContains('data-series-direction-copy="conceptual_core"', $seriesScreen, 'la explicación de Series usa superficies editoriales');
     TestHarness::assertContains('series-bilingual-field series-bilingual-field--large', $seriesScreen, 'la dirección reutiliza exactamente el componente del texto curatorial');
     TestHarness::assertContains('grid-template-rows:subgrid', $seriesScreen, 'los tableros editoriales comparten filas reales para comparar ES y EN');
