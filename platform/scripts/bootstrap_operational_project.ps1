@@ -178,9 +178,16 @@ $existingQueue = gcloud tasks queues describe $QueueName --project=$ProjectId --
 if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($existingQueue)) {
     gcloud tasks queues create $QueueName `
         --project=$ProjectId `
-        --location=$Region
+        --location=$Region `
+        --max-concurrent-dispatches=8 `
+        --max-dispatches-per-second=4
 } else {
     Write-Host "Cloud Tasks queue already exists: $QueueName" -ForegroundColor Yellow
+    gcloud tasks queues update $QueueName `
+        --project=$ProjectId `
+        --location=$Region `
+        --max-concurrent-dispatches=8 `
+        --max-dispatches-per-second=4
 }
 
 Write-Host "SUCCESS: Operational project bootstrap completed." -ForegroundColor Green

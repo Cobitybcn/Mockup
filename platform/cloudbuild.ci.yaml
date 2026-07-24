@@ -282,6 +282,12 @@ steps:
           --region="${_REGION}" \
           --platform=managed \
           --image="$${image}@$${digest}" \
+          --cpu=1 \
+          --memory=2Gi \
+          --concurrency=4 \
+          --min-instances=0 \
+          --max-instances=4 \
+          --timeout=300 \
           --update-env-vars="APP_ENV=production,APP_ALLOW_SCHEMA_MIGRATIONS=false,APP_RELEASE_COMMIT=$COMMIT_SHA,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true,PINTEREST_API_ENVIRONMENT=production,PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED=true,PINTEREST_LIVE_PUBLISH_ENABLED=true" \
           --remove-env-vars="DB_PASSWORD" \
           --update-secrets="DB_PASSWORD=${_DB_PASSWORD_SECRET}:latest" \
@@ -327,6 +333,12 @@ steps:
           --region="${_REGION}" \
           --platform=managed \
           --image="$${image}@$${digest}" \
+          --cpu=2 \
+          --memory=4Gi \
+          --concurrency=20 \
+          --min-instances=1 \
+          --max-instances=10 \
+          --timeout=300 \
           --update-env-vars="APP_ENV=production,APP_ALLOW_SCHEMA_MIGRATIONS=false,APP_RELEASE_COMMIT=$COMMIT_SHA,PUBLIC_REGISTRATION_ENABLED=false,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true,PINTEREST_API_ENVIRONMENT=production,PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED=true,PINTEREST_LIVE_PUBLISH_ENABLED=true" \
           --remove-env-vars="DB_PASSWORD" \
           --update-secrets="DB_PASSWORD=${_DB_PASSWORD_SECRET}:latest,STRIPE_CREDENTIALS_KEY=${_STRIPE_CREDENTIALS_KEY_SECRET}:latest" \

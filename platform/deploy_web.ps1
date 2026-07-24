@@ -90,9 +90,12 @@ Invoke-Gcloud run deploy $WebService `
     --revision-suffix=$revisionSuffix `
     --allow-unauthenticated `
     --service-account="mockups-web-sa@$ProjectId.iam.gserviceaccount.com" `
-    --min-instances=0 `
-    --max-instances=2 `
-    --memory=2Gi `
+    --cpu=2 `
+    --memory=4Gi `
+    --concurrency=20 `
+    --min-instances=1 `
+    --max-instances=10 `
+    --timeout=300 `
     --region=$Region
 
 # A service may retain revision-pinned traffic after a rollback. Verify and

@@ -36,8 +36,12 @@ steps:
       - '--region=us-central1'
       - '--service-account=mockups-web-sa@$PROJECT_ID.iam.gserviceaccount.com'
       - '--allow-unauthenticated'
-      - '--min-instances=0'
-      - '--max-instances=2'
+      - '--cpu=2'
+      - '--memory=4Gi'
+      - '--concurrency=20'
+      - '--min-instances=1'
+      - '--max-instances=10'
+      - '--timeout=300'
 
   # 6. Deploy Worker Service to Cloud Run (Private/Internal)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -50,8 +54,12 @@ steps:
       - '--region=us-central1'
       - '--service-account=mockups-worker-sa@$PROJECT_ID.iam.gserviceaccount.com'
       - '--no-allow-unauthenticated'
+      - '--cpu=1'
+      - '--memory=2Gi'
+      - '--concurrency=4'
       - '--min-instances=0'
-      - '--max-instances=2'
+      - '--max-instances=4'
+      - '--timeout=300'
 
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/mockups-repo/mockups-web:latest'

@@ -91,9 +91,12 @@ Invoke-Gcloud run deploy $WorkerService `
     --revision-suffix=$revisionSuffix `
     --no-allow-unauthenticated `
     --service-account="mockups-worker-sa@$ProjectId.iam.gserviceaccount.com" `
-    --min-instances=0 `
-    --max-instances=2 `
+    --cpu=1 `
     --memory=2Gi `
+    --concurrency=4 `
+    --min-instances=0 `
+    --max-instances=4 `
+    --timeout=300 `
     --region=$Region
 
 Invoke-Gcloud run services add-iam-policy-binding $WorkerService `
