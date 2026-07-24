@@ -2237,31 +2237,23 @@ function render_published_artist_page(array $profile): void
     $portraitImage = $photoFile !== '' ? app_artist_photo_url($photoFile) : '';
     $portraitCanRender = $portraitImage !== '';
 
-    $tagline = trim((string)($profile['conceptual_keywords'] ?? ''));
-    if ($tagline !== '') {
-        $tagline = implode(' · ', array_map('trim', preg_split('/[,;]+/', $tagline) ?: []));
-    } else {
-        $tagline = 'Abstract Painting';
-    }
-
     $processItems = [];
     if (trim((string)($profile['visual_language'] ?? '')) !== '') {
-        $processItems[] = ['title' => 'Core Visual Language', 'description' => $profile['visual_language']];
+        $processItems[] = ['title' => site_t('Core Visual Language', 'Lenguaje visual'), 'description' => $profile['visual_language']];
     }
     if (trim((string)($profile['materials'] ?? '')) !== '') {
-        $processItems[] = ['title' => 'Materials & Process', 'description' => $profile['materials']];
+        $processItems[] = ['title' => site_t('Materials & Process', 'Materiales y proceso'), 'description' => $profile['materials']];
     }
     if (trim((string)($profile['recurring_themes'] ?? '')) !== '') {
-        $processItems[] = ['title' => 'Recurring Themes', 'description' => $profile['recurring_themes']];
+        $processItems[] = ['title' => site_t('Recurring Themes', 'Temas recurrentes'), 'description' => $profile['recurring_themes']];
     }
     if (trim((string)($profile['palette_notes'] ?? '')) !== '') {
-        $processItems[] = ['title' => 'Atmosphere & Palette', 'description' => $profile['palette_notes']];
+        $processItems[] = ['title' => site_t('Atmosphere & Palette', 'Atmósfera y paleta'), 'description' => $profile['palette_notes']];
     }
     ?>
     <section class="page-hero artist-page-hero">
-        <p class="eyebrow"><?= e($tagline) ?></p>
+        <p class="eyebrow"><?= e(site_t('Artist profile', 'Perfil del artista')) ?></p>
         <h1><?= e($profile['artist_name'] ?: 'Maurizio Valch') ?></h1>
-        <p><?= nl2br(e($profile['short_bio'])) ?></p>
     </section>
     <section class="section artist-profile-block<?= $portraitCanRender ? '' : ' artist-profile-block--text-only' ?>">
         <?php if ($portraitCanRender): ?>
@@ -2276,12 +2268,12 @@ function render_published_artist_page(array $profile): void
     <?php if (trim((string)($profile['statement'] ?? '')) !== ''): ?>
         <section class="section artist-statement-excerpt">
             <div>
-                <p class="eyebrow">Artist statement</p>
-                <h2>Statement Excerpt</h2>
+                <p class="eyebrow"><?= e(site_t('Artist statement', 'Declaración artística')) ?></p>
+                <h2><?= e(site_t('Statement Excerpt', 'Fragmento de la declaración')) ?></h2>
             </div>
             <div class="prose">
                 <p><?= nl2br(e($profile['statement'])) ?></p>
-                <a class="button button--quiet" href="<?= e(url_for('artist-statement')) ?>">Full Statement</a>
+                <a class="button button--quiet" href="<?= e(url_for('artist-statement')) ?>"><?= e(site_t('Full Statement', 'Declaración completa')) ?></a>
             </div>
         </section>
     <?php endif; ?>
@@ -2289,7 +2281,7 @@ function render_published_artist_page(array $profile): void
     <?php if ($processItems): ?>
         <section class="section">
             <div class="section-head section-head--simple">
-                <h2>Artistic Process & Language</h2>
+                <h2><?= e(site_t('Artistic Process & Language', 'Proceso y lenguaje artístico')) ?></h2>
             </div>
             <div class="artist-genealogy">
                 <?php foreach ($processItems as $item): ?>
@@ -2303,8 +2295,8 @@ function render_published_artist_page(array $profile): void
     <?php endif; ?>
 
     <section class="section artist-link-panel">
-        <a class="button" href="<?= e(url_for('artworks/')) ?>">View Artworks</a>
-        <a class="button button--quiet" href="<?= e(url_for('contact')) ?>">Inquire / Contact</a>
+        <a class="button" href="<?= e(url_for('artworks/')) ?>"><?= e(site_t('View Artworks', 'Ver obras')) ?></a>
+        <a class="button button--quiet" href="<?= e(url_for('contact')) ?>"><?= e(site_t('Inquire / Contact', 'Consultar / Contactar')) ?></a>
     </section>
     <?php
 }
