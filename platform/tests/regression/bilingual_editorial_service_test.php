@@ -112,6 +112,34 @@ final class BilingualEditorialRepairingMockupClient extends BilingualEditorialFa
     }
 }
 
+final class BilingualEditorialStaleIdentityClient extends BilingualEditorialFakeClient
+{
+    public function generateText(array $parts, string $model = 'gemini-2.5-flash'): string
+    {
+        $result = parent::generateText($parts, $model);
+        if (!str_contains($this->lastPrompt, 'independent contextual image')) return $result;
+        $decoded = json_decode($result, true);
+        if (!is_array($decoded)) return $result;
+        $decoded['description'] = str_replace(
+            'SOL DIVISUS',
+            'Warm Structures, Distant Sun',
+            (string)($decoded['description'] ?? '')
+        ) . ' Pertenece a la Serie Core.';
+        $decoded['caption'] = str_replace(
+            'SOL DIVISUS',
+            'Warm Structures, Distant Sun',
+            (string)($decoded['caption'] ?? '')
+        );
+        $decoded['seo_title'] = str_replace(
+            'SOL DIVISUS',
+            'Warm Structures, Distant Sun',
+            (string)($decoded['seo_title'] ?? '')
+        );
+        $decoded['social']['website']['description'] = 'Warm Structures, Distant Sun pertenece a la Core Series.';
+        return json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+}
+
 function run_bilingual_editorial_service_tests(): void
 {
     TestHarness::group('Contenido editorial bilingue');
@@ -236,6 +264,24 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertSame('Una lectura contextual precisa de la obra dentro de un espacio arquitectónico contemporáneo.', $mockupProposal['content']['description'] ?? '', 'Mockups puede generar una propuesta editorial directamente en español');
     TestHarness::assertContains('independent contextual image', $mockupProposalClient->lastPrompt, 'la propuesta del mockup conserva su lectura contextual propia');
     TestHarness::assertContains('Never infer artwork pigments from mockup lighting', $mockupProposalClient->lastPrompt, 'el mockup no reinterpreta pigmentos alterados por la escena');
+    $staleArtworkAnalysis = [
+        'confirmed_facts' => ['series' => 'Core'],
+        'canonical_editorial' => [
+            'title' => 'Warm Structures, Distant Sun',
+            'caption' => 'Warm Structures, Distant Sun, Core Series.',
+        ],
+    ];
+    $pdo->prepare('UPDATE artwork_sheets SET title=?,generated_json=? WHERE id=41')
+        ->execute(['VIA SOLIS', json_encode($staleArtworkAnalysis, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)]);
+    $pdo->exec("UPDATE artworks SET final_title='VIA SOLIS' WHERE id=11");
+    $pdo->exec("UPDATE artwork_series SET title='PRIMORDIUM' WHERE id=3");
+    $identityProposal = (new BilingualEditorialAdapterService($pdo, new BilingualEditorialStaleIdentityClient()))
+        ->generateSpanishDraft(7, 'mockup', 21);
+    $identityJson = json_encode($identityProposal['content'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    TestHarness::assertContains('VIA SOLIS', $identityJson, 'el título maestro actual reemplaza cualquier nombre heredado en el contenido del mockup');
+    TestHarness::assertTrue(!str_contains($identityJson, 'Warm Structures, Distant Sun'), 'el mockup no vuelve a publicar el título histórico de la obra');
+    TestHarness::assertContains('PRIMORDIUM', $identityJson, 'la serie actual reemplaza la serie heredada en el contenido del mockup');
+    TestHarness::assertTrue(!str_contains($identityJson, 'Core Series') && !str_contains($identityJson, 'Serie Core'), 'el mockup no vuelve a publicar la serie histórica');
     $repairingMockupClient = new BilingualEditorialRepairingMockupClient();
     $repairedMockupProposal = (new BilingualEditorialAdapterService($pdo, $repairingMockupClient))->generateSpanishDraft(7, 'mockup', 21);
     TestHarness::assertSame(2, $repairingMockupClient->calls, 'Mockups corrige automáticamente una primera respuesta incompleta');

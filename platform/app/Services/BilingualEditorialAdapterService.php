@@ -138,6 +138,10 @@ final class BilingualEditorialAdapterService
                 'international English',
                 $sourceContent
             );
+            $adapted = $this->enforceCurrentMockupIdentity(
+                $adapted,
+                $this->entityContext($userId, $entityType, $entityId)
+            );
         }
         if (!$this->hasMeaningfulContent($adapted)) {
             throw new RuntimeException('La adaptación no produjo contenido utilizable.');
@@ -203,6 +207,7 @@ final class BilingualEditorialAdapterService
                 $proposal,
                 'natural Spanish'
             );
+            $proposal = $this->enforceCurrentMockupIdentity($proposal, $context);
         }
         if (!$this->hasMeaningfulContent($proposal)) {
             throw new RuntimeException('The editorial assistant did not produce a usable Spanish proposal.');
@@ -543,6 +548,26 @@ PROMPT;
         $analysis = json_decode((string)($row['generated_json'] ?? ''), true);
         $artworkAnalysis = json_decode((string)($row['artwork_generated_json'] ?? ''), true);
         unset($row['generated_json'], $row['artwork_generated_json']);
+        $currentArtworkTitle = trim((string)($row['artwork_title'] ?? ''));
+        $currentSeriesTitle = trim((string)($row['series_title'] ?? ''));
+        $legacyArtworkTitle = is_array($artworkAnalysis)
+            ? trim((string)($artworkAnalysis['canonical_editorial']['title'] ?? ''))
+            : '';
+        $legacySeriesTitle = is_array($artworkAnalysis)
+            ? trim((string)($artworkAnalysis['confirmed_facts']['series'] ?? ''))
+            : '';
+        $row['artwork_identity'] = [
+            'universal_title' => $currentArtworkTitle,
+            'series_title' => $currentSeriesTitle,
+            'historical_title_aliases_do_not_use' => array_values(array_filter(
+                [$legacyArtworkTitle],
+                static fn(string $value): bool => $value !== '' && strcasecmp($value, $currentArtworkTitle) !== 0
+            )),
+            'historical_series_aliases_do_not_use' => array_values(array_filter(
+                [$legacySeriesTitle],
+                static fn(string $value): bool => $value !== '' && strcasecmp($value, $currentSeriesTitle) !== 0
+            )),
+        ];
         if (is_array($analysis['mockup_analysis_v2'] ?? null)) {
             $row['mockup_analysis'] = [
                 'neutral' => $analysis['mockup_analysis_v2']['neutral'] ?? [],
@@ -550,6 +575,13 @@ PROMPT;
             ];
         }
         if (is_array($artworkAnalysis)) {
+            $artworkAnalysis = $this->rewriteIdentityAliases(
+                $artworkAnalysis,
+                $currentArtworkTitle,
+                (array)$row['artwork_identity']['historical_title_aliases_do_not_use'],
+                $currentSeriesTitle,
+                (array)$row['artwork_identity']['historical_series_aliases_do_not_use']
+            );
             $row['approved_artwork_analysis'] = array_filter([
                 'confirmed_facts' => $artworkAnalysis['confirmed_facts'] ?? null,
                 'visual_analysis' => $artworkAnalysis['visual_analysis'] ?? null,
@@ -610,6 +642,85 @@ PROMPT;
                 : '';
         }
         return $result;
+    }
+
+    private function enforceCurrentMockupIdentity(array $content, array $context): array
+    {
+        $identity = is_array($context['artwork_identity'] ?? null)
+            ? (array)$context['artwork_identity']
+            : [];
+        return $this->rewriteIdentityAliases(
+            $content,
+            trim((string)($identity['universal_title'] ?? $context['artwork_title'] ?? '')),
+            is_array($identity['historical_title_aliases_do_not_use'] ?? null)
+                ? $identity['historical_title_aliases_do_not_use']
+                : [],
+            trim((string)($identity['series_title'] ?? $context['series_title'] ?? '')),
+            is_array($identity['historical_series_aliases_do_not_use'] ?? null)
+                ? $identity['historical_series_aliases_do_not_use']
+                : []
+        );
+    }
+
+    private function rewriteIdentityAliases(
+        array $content,
+        string $currentArtworkTitle,
+        array $historicalArtworkTitles,
+        string $currentSeriesTitle,
+        array $historicalSeriesTitles
+    ): array {
+        $rewrite = function (mixed $value) use (
+            &$rewrite,
+            $currentArtworkTitle,
+            $historicalArtworkTitles,
+            $currentSeriesTitle,
+            $historicalSeriesTitles
+        ): mixed {
+            if (is_array($value)) {
+                foreach ($value as $key => $nested) {
+                    $value[$key] = $rewrite($nested);
+                }
+                return $value;
+            }
+            if (!is_string($value)) return $value;
+
+            if ($currentArtworkTitle !== '') {
+                foreach ($historicalArtworkTitles as $historicalTitle) {
+                    $historicalTitle = trim((string)$historicalTitle);
+                    if ($historicalTitle !== '' && strcasecmp($historicalTitle, $currentArtworkTitle) !== 0) {
+                        $value = str_ireplace($historicalTitle, $currentArtworkTitle, $value);
+                    }
+                }
+            }
+            if ($currentSeriesTitle !== '') {
+                foreach ($historicalSeriesTitles as $historicalSeries) {
+                    $historicalSeries = trim((string)$historicalSeries);
+                    if ($historicalSeries === '' || strcasecmp($historicalSeries, $currentSeriesTitle) === 0) continue;
+                    $value = str_ireplace(
+                        [
+                            $historicalSeries . ' Series',
+                            'Series ' . $historicalSeries,
+                            'Serie ' . $historicalSeries,
+                            'series ' . $historicalSeries,
+                            'serie ' . $historicalSeries,
+                            '#' . preg_replace('/\s+/u', '', $historicalSeries) . 'Series',
+                        ],
+                        [
+                            $currentSeriesTitle . ' series',
+                            $currentSeriesTitle . ' series',
+                            'serie ' . $currentSeriesTitle,
+                            $currentSeriesTitle . ' series',
+                            'serie ' . $currentSeriesTitle,
+                            '#' . preg_replace('/\s+/u', '', $currentSeriesTitle),
+                        ],
+                        $value
+                    );
+                }
+            }
+            return $value;
+        };
+
+        return $rewrite($content);
     }
 
     private function plainEditorialText(string $value): string
