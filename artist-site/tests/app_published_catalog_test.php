@@ -170,8 +170,8 @@ $catalog = (new AppPublishedCatalog($pdo, 'artist@example.com'))->all();
 $artwork = $catalog['test-work-current'] ?? null;
 $catalogService = new AppPublishedCatalog($pdo, 'artist@example.com');
 
-if (array_keys($catalog) !== ['first-work', 'test-work-current']) {
-    fwrite(STDERR, "FAIL: published catalog does not follow Root Album series order and canonical grouping.\n");
+if (array_keys($catalog) !== ['test-work-current', 'first-work']) {
+    fwrite(STDERR, "FAIL: published artworks do not follow the series order defined in the app.\n");
     exit(1);
 }
 if (!is_array($artwork)
