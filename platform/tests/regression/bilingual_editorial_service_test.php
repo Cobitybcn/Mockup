@@ -466,6 +466,10 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertContains('data-current-series-delete', $seriesScreen, 'la ficha bilingüe conserva una acción visible para eliminar la serie actual');
     TestHarness::assertContains('Sus obras y mockups pasarán a NO SERIE', $seriesScreen, 'eliminar una serie explica el destino de sus obras y mockups');
     TestHarness::assertContains('series-website-decision', $seriesScreen, 'la mesa bilingüe conserva el bloque de decisión cuadrado para publicar la serie');
+    TestHarness::assertContains('series-website-decision--create', $seriesScreen, 'la mesa bilingüe permite crear una obra ligada directamente a la serie');
+    TestHarness::assertContains('width:112px', $seriesScreen, 'las acciones del header reutilizan el tamaño compacto aprobado');
+    TestHarness::assertContains('data-series-order-grid', $seriesScreen, 'el catálogo expone el orden directo de las series');
+    TestHarness::assertContains('series_order.js', $seriesScreen, 'el catálogo carga la persistencia del orden de series');
     TestHarness::assertContains('value="publish_series"', $seriesScreen, 'la ficha bilingüe puede llevar la serie al sitio del artista');
     TestHarness::assertContains('value="unpublish_series"', $seriesScreen, 'la ficha bilingüe puede retirar la serie del sitio del artista');
     TestHarness::assertContains("series_year_select('year_start'", $seriesScreen, 'la ficha bilingüe expone el año de inicio de la serie');

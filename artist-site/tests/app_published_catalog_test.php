@@ -94,6 +94,7 @@ $pdo->exec("CREATE TABLE artwork_series (
     published INTEGER NOT NULL DEFAULT 0,
     year_start INTEGER,
     year_end INTEGER,
+    display_order INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL
 )");
 $pdo->exec("CREATE TABLE root_artwork_candidates (
@@ -121,8 +122,8 @@ $pdo->exec("CREATE TABLE publication_slug_aliases (
 )");
 
 $pdo->exec("INSERT INTO users (id,email) VALUES (7,'artist@example.com')");
-$pdo->exec("INSERT INTO artwork_series (id,user_id,published,year_start,year_end,created_at)
-    VALUES (81,7,1,2025,2026,'2025-01-01'),(82,7,1,2026,2026,'2026-01-01')");
+$pdo->exec("INSERT INTO artwork_series (id,user_id,published,year_start,year_end,display_order,created_at)
+    VALUES (81,7,1,2025,2026,10,'2025-01-01'),(82,7,1,2026,2026,20,'2026-01-01')");
 $pdo->exec("INSERT INTO artwork_groups (id,user_id,canonical_artwork_id,status,created_at)
     VALUES (71,7,31,'active','2026-01-01'),(72,7,32,'active','2026-02-01')");
 $pdo->exec("INSERT INTO artworks (id,user_id,artwork_group_id,series_id,series_creation_number,medium,artwork_year,series,width,height,depth,unit)

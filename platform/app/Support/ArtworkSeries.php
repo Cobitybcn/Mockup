@@ -39,6 +39,7 @@ class ArtworkSeries
             self::addColumnIfMissing($pdo, 'artwork_series', 'header_focal_x', 'TINYINT UNSIGNED NOT NULL DEFAULT 50');
             self::addColumnIfMissing($pdo, 'artwork_series', 'header_focal_y', 'TINYINT UNSIGNED NOT NULL DEFAULT 50');
             self::addColumnIfMissing($pdo, 'artwork_series', 'header_zoom', 'SMALLINT UNSIGNED NOT NULL DEFAULT 115');
+            self::addColumnIfMissing($pdo, 'artwork_series', 'display_order', 'INT UNSIGNED NOT NULL DEFAULT 0');
             self::dropColumnIfExists($pdo, 'artwork_series', 'alt_text');
             self::dropColumnIfExists($pdo, 'artwork_series', 'seo_title');
             return;
@@ -74,6 +75,7 @@ class ArtworkSeries
         self::addColumnIfMissing($pdo, 'artwork_series', 'header_focal_x', 'INTEGER NOT NULL DEFAULT 50');
         self::addColumnIfMissing($pdo, 'artwork_series', 'header_focal_y', 'INTEGER NOT NULL DEFAULT 50');
         self::addColumnIfMissing($pdo, 'artwork_series', 'header_zoom', 'INTEGER NOT NULL DEFAULT 115');
+        self::addColumnIfMissing($pdo, 'artwork_series', 'display_order', 'INTEGER NOT NULL DEFAULT 0');
         // SQLite can't drop columns cheaply pre-3.35; alt_text/seo_title are left as unused legacy columns there.
     }
 
@@ -535,6 +537,8 @@ class ArtworkSeries
             FROM artwork_series s
             WHERE s.user_id = ? AND s.status = ?
             ORDER BY
+                CASE WHEN s.display_order > 0 THEN 0 ELSE 1 END ASC,
+                s.display_order ASC,
                 CASE WHEN s.year_start IS NULL AND s.year_end IS NULL THEN 1 ELSE 0 END ASC,
                 COALESCE(s.year_start, s.year_end) DESC,
                 COALESCE(s.year_end, s.year_start) DESC,
@@ -543,6 +547,57 @@ class ArtworkSeries
         ');
         $stmt->execute([$userId, 'active']);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * @param array<int,int> $orderedSeriesIds
+     */
+    public static function reorderSeries(PDO $pdo, int $userId, array $orderedSeriesIds): void
+    {
+        self::ensureSchema($pdo);
+        $orderedSeriesIds = array_values(array_unique(array_filter(
+            array_map('intval', $orderedSeriesIds),
+            static fn (int $seriesId): bool => $seriesId > 0
+        )));
+        if (!$orderedSeriesIds) {
+            throw new RuntimeException('No series were supplied.');
+        }
+
+        $current = $pdo->prepare('SELECT id FROM artwork_series WHERE user_id = ? AND status = ?');
+        $current->execute([$userId, 'active']);
+        $currentIds = array_map('intval', $current->fetchAll(PDO::FETCH_COLUMN));
+        $currentLookup = array_fill_keys($currentIds, true);
+        foreach ($orderedSeriesIds as $seriesId) {
+            if (!isset($currentLookup[$seriesId])) {
+                throw new RuntimeException('One series does not belong to this account.');
+            }
+        }
+
+        $requestedLookup = array_fill_keys($orderedSeriesIds, true);
+        foreach ($currentIds as $seriesId) {
+            if (!isset($requestedLookup[$seriesId])) {
+                $orderedSeriesIds[] = $seriesId;
+            }
+        }
+
+        $startedTransaction = !$pdo->inTransaction();
+        if ($startedTransaction) {
+            $pdo->beginTransaction();
+        }
+        try {
+            $update = $pdo->prepare('UPDATE artwork_series SET display_order = ?, updated_at = ? WHERE id = ? AND user_id = ?');
+            foreach ($orderedSeriesIds as $index => $seriesId) {
+                $update->execute([($index + 1) * 10, date('c'), $seriesId, $userId]);
+            }
+            if ($startedTransaction) {
+                $pdo->commit();
+            }
+        } catch (Throwable $e) {
+            if ($startedTransaction && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
     }
 
     private static function addColumnIfMissing(PDO $pdo, string $table, string $column, string $definition): void

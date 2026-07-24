@@ -392,11 +392,12 @@ $seriesSearchFields = $selectedSeries ? [
         .series-bilingual-period span { color:var(--muted); font-size:13px; }
         .series-bilingual-period__note { color:var(--muted); font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
 
-        .series-bilingual-actions { display:grid; align-content:center; justify-items:center; gap:10px; }
+        .series-bilingual-actions { display:grid; grid-template-columns:repeat(2,112px); align-content:center; align-items:start; justify-items:stretch; gap:10px; }
         .series-bilingual-actions form { margin:0; }
-        .series-bilingual-actions .status-pill { margin:0; }
-        .series-bilingual-actions__missing { max-width:160px; margin:0; color:var(--muted); font-size:10px; line-height:1.45; text-align:center; }
+        .series-bilingual-actions .status-pill { grid-column:1 / -1; justify-self:center; margin:0; }
+        .series-bilingual-actions__missing { grid-column:1 / -1; max-width:234px; margin:0; color:var(--muted); font-size:10px; line-height:1.45; text-align:center; }
         .series-bilingual-actions__missing a { color:var(--accent); text-decoration:underline; }
+        .series-bilingual-actions__retire { grid-column:1 / -1; justify-self:center; }
         .series-bilingual-actions__retire button { width:auto; min-height:0; margin:0; padding:8px 12px; box-shadow:none; font-size:9px; }
 
         .series-bilingual-editorial {
@@ -515,12 +516,12 @@ $seriesSearchFields = $selectedSeries ? [
             display:inline-flex;
             align-items:center;
             justify-content:center;
-            width:150px;
-            min-width:150px;
-            height:150px;
-            min-height:150px;
+            width:112px;
+            min-width:112px;
+            height:112px;
+            min-height:112px;
             margin:0;
-            padding:20px;
+            padding:14px;
             border-radius:4px;
             box-shadow:0 8px 20px rgba(58,52,43,.10);
             font-size:11px;
@@ -537,12 +538,21 @@ $seriesSearchFields = $selectedSeries ? [
         .series-website-decision--retire { border:1px solid #c9a0a7; background:#ddbfc3; color:#5d363d; }
         .series-website-decision--retire:hover,
         .series-website-decision--retire:focus-visible { border-color:#b9858e; background:#d3adb3; }
+        .series-website-decision--create { border:1px solid #9daf98; background:#b8c7b1; color:#344232; text-decoration:none; }
+        .series-website-decision--create:hover,
+        .series-website-decision--create:focus-visible { border-color:#879c81; background:#aabca3; color:#293627; }
         .series-website-decision:disabled { box-shadow:none; opacity:.55; }
+
+        .series-order-grid [data-series-order-id] { cursor:grab; }
+        .series-order-grid [data-series-order-id].sortable-chosen { cursor:grabbing; }
+        .series-order-grid .sortable-ghost { opacity:.35; }
+        .series-order-grid.is-saving-order { pointer-events:none; }
+        .series-order-status { display:block; min-height:14px; margin:8px 0 0; color:var(--muted); font-size:9px; letter-spacing:.05em; text-align:right; text-transform:uppercase; }
+        .series-order-status.is-error { color:#9f2d23; }
 
         @media (max-width:800px) {
             .series-bilingual-title { grid-template-columns:100px minmax(0,1fr); gap:14px; padding:14px; }
-            .series-bilingual-actions { grid-column:1 / -1; grid-auto-flow:column; align-items:center; justify-content:start; justify-items:start; gap:14px; padding-top:4px; border-top:1px solid var(--line); }
-            .series-website-decision { width:124px; min-width:124px; height:124px; min-height:124px; padding:14px; }
+            .series-bilingual-actions { grid-column:1 / -1; grid-template-columns:repeat(2,112px); align-items:start; justify-content:start; justify-items:stretch; gap:10px; padding-top:4px; border-top:1px solid var(--line); }
             .series-bilingual-cover { min-height:112px; }
             .series-bilingual-heading { font-size:36px; }
             .series-bilingual-title-memo { font-size:17px; }
@@ -636,6 +646,7 @@ $seriesSearchFields = $selectedSeries ? [
                 </div>
                 <div class="series-bilingual-actions">
                     <span class="status-pill <?= $seriesIsPublished ? 'status-published' : 'status-pending' ?>"><?= $seriesIsPublished ? 'Publicada' : 'Borrador' ?></span>
+                    <a class="series-website-decision series-website-decision--create" href="create_scenes.php?series=<?= (int)$selectedSeries['id'] ?>"><span>Crear<br>obra</span></a>
                     <form method="post" action="<?= series_h($seriesPublicationAnchor) ?>">
                         <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
                         <input type="hidden" name="series_id" value="<?= (int)$selectedSeries['id'] ?>">
@@ -786,18 +797,24 @@ $seriesSearchFields = $selectedSeries ? [
                     <div class="warning-list" style="margin-bottom: 20px;">Complete before publishing: <?= series_h(implode(' · ', $seriesMissing)) ?></div>
                 <?php endif; ?>
                 <?php if (!$selectedSeries): ?>
-                    <div class="social-square-grid">
+                    <div
+                        class="social-square-grid series-order-grid"
+                        data-series-order-grid
+                        data-series-order-endpoint="reorder_series.php"
+                        data-series-order-csrf="<?= series_h($_SESSION['series_csrf']) ?>"
+                        data-series-order-app-csrf="<?= series_h(Auth::csrfToken('mutation')) ?>"
+                    >
                         <?php foreach ($seriesRows as $index => $series): ?>
                             <?php $seriesArtworkCount = (int)($series['artwork_count'] ?? 0); ?>
-                            <div class="series-series-option">
-                                <a class="social-square-button series-series-tile social-square-button--<?= series_tone($index) ?>" href="series.php?series=<?= (int)$series['id'] ?>" data-series-filter-id="<?= (int)$series['id'] ?>"<?= !empty($series['header_file']) ? ' style="--series-tile-image: url(\'' . series_h(series_media_url($series['header_file'], 420)) . '\'); --series-tile-position: ' . (int)($series['header_focal_x'] ?? 50) . '% ' . (int)($series['header_focal_y'] ?? 50) . '%;"' : '' ?> aria-label="Abrir mesa de trabajo de <?= series_h($series['title']) ?>, <?= $seriesArtworkCount ?> <?= $seriesArtworkCount === 1 ? 'artwork' : 'artworks' ?>, <?= !empty($series['published']) ? 'published' : 'draft' ?>">
+                            <div class="series-series-option" data-series-order-id="<?= (int)$series['id'] ?>">
+                                <a class="social-square-button series-series-tile social-square-button--<?= series_tone($index) ?>" href="series.php?series=<?= (int)$series['id'] ?>" data-series-order-handle data-series-filter-id="<?= (int)$series['id'] ?>"<?= !empty($series['header_file']) ? ' style="--series-tile-image: url(\'' . series_h(series_media_url($series['header_file'], 420)) . '\'); --series-tile-position: ' . (int)($series['header_focal_x'] ?? 50) . '% ' . (int)($series['header_focal_y'] ?? 50) . '%;"' : '' ?> aria-label="Abrir mesa de trabajo de <?= series_h($series['title']) ?>, <?= $seriesArtworkCount ?> <?= $seriesArtworkCount === 1 ? 'artwork' : 'artworks' ?>, <?= !empty($series['published']) ? 'published' : 'draft' ?>">
                                     <span class="series-series-tile__title"><?= series_h($series['title']) ?></span>
                                     <small class="series-series-tile__meta">
                                         <?= $seriesArtworkCount > 0 ? $seriesArtworkCount . ' ' . ($seriesArtworkCount === 1 ? 'artwork' : 'artworks') : 'No artworks' ?>
                                         · <?= !empty($series['published']) ? 'Published' : 'Draft' ?>
                                     </small>
                                 </a>
-                                <a class="series-series-option__edit" href="series.php?series=<?= (int)$series['id'] ?>#series-language-editorial" aria-label="Editar texto de <?= series_h($series['title']) ?>" title="Editar texto editorial">
+                                <a class="series-series-option__edit" data-no-series-order href="series.php?series=<?= (int)$series['id'] ?>#series-language-editorial" aria-label="Editar texto de <?= series_h($series['title']) ?>" title="Editar texto editorial">
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16v4Zm9.7-13.7 4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                                 </a>
                             </div>
@@ -813,6 +830,7 @@ $seriesSearchFields = $selectedSeries ? [
                             </form>
                         </details>
                     </div>
+                    <span class="series-order-status" data-series-order-status aria-live="polite"></span>
                 <?php else: $series = $selectedSeries; ?>
                     <div class="series-grid series-grid--detailed">
                         <div class="series-header-picker">
@@ -1093,6 +1111,7 @@ $seriesSearchFields = $selectedSeries ? [
     </main>
 </div>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
+<?php if (!$selectedSeries): ?><script src="series_order.js?v=20260724-1"></script><?php endif; ?>
 <script src="series_artwork_order.js?v=20260720-4"></script>
 <?php if ($selectedSeries): ?><script src="series_header_upload.js?v=20260724-1"></script><?php endif; ?>
 <?php if ($selectedSeries && $seriesBilingualExperiment): ?><script src="bilingual-editorial.js?v=20260724-1"></script><?php endif; ?>

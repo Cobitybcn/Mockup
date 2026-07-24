@@ -30,6 +30,8 @@ final class AppPublishedSeriesCatalog
             JOIN users u ON u.id = s.user_id
             WHERE LOWER(u.email) = ? AND s.published = 1
             ORDER BY
+                CASE WHEN s.display_order > 0 THEN 0 ELSE 1 END ASC,
+                s.display_order ASC,
                 CASE WHEN s.year_start IS NULL AND s.year_end IS NULL THEN 1 ELSE 0 END ASC,
                 COALESCE(s.year_start, s.year_end) DESC,
                 COALESCE(s.year_end, s.year_start) DESC,
