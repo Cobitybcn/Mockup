@@ -464,6 +464,12 @@ function run_bilingual_editorial_service_tests(): void
     TestHarness::assertContains('recoverStalledJob', $editorEndpoint, 'una traducción detenida se recupera sin bloquear para siempre la ficha');
     $cloudTasksSource = (string)file_get_contents($platformRoot . '/app/Services/CloudTasksService.php');
     TestHarness::assertContains('$oidcToken->setAudience($oidcAudience)', $cloudTasksSource, 'Cloud Tasks autentica contra el origen del worker y no contra la ruta PHP');
+    TestHarness::assertContains("app_env('GCP_EDITORIAL_WORKER_URL', '')", $cloudTasksSource, 'la traducción puede usar un worker público firmado cuando OIDC está bloqueado por políticas de infraestructura');
+    TestHarness::assertContains("'X-Editorial-Worker-Token' => \$editorialWorkerToken", $cloudTasksSource, 'el worker editorial público recibe un secreto dedicado');
+    TestHarness::assertContains('], false);', $cloudTasksSource, 'el fallback editorial firmado no depende de la emisión OIDC');
+    $editorialWorkerSource = (string)file_get_contents($platformRoot . '/editorial_worker.php');
+    TestHarness::assertContains("app_env('EDITORIAL_WORKER_TOKEN', '')", $editorialWorkerSource, 'el worker editorial valida el secreto dedicado');
+    TestHarness::assertContains('hash_equals($expectedWorkerToken, $receivedWorkerToken)', $editorialWorkerSource, 'la validación del secreto editorial evita comparaciones vulnerables');
     $audienceMethod = new ReflectionMethod(CloudTasksService::class, 'oidcAudience');
     $audienceMethod->setAccessible(true);
     TestHarness::assertSame(

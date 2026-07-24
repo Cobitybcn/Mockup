@@ -7,12 +7,28 @@ ini_set('log_errors', '1');
 require_once __DIR__ . '/app/bootstrap.php';
 header('Content-Type: application/json; charset=utf-8');
 
-$configuredWorkerUrl = app_env('GCP_WORKER_URL', '');
-$configuredWorkerHost = $configuredWorkerUrl !== '' ? (string)(parse_url($configuredWorkerUrl, PHP_URL_HOST) ?: '') : '';
+$configuredWorkerUrls = array_filter([
+    app_env('GCP_WORKER_URL', ''),
+    app_env('GCP_EDITORIAL_WORKER_URL', ''),
+]);
+$configuredWorkerHosts = array_values(array_filter(array_map(
+    static fn(string $url): string => (string)(parse_url($url, PHP_URL_HOST) ?: ''),
+    $configuredWorkerUrls
+)));
 $requestHost = (string)($_SERVER['HTTP_HOST'] ?? '');
-if (PHP_SAPI !== 'cli' && $configuredWorkerHost !== '' && strcasecmp($configuredWorkerHost, $requestHost) !== 0) {
+if (PHP_SAPI !== 'cli' && $configuredWorkerHosts !== [] && !in_array(strtolower($requestHost), array_map('strtolower', $configuredWorkerHosts), true)) {
     http_response_code(404);
     exit;
+}
+
+if (PHP_SAPI !== 'cli') {
+    $expectedWorkerToken = trim(app_env('EDITORIAL_WORKER_TOKEN', ''));
+    $receivedWorkerToken = trim((string)($_SERVER['HTTP_X_EDITORIAL_WORKER_TOKEN'] ?? ''));
+    if ($expectedWorkerToken !== '' && !hash_equals($expectedWorkerToken, $receivedWorkerToken)) {
+        http_response_code(403);
+        echo json_encode(['ok' => false, 'error' => 'Editorial worker authorization failed.']);
+        exit;
+    }
 }
 
 $payload = PHP_SAPI === 'cli'

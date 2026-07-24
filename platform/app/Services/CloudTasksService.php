@@ -51,6 +51,21 @@ class CloudTasksService
 
     public static function enqueueEditorialGeneration(int $jobId): string
     {
+        $editorialWorkerUrl = trim(app_env('GCP_EDITORIAL_WORKER_URL', ''));
+        if ($editorialWorkerUrl !== '') {
+            $editorialWorkerToken = trim(app_env('EDITORIAL_WORKER_TOKEN', ''));
+            if ($editorialWorkerToken === '') {
+                throw new RuntimeException('EDITORIAL_WORKER_TOKEN is required for the public editorial worker.');
+            }
+
+            return self::enqueue('editorial_worker.php', [
+                'job_id' => $jobId,
+                'timestamp' => date('c'),
+            ], null, '', $editorialWorkerUrl, [
+                'X-Editorial-Worker-Token' => $editorialWorkerToken,
+            ], false);
+        }
+
         return self::enqueue('editorial_worker.php', [
             'job_id' => $jobId,
             'timestamp' => date('c'),
@@ -85,38 +100,43 @@ class CloudTasksService
         string $workerScript,
         array $payload,
         ?DateTimeImmutable $scheduledAt = null,
-        string $queueOverride = ''
+        string $queueOverride = '',
+        string $workerUrlOverride = '',
+        array $additionalHeaders = [],
+        bool $withOidc = true
     ): string
     {
         $projectId = app_env('GCP_PROJECT_ID', '');
         $location = app_env('GCP_LOCATION', 'us-central1');
         $queue = $queueOverride !== '' ? $queueOverride : app_env('GCP_QUEUE_NAME', 'mockups-generation-queue');
-        $workerUrl = app_env('GCP_WORKER_URL', '');
+        $workerUrl = $workerUrlOverride !== '' ? $workerUrlOverride : app_env('GCP_WORKER_URL', '');
         $invokerSa = app_env('GCP_TASKS_INVOKER_SA', '');
 
-        if (!$projectId || !$workerUrl || !$invokerSa) {
+        if (!$projectId || !$workerUrl || ($withOidc && !$invokerSa)) {
             throw new RuntimeException('Configuración de GCP incompleta en .env (requiere GCP_PROJECT_ID, GCP_WORKER_URL, GCP_TASKS_INVOKER_SA).');
         }
 
         $targetUrl = self::targetUrl($workerUrl, $workerScript);
-        $oidcAudience = self::oidcAudience($workerUrl);
 
         $client = new CloudTasksClient();
         $queueName = $client->queueName($projectId, $location, $queue);
 
-        $oidcToken = new OidcToken();
-        $oidcToken->setServiceAccountEmail($invokerSa);
-        // Cloud Run validates the service origin as the OIDC audience. Using
-        // the endpoint path here makes an otherwise authorized task fail with
-        // HTTP 403 before the worker script can claim the persisted job.
-        $oidcToken->setAudience($oidcAudience);
-
         $httpRequest = new HttpRequest();
         $httpRequest->setUrl($targetUrl);
         $httpRequest->setHttpMethod(HttpMethod::POST);
-        $httpRequest->setHeaders(['Content-Type' => 'application/json']);
+        $httpRequest->setHeaders(array_merge(
+            ['Content-Type' => 'application/json'],
+            $additionalHeaders
+        ));
         $httpRequest->setBody(json_encode($payload));
-        $httpRequest->setOidcToken($oidcToken);
+        if ($withOidc) {
+            $oidcAudience = self::oidcAudience($workerUrl);
+            $oidcToken = new OidcToken();
+            $oidcToken->setServiceAccountEmail($invokerSa);
+            // Cloud Run validates the service origin as the OIDC audience.
+            $oidcToken->setAudience($oidcAudience);
+            $httpRequest->setOidcToken($oidcToken);
+        }
 
         $task = new Task();
         $task->setHttpRequest($httpRequest);
