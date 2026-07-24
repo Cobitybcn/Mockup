@@ -1187,16 +1187,7 @@ foreach ($mockups ?: [] as $relatedMockup) {
     $relatedMockup['is_favorite'] = isset($favoriteMockupLookup[(int)$relatedMockup['id']]);
     $relatedMockups[] = $relatedMockup;
 }
-usort($relatedMockups, static function (array $a, array $b): int {
-    $closeViewOrder = (!empty($a['is_close_view']) ? 1 : 0) <=> (!empty($b['is_close_view']) ? 1 : 0);
-    if ($closeViewOrder !== 0) return $closeViewOrder;
-
-    $favoriteOrder = (!empty($b['is_favorite']) ? 1 : 0) <=> (!empty($a['is_favorite']) ? 1 : 0);
-    if ($favoriteOrder !== 0) return $favoriteOrder;
-
-    $dateOrder = strcmp((string)($b['created_at'] ?? ''), (string)($a['created_at'] ?? ''));
-    return $dateOrder !== 0 ? $dateOrder : ((int)($b['id'] ?? 0) <=> (int)($a['id'] ?? 0));
-});
+$relatedMockups = MockupFavorites::orderForArtworkDisplay($relatedMockups);
 $favoriteMockups = array_values(array_filter($relatedMockups, static fn (array $mockup): bool => !empty($mockup['is_favorite'])));
 
 $measurement = $meta['measurements'] ?? [];
@@ -4599,6 +4590,31 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                 button.classList.toggle('active', !!result.favorite);
                 button.title = result.favorite ? 'Remove favorite' : 'Add favorite';
                 button.setAttribute('aria-label', button.title);
+                const card = button.closest('[data-mockup-card]');
+                const grid = card?.closest('.related-mockups-sidebar-grid');
+                if (card && grid) {
+                    const cards = Array.from(grid.querySelectorAll('[data-mockup-card]'));
+                    if (result.favorite) {
+                        const firstNonFavorite = cards.find((candidate) => (
+                            candidate !== card
+                            && !candidate.querySelector('[data-favorite-mockup]')?.classList.contains('active')
+                        ));
+                        if (firstNonFavorite) {
+                            grid.insertBefore(card, firstNonFavorite);
+                        } else {
+                            grid.appendChild(card);
+                        }
+                    } else {
+                        const remainingFavorites = cards.filter((candidate) => (
+                            candidate !== card
+                            && candidate.querySelector('[data-favorite-mockup]')?.classList.contains('active')
+                        ));
+                        const lastFavorite = remainingFavorites.at(-1);
+                        if (lastFavorite) {
+                            lastFavorite.after(card);
+                        }
+                    }
+                }
             } catch (error) {
                 alert(error.message);
             } finally {

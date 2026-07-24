@@ -252,7 +252,7 @@ $seriesSearchFields = $selectedSeries ? [
     <style>
         .series-bilingual-title {
             display:grid;
-            grid-template-columns:160px minmax(0,1fr) 150px;
+            grid-template-columns:160px minmax(0,1fr);
             gap:22px;
             align-items:stretch;
             width:100%;
@@ -262,13 +262,19 @@ $seriesSearchFields = $selectedSeries ? [
             background:var(--surface);
         }
 
-        .series-bilingual-title--without-cover { grid-template-columns:minmax(0,1fr) 150px; }
+        .series-bilingual-cover-upload {
+            min-width:0;
+            margin:0;
+        }
 
         .series-bilingual-cover {
+            display:block;
             position:relative;
             min-height:160px;
             overflow:hidden;
+            border:1px solid var(--line);
             background:var(--surface-soft);
+            cursor:pointer;
         }
 
         .series-bilingual-cover img {
@@ -277,6 +283,21 @@ $seriesSearchFields = $selectedSeries ? [
             height:100%;
             object-fit:cover;
             transform-origin:center;
+        }
+
+        .series-bilingual-cover--empty {
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border-style:dashed;
+        }
+
+        .series-bilingual-cover--empty .series-header-framing__replace {
+            position:static;
+        }
+
+        .series-bilingual-cover-upload .series-header-upload__status {
+            margin:6px 0 0;
         }
 
         .series-bilingual-title-copy {
@@ -428,8 +449,7 @@ $seriesSearchFields = $selectedSeries ? [
         .bilingual-publication-bar button { min-height:38px; margin:0; padding:9px 16px; border:1px solid #d8c17e; border-radius:3px; background:#ead99f; color:#554a30; box-shadow:none; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
 
         @media (max-width:800px) {
-            .series-bilingual-title { grid-template-columns:100px minmax(0,1fr) 112px; gap:14px; padding:14px; }
-            .series-bilingual-title--without-cover { grid-template-columns:minmax(0,1fr) 112px; }
+            .series-bilingual-title { grid-template-columns:100px minmax(0,1fr); gap:14px; padding:14px; }
             .series-bilingual-cover { min-height:112px; }
             .series-bilingual-heading { font-size:36px; }
             .series-bilingual-title-memo { font-size:17px; }
@@ -459,7 +479,6 @@ $seriesSearchFields = $selectedSeries ? [
 
         @media (max-width:560px) {
             .series-bilingual-title { grid-template-columns:86px minmax(0,1fr); }
-            .series-bilingual-title--without-cover { grid-template-columns:1fr; }
         }
     </style>
 </head>
@@ -483,16 +502,31 @@ $seriesSearchFields = $selectedSeries ? [
                 </div>
             </div>
             <?php elseif ($seriesBilingualExperiment): ?>
-            <div class="series-bilingual-title <?= empty($selectedSeries['header_file']) ? 'series-bilingual-title--without-cover' : '' ?>" aria-label="Título universal de la serie">
-                <?php if (!empty($selectedSeries['header_file'])): ?>
-                    <div class="series-bilingual-cover" aria-label="Portada de la serie">
+            <div class="series-bilingual-title" aria-label="Título universal de la serie">
+                <form method="post" enctype="multipart/form-data" class="series-bilingual-cover-upload" data-series-header-upload data-series-bilingual-header-upload>
+                    <input type="hidden" name="csrf" value="<?= series_h($_SESSION['series_csrf']) ?>">
+                    <input type="hidden" name="action" value="upload_series_header">
+                    <input type="hidden" name="series_id" value="<?= (int)$selectedSeries['id'] ?>">
+                    <label
+                        class="series-bilingual-cover<?= empty($selectedSeries['header_file']) ? ' series-bilingual-cover--empty' : '' ?>"
+                        for="series-bilingual-header-upload-input"
+                        data-series-header-dropzone
+                        tabindex="0"
+                        role="button"
+                        aria-label="<?= empty($selectedSeries['header_file']) ? 'Subir portada de la serie' : 'Cambiar portada de la serie' ?>"
+                    >
+                        <?php if (!empty($selectedSeries['header_file'])): ?>
                         <img
                             src="<?= series_h(series_media_url($selectedSeries['header_file'], 520)) ?>"
                             alt="Portada de <?= series_h($selectedSeries['title']) ?>"
                             style="object-position:<?= (int)($selectedSeries['header_focal_x'] ?? 50) ?>% <?= (int)($selectedSeries['header_focal_y'] ?? 50) ?>%;transform:scale(<?= ((int)($selectedSeries['header_zoom'] ?? 115)) / 100 ?>);"
                         >
-                    </div>
-                <?php endif; ?>
+                        <?php endif; ?>
+                        <span class="series-header-framing__replace" data-series-header-label><?= empty($selectedSeries['header_file']) ? 'Subir portada' : 'Cambiar imagen' ?></span>
+                    </label>
+                    <input id="series-bilingual-header-upload-input" class="series-header-upload__input" type="file" name="header_upload" accept="image/png,image/jpeg,image/webp" required data-series-header-file>
+                    <span class="series-header-upload__status" data-series-header-status aria-live="polite"></span>
+                </form>
                 <div class="series-bilingual-title-copy">
                     <span class="series-bilingual-label">Título universal</span>
                     <h1 class="series-bilingual-heading" aria-label="Título de la serie"><span contenteditable="true" role="textbox" data-universal-title><?= series_h($selectedSeries['title']) ?></span> <span contenteditable="false">Series</span></h1>
@@ -778,65 +812,6 @@ $seriesSearchFields = $selectedSeries ? [
                                 <?php endif; ?>
                             </details>
 
-                            <script>
-                            (function () {
-                                var form = document.querySelector('[data-series-header-upload]');
-                                var input = form && form.querySelector('[data-series-header-file]');
-                                var dropzone = document.querySelector('[data-series-header-dropzone]');
-                                var label = document.querySelector('[data-series-header-label]');
-                                var status = form && form.querySelector('[data-series-header-status]');
-                                if (!form || !input || !dropzone || !label) return;
-
-                                function beginUpload(file, fromDrop) {
-                                    if (!file) return;
-                                    if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) {
-                                        if (status) status.textContent = 'Choose a JPG, PNG or WebP image.';
-                                        return;
-                                    }
-                                    if (file.size > 15 * 1024 * 1024) {
-                                        if (status) status.textContent = 'The image must be 15 MB or smaller.';
-                                        return;
-                                    }
-                                    if (fromDrop) {
-                                        try {
-                                            var transfer = new DataTransfer();
-                                            transfer.items.add(file);
-                                            input.files = transfer.files;
-                                        } catch (error) {
-                                            if (status) status.textContent = 'Click the image area to select this file.';
-                                            return;
-                                        }
-                                    }
-                                    form.setAttribute('aria-busy', 'true');
-                                    dropzone.classList.remove('is-dragging');
-                                    label.textContent = 'Uploading…';
-                                    if (status) status.textContent = file.name;
-                                    form.requestSubmit();
-                                }
-
-                                input.addEventListener('change', function () {
-                                    beginUpload(input.files && input.files[0], false);
-                                });
-                                dropzone.addEventListener('keydown', function (event) {
-                                    if (event.key !== 'Enter' && event.key !== ' ') return;
-                                    event.preventDefault();
-                                    input.click();
-                                });
-                                ['dragenter', 'dragover'].forEach(function (eventName) {
-                                    dropzone.addEventListener(eventName, function (event) {
-                                        event.preventDefault();
-                                        dropzone.classList.add('is-dragging');
-                                    });
-                                });
-                                dropzone.addEventListener('dragleave', function () {
-                                    dropzone.classList.remove('is-dragging');
-                                });
-                                dropzone.addEventListener('drop', function (event) {
-                                    event.preventDefault();
-                                    beginUpload(event.dataTransfer && event.dataTransfer.files[0], true);
-                                });
-                            }());
-                            </script>
                         </div>
                         <article class="series-card series-card--detailed">
                             <form class="series-delete-form" method="post" id="delete-series-form" onsubmit="return confirm('Remove this series? Artworks will move to NO SERIE.');" style="display:none;">
@@ -992,6 +967,7 @@ $seriesSearchFields = $selectedSeries ? [
 </div>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
 <script src="series_artwork_order.js?v=20260720-4"></script>
+<?php if ($selectedSeries): ?><script src="series_header_upload.js?v=20260724-1"></script><?php endif; ?>
 <?php if ($selectedSeries && $seriesBilingualExperiment): ?><script src="bilingual-editorial.js?v=20260724-1"></script><?php endif; ?>
 </body>
 </html>

@@ -39,6 +39,33 @@ final class MockupFavorites
         return array_fill_keys(self::idsForUser($userId), true);
     }
 
+    /**
+     * Favorites always lead an artwork's related mockups. Existing visual
+     * grouping and recency rules are preserved inside each favorite bucket.
+     *
+     * @param array<int,array<string,mixed>> $mockups
+     * @return array<int,array<string,mixed>>
+     */
+    public static function orderForArtworkDisplay(array $mockups): array
+    {
+        usort($mockups, static function (array $a, array $b): int {
+            $favoriteOrder = (!empty($b['is_favorite']) ? 1 : 0) <=> (!empty($a['is_favorite']) ? 1 : 0);
+            if ($favoriteOrder !== 0) {
+                return $favoriteOrder;
+            }
+
+            $closeViewOrder = (!empty($a['is_close_view']) ? 1 : 0) <=> (!empty($b['is_close_view']) ? 1 : 0);
+            if ($closeViewOrder !== 0) {
+                return $closeViewOrder;
+            }
+
+            $dateOrder = strcmp((string)($b['created_at'] ?? ''), (string)($a['created_at'] ?? ''));
+            return $dateOrder !== 0 ? $dateOrder : ((int)($b['id'] ?? 0) <=> (int)($a['id'] ?? 0));
+        });
+
+        return array_values($mockups);
+    }
+
     public static function removeForUser(int $userId, int $mockupId): void
     {
         if ($userId <= 0 || $mockupId <= 0) {

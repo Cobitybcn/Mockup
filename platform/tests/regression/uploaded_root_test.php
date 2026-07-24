@@ -572,6 +572,21 @@ function run_uploaded_root_regression_tests(): void
         'la portada visible de una serie abre directamente el selector de reemplazo'
     );
     TestHarness::assertContains(
+        'data-series-bilingual-header-upload',
+        $seriesSource,
+        'la ficha editorial bilingüe conserva el upload de portada'
+    );
+    TestHarness::assertContains(
+        'for="series-bilingual-header-upload-input"',
+        $seriesSource,
+        'la portada visible del modo bilingüe abre el selector de archivo'
+    );
+    TestHarness::assertContains(
+        'series_header_upload.js',
+        $seriesSource,
+        'el upload de portada comparte el mismo comportamiento en ambos modos'
+    );
+    TestHarness::assertContains(
         'if (!dragMoved) return;',
         $seriesSource,
         'arrastrar la portada para reencuadrar no abre accidentalmente el selector de archivo'
