@@ -1586,13 +1586,13 @@ function render_published_artwork(array $site, array $artwork): void
                 <?php if ($imageCaption !== ''): ?><figcaption><?= e($imageCaption) ?></figcaption><?php endif; ?>
             </figure>
             <?php if ($artwork['artwork_views']): ?>
-                <div class="mockup-gallery artwork-view-gallery" aria-label="<?= e($artwork['title'] . ' additional artwork views') ?>">
+                <div class="mockup-gallery artwork-view-gallery" aria-label="<?= e($artwork['title'] . site_t(' additional artwork views', ' vistas adicionales de la obra')) ?>">
                     <?php foreach ($artwork['artwork_views'] as $view): ?>
                         <a href="<?= e(app_publication_media_url($artwork, $view['file_name'])) ?>" target="_blank" rel="noopener">
                             <img src="<?= e(app_publication_media_url($artwork, $view['file_name'], 768)) ?>"
                                 srcset="<?= e(app_publication_media_srcset($artwork, $view['file_name'])) ?>"
                                 sizes="(max-width: 940px) calc(100vw - 36px), 62vw"
-                                alt="<?= e($artwork['title'] . ' ' . str_replace('-', ' ', $view['view_type']) . ' view') ?>"
+                                alt="<?= e($artwork['title'] . ' ' . site_t(str_replace('-', ' ', $view['view_type']) . ' view', 'vista adicional')) ?>"
                                 loading="lazy" decoding="async">
                         </a>
                     <?php endforeach; ?>
@@ -1669,14 +1669,17 @@ function render_published_artwork(array $site, array $artwork): void
                 <?php if (!empty($facts['shipping_notes'])): ?><h2>Shipping</h2><p><?= nl2br(e($facts['shipping_notes'])) ?></p><?php endif; ?>
             </div>
             <?php if ($storeOffer && !empty($storeOffer['is_purchasable'])): ?>
-                <aside class="store-offer" aria-label="Acquisition information">
-                    <p class="eyebrow">Available for acquisition</p>
+                <aside class="store-offer" aria-label="<?= e(site_t('Acquisition information', 'Información de compra')) ?>">
+                    <p class="eyebrow"><?= e(site_t('Available for acquisition', 'Disponible para adquisición')) ?></p>
                     <strong class="store-offer__price"><?= e(AppStore::money((int)$storeOffer['price_minor'], (string)$storeOffer['currency'])) ?></strong>
-                    <p>Shipping is calculated from the destination country using the rate set for its continent.</p>
-                    <div class="actions"><a class="button" href="<?= e(url_for('acquire/' . $artwork['slug'])) ?>">Acquire this work</a><a class="button button--quiet" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>">Ask the studio</a></div>
+                    <p><?= e(site_t(
+                        'Shipping is calculated from the destination country using the rate set for its continent.',
+                        'El envío se calcula según el país de destino y la tarifa correspondiente a su continente.'
+                    )) ?></p>
+                    <div class="actions"><a class="button" href="<?= e(url_for('acquire/' . $artwork['slug'])) ?>"><?= e(site_t('Acquire this work', 'Adquirir esta obra')) ?></a><a class="button button--quiet" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>"><?= e(site_t('Ask the studio', 'Consultar al estudio')) ?></a></div>
                 </aside>
             <?php elseif ($storeOffer && ((string)$storeOffer['status'] === 'sold_out' || (int)$storeOffer['stock_available'] <= 0)): ?>
-                <aside class="store-offer store-offer--unavailable"><p class="eyebrow">No longer available</p><p>This work is currently reserved or sold.</p><div class="actions"><a class="button button--quiet" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>">Ask the studio</a></div></aside>
+                <aside class="store-offer store-offer--unavailable"><p class="eyebrow"><?= e(site_t('No longer available', 'Ya no está disponible')) ?></p><p><?= e(site_t('This work is currently reserved or sold.', 'Esta obra se encuentra reservada o vendida.')) ?></p><div class="actions"><a class="button button--quiet" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>"><?= e(site_t('Ask the studio', 'Consultar al estudio')) ?></a></div></aside>
             <?php else: ?>
                 <div class="actions"><a class="button" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>"><?= e(site_t('Inquire about this work', 'Consultar por esta obra')) ?></a></div>
             <?php endif; ?>

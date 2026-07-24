@@ -14,6 +14,7 @@ $checks = [
     [str_contains($header, 'class="language-switch"') && str_contains($header, "artist_site_language_url('es')") && str_contains($header, "artist_site_language_url('en')"), 'the public header exposes the Spanish and English language selector'],
     [str_contains($styles, '.has-js .site-header.is-menu-open .header-tools') && str_contains($styles, 'min-height: 44px;'), 'mobile navigation opens explicitly and preserves touch target size'],
     [str_contains($functions, "in_array(\$requested, ['es', 'en']") && str_contains($functions, "artist_site_language() === 'es'"), 'the public website resolves Spanish or international English explicitly'],
+    [str_contains($site, "site_t('Available for acquisition', 'Disponible para adquisición')") && str_contains($site, "site_t('Acquire this work', 'Adquirir esta obra')"), 'artwork acquisition controls follow the selected public language'],
     [str_contains($script, "window.matchMedia('(min-width: 1181px)')") && !str_contains($script, 'setInterval('), 'navigation collapses before its tools overflow and the hero never auto-advances'],
     [str_contains($site, 'data-srcset=') && str_contains($site, 'app_publication_media_srcset'), 'home defers secondary hero images and publishes responsive candidates'],
     [str_contains($site, "preg_match('~^(?:data:|javascript:)~i'") && str_contains($site, 'loading="lazy"'), 'Studio Notes never emits embedded data images as listing thumbnails'],
