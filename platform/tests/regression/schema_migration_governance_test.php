@@ -80,4 +80,68 @@ function run_schema_migration_governance_tests(): void
 
     SchemaMigrator::assertCurrent($pdo, $directory);
     TestHarness::assertTrue(true, 'la comprobacion final reconoce base y codigo en la misma version');
+
+    $rolloutDirectory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'schema-rollout-' . bin2hex(random_bytes(6));
+    if (!mkdir($rolloutDirectory, 0775, true) && !is_dir($rolloutDirectory)) {
+        throw new RuntimeException('Could not create schema rollout test directory.');
+    }
+
+    $firstVersion = '20260101_000001_rollout_base';
+    $secondVersion = '20260101_000002_rollout_shared';
+    $migrationTemplate = <<<'PHP'
+<?php
+return [
+    'description' => '%s',
+    'up' => static function (PDO $pdo): void {
+        $pdo->exec('%s');
+    },
+];
+PHP;
+
+    try {
+        file_put_contents(
+            $rolloutDirectory . DIRECTORY_SEPARATOR . $firstVersion . '.php',
+            sprintf($migrationTemplate, 'rollout base', 'CREATE TABLE rollout_base (id INTEGER PRIMARY KEY)')
+        );
+        file_put_contents(
+            $rolloutDirectory . DIRECTORY_SEPARATOR . $secondVersion . '.php',
+            sprintf($migrationTemplate, 'rollout shared', 'CREATE TABLE rollout_shared (id INTEGER PRIMARY KEY)')
+        );
+
+        $rolloutPdo = new PDO('sqlite::memory:');
+        $rolloutPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        SchemaMigrator::migrate($rolloutPdo, $rolloutDirectory);
+
+        $forwardVersion = '20260101_000003_rollout_forward';
+        $insertForward = $rolloutPdo->prepare(
+            'INSERT INTO schema_migrations (version,description,checksum,applied_at,execution_ms) VALUES (?,?,?,?,?)'
+        );
+        $insertForward->execute([$forwardVersion, 'new revision migration', str_repeat('a', 64), date(DATE_ATOM), 1]);
+
+        SchemaMigrator::assertCurrent($rolloutPdo, $rolloutDirectory);
+        $rolloutStatus = SchemaMigrator::status($rolloutPdo, $rolloutDirectory);
+        TestHarness::assertSame(
+            [$forwardVersion],
+            $rolloutStatus['forward'],
+            'una revision anterior tolera temporalmente una migracion aditiva de la revision siguiente'
+        );
+
+        unlink($rolloutDirectory . DIRECTORY_SEPARATOR . $firstVersion . '.php');
+        $historicalFailure = '';
+        try {
+            SchemaMigrator::assertCurrent($rolloutPdo, $rolloutDirectory);
+        } catch (RuntimeException $error) {
+            $historicalFailure = $error->getMessage();
+        }
+        TestHarness::assertContains(
+            $firstVersion . ' is missing from this application build',
+            $historicalFailure,
+            'una migracion historica ausente sigue fallando aunque el despliegue tolere versiones futuras'
+        );
+    } finally {
+        foreach (glob($rolloutDirectory . DIRECTORY_SEPARATOR . '*.php') ?: [] as $temporaryMigration) {
+            @unlink($temporaryMigration);
+        }
+        @rmdir($rolloutDirectory);
+    }
 }

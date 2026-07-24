@@ -84,12 +84,13 @@ final class SchemaMigrator
         self::ensureLedger($pdo);
         $migrations = self::loadMigrations($directory);
         $applied = self::applied($pdo);
-        self::assertHistoryIsImmutable($migrations, $applied);
+        $forward = self::assertHistoryIsImmutable($migrations, $applied);
 
         return [
             'latest_code_version' => array_key_last($migrations) ?? '',
             'latest_database_version' => array_key_last($applied) ?? '',
             'pending' => array_values(array_diff(array_keys($migrations), array_keys($applied))),
+            'forward' => $forward,
             'applied' => array_keys($applied),
         ];
     }
@@ -99,16 +100,25 @@ final class SchemaMigrator
         $directory ??= self::defaultDirectory();
         $migrations = self::loadMigrations($directory);
         $applied = self::applied($pdo);
-        self::assertHistoryIsImmutable($migrations, $applied);
+        $forward = self::assertHistoryIsImmutable($migrations, $applied);
         $status = [
             'latest_code_version' => array_key_last($migrations) ?? '',
             'latest_database_version' => array_key_last($applied) ?? '',
             'pending' => array_values(array_diff(array_keys($migrations), array_keys($applied))),
+            'forward' => $forward,
         ];
         if ($status['pending'] !== []) {
             throw new RuntimeException(
                 'Database schema is behind application code. Pending migrations: ' . implode(', ', $status['pending'])
             );
+        }
+        // Production migrations are additive and are applied before the new
+        // Cloud Run revision receives traffic. During that short rollout, an
+        // older revision can legitimately observe newer ledger entries. Shared
+        // history is still checksum-verified, while missing historical entries
+        // continue to fail closed.
+        if ($status['forward'] !== []) {
+            return;
         }
         if ($status['latest_code_version'] !== $status['latest_database_version']) {
             throw new RuntimeException(
@@ -199,16 +209,26 @@ final class SchemaMigrator
         return $applied;
     }
 
-    private static function assertHistoryIsImmutable(array $migrations, array $applied): void
+    /** @return list<string> Applied versions newer than this application build. */
+    private static function assertHistoryIsImmutable(array $migrations, array $applied): array
     {
+        $latestCodeVersion = (string)(array_key_last($migrations) ?? '');
+        $forward = [];
+
         foreach ($applied as $version => $row) {
             if (!isset($migrations[$version])) {
+                if ($latestCodeVersion !== '' && strcmp((string)$version, $latestCodeVersion) > 0) {
+                    $forward[] = (string)$version;
+                    continue;
+                }
                 throw new RuntimeException("Applied migration {$version} is missing from this application build.");
             }
             if (!hash_equals((string)$row['checksum'], (string)$migrations[$version]['checksum'])) {
                 throw new RuntimeException("Applied migration {$version} was modified after execution.");
             }
         }
+
+        return $forward;
     }
 
     private static function acquireLock(PDO $pdo): bool
