@@ -27,10 +27,33 @@ final class AppPublishedCatalog
             FROM publications p
             JOIN users u ON u.id=p.user_id
             JOIN artwork_sheets a ON a.id=p.artwork_sheet_id AND a.user_id=p.user_id
-            LEFT JOIN artworks aw ON aw.id=a.canonical_artwork_id AND aw.user_id=p.user_id
+            INNER JOIN artworks aw ON aw.id=a.canonical_artwork_id AND aw.user_id=p.user_id
+            INNER JOIN artwork_groups g ON g.id=aw.artwork_group_id AND g.user_id=aw.user_id
+                AND g.status='active' AND g.canonical_artwork_id=aw.id
+            LEFT JOIN artwork_series s ON s.id=aw.series_id AND s.user_id=aw.user_id
             WHERE LOWER(u.email)=? AND p.status='published' AND p.visibility IN ('public','unlisted')
-            ORDER BY CASE WHEN p.display_order>0 THEN 0 ELSE 1 END,
-                p.display_order ASC,COALESCE(p.published_at,p.updated_at) DESC,p.id DESC");
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM publications newer
+                    INNER JOIN artwork_sheets newer_sheet ON newer_sheet.id=newer.artwork_sheet_id
+                        AND newer_sheet.user_id=newer.user_id
+                    WHERE newer.user_id=p.user_id
+                        AND newer.status='published'
+                        AND newer.visibility IN ('public','unlisted')
+                        AND newer_sheet.canonical_artwork_id=a.canonical_artwork_id
+                        AND newer.id>p.id
+                )
+            ORDER BY
+                CASE WHEN aw.series_id IS NULL THEN 1 ELSE 0 END ASC,
+                CASE WHEN s.year_start IS NULL AND s.year_end IS NULL THEN 1 ELSE 0 END ASC,
+                COALESCE(s.year_start,s.year_end) DESC,
+                COALESCE(s.year_end,s.year_start) DESC,
+                s.created_at DESC,
+                s.id DESC,
+                CASE WHEN aw.series_creation_number IS NULL THEN 1 ELSE 0 END ASC,
+                aw.series_creation_number DESC,
+                g.created_at DESC,
+                g.id DESC");
         $statement->execute([$this->artistEmail]);
         $publications = [];
         foreach ($statement as $row) {

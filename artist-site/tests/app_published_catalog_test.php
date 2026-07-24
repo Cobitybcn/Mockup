@@ -44,6 +44,8 @@ $pdo->exec("CREATE TABLE artworks (
     id INTEGER PRIMARY KEY,
     user_id INTEGER NOT NULL,
     artwork_group_id INTEGER NOT NULL DEFAULT 0,
+    series_id INTEGER,
+    series_creation_number INTEGER,
     medium TEXT NOT NULL,
     artwork_year INTEGER,
     series TEXT NOT NULL,
@@ -51,6 +53,13 @@ $pdo->exec("CREATE TABLE artworks (
     height REAL,
     depth REAL,
     unit TEXT NOT NULL
+)");
+$pdo->exec("CREATE TABLE artwork_groups (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    canonical_artwork_id INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    created_at TEXT NOT NULL
 )");
 $pdo->exec("CREATE TABLE publication_items (
     id INTEGER PRIMARY KEY,
@@ -82,7 +91,10 @@ $pdo->exec("CREATE TABLE mockups (
 $pdo->exec("CREATE TABLE artwork_series (
     id INTEGER PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    published INTEGER NOT NULL DEFAULT 0
+    published INTEGER NOT NULL DEFAULT 0,
+    year_start INTEGER,
+    year_end INTEGER,
+    created_at TEXT NOT NULL
 )");
 $pdo->exec("CREATE TABLE root_artwork_candidates (
     id INTEGER PRIMARY KEY,
@@ -102,18 +114,26 @@ $pdo->exec("CREATE TABLE bilingual_editorial_content (
 )");
 
 $pdo->exec("INSERT INTO users (id,email) VALUES (7,'artist@example.com')");
-$pdo->exec("INSERT INTO artworks (id,user_id,artwork_group_id,medium,artwork_year,series,width,height,depth,unit)
-    VALUES (31,7,71,'Oil on canvas',2026,'Strata',120,100,4,'cm')");
+$pdo->exec("INSERT INTO artwork_series (id,user_id,published,year_start,year_end,created_at)
+    VALUES (81,7,1,2025,2026,'2025-01-01'),(82,7,1,2026,2026,'2026-01-01')");
+$pdo->exec("INSERT INTO artwork_groups (id,user_id,canonical_artwork_id,status,created_at)
+    VALUES (71,7,31,'active','2026-01-01'),(72,7,32,'active','2026-02-01')");
+$pdo->exec("INSERT INTO artworks (id,user_id,artwork_group_id,series_id,series_creation_number,medium,artwork_year,series,width,height,depth,unit)
+    VALUES (31,7,71,81,9,'Oil on canvas',2026,'Strata',120,100,4,'cm')");
 $pdo->exec("INSERT INTO artwork_sheets (id,user_id,source_image_file,canonical_artwork_id,subtitle,alt_text,keywords,tags)
     VALUES (41,7,'main.jpg',31,'Subtitle','Alt text','','')");
 $pdo->exec("INSERT INTO publications (id,user_id,artwork_sheet_id,status,visibility,published_at,updated_at,display_order,metadata_snapshot_json,slug,header_file)
     VALUES (51,7,41,'published','public','2026-07-20','2026-07-20',20,'{}','test-work','related-cover.jpg')");
-$pdo->exec("INSERT INTO artworks (id,user_id,artwork_group_id,medium,artwork_year,series,width,height,depth,unit)
-    VALUES (32,7,0,'Oil on canvas',2026,'Strata',80,60,3,'cm')");
+$pdo->exec("INSERT INTO artworks (id,user_id,artwork_group_id,series_id,series_creation_number,medium,artwork_year,series,width,height,depth,unit)
+    VALUES (32,7,72,82,2,'Oil on canvas',2026,'Strata',80,60,3,'cm')");
 $pdo->exec("INSERT INTO artwork_sheets (id,user_id,source_image_file,canonical_artwork_id,subtitle,alt_text,keywords,tags)
     VALUES (42,7,'first.jpg',32,'','','','')");
 $pdo->exec("INSERT INTO publications (id,user_id,artwork_sheet_id,status,visibility,published_at,updated_at,display_order,metadata_snapshot_json,slug,header_file)
     VALUES (52,7,42,'published','public','2026-07-01','2026-07-01',10,'{}','first-work','first.jpg')");
+$pdo->exec("INSERT INTO artwork_sheets (id,user_id,source_image_file,canonical_artwork_id,subtitle,alt_text,keywords,tags)
+    VALUES (43,7,'duplicate.jpg',31,'','','','')");
+$pdo->exec("INSERT INTO publications (id,user_id,artwork_sheet_id,status,visibility,published_at,updated_at,display_order,metadata_snapshot_json,slug,header_file)
+    VALUES (53,7,43,'published','public','2026-07-21','2026-07-21',1,'{}','test-work-current','related-cover.jpg')");
 $pdo->exec("INSERT INTO root_artwork_candidates (id,artwork_id,file_name,view_type)
     VALUES (61,31,'detail.jpg','detail')");
 $pdo->exec("INSERT INTO mockup_sheets (id,user_id,artwork_id,artwork_sheet_id,artwork_group_id,mockup_file,title,description,keywords,tags)
@@ -130,15 +150,17 @@ $pdo->exec("INSERT INTO mockups (id,user_id,mockup_file) VALUES (74,7,'unrelated
 $pdo->exec("INSERT INTO publication_items (id,publication_id,mockup_sheet_id,position,title)
     VALUES (63,51,62,0,'')");
 $pdo->exec("INSERT INTO publication_items (id,publication_id,mockup_sheet_id,position,title)
+    VALUES (68,53,62,0,'')");
+$pdo->exec("INSERT INTO publication_items (id,publication_id,mockup_sheet_id,position,title)
     VALUES (67,51,66,1,'')");
 $pdo->exec("INSERT INTO bilingual_editorial_content (user_id,entity_type,entity_id,locale,content_json,is_published,published_content_json)
     VALUES (7,'artwork',31,'es','{\"description\":\"Borrador posterior\"}',1,'{\"description\":\"Texto español aprobado\"}')");
 
 $catalog = (new AppPublishedCatalog($pdo, 'artist@example.com'))->all();
-$artwork = $catalog['test-work'] ?? null;
+$artwork = $catalog['test-work-current'] ?? null;
 
-if (array_keys($catalog) !== ['first-work', 'test-work']) {
-    fwrite(STDERR, "FAIL: published catalog does not respect manual display order.\n");
+if (array_keys($catalog) !== ['first-work', 'test-work-current']) {
+    fwrite(STDERR, "FAIL: published catalog does not follow Root Album series order and canonical grouping.\n");
     exit(1);
 }
 if (!is_array($artwork)
@@ -163,4 +185,4 @@ if (($localization->content('artwork', 31)['description'] ?? '') !== 'Borrador p
 }
 putenv('APP_ENV');
 
-echo "PASS: published catalog order, related covers, production snapshots and local Spanish master preview.\n";
+echo "PASS: Root Album grouping/order, related covers, production snapshots and local Spanish master preview.\n";
