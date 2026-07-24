@@ -7,6 +7,8 @@ function run_deployment_pipeline_regression_tests(): void
     $cloudBuild = (string) file_get_contents($root . '/cloudbuild.ci.yaml');
     $preflightBuild = (string) file_get_contents($root . '/cloudbuild.preflight.yaml');
     $webDockerfile = (string) file_get_contents($root . '/Dockerfile.web');
+    $webDeploy = (string) file_get_contents($root . '/deploy_web.ps1');
+    $workerDeploy = (string) file_get_contents($root . '/deploy_worker.ps1');
     $setupScript = (string) file_get_contents($root . '/scripts/setup_cloud_build_cicd.ps1');
     $siteManagerPath = dirname($root) . '/site-admin/app/SiteManagerService.php';
     if (!is_file($siteManagerPath)) {
@@ -59,5 +61,12 @@ function run_deployment_pipeline_regression_tests(): void
             && str_contains($preflightBuild, 'composer')
             && str_contains($preflightBuild, 'audit'),
         'a deployment preflight reproduces the production image, dependency load, and package audit'
+    );
+    TestHarness::assertTrue(
+        str_contains($webDeploy, '$RepoRoot')
+            && str_contains($webDeploy, '_DOCKERFILE=platform/Dockerfile.web')
+            && str_contains($workerDeploy, '$RepoRoot')
+            && str_contains($workerDeploy, '_DOCKERFILE=platform/Dockerfile.worker'),
+        'local deployment scripts always submit the repository root as Docker build context'
     );
 }

@@ -11,6 +11,8 @@ param(
 $ErrorActionPreference = "Stop"
 $imageBase = "$Region-docker.pkg.dev/$ProjectId/$Repository"
 $Gcloud = "gcloud.cmd"
+$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$BuildConfig = Join-Path $PSScriptRoot "cloudbuild.cached-image.yaml"
 
 function Invoke-Gcloud {
     param(
@@ -68,9 +70,9 @@ Write-Host "Deploying mockups-web only..." -ForegroundColor Cyan
 # rebuilt only when their inputs change.
 Invoke-Gcloud builds submit `
     --project=$ProjectId `
-    --config=cloudbuild.cached-image.yaml `
-    "--substitutions=_IMAGE=$imageBase/$WebService,_DOCKERFILE=Dockerfile.web" `
-    .
+    "--config=$BuildConfig" `
+    "--substitutions=_IMAGE=$imageBase/$WebService,_DOCKERFILE=platform/Dockerfile.web" `
+    $RepoRoot
 
 $digest = Get-GcloudValue artifacts docker images describe "$imageBase/${WebService}:latest" `
     --project=$ProjectId `
