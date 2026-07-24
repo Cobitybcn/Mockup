@@ -360,6 +360,7 @@ $profile = is_array($analysis['artwork_profile'] ?? null) ? $analysis['artwork_p
 $artistProfile = is_array($profile['_artist_profile'] ?? null) ? $profile['_artist_profile'] : ArtistProfile::findForUser((int)$user['id']);
 $contextTitle = Display::contextTitle($mockup['context_id']);
 $viewerMockupId = (int)($mockup['id'] ?? 0);
+$viewerEditorialEnabled = false;
 $viewerFavoriteLookup = $viewerMockupId > 0 ? MockupFavorites::lookupForUser((int)$user['id']) : [];
 $viewerIsFavorite = $viewerMockupId > 0 && isset($viewerFavoriteLookup[$viewerMockupId]);
 $pinterestDraftNotice=(string)($_SESSION['pinterest_draft_notice']??'');unset($_SESSION['pinterest_draft_notice']);
@@ -382,7 +383,7 @@ $titleLine = $editorial['titleLine'];
 // y persistimos su copy actual para que el publicador use este mockup exacto.
 $publicationSheetId = 0;
 $publicationMockupSheetId = 0;
-if ($artworkId > 0 && $viewerMockupId > 0) {
+if ($viewerEditorialEnabled && $artworkId > 0 && $viewerMockupId > 0) {
     try {
         $artworkSheetService = new ArtworkSheetService($pdo);
         $publicationArtworkSheet = $artworkSheetService->sheetForArtwork($artworkId, (int)$user['id']);
@@ -410,7 +411,7 @@ if ($artworkId > 0 && $viewerMockupId > 0) {
     }
 }
 $mockupV2 = [];
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'generate_mockup_v2') {
+if ($viewerEditorialEnabled && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'generate_mockup_v2') {
     try {
         if ($publicationSheetId <= 0 || $publicationMockupSheetId <= 0) throw new RuntimeException('Mockup sheet is not available.');
         $artworkSheetService->generateMockupSheet($publicationSheetId, $artworkId, (string)$mockup['mockup_file'], (int)$user['id'], 'Generate neutral mockup analysis v2 and channel adapters.');
@@ -1110,6 +1111,7 @@ foreach ($mockupSocialSpecs as $channelKey => $channelSpec) {
         <span><?= h(date('m/d/Y H:i', strtotime((string)$mockup['created_at']))) ?></span>
     </footer>
 
+    <?php if ($viewerEditorialEnabled): ?>
     <section class="publication">
         <?php if(isset($_GET['mockup_v2_generated'])):?><div class="notice success">Mockup analysis v2 generated as a draft. Nothing was published.</div><?php endif;?>
         <?php if(isset($_GET['mockup_v2_error'])):?><div class="notice error"><?=h((string)$_GET['mockup_v2_error'])?></div><?php endif;?>
@@ -1303,6 +1305,7 @@ foreach ($mockupSocialSpecs as $channelKey => $channelSpec) {
         </section><?php endif; ?>
 
     </section>
+    <?php endif; ?>
 
     <script>
         document.querySelectorAll('[data-copy]').forEach((button) => {

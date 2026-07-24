@@ -122,6 +122,9 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertTrue(!str_contains($seriesPage, 'website_studio_notes.php?source=series:'), 'Series reserva su encabezado para Create Art como unica accion contextual');
     TestHarness::assertContains('website_studio_notes.php?source=mockup:', $viewerPage, 'el viewer puede iniciar una Studio Note desde el mockup activo');
     TestHarness::assertTrue(!str_contains($viewerPage, '>Publish mockup</a>'), 'el viewer ya no confunde Studio Notes con Publish mockup');
+    TestHarness::assertContains('$viewerEditorialEnabled = false;', $viewerPage, 'el viewer permanece dedicado a mirar la imagen y no muestra contenido editorial');
+    TestHarness::assertContains('if ($viewerEditorialEnabled && $artworkId > 0', $viewerPage, 'abrir el viewer no crea ni modifica fichas editoriales');
+    TestHarness::assertContains('<?php if ($viewerEditorialEnabled): ?>', $viewerPage, 'los análisis, keywords y adaptaciones permanecen fuera de la interfaz del viewer');
 
     $insertPublication = $pdo->prepare("INSERT INTO publications
         (user_id,artwork_sheet_id,slug,title,description,short_description,language,objective,cta_label,cta_url,visibility,status,profile_snapshot_json,metadata_snapshot_json,published_at,created_at,updated_at,header_file)
