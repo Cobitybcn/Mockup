@@ -36,30 +36,16 @@ if ($size === false || $size <= 0) {
     exit('Reference media is unavailable.');
 }
 
-$start = 0;
-$end = $size - 1;
-$status = 200;
 $range = trim((string)($_SERVER['HTTP_RANGE'] ?? ''));
-if ($range !== '') {
-    if (!preg_match('/^bytes=(\d*)-(\d*)$/', $range, $matches)) {
-        header('Content-Range: bytes */' . $size);
-        http_response_code(416);
-        exit;
-    }
-    if ($matches[1] === '' && $matches[2] !== '') {
-        $suffix = min($size, (int)$matches[2]);
-        $start = $size - $suffix;
-    } else {
-        $start = (int)$matches[1];
-        if ($matches[2] !== '') $end = min($end, (int)$matches[2]);
-    }
-    if ($start < 0 || $start > $end || $start >= $size) {
-        header('Content-Range: bytes */' . $size);
-        http_response_code(416);
-        exit;
-    }
-    $status = 206;
+$resolvedRange = VideoHttp::mediaByteRange($size, $range);
+if ($resolvedRange === null) {
+    header('Content-Range: bytes */' . $size);
+    http_response_code(416);
+    exit;
 }
+$start = $resolvedRange['start'];
+$end = $resolvedRange['end'];
+$status = $resolvedRange['status'];
 
 $mime = (string)$asset['mime_type'];
 $downloadName = basename(str_replace('\\', '/', (string)$asset['original_name'])) ?: 'reference';

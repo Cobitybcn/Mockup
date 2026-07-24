@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 final class VideoHttp
 {
+    private const MEDIA_RANGE_CHUNK_BYTES = 8 * 1024 * 1024;
+
     public static function csrfToken(): string
     {
         Auth::start();
@@ -61,5 +63,47 @@ final class VideoHttp
             Logger::log('Video Lab request failed: ' . $e->getMessage(), 'error');
             self::respond(['ok' => false, 'error' => 'Video Lab could not complete the request. Check the server log for details.'], 500);
         }
+    }
+
+    /**
+     * @return array{status:int,start:int,end:int}|null
+     */
+    public static function mediaByteRange(int $size, string $range): ?array
+    {
+        if ($size <= 0) {
+            return null;
+        }
+
+        $range = trim($range);
+        if ($range === '') {
+            return ['status' => 200, 'start' => 0, 'end' => $size - 1];
+        }
+        if (!preg_match('/^bytes=(\d*)-(\d*)$/', $range, $matches)) {
+            return null;
+        }
+
+        $end = $size - 1;
+        if ($matches[1] === '' && $matches[2] !== '') {
+            $suffix = min($size, (int)$matches[2]);
+            if ($suffix <= 0) {
+                return null;
+            }
+            $start = $size - $suffix;
+        } else {
+            $start = (int)$matches[1];
+            if ($matches[2] !== '') {
+                $end = min($end, (int)$matches[2]);
+            }
+        }
+        if ($start < 0 || $start > $end || $start >= $size) {
+            return null;
+        }
+
+        // Cloud Run rejects buffered HTTP/1 responses above 32 MiB. Browsers
+        // commonly request "bytes=0-", so return a bounded 206 block and let
+        // the media element request subsequent ranges as playback advances.
+        $end = min($end, $start + self::MEDIA_RANGE_CHUNK_BYTES - 1);
+
+        return ['status' => 206, 'start' => $start, 'end' => $end];
     }
 }
