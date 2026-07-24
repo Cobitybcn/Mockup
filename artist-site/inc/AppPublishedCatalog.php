@@ -175,6 +175,26 @@ final class AppPublishedCatalog
             WHERE i.publication_id=? ORDER BY i.position,i.id');
         $statement->execute([$publicationId]);
         $items = $statement->fetchAll();
+        $seenMockupIds = [];
+        $seenFiles = [];
+        foreach ($items as $item) {
+            $mockupId = (int)($item['mockup_id'] ?? 0);
+            $file = basename((string)($item['mockup_file'] ?? ''));
+            if ($mockupId > 0) $seenMockupIds[$mockupId] = true;
+            if ($file !== '') $seenFiles[$file] = true;
+        }
+
+        foreach ($this->relatedItems($publicationId) as $relatedItem) {
+            $mockupId = (int)($relatedItem['mockup_id'] ?? 0);
+            $file = basename((string)($relatedItem['mockup_file'] ?? ''));
+            if (($mockupId > 0 && isset($seenMockupIds[$mockupId])) || ($file !== '' && isset($seenFiles[$file]))) {
+                continue;
+            }
+            $items[] = $relatedItem;
+            if ($mockupId > 0) $seenMockupIds[$mockupId] = true;
+            if ($file !== '') $seenFiles[$file] = true;
+        }
+
         foreach ($items as &$item) {
             $language = function_exists('artist_site_language') ? artist_site_language() : 'es';
             $spanish = $this->localization->content('mockup', (int)($item['mockup_id'] ?? 0), 'es');
@@ -202,6 +222,44 @@ final class AppPublishedCatalog
         }
         unset($item);
         return $items;
+    }
+
+    /**
+     * Publication items are the artist's explicit favorites and keep their saved
+     * order. Append every other canonical mockup afterwards so older or incomplete
+     * publications do not lose the artwork's visual context.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    private function relatedItems(int $publicationId): array
+    {
+        $statement = $this->pdo->prepare('SELECT
+                0 id,p.id publication_id,m.id mockup_sheet_id,m.id position,
+                \'context\' role,\'\' title,m.alt_text,m.caption,
+                COALESCE(NULLIF(m.mockup_id,0),(
+                    SELECT source.id FROM mockups source
+                    WHERE source.user_id=m.user_id AND source.mockup_file=m.mockup_file
+                    ORDER BY source.id DESC LIMIT 1
+                )) mockup_id,
+                m.mockup_file,m.description,m.keywords,m.tags,
+                m.alt_text mockup_alt_text,m.caption mockup_caption
+            FROM publications p
+            INNER JOIN artwork_sheets sh ON sh.id=p.artwork_sheet_id AND sh.user_id=p.user_id
+            INNER JOIN artworks a ON a.id=sh.canonical_artwork_id AND a.user_id=sh.user_id
+            INNER JOIN mockup_sheets m ON m.user_id=p.user_id AND (
+                m.artwork_id=a.id OR m.artwork_sheet_id=sh.id OR
+                (COALESCE(a.artwork_group_id,0)>0 AND m.artwork_group_id=a.artwork_group_id)
+            )
+            WHERE p.id=? AND NOT EXISTS (
+                SELECT 1 FROM mockup_sheets newer
+                WHERE newer.user_id=m.user_id AND newer.id>m.id AND (
+                    (COALESCE(m.mockup_id,0)>0 AND newer.mockup_id=m.mockup_id) OR
+                    (COALESCE(m.mockup_id,0)=0 AND newer.mockup_file=m.mockup_file)
+                )
+            )
+            ORDER BY m.id DESC');
+        $statement->execute([$publicationId]);
+        return $statement->fetchAll();
     }
 
     private function artworkViews(int $artworkId): array

@@ -117,7 +117,13 @@ $pdo->exec("INSERT INTO root_artwork_candidates (id,artwork_id,file_name,view_ty
     VALUES (61,31,'detail.jpg','detail')");
 $pdo->exec("INSERT INTO mockup_sheets (id,user_id,artwork_id,artwork_sheet_id,artwork_group_id,mockup_file,description,keywords,tags)
     VALUES (62,7,31,41,71,'related-cover.jpg','','','')");
+$pdo->exec("INSERT INTO mockup_sheets (id,user_id,artwork_id,artwork_sheet_id,artwork_group_id,mockup_file,description,keywords,tags)
+    VALUES (64,7,31,41,71,'related-context.jpg','','','')");
+$pdo->exec("INSERT INTO mockup_sheets (id,user_id,artwork_id,artwork_sheet_id,artwork_group_id,mockup_file,description,keywords,tags)
+    VALUES (65,7,32,42,0,'unrelated-context.jpg','','','')");
 $pdo->exec("INSERT INTO mockups (id,user_id,mockup_file) VALUES (72,7,'related-cover.jpg')");
+$pdo->exec("INSERT INTO mockups (id,user_id,mockup_file) VALUES (73,7,'related-context.jpg')");
+$pdo->exec("INSERT INTO mockups (id,user_id,mockup_file) VALUES (74,7,'unrelated-context.jpg')");
 $pdo->exec("INSERT INTO publication_items (id,publication_id,mockup_sheet_id,position,title)
     VALUES (63,51,62,0,'')");
 $pdo->exec("INSERT INTO bilingual_editorial_content (user_id,entity_type,entity_id,locale,content_json,is_published,published_content_json)
@@ -133,7 +139,7 @@ if (array_keys($catalog) !== ['first-work', 'test-work']) {
 if (!is_array($artwork)
     || ($artwork['artwork_views'][0]['file_name'] ?? '') !== 'detail.jpg'
     || ($artwork['header_file'] ?? '') !== 'related-cover.jpg'
-    || (int)($artwork['items'][0]['mockup_id'] ?? 0) !== 72) {
+    || array_map(static fn (array $item): int => (int)($item['mockup_id'] ?? 0), $artwork['items']) !== [72, 73]) {
     fwrite(STDERR, "FAIL: published catalog cannot use a canonically related mockup as its cover.\n");
     exit(1);
 }
