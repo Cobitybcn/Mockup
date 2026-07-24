@@ -145,14 +145,13 @@ function run_uploaded_root_regression_tests(): void
     );
     $artworkPageSource = (string)file_get_contents(dirname(__DIR__, 2) . '/artwork.php');
     TestHarness::assertContains(
-        'class="button-link artwork-studio-note-link"',
+        'data-editorial-package',
         $artworkPageSource,
-        'la ficha de obra presenta Studio Notes como accion principal'
+        'la ficha de obra integra la preparacion editorial como utilidad avanzada'
     );
-    TestHarness::assertContains(
-        'width:140px;',
-        $artworkPageSource,
-        'la accion principal de Studio Notes usa el Decision Block cuadrado'
+    TestHarness::assertTrue(
+        !str_contains($artworkPageSource, 'artwork-studio-note-link'),
+        'Studio Notes ya no compite como accion principal de la obra'
     );
     TestHarness::assertTrue(
         str_contains($artworkPageSource, 'class="related-mockups-create-decision"')

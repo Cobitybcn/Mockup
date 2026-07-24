@@ -14,7 +14,8 @@ $pdo = Database::connection();
 $bilingualEditorialService = new BilingualEditorialService($pdo);
 ArtworkSeries::ensureSchema($pdo);
 $id = max(0, (int)($_GET['id'] ?? 0));
-$bilingualExperiment = $bilingualEditorialService->isEnabled((int)$user['id'])
+$editorialPackageEnabled = $bilingualEditorialService->isEnabled((int)$user['id']);
+$bilingualExperiment = $editorialPackageEnabled
     || ($isAdmin && (string)($_GET['bilingual_experiment'] ?? '') === '1');
 $metadataErrorMessage = trim((string)($_GET['metadata_error'] ?? ''));
 
@@ -1297,6 +1298,15 @@ if (
     $sheetService->saveArtworkTitle($id, $artworkOwnerId, $canonicalSheetTitle);
     $artwork = $sheetService->artwork($id, $artworkOwnerId);
 }
+$artworkEditorialPackageAudit = null;
+$artworkEditorialPackageError = '';
+if ($editorialPackageEnabled) {
+    try {
+        $artworkEditorialPackageAudit = (new ArtworkEditorialPackageService($pdo))->audit($artworkOwnerId, $id);
+    } catch (Throwable $editorialPackageException) {
+        $artworkEditorialPackageError = $editorialPackageException->getMessage();
+    }
+}
 $packageAnalysis = $analysis;
 if ($v2Draft && is_array($v2Draft['canonical_editorial'] ?? null)) {
     $v2CanonicalEditorial = (array)$v2Draft['canonical_editorial'];
@@ -1372,29 +1382,6 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .artwork-series-controls { display:flex; justify-content:flex-end; align-items:flex-end; }
         .artwork-title-block { width:min(920px, 100%); }
         .artwork-page-header { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; }
-        .artwork-studio-note-link {
-            display:inline-flex;
-            flex:0 0 140px;
-            width:140px;
-            height:140px;
-            align-items:center;
-            justify-content:center;
-            padding:18px;
-            border:1px solid #94a88f;
-            border-radius:4px;
-            background:#9fb198;
-            color:#fffdf8;
-            box-shadow:0 8px 18px rgba(68, 83, 63, .12);
-            font-size:11px;
-            font-weight:800;
-            letter-spacing:.09em;
-            line-height:1.35;
-            text-align:center;
-            text-transform:uppercase;
-        }
-        .artwork-studio-note-link:hover,
-        .artwork-studio-note-link:focus-visible { border-color:#81987b; background:#8fa487; color:#fff; transform:translateY(-1px); }
-        .artwork-studio-note-mobile { display:none; }
         .artwork-title-heading { display:flex; align-items:center; gap:10px; }
         .artwork-page-header h1 { display:inline-block; border-bottom:4px solid #b77f86; padding-bottom:10px; }
         .artwork-title-edit-button {
@@ -3111,8 +3098,6 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                 display: none !important;
             }
 
-            .artwork-studio-note-mobile { display:flex; justify-content:flex-end; margin:0 0 12px; }
-            .artwork-studio-note-mobile .artwork-studio-note-link { flex-basis:112px; width:112px; height:112px; padding:14px; }
             .related-mockups-empty { grid-template-columns:1fr 112px; gap:18px; padding:16px; }
             .related-mockups-create-decision { width:112px; height:112px; padding:14px; }
 
@@ -3297,6 +3282,7 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         }
     </style>
     <link rel="stylesheet" href="media-controls.css?v=2">
+    <?php if ($editorialPackageEnabled): ?><link rel="stylesheet" href="artwork-editorial-package.css?v=20260724-1"><?php endif; ?>
 </head>
 <body>
 <div class="app-shell">
@@ -3336,7 +3322,6 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                     </form>
                     <?php if ($bilingualExperiment): ?><p class="artwork-title-universal-memo">STRATA X — LIMEN · STRATA XI — NUHRĀ (ܢܘܗܪܐ) · no traducir</p><?php endif; ?>
                 </div>
-                <a class="button-link artwork-studio-note-link" href="website_studio_notes.php?source=artwork:<?= (int)$id ?>#new-studio-note">Create Studio Note</a>
             </div>
 
             <?php if (isset($_GET['series_updated'])): ?>
@@ -3381,10 +3366,6 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
             <?php if (isset($_GET['root_views_completed'])): ?>
                 <div class="notice">The two missing root views were added to this artwork.</div>
             <?php endif; ?>
-
-            <div class="artwork-studio-note-mobile">
-                <a class="button-link artwork-studio-note-link" href="website_studio_notes.php?source=artwork:<?= (int)$id ?>#new-studio-note">Create Studio Note</a>
-            </div>
 
             <?php if ($analysisNeedsRefresh): ?>
                 <div class="notice error">
@@ -4012,6 +3993,72 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                     <div class="notice">No root artwork image is available yet.</div>
                 <?php endif; ?>
             </section>
+
+            <?php if ($editorialPackageEnabled): ?>
+                <?php
+                $editorialPendingTotal = (int)($artworkEditorialPackageAudit['editorial_pending']['total'] ?? 0);
+                $editorialActivePackage = (array)($artworkEditorialPackageAudit['package'] ?? []);
+                $editorialPackageStatus = (string)($editorialActivePackage['status'] ?? '');
+                $editorialSummaryState = $artworkEditorialPackageError !== ''
+                    ? 'Unavailable'
+                    : (in_array($editorialPackageStatus, ['queued', 'processing'], true)
+                        ? 'In progress'
+                        : ($editorialPendingTotal > 0 ? $editorialPendingTotal . ' pending' : 'Complete'));
+                $editorialInitialPayload = json_encode(
+                    ['ok' => $artworkEditorialPackageError === '', 'audit' => $artworkEditorialPackageAudit, 'error' => $artworkEditorialPackageError],
+                    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+                );
+                ?>
+                <details
+                    class="artwork-editorial-package"
+                    data-editorial-package
+                    data-artwork-id="<?= (int)$id ?>"
+                    data-csrf="<?= h(Auth::csrfToken('artwork_editorial_package')) ?>"
+                    data-endpoint="artwork_editorial_package.php"
+                >
+                    <summary>
+                        <span class="editorial-package-summary-title">Editorial preparation</span>
+                        <span class="editorial-package-badge">Advanced</span>
+                        <span class="editorial-package-summary-state" data-package-summary-state><?= h($editorialSummaryState) ?></span>
+                    </summary>
+                    <div class="editorial-package-workspace">
+                        <header class="editorial-package-intro">
+                            <div>
+                                <p class="editorial-package-kicker">Optional workflow</p>
+                                <h2>Prepare the editorial package</h2>
+                                <p>Complete the series, artwork and mockup texts together after the visual work has been approved.</p>
+                            </div>
+                            <p class="editorial-package-publication-note">Creates editable drafts. Nothing is published automatically.</p>
+                        </header>
+
+                        <div class="editorial-package-layout">
+                            <section class="editorial-package-checklist-section" aria-labelledby="editorial-package-checklist-title">
+                                <h3 id="editorial-package-checklist-title">Ready to prepare</h3>
+                                <ul class="editorial-package-checklist" data-package-checklist>
+                                    <li>Checking editorial context…</li>
+                                </ul>
+                            </section>
+
+                            <section class="editorial-package-scope" aria-labelledby="editorial-package-scope-title">
+                                <h3 id="editorial-package-scope-title">This order includes</h3>
+                                <div class="editorial-package-scope-counts" data-package-scope>
+                                    <span>Checking pending content…</span>
+                                </div>
+                            </section>
+
+                            <section class="editorial-package-status" data-package-status aria-live="polite"></section>
+
+                            <div class="editorial-package-decision-wrap" data-package-decision hidden>
+                                <button class="editorial-package-decision" type="button" data-package-action>
+                                    <span data-package-action-label>Prepare Editorial Package</span>
+                                </button>
+                                <p data-package-action-help>The preparation runs in stages and covers every mockup attached to this artwork.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <script type="application/json" data-package-initial><?= $editorialInitialPayload ?: '{}' ?></script>
+                </details>
+            <?php endif; ?>
 
             <section class="artwork-sheet beta-hidden-stage">
                 <aside class="root-panel">
@@ -4850,5 +4897,6 @@ document.querySelectorAll('[data-website-cover-picker]').forEach((picker) => {
 });
 </script>
 <?php if ($bilingualExperiment): ?><script src="bilingual-editorial.js?v=20260724-1"></script><?php endif; ?>
+<?php if ($editorialPackageEnabled): ?><script src="artwork-editorial-package.js?v=20260724-1"></script><?php endif; ?>
 </body>
 </html>

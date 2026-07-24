@@ -118,7 +118,7 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertContains('type="radio"', $artworkPage, 'la portada elegida se envia como una opcion accesible del formulario');
     TestHarness::assertTrue(!str_contains($artworkPage, '<select name="header_file">'), 'Website ya no oculta la portada elegida en un select de texto');
     TestHarness::assertContains("['camera_slot_name']", $artworkPage, 'los mockups del selector usan el nombre real de su camara');
-    TestHarness::assertContains('website_studio_notes.php?source=artwork:', $artworkPage, 'cada Artwork puede iniciar una Studio Note contextual');
+    TestHarness::assertTrue(!str_contains($artworkPage, 'website_studio_notes.php?source=artwork:'), 'Artwork reserva su cabecera para el trabajo visual principal');
     TestHarness::assertTrue(!str_contains($seriesPage, 'website_studio_notes.php?source=series:'), 'Series reserva su encabezado para Create Art como unica accion contextual');
     TestHarness::assertContains('website_studio_notes.php?source=mockup:', $viewerPage, 'el viewer puede iniciar una Studio Note desde el mockup activo');
     TestHarness::assertTrue(!str_contains($viewerPage, '>Publish mockup</a>'), 'el viewer ya no confunde Studio Notes con Publish mockup');

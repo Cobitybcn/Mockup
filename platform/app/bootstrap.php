@@ -87,6 +87,7 @@ require_once __DIR__ . '/Services/MockMockupGenerator.php';
 require_once __DIR__ . '/Services/MockupBatchQueue.php';
 require_once __DIR__ . '/Services/GeminiImageClient.php';
 require_once __DIR__ . '/Services/BilingualEditorialAdapterService.php';
+require_once __DIR__ . '/Services/ArtworkEditorialPackageService.php';
 require_once __DIR__ . '/Services/BilingualEditorialGenerationWorker.php';
 require_once __DIR__ . '/Services/MockupEditorialBatchService.php';
 require_once __DIR__ . '/Services/GeminiArtworkProcessor.php';

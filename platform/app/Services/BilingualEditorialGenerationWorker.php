@@ -28,6 +28,7 @@ final class BilingualEditorialGenerationWorker
             $action = (string)$job['action'];
             $payload = json_decode((string)$job['payload_json'], true);
             $payload = is_array($payload) ? $payload : [];
+            $publishSpanish = !array_key_exists('publish_spanish', $payload) || !empty($payload['publish_spanish']);
             $adapter = $this->adapter ?? new BilingualEditorialAdapterService($this->pdo);
             $editorial = new BilingualEditorialService($this->pdo);
 
@@ -36,7 +37,8 @@ final class BilingualEditorialGenerationWorker
                     $userId,
                     $entityId,
                     is_array($payload['current_spanish'] ?? null) ? $payload['current_spanish'] : null,
-                    array_key_exists('private_memo', $payload) ? (string)$payload['private_memo'] : null
+                    array_key_exists('private_memo', $payload) ? (string)$payload['private_memo'] : null,
+                    $publishSpanish
                 );
             } elseif ($action === 'prepare') {
                 $spanish = $adapter->generateSpanishDraft(
@@ -55,15 +57,17 @@ final class BilingualEditorialGenerationWorker
                     $spanishContent,
                     (string)($payload['private_memo'] ?? '')
                 );
-                // The Spanish master reaches the website before the English
-                // phase begins. A later adaptation failure cannot hide it.
-                $editorial->setSpanishPublished($userId, $entityType, $entityId, true);
+                // Existing single-entity actions preserve their publication
+                // behavior; coordinated packages explicitly create drafts.
+                if ($publishSpanish) {
+                    $editorial->setSpanishPublished($userId, $entityType, $entityId, true);
+                }
                 $english = $adapter->adaptMissing($userId, $entityType, $entityId, 'es', 'en');
                 $result = [
                     'spanish_content' => $spanishContent,
                     'english_content' => (array)($english['content'] ?? []),
                     'english_status' => (string)($english['english_status'] ?? 'current'),
-                    'spanish_published' => true,
+                    'spanish_published' => $publishSpanish,
                 ];
             } else {
                 $english = $adapter->adaptMissing($userId, $entityType, $entityId, 'es', 'en');
@@ -74,10 +78,24 @@ final class BilingualEditorialGenerationWorker
             }
 
             $jobs->complete($jobId, $result);
+            $this->refreshEditorialPackages($jobId);
             return ['ok' => true, 'job' => $jobs->publicState($jobs->job($jobId))];
         } catch (Throwable $error) {
             $jobs->fail($jobId, $error->getMessage());
+            $this->refreshEditorialPackages($jobId);
             return ['ok' => false, 'job' => $jobs->publicState($jobs->job($jobId)), 'error' => $error->getMessage()];
+        }
+    }
+
+    private function refreshEditorialPackages(int $jobId): void
+    {
+        if (!class_exists(ArtworkEditorialPackageService::class)) {
+            return;
+        }
+        try {
+            (new ArtworkEditorialPackageService($this->pdo))->refreshPackagesForEditorialJob($jobId);
+        } catch (Throwable $error) {
+            error_log('Editorial package refresh failed for job ' . $jobId . ': ' . $error->getMessage());
         }
     }
 }

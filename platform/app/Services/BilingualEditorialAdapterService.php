@@ -60,7 +60,8 @@ final class BilingualEditorialAdapterService
         int $userId,
         int $entityId,
         ?array $currentSpanishOverride = null,
-        ?string $privateMemoOverride = null
+        ?string $privateMemoOverride = null,
+        bool $publishSpanish = true
     ): array {
         $currentSpanish = $this->editorial->get($userId, 'series', $entityId, 'es');
         $currentEnglish = $this->editorial->get($userId, 'series', $entityId, 'en');
@@ -86,7 +87,9 @@ final class BilingualEditorialAdapterService
         try {
             $this->editorial->save($userId, 'series', $entityId, 'es', $spanishContent, $memo);
             $this->editorial->save($userId, 'series', $entityId, 'en', $englishContent);
-            $this->editorial->setSpanishPublished($userId, 'series', $entityId, true);
+            if ($publishSpanish) {
+                $this->editorial->setSpanishPublished($userId, 'series', $entityId, true);
+            }
             if ($ownsTransaction) $this->pdo->commit();
         } catch (Throwable $error) {
             if ($ownsTransaction && $this->pdo->inTransaction()) $this->pdo->rollBack();
@@ -97,7 +100,7 @@ final class BilingualEditorialAdapterService
             'spanish_content' => $spanishContent,
             'english_content' => $englishContent,
             'status' => 'current',
-            'spanish_published' => true,
+            'spanish_published' => $publishSpanish,
         ];
     }
 
