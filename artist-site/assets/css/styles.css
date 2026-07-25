@@ -796,8 +796,8 @@ p {
 .journal .prose img {
     display: block;
     width: auto !important;
-    max-width: min(100%, 640px) !important;
-    max-height: 480px;
+    max-width: min(100%, 520px) !important;
+    max-height: 380px;
     height: auto !important;
     margin: 20px auto;
     object-fit: contain;
@@ -858,6 +858,11 @@ p {
 .journal .prose img.studio-note-inline-image--large {
     max-width: min(100%, 760px) !important;
     max-height: 520px;
+}
+
+.journal .prose img.studio-note-inline-image--center {
+    margin-right: auto;
+    margin-left: auto;
 }
 
 .journal .prose img.studio-note-inline-image--left {

@@ -554,11 +554,13 @@ $initialSourceType = $requestedSourceKey !== ''
         .studio-image-tools .studio-image-tools__remove { margin-left:auto !important; color:#966161 !important; }
         .studio-note-actions { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-top:20px; }
         .studio-note-actions__main { display:flex; gap:10px; }
+        .studio-note-actions__secondary { display:flex; gap:8px; margin-left:auto; }
         .studio-note-actions button { width:auto; min-width:148px; margin:0; }
         .studio-note-publish { border-color:#b8a4c0 !important; background:#b8a4c0 !important; color:#fffaf7 !important; }
         .studio-note-publish:hover { border-color:#a791b0 !important; background:#a791b0 !important; }
-        .studio-note-delete { min-width:0 !important; margin:0 0 0 auto !important; padding:8px 3px !important; border:0 !important; background:transparent !important; color:#966161 !important; box-shadow:none !important; font-size:10px !important; }
-        .studio-note-delete:hover { background:transparent !important; color:#753f3f !important; text-decoration:underline; transform:none !important; box-shadow:none !important; }
+        .studio-note-secondary-action { min-width:92px !important; padding:9px 13px !important; border:1px solid #cfc7c0 !important; border-radius:3px !important; background:#fff !important; color:#625b55 !important; box-shadow:none !important; font-size:10px !important; }
+        .studio-note-secondary-action:hover { border-color:#9f958d !important; background:#f7f4ef !important; transform:none !important; box-shadow:none !important; }
+        .studio-note-secondary-action--danger { border-color:#d8bebe !important; color:#8b5151 !important; }
         .studio-language-heading { display:flex; align-items:center; justify-content:space-between; min-height:27px; gap:18px; margin:0 0 14px; }
         .studio-language-heading span { color:#625b55; font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
         .studio-language-state { padding:5px 9px; border:1px solid #d2c6d5; border-radius:999px; background:#f3eef4; color:#5d5161 !important; letter-spacing:.04em !important; text-transform:none !important; }
@@ -622,7 +624,7 @@ $initialSourceType = $requestedSourceKey !== ''
             .studio-note-actions { align-items:stretch; flex-direction:column; }
             .studio-note-actions__main { display:grid; grid-template-columns:1fr 1fr; }
             .studio-note-actions__main button { width:100%; min-width:0; }
-            .studio-note-delete { align-self:flex-end; width:auto !important; }
+            .studio-note-actions__secondary { align-self:flex-end; margin-left:0; }
             .studio-seo-grid { grid-template-columns:1fr; }
             .studio-drafts-list { grid-template-columns:1fr; }
             .studio-draft { grid-template-columns:112px minmax(0,1fr); min-height:164px; }
@@ -821,10 +823,12 @@ $initialSourceType = $requestedSourceKey !== ''
                                         </button>
                                         <button class="button-link secondary" name="action" value="save_draft" type="submit">Guardar borrador</button>
                                     </div>
-                                    <?php if ((string)$openDraft['status'] === 'published'): ?>
-                                        <button class="studio-note-delete" name="action" value="unpublish_draft" type="submit">Retirar</button>
-                                    <?php endif; ?>
-                                    <button class="studio-note-delete" name="action" value="delete_draft" type="submit" onclick="return confirm('¿Eliminar esta Nota de estudio?')">Eliminar</button>
+                                    <div class="studio-note-actions__secondary">
+                                        <?php if ((string)$openDraft['status'] === 'published'): ?>
+                                            <button class="studio-note-secondary-action" name="action" value="unpublish_draft" type="submit">Retirar</button>
+                                        <?php endif; ?>
+                                        <button class="studio-note-secondary-action studio-note-secondary-action--danger" name="action" value="delete_draft" type="submit" onclick="return confirm('¿Eliminar esta Nota de estudio?')">Eliminar</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
