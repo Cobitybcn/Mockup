@@ -100,7 +100,24 @@ function run_studio_note_workspace_tests(): void
         'las adaptaciones inglesas no aparecen en el Board español'
     );
 
+    $pdo->prepare('UPDATE social_campaigns SET objective=? WHERE id=17')->execute([
+        '<p>English text.</p><img src="data:image/png;base64,' . str_repeat('A', 12000) . '">',
+    ]);
+    $contextMethod = new ReflectionMethod(BilingualEditorialAdapterService::class, 'entityContext');
+    $promptContext = (array)$contextMethod->invoke(
+        new BilingualEditorialAdapterService($pdo),
+        7,
+        'studio_note',
+        17
+    );
+    TestHarness::assertTrue(
+        !str_contains((string)($promptContext['objective'] ?? ''), 'data:image/')
+            && str_contains((string)($promptContext['objective'] ?? ''), 'STUDIO_NOTE_IMAGE_SLOT_0'),
+        'el contexto editorial nunca envía bytes base64 de imágenes a Vertex'
+    );
+
     $worker = (string)file_get_contents(dirname(__DIR__, 2) . '/app/Services/BilingualEditorialGenerationWorker.php');
+    $adapter = (string)file_get_contents(dirname(__DIR__, 2) . '/app/Services/BilingualEditorialAdapterService.php');
     TestHarness::assertContains("'proposal_only' => true", $worker, 'el worker marca Studio Notes como propuesta sin guardado automático');
     TestHarness::assertContains('completeStudioNoteMetadata', $worker, 'el worker completa los metadatos españoles desde el análisis editorial');
     TestHarness::assertContains("'metadata_completed' => true", $worker, 'publicar registra que el paquete SEO español fue completado');
@@ -115,4 +132,9 @@ function run_studio_note_workspace_tests(): void
     );
     TestHarness::assertContains('syncHistoricalJobs', $worker, 'al completar el trabajo el resultado se incorpora a la mesa editorial');
     TestHarness::assertContains("'applied_to_editor' => true", $worker, 'la adaptación explícita actualiza el editor inglés al terminar');
+    TestHarness::assertContains(
+        '$promptTargetContent[\'body_html\']',
+        $adapter,
+        'el borrador inglés previo también reemplaza las imágenes por referencias antes de adaptar'
+    );
 }

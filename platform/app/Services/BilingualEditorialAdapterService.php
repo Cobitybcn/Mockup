@@ -112,6 +112,7 @@ final class BilingualEditorialAdapterService
         array $targetContent
     ): array {
         $promptSourceContent = $sourceContent;
+        $promptTargetContent = $targetContent;
         $protectedImages = [];
         if ($entityType === 'studio_note' && isset($sourceContent['body_html'])) {
             $protected = StudioNoteMediaService::protectImagesForAdaptation(
@@ -120,6 +121,12 @@ final class BilingualEditorialAdapterService
             $promptSourceContent['body_html'] = (string)$protected['html'];
             $protectedImages = (array)$protected['images'];
         }
+        if ($entityType === 'studio_note' && isset($targetContent['body_html'])) {
+            $protectedTarget = StudioNoteMediaService::protectImagesForAdaptation(
+                (string)$targetContent['body_html']
+            );
+            $promptTargetContent['body_html'] = (string)$protectedTarget['html'];
+        }
         $prompt = $this->prompt(
             $userId,
             $entityType,
@@ -127,7 +134,7 @@ final class BilingualEditorialAdapterService
             'es',
             'en',
             $promptSourceContent,
-            $targetContent,
+            $promptTargetContent,
             false
         );
         $decoded = $this->decodeJson($this->client->generateText([$this->client->textPart($prompt)], 'gemini-2.5-flash'));
@@ -362,6 +369,13 @@ final class BilingualEditorialAdapterService
     {
         $context = $this->entityContext($userId, 'studio_note', $entityId);
         if ($context === []) throw new RuntimeException('Studio Note not found.');
+        $promptSourceContent = $sourceContent;
+        if (isset($promptSourceContent['body_html'])) {
+            $protected = StudioNoteMediaService::protectImagesForAdaptation(
+                (string)$promptSourceContent['body_html']
+            );
+            $promptSourceContent['body_html'] = (string)$protected['html'];
+        }
         $profile = $this->profileContext(ArtistProfile::findForUser($userId));
         $imagePaths = $this->entityImagePaths($userId, 'studio_note', $entityId);
         $imageFiles = array_map('basename', $imagePaths);
@@ -393,7 +407,7 @@ final class BilingualEditorialAdapterService
             . "- Do not alter, translate, summarize into, or return title/body_html.\n\n"
             . "ARTIST PROFILE\n{$profile}\n\n"
             . "ENTITY CONTEXT\n" . json_encode($context, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
-            . "AUTHORITATIVE SPANISH NOTE\n" . json_encode($sourceContent, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
+            . "AUTHORITATIVE SPANISH NOTE\n" . json_encode($promptSourceContent, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
             . "ATTACHED IMAGE FILENAMES IN ORDER\n" . json_encode($imageFiles, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
             . "OUTPUT SHAPE\n" . json_encode($shape, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $parts = [$this->client->textPart($prompt)];
@@ -915,6 +929,10 @@ RULES;
             if ($row === []) return [];
             $payload = json_decode((string)($row['payload_json'] ?? ''), true);
             unset($row['payload_json']);
+            $protectedObjective = StudioNoteMediaService::protectImagesForAdaptation(
+                (string)($row['objective'] ?? '')
+            );
+            $row['objective'] = (string)$protectedObjective['html'];
             $row['source'] = is_array($payload['source'] ?? null) ? $payload['source'] : [];
             $row['related_media'] = array_values(array_map(
                 static fn(array $media): array => array_filter([
