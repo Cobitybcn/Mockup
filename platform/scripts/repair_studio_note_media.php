@@ -8,8 +8,9 @@ if (PHP_SAPI !== 'cli') {
 
 require_once dirname(__DIR__) . '/app/bootstrap.php';
 
-$options = getopt('', ['apply', 'notes:']);
+$options = getopt('', ['apply', 'compact-history', 'notes:']);
 $apply = array_key_exists('apply', $options);
+$compactHistory = array_key_exists('compact-history', $options);
 $noteIds = array_values(array_unique(array_filter(
     array_map('intval', preg_split('/[^0-9]+/', (string)($options['notes'] ?? '')) ?: []),
     static fn(int $id): bool => $id > 0
@@ -68,7 +69,7 @@ foreach ($rows as $note) {
         $report[] = $reportRow;
         continue;
     }
-    if ($beforeImages === 0) {
+    if ($beforeImages === 0 && !$compactHistory) {
         throw new RuntimeException("Studio Note {$noteId} has no recoverable embedded images.");
     }
 
@@ -113,6 +114,52 @@ foreach ($rows as $note) {
     }
 
     $source = is_array($payload['source'] ?? null) ? $payload['source'] : [];
+    $workspaceUpdates = [];
+    $workspaceBeforeBytes = 0;
+    $workspaceAfterBytes = 0;
+    if ($compactHistory) {
+        $workspace = $pdo->prepare(
+            'SELECT id,content_json FROM studio_note_workspace_items
+             WHERE user_id=? AND note_id=? ORDER BY id'
+        );
+        $workspace->execute([$userId, $noteId]);
+        foreach ($workspace as $workspaceRow) {
+            $content = json_decode((string)$workspaceRow['content_json'], true);
+            $content = is_array($content) ? $content : [];
+            $body = (string)($content['body_html'] ?? '');
+            $workspaceBeforeBytes += strlen((string)$workspaceRow['content_json']);
+            if (embeddedImageCount($body) > 0) {
+                $textFingerprint = hash('sha256', normalizedEditorialText($body));
+                $normalized = StudioNoteMediaService::normalize(
+                    $userId,
+                    $noteId,
+                    $body,
+                    $payload,
+                    $availableSources
+                );
+                $content['body_html'] = (string)$normalized['html'];
+                if (embeddedImageCount((string)$content['body_html']) !== 0
+                    || !hash_equals(
+                        $textFingerprint,
+                        hash('sha256', normalizedEditorialText((string)$content['body_html']))
+                    )) {
+                    throw new RuntimeException(
+                        "Studio Note {$noteId} historical text changed while extracting its images."
+                    );
+                }
+            }
+            $encodedWorkspace = json_encode(
+                $content,
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
+            );
+            $workspaceAfterBytes += strlen($encodedWorkspace);
+            $workspaceUpdates[] = [
+                'id' => (int)$workspaceRow['id'],
+                'content_json' => $encodedWorkspace,
+                'content_hash' => hash('sha256', $encodedWorkspace),
+            ];
+        }
+    }
     $englishCurrent = '';
     foreach ($updates as $update) {
         if ((string)$update['locale'] !== 'en') continue;
@@ -137,6 +184,23 @@ foreach ($rows as $note) {
                 (string)$update['locale'],
             ]);
         }
+        if ($compactHistory) {
+            $updateWorkspace = $pdo->prepare(
+                'UPDATE studio_note_workspace_items
+                 SET content_json=?,content_hash=?,updated_at=?
+                 WHERE id=? AND user_id=? AND note_id=?'
+            );
+            foreach ($workspaceUpdates as $workspaceUpdate) {
+                $updateWorkspace->execute([
+                    (string)$workspaceUpdate['content_json'],
+                    (string)$workspaceUpdate['content_hash'],
+                    date(DATE_ATOM),
+                    (int)$workspaceUpdate['id'],
+                    $userId,
+                    $noteId,
+                ]);
+            }
+        }
         $objective = $englishCurrent !== '' ? $englishCurrent : (string)$note['objective'];
         $pdo->prepare(
             'UPDATE social_campaigns
@@ -152,6 +216,38 @@ foreach ($rows as $note) {
             $noteId,
             $userId,
         ]);
+        $prunedJobs = 0;
+        $prunedBytes = 0;
+        if ($compactHistory) {
+            $jobs = $pdo->prepare(
+                "SELECT id,payload_json,result_json
+                 FROM bilingual_editorial_jobs
+                 WHERE user_id=? AND entity_type='studio_note' AND entity_id=?
+                   AND status IN ('completed','failed','enqueue_failed')"
+            );
+            $jobs->execute([$userId, $noteId]);
+            $updateJob = $pdo->prepare(
+                'UPDATE bilingual_editorial_jobs
+                 SET payload_json=?,result_json=?,updated_at=?
+                 WHERE id=? AND user_id=?'
+            );
+            foreach ($jobs as $job) {
+                $payloadJson = (string)$job['payload_json'];
+                $resultJson = (string)$job['result_json'];
+                if (strlen($payloadJson) <= 100000 && strlen($resultJson) <= 100000) continue;
+                $prunedBytes += strlen($payloadJson) + strlen($resultJson);
+                $payloadReceipt = historyReceipt('payload', $payloadJson);
+                $resultReceipt = historyReceipt('result', $resultJson);
+                $updateJob->execute([
+                    $payloadReceipt,
+                    $resultReceipt,
+                    date(DATE_ATOM),
+                    (int)$job['id'],
+                    $userId,
+                ]);
+                $prunedJobs++;
+            }
+        }
         $pdo->commit();
     } catch (Throwable $error) {
         if ($pdo->inTransaction()) $pdo->rollBack();
@@ -167,6 +263,12 @@ foreach ($rows as $note) {
     }
     $reportRow['after_body_bytes'] = $afterBytes;
     $reportRow['media_count'] = count((array)($payload['media'] ?? []));
+    if ($compactHistory) {
+        $reportRow['workspace_before_bytes'] = $workspaceBeforeBytes;
+        $reportRow['workspace_after_bytes'] = $workspaceAfterBytes;
+        $reportRow['pruned_jobs'] = $prunedJobs;
+        $reportRow['pruned_job_bytes'] = $prunedBytes;
+    }
     $report[] = $reportRow;
 }
 
@@ -200,4 +302,14 @@ function normalizedEditorialText(string $html): string
         ENT_QUOTES | ENT_HTML5,
         'UTF-8'
     )) ?? '');
+}
+
+function historyReceipt(string $kind, string $json): string
+{
+    return json_encode([
+        'archived' => true,
+        'kind' => $kind,
+        'original_bytes' => strlen($json),
+        'original_sha256' => hash('sha256', $json),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 }

@@ -40,7 +40,7 @@ function run_deployment_pipeline_regression_tests(): void
         'the interactive web service remains bounded while generation runs in the worker'
     );
     TestHarness::assertContains(
-        'platform/scripts/audit_studio_note_media.php|platform/cloudbuild*.yaml',
+        'platform/scripts/audit_studio_note_media.php|platform/scripts/repair_studio_note_media.php|platform/cloudbuild*.yaml',
         $cloudBuild,
         'diagnostic and pipeline-only changes do not rebuild the generation worker'
     );
