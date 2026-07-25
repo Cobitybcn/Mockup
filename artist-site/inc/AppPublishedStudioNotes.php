@@ -71,7 +71,9 @@ final class AppPublishedStudioNotes
             $row['seo_title'] = trim((string)($content['seo_title'] ?? ''));
             $row['seo_description'] = trim((string)($content['seo_description'] ?? ''));
             $row['alt_text'] = trim((string)($content['alt_text'] ?? ''));
+            $row['caption'] = trim((string)($content['caption'] ?? ''));
             $row['search_terms'] = trim((string)($content['search_terms'] ?? ''));
+            $row['image_metadata'] = $this->imageMetadata((array)($content['image_metadata'] ?? []));
             $row['locale'] = $locale;
             $row['has_embedded_image'] = $this->hasEmbeddedImage((string)$row['objective']);
 
@@ -83,6 +85,22 @@ final class AppPublishedStudioNotes
             $notes[$slug] = $row;
         }
         return $notes;
+    }
+
+    /** @return array<string,array{alt_text:string,caption:string}> */
+    private function imageMetadata(array $items): array
+    {
+        $metadata = [];
+        foreach ($items as $item) {
+            if (!is_array($item)) continue;
+            $file = basename(trim((string)($item['file'] ?? '')));
+            if ($file === '') continue;
+            $metadata[$file] = [
+                'alt_text' => trim((string)($item['alt_text'] ?? '')),
+                'caption' => trim((string)($item['caption'] ?? '')),
+            ];
+        }
+        return $metadata;
     }
 
     /** @return array<int,array<string,array<string,mixed>>> */

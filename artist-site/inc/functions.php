@@ -131,12 +131,14 @@ function studio_note_image_file(string $source): string
  * @param array<int,string> $allowedImageFiles
  * @param callable(string):string $imageUrl
  * @param array<int,string> $excludedImageFiles
+ * @param array<string,array{alt_text?:string,caption?:string}> $imageMetadata
  */
 function safe_studio_note_rich_text(
     string $html,
     array $allowedImageFiles,
     callable $imageUrl,
-    array $excludedImageFiles = []
+    array $excludedImageFiles = [],
+    array $imageMetadata = []
 ): string {
     if (!class_exists(DOMDocument::class)) return safe_rich_text($html);
 
@@ -149,6 +151,15 @@ function safe_studio_note_rich_text(
     foreach ($excludedImageFiles as $file) {
         $file = basename((string)$file);
         if ($file !== '') $excluded[$file] = true;
+    }
+    $metadata = [];
+    foreach ($imageMetadata as $file => $item) {
+        $file = basename((string)$file);
+        if ($file === '' || !is_array($item)) continue;
+        $metadata[$file] = [
+            'alt_text' => trim((string)($item['alt_text'] ?? '')),
+            'caption' => trim((string)($item['caption'] ?? '')),
+        ];
     }
 
     $document = new DOMDocument('1.0', 'UTF-8');
@@ -176,7 +187,7 @@ function safe_studio_note_rich_text(
         foreach ($node->childNodes as $child) $result .= $render($child);
         return $result;
     };
-    $render = static function (DOMNode $node) use (&$render, $renderChildren, $allowed, $excluded, $imageUrl): string {
+    $render = static function (DOMNode $node) use (&$render, $renderChildren, $allowed, $excluded, $imageUrl, $metadata): string {
         if ($node->nodeType === XML_TEXT_NODE) return e($node->nodeValue ?? '');
         if ($node->nodeType !== XML_ELEMENT_NODE || !$node instanceof DOMElement) return '';
 
@@ -191,14 +202,23 @@ function safe_studio_note_rich_text(
             $align = strtolower($node->getAttribute('data-editor-align'));
             if (!in_array($align, ['left', 'center', 'right'], true)) $align = 'center';
             $class = 'studio-note-inline-image studio-note-inline-image--' . $size . ' studio-note-inline-image--' . $align;
-            return '<img class="' . e($class) . '" src="' . e($url) . '" alt="'
-                . e($node->getAttribute('alt')) . '" loading="lazy" decoding="async">';
+            $seo = (array)($metadata[$file] ?? []);
+            $alt = trim((string)($seo['alt_text'] ?? '')) ?: trim($node->getAttribute('alt'));
+            $caption = trim((string)($seo['caption'] ?? ''));
+            $image = '<img class="' . e($class) . '" src="' . e($url) . '" alt="'
+                . e($alt) . '" loading="lazy" decoding="async">';
+            if ($caption === '') return $image;
+            return '<figure class="studio-note-inline-figure studio-note-inline-figure--' . e($align) . '">'
+                . $image . '<figcaption>' . e($caption) . '</figcaption></figure>';
         }
 
         $children = $renderChildren($node);
         $simpleTags = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'blockquote', 'ul', 'ol', 'li', 'h2', 'h3'];
         if (in_array($tag, $simpleTags, true)) {
             if ($tag === 'br') return '<br>';
+            if ($tag === 'p' && str_starts_with(ltrim($children), '<figure class="studio-note-inline-figure')) {
+                return $children;
+            }
             return '<' . $tag . '>' . $children . '</' . $tag . '>';
         }
         if ($tag === 'h1') return '<h2>' . $children . '</h2>';

@@ -37,6 +37,13 @@ $insertLocalized->execute(['es', json_encode([
     'title' => 'Donde el pensamiento emerge de la tierra',
     'body_html' => '<p>El territorio nunca es una superficie neutral.</p><img src="/studio_note_media.php?note=12&amp;file=' . $imageFile . '">',
     'slug' => 'donde-el-pensamiento-emerge-de-la-tierra',
+    'alt_text' => 'Portada española.',
+    'caption' => 'Caption español de portada.',
+    'image_metadata' => [[
+        'file' => $imageFile,
+        'alt_text' => 'Pintura abstracta roja atravesada por líneas horizontales.',
+        'caption' => 'Estudio del territorio pictórico y sus estratos.',
+    ]],
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)]);
 $insertLocalized->execute(['en', json_encode([
     'title' => 'Where Thought Emerges from the Earth',
@@ -54,6 +61,8 @@ if (!isset($spanish[$spanishSlug])
     || !isset($english[$englishSlug])
     || (string)$spanish[$spanishSlug]['language_slugs']['en'] !== $englishSlug
     || (array)$spanish[$spanishSlug]['body_media_files'] !== [$imageFile]
+    || (string)$spanish[$spanishSlug]['image_metadata'][$imageFile]['alt_text'] !== 'Pintura abstracta roja atravesada por líneas horizontales.'
+    || (string)$spanish[$spanishSlug]['image_metadata'][$imageFile]['caption'] !== 'Estudio del territorio pictórico y sus estratos.'
     || (array)$english[$englishSlug]['body_media_files'] !== []
     || isset($spanish['english-only-13'])
     || !isset($english['english-only-13'])) {

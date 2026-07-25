@@ -875,6 +875,27 @@ p {
     margin-left: auto;
 }
 
+.journal .prose .studio-note-inline-figure {
+    display: grid;
+    gap: 8px;
+    margin: 24px 0;
+}
+
+.journal .prose .studio-note-inline-figure--center {
+    justify-items: center;
+}
+
+.journal .prose .studio-note-inline-figure--right {
+    justify-items: end;
+}
+
+.journal .prose .studio-note-inline-figure figcaption {
+    max-width: 760px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
 .journal-block-image {
     margin: 18px 0;
 }

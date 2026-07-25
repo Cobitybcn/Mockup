@@ -2429,6 +2429,7 @@ function render_published_journal(array $notes): void
                 $thumbUrl = app_studio_note_embedded_image_url($post, 480);
                 $thumbSrcset = app_studio_note_embedded_image_srcset($post);
             }
+            $thumbMetadata = (array)($post['image_metadata'][$thumbFile] ?? []);
             
             $snippet = trim((string)($post['excerpt'] ?? '')) ?: trim(strip_tags((string)$post['objective']));
             if (mb_strlen($snippet) > 200) {
@@ -2442,7 +2443,7 @@ function render_published_journal(array $notes): void
                 <?php if ($thumbUrl !== ''): ?>
                     <a class="article-thumb" href="<?= e(url_for('studio-notes/' . $slug)) ?>">
                         <img src="<?= e($thumbUrl) ?>" <?= $thumbSrcset !== '' ? 'srcset="' . e($thumbSrcset) . '" sizes="(max-width: 940px) calc(100vw - 72px), 33vw"' : '' ?>
-                            alt="<?= e((string)($post['alt_text'] ?? '') ?: $post['title']) ?>" loading="lazy" decoding="async">
+                            alt="<?= e((string)($thumbMetadata['alt_text'] ?? '') ?: ((string)($post['alt_text'] ?? '') ?: $post['title'])) ?>" loading="lazy" decoding="async">
                     </a>
                 <?php endif; ?>
                 <p class="eyebrow"><?= e(site_t('Essay', 'Ensayo')) ?></p>
@@ -2473,6 +2474,7 @@ function render_published_journal_post(array $notes, string $slug): bool
     $noteMediaFiles = array_values(array_filter(array_map('basename', (array)($post['media_files'] ?? []))));
     $bodyMediaFiles = array_values(array_filter(array_map('basename', (array)($post['body_media_files'] ?? []))));
     $externalMediaFiles = array_values(array_diff($noteMediaFiles, $bodyMediaFiles));
+    $imageMetadata = (array)($post['image_metadata'] ?? []);
     $coverUrl = '';
     $coverSrcset = '';
     $coverFile = (string)($externalMediaFiles[0] ?? '');
@@ -2487,8 +2489,10 @@ function render_published_journal_post(array $notes, string $slug): bool
         (string)$post['objective'],
         $noteMediaFiles,
         static fn(string $file): string => app_studio_note_media_url($post, $file, 1200),
-        $coverFile !== '' ? [$coverFile] : []
+        $coverFile !== '' ? [$coverFile] : [],
+        $imageMetadata
     );
+    $coverMetadata = (array)($imageMetadata[$coverFile] ?? []);
     ?>
     <section class="page-hero artist-page-hero journal-post-hero__intro">
         <p class="eyebrow"><?= e(site_t('Studio Notes', 'Notas de estudio')) ?></p>
@@ -2501,7 +2505,10 @@ function render_published_journal_post(array $notes, string $slug): bool
             <figure class="artist-profile-block__portrait journal-post-feature__portrait">
                 <img src="<?= e($coverUrl) ?>" srcset="<?= e($coverSrcset) ?>"
                     sizes="(max-width: 940px) calc(100vw - 36px), 148px"
-                    alt="<?= e((string)($post['alt_text'] ?? '') ?: $post['title']) ?>" fetchpriority="high" decoding="async">
+                    alt="<?= e((string)($coverMetadata['alt_text'] ?? '') ?: ((string)($post['alt_text'] ?? '') ?: $post['title'])) ?>" fetchpriority="high" decoding="async">
+                <?php if (trim((string)($coverMetadata['caption'] ?? $post['caption'] ?? '')) !== ''): ?>
+                    <figcaption><?= e((string)($coverMetadata['caption'] ?? $post['caption'])) ?></figcaption>
+                <?php endif; ?>
             </figure>
             <div class="prose">
                 <?= $renderNoteBody() ?>
@@ -2520,11 +2527,15 @@ function render_published_journal_post(array $notes, string $slug): bool
             </div>
             <div class="artist-studio-grid">
                 <?php foreach (array_slice($externalMediaFiles, 1) as $mockupFile): ?>
+                    <?php $mediaMetadata = (array)($imageMetadata[$mockupFile] ?? []); ?>
                     <figure>
                         <img src="<?= e(app_studio_note_media_url($post, (string)$mockupFile, 768)) ?>"
                             srcset="<?= e(app_studio_note_media_srcset($post, (string)$mockupFile)) ?>"
                             sizes="(max-width: 940px) calc(100vw - 36px), 33vw"
-                            alt="<?= e(site_t('Context study', 'Estudio de contexto')) ?>" loading="lazy" decoding="async">
+                            alt="<?= e((string)($mediaMetadata['alt_text'] ?? '') ?: site_t('Context study', 'Estudio de contexto')) ?>" loading="lazy" decoding="async">
+                        <?php if (trim((string)($mediaMetadata['caption'] ?? '')) !== ''): ?>
+                            <figcaption><?= e((string)$mediaMetadata['caption']) ?></figcaption>
+                        <?php endif; ?>
                     </figure>
                 <?php endforeach; ?>
             </div>

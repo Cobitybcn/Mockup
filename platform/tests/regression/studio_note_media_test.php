@@ -69,9 +69,16 @@ studio_note_media_assert(
 $public = safe_studio_note_rich_text(
     $normalized['html'],
     [$file],
-    static fn(string $allowedFile): string => '/studio-note/' . rawurlencode($allowedFile)
+    static fn(string $allowedFile): string => '/studio-note/' . rawurlencode($allowedFile),
+    [],
+    [$file => [
+        'alt_text' => 'Pintura abstracta roja con divisiones horizontales.',
+        'caption' => 'Detalle del territorio pictórico.',
+    ]]
 );
 studio_note_media_assert(str_contains($public, '<img class="studio-note-inline-image'), 'authorized image is rendered in the public note');
+studio_note_media_assert(str_contains($public, 'alt="Pintura abstracta roja con divisiones horizontales."'), 'published images use the analyzed Spanish alt text');
+studio_note_media_assert(str_contains($public, '<figcaption>Detalle del territorio pictórico.</figcaption>'), 'published images use the analyzed Spanish editorial caption');
 studio_note_media_assert(str_contains($public, 'Before — territory'), 'UTF-8 punctuation survives safe public rendering');
 studio_note_media_assert(str_contains($public, 'studio-note-inline-image--small') && str_contains($public, 'studio-note-inline-image--right'), 'editor size and alignment survive publication');
 studio_note_media_assert(!str_contains($public, 'onerror') && !str_contains($public, '<script'), 'unsafe image attributes and scripts are removed');
