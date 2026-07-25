@@ -111,18 +111,33 @@ final class BilingualEditorialAdapterService
         array $sourceContent,
         array $targetContent
     ): array {
+        $promptSourceContent = $sourceContent;
+        $protectedImages = [];
+        if ($entityType === 'studio_note' && isset($sourceContent['body_html'])) {
+            $protected = StudioNoteMediaService::protectImagesForAdaptation(
+                (string)$sourceContent['body_html']
+            );
+            $promptSourceContent['body_html'] = (string)$protected['html'];
+            $protectedImages = (array)$protected['images'];
+        }
         $prompt = $this->prompt(
             $userId,
             $entityType,
             $entityId,
             'es',
             'en',
-            $sourceContent,
+            $promptSourceContent,
             $targetContent,
             false
         );
         $decoded = $this->decodeJson($this->client->generateText([$this->client->textPart($prompt)], 'gemini-2.5-flash'));
         $adapted = $this->projectToSourceShape($sourceContent, $decoded);
+        if ($entityType === 'studio_note') {
+            $adapted['body_html'] = StudioNoteMediaService::restoreImagesAfterAdaptation(
+                (string)($adapted['body_html'] ?? ''),
+                $protectedImages
+            );
+        }
         if ($entityType === 'series'
             && array_key_exists('tags', $sourceContent)
             && array_key_exists('search_terms', $sourceContent)) {
@@ -382,6 +397,7 @@ EDITORIAL RULES
 - Never invent search volume, competition, ranking difficulty, buyer demand or regional performance.
 - Alt text remains visual and non-interpretive.
 - When adapting body_html, preserve every HTML tag, attribute, image URL and link URL. Adapt only human-readable text nodes; never return Markdown in body_html.
+- Preserve every STUDIO_NOTE_IMAGE_SLOT token unchanged and in its original position. It represents immutable visual material restored by the application.
 - When the source value is empty, return an empty value.
 - Return exactly the same JSON keys and nesting as SOURCE_CONTENT.
 - {$targetPolicy}

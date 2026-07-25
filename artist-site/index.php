@@ -2428,8 +2428,6 @@ function render_published_journal(array $notes): void
             } elseif (!empty($post['has_embedded_image'])) {
                 $thumbUrl = app_studio_note_embedded_image_url($post, 480);
                 $thumbSrcset = app_studio_note_embedded_image_srcset($post);
-            } else {
-                $thumbUrl = first_html_image_src((string)$post['objective']);
             }
             
             $snippet = trim((string)($post['excerpt'] ?? '')) ?: trim(strip_tags((string)$post['objective']));

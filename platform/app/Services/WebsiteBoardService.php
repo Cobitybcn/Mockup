@@ -432,20 +432,33 @@ final class WebsiteBoardService
         return $this->note($userId, $noteId);
     }
 
-    public function saveNote(int $userId, int $noteId, string $title, string $objective): array
+    public function saveNote(
+        int $userId,
+        int $noteId,
+        string $title,
+        string $objective,
+        ?string $mediaAuthorityHtml = null
+    ): array
     {
         $title = trim($title);
         if ($title === '') throw new RuntimeException('El título es obligatorio.');
         [$row, $payload] = $this->noteRow($userId, $noteId);
-        $normalized = StudioNoteMediaService::normalize($userId, $noteId, $objective, $payload, $this->sources($userId));
+        $normalized = StudioNoteMediaService::normalize(
+            $userId,
+            $noteId,
+            $mediaAuthorityHtml ?? $objective,
+            $payload,
+            $this->sources($userId)
+        );
         $payload = $normalized['payload'];
+        $storedObjective = $mediaAuthorityHtml === null ? (string)$normalized['html'] : $objective;
         $source = is_array($payload['source'] ?? null) ? $payload['source'] : [];
         $sourceLabel = (string)($source['label'] ?? $row['source_label'] ?? '');
         if ((string)($source['type'] ?? '') === 'studio_note') $sourceLabel = 'Studio Essay';
         $stmt = $this->pdo->prepare('UPDATE social_campaigns SET title=?,objective=?,source_type=?,source_id=?,source_label=?,payload_json=?,updated_at=? WHERE id=? AND user_id=?');
         $stmt->execute([
             $title,
-            $normalized['html'],
+            $storedObjective,
             (string)($source['type'] ?? $row['source_type'] ?? ''),
             (string)($source['id'] ?? $row['source_id'] ?? ''),
             $sourceLabel,

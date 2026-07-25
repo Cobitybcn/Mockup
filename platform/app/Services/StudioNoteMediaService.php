@@ -4,6 +4,57 @@ declare(strict_types=1);
 final class StudioNoteMediaService
 {
     private const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
+    private const ADAPTATION_IMAGE_TOKEN = 'STUDIO_NOTE_IMAGE_SLOT_';
+
+    /**
+     * Replaces images with immutable slots before language adaptation. The
+     * model receives the editorial text and placement markers, never ownership
+     * of the image URLs or attributes.
+     *
+     * @return array{html:string,images:array<string,string>}
+     */
+    public static function protectImagesForAdaptation(string $html): array
+    {
+        $images = [];
+        $protected = preg_replace_callback(
+            '/<img\b[^>]*>/iu',
+            static function (array $match) use (&$images): string {
+                $token = self::ADAPTATION_IMAGE_TOKEN . count($images);
+                $images[$token] = (string)$match[0];
+                return $token;
+            },
+            $html
+        );
+        return ['html' => is_string($protected) ? $protected : $html, 'images' => $images];
+    }
+
+    /**
+     * Restores the exact source images after adaptation. Any image invented or
+     * copied from stale target content is discarded. If a model omits a slot,
+     * the source image is retained at the end rather than silently deleted.
+     *
+     * @param array<string,string> $images
+     */
+    public static function restoreImagesAfterAdaptation(string $html, array $images): string
+    {
+        $restored = preg_replace('/<img\b[^>]*>/iu', '', $html) ?? $html;
+        $missing = [];
+        foreach ($images as $token => $imageTag) {
+            if (str_contains($restored, $token)) {
+                $restored = str_replace($token, $imageTag, $restored);
+            } else {
+                $missing[] = $imageTag;
+            }
+        }
+        if ($missing !== []) {
+            $restored = rtrim($restored)
+                . implode('', array_map(
+                    static fn(string $imageTag): string => '<p>' . $imageTag . '</p>',
+                    $missing
+                ));
+        }
+        return trim($restored);
+    }
 
     /**
      * Converts editor-only image sources into persistent note media and rewrites
@@ -81,6 +132,8 @@ final class StudioNoteMediaService
                         $mediaItem = $sourcesByFile[$file];
                     } elseif (isset($existingInlineMedia[$file])) {
                         $mediaItem = $existingInlineMedia[$file];
+                    } elseif (($recovered = self::persistentNoteMediaFromFile($userId, $noteId, $file)) !== null) {
+                        $mediaItem = $recovered;
                     } else {
                         foreach ($media as $existing) {
                             if (basename((string)($existing['file'] ?? '')) === $file) {
@@ -173,6 +226,29 @@ final class StudioNoteMediaService
             'key' => 'studio_note:' . $noteId . ':' . $hash,
             'type' => 'studio_note',
             'id' => $hash,
+            'file' => $file,
+            'label' => 'Studio Note image',
+        ];
+    }
+
+    /** @return array<string,mixed>|null */
+    private static function persistentNoteMediaFromFile(int $userId, int $noteId, string $file): ?array
+    {
+        $prefix = 'studio-note-' . $userId . '-' . $noteId . '-';
+        if (!str_starts_with($file, $prefix)
+            || preg_match(
+                '/^studio-note-' . preg_quote((string)$userId, '/')
+                    . '-' . preg_quote((string)$noteId, '/')
+                    . '-([a-f0-9]{20})\.(?:jpg|png|webp)$/i',
+                $file,
+                $match
+            ) !== 1) {
+            return null;
+        }
+        return [
+            'key' => 'studio_note:' . $noteId . ':' . strtolower((string)$match[1]),
+            'type' => 'studio_note',
+            'id' => strtolower((string)$match[1]),
             'file' => $file,
             'label' => 'Studio Note image',
         ];

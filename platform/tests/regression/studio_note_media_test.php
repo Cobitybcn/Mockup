@@ -34,6 +34,38 @@ studio_note_media_assert((string)($media['type'] ?? '') === 'studio_note', 'pers
 studio_note_media_assert(is_file($path), 'embedded image is persisted as a real file');
 studio_note_media_assert(is_array($normalized['payload']['source'] ?? null), 'first embedded image becomes the source of a custom note');
 
+$protected = StudioNoteMediaService::protectImagesForAdaptation($normalized['html']);
+studio_note_media_assert(
+    !str_contains((string)$protected['html'], '<img')
+        && str_contains((string)$protected['html'], 'STUDIO_NOTE_IMAGE_SLOT_0'),
+    'adaptation receives an immutable image slot instead of an editable image URL'
+);
+$restored = StudioNoteMediaService::restoreImagesAfterAdaptation(
+    '<h2>Material</h2><p>Translated territory.</p>',
+    (array)$protected['images']
+);
+studio_note_media_assert(
+    str_contains($restored, 'src="media.php?file=' . rawurlencode($file)),
+    'a model that omits the slot cannot delete the source image'
+);
+
+$orphanPayload = $normalized['payload'];
+$orphanPayload['media'] = [];
+$orphanPayload['inline_media_files'] = [];
+unset($orphanPayload['source']);
+$recovered = StudioNoteMediaService::normalize(
+    24680,
+    987654,
+    $normalized['html'],
+    $orphanPayload,
+    []
+);
+studio_note_media_assert(
+    count((array)$recovered['payload']['media']) === 1
+        && basename((string)$recovered['payload']['media'][0]['file']) === $file,
+    'a persistent Studio Note file is re-associated from the Spanish body after a legacy adaptation orphaned it'
+);
+
 $public = safe_studio_note_rich_text(
     $normalized['html'],
     [$file],

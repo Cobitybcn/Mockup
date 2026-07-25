@@ -54,7 +54,11 @@ final class AppPublishedStudioNotes
                 continue;
             }
 
-            $mediaFiles = $this->mediaFiles($row, $payload);
+            $mediaFiles = $this->mediaFiles($row, $payload, [
+                (string)($spanish['body_html'] ?? ''),
+                (string)($english['body_html'] ?? ''),
+                (string)$row['objective'],
+            ]);
             $row['source'] = is_array($payload['source'] ?? null) ? $payload['source'] : null;
             $row['media_files'] = $mediaFiles;
             $row['mockup_files'] = $mediaFiles;
@@ -99,13 +103,35 @@ final class AppPublishedStudioNotes
     }
 
     /** @return list<string> */
-    private function mediaFiles(array $row, array $payload): array
+    private function mediaFiles(array $row, array $payload, array $localizedBodies = []): array
     {
         $mediaFiles = [];
         foreach ((array)($payload['media'] ?? []) as $media) {
             if (!is_array($media)) continue;
             $file = basename((string)($media['file'] ?? ''));
             if ($file !== '' && !in_array($file, $mediaFiles, true)) $mediaFiles[] = $file;
+        }
+        if ($mediaFiles) return $mediaFiles;
+
+        $notePrefix = 'studio-note-' . (int)$row['user_id'] . '-' . (int)$row['id'] . '-';
+        foreach ($localizedBodies as $bodyHtml) {
+            $imageCount = preg_match_all(
+                '/<img\b[^>]*\bsrc=["\']([^"\']+)["\']/iu',
+                (string)$bodyHtml,
+                $matches
+            );
+            if (!$imageCount) continue;
+            foreach ((array)($matches[1] ?? []) as $source) {
+                $source = html_entity_decode((string)$source, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $query = parse_url($source, PHP_URL_QUERY);
+                if (!is_string($query)) continue;
+                parse_str($query, $parameters);
+                $file = basename((string)($parameters['file'] ?? ''));
+                if ($file !== '' && str_starts_with($file, $notePrefix)
+                    && !in_array($file, $mediaFiles, true)) {
+                    $mediaFiles[] = $file;
+                }
+            }
         }
         if ($mediaFiles) return $mediaFiles;
 

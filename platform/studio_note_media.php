@@ -37,6 +37,29 @@ if (!$allowed) {
         $allowed = array_map('basename', $mockups->fetchAll(PDO::FETCH_COLUMN) ?: []);
     }
 }
+if (!in_array($file, array_values(array_filter($allowed)), true)
+    && str_starts_with($file, 'studio-note-' . (int)$note['user_id'] . '-' . $noteId . '-')) {
+    $publishedBodies = $pdo->prepare("SELECT published_content_json
+        FROM bilingual_editorial_content
+        WHERE user_id=? AND entity_type='studio_note' AND entity_id=? AND is_published=1");
+    $publishedBodies->execute([(int)$note['user_id'], $noteId]);
+    foreach ($publishedBodies->fetchAll(PDO::FETCH_COLUMN) ?: [] as $contentJson) {
+        $content = json_decode((string)$contentJson, true);
+        $bodyHtml = is_array($content) ? (string)($content['body_html'] ?? '') : '';
+        if (preg_match_all('/<img\b[^>]*\bsrc=["\']([^"\']+)["\']/iu', $bodyHtml, $matches)) {
+            foreach ((array)($matches[1] ?? []) as $source) {
+                $source = html_entity_decode((string)$source, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $query = parse_url($source, PHP_URL_QUERY);
+                if (!is_string($query)) continue;
+                parse_str($query, $parameters);
+                if (basename((string)($parameters['file'] ?? '')) === $file) {
+                    $allowed[] = $file;
+                    break 2;
+                }
+            }
+        }
+    }
+}
 if (!in_array($file, array_values(array_filter($allowed)), true)) {
     http_response_code(403);
     exit;
