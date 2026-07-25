@@ -392,15 +392,17 @@ $noteEditorialIndex = [];
 $noteIds = array_values(array_map(static fn(array $draft): int => (int)$draft['id'], $websiteDrafts));
 if ($noteIds) {
     $marks = implode(',', array_fill(0, count($noteIds), '?'));
-    $localizedStmt = $pdo->prepare("SELECT entity_id,locale,content_json,status,is_published
+    $localizedStmt = $pdo->prepare("SELECT entity_id,locale,content_json,published_content_json,status,is_published
         FROM bilingual_editorial_content
         WHERE user_id=? AND entity_type='studio_note' AND entity_id IN ($marks)");
     $localizedStmt->execute(array_merge([$userId], $noteIds));
     foreach ($localizedStmt as $localizedRow) {
         $content = json_decode((string)$localizedRow['content_json'], true);
         if (!is_array($content)) continue;
+        $publishedContent = json_decode((string)($localizedRow['published_content_json'] ?? ''), true);
         $noteEditorialIndex[(int)$localizedRow['entity_id']][(string)$localizedRow['locale']] = [
             'content' => $content,
+            'published_content' => is_array($publishedContent) ? $publishedContent : [],
             'status' => (string)$localizedRow['status'],
             'is_published' => (bool)$localizedRow['is_published'],
         ];
@@ -841,6 +843,8 @@ $initialSourceType = $requestedSourceKey !== ''
                             $payload = (array)$draft['_payload']; 
                             $draftSpanish = (array)($noteEditorialIndex[(int)$draft['id']]['es']['content'] ?? []);
                             $draftEnglish = (array)($noteEditorialIndex[(int)$draft['id']]['en']['content'] ?? []);
+                            $publishedSpanish = (array)($noteEditorialIndex[(int)$draft['id']]['es']['published_content'] ?? []);
+                            $publishedEnglish = (array)($noteEditorialIndex[(int)$draft['id']]['en']['published_content'] ?? []);
                             $draftTitle = trim((string)($draftSpanish['title'] ?? ''))
                                 ?: trim((string)($draftEnglish['title'] ?? ''))
                                 ?: (string)$draft['title'];
@@ -852,12 +856,22 @@ $initialSourceType = $requestedSourceKey !== ''
                                 (int)$draft['id'],
                                 $draftBody
                             );
+                            $publishedBody = trim((string)($publishedSpanish['body_html'] ?? ''))
+                                ?: trim((string)($publishedEnglish['body_html'] ?? ''));
+                            $publishedBody = StudioNoteMediaService::rewriteDeliveryUrls(
+                                $userId,
+                                (int)$draft['id'],
+                                $publishedBody
+                            );
                             $mockupIds = array_values(array_filter(array_map('intval', (array)($payload['mockup_ids'] ?? []))));
                             
-                            $thumbUrl = '';
+                            $thumbUrl = first_html_image_src($draftBody)
+                                ?: first_html_image_src($publishedBody);
                             $payloadSource = is_array($payload['source'] ?? null) ? $payload['source'] : [];
                             $payloadSourceKey = trim((string)($payloadSource['key'] ?? ''));
-                            if ($payloadSourceKey !== '' && isset($studioSourceLookup[$payloadSourceKey])) {
+                            if ($thumbUrl === ''
+                                && $payloadSourceKey !== ''
+                                && isset($studioSourceLookup[$payloadSourceKey])) {
                                 $sourceFile = (string)$studioSourceLookup[$payloadSourceKey]['file'];
                                 $thumbUrl = str_starts_with(basename($sourceFile), 'studio-note-' . $userId . '-' . (int)$draft['id'] . '-')
                                     ? wsn_note_media_url((int)$draft['id'], $sourceFile, 360)
@@ -871,10 +885,6 @@ $initialSourceType = $requestedSourceKey !== ''
                                     $thumbUrl = 'media.php?file=' . rawurlencode(basename($mFile));
                                 }
                             }
-                            if ($thumbUrl === '') {
-                                $thumbUrl = first_html_image_src($draftBody);
-                            }
-                            
                             $snippet = trim(strip_tags($draftBody));
                             if (mb_strlen($snippet) > 180) {
                                 $snippet = mb_substr($snippet, 0, 177) . '...';

@@ -131,6 +131,8 @@ function run_website_board_grouping_regression_tests(): void
         'la publicación no transporta el editor inglés ni sus imágenes dentro del trabajo'
     );
     TestHarness::assertContains("studio_note_inline_upload.php", $studioNotesPage, 'las imágenes del WYSIWYG se persisten al insertarlas y no esperan hasta publicar');
+    TestHarness::assertContains("published_content_json", $studioNotesPage, 'la tarjeta recupera la imagen del último snapshot publicado cuando el borrador actual perdió su referencia');
+    TestHarness::assertContains("first_html_image_src(\$publishedBody)", $studioNotesPage, 'el cuerpo editorial publicado actúa como respaldo real del thumbnail');
     TestHarness::assertContains('data-active-job-action', $studioNotesPage, 'la interfaz distingue una adaptación activa de otras propuestas');
     TestHarness::assertContains('setEnglishAdaptationBusy', $studioNotesPage, 'el editor inglés queda inhabilitado mientras se prepara su adaptación');
     TestHarness::assertContains('(string)$spanish[\'body_html\']', $studioNotesPage, 'el HTML español gobierna los medios al publicar la adaptación');
