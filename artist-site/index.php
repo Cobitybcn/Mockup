@@ -19,12 +19,28 @@ require __DIR__ . '/inc/AppPublishedSiteSettings.php';
 require __DIR__ . '/inc/AppStore.php';
 require __DIR__ . '/inc/StripeCheckout.php';
 require __DIR__ . '/inc/ArtistContactMailer.php';
+require __DIR__ . '/inc/ArtistSitemapCache.php';
 
 $requestPath = current_path();
 $pathLanguage = artist_site_path_language($requestPath);
 $path = artist_site_path_without_language($requestPath);
 $segments = array_values(array_filter(explode('/', trim($path, '/'))));
 $siteLanguage = artist_site_language();
+$sitemapCache = null;
+$staleSitemap = null;
+if ($path === '/sitemap.xml') {
+    $sitemapCache = ArtistSitemapCache::forRequest();
+    $freshSitemap = $sitemapCache->fresh();
+    if ($freshSitemap !== null) ArtistSitemapCache::emit($freshSitemap, 'hit');
+    $staleSitemap = $sitemapCache->stale();
+    try {
+        // Abort an unexpectedly expensive read before Cloud Run's 60-second
+        // request deadline so an existing stale sitemap can still be served.
+        app_admin_pdo()->exec('SET SESSION MAX_EXECUTION_TIME=10000');
+    } catch (Throwable $error) {
+        error_log('Sitemap database deadline unavailable: ' . $error->getMessage());
+    }
+}
 
 $isPublicDocument = !in_array(($segments[0] ?? ''), ['admin', 'admin-v2', 'api'], true)
     && !in_array($path, ['/sitemap.xml', '/robots.txt'], true);
@@ -43,46 +59,51 @@ $resolvedArtistEmail = '';
 try {
     $resolvedArtistEmail = resolved_artist_email();
 } catch (Throwable $error) {
+    if ($staleSitemap !== null) ArtistSitemapCache::emit($staleSitemap, 'stale');
     http_response_code(503);
     header('Retry-After: 60');
     exit('Artist site configuration is temporarily unavailable.');
 }
 
-try {
-    $managedSiteSettings = AppPublishedSiteSettings::fromApp(dirname(__DIR__) . '/platform', $resolvedArtistEmail)->get();
-    if (trim((string)($managedSiteSettings['site_title'] ?? '')) !== '') $site['name'] = trim((string)$managedSiteSettings['site_title']);
-    if (trim((string)($managedSiteSettings['tagline'] ?? '')) !== '') $site['tagline'] = trim((string)$managedSiteSettings['tagline']);
-    if (trim((string)($managedSiteSettings['contact_email'] ?? '')) !== '') $site['email'] = trim((string)$managedSiteSettings['contact_email']);
-    $site['inquiry_intro'] = trim((string)($managedSiteSettings['inquiry_intro'] ?? ''));
+if ($path === '/sitemap.xml') {
     $site['url'] = rtrim(app_absolute_url('/'), '/');
-} catch (Throwable $error) {
-    error_log('Artist Site Manager settings unavailable: ' . $error->getMessage());
+} else {
+    try {
+        $managedSiteSettings = AppPublishedSiteSettings::fromApp(dirname(__DIR__) . '/platform', $resolvedArtistEmail)->get();
+        if (trim((string)($managedSiteSettings['site_title'] ?? '')) !== '') $site['name'] = trim((string)$managedSiteSettings['site_title']);
+        if (trim((string)($managedSiteSettings['tagline'] ?? '')) !== '') $site['tagline'] = trim((string)$managedSiteSettings['tagline']);
+        if (trim((string)($managedSiteSettings['contact_email'] ?? '')) !== '') $site['email'] = trim((string)$managedSiteSettings['contact_email']);
+        $site['inquiry_intro'] = trim((string)($managedSiteSettings['inquiry_intro'] ?? ''));
+        $site['url'] = rtrim(app_absolute_url('/'), '/');
+    } catch (Throwable $error) {
+        error_log('Artist Site Manager settings unavailable: ' . $error->getMessage());
+    }
 }
 
 if ($path === '/sitemap.xml') {
-    header('Content-Type: application/xml; charset=utf-8');
-    $routes = [];
-    $addLocalizedRoute = static function (string $english, ?string $spanish = null) use (&$routes): void {
-        $routes[$english . "\n" . ($spanish ?? $english)] = [
-            'en' => $english,
-            'es' => $spanish ?? $english,
-        ];
-    };
-    foreach (['/', '/artworks/', '/sold-works/', '/series/', '/artist/', '/artist-statement/', '/studio-process/', '/exhibitions-collections/', '/studio-notes/', '/contact/', '/privacy-policy/'] as $route) {
-        $addLocalizedRoute($route);
-    }
-    foreach (array_keys($journal) as $slug) {
-        $addLocalizedRoute('/studio-notes/' . $slug . '/');
-    }
     try {
+        $routes = [];
+        $addLocalizedRoute = static function (string $english, ?string $spanish = null) use (&$routes): void {
+            $routes[$english . "\n" . ($spanish ?? $english)] = [
+                'en' => $english,
+                'es' => $spanish ?? $english,
+            ];
+        };
+        foreach (['/', '/artworks/', '/sold-works/', '/series/', '/artist/', '/artist-statement/', '/studio-process/', '/exhibitions-collections/', '/studio-notes/', '/contact/', '/privacy-policy/'] as $route) {
+            $addLocalizedRoute($route);
+        }
+        foreach (array_keys($journal) as $slug) {
+            $addLocalizedRoute('/studio-notes/' . $slug . '/');
+        }
+        // Reuse the already opened, deadline-bound connection. The normal page
+        // catalogs keep their independent request lifecycle.
+        $sitemapPdo = app_admin_pdo();
+        $GLOBALS['artist_site_sitemap_pdo'] = $sitemapPdo;
         foreach (array_keys(app_series_catalog()?->all() ?? []) as $slug) {
             $addLocalizedRoute('/series/' . $slug . '/');
         }
-    } catch (Throwable $error) {
-        error_log('Published series sitemap unavailable: ' . $error->getMessage());
-    }
-    try {
-        foreach (app_catalog()?->all() ?? [] as $slug => $publishedArtwork) {
+        $publishedCatalog = new AppPublishedCatalog($sitemapPdo, $resolvedArtistEmail);
+        foreach ($publishedCatalog->all() as $slug => $publishedArtwork) {
             if ($publishedArtwork['visibility'] !== 'public') continue;
             $addLocalizedRoute('/artworks/' . $slug . '/');
             foreach ($publishedArtwork['items'] as $mockup) {
@@ -92,21 +113,28 @@ if ($path === '/sitemap.xml') {
                 );
             }
         }
+        $urls = [];
+        foreach ($routes as $route) {
+            $urls[] = artist_site_url_with_language($site['url'] . $route['en'], 'en');
+            $urls[] = artist_site_url_with_language($site['url'] . $route['es'], 'es');
+        }
+        $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+        $xml .= "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
+        foreach ($urls as $url) {
+            $xml .= "  <url><loc>" . e($url) . "</loc></url>\n";
+        }
+        $xml .= '</urlset>';
+        if (!$sitemapCache?->store($xml)) {
+            error_log('The generated sitemap could not be cached.');
+        }
+        ArtistSitemapCache::emit($xml, 'miss');
     } catch (Throwable $error) {
-        error_log('Published artwork sitemap unavailable: ' . $error->getMessage());
+        error_log('Sitemap generation unavailable: ' . $error->getMessage());
+        if ($staleSitemap !== null) ArtistSitemapCache::emit($staleSitemap, 'stale');
+        http_response_code(503);
+        header('Retry-After: 60');
+        exit('Sitemap generation is temporarily unavailable.');
     }
-    $urls = [];
-    foreach ($routes as $route) {
-        $urls[] = artist_site_url_with_language($site['url'] . $route['en'], 'en');
-        $urls[] = artist_site_url_with_language($site['url'] . $route['es'], 'es');
-    }
-    echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-    echo "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
-    foreach ($urls as $url) {
-        echo "  <url><loc>" . e($url) . "</loc></url>\n";
-    }
-    echo "</urlset>";
-    exit;
 }
 
 $meta = page_meta(
@@ -1351,7 +1379,10 @@ function app_series_catalog(): ?AppPublishedSeriesCatalog
     static $catalog = false;
     if ($catalog === false) {
         try {
-            $catalog = AppPublishedSeriesCatalog::fromApp(dirname(__DIR__) . '/platform', resolved_artist_email());
+            $sitemapPdo = $GLOBALS['artist_site_sitemap_pdo'] ?? null;
+            $catalog = $sitemapPdo instanceof PDO
+                ? new AppPublishedSeriesCatalog($sitemapPdo, resolved_artist_email())
+                : AppPublishedSeriesCatalog::fromApp(dirname(__DIR__) . '/platform', resolved_artist_email());
         } catch (Throwable $error) {
             error_log('Published series catalog unavailable: ' . $error->getMessage());
             $catalog = null;

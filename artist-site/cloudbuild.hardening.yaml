@@ -151,6 +151,13 @@ steps:
         grep -qi '^x-content-type-options: nosniff' <<<"$$headers"
         grep -qi '^x-frame-options: DENY' <<<"$$headers"
 
+        curl --fail --silent --show-error --max-time 15 \
+          --dump-header /tmp/artist-sitemap.headers \
+          "$${candidate_url}/sitemap.xml" >/tmp/artist-sitemap.xml
+        grep -q '^<?xml version="1.0" encoding="UTF-8"?>' /tmp/artist-sitemap.xml
+        grep -q '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' /tmp/artist-sitemap.xml
+        grep -qi '^x-sitemap-cache: MISS' /tmp/artist-sitemap.headers
+
   - id: promote
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
     waitFor: [candidate-smoke]

@@ -6,11 +6,17 @@ $dockerfile = (string)file_get_contents($root . '/Dockerfile');
 $cloudBuild = str_replace("\r\n", "\n", (string)file_get_contents($root . '/cloudbuild.hardening.yaml'));
 $dockerIgnore = (string)file_get_contents($root . '/.dockerignore');
 $cloudIgnore = (string)file_get_contents($root . '/.gcloudignore');
+$artistSite = (string)file_get_contents($root . '/index.php');
 
 $checks = [
     [str_contains($dockerfile, 'artist-site-transport-security'), 'production TLS termination emits HSTS'],
     [str_contains($dockerfile, 'composer install --no-dev') && str_contains($dockerfile, '/app/vendor'), 'production image installs the contact mail transport'],
     [str_contains($cloudBuild, 'candidate-smoke'), 'candidate revision is smoke-tested before promotion'],
+    [str_contains($cloudBuild, '/sitemap.xml') && str_contains($cloudBuild, 'x-sitemap-cache: MISS'), 'candidate smoke generates and warms a complete sitemap before promotion'],
+    [str_contains($artistSite, "ArtistSitemapCache::emit(\$freshSitemap, 'hit')"), 'crawler requests reuse the fresh sitemap cache'],
+    [str_contains($artistSite, "ArtistSitemapCache::emit(\$staleSitemap, 'stale')"), 'temporary database failures serve the last valid sitemap'],
+    [str_contains($artistSite, 'SET SESSION MAX_EXECUTION_TIME=10000'), 'sitemap reads end before the Cloud Run deadline'],
+    [str_contains($artistSite, 'new AppPublishedCatalog($sitemapPdo, $resolvedArtistEmail)'), 'sitemap generation reuses its deadline-bound database connection'],
     [str_contains($cloudBuild, '/admin-v2/'), 'both retired Cloud Run admin routes are verified'],
     [str_contains($cloudBuild, '--clear-tags'), 'promotion retires stale tagged revisions'],
     [str_contains($cloudBuild, 'serviceAccounts/mockups-cicd-sa@'), 'artist releases use the dedicated CI/CD identity'],
