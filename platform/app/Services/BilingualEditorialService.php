@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 final class BilingualEditorialService
 {
-    private const ENTITY_TYPES = ['series', 'artwork', 'mockup'];
+    private const ENTITY_TYPES = ['series', 'artwork', 'mockup', 'studio_note'];
     private const LOCALES = ['es', 'en'];
 
     public function __construct(private PDO $pdo)
@@ -95,25 +95,37 @@ final class BilingualEditorialService
 
     public function setSpanishPublished(int $userId, string $entityType, int $entityId, bool $published): array
     {
-        $this->assertIdentity($entityType, $entityId, 'es');
+        return $this->setPublished($userId, $entityType, $entityId, 'es', $published);
+    }
+
+    public function setPublished(
+        int $userId,
+        string $entityType,
+        int $entityId,
+        string $locale,
+        bool $published
+    ): array
+    {
+        $this->assertIdentity($entityType, $entityId, $locale);
         $this->assertOwned($userId, $entityType, $entityId);
-        $spanish = $this->get($userId, $entityType, $entityId, 'es');
-        if ($published && !$this->hasMeaningfulContent($spanish['content'])) {
-            throw new RuntimeException('Add Spanish content before publishing it.');
+        $localized = $this->get($userId, $entityType, $entityId, $locale);
+        if ($published && !$this->hasMeaningfulContent($localized['content'])) {
+            throw new RuntimeException('Add localized content before publishing it.');
         }
         if ($published) {
-            $stmt = $this->pdo->prepare("UPDATE bilingual_editorial_content SET is_published=1,published_content_json=content_json,published_at=?,updated_at=? WHERE user_id=? AND entity_type=? AND entity_id=? AND locale='es'");
+            $stmt = $this->pdo->prepare('UPDATE bilingual_editorial_content SET is_published=1,published_content_json=content_json,published_at=?,updated_at=? WHERE user_id=? AND entity_type=? AND entity_id=? AND locale=?');
             $now = date(DATE_ATOM);
-            $stmt->execute([$now, $now, $userId, $entityType, $entityId]);
+            $stmt->execute([$now, $now, $userId, $entityType, $entityId, $locale]);
         } else {
-            $stmt = $this->pdo->prepare("UPDATE bilingual_editorial_content SET is_published=0,updated_at=? WHERE user_id=? AND entity_type=? AND entity_id=? AND locale='es'");
-            $stmt->execute([date(DATE_ATOM), $userId, $entityType, $entityId]);
+            $stmt = $this->pdo->prepare('UPDATE bilingual_editorial_content SET is_published=0,updated_at=? WHERE user_id=? AND entity_type=? AND entity_id=? AND locale=?');
+            $stmt->execute([date(DATE_ATOM), $userId, $entityType, $entityId, $locale]);
         }
-        $state = $this->get($userId, $entityType, $entityId, 'es');
+        $state = $this->get($userId, $entityType, $entityId, $locale);
         return [
             'is_published' => $state['is_published'],
             'published_at' => $state['published_at'],
             'has_unpublished_changes' => $state['has_unpublished_changes'],
+            'locale' => $locale,
         ];
     }
 
@@ -207,17 +219,20 @@ final class BilingualEditorialService
             $this->pdo->prepare('UPDATE artworks SET series=?,updated_at=? WHERE series_id=? AND user_id=?')->execute([$title, $now, $entityId, $userId]);
         } elseif ($entityType === 'artwork') {
             (new ArtworkSheetService($this->pdo))->saveArtworkTitle($entityId, $userId, $title);
-        } else {
+        } elseif ($entityType === 'mockup') {
             $mockup = $this->mockupRow($userId, $entityId);
             $this->ensureMockupSheet($userId, $mockup);
             $this->pdo->prepare('UPDATE mockup_sheets SET title=?,updated_at=? WHERE user_id=? AND (mockup_id=? OR mockup_file=?)')->execute([$title, $now, $userId, $entityId, (string)$mockup['mockup_file']]);
+        } else {
+            $this->pdo->prepare("UPDATE social_campaigns SET title=?,updated_at=? WHERE id=? AND user_id=? AND campaign_type='website_blog'")
+                ->execute([$title, $now, $entityId, $userId]);
         }
         return $title;
     }
 
     public function backfillEnglish(int $userId): array
     {
-        return ['series' => 0, 'artwork' => 0, 'mockup' => 0];
+        return ['series' => 0, 'artwork' => 0, 'mockup' => 0, 'studio_note' => 0];
     }
 
     private function upsertRow(int $userId, string $entityType, int $entityId, string $locale, array $content, string $memo, string $status, string $sourceHash): void
@@ -234,6 +249,16 @@ final class BilingualEditorialService
 
     private function assertOwned(int $userId, string $entityType, int $entityId): void
     {
+        if ($entityType === 'studio_note') {
+            $stmt = $this->pdo->prepare("SELECT payload_json FROM social_campaigns WHERE id=? AND user_id=? AND campaign_type='website_blog' LIMIT 1");
+            $stmt->execute([$entityId, $userId]);
+            $payload = json_decode((string)($stmt->fetchColumn() ?: ''), true);
+            if (!is_array($payload)
+                || !in_array('website_blog', array_map('strval', (array)($payload['channels'] ?? [])), true)) {
+                throw new RuntimeException('Editorial item not found.');
+            }
+            return;
+        }
         $table = $entityType === 'series' ? 'artwork_series' : ($entityType === 'artwork' ? 'artworks' : 'mockups');
         $stmt = $this->pdo->prepare("SELECT 1 FROM {$table} WHERE id=? AND user_id=? LIMIT 1");
         $stmt->execute([$entityId, $userId]);
@@ -376,6 +401,9 @@ final class BilingualEditorialService
                     (string)($content['caption'] ?? ''),
                     $now, $userId, $entityId,
                 ]);
+            return;
+        }
+        if ($entityType === 'studio_note') {
             return;
         }
         $mockup = $this->mockupRow($userId, $entityId);

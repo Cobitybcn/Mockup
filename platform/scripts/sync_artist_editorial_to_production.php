@@ -403,6 +403,103 @@ try {
         $record($stats, 'updated', 'bilingual_editorial_settings');
     }
 
+    $studioNoteFields = [
+        'campaign_type',
+        'title',
+        'objective',
+        'source_type',
+        'source_id',
+        'source_label',
+        'status',
+        'payload_json',
+        'created_at',
+    ];
+    $sourceNotesStmt = $source->prepare("SELECT id," . implode(',', $studioNoteFields) . "
+        FROM social_campaigns
+        WHERE user_id=? AND campaign_type='website_blog'
+        ORDER BY id");
+    $sourceNotesStmt->execute([$sourceUserId]);
+    $targetNotesStmt = $target->prepare("SELECT id," . implode(',', $studioNoteFields) . "
+        FROM social_campaigns
+        WHERE user_id=? AND campaign_type='website_blog'
+        ORDER BY id");
+    $targetNotesStmt->execute([$targetUserId]);
+    $targetNotesBySyncKey = [];
+    $targetNotesByLegacyIdentity = [];
+    foreach ($targetNotesStmt->fetchAll() as $targetNote) {
+        $targetPayload = json_decode((string)$targetNote['payload_json'], true);
+        $targetSyncKey = is_array($targetPayload)
+            ? trim((string)($targetPayload['editorial_sync_key'] ?? ''))
+            : '';
+        if ($targetSyncKey !== '') {
+            $targetNotesBySyncKey[$targetSyncKey] = $targetNote;
+        }
+        $legacyIdentity = hash('sha256', implode('|', [
+            (string)$targetNote['title'],
+            (string)$targetNote['source_type'],
+            (string)$targetNote['source_id'],
+            (string)$targetNote['created_at'],
+        ]));
+        $targetNotesByLegacyIdentity[$legacyIdentity] = $targetNote;
+    }
+    $insertTargetNote = $target->prepare('INSERT INTO social_campaigns
+        (user_id,campaign_type,title,objective,source_type,source_id,source_label,status,payload_json,created_at,updated_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)');
+    $updateTargetNote = $target->prepare('UPDATE social_campaigns SET
+        campaign_type=?,title=?,objective=?,source_type=?,source_id=?,source_label=?,status=?,payload_json=?,created_at=?,updated_at=?
+        WHERE id=? AND user_id=?');
+    $studioNoteTargetIds = [];
+    foreach ($sourceNotesStmt->fetchAll() as $sourceNote) {
+        $payload = json_decode((string)$sourceNote['payload_json'], true);
+        if (!is_array($payload)
+            || !in_array('website_blog', array_map('strval', (array)($payload['channels'] ?? [])), true)) {
+            continue;
+        }
+        $syncKey = trim((string)($payload['editorial_sync_key'] ?? ''));
+        if ($syncKey === '') {
+            $syncKey = 'studio-note-' . hash('sha256', implode('|', [
+                $email,
+                (string)$sourceNote['id'],
+                (string)$sourceNote['created_at'],
+            ]));
+        }
+        $payload['editorial_sync_key'] = $syncKey;
+        $sourceNote['payload_json'] = json_encode(
+            $payload,
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
+        $legacyIdentity = hash('sha256', implode('|', [
+            (string)$sourceNote['title'],
+            (string)$sourceNote['source_type'],
+            (string)$sourceNote['source_id'],
+            (string)$sourceNote['created_at'],
+        ]));
+        $targetNote = $targetNotesBySyncKey[$syncKey]
+            ?? $targetNotesByLegacyIdentity[$legacyIdentity]
+            ?? null;
+        $values = array_map(
+            static fn(string $field): mixed => $sourceNote[$field] ?? null,
+            $studioNoteFields
+        );
+        if (!is_array($targetNote)) {
+            $insertTargetNote->execute(array_merge([$targetUserId], $values, [date(DATE_ATOM)]));
+            $targetId = (int)$target->lastInsertId();
+            $record($stats, 'inserted', 'social_campaigns');
+        } else {
+            $targetId = (int)$targetNote['id'];
+            if ($sameFields($sourceNote, $targetNote, $studioNoteFields)) {
+                $record($stats, 'unchanged', 'social_campaigns');
+            } else {
+                $updateTargetNote->execute(array_merge(
+                    $values,
+                    [date(DATE_ATOM), $targetId, $targetUserId]
+                ));
+                $record($stats, 'updated', 'social_campaigns');
+            }
+        }
+        $studioNoteTargetIds[(int)$sourceNote['id']] = $targetId;
+    }
+
     $contentStmt = $source->prepare(
         'SELECT entity_type,entity_id,locale,content_json,private_memo,status,source_hash,created_at,updated_at,
                 is_published,published_content_json,published_at
@@ -415,6 +512,7 @@ try {
         'series' => $target->prepare('SELECT COUNT(*) FROM artwork_series WHERE id=? AND user_id=?'),
         'artwork' => $target->prepare('SELECT COUNT(*) FROM artworks WHERE id=? AND user_id=?'),
         'mockup' => $target->prepare('SELECT COUNT(*) FROM mockups WHERE id=? AND user_id=?'),
+        'studio_note' => $target->prepare("SELECT COUNT(*) FROM social_campaigns WHERE id=? AND user_id=? AND campaign_type='website_blog'"),
     ];
     $upsertContent = $target->prepare(
         'INSERT INTO bilingual_editorial_content
@@ -436,14 +534,21 @@ try {
         if (!isset($entityChecks[$entityType])) {
             throw new RuntimeException("Unsupported bilingual entity type: {$entityType}");
         }
-        $entityChecks[$entityType]->execute([(int)$content['entity_id'], $targetUserId]);
+        $sourceEntityId = (int)$content['entity_id'];
+        $targetEntityId = $entityType === 'studio_note'
+            ? (int)($studioNoteTargetIds[$sourceEntityId] ?? 0)
+            : $sourceEntityId;
+        if ($targetEntityId <= 0) {
+            throw new RuntimeException("Target entity mapping is missing: {$entityType} #{$sourceEntityId}");
+        }
+        $entityChecks[$entityType]->execute([$targetEntityId, $targetUserId]);
         if ((int)$entityChecks[$entityType]->fetchColumn() !== 1) {
-            throw new RuntimeException("Target entity is missing: {$entityType} #{$content['entity_id']}");
+            throw new RuntimeException("Target entity is missing: {$entityType} #{$targetEntityId}");
         }
         $upsertContent->execute([
             $targetUserId,
             $entityType,
-            (int)$content['entity_id'],
+            $targetEntityId,
             $content['locale'],
             $content['content_json'],
             $content['private_memo'],

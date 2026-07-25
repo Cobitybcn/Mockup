@@ -16,6 +16,7 @@ $faviconUrl = $artistPhotoFile !== ''
     : artworkmockups_public_url() . '/favicon.svg?v=1';
 $currentLanguage = artist_site_language();
 $languageCanonicals = is_array($meta['language_urls'] ?? null) ? $meta['language_urls'] : [];
+$hasExplicitLanguageCanonicals = array_key_exists('language_urls', $meta);
 $localizedCanonical = artist_site_url_with_language(
     (string)($languageCanonicals[$currentLanguage] ?? $meta['canonical']),
     $currentLanguage
@@ -33,9 +34,13 @@ $localizedCanonical = artist_site_url_with_language(
     <?php if (!empty($meta['robots'])): ?><meta name="robots" content="<?= e($meta['robots']) ?>"><?php endif; ?>
     <?php if (!empty($meta['keywords'])): ?><meta name="keywords" content="<?= e($meta['keywords']) ?>"><?php endif; ?>
     <link rel="canonical" href="<?= e($localizedCanonical) ?>">
-    <link rel="alternate" hreflang="es" href="<?= e(artist_site_url_with_language((string)($languageCanonicals['es'] ?? $meta['canonical']), 'es')) ?>">
-    <link rel="alternate" hreflang="en" href="<?= e(artist_site_url_with_language((string)($languageCanonicals['en'] ?? $meta['canonical']), 'en')) ?>">
-    <link rel="alternate" hreflang="x-default" href="<?= e(artist_site_url_with_language((string)($languageCanonicals['en'] ?? $meta['canonical']), 'en')) ?>">
+    <?php if (!$hasExplicitLanguageCanonicals || isset($languageCanonicals['es'])): ?>
+        <link rel="alternate" hreflang="es" href="<?= e(artist_site_url_with_language((string)($languageCanonicals['es'] ?? $meta['canonical']), 'es')) ?>">
+    <?php endif; ?>
+    <?php if (!$hasExplicitLanguageCanonicals || isset($languageCanonicals['en'])): ?>
+        <link rel="alternate" hreflang="en" href="<?= e(artist_site_url_with_language((string)($languageCanonicals['en'] ?? $meta['canonical']), 'en')) ?>">
+        <link rel="alternate" hreflang="x-default" href="<?= e(artist_site_url_with_language((string)($languageCanonicals['en'] ?? $meta['canonical']), 'en')) ?>">
+    <?php endif; ?>
     <meta property="og:title" content="<?= e($meta['title']) ?>">
     <meta property="og:description" content="<?= e($meta['description']) ?>">
     <meta property="og:type" content="website">

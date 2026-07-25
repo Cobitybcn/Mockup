@@ -10,52 +10,125 @@ final class AppPublishedStudioNotes
         return new self(artist_site_database_connection($appRoot), $artistEmail);
     }
 
-    public function all(): array
+    public function all(string $locale = 'en'): array
     {
+        $locale = in_array($locale, ['es', 'en'], true) ? $locale : 'en';
         $statement = $this->pdo->prepare("
-            SELECT sc.* 
+            SELECT sc.*
             FROM social_campaigns sc
             JOIN users u ON u.id = sc.user_id
             WHERE LOWER(u.email) = ? AND sc.status = 'published'
             ORDER BY sc.updated_at DESC, sc.id DESC
         ");
         $statement->execute([$this->artistEmail]);
-        
-        $notes = [];
-        foreach ($statement as $row) {
-            $payload = json_decode((string)$row['payload_json'], true);
-            if (is_array($payload) && in_array('website_blog', array_map('strval', (array)($payload['channels'] ?? [])), true)) {
-                // New Website Board notes may begin from a series, artwork or mockup.
-                // Keep the historical mockup_ids path so previously published notes remain valid.
-                $mediaFiles = [];
-                foreach ((array)($payload['media'] ?? []) as $media) {
-                    if (!is_array($media)) continue;
-                    $file = basename((string)($media['file'] ?? ''));
-                    if ($file !== '' && !in_array($file, $mediaFiles, true)) $mediaFiles[] = $file;
-                }
-                if (!$mediaFiles) {
-                    $mockupIds = array_values(array_filter(array_map('intval', (array)($payload['mockup_ids'] ?? []))));
-                    if ($mockupIds) {
-                        $marks = implode(',', array_fill(0, count($mockupIds), '?'));
-                        $mStmt = $this->pdo->prepare("SELECT mockup_file FROM mockups WHERE user_id = ? AND id IN ($marks)");
-                        $mStmt->execute(array_merge([$row['user_id']], $mockupIds));
-                        $mediaFiles = array_values(array_filter(array_map('basename', $mStmt->fetchAll(PDO::FETCH_COLUMN) ?: [])));
-                    }
-                }
+        $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
+        if (!$rows) return [];
 
-                $row['source'] = is_array($payload['source'] ?? null) ? $payload['source'] : null;
-                $row['media_files'] = $mediaFiles;
-                $objective = (string)$row['objective'];
-                $row['has_embedded_image'] = stripos($objective, 'data:image/jpeg;base64,') !== false
-                    || stripos($objective, 'data:image/png;base64,') !== false
-                    || stripos($objective, 'data:image/webp;base64,') !== false;
-                // The current public templates read mockup_files; expose the generic media list there too.
-                $row['mockup_files'] = $mediaFiles;
-                $slug = $this->slug($row['title']) . '-' . (int)$row['id'];
-                $notes[$slug] = $row;
+        $userId = (int)$rows[0]['user_id'];
+        $localized = $this->publishedLocalizations($userId);
+        $notes = [];
+        foreach ($rows as $row) {
+            $payload = json_decode((string)$row['payload_json'], true);
+            if (!is_array($payload)
+                || !in_array('website_blog', array_map('strval', (array)($payload['channels'] ?? [])), true)) {
+                continue;
             }
+
+            $noteId = (int)$row['id'];
+            $englishLegacy = [
+                'title' => (string)$row['title'],
+                'excerpt' => '',
+                'body_html' => (string)$row['objective'],
+                'slug' => $this->slug((string)$row['title']),
+                'seo_title' => '',
+                'seo_description' => '',
+                'alt_text' => '',
+                'search_terms' => '',
+            ];
+            $spanish = (array)($localized[$noteId]['es'] ?? []);
+            $english = (array)($localized[$noteId]['en'] ?? []);
+            if ($locale === 'es' && $spanish === []) continue;
+            $content = $locale === 'es' ? $spanish : ($english ?: $englishLegacy);
+            if (trim((string)($content['title'] ?? '')) === ''
+                || trim(strip_tags((string)($content['body_html'] ?? ''))) === '') {
+                continue;
+            }
+
+            $mediaFiles = $this->mediaFiles($row, $payload);
+            $row['source'] = is_array($payload['source'] ?? null) ? $payload['source'] : null;
+            $row['media_files'] = $mediaFiles;
+            $row['mockup_files'] = $mediaFiles;
+            $row['title'] = trim((string)$content['title']);
+            $row['objective'] = (string)$content['body_html'];
+            $row['excerpt'] = trim((string)($content['excerpt'] ?? ''));
+            $row['seo_title'] = trim((string)($content['seo_title'] ?? ''));
+            $row['seo_description'] = trim((string)($content['seo_description'] ?? ''));
+            $row['alt_text'] = trim((string)($content['alt_text'] ?? ''));
+            $row['search_terms'] = trim((string)($content['search_terms'] ?? ''));
+            $row['locale'] = $locale;
+            $row['has_embedded_image'] = $this->hasEmbeddedImage((string)$row['objective']);
+
+            $englishSlug = $this->contentSlug($english ?: $englishLegacy, $noteId);
+            $spanishSlug = $spanish !== [] ? $this->contentSlug($spanish, $noteId) : '';
+            $slug = $locale === 'es' ? $spanishSlug : $englishSlug;
+            $row['language_slugs'] = ['es' => $spanishSlug, 'en' => $englishSlug];
+            $row['legacy_slug'] = $this->slug((string)$englishLegacy['title']) . '-' . $noteId;
+            $notes[$slug] = $row;
         }
         return $notes;
+    }
+
+    /** @return array<int,array<string,array<string,mixed>>> */
+    private function publishedLocalizations(int $userId): array
+    {
+        $entries = [];
+        try {
+            $stmt = $this->pdo->prepare("SELECT entity_id,locale,published_content_json
+                FROM bilingual_editorial_content
+                WHERE user_id=? AND entity_type='studio_note' AND locale IN ('es','en') AND is_published=1");
+            $stmt->execute([$userId]);
+            foreach ($stmt as $row) {
+                $content = json_decode((string)$row['published_content_json'], true);
+                if (!is_array($content)) continue;
+                $entries[(int)$row['entity_id']][(string)$row['locale']] = $content;
+            }
+        } catch (PDOException) {
+            return [];
+        }
+        return $entries;
+    }
+
+    /** @return list<string> */
+    private function mediaFiles(array $row, array $payload): array
+    {
+        $mediaFiles = [];
+        foreach ((array)($payload['media'] ?? []) as $media) {
+            if (!is_array($media)) continue;
+            $file = basename((string)($media['file'] ?? ''));
+            if ($file !== '' && !in_array($file, $mediaFiles, true)) $mediaFiles[] = $file;
+        }
+        if ($mediaFiles) return $mediaFiles;
+
+        $mockupIds = array_values(array_filter(array_map('intval', (array)($payload['mockup_ids'] ?? []))));
+        if (!$mockupIds) return [];
+        $marks = implode(',', array_fill(0, count($mockupIds), '?'));
+        $stmt = $this->pdo->prepare("SELECT mockup_file FROM mockups WHERE user_id = ? AND id IN ($marks)");
+        $stmt->execute(array_merge([(int)$row['user_id']], $mockupIds));
+        return array_values(array_filter(array_map('basename', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [])));
+    }
+
+    private function contentSlug(array $content, int $noteId): string
+    {
+        $slug = $this->slug((string)($content['slug'] ?? ''));
+        if ($slug === '') $slug = $this->slug((string)($content['title'] ?? 'studio-note'));
+        return $slug . '-' . $noteId;
+    }
+
+    private function hasEmbeddedImage(string $html): bool
+    {
+        return stripos($html, 'data:image/jpeg;base64,') !== false
+            || stripos($html, 'data:image/png;base64,') !== false
+            || stripos($html, 'data:image/webp;base64,') !== false;
     }
 
     private function slug(string $title): string
@@ -65,5 +138,4 @@ final class AppPublishedStudioNotes
         $slug = preg_replace('/[^a-z0-9]+/', '-', $slug) ?? '';
         return trim($slug, '-');
     }
-
 }

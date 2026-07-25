@@ -113,6 +113,20 @@ if ($path === '/sitemap.xml') {
                 );
             }
         }
+        $studioNotesCatalog = new AppPublishedStudioNotes($sitemapPdo, $resolvedArtistEmail);
+        $englishNotes = $studioNotesCatalog->all('en');
+        $spanishNotesById = [];
+        foreach ($studioNotesCatalog->all('es') as $spanishSlug => $spanishNote) {
+            $spanishNotesById[(int)$spanishNote['id']] = $spanishSlug;
+        }
+        foreach ($englishNotes as $englishSlug => $englishNote) {
+            $spanishSlug = (string)($spanishNotesById[(int)$englishNote['id']] ?? '');
+            if ($spanishSlug === '') continue;
+            $addLocalizedRoute(
+                '/studio-notes/' . $englishSlug . '/',
+                '/studio-notes/' . $spanishSlug . '/'
+            );
+        }
         $urls = [];
         foreach ($routes as $route) {
             $urls[] = artist_site_url_with_language($site['url'] . $route['en'], 'en');
@@ -2376,9 +2390,12 @@ function render_published_journal(array $notes): void
 {
     ?>
     <section class="page-hero">
-        <p class="eyebrow">Studio Notes</p>
-        <h1>Concepts in Architectural Abstract Painting</h1>
-        <p>Reflections, essays, and notes on abstract painting, space, and territory.</p>
+        <p class="eyebrow"><?= e(site_t('Studio Notes', 'Notas de estudio')) ?></p>
+        <h1><?= e(site_t('Concepts in Architectural Abstract Painting', 'Ideas sobre pintura abstracta, territorio y espacio')) ?></h1>
+        <p><?= e(site_t(
+            'Reflections, essays, and notes on abstract painting, space, and territory.',
+            'Reflexiones, ensayos y apuntes sobre pintura abstracta, espacio y territorio.'
+        )) ?></p>
     </section>
     <section class="section article-list">
         <?php foreach ($notes as $slug => $post): ?>
@@ -2396,22 +2413,22 @@ function render_published_journal(array $notes): void
                 $thumbUrl = first_html_image_src((string)$post['objective']);
             }
             
-            $snippet = trim(strip_tags((string)$post['objective']));
+            $snippet = trim((string)($post['excerpt'] ?? '')) ?: trim(strip_tags((string)$post['objective']));
             if (mb_strlen($snippet) > 200) {
                 $snippet = mb_substr($snippet, 0, 197) . '...';
             }
             if ($snippet === '') {
-                $snippet = 'Reflections on the studio process.';
+                $snippet = site_t('Reflections on the studio process.', 'Reflexiones sobre el proceso de estudio.');
             }
             ?>
             <article>
                 <?php if ($thumbUrl !== ''): ?>
                     <a class="article-thumb" href="<?= e(url_for('studio-notes/' . $slug)) ?>">
                         <img src="<?= e($thumbUrl) ?>" <?= $thumbSrcset !== '' ? 'srcset="' . e($thumbSrcset) . '" sizes="(max-width: 940px) calc(100vw - 72px), 33vw"' : '' ?>
-                            alt="<?= e($post['title'] . ' thumbnail') ?>" loading="lazy" decoding="async">
+                            alt="<?= e((string)($post['alt_text'] ?? '') ?: $post['title']) ?>" loading="lazy" decoding="async">
                     </a>
                 <?php endif; ?>
-                <p class="eyebrow">Essay</p>
+                <p class="eyebrow"><?= e(site_t('Essay', 'Ensayo')) ?></p>
                 <h2><a href="<?= e(url_for('studio-notes/' . $slug)) ?>"><?= e($post['title']) ?></a></h2>
                 <p><?= e($snippet) ?></p>
             </article>
@@ -2426,6 +2443,15 @@ function render_published_journal_post(array $notes, string $slug): bool
         return false;
     }
     $post = $notes[$slug];
+    $languageSlugs = (array)($post['language_slugs'] ?? []);
+    $languageSwitchUrls = [];
+    foreach (['en', 'es'] as $language) {
+        $languageSlug = trim((string)($languageSlugs[$language] ?? ''));
+        $languageSwitchUrls[$language] = $languageSlug !== ''
+            ? $GLOBALS['site']['url'] . '/studio-notes/' . $languageSlug . '/'
+            : $GLOBALS['site']['url'] . '/studio-notes/';
+    }
+    artist_site_set_language_urls($languageSwitchUrls);
     
     $coverUrl = '';
     $coverSrcset = '';
@@ -2446,9 +2472,9 @@ function render_published_journal_post(array $notes, string $slug): bool
     );
     ?>
     <section class="page-hero artist-page-hero journal-post-hero__intro">
-        <p class="eyebrow">Studio Notes</p>
+        <p class="eyebrow"><?= e(site_t('Studio Notes', 'Notas de estudio')) ?></p>
         <h1><?= e($post['title']) ?></h1>
-        <p><?= e($post['source_label'] ?: 'Studio Essay') ?></p>
+        <p><?= e((string)($post['excerpt'] ?? '') ?: site_t('Studio Essay', 'Ensayo de estudio')) ?></p>
     </section>
     
     <?php if ($coverUrl !== ''): ?>
@@ -2456,7 +2482,7 @@ function render_published_journal_post(array $notes, string $slug): bool
             <figure class="artist-profile-block__portrait journal-post-feature__portrait">
                 <img src="<?= e($coverUrl) ?>" srcset="<?= e($coverSrcset) ?>"
                     sizes="(max-width: 940px) calc(100vw - 36px), 148px"
-                    alt="<?= e($post['title']) ?>" fetchpriority="high" decoding="async">
+                    alt="<?= e((string)($post['alt_text'] ?? '') ?: $post['title']) ?>" fetchpriority="high" decoding="async">
             </figure>
             <div class="prose">
                 <?= $renderNoteBody() ?>
@@ -2471,7 +2497,7 @@ function render_published_journal_post(array $notes, string $slug): bool
     <?php if (count($post['mockup_files']) > 1): ?>
         <section class="section">
             <div class="section-head section-head--simple">
-                <h2>Context & Studies</h2>
+                <h2><?= e(site_t('Context & Studies', 'Contexto y estudios')) ?></h2>
             </div>
             <div class="artist-studio-grid">
                 <?php foreach (array_slice($post['mockup_files'], 1) as $mockupFile): ?>
@@ -2479,7 +2505,7 @@ function render_published_journal_post(array $notes, string $slug): bool
                         <img src="<?= e(app_studio_note_media_url($post, (string)$mockupFile, 768)) ?>"
                             srcset="<?= e(app_studio_note_media_srcset($post, (string)$mockupFile)) ?>"
                             sizes="(max-width: 940px) calc(100vw - 36px), 33vw"
-                            alt="Context mockup" loading="lazy" decoding="async">
+                            alt="<?= e(site_t('Context study', 'Estudio de contexto')) ?>" loading="lazy" decoding="async">
                     </figure>
                 <?php endforeach; ?>
             </div>
@@ -2487,8 +2513,22 @@ function render_published_journal_post(array $notes, string $slug): bool
     <?php endif; ?>
 
     <section class="section artist-link-panel">
-        <a class="button button--quiet" href="<?= e(url_for('studio-notes')) ?>">Back to Studio Notes</a>
+        <a class="button button--quiet" href="<?= e(url_for('studio-notes')) ?>"><?= e(site_t('Back to Studio Notes', 'Volver a Notas de estudio')) ?></a>
     </section>
+    <script type="application/ld+json"><?= json_encode([
+        '@context' => 'https://schema.org',
+        '@type' => 'Article',
+        'headline' => (string)$post['title'],
+        'description' => (string)($post['seo_description'] ?? $post['excerpt'] ?? ''),
+        'inLanguage' => artist_site_language(),
+        'datePublished' => (string)($post['published_at'] ?? $post['created_at'] ?? ''),
+        'dateModified' => (string)($post['updated_at'] ?? ''),
+        'author' => ['@type' => 'Person', 'name' => 'Maurizio Valch'],
+        'mainEntityOfPage' => artist_site_url_with_language(
+            $GLOBALS['site']['url'] . '/studio-notes/' . $slug . '/',
+            artist_site_language()
+        ),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
     <?php
     return true;
 }
@@ -3873,17 +3913,47 @@ switch ($segments[0] ?? '') {
         header('Location: ' . url_for('studio-notes' . (isset($segments[1]) ? '/' . $segments[1] : '/')), true, 302);
         exit;
     case 'studio-notes':
-        $publishedNotes = app_studio_notes_catalog()?->all() ?? [];
+        $publishedNotes = app_studio_notes_catalog()?->all($siteLanguage) ?? [];
         if (isset($segments[1])) {
             $slug = $segments[1];
-            if (!isset($publishedNotes[$slug])) { $handled = false; break; }
+            if (!isset($publishedNotes[$slug])) {
+                foreach ($publishedNotes as $localizedSlug => $candidateNote) {
+                    if ((string)($candidateNote['legacy_slug'] ?? '') !== $slug) continue;
+                    header('Location: ' . url_for('studio-notes/' . $localizedSlug . '/'), true, 301);
+                    exit;
+                }
+                $handled = false;
+                break;
+            }
             $post = $publishedNotes[$slug];
-            $description = trim(strip_tags((string)$post['objective']));
+            $languageSlugs = (array)($post['language_slugs'] ?? []);
+            $languageUrls = [];
+            foreach (['en', 'es'] as $language) {
+                $languageSlug = trim((string)($languageSlugs[$language] ?? ''));
+                if ($languageSlug !== '') {
+                    $languageUrls[$language] = $site['url'] . '/studio-notes/' . $languageSlug . '/';
+                }
+            }
+            $description = trim((string)($post['seo_description'] ?? ''))
+                ?: trim((string)($post['excerpt'] ?? ''))
+                ?: trim(strip_tags((string)$post['objective']));
             if (mb_strlen($description) > 160) $description = mb_substr($description, 0, 157) . '...';
-            $meta = page_meta($post['title'] . ' | ' . $artistName, $description, $site['url'] . '/studio-notes/' . $slug . '/');
+            $meta = page_meta(
+                trim((string)($post['seo_title'] ?? '')) ?: $post['title'] . ' | ' . $artistName,
+                $description,
+                $site['url'] . '/studio-notes/' . $slug . '/'
+            );
+            $meta['language_urls'] = $languageUrls;
             $handled = render_published_journal_post($publishedNotes, $slug);
         } else {
-            $meta = page_meta('Studio Notes | ' . $artistName, 'Studio Notes on architectural abstract painting, territory, silence, presence and structural metaphysical work by ' . $artistName . '.', $site['url'] . '/studio-notes/');
+            $meta = page_meta(
+                site_t('Studio Notes', 'Notas de estudio') . ' | ' . $artistName,
+                site_t(
+                    'Studio Notes on architectural abstract painting, territory, silence, presence and structural metaphysical work by ' . $artistName . '.',
+                    'Notas de estudio sobre pintura abstracta, territorio, silencio, presencia y pintura metafísica estructural de ' . $artistName . '.'
+                ),
+                $site['url'] . '/studio-notes/'
+            );
             render_published_journal($publishedNotes);
         }
         break;

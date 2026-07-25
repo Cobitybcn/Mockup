@@ -15,6 +15,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 $websiteBoard = new WebsiteBoardService($pdo);
+$editorial = new BilingualEditorialService($pdo);
 $studioSources = $websiteBoard->sources($userId);
 $studioSourceLookup = [];
 foreach ($studioSources as $studioSource) {
@@ -39,12 +40,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 throw new RuntimeException('The selected source is not available.');
             }
             if ($title === '') {
-                $title = $source ? trim((string)$source['label']) . ' — Studio Note' : 'New Studio Note';
+                $title = $source ? trim((string)$source['label']) . ' — Nota de estudio' : 'Nueva nota de estudio';
             }
             $now = date('c');
             $payload = [
                 'channels' => ['website_blog'],
                 'destinations' => ['website_blog'],
+                'editorial_sync_key' => 'studio-note-' . bin2hex(random_bytes(16)),
                 'mockup_ids' => $source && (string)$source['type'] === 'mockup' ? [(int)$source['id']] : [],
                 'channel_status' => ['website_blog' => 'draft'],
             ];
@@ -72,26 +74,117 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             exit;
         }
         
-        if ($action === 'save_draft' || $action === 'publish_draft') {
+        if ($action === 'generate_bilingual') {
             $id = max(0, (int)($_POST['draft_id'] ?? 0));
-            $title = trim((string)($_POST['title'] ?? ''));
-            $objective = trim((string)($_POST['objective'] ?? ''));
-            if ($title === '') throw new RuntimeException('The title is required.');
-            $saved = $websiteBoard->saveNote($userId, $id, $title, $objective);
-            $currentStatus = (string)($saved['status'] ?? 'draft');
-            if ($action === 'publish_draft' && $currentStatus !== 'published') {
-                $websiteBoard->noteAction($userId, $id, 'publish');
-            } elseif ($action === 'save_draft' && $currentStatus === 'published') {
-                $websiteBoard->noteAction($userId, $id, 'unpublish');
+            if (!$editorial->isEnabled($userId)) {
+                throw new RuntimeException('El espacio editorial bilingüe no está habilitado para esta cuenta.');
             }
-            
-            $_SESSION['wsn_notice'] = $action === 'publish_draft' ? 'Studio Note published successfully.' : 'Draft saved successfully.';
+            $currentSpanish = wsn_post_content('es');
+            if (trim((string)$currentSpanish['body_html']) !== '') {
+                $currentSpanish['body_html'] = $websiteBoard->normalizeNoteBody(
+                    $userId,
+                    $id,
+                    (string)$currentSpanish['body_html']
+                );
+            }
+            $jobs = new BilingualEditorialJobService($pdo);
+            $job = $jobs->createOrReuse($userId, 'studio_note', $id, 'prepare', [
+                'current_spanish' => $currentSpanish,
+                'private_memo' => trim((string)($_POST['private_memo_es'] ?? '')),
+                'publish_spanish' => false,
+            ]);
+            if ((string)$job['status'] === 'queued' && trim((string)$job['task_name']) === '') {
+                if (CloudTasksService::isAvailable()) {
+                    $jobs->attachTask(
+                        (int)$job['id'],
+                        $userId,
+                        CloudTasksService::enqueueEditorialGeneration((int)$job['id'])
+                    );
+                } else {
+                    (new BilingualEditorialGenerationWorker($pdo))->process((int)$job['id']);
+                }
+            }
+            $_SESSION['wsn_notice'] = 'La propuesta española y su adaptación inglesa quedaron en preparación.';
+            header('Location: website_studio_notes.php?draft=' . $id);
+            exit;
+        }
+
+        if (in_array($action, ['save_draft', 'publish_draft', 'prepare_english'], true)) {
+            $id = max(0, (int)($_POST['draft_id'] ?? 0));
+            $spanish = wsn_post_content('es');
+            $english = wsn_post_content('en');
+            if (trim((string)$spanish['title']) === '') throw new RuntimeException('El título en español es obligatorio.');
+            if (trim(strip_tags((string)$spanish['body_html'])) === '') throw new RuntimeException('Escribí el contenido español antes de guardar.');
+
+            $spanish['body_html'] = $websiteBoard->normalizeNoteBody($userId, $id, (string)$spanish['body_html']);
+            $editorial->save($userId, 'studio_note', $id, 'es', $spanish);
+            if (wsn_has_content($english)) {
+                $english['body_html'] = $websiteBoard->normalizeNoteBody($userId, $id, (string)$english['body_html']);
+                $editorial->save($userId, 'studio_note', $id, 'en', $english);
+            }
+
+            if ($action === 'prepare_english') {
+                if (!$editorial->isEnabled($userId)) {
+                    throw new RuntimeException('El espacio editorial bilingüe no está habilitado para esta cuenta.');
+                }
+                $jobs = new BilingualEditorialJobService($pdo);
+                $job = $jobs->createOrReuse($userId, 'studio_note', $id, 'adapt');
+                if ((string)$job['status'] === 'queued' && trim((string)$job['task_name']) === '') {
+                    if (CloudTasksService::isAvailable()) {
+                        $jobs->attachTask(
+                            (int)$job['id'],
+                            $userId,
+                            CloudTasksService::enqueueEditorialGeneration((int)$job['id'])
+                        );
+                    } else {
+                        (new BilingualEditorialGenerationWorker($pdo))->process((int)$job['id']);
+                    }
+                }
+                $_SESSION['wsn_notice'] = 'La adaptación inglesa quedó en preparación.';
+            } elseif ($action === 'publish_draft') {
+                if (!wsn_has_required_public_content($english)) {
+                    throw new RuntimeException('Prepará y revisá el título y el cuerpo en inglés antes de publicar.');
+                }
+                $pdo->beginTransaction();
+                try {
+                    $editorial->setPublished($userId, 'studio_note', $id, 'es', true);
+                    $editorial->setPublished($userId, 'studio_note', $id, 'en', true);
+                    $saved = $websiteBoard->saveNote(
+                        $userId,
+                        $id,
+                        (string)$english['title'],
+                        (string)$english['body_html']
+                    );
+                    if ((string)($saved['status'] ?? 'draft') !== 'published') {
+                        $websiteBoard->noteAction($userId, $id, 'publish');
+                    }
+                    $pdo->commit();
+                } catch (Throwable $publishError) {
+                    if ($pdo->inTransaction()) $pdo->rollBack();
+                    throw $publishError;
+                }
+                $_SESSION['wsn_notice'] = 'Nota publicada en español e inglés.';
+            } else {
+                $_SESSION['wsn_notice'] = 'Borrador bilingüe guardado.';
+            }
+            header('Location: website_studio_notes.php?draft=' . $id);
+            exit;
+        }
+
+        if ($action === 'unpublish_draft') {
+            $id = max(0, (int)($_POST['draft_id'] ?? 0));
+            $editorial->setPublished($userId, 'studio_note', $id, 'es', false);
+            $editorial->setPublished($userId, 'studio_note', $id, 'en', false);
+            $websiteBoard->noteAction($userId, $id, 'unpublish');
+            $_SESSION['wsn_notice'] = 'La nota fue retirada del website.';
             header('Location: website_studio_notes.php?draft=' . $id);
             exit;
         }
         
         if ($action === 'delete_draft') {
             $id = max(0, (int)($_POST['draft_id'] ?? 0));
+            $pdo->prepare("DELETE FROM bilingual_editorial_jobs WHERE user_id=? AND entity_type='studio_note' AND entity_id=?")->execute([$userId, $id]);
+            $pdo->prepare("DELETE FROM bilingual_editorial_content WHERE user_id=? AND entity_type='studio_note' AND entity_id=?")->execute([$userId, $id]);
             $stmt = $pdo->prepare('DELETE FROM social_campaigns WHERE id=? AND user_id=?');
             $stmt->execute([$id, $userId]);
             $_SESSION['wsn_notice'] = 'Nota de estudio eliminada.';
@@ -109,6 +202,36 @@ if (!empty($_SESSION['wsn_notice'])) {
 }
 
 function wsn_h(mixed $value): string { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); }
+function wsn_post_content(string $locale): array
+{
+    return [
+        'title' => trim((string)($_POST['title_' . $locale] ?? '')),
+        'excerpt' => trim((string)($_POST['excerpt_' . $locale] ?? '')),
+        'body_html' => trim((string)($_POST['body_' . $locale] ?? '')),
+        'slug' => wsn_slug((string)($_POST['slug_' . $locale] ?? $_POST['title_' . $locale] ?? '')),
+        'seo_title' => trim((string)($_POST['seo_title_' . $locale] ?? '')),
+        'seo_description' => trim((string)($_POST['seo_description_' . $locale] ?? '')),
+        'alt_text' => trim((string)($_POST['alt_text_' . $locale] ?? '')),
+        'search_terms' => trim((string)($_POST['search_terms_' . $locale] ?? '')),
+    ];
+}
+function wsn_has_content(array $content): bool
+{
+    foreach ($content as $value) if (trim(strip_tags((string)$value)) !== '') return true;
+    return false;
+}
+function wsn_has_required_public_content(array $content): bool
+{
+    return trim((string)($content['title'] ?? '')) !== ''
+        && trim(strip_tags((string)($content['body_html'] ?? ''))) !== '';
+}
+function wsn_slug(string $value): string
+{
+    $value = mb_strtolower(trim($value));
+    $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+    if (is_string($ascii) && $ascii !== '') $value = $ascii;
+    return trim((string)preg_replace('/[^a-z0-9]+/', '-', $value), '-');
+}
 function wsn_media_url(?string $file, int $width = 520): string
 {
     $file = basename((string)$file);
@@ -158,6 +281,24 @@ foreach ($allStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
         $websiteDrafts[] = $row;
     }
 }
+$noteEditorialIndex = [];
+$noteIds = array_values(array_map(static fn(array $draft): int => (int)$draft['id'], $websiteDrafts));
+if ($noteIds) {
+    $marks = implode(',', array_fill(0, count($noteIds), '?'));
+    $localizedStmt = $pdo->prepare("SELECT entity_id,locale,content_json,status,is_published
+        FROM bilingual_editorial_content
+        WHERE user_id=? AND entity_type='studio_note' AND entity_id IN ($marks)");
+    $localizedStmt->execute(array_merge([$userId], $noteIds));
+    foreach ($localizedStmt as $localizedRow) {
+        $content = json_decode((string)$localizedRow['content_json'], true);
+        if (!is_array($content)) continue;
+        $noteEditorialIndex[(int)$localizedRow['entity_id']][(string)$localizedRow['locale']] = [
+            'content' => $content,
+            'status' => (string)$localizedRow['status'],
+            'is_published' => (bool)$localizedRow['is_published'],
+        ];
+    }
+}
 
 $openDraft = null;
 foreach ($websiteDrafts as $draft) {
@@ -167,6 +308,40 @@ foreach ($websiteDrafts as $draft) {
     }
 }
 $openPayload = $openDraft ? (array)$openDraft['_payload'] : [];
+$noteShape = [
+    'title' => '', 'excerpt' => '', 'body_html' => '', 'slug' => '',
+    'seo_title' => '', 'seo_description' => '', 'alt_text' => '', 'search_terms' => '',
+];
+$spanishState = ['content' => $noteShape, 'status' => 'unprepared', 'is_published' => false, 'has_unpublished_changes' => false];
+$englishState = ['content' => $noteShape, 'status' => 'unprepared', 'is_published' => false, 'has_unpublished_changes' => false];
+$activeEditorialJob = null;
+if ($openDraft) {
+    $legacyEnglish = trim(strip_tags((string)$openDraft['objective'])) !== ''
+        ? [
+            'title' => (string)$openDraft['title'],
+            'excerpt' => '',
+            'body_html' => (string)$openDraft['objective'],
+            'slug' => wsn_slug((string)$openDraft['title']),
+            'seo_title' => '',
+            'seo_description' => '',
+            'alt_text' => '',
+            'search_terms' => '',
+        ]
+        : [];
+    $spanishState = $editorial->get($userId, 'studio_note', (int)$openDraft['id'], 'es');
+    $englishState = $editorial->get($userId, 'studio_note', (int)$openDraft['id'], 'en', $legacyEnglish);
+    $spanishState['content'] = array_replace($noteShape, (array)$spanishState['content']);
+    $englishState['content'] = array_replace($noteShape, (array)$englishState['content']);
+    try {
+        $activeEditorialJob = (new BilingualEditorialJobService($pdo))->activeForEntity(
+            $userId,
+            'studio_note',
+            (int)$openDraft['id']
+        );
+    } catch (Throwable) {
+        $activeEditorialJob = null;
+    }
+}
 $openSource = null;
 if ($openDraft) {
     $payloadSource = is_array($openPayload['source'] ?? null) ? $openPayload['source'] : [];
@@ -245,7 +420,7 @@ $initialSourceType = $requestedSourceKey !== ''
     : 'artwork';
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -312,6 +487,26 @@ $initialSourceType = $requestedSourceKey !== ''
         .studio-note-publish:hover { border-color:#a791b0 !important; background:#a791b0 !important; }
         .studio-note-delete { min-width:0 !important; margin:0 0 0 auto !important; padding:8px 3px !important; border:0 !important; background:transparent !important; color:#966161 !important; box-shadow:none !important; font-size:10px !important; }
         .studio-note-delete:hover { background:transparent !important; color:#753f3f !important; text-decoration:underline; transform:none !important; box-shadow:none !important; }
+        .studio-language-heading { display:flex; align-items:center; justify-content:space-between; gap:18px; margin:0 0 14px; }
+        .studio-language-heading span { color:#625b55; font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        .studio-language-state { padding:5px 9px; border:1px solid #d2c6d5; border-radius:999px; background:#f3eef4; color:#5d5161 !important; letter-spacing:.04em !important; text-transform:none !important; }
+        .studio-editorial-panel { margin-top:24px; border-top:1px solid var(--line); }
+        .studio-editorial-panel > summary { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:17px 2px; cursor:pointer; color:var(--ink); font:400 22px/1.2 var(--font-serif); list-style:none; }
+        .studio-editorial-panel > summary::-webkit-details-marker { display:none; }
+        .studio-editorial-panel > summary small { color:#625b55; font:600 11px/1.3 var(--font-sans); letter-spacing:.04em; }
+        .studio-editorial-panel__body { padding:4px 0 12px; }
+        .studio-editorial-panel .studio-note-editor.ql-container { height:420px !important; min-height:420px; }
+        .studio-editorial-panel .studio-note-editor .ql-editor { min-height:418px; }
+        .studio-note-adapt { margin:0 0 18px !important; border-color:#9eaf99 !important; background:#dce7d8 !important; color:#354332 !important; }
+        .studio-seo-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+        .studio-seo-column { padding:18px; border:1px solid var(--line); background:#fbfaf7; }
+        .studio-seo-column h3 { margin:0 0 16px; font:400 21px/1.2 var(--font-serif); }
+        .studio-seo-field { display:block; margin:0 0 15px; color:#625b55; font-size:12px; font-weight:650; letter-spacing:.04em; }
+        .studio-seo-field input,
+        .studio-seo-field textarea { width:100%; box-sizing:border-box; margin-top:7px; padding:10px 0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; color:var(--ink); font:400 16px/1.5 var(--font-sans); resize:vertical; }
+        .studio-seo-field textarea { min-height:92px; }
+        .studio-seo-field input:focus,
+        .studio-seo-field textarea:focus { outline:0; border-bottom-color:#9b86a4; box-shadow:none; }
         .studio-note-media-library { position:sticky; top:18px; padding:16px; border:1px solid var(--line); border-radius:4px; background:#f8f6f2; }
         .studio-note-media-library h2 { margin:0 0 4px; font:400 23px/1.15 var(--font-serif); }
         .studio-note-media-library > p { margin:0 0 14px; color:#625b55; font-size:14px; line-height:1.4; }
@@ -361,6 +556,7 @@ $initialSourceType = $requestedSourceKey !== ''
             .studio-note-actions__main { display:grid; grid-template-columns:1fr 1fr; }
             .studio-note-actions__main button { width:100%; min-width:0; }
             .studio-note-delete { align-self:flex-end; width:auto !important; }
+            .studio-seo-grid { grid-template-columns:1fr; }
             .studio-note-media-library { position:static; }
             .studio-note-media-grid { grid-template-columns:repeat(2,minmax(0,1fr)); max-height:none; overflow:visible; }
             .studio-drafts-list { grid-template-columns:1fr; }
@@ -449,34 +645,111 @@ $initialSourceType = $requestedSourceKey !== ''
                     <div class="studio-note-editor-top"><a href="website_studio_notes.php">Close</a></div>
                     <div class="studio-note-editor-shell<?= $mediaLibrary ? '' : ' studio-note-editor-shell--text-only' ?>">
                         <div>
-                            <form class="studio-note-form" method="post">
+                            <form class="studio-note-form" method="post"
+                                  data-note-id="<?= (int)$openDraft['id'] ?>"
+                                  data-editorial-csrf="<?= wsn_h(Auth::csrfToken('bilingual_editorial')) ?>"
+                                  data-active-job="<?= (int)($activeEditorialJob['id'] ?? 0) ?>">
                                 <input type="hidden" name="csrf" value="<?= wsn_h($_SESSION['studio_notes_csrf']) ?>">
                                 <input type="hidden" name="draft_id" value="<?= (int)$openDraft['id'] ?>">
-                                
-                                <input class="studio-note-editor-title" type="text" name="title" id="studio-note-title" value="<?= wsn_h($openDraft['title']) ?>" placeholder="Studio Note title" aria-label="Studio Note title">
-                                <div class="studio-image-tools" id="studio-image-tools" hidden>
-                                    <span class="studio-image-tools__label">Image</span>
-                                    <div class="studio-image-tools__group" role="group" aria-label="Image size">
-                                        <button type="button" data-image-size="small">Small</button>
-                                        <button type="button" data-image-size="medium">Medium</button>
-                                        <button type="button" data-image-size="large">Large</button>
-                                    </div>
-                                    <div class="studio-image-tools__group" role="group" aria-label="Image alignment">
-                                        <button type="button" data-image-align="left">Left</button>
-                                        <button type="button" data-image-align="center">Center</button>
-                                        <button type="button" data-image-align="right">Right</button>
-                                    </div>
-                                    <button class="studio-image-tools__remove" type="button" data-image-remove>Remove</button>
+
+                                <div class="studio-language-heading">
+                                    <span>Español · fuente editorial</span>
+                                    <span class="studio-language-state"><?= !empty($spanishState['is_published']) ? (!empty($spanishState['has_unpublished_changes']) ? 'Cambios sin publicar' : 'Publicado') : 'Borrador' ?></span>
                                 </div>
-                                <div id="editor-container" class="studio-note-editor" aria-label="Studio Note content"></div>
-                                <input type="hidden" name="objective" id="objective-input">
-                                
+                                <button class="button-link studio-note-adapt" name="action" value="generate_bilingual" type="submit">
+                                    Preparar propuesta ES + EN desde el material relacionado
+                                </button>
+                                <input class="studio-note-editor-title" type="text" name="title_es" id="studio-note-title-es"
+                                       value="<?= wsn_h((string)$spanishState['content']['title']) ?>"
+                                       placeholder="Título de la nota en español" aria-label="Título de la nota en español">
+                                <div class="studio-image-tools" id="studio-image-tools" hidden>
+                                    <span class="studio-image-tools__label">Imagen</span>
+                                    <div class="studio-image-tools__group" role="group" aria-label="Tamaño de imagen">
+                                        <button type="button" data-image-size="small">Pequeña</button>
+                                        <button type="button" data-image-size="medium">Mediana</button>
+                                        <button type="button" data-image-size="large">Grande</button>
+                                    </div>
+                                    <div class="studio-image-tools__group" role="group" aria-label="Alineación de imagen">
+                                        <button type="button" data-image-align="left">Izquierda</button>
+                                        <button type="button" data-image-align="center">Centro</button>
+                                        <button type="button" data-image-align="right">Derecha</button>
+                                    </div>
+                                    <button class="studio-image-tools__remove" type="button" data-image-remove>Quitar</button>
+                                </div>
+                                <div id="editor-container-es" class="studio-note-editor" aria-label="Contenido de la nota en español"></div>
+                                <input type="hidden" name="body_es" id="body-input-es">
+                                <details class="studio-editorial-panel">
+                                    <summary>
+                                        <span>Dirección privada para la propuesta</span>
+                                        <small>No se publica</small>
+                                    </summary>
+                                    <div class="studio-editorial-panel__body">
+                                        <label class="studio-seo-field">Enfoque, límites o ideas que la nota debe respetar
+                                            <textarea name="private_memo_es"><?= wsn_h((string)$spanishState['private_memo']) ?></textarea>
+                                        </label>
+                                    </div>
+                                </details>
+
+                                <details class="studio-editorial-panel">
+                                    <summary>
+                                        <span>English · adaptación internacional</span>
+                                        <small data-english-state><?= wsn_h((string)$englishState['status']) ?></small>
+                                    </summary>
+                                    <div class="studio-editorial-panel__body">
+                                        <button class="button-link studio-note-adapt" name="action" value="prepare_english" type="submit">
+                                            Adaptar desde el español — no traducir literalmente
+                                        </button>
+                                        <input class="studio-note-editor-title" type="text" name="title_en" id="studio-note-title-en"
+                                               value="<?= wsn_h((string)$englishState['content']['title']) ?>"
+                                               placeholder="English title" aria-label="Studio Note title in English">
+                                        <div id="editor-container-en" class="studio-note-editor" aria-label="Studio Note content in English"></div>
+                                        <input type="hidden" name="body_en" id="body-input-en">
+                                    </div>
+                                </details>
+
+                                <details class="studio-editorial-panel">
+                                    <summary>
+                                        <span>Edición de portada y SEO</span>
+                                        <small>Metadatos por idioma</small>
+                                    </summary>
+                                    <div class="studio-editorial-panel__body studio-seo-grid">
+                                        <?php foreach (['es' => ['Español', $spanishState['content']], 'en' => ['English', $englishState['content']]] as $locale => [$languageLabel, $localizedContent]): ?>
+                                            <div class="studio-seo-column">
+                                                <h3><?= wsn_h($languageLabel) ?></h3>
+                                                <label class="studio-seo-field">Entradilla
+                                                    <textarea name="excerpt_<?= $locale ?>"><?= wsn_h((string)$localizedContent['excerpt']) ?></textarea>
+                                                </label>
+                                                <label class="studio-seo-field">Slug
+                                                    <input name="slug_<?= $locale ?>" value="<?= wsn_h((string)$localizedContent['slug']) ?>">
+                                                </label>
+                                                <label class="studio-seo-field">SEO title
+                                                    <input name="seo_title_<?= $locale ?>" value="<?= wsn_h((string)$localizedContent['seo_title']) ?>">
+                                                </label>
+                                                <label class="studio-seo-field">Meta description
+                                                    <textarea name="seo_description_<?= $locale ?>"><?= wsn_h((string)$localizedContent['seo_description']) ?></textarea>
+                                                </label>
+                                                <label class="studio-seo-field">Texto alternativo de portada
+                                                    <textarea name="alt_text_<?= $locale ?>"><?= wsn_h((string)$localizedContent['alt_text']) ?></textarea>
+                                                </label>
+                                                <label class="studio-seo-field">Arquitectura de búsqueda
+                                                    <textarea name="search_terms_<?= $locale ?>"><?= wsn_h((string)$localizedContent['search_terms']) ?></textarea>
+                                                </label>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </details>
+
                                 <div class="studio-note-actions">
                                     <div class="studio-note-actions__main">
-                                        <button class="button-link primary studio-note-publish" name="action" value="publish_draft" type="submit">Publish to Website</button>
-                                        <button class="button-link secondary" name="action" value="save_draft" type="submit">Save Draft</button>
+                                        <button class="button-link primary studio-note-publish" name="action" value="publish_draft" type="submit">
+                                            <?= (string)$openDraft['status'] === 'published' ? 'Actualizar publicación' : 'Publicar ES + EN' ?>
+                                        </button>
+                                        <button class="button-link secondary" name="action" value="save_draft" type="submit">Guardar borrador</button>
                                     </div>
-                                    <button class="studio-note-delete" name="action" value="delete_draft" type="submit" onclick="return confirm('Delete this Studio Note?')">Delete</button>
+                                    <?php if ((string)$openDraft['status'] === 'published'): ?>
+                                        <button class="studio-note-delete" name="action" value="unpublish_draft" type="submit">Retirar</button>
+                                    <?php endif; ?>
+                                    <button class="studio-note-delete" name="action" value="delete_draft" type="submit" onclick="return confirm('¿Eliminar esta Nota de estudio?')">Eliminar</button>
                                 </div>
                             </form>
                         </div>
@@ -533,6 +806,14 @@ $initialSourceType = $requestedSourceKey !== ''
                     <div class="studio-drafts-list">
                         <?php foreach ($websiteDrafts as $draft): 
                             $payload = (array)$draft['_payload']; 
+                            $draftSpanish = (array)($noteEditorialIndex[(int)$draft['id']]['es']['content'] ?? []);
+                            $draftEnglish = (array)($noteEditorialIndex[(int)$draft['id']]['en']['content'] ?? []);
+                            $draftTitle = trim((string)($draftSpanish['title'] ?? ''))
+                                ?: trim((string)($draftEnglish['title'] ?? ''))
+                                ?: (string)$draft['title'];
+                            $draftBody = trim((string)($draftSpanish['body_html'] ?? ''))
+                                ?: trim((string)($draftEnglish['body_html'] ?? ''))
+                                ?: (string)$draft['objective'];
                             $mockupIds = array_values(array_filter(array_map('intval', (array)($payload['mockup_ids'] ?? []))));
                             
                             $thumbUrl = '';
@@ -550,15 +831,15 @@ $initialSourceType = $requestedSourceKey !== ''
                                 }
                             }
                             if ($thumbUrl === '') {
-                                $thumbUrl = first_html_image_src((string)$draft['objective']);
+                                $thumbUrl = first_html_image_src($draftBody);
                             }
                             
-                            $snippet = trim(strip_tags((string)$draft['objective']));
+                            $snippet = trim(strip_tags($draftBody));
                             if (mb_strlen($snippet) > 180) {
                                 $snippet = mb_substr($snippet, 0, 177) . '...';
                             }
                         ?>
-                            <a class="studio-draft<?= $thumbUrl === '' ? ' studio-draft--text-only' : '' ?>" href="website_studio_notes.php?draft=<?= (int)$draft['id'] ?>" aria-label="Edit <?= wsn_h($draft['title']) ?>">
+                            <a class="studio-draft<?= $thumbUrl === '' ? ' studio-draft--text-only' : '' ?>" href="website_studio_notes.php?draft=<?= (int)$draft['id'] ?>" aria-label="Editar <?= wsn_h($draftTitle) ?>">
                                 <?php if ($thumbUrl !== ''): ?>
                                     <div class="studio-draft__thumb">
                                         <img src="<?= wsn_h($thumbUrl) ?>" alt="">
@@ -566,7 +847,7 @@ $initialSourceType = $requestedSourceKey !== ''
                                 <?php endif; ?>
                                 
                                 <div class="studio-draft__body">
-                                    <h3><?= wsn_h($draft['title']) ?></h3>
+                                    <h3><?= wsn_h($draftTitle) ?></h3>
                                     <?php if ($snippet !== ''): ?><p><?= wsn_h($snippet) ?></p><?php endif; ?>
                                     <span class="studio-draft__state"><?= wsn_h($draft['status']) ?></span>
                                 </div>
@@ -606,22 +887,26 @@ $initialSourceType = $requestedSourceKey !== ''
             <?php if ($openDraft): ?>
             <script>
                 document.addEventListener("DOMContentLoaded", function() {
-                    var quill = new Quill('#editor-container', {
+                    var toolbarOptions = [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        ['blockquote', 'code-block'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        ['link', 'image', 'video'],
+                        ['clean']
+                    ];
+                    var quillEs = new Quill('#editor-container-es', {
                         theme: 'snow',
-                        modules: {
-                            toolbar: [
-                                [{ 'header': [1, 2, 3, false] }],
-                                ['bold', 'italic', 'underline', 'strike'],
-                                ['blockquote', 'code-block'],
-                                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                                ['link', 'image', 'video'],
-                                ['clean']
-                            ]
-                        }
+                        modules: { toolbar: toolbarOptions }
                     });
-                    
-                    // Cargar el contenido inicial en HTML
-                    quill.root.innerHTML = <?= json_encode($openDraft['objective']) ?>;
+                    var quillEn = new Quill('#editor-container-en', {
+                        theme: 'snow',
+                        modules: { toolbar: toolbarOptions }
+                    });
+                    var quill = quillEs;
+
+                    quillEs.root.innerHTML = <?= json_encode((string)$spanishState['content']['body_html'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+                    quillEn.root.innerHTML = <?= json_encode((string)$englishState['content']['body_html'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
                     var imageTools = document.getElementById('studio-image-tools');
                     var toolbarModule = quill.getModule('toolbar');
@@ -823,10 +1108,42 @@ $initialSourceType = $requestedSourceKey !== ''
                     var form = document.querySelector('form.studio-note-form');
                     if (form) {
                         form.addEventListener('submit', function() {
-                            var input = document.getElementById('objective-input');
-                            input.value = quill.root.innerHTML;
+                            document.getElementById('body-input-es').value = quillEs.root.innerHTML;
+                            document.getElementById('body-input-en').value = quillEn.root.innerHTML;
                         });
                     }
+
+                    var activeJobId = Number(form ? form.getAttribute('data-active-job') : 0) || 0;
+                    var editorialCsrf = form ? form.getAttribute('data-editorial-csrf') : '';
+                    var englishState = document.querySelector('[data-english-state]');
+                    function pollEditorialJob() {
+                        if (!activeJobId || !editorialCsrf) return;
+                        var body = new FormData();
+                        body.append('csrf', editorialCsrf);
+                        body.append('action', 'generation_status');
+                        body.append('entity_type', 'studio_note');
+                        body.append('entity_id', form.getAttribute('data-note-id'));
+                        body.append('job_id', String(activeJobId));
+                        fetch('bilingual_editorial.php', {method:'POST', body:body, headers:{'Accept':'application/json'}})
+                            .then(function(response) { return response.json(); })
+                            .then(function(result) {
+                                if (!result.ok || !result.job) throw new Error(result.error || 'No se pudo consultar la adaptación.');
+                                if (englishState) englishState.textContent = result.job.status === 'processing' ? 'adaptando…' : result.job.status;
+                                if (result.job.status === 'completed') {
+                                    window.location.reload();
+                                    return;
+                                }
+                                if (['failed', 'enqueue_failed'].indexOf(result.job.status) !== -1) {
+                                    if (englishState) englishState.textContent = result.job.error || 'La adaptación falló';
+                                    return;
+                                }
+                                window.setTimeout(pollEditorialJob, 1200);
+                            })
+                            .catch(function(error) {
+                                if (englishState) englishState.textContent = error.message || 'Adaptación no disponible';
+                            });
+                    }
+                    pollEditorialJob();
                 });
             </script>
             <?php endif; ?>

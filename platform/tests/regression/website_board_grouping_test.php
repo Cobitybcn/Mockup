@@ -89,6 +89,7 @@ function run_website_board_grouping_regression_tests(): void
 
     $platformRoot = dirname(__DIR__, 2);
     $studioNotesPage = (string)file_get_contents($platformRoot . '/website_studio_notes.php');
+    $editorialSyncScript = (string)file_get_contents($platformRoot . '/scripts/sync_artist_editorial_to_production.php');
     $artworkPage = (string)file_get_contents($platformRoot . '/artwork.php');
     $seriesPage = (string)file_get_contents($platformRoot . '/series.php');
     $viewerPage = (string)file_get_contents($platformRoot . '/viewer.php');
@@ -113,6 +114,17 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertContains('data-media-search', $studioNotesPage, 'la biblioteca visual ofrece busqueda por sus metadatos');
     TestHarness::assertContains("(string)(\$media['searchTerms'] ?? '')", $studioNotesPage, 'la busqueda incluye camara, slot y sinonimos del mockup');
     TestHarness::assertContains("normalize('NFD')", $studioNotesPage, 'la busqueda visual ignora tildes');
+    TestHarness::assertContains('name="title_es"', $studioNotesPage, 'Studio Notes escribe primero el título español');
+    TestHarness::assertContains('id="editor-container-es"', $studioNotesPage, 'Studio Notes conserva una superficie amplia para el master español');
+    TestHarness::assertContains('id="editor-container-en"', $studioNotesPage, 'la adaptación inglesa tiene una superficie editorial independiente');
+    TestHarness::assertContains('value="generate_bilingual"', $studioNotesPage, 'la nota puede preparar una propuesta completa ES y EN desde su material');
+    TestHarness::assertContains('value="prepare_english"', $studioNotesPage, 'la nota puede reconstruir el inglés desde el español revisado');
+    TestHarness::assertContains('Publicar ES + EN', $studioNotesPage, 'la publicación bilingüe se presenta como un único compromiso');
+    TestHarness::assertContains("setPublished(\$userId, 'studio_note', \$id, 'es', true)", $studioNotesPage, 'la publicación congela un snapshot español');
+    TestHarness::assertContains("setPublished(\$userId, 'studio_note', \$id, 'en', true)", $studioNotesPage, 'la publicación congela un snapshot inglés');
+    TestHarness::assertContains("'editorial_sync_key' => 'studio-note-'", $studioNotesPage, 'cada nota nueva recibe una identidad estable para sincronización');
+    TestHarness::assertContains('$studioNoteTargetIds', $editorialSyncScript, 'la sincronización resuelve el identificador productivo de cada nota');
+    TestHarness::assertContains("'studio_note' => \$target->prepare", $editorialSyncScript, 'la sincronización admite snapshots bilingües de Notas de estudio');
     TestHarness::assertContains('data-website-cover-picker', $artworkPage, 'Website muestra la portada activa en un selector visual');
     TestHarness::assertContains('class="artwork-cover-options"', $artworkPage, 'Website permite comparar las portadas mediante miniaturas');
     TestHarness::assertContains('type="radio"', $artworkPage, 'la portada elegida se envia como una opcion accesible del formulario');

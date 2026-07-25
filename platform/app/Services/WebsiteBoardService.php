@@ -457,6 +457,31 @@ final class WebsiteBoardService
         return $this->note($userId, $noteId);
     }
 
+    public function normalizeNoteBody(int $userId, int $noteId, string $html): string
+    {
+        [$row, $payload] = $this->noteRow($userId, $noteId);
+        $normalized = StudioNoteMediaService::normalize(
+            $userId,
+            $noteId,
+            $html,
+            $payload,
+            $this->sources($userId)
+        );
+        $payload = $normalized['payload'];
+        $source = is_array($payload['source'] ?? null) ? $payload['source'] : [];
+        $this->pdo->prepare('UPDATE social_campaigns SET source_type=?,source_id=?,source_label=?,payload_json=?,updated_at=? WHERE id=? AND user_id=?')
+            ->execute([
+                (string)($source['type'] ?? $row['source_type'] ?? ''),
+                (string)($source['id'] ?? $row['source_id'] ?? ''),
+                (string)($source['label'] ?? $row['source_label'] ?? ''),
+                json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                date('c'),
+                $noteId,
+                $userId,
+            ]);
+        return (string)$normalized['html'];
+    }
+
     public function noteAction(int $userId, int $noteId, string $action): ?array
     {
         [$row, $payload] = $this->noteRow($userId, $noteId);

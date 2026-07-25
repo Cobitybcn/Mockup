@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 final class BilingualEditorialJobService
 {
-    private const ENTITY_TYPES = ['series', 'artwork', 'mockup'];
+    private const ENTITY_TYPES = ['series', 'artwork', 'mockup', 'studio_note'];
     private const ACTIONS = ['prepare', 'adapt'];
     private const ACTIVE_STATUSES = ['queued', 'processing'];
     private const QUEUED_REDISPATCH_AFTER_SECONDS = 300;

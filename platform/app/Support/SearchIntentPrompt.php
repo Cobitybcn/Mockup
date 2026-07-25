@@ -5,6 +5,17 @@ final class SearchIntentPrompt
 {
     public static function forEntity(string $entityType): string
     {
+        if ($entityType === 'studio_note') {
+            return <<<'RULES'
+SEARCH INTENT FOR STUDIO NOTES
+- Treat the note as an informational editorial article, never as a product page.
+- Derive six to ten natural informational searches from the article's actual artistic subject.
+- Connect the artist's conceptual language with established phrases such as contemporary abstract painting, painting process, architectural abstraction or art for collectors only when supported by the note.
+- Keep acquisition, availability, pricing and marketplace language out of the article, title, excerpt and search terms.
+- Write one concise, page-specific SEO title and one human meta description.
+- Do not use keyword stuffing, compressed keyword lists, generic openings or unsupported art-historical claims.
+RULES;
+        }
         $entityRule = match ($entityType) {
             'series' => 'Describe this exact series from the artist-authored title, explanation, conceptual direction and profile. Do not infer identity from image analysis or use the series title alone as a search phrase.',
             'artwork' => 'Stay specific to this exact artwork. Use confirmed medium, material, dimensions, orientation and series only when supplied. Acquisition phrases must describe the original artwork, never promise availability.',
