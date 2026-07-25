@@ -125,7 +125,12 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'Mesa editorial'), 'el borrador elimina la mesa editorial lateral');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'Ideas y fragmentos'), 'el borrador elimina el board de ideas que ocupaba espacio');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'Adaptar desde el español — no traducir literalmente'), 'el editor elimina el botón largo redundante');
-    TestHarness::assertContains("'current_spanish' => \$spanish", $studioNotesPage, 'la adaptación recibe la instantánea española exacta enviada por el editor');
+    TestHarness::assertContains("'source_hash' => hash(", $studioNotesPage, 'la publicación identifica la instantánea española sin copiar el documento completo a la cola');
+    TestHarness::assertTrue(
+        !str_contains($studioNotesPage, "'current_english' => \$english"),
+        'la publicación no transporta el editor inglés ni sus imágenes dentro del trabajo'
+    );
+    TestHarness::assertContains("studio_note_inline_upload.php", $studioNotesPage, 'las imágenes del WYSIWYG se persisten al insertarlas y no esperan hasta publicar');
     TestHarness::assertContains('data-active-job-action', $studioNotesPage, 'la interfaz distingue una adaptación activa de otras propuestas');
     TestHarness::assertContains('setEnglishAdaptationBusy', $studioNotesPage, 'el editor inglés queda inhabilitado mientras se prepara su adaptación');
     TestHarness::assertContains('(string)$spanish[\'body_html\']', $studioNotesPage, 'el HTML español gobierna los medios al publicar la adaptación');

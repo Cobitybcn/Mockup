@@ -85,13 +85,37 @@ final class BilingualEditorialGenerationWorker
                     'spanish_published' => $publishSpanish,
                 ];
             } elseif ($action === 'publish' && $entityType === 'studio_note') {
-                $sourceContent = is_array($payload['current_spanish'] ?? null)
-                    ? (array)$payload['current_spanish']
-                    : (array)$editorial->get($userId, $entityType, $entityId, 'es')['content'];
+                $sourceContent = (array)$editorial->get(
+                    $userId,
+                    $entityType,
+                    $entityId,
+                    'es'
+                )['content'];
+                $expectedSourceHash = trim((string)($payload['source_hash'] ?? ''));
+                $actualSourceHash = hash(
+                    'sha256',
+                    json_encode(
+                        $sourceContent,
+                        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
+                    )
+                );
+                if ($expectedSourceHash !== '' && !hash_equals($expectedSourceHash, $actualSourceHash)) {
+                    throw new RuntimeException(
+                        'El original español cambió mientras se preparaba la publicación. Volvé a pulsar Publicar.'
+                    );
+                }
                 $sourceContent = $adapter->completeStudioNoteMetadata($userId, $entityId, $sourceContent);
-                $targetContent = is_array($payload['current_english'] ?? null)
-                    ? (array)$payload['current_english']
-                    : [];
+                $targetContent = (array)$editorial->get(
+                    $userId,
+                    $entityType,
+                    $entityId,
+                    'en'
+                )['content'];
+                if (isset($targetContent['body_html'])) {
+                    $targetContent['body_html'] = StudioNoteMediaService::removeImages(
+                        (string)$targetContent['body_html']
+                    );
+                }
                 $english = $adapter->proposeAdaptationFromContent(
                     $userId,
                     $entityType,
@@ -128,8 +152,6 @@ final class BilingualEditorialGenerationWorker
                     throw $publishError;
                 }
                 $result = [
-                    'spanish_content' => $sourceContent,
-                    'english_content' => $englishContent,
                     'metadata_completed' => true,
                     'english_status' => 'current',
                     'published' => true,

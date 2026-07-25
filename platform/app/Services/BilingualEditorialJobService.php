@@ -167,10 +167,9 @@ final class BilingualEditorialJobService
         )->execute([mb_substr(trim($error), 0, 4000), $now, $now, $jobId]);
     }
 
-    public function publicState(array $job): array
+    public function publicState(array $job, bool $includeResult = false): array
     {
-        $result = json_decode((string)($job['result_json'] ?? '{}'), true);
-        return [
+        $state = [
             'id' => (int)$job['id'],
             'entity_type' => (string)$job['entity_type'],
             'entity_id' => (int)$job['entity_id'],
@@ -178,10 +177,14 @@ final class BilingualEditorialJobService
             'status' => (string)$job['status'],
             'attempts' => (int)$job['attempts'],
             'error' => (string)$job['error'],
-            'result' => is_array($result) ? $result : [],
             'created_at' => (string)$job['created_at'],
             'updated_at' => (string)$job['updated_at'],
         ];
+        if ($includeResult) {
+            $result = json_decode((string)($job['result_json'] ?? '{}'), true);
+            $state['result'] = is_array($result) ? $result : [];
+        }
+        return $state;
     }
 
     private function assertIdentity(int $userId, string $entityType, int $entityId, string $action): void

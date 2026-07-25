@@ -221,6 +221,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             if (wsn_has_content($english)) {
                 $editorial->save($userId, 'studio_note', $id, 'en', $english);
             }
+            $savedSpanishContent = (array)$editorial->get(
+                $userId,
+                'studio_note',
+                $id,
+                'es'
+            )['content'];
 
             if ($action === 'publish_draft') {
                 if (!$editorial->isEnabled($userId)) {
@@ -228,12 +234,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 }
                 $jobs = new BilingualEditorialJobService($pdo);
                 $job = $jobs->createOrReuse($userId, 'studio_note', $id, 'publish', [
-                    'current_spanish' => $spanish,
-                    'current_english' => $english,
                     'source_hash' => hash(
                         'sha256',
                         json_encode(
-                            $spanish,
+                            $savedSpanishContent,
                             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
                         )
                     ),
@@ -292,10 +296,14 @@ function wsn_h(mixed $value): string { return htmlspecialchars((string)$value, E
 function wsn_post_content(string $locale): array
 {
     $imageMetadata = json_decode((string)($_POST['image_metadata_' . $locale] ?? '[]'), true);
+    $bodyHtml = trim((string)($_POST['body_' . $locale] ?? ''));
+    if ($locale === 'en') {
+        $bodyHtml = StudioNoteMediaService::removeImages($bodyHtml);
+    }
     return [
         'title' => trim((string)($_POST['title_' . $locale] ?? '')),
         'excerpt' => trim((string)($_POST['excerpt_' . $locale] ?? '')),
-        'body_html' => trim((string)($_POST['body_' . $locale] ?? '')),
+        'body_html' => $bodyHtml,
         'slug' => wsn_slug((string)($_POST['slug_' . $locale] ?? $_POST['title_' . $locale] ?? '')),
         'seo_title' => trim((string)($_POST['seo_title_' . $locale] ?? '')),
         'seo_description' => trim((string)($_POST['seo_description_' . $locale] ?? '')),
@@ -941,6 +949,8 @@ $initialSourceType = $requestedSourceKey !== ''
                     quillEs.root.innerHTML = <?= json_encode((string)$spanishState['content']['body_html'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
                     quillEn.root.innerHTML = <?= json_encode((string)$englishState['content']['body_html'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
                     var form = document.querySelector('form.studio-note-form');
+                    var noteId = Number(form ? form.getAttribute('data-note-id') : 0) || 0;
+                    var formCsrf = form ? form.querySelector('input[name="csrf"]') : null;
                     var activeJobAction = form ? form.getAttribute('data-active-job-action') : '';
                     var englishPanel = document.querySelector('[data-english-panel]');
                     var englishDependents = Array.prototype.slice.call(
@@ -1006,6 +1016,53 @@ $initialSourceType = $requestedSourceKey !== ''
                     }
 
                     quill.root.querySelectorAll('img').forEach(prepareImage);
+
+                    function uploadSpanishImage() {
+                        var input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/jpeg,image/png,image/webp';
+                        input.addEventListener('change', function() {
+                            var file = input.files && input.files[0];
+                            if (!file || !formCsrf || !noteId) return;
+                            var data = new FormData();
+                            data.append('csrf', formCsrf.value);
+                            data.append('note_id', String(noteId));
+                            data.append('image', file);
+                            var range = quillEs.getSelection(true);
+                            quillEs.enable(false);
+                            fetch('studio_note_inline_upload.php', {
+                                method: 'POST',
+                                body: data,
+                                headers: {'Accept': 'application/json'}
+                            })
+                                .then(function(response) { return response.json(); })
+                                .then(function(result) {
+                                    if (!result.ok || !result.url) {
+                                        throw new Error(result.error || 'No se pudo guardar la imagen.');
+                                    }
+                                    quillEs.insertEmbed(range.index, 'image', result.url, 'user');
+                                    quillEs.setSelection(range.index + 1, 0, 'silent');
+                                    quillEs.root.querySelectorAll('img').forEach(prepareImage);
+                                })
+                                .catch(function(error) {
+                                    window.alert(error.message || 'No se pudo guardar la imagen.');
+                                })
+                                .finally(function() {
+                                    quillEs.enable(true);
+                                    quillEs.focus();
+                                });
+                        });
+                        input.click();
+                    }
+
+                    var spanishToolbar = quillEs.getModule('toolbar');
+                    if (spanishToolbar) spanishToolbar.addHandler('image', uploadSpanishImage);
+                    var englishToolbar = quillEn.getModule('toolbar');
+                    if (englishToolbar) {
+                        englishToolbar.addHandler('image', function() {
+                            window.alert('Las imágenes pertenecen al original español y se reflejan automáticamente en inglés.');
+                        });
+                    }
 
                     if (imageTools) {
                         imageTools.addEventListener('click', function(event) {

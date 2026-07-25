@@ -231,7 +231,10 @@ function run_bilingual_editorial_service_tests(): void
     $claimedJob = $jobs->claim((int)$queuedJob['id']);
     TestHarness::assertSame('processing', (string)($claimedJob['status'] ?? ''), 'el worker reclama la generación persistente una sola vez');
     $jobs->complete((int)$queuedJob['id'], ['english_content' => ['description' => 'Background English']]);
-    $completedJob = $jobs->publicState($jobs->job((int)$queuedJob['id'], 7));
+    $compactCompletedJob = $jobs->publicState($jobs->job((int)$queuedJob['id'], 7));
+    TestHarness::assertTrue(!isset($compactCompletedJob['result']), 'el sondeo editorial no devuelve el documento generado completo');
+    TestHarness::assertTrue(strlen((string)json_encode($compactCompletedJob)) < 1000, 'el estado editorial permanece por debajo de 1 KB');
+    $completedJob = $jobs->publicState($jobs->job((int)$queuedJob['id'], 7), true);
     TestHarness::assertSame('completed', $completedJob['status'], 'la generación terminada queda disponible después de abandonar la ficha');
     TestHarness::assertSame('Background English', $completedJob['result']['english_content']['description'] ?? '', 'el resultado persistente puede recuperarse al volver');
     $stalledJob = $jobs->createOrReuse(7, 'artwork', 11, 'adapt');

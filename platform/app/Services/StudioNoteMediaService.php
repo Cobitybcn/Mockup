@@ -6,6 +6,11 @@ final class StudioNoteMediaService
     private const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
     private const ADAPTATION_IMAGE_TOKEN = 'STUDIO_NOTE_IMAGE_SLOT_';
 
+    public static function removeImages(string $html): string
+    {
+        return trim((string)(preg_replace('/<img\b[^>]*>/iu', '', $html) ?? $html));
+    }
+
     /**
      * Replaces images with immutable slots before language adaptation. The
      * model receives the editorial text and placement markers, never ownership

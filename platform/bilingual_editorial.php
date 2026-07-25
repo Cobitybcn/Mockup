@@ -54,15 +54,9 @@ try {
                 $job = $jobs->job((int)$job['id'], $userId);
             }
         }
-        $spanish = $service->get($userId, $entityType, $entityId, 'es');
-        $english = $service->get($userId, $entityType, $entityId, 'en');
         echo json_encode([
             'ok' => true,
             'job' => $job ? $jobs->publicState($job) : null,
-            'spanish_content' => (array)($spanish['content'] ?? []),
-            'english_content' => (array)($english['content'] ?? []),
-            'english_status' => (string)($english['status'] ?? 'unprepared'),
-            'spanish_published' => (bool)($spanish['is_published'] ?? false),
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         exit;
     }
