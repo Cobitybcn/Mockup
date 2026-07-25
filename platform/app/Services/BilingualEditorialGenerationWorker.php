@@ -84,19 +84,52 @@ final class BilingualEditorialGenerationWorker
                     'english_status' => (string)($english['english_status'] ?? 'current'),
                     'spanish_published' => $publishSpanish,
                 ];
-            } elseif ($action === 'metadata' && $entityType === 'studio_note') {
+            } elseif ($action === 'publish' && $entityType === 'studio_note') {
                 $sourceContent = is_array($payload['current_spanish'] ?? null)
                     ? (array)$payload['current_spanish']
                     : (array)$editorial->get($userId, $entityType, $entityId, 'es')['content'];
                 $sourceContent = $adapter->completeStudioNoteMetadata($userId, $entityId, $sourceContent);
-                $editorial->save($userId, $entityType, $entityId, 'es', $sourceContent);
-                if (!empty($payload['republish_spanish'])) {
+                $targetContent = is_array($payload['current_english'] ?? null)
+                    ? (array)$payload['current_english']
+                    : [];
+                $english = $adapter->proposeAdaptationFromContent(
+                    $userId,
+                    $entityType,
+                    $entityId,
+                    $sourceContent,
+                    $targetContent
+                );
+                $englishContent = (array)($english['content'] ?? []);
+
+                $ownsTransaction = !$this->pdo->inTransaction();
+                if ($ownsTransaction) $this->pdo->beginTransaction();
+                try {
+                    $editorial->save($userId, $entityType, $entityId, 'es', $sourceContent);
+                    $editorial->save($userId, $entityType, $entityId, 'en', $englishContent);
                     $editorial->setPublished($userId, $entityType, $entityId, 'es', true);
+                    $editorial->setPublished($userId, $entityType, $entityId, 'en', true);
+                    $websiteBoard = new WebsiteBoardService($this->pdo);
+                    $saved = $websiteBoard->saveNote(
+                        $userId,
+                        $entityId,
+                        (string)($englishContent['title'] ?? ''),
+                        (string)($englishContent['body_html'] ?? ''),
+                        (string)($sourceContent['body_html'] ?? '')
+                    );
+                    if ((string)($saved['status'] ?? 'draft') !== 'published') {
+                        $websiteBoard->noteAction($userId, $entityId, 'publish');
+                    }
+                    if ($ownsTransaction) $this->pdo->commit();
+                } catch (Throwable $publishError) {
+                    if ($ownsTransaction && $this->pdo->inTransaction()) $this->pdo->rollBack();
+                    throw $publishError;
                 }
                 $result = [
                     'spanish_content' => $sourceContent,
+                    'english_content' => $englishContent,
                     'metadata_completed' => true,
-                    'republished_spanish' => !empty($payload['republish_spanish']),
+                    'english_status' => 'current',
+                    'published' => true,
                 ];
             } elseif ($entityType === 'studio_note') {
                 $sourceContent = is_array($payload['current_spanish'] ?? null)

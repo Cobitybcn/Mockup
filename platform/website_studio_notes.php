@@ -209,7 +209,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             exit;
         }
 
-        if (in_array($action, ['save_draft', 'publish_draft', 'prepare_english'], true)) {
+        if (in_array($action, ['save_draft', 'publish_draft'], true)) {
             $id = max(0, (int)($_POST['draft_id'] ?? 0));
             $spanish = wsn_post_content('es');
             $english = wsn_post_content('en');
@@ -222,12 +222,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 $editorial->save($userId, 'studio_note', $id, 'en', $english);
             }
 
-            if ($action === 'prepare_english') {
+            if ($action === 'publish_draft') {
                 if (!$editorial->isEnabled($userId)) {
                     throw new RuntimeException('El espacio editorial bilingüe no está habilitado para esta cuenta.');
                 }
                 $jobs = new BilingualEditorialJobService($pdo);
-                $job = $jobs->createOrReuse($userId, 'studio_note', $id, 'adapt', [
+                $job = $jobs->createOrReuse($userId, 'studio_note', $id, 'publish', [
                     'current_spanish' => $spanish,
                     'current_english' => $english,
                     'source_hash' => hash(
@@ -238,17 +238,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                         )
                     ),
                 ], true);
-                if (wsn_has_content($english)) {
-                    $studioWorkspace->capture(
-                        $userId,
-                        $id,
-                        'version',
-                        'en',
-                        $english,
-                        'English before adapting «' . mb_substr((string)$spanish['title'], 0, 100) . '»',
-                        (int)$job['id']
-                    );
-                }
                 if ((string)$job['status'] === 'queued' && trim((string)$job['task_name']) === '') {
                     if (CloudTasksService::isAvailable()) {
                         $jobs->attachTask(
@@ -260,62 +249,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                         (new BilingualEditorialGenerationWorker($pdo))->process((int)$job['id']);
                     }
                 }
-                $_SESSION['wsn_notice'] = 'Se está adaptando exactamente el texto español que acabás de guardar. Al terminar se actualizará el editor inglés.';
-            } elseif ($action === 'publish_draft') {
-                if (!wsn_has_required_public_content($english)) {
-                    throw new RuntimeException('Prepará y revisá el título y el cuerpo en inglés antes de publicar.');
-                }
-                $pdo->beginTransaction();
-                try {
-                    $editorial->setPublished($userId, 'studio_note', $id, 'es', true);
-                    $editorial->setPublished($userId, 'studio_note', $id, 'en', true);
-                    $saved = $websiteBoard->saveNote(
-                        $userId,
-                        $id,
-                        (string)$english['title'],
-                        (string)$english['body_html'],
-                        (string)$spanish['body_html']
-                    );
-                    if ((string)($saved['status'] ?? 'draft') !== 'published') {
-                        $websiteBoard->noteAction($userId, $id, 'publish');
-                    }
-                    $pdo->commit();
-                } catch (Throwable $publishError) {
-                    if ($pdo->inTransaction()) $pdo->rollBack();
-                    throw $publishError;
-                }
-                $_SESSION['wsn_notice'] = 'Nota publicada en español e inglés.';
+                $_SESSION['wsn_notice'] = 'Analizando y publicando la nota completa en español e inglés.';
             } else {
                 $_SESSION['wsn_notice'] = 'Borrador bilingüe guardado.';
-            }
-            if ($action !== 'prepare_english' && $editorial->isEnabled($userId)) {
-                $metaSourceHash = hash('sha256', json_encode([
-                    'title' => (string)$spanish['title'],
-                    'body_html' => (string)$spanish['body_html'],
-                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
-                if (!hash_equals((string)($spanish['meta_source_hash'] ?? ''), $metaSourceHash)) {
-                    $jobs = new BilingualEditorialJobService($pdo);
-                    $job = $jobs->activeForEntity($userId, 'studio_note', $id);
-                    if ($job === null) {
-                        $job = $jobs->createOrReuse($userId, 'studio_note', $id, 'metadata', [
-                            'current_spanish' => $spanish,
-                            'source_hash' => $metaSourceHash,
-                            'republish_spanish' => $action === 'publish_draft',
-                        ]);
-                        if ((string)$job['status'] === 'queued' && trim((string)$job['task_name']) === '') {
-                            if (CloudTasksService::isAvailable()) {
-                                $jobs->attachTask(
-                                    (int)$job['id'],
-                                    $userId,
-                                    CloudTasksService::enqueueEditorialGeneration((int)$job['id'])
-                                );
-                            } else {
-                                (new BilingualEditorialGenerationWorker($pdo))->process((int)$job['id']);
-                            }
-                        }
-                        $_SESSION['wsn_notice'] .= ' El Meta Analyzer está completando SEO, tags, alts y captions en español.';
-                    }
-                }
             }
             header('Location: website_studio_notes.php?draft=' . $id);
             exit;
@@ -504,10 +440,13 @@ if ($openDraft) {
             (int)$openDraft['id']
         );
         $englishAdaptationActive = is_array($activeEditorialJob)
-            && (string)($activeEditorialJob['action'] ?? '') === 'adapt';
+            && in_array((string)($activeEditorialJob['action'] ?? ''), ['adapt', 'publish'], true);
+        $publicationActive = is_array($activeEditorialJob)
+            && (string)($activeEditorialJob['action'] ?? '') === 'publish';
     } catch (Throwable) {
         $activeEditorialJob = null;
         $englishAdaptationActive = false;
+        $publicationActive = false;
     }
 }
 
@@ -562,14 +501,8 @@ $initialSourceType = $requestedSourceKey !== ''
         .studio-note-editor-top a { color:#625b55; font-size:12px; font-weight:650; letter-spacing:.05em; text-decoration:none; text-transform:uppercase; }
         .studio-note-editor-shell { display:block; }
         .studio-note-writing-desk { min-width:0; width:100%; }
-        .studio-bilingual-editors { display:grid; grid-template-columns:minmax(0,1fr) 54px minmax(0,1fr); align-items:start; gap:14px; }
+        .studio-bilingual-editors { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); align-items:start; gap:24px; }
         .studio-language-editor { position:relative; min-width:0; }
-        .studio-translation-control { display:flex; align-items:center; flex-direction:column; gap:8px; padding-top:190px; }
-        .studio-translation-arrow { display:grid !important; width:44px !important; min-width:44px !important; height:44px !important; min-height:44px !important; margin:0 !important; padding:0 !important; place-items:center; border:1px solid #9eaf99 !important; border-radius:50% !important; background:#dce7d8 !important; color:#354332 !important; box-shadow:none !important; }
-        .studio-translation-arrow:hover { border-color:#879d81 !important; background:#d2e0ce !important; transform:none !important; box-shadow:none !important; }
-        .studio-translation-arrow:disabled { opacity:.55; cursor:wait; }
-        .studio-translation-arrow svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
-        .studio-translation-control > span { max-width:54px; color:#625b55; font-size:10px; line-height:1.25; text-align:center; overflow-wrap:anywhere; }
         .studio-notes-page input.studio-note-editor-title { width:100%; box-sizing:border-box; margin:0 0 18px; padding:5px 2px 14px; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; color:var(--ink); font-family:var(--font-serif); font-size:38px; font-weight:400; line-height:1.2; }
         .studio-bilingual-editors input.studio-note-editor-title { font-size:31px; }
         .studio-notes-page input.studio-note-editor-title:focus { outline:0; border-bottom-color:var(--accent); box-shadow:none; }
@@ -596,6 +529,7 @@ $initialSourceType = $requestedSourceKey !== ''
         .studio-image-tools .studio-image-tools__remove { margin-left:auto !important; color:#966161 !important; }
         .studio-note-actions { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-top:20px; }
         .studio-note-actions__main { display:flex; gap:10px; }
+        .studio-publication-state { align-self:center; color:#625b55; font-size:11px; letter-spacing:.04em; }
         .studio-note-actions__secondary { display:flex; gap:8px; margin-left:auto; }
         .studio-note-actions button { width:auto; min-width:148px; margin:0; }
         .studio-note-publish { border-color:#b8a4c0 !important; background:#b8a4c0 !important; color:#fffaf7 !important; }
@@ -628,9 +562,7 @@ $initialSourceType = $requestedSourceKey !== ''
         .studio-seo-field input:focus,
         .studio-seo-field textarea:focus { outline:0; border-bottom-color:#9b86a4; box-shadow:none; }
         @media (max-width:1100px) {
-            .studio-bilingual-editors { grid-template-columns:minmax(0,1fr) 46px minmax(0,1fr); gap:9px; }
-            .studio-translation-control { padding-top:176px; }
-            .studio-translation-arrow { width:38px !important; min-width:38px !important; height:38px !important; min-height:38px !important; }
+            .studio-bilingual-editors { gap:16px; }
             .studio-bilingual-editors input.studio-note-editor-title { font-size:27px; }
             .studio-notes-page .studio-note-editor .ql-editor { padding:26px 24px; font-size:17px; }
         }
@@ -654,8 +586,6 @@ $initialSourceType = $requestedSourceKey !== ''
             .studio-source-rail { grid-auto-columns:minmax(146px,44vw); }
             .studio-create-decision { width:126px !important; min-width:126px !important; height:126px !important; min-height:126px !important; margin-top:clamp(28px, calc(27.5vw - 63px), 48px) !important; padding:12px !important; font-size:11px !important; }
             .studio-bilingual-editors { grid-template-columns:1fr; }
-            .studio-translation-control { padding:0; }
-            .studio-translation-arrow svg { transform:rotate(90deg); }
             .studio-editor-workspace { padding:20px 16px 24px; }
             .studio-notes-page input.studio-note-editor-title { font-size:31px; }
             .studio-notes-page .studio-note-editor.ql-container { height:440px !important; min-height:440px; }
@@ -788,19 +718,6 @@ $initialSourceType = $requestedSourceKey !== ''
                                         <input type="hidden" name="body_es" id="body-input-es">
                                     </section>
 
-                                    <div class="studio-translation-control">
-                                        <button class="studio-translation-arrow" name="action" value="prepare_english" type="submit"
-                                                aria-label="Adaptar el paquete español al inglés" title="Adaptar al inglés"
-                                                <?= $englishAdaptationActive ? 'disabled' : '' ?>>
-                                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                                <path d="M5 12h13M14 7l5 5-5 5"></path>
-                                            </svg>
-                                        </button>
-                                        <span data-english-state>
-                                            <?= $englishAdaptationActive ? 'adaptando…' : wsn_h((string)$englishState['status']) ?>
-                                        </span>
-                                    </div>
-
                                     <section class="studio-language-editor studio-english-panel<?= $englishAdaptationActive ? ' is-adapting' : '' ?>"
                                              data-english-panel aria-labelledby="studio-language-en"
                                              aria-busy="<?= $englishAdaptationActive ? 'true' : 'false' ?>">
@@ -809,8 +726,8 @@ $initialSourceType = $requestedSourceKey !== ''
                                         </div>
                                         <div class="studio-english-panel__lock" data-english-lock<?= $englishAdaptationActive ? '' : ' hidden' ?>>
                                             <div>
-                                                <strong>Adaptando el texto español actual</strong>
-                                                <span>Las imágenes y su orden se conservan desde el original.</span>
+                                                <strong>Preparando publicación ES + EN</strong>
+                                                <span>Analizando metadata y adaptando el original español.</span>
                                             </div>
                                         </div>
                                         <div class="studio-english-panel__controls" data-english-dependent<?= $englishAdaptationActive ? ' inert' : '' ?>>
@@ -870,10 +787,14 @@ $initialSourceType = $requestedSourceKey !== ''
 
                                 <div class="studio-note-actions">
                                     <div class="studio-note-actions__main">
-                                        <button class="button-link primary studio-note-publish" name="action" value="publish_draft" type="submit">
-                                            <?= (string)$openDraft['status'] === 'published' ? 'Actualizar publicación' : 'Publicar ES + EN' ?>
+                                        <button class="button-link primary studio-note-publish" name="action" value="publish_draft" type="submit"
+                                                <?= $publicationActive ? 'disabled' : '' ?>>
+                                            <?= $publicationActive ? 'Publicando…' : ((string)$openDraft['status'] === 'published' ? 'Actualizar publicación' : 'Publicar ES + EN') ?>
                                         </button>
                                         <button class="button-link secondary" name="action" value="save_draft" type="submit">Guardar borrador</button>
+                                        <span class="studio-publication-state" data-publication-state>
+                                            <?= $publicationActive ? 'Analizando ES · preparando EN' : '' ?>
+                                        </span>
                                     </div>
                                     <div class="studio-note-actions__secondary">
                                         <?php if ((string)$openDraft['status'] === 'published'): ?>
@@ -1005,7 +926,6 @@ $initialSourceType = $requestedSourceKey !== ''
                     );
                     var englishLock = document.querySelector('[data-english-lock]');
                     var englishTitle = document.getElementById('studio-note-title-en');
-                    var englishAdaptButton = document.querySelector('button[value="prepare_english"]');
 
                     function setEnglishAdaptationBusy(busy) {
                         if (englishPanel) {
@@ -1019,10 +939,9 @@ $initialSourceType = $requestedSourceKey !== ''
                         });
                         if (englishLock) englishLock.hidden = !busy;
                         if (englishTitle) englishTitle.readOnly = busy;
-                        if (englishAdaptButton) englishAdaptButton.disabled = busy;
                         quillEn.enable(!busy);
                     }
-                    setEnglishAdaptationBusy(activeJobAction === 'adapt');
+                    setEnglishAdaptationBusy(['adapt', 'publish'].indexOf(activeJobAction) !== -1);
 
                     var imageTools = document.getElementById('studio-image-tools');
                     var toolbarModule = quill.getModule('toolbar');
@@ -1100,7 +1019,7 @@ $initialSourceType = $requestedSourceKey !== ''
 
                     var activeJobId = Number(form ? form.getAttribute('data-active-job') : 0) || 0;
                     var editorialCsrf = form ? form.getAttribute('data-editorial-csrf') : '';
-                    var englishState = document.querySelector('[data-english-state]');
+                    var publicationState = document.querySelector('[data-publication-state]');
                     function pollEditorialJob() {
                         if (!activeJobId || !editorialCsrf) return;
                         var body = new FormData();
@@ -1113,22 +1032,22 @@ $initialSourceType = $requestedSourceKey !== ''
                             .then(function(response) { return response.json(); })
                             .then(function(result) {
                                 if (!result.ok || !result.job) throw new Error(result.error || 'No se pudo consultar la adaptación.');
-                                if (englishState) englishState.textContent = result.job.status === 'processing'
-                                    ? (activeJobAction === 'metadata' ? 'analizando SEO…' : 'adaptando…')
+                                if (publicationState) publicationState.textContent = result.job.status === 'processing'
+                                    ? 'Analizando ES · preparando EN'
                                     : result.job.status;
                                 if (result.job.status === 'completed') {
                                     window.location.reload();
                                     return;
                                 }
                                 if (['failed', 'enqueue_failed'].indexOf(result.job.status) !== -1) {
-                                    if (englishState) englishState.textContent = result.job.error || 'La adaptación falló';
-                                    if (activeJobAction === 'adapt') setEnglishAdaptationBusy(false);
+                                    if (publicationState) publicationState.textContent = result.job.error || 'La publicación falló';
+                                    setEnglishAdaptationBusy(false);
                                     return;
                                 }
                                 window.setTimeout(pollEditorialJob, 1200);
                             })
                             .catch(function(error) {
-                                if (englishState) englishState.textContent = error.message || 'Adaptación no disponible';
+                                if (publicationState) publicationState.textContent = error.message || 'Publicación no disponible';
                             });
                     }
                     pollEditorialJob();
