@@ -31,6 +31,11 @@ final class StudioNoteMediaService
             $file = basename((string)$file);
             if ($file !== '') $previousInlineFiles[$file] = true;
         }
+        $workspaceMediaFiles = [];
+        foreach ((array)($payload['workspace_media_files'] ?? []) as $file) {
+            $file = basename((string)$file);
+            if ($file !== '') $workspaceMediaFiles[$file] = true;
+        }
         $media = [];
         $mediaFiles = [];
         $existingInlineMedia = [];
@@ -38,7 +43,11 @@ final class StudioNoteMediaService
             if (!is_array($item)) continue;
             $file = basename((string)($item['file'] ?? ''));
             if ($file === '' || isset($mediaFiles[$file])) continue;
-            if (isset($previousInlineFiles[$file]) || (string)($item['type'] ?? '') === 'studio_note') {
+            if (isset($workspaceMediaFiles[$file])) {
+                $mediaFiles[$file] = true;
+                $media[] = $item;
+                $existingInlineMedia[$file] = $item;
+            } elseif (isset($previousInlineFiles[$file]) || (string)($item['type'] ?? '') === 'studio_note') {
                 $existingInlineMedia[$file] = $item;
                 continue;
             }
@@ -104,7 +113,8 @@ final class StudioNoteMediaService
         $source = is_array($payload['source'] ?? null) ? $payload['source'] : null;
         if (is_array($source)) {
             $sourceFile = basename((string)($source['file'] ?? ''));
-            $sourceWasInline = isset($previousInlineFiles[$sourceFile]) || (string)($source['type'] ?? '') === 'studio_note';
+            $sourceWasInline = !isset($workspaceMediaFiles[$sourceFile])
+                && (isset($previousInlineFiles[$sourceFile]) || (string)($source['type'] ?? '') === 'studio_note');
             if ($sourceWasInline && !isset($referencedInlineFiles[$sourceFile])) $source = null;
         }
         $availableFiles = [];

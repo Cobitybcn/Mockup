@@ -60,7 +60,7 @@ $target = new PDO(
     ]
 );
 
-$latestMigration = '20260723_000008_retire_series_visual_language';
+$latestMigration = '20260725_000001_studio_note_workspace_items';
 $migration = $target->prepare('SELECT COUNT(*) FROM schema_migrations WHERE version=?');
 $migration->execute([$latestMigration]);
 if ((int)$migration->fetchColumn() !== 1) {
@@ -561,6 +561,46 @@ try {
             $content['published_at'],
         ]);
         $record($stats, 'updated', 'bilingual_editorial_content');
+    }
+
+    $workspaceStmt = $source->prepare(
+        'SELECT note_id,board_type,locale,label,content_json,content_hash,position,created_at,updated_at
+         FROM studio_note_workspace_items
+         WHERE user_id=?
+         ORDER BY note_id,board_type,position,id'
+    );
+    $workspaceStmt->execute([$sourceUserId]);
+    $upsertWorkspace = $target->prepare(
+        'INSERT INTO studio_note_workspace_items
+         (user_id,note_id,board_type,locale,label,content_json,content_hash,source_job_id,position,created_at,updated_at)
+         VALUES (?,?,?,?,?,?,?,0,?,?,?)
+         ON DUPLICATE KEY UPDATE
+         label=VALUES(label),
+         content_json=VALUES(content_json),
+         position=VALUES(position),
+         updated_at=VALUES(updated_at)'
+    );
+    foreach ($workspaceStmt->fetchAll() as $workspaceItem) {
+        $targetNoteId = (int)($studioNoteTargetIds[(int)$workspaceItem['note_id']] ?? 0);
+        if ($targetNoteId <= 0) {
+            throw new RuntimeException(
+                'Target Studio Note mapping is missing for workspace item: #'
+                . (int)$workspaceItem['note_id']
+            );
+        }
+        $upsertWorkspace->execute([
+            $targetUserId,
+            $targetNoteId,
+            $workspaceItem['board_type'],
+            $workspaceItem['locale'],
+            $workspaceItem['label'],
+            $workspaceItem['content_json'],
+            $workspaceItem['content_hash'],
+            (int)$workspaceItem['position'],
+            $workspaceItem['created_at'],
+            date(DATE_ATOM),
+        ]);
+        $record($stats, 'updated', 'studio_note_workspace_items');
     }
 
     $sourceItems = $source->prepare(

@@ -482,6 +482,85 @@ final class WebsiteBoardService
         return (string)$normalized['html'];
     }
 
+    /** @return array<string,mixed> */
+    public function addNoteUploads(int $userId, int $noteId, array $uploads): array
+    {
+        [$row, $payload] = $this->noteRow($userId, $noteId);
+        $originalSource = is_array($payload['source'] ?? null) ? $payload['source'] : null;
+        $names = (array)($uploads['name'] ?? []);
+        $temporaryFiles = (array)($uploads['tmp_name'] ?? []);
+        $errors = (array)($uploads['error'] ?? []);
+        $workspaceFiles = [];
+        foreach ((array)($payload['workspace_media_files'] ?? []) as $file) {
+            $file = basename((string)$file);
+            if ($file !== '') $workspaceFiles[$file] = true;
+        }
+
+        $uploaded = 0;
+        foreach ($temporaryFiles as $index => $temporaryFile) {
+            $error = (int)($errors[$index] ?? UPLOAD_ERR_NO_FILE);
+            if ($error === UPLOAD_ERR_NO_FILE) continue;
+            if ($error !== UPLOAD_ERR_OK) {
+                throw new RuntimeException('No se pudo cargar una de las imágenes de la mesa.');
+            }
+            $temporaryFile = (string)$temporaryFile;
+            if ($temporaryFile === ''
+                || (!is_uploaded_file($temporaryFile) && PHP_SAPI !== 'cli')) {
+                throw new RuntimeException('La carga de imagen no es válida.');
+            }
+            $bytes = file_get_contents($temporaryFile);
+            $info = is_string($bytes) ? @getimagesizefromstring($bytes) : false;
+            $mime = is_array($info) ? strtolower((string)($info['mime'] ?? '')) : '';
+            if (!is_string($bytes)
+                || $bytes === ''
+                || strlen($bytes) > 12 * 1024 * 1024
+                || !in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
+                throw new RuntimeException('Las cargas deben ser imágenes JPEG, PNG o WebP de hasta 12 MB.');
+            }
+            $dataUri = 'data:' . $mime . ';base64,' . base64_encode($bytes);
+            $normalized = StudioNoteMediaService::normalize(
+                $userId,
+                $noteId,
+                '<p><img src="' . $dataUri . '" alt="'
+                    . htmlspecialchars((string)($names[$index] ?? ''), ENT_QUOTES, 'UTF-8')
+                    . '"></p>',
+                $payload,
+                $this->sources($userId)
+            );
+            $payload = (array)$normalized['payload'];
+            foreach ((array)($payload['inline_media_files'] ?? []) as $file) {
+                $file = basename((string)$file);
+                if ($file !== '') $workspaceFiles[$file] = true;
+            }
+            $payload['inline_media_files'] = array_values(array_filter(
+                (array)($payload['inline_media_files'] ?? []),
+                static fn(mixed $file): bool => !isset($workspaceFiles[basename((string)$file)])
+            ));
+            $payload['workspace_media_files'] = array_keys($workspaceFiles);
+            $uploaded++;
+        }
+        if ($uploaded === 0) throw new RuntimeException('Elegí al menos una imagen para la mesa editorial.');
+
+        if ($originalSource === null) {
+            unset($payload['source']);
+        } else {
+            $payload['source'] = $originalSource;
+        }
+        $source = $originalSource ?? [];
+        $this->pdo->prepare('UPDATE social_campaigns
+            SET source_type=?,source_id=?,source_label=?,payload_json=?,updated_at=?
+            WHERE id=? AND user_id=?')->execute([
+                (string)($source['type'] ?? $row['source_type'] ?? ''),
+                (string)($source['id'] ?? $row['source_id'] ?? ''),
+                (string)($source['label'] ?? $row['source_label'] ?? ''),
+                json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                date(DATE_ATOM),
+                $noteId,
+                $userId,
+            ]);
+        return ['count' => $uploaded, 'payload' => $payload];
+    }
+
     public function noteAction(int $userId, int $noteId, string $action): ?array
     {
         [$row, $payload] = $this->noteRow($userId, $noteId);

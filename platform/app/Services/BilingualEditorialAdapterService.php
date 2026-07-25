@@ -291,6 +291,37 @@ final class BilingualEditorialAdapterService
         return ['content' => $proposal, 'status' => 'proposal', 'source_locale' => 'es', 'target_locale' => 'en'];
     }
 
+    /**
+     * Builds a review-only adaptation from an explicit source proposal. It is
+     * used by Studio Notes so generation never mutates the active WYSIWYG draft.
+     *
+     * @return array{content:array,status:string,source_locale:string,target_locale:string}
+     */
+    public function proposeAdaptationFromContent(
+        int $userId,
+        string $entityType,
+        int $entityId,
+        array $sourceContent,
+        array $targetContent = []
+    ): array {
+        if (!$this->editorial->isEnabled($userId)) {
+            throw new RuntimeException('El espacio editorial no está habilitado para esta cuenta.');
+        }
+        $proposal = $this->adaptContent(
+            $userId,
+            $entityType,
+            $entityId,
+            $sourceContent,
+            $targetContent
+        );
+        return [
+            'content' => $proposal,
+            'status' => 'proposal',
+            'source_locale' => 'es',
+            'target_locale' => 'en',
+        ];
+    }
+
     private function prompt(
         int $userId,
         string $entityType,

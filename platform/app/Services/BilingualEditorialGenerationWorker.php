@@ -40,6 +40,28 @@ final class BilingualEditorialGenerationWorker
                     array_key_exists('private_memo', $payload) ? (string)$payload['private_memo'] : null,
                     $publishSpanish
                 );
+            } elseif ($action === 'prepare' && $entityType === 'studio_note') {
+                $spanish = $adapter->generateSpanishDraft(
+                    $userId,
+                    $entityType,
+                    $entityId,
+                    is_array($payload['current_spanish'] ?? null) ? $payload['current_spanish'] : null,
+                    array_key_exists('private_memo', $payload) ? (string)$payload['private_memo'] : null
+                );
+                $spanishContent = (array)($spanish['content'] ?? []);
+                $english = $adapter->proposeAdaptationFromContent(
+                    $userId,
+                    $entityType,
+                    $entityId,
+                    $spanishContent
+                );
+                $result = [
+                    'spanish_content' => $spanishContent,
+                    'english_content' => (array)($english['content'] ?? []),
+                    'english_status' => 'proposal',
+                    'spanish_published' => false,
+                    'proposal_only' => true,
+                ];
             } elseif ($action === 'prepare') {
                 $spanish = $adapter->generateSpanishDraft(
                     $userId,
@@ -69,6 +91,19 @@ final class BilingualEditorialGenerationWorker
                     'english_status' => (string)($english['english_status'] ?? 'current'),
                     'spanish_published' => $publishSpanish,
                 ];
+            } elseif ($entityType === 'studio_note') {
+                $english = $adapter->proposeAdaptation(
+                    $userId,
+                    $entityType,
+                    $entityId,
+                    'es',
+                    'en'
+                );
+                $result = [
+                    'english_content' => (array)($english['content'] ?? []),
+                    'english_status' => 'proposal',
+                    'proposal_only' => true,
+                ];
             } else {
                 $english = $adapter->adaptMissing($userId, $entityType, $entityId, 'es', 'en');
                 $result = [
@@ -78,6 +113,9 @@ final class BilingualEditorialGenerationWorker
             }
 
             $jobs->complete($jobId, $result);
+            if ($entityType === 'studio_note') {
+                (new StudioNoteWorkspaceService($this->pdo))->syncHistoricalJobs($userId, $entityId);
+            }
             $this->refreshEditorialPackages($jobId);
             return ['ok' => true, 'job' => $jobs->publicState($jobs->job($jobId))];
         } catch (Throwable $error) {

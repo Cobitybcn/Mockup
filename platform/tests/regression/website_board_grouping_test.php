@@ -118,6 +118,12 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertContains('id="editor-container-es"', $studioNotesPage, 'Studio Notes conserva una superficie amplia para el master español');
     TestHarness::assertContains('id="editor-container-en"', $studioNotesPage, 'la adaptación inglesa tiene una superficie editorial independiente');
     TestHarness::assertContains('value="generate_bilingual"', $studioNotesPage, 'la nota puede preparar una propuesta completa ES y EN desde su material');
+    TestHarness::assertContains('Mesa editorial', $studioNotesPage, 'el borrador incluye su propia mesa editorial junto al editor');
+    TestHarness::assertContains('Ideas y fragmentos', $studioNotesPage, 'la mesa permite conservar ideas legibles dentro del mismo borrador');
+    TestHarness::assertContains('application/x-studio-note-fragment', $studioNotesPage, 'las tarjetas editoriales se pueden arrastrar al WYSIWYG');
+    TestHarness::assertContains('name="workspace_images[]"', $studioNotesPage, 'el borrador permite subir varias imágenes a su mesa de material');
+    TestHarness::assertContains('sin reemplazar el texto activo', $studioNotesPage, 'la acción de IA declara que no sobrescribe el texto en curso');
+    TestHarness::assertContains("DELETE FROM studio_note_workspace_items", $studioNotesPage, 'eliminar una nota también elimina su mesa editorial');
     TestHarness::assertContains('value="prepare_english"', $studioNotesPage, 'la nota puede reconstruir el inglés desde el español revisado');
     TestHarness::assertContains('Publicar ES + EN', $studioNotesPage, 'la publicación bilingüe se presenta como un único compromiso');
     TestHarness::assertContains("setPublished(\$userId, 'studio_note', \$id, 'es', true)", $studioNotesPage, 'la publicación congela un snapshot español');

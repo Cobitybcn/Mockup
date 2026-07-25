@@ -16,6 +16,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $websiteBoard = new WebsiteBoardService($pdo);
 $editorial = new BilingualEditorialService($pdo);
+$studioWorkspace = new StudioNoteWorkspaceService($pdo);
 $studioSources = $websiteBoard->sources($userId);
 $studioSourceLookup = [];
 foreach ($studioSources as $studioSource) {
@@ -87,12 +88,42 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     (string)$currentSpanish['body_html']
                 );
             }
+            $currentEnglish = wsn_post_content('en');
+            if (wsn_has_content($currentSpanish)) {
+                $editorial->save(
+                    $userId,
+                    'studio_note',
+                    $id,
+                    'es',
+                    $currentSpanish,
+                    trim((string)($_POST['private_memo_es'] ?? ''))
+                );
+            }
+            if (wsn_has_content($currentEnglish)) {
+                if (trim((string)$currentEnglish['body_html']) !== '') {
+                    $currentEnglish['body_html'] = $websiteBoard->normalizeNoteBody(
+                        $userId,
+                        $id,
+                        (string)$currentEnglish['body_html']
+                    );
+                }
+                $editorial->save($userId, 'studio_note', $id, 'en', $currentEnglish);
+            }
             $jobs = new BilingualEditorialJobService($pdo);
             $job = $jobs->createOrReuse($userId, 'studio_note', $id, 'prepare', [
                 'current_spanish' => $currentSpanish,
                 'private_memo' => trim((string)($_POST['private_memo_es'] ?? '')),
                 'publish_spanish' => false,
             ]);
+            $studioWorkspace->capture(
+                $userId,
+                $id,
+                'version',
+                'es',
+                $currentSpanish,
+                'Texto conservado antes de generar',
+                (int)$job['id']
+            );
             if ((string)$job['status'] === 'queued' && trim((string)$job['task_name']) === '') {
                 if (CloudTasksService::isAvailable()) {
                     $jobs->attachTask(
@@ -104,7 +135,90 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     (new BilingualEditorialGenerationWorker($pdo))->process((int)$job['id']);
                 }
             }
-            $_SESSION['wsn_notice'] = 'La propuesta española y su adaptación inglesa quedaron en preparación.';
+            $_SESSION['wsn_notice'] = 'La propuesta se está preparando en la pizarra. Tu texto activo no será reemplazado.';
+            header('Location: website_studio_notes.php?draft=' . $id);
+            exit;
+        }
+
+        if (in_array($action, ['add_idea', 'upload_workspace_media', 'apply_workspace_item', 'remove_workspace_item'], true)) {
+            $id = max(0, (int)($_POST['draft_id'] ?? 0));
+            $spanish = wsn_post_content('es');
+            $english = wsn_post_content('en');
+            if (wsn_has_content($spanish)) {
+                if (trim((string)$spanish['body_html']) !== '') {
+                    $spanish['body_html'] = $websiteBoard->normalizeNoteBody(
+                        $userId,
+                        $id,
+                        (string)$spanish['body_html']
+                    );
+                }
+                $editorial->save(
+                    $userId,
+                    'studio_note',
+                    $id,
+                    'es',
+                    $spanish,
+                    trim((string)($_POST['private_memo_es'] ?? ''))
+                );
+            }
+            if (wsn_has_content($english)) {
+                if (trim((string)$english['body_html']) !== '') {
+                    $english['body_html'] = $websiteBoard->normalizeNoteBody(
+                        $userId,
+                        $id,
+                        (string)$english['body_html']
+                    );
+                }
+                $editorial->save($userId, 'studio_note', $id, 'en', $english);
+            }
+
+            if ($action === 'add_idea') {
+                $studioWorkspace->addIdea(
+                    $userId,
+                    $id,
+                    trim((string)($_POST['idea_title'] ?? '')),
+                    trim((string)($_POST['idea_text'] ?? ''))
+                );
+                $_SESSION['wsn_notice'] = 'Idea añadida a la pizarra.';
+            } elseif ($action === 'upload_workspace_media') {
+                $uploadResult = $websiteBoard->addNoteUploads(
+                    $userId,
+                    $id,
+                    (array)($_FILES['workspace_images'] ?? [])
+                );
+                $_SESSION['wsn_notice'] = (int)$uploadResult['count'] === 1
+                    ? 'Imagen añadida a la mesa de material.'
+                    : (int)$uploadResult['count'] . ' imágenes añadidas a la mesa de material.';
+            } else {
+                $itemId = max(0, (int)($_POST['workspace_item_id'] ?? 0));
+                if ($action === 'remove_workspace_item') {
+                    $studioWorkspace->remove($userId, $id, $itemId);
+                    $_SESSION['wsn_notice'] = 'Elemento retirado de la pizarra.';
+                } else {
+                    $item = $studioWorkspace->item($userId, $id, $itemId);
+                    $locale = (string)$item['locale'];
+                    $current = $locale === 'es' ? $spanish : $english;
+                    $studioWorkspace->capture(
+                        $userId,
+                        $id,
+                        'version',
+                        $locale,
+                        $current,
+                        $locale === 'es' ? 'Texto anterior a aplicar una tarjeta' : 'English text before applying a card'
+                    );
+                    $editorial->save(
+                        $userId,
+                        'studio_note',
+                        $id,
+                        $locale,
+                        (array)$item['content'],
+                        (string)$editorial->get($userId, 'studio_note', $id, $locale)['private_memo']
+                    );
+                    $_SESSION['wsn_notice'] = $locale === 'es'
+                        ? 'La tarjeta se aplicó al editor español. El texto anterior quedó en Versiones.'
+                        : 'The card was applied to the English editor. The previous text remains in Versions.';
+                }
+            }
             header('Location: website_studio_notes.php?draft=' . $id);
             exit;
         }
@@ -140,7 +254,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                         (new BilingualEditorialGenerationWorker($pdo))->process((int)$job['id']);
                     }
                 }
-                $_SESSION['wsn_notice'] = 'La adaptación inglesa quedó en preparación.';
+                $_SESSION['wsn_notice'] = 'La adaptación inglesa se está preparando en la pizarra; no reemplazará el editor.';
             } elseif ($action === 'publish_draft') {
                 if (!wsn_has_required_public_content($english)) {
                     throw new RuntimeException('Prepará y revisá el título y el cuerpo en inglés antes de publicar.');
@@ -183,6 +297,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         
         if ($action === 'delete_draft') {
             $id = max(0, (int)($_POST['draft_id'] ?? 0));
+            $pdo->prepare('DELETE FROM studio_note_workspace_items WHERE user_id=? AND note_id=?')->execute([$userId, $id]);
             $pdo->prepare("DELETE FROM bilingual_editorial_jobs WHERE user_id=? AND entity_type='studio_note' AND entity_id=?")->execute([$userId, $id]);
             $pdo->prepare("DELETE FROM bilingual_editorial_content WHERE user_id=? AND entity_type='studio_note' AND entity_id=?")->execute([$userId, $id]);
             $stmt = $pdo->prepare('DELETE FROM social_campaigns WHERE id=? AND user_id=?');
@@ -231,6 +346,11 @@ function wsn_slug(string $value): string
     $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
     if (is_string($ascii) && $ascii !== '') $value = $ascii;
     return trim((string)preg_replace('/[^a-z0-9]+/', '-', $value), '-');
+}
+function wsn_workspace_excerpt(array $content, int $limit = 180): string
+{
+    $text = trim(preg_replace('/\s+/u', ' ', strip_tags((string)($content['body_html'] ?? ''))) ?? '');
+    return mb_strlen($text) > $limit ? mb_substr($text, 0, $limit - 1) . '…' : $text;
 }
 function wsn_media_url(?string $file, int $width = 520): string
 {
@@ -315,6 +435,7 @@ $noteShape = [
 $spanishState = ['content' => $noteShape, 'status' => 'unprepared', 'is_published' => false, 'has_unpublished_changes' => false];
 $englishState = ['content' => $noteShape, 'status' => 'unprepared', 'is_published' => false, 'has_unpublished_changes' => false];
 $activeEditorialJob = null;
+$workspaceBoards = ['version' => [], 'proposal' => [], 'idea' => []];
 if ($openDraft) {
     $legacyEnglish = trim(strip_tags((string)$openDraft['objective'])) !== ''
         ? [
@@ -333,6 +454,8 @@ if ($openDraft) {
     $spanishState['content'] = array_replace($noteShape, (array)$spanishState['content']);
     $englishState['content'] = array_replace($noteShape, (array)$englishState['content']);
     try {
+        $studioWorkspace->syncHistoricalJobs($userId, (int)$openDraft['id']);
+        $workspaceBoards = $studioWorkspace->boards($userId, (int)$openDraft['id']);
         $activeEditorialJob = (new BilingualEditorialJobService($pdo))->activeForEntity(
             $userId,
             'studio_note',
@@ -355,8 +478,20 @@ if ($openDraft) {
 }
 
 $openMedia = [];
+$noteMediaKeys = [];
+foreach ((array)($openPayload['media'] ?? []) as $payloadMedia) {
+    if (!is_array($payloadMedia)) continue;
+    $file = basename((string)($payloadMedia['file'] ?? ''));
+    if ($file === '') continue;
+    $openMedia[] = $payloadMedia;
+    $noteMediaKeys[(string)($payloadMedia['key'] ?? $file)] = true;
+}
 if ($openSource) {
     $seenMediaFiles = [];
+    foreach ($openMedia as $existingMedia) {
+        $existingFile = basename((string)($existingMedia['file'] ?? ''));
+        if ($existingFile !== '') $seenMediaFiles[$existingFile] = true;
+    }
     $appendMedia = static function (array $source) use (&$openMedia, &$seenMediaFiles): void {
         $file = basename((string)($source['file'] ?? ''));
         if ($file === '' || isset($seenMediaFiles[$file]) || count($openMedia) >= 200) return;
@@ -382,6 +517,10 @@ if ($openSource) {
     }
 } else {
     $seenMediaFiles = [];
+    foreach ($openMedia as $existingMedia) {
+        $existingFile = basename((string)($existingMedia['file'] ?? ''));
+        if ($existingFile !== '') $seenMediaFiles[$existingFile] = true;
+    }
     foreach ($studioSources as $candidate) {
         $file = basename((string)($candidate['file'] ?? ''));
         if ($file === '' || isset($seenMediaFiles[$file])) continue;
@@ -404,7 +543,7 @@ foreach (array_merge($openMedia, $studioSources) as $media) {
     $mediaLibrary[] = $media;
     if (count($mediaLibrary) >= 400) break;
 }
-$mediaDefaultFilter = $openSource ? 'related' : 'all';
+$mediaDefaultFilter = $noteMediaKeys ? 'note' : ($openSource ? 'related' : 'all');
 
 $requestedSourceKey = trim((string)($_GET['source'] ?? ''));
 if ($requestedSourceKey !== '' && !isset($studioSourceLookup[$requestedSourceKey])) {
@@ -452,11 +591,38 @@ $initialSourceType = $requestedSourceKey !== ''
         .studio-create-decision__content { display:flex !important; align-items:center; flex-direction:column; justify-content:center; gap:10px; }
         .studio-create-decision .studio-create-decision__plus { display:block !important; font-size:48px !important; font-weight:300 !important; line-height:.72 !important; letter-spacing:0 !important; }
         .studio-create-decision .studio-create-decision__label { display:block !important; font-size:14px !important; line-height:1 !important; letter-spacing:.12em !important; }
-        .studio-editor-workspace { max-width:1500px; margin:0 auto; padding:28px 30px 32px; border:1px solid var(--line); border-radius:4px; background:var(--surface); }
+        .studio-editor-workspace { width:100%; box-sizing:border-box; margin:0 auto; padding:28px 24px 32px; border:1px solid var(--line); border-radius:4px; background:var(--surface); }
         .studio-note-editor-top { display:flex; justify-content:flex-end; margin-bottom:8px; }
         .studio-note-editor-top a { color:#625b55; font-size:12px; font-weight:650; letter-spacing:.05em; text-decoration:none; text-transform:uppercase; }
-        .studio-note-editor-shell { display:grid; grid-template-columns:minmax(0,960px) minmax(320px,420px); justify-content:center; gap:24px; }
-        .studio-note-editor-shell--text-only { grid-template-columns:minmax(0,1020px); }
+        .studio-note-editor-shell { display:grid; grid-template-columns:minmax(250px,290px) minmax(560px,1fr) minmax(280px,340px); align-items:start; gap:22px; }
+        .studio-note-writing-desk { min-width:0; }
+        .studio-workspace-board { position:sticky; top:18px; max-height:calc(100vh - 36px); overflow-y:auto; padding:17px; border:1px solid var(--line); border-radius:4px; background:#f3eef4; scrollbar-width:thin; scrollbar-color:#c8becb transparent; }
+        .studio-workspace-board__heading { margin-bottom:16px; }
+        .studio-workspace-board__heading h2 { margin:0 0 5px; font:400 25px/1.1 var(--font-serif); }
+        .studio-workspace-board__heading p { margin:0; color:#625b55; font-size:13px; line-height:1.45; }
+        .studio-workspace-generate { width:100% !important; min-height:84px !important; margin:0 0 16px !important; padding:16px !important; border-color:#9eaf99 !important; background:#dce7d8 !important; color:#354332 !important; font-size:12px !important; letter-spacing:.05em !important; line-height:1.35 !important; }
+        .studio-workspace-generate:disabled { opacity:.58; cursor:wait; }
+        .studio-workspace-job { margin:-7px 0 15px; color:#5d5161; font-size:12px; line-height:1.4; }
+        .studio-board-section { border-top:1px solid #d2c6d5; }
+        .studio-board-section > summary { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:13px 0; cursor:pointer; list-style:none; color:var(--ink); font:400 19px/1.2 var(--font-serif); }
+        .studio-board-section > summary::-webkit-details-marker { display:none; }
+        .studio-board-count { min-width:24px; padding:3px 7px; border:1px solid #cbbdce; border-radius:999px; color:#625b55; font:700 10px/1.2 var(--font-sans); text-align:center; }
+        .studio-board-cards { display:grid; gap:10px; padding:0 0 14px; }
+        .studio-board-card { padding:12px; border:1px solid #cfc3d3; border-radius:3px; background:#fff; cursor:grab; }
+        .studio-board-card:active { cursor:grabbing; }
+        .studio-board-card.is-dragging { opacity:.55; }
+        .studio-board-card__meta { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:7px; color:#756b77; font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+        .studio-board-card h3 { margin:0 0 7px; font:400 18px/1.2 var(--font-serif); }
+        .studio-board-card p { display:-webkit-box; overflow:hidden; margin:0; color:#5b535b; font-size:13px; line-height:1.45; -webkit-box-orient:vertical; -webkit-line-clamp:5; }
+        .studio-board-card__actions { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:11px; }
+        .studio-board-card__actions button { width:auto !important; min-width:0 !important; margin:0 !important; padding:7px 9px !important; border:1px solid #cbbdce !important; border-radius:2px !important; background:#f4eff5 !important; color:#514951 !important; box-shadow:none !important; font-size:10px !important; }
+        .studio-board-card__actions button[data-workspace-remove] { border-color:transparent !important; background:transparent !important; color:#8a6666 !important; }
+        .studio-board-empty { margin:0 0 13px; color:#756c73; font-size:12px; line-height:1.45; }
+        .studio-idea-composer { display:grid; gap:8px; padding:0 0 15px; }
+        .studio-idea-composer input,
+        .studio-idea-composer textarea { width:100%; box-sizing:border-box; margin:0; padding:9px 0; border:0; border-bottom:1px solid #cbbdce; border-radius:0; background:transparent; color:var(--ink); font:400 14px/1.45 var(--font-sans); resize:vertical; }
+        .studio-idea-composer textarea { min-height:92px; }
+        .studio-idea-composer button { width:auto !important; min-width:0 !important; margin:2px 0 0 !important; justify-self:start; padding:8px 11px !important; border-color:#cfb98f !important; background:#eee0bd !important; color:#5d4c2d !important; font-size:11px !important; }
         .studio-notes-page input.studio-note-editor-title { width:100%; box-sizing:border-box; margin:0 0 18px; padding:5px 2px 14px; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; color:var(--ink); font-family:var(--font-serif); font-size:38px; font-weight:400; line-height:1.2; }
         .studio-notes-page input.studio-note-editor-title:focus { outline:0; border-bottom-color:var(--accent); box-shadow:none; }
         .studio-notes-page .studio-note-editor.ql-container { height:520px !important; min-height:520px; border:1px solid var(--line); border-radius:0 0 4px 4px; background:#fff; color:var(--ink); font-family:var(--font-sans); font-size:19px; line-height:1.72; }
@@ -525,6 +691,14 @@ $initialSourceType = $requestedSourceKey !== ''
         .studio-note-media img { display:block; width:100%; height:100%; object-fit:contain; background:#eeece7; }
         .studio-note-media.is-inserted { border-color:#8b7a92 !important; }
         .studio-note-media-empty { margin:14px 0 0 !important; color:#625b55; font-size:14px; }
+        .studio-media-upload { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px; margin:0 0 13px; padding:10px; border:1px dashed #b9afa5; background:#fff; }
+        .studio-media-upload input { width:100%; min-width:0; color:#625b55; font-size:12px; }
+        .studio-media-upload button { width:auto !important; min-width:0 !important; margin:0 !important; padding:8px 10px !important; border-color:#c8b384 !important; background:#eee0bd !important; color:#5d4c2d !important; box-shadow:none !important; font-size:10px !important; }
+        @media (max-width:1280px) {
+            .studio-note-editor-shell { grid-template-columns:minmax(240px,280px) minmax(0,1fr); }
+            .studio-note-media-library { position:static; grid-column:1 / -1; }
+            .studio-note-media-grid { grid-template-columns:repeat(4,minmax(0,1fr)); max-height:520px; }
+        }
         .studio-drafts { margin-top:36px; padding:0; }
         .studio-drafts-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,440px)); justify-content:start; gap:18px; }
         .studio-draft { display:grid; grid-template-columns:138px minmax(0,1fr); min-height:188px; overflow:hidden; border:1px solid #cfc3d3; border-radius:4px; background:#eee8f0; color:var(--ink); text-decoration:none; box-shadow:0 8px 20px rgba(126,104,133,.10); transition:border-color .16s ease, box-shadow .16s ease, transform .16s ease; }
@@ -545,6 +719,7 @@ $initialSourceType = $requestedSourceKey !== ''
             .studio-source-rail { grid-auto-columns:minmax(146px,44vw); }
             .studio-create-decision { width:126px !important; min-width:126px !important; height:126px !important; min-height:126px !important; margin-top:clamp(28px, calc(27.5vw - 63px), 48px) !important; padding:12px !important; font-size:11px !important; }
             .studio-note-editor-shell { grid-template-columns:1fr; }
+            .studio-workspace-board { position:static; max-height:none; }
             .studio-editor-workspace { padding:20px 16px 24px; }
             .studio-notes-page input.studio-note-editor-title { font-size:31px; }
             .studio-notes-page .studio-note-editor.ql-container { height:440px !important; min-height:440px; }
@@ -643,22 +818,98 @@ $initialSourceType = $requestedSourceKey !== ''
             <?php if ($openDraft): ?>
                 <section class="studio-editor-workspace">
                     <div class="studio-note-editor-top"><a href="website_studio_notes.php">Close</a></div>
-                    <div class="studio-note-editor-shell<?= $mediaLibrary ? '' : ' studio-note-editor-shell--text-only' ?>">
-                        <div>
-                            <form class="studio-note-form" method="post"
-                                  data-note-id="<?= (int)$openDraft['id'] ?>"
-                                  data-editorial-csrf="<?= wsn_h(Auth::csrfToken('bilingual_editorial')) ?>"
-                                  data-active-job="<?= (int)($activeEditorialJob['id'] ?? 0) ?>">
-                                <input type="hidden" name="csrf" value="<?= wsn_h($_SESSION['studio_notes_csrf']) ?>">
-                                <input type="hidden" name="draft_id" value="<?= (int)$openDraft['id'] ?>">
+                    <form class="studio-note-form" method="post" enctype="multipart/form-data"
+                          data-note-id="<?= (int)$openDraft['id'] ?>"
+                          data-editorial-csrf="<?= wsn_h(Auth::csrfToken('bilingual_editorial')) ?>"
+                          data-active-job="<?= (int)($activeEditorialJob['id'] ?? 0) ?>">
+                        <input type="hidden" name="csrf" value="<?= wsn_h($_SESSION['studio_notes_csrf']) ?>">
+                        <input type="hidden" name="draft_id" value="<?= (int)$openDraft['id'] ?>">
+                        <input type="hidden" name="workspace_item_id" id="workspace-item-id" value="">
+                        <div class="studio-note-editor-shell">
+                            <aside class="studio-workspace-board" aria-label="Mesa editorial">
+                                <div class="studio-workspace-board__heading">
+                                    <h2>Mesa editorial</h2>
+                                    <p>Conservá versiones, compará propuestas y arrastrá fragmentos al artículo.</p>
+                                </div>
+                                <button class="studio-workspace-generate" name="action" value="generate_bilingual"
+                                        type="submit"<?= $activeEditorialJob ? ' disabled' : '' ?>>
+                                    Crear propuesta ES + EN<br>sin reemplazar el texto activo
+                                </button>
+                                <?php if ($activeEditorialJob): ?>
+                                    <p class="studio-workspace-job" data-workspace-job-state>
+                                        Preparando una propuesta. Podés seguir trabajando: aparecerá en este Board.
+                                    </p>
+                                <?php endif; ?>
+
+                                <?php foreach ([
+                                    'proposal' => ['Propuestas', true],
+                                    'version' => ['Versiones', true],
+                                    'idea' => ['Ideas y fragmentos', true],
+                                ] as $boardType => [$boardLabel, $boardOpen]): ?>
+                                    <details class="studio-board-section"<?= $boardOpen ? ' open' : '' ?>>
+                                        <summary>
+                                            <span><?= wsn_h($boardLabel) ?></span>
+                                            <span class="studio-board-count"><?= count($workspaceBoards[$boardType]) ?></span>
+                                        </summary>
+                                        <div class="studio-board-cards">
+                                            <?php if (!$workspaceBoards[$boardType]): ?>
+                                                <p class="studio-board-empty">
+                                                    <?= $boardType === 'proposal'
+                                                        ? 'Las propuestas nuevas aparecerán aquí sin tocar el editor.'
+                                                        : ($boardType === 'version'
+                                                            ? 'Cada texto protegido quedará disponible para recuperar.'
+                                                            : 'Guardá aquí argumentos, cierres o fragmentos sueltos.') ?>
+                                                </p>
+                                            <?php endif; ?>
+                                            <?php foreach ($workspaceBoards[$boardType] as $workspaceItem): ?>
+                                                <?php
+                                                    $workspaceContent = (array)$workspaceItem['content'];
+                                                    $workspaceTitle = trim((string)($workspaceContent['title'] ?? ''))
+                                                        ?: (string)$workspaceItem['label'];
+                                                    $workspaceExcerpt = wsn_workspace_excerpt($workspaceContent);
+                                                ?>
+                                                <article class="studio-board-card" draggable="true"
+                                                         data-workspace-fragment
+                                                         data-workspace-title="<?= wsn_h($workspaceTitle) ?>"
+                                                         data-workspace-html="<?= wsn_h((string)($workspaceContent['body_html'] ?? '')) ?>"
+                                                         data-workspace-locale="<?= wsn_h((string)$workspaceItem['locale']) ?>">
+                                                    <div class="studio-board-card__meta">
+                                                        <span><?= wsn_h((string)$workspaceItem['locale']) ?></span>
+                                                        <span><?= wsn_h((string)$workspaceItem['label']) ?></span>
+                                                    </div>
+                                                    <h3><?= wsn_h($workspaceTitle) ?></h3>
+                                                    <?php if ($workspaceExcerpt !== ''): ?><p><?= wsn_h($workspaceExcerpt) ?></p><?php endif; ?>
+                                                    <div class="studio-board-card__actions">
+                                                        <button type="submit" name="action" value="apply_workspace_item"
+                                                                data-workspace-apply="<?= (int)$workspaceItem['id'] ?>">
+                                                            Aplicar al editor
+                                                        </button>
+                                                        <button type="submit" name="action" value="remove_workspace_item"
+                                                                data-workspace-remove="<?= (int)$workspaceItem['id'] ?>"
+                                                                onclick="return confirm('¿Retirar esta tarjeta de la mesa?')">
+                                                            Retirar
+                                                        </button>
+                                                    </div>
+                                                </article>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <?php if ($boardType === 'idea'): ?>
+                                            <div class="studio-idea-composer">
+                                                <input name="idea_title" placeholder="Nombre breve de la idea" aria-label="Nombre de la idea">
+                                                <textarea name="idea_text" placeholder="Argumento, cita propia, cierre posible o fragmento…" aria-label="Texto de la idea"></textarea>
+                                                <button type="submit" name="action" value="add_idea">Guardar en Ideas</button>
+                                            </div>
+                                        <?php endif; ?>
+                                    </details>
+                                <?php endforeach; ?>
+                            </aside>
+
+                            <div class="studio-note-writing-desk">
 
                                 <div class="studio-language-heading">
                                     <span>Español · fuente editorial</span>
                                     <span class="studio-language-state"><?= !empty($spanishState['is_published']) ? (!empty($spanishState['has_unpublished_changes']) ? 'Cambios sin publicar' : 'Publicado') : 'Borrador' ?></span>
                                 </div>
-                                <button class="button-link studio-note-adapt" name="action" value="generate_bilingual" type="submit">
-                                    Preparar propuesta ES + EN desde el material relacionado
-                                </button>
                                 <input class="studio-note-editor-title" type="text" name="title_es" id="studio-note-title-es"
                                        value="<?= wsn_h((string)$spanishState['content']['title']) ?>"
                                        placeholder="Título de la nota en español" aria-label="Título de la nota en español">
@@ -751,13 +1002,17 @@ $initialSourceType = $requestedSourceKey !== ''
                                     <?php endif; ?>
                                     <button class="studio-note-delete" name="action" value="delete_draft" type="submit" onclick="return confirm('¿Eliminar esta Nota de estudio?')">Eliminar</button>
                                 </div>
-                            </form>
-                        </div>
-                        <?php if ($mediaLibrary): ?>
-                            <div class="studio-note-media-library" data-media-library data-default-media-filter="<?= wsn_h($mediaDefaultFilter) ?>">
-                                <h2>Insert image</h2>
-                                <p><?= $openSource ? 'Related material first. Filter or search for anything else.' : 'Search all visual material, then drag or click to insert.' ?></p>
+                            </div>
+                        <div class="studio-note-media-library" data-media-library data-default-media-filter="<?= wsn_h($mediaDefaultFilter) ?>">
+                                <h2>Material visual</h2>
+                                <p>Subí, buscá y arrastrá imágenes al artículo activo.</p>
+                                <div class="studio-media-upload">
+                                    <input type="file" name="workspace_images[]" accept="image/jpeg,image/png,image/webp" multiple
+                                           aria-label="Cargar imágenes a la mesa editorial">
+                                    <button type="submit" name="action" value="upload_workspace_media">Subir</button>
+                                </div>
                                 <div class="studio-note-media-filters" role="tablist" aria-label="Image source">
+                                    <?php if ($noteMediaKeys): ?><button type="button" data-media-filter="note">En esta nota</button><?php endif; ?>
                                     <?php if ($openSource): ?><button type="button" data-media-filter="related">Related</button><?php endif; ?>
                                     <button type="button" data-media-filter="all">All</button>
                                     <button type="button" data-media-filter="artwork">Artworks</button>
@@ -784,6 +1039,7 @@ $initialSourceType = $requestedSourceKey !== ''
                                                 data-insert-alt="<?= wsn_h((string)$media['label']) ?>"
                                                 data-media-type="<?= wsn_h($mediaType) ?>"
                                                 data-media-related="<?= isset($relatedMediaKeys[$mediaKey]) ? '1' : '0' ?>"
+                                                data-media-note="<?= isset($noteMediaKeys[$mediaKey]) ? '1' : '0' ?>"
                                                 data-media-search-text="<?= wsn_h($mediaSearch) ?>"
                                                 aria-label="Insert <?= wsn_h((string)$media['label']) ?>"
                                                 title="Insert <?= wsn_h((string)$media['label']) ?>">
@@ -792,9 +1048,9 @@ $initialSourceType = $requestedSourceKey !== ''
                                     <?php endforeach; ?>
                                 </div>
                                 <p class="studio-note-media-empty" data-media-empty hidden>No images found.</p>
-                            </div>
-                        <?php endif; ?>
-                    </div>
+                        </div>
+                        </div>
+                    </form>
                 </section>
             <?php endif; ?>
 
@@ -1025,6 +1281,7 @@ $initialSourceType = $requestedSourceKey !== ''
                             var visibleCount = 0;
                             mediaCards.forEach(function(card) {
                                 var typeMatches = activeFilter === 'all'
+                                    || (activeFilter === 'note' && card.getAttribute('data-media-note') === '1')
                                     || (activeFilter === 'related' && card.getAttribute('data-media-related') === '1')
                                     || card.getAttribute('data-media-type') === activeFilter;
                                 var searchMatches = !query || normalizeMediaSearch(card.getAttribute('data-media-search-text')).indexOf(query) !== -1;
@@ -1106,6 +1363,70 @@ $initialSourceType = $requestedSourceKey !== ''
                     
                     // Sincronizar el contenido antes de enviar el formulario
                     var form = document.querySelector('form.studio-note-form');
+                    var workspaceItemInput = document.getElementById('workspace-item-id');
+                    document.querySelectorAll('[data-workspace-apply], [data-workspace-remove]').forEach(function(button) {
+                        button.addEventListener('click', function() {
+                            if (!workspaceItemInput) return;
+                            workspaceItemInput.value = button.getAttribute('data-workspace-apply')
+                                || button.getAttribute('data-workspace-remove')
+                                || '';
+                        });
+                    });
+
+                    var studioTextType = 'application/x-studio-note-fragment';
+                    document.querySelectorAll('[data-workspace-fragment]').forEach(function(card) {
+                        card.addEventListener('dragstart', function(event) {
+                            if (!event.dataTransfer) return;
+                            event.dataTransfer.effectAllowed = 'copy';
+                            event.dataTransfer.setData(studioTextType, JSON.stringify({
+                                title: card.getAttribute('data-workspace-title') || '',
+                                html: card.getAttribute('data-workspace-html') || '',
+                                locale: card.getAttribute('data-workspace-locale') || 'es'
+                            }));
+                            card.classList.add('is-dragging');
+                        });
+                        card.addEventListener('dragend', function() {
+                            card.classList.remove('is-dragging');
+                            quillEs.container.classList.remove('is-media-drop-target');
+                            quillEn.container.classList.remove('is-media-drop-target');
+                        });
+                    });
+
+                    function enableFragmentDrop(targetQuill) {
+                        targetQuill.container.addEventListener('dragover', function(event) {
+                            if (!event.dataTransfer
+                                || Array.from(event.dataTransfer.types || []).indexOf(studioTextType) === -1) return;
+                            event.preventDefault();
+                            event.dataTransfer.dropEffect = 'copy';
+                            targetQuill.container.classList.add('is-media-drop-target');
+                        }, true);
+                        targetQuill.container.addEventListener('dragleave', function(event) {
+                            if (!targetQuill.container.contains(event.relatedTarget)) {
+                                targetQuill.container.classList.remove('is-media-drop-target');
+                            }
+                        }, true);
+                        targetQuill.container.addEventListener('drop', function(event) {
+                            if (!event.dataTransfer) return;
+                            var rawFragment = event.dataTransfer.getData(studioTextType);
+                            if (!rawFragment) return;
+                            event.preventDefault();
+                            event.stopPropagation();
+                            targetQuill.container.classList.remove('is-media-drop-target');
+                            try {
+                                var fragment = JSON.parse(rawFragment);
+                                var range = targetQuill.getSelection();
+                                var index = range ? range.index : Math.max(0, targetQuill.getLength() - 1);
+                                var fragmentHtml = String(fragment.html || '');
+                                if (fragmentHtml) {
+                                    targetQuill.clipboard.dangerouslyPasteHTML(index, fragmentHtml, 'user');
+                                    targetQuill.focus();
+                                }
+                            } catch (error) {}
+                        }, true);
+                    }
+                    enableFragmentDrop(quillEs);
+                    enableFragmentDrop(quillEn);
+
                     if (form) {
                         form.addEventListener('submit', function() {
                             document.getElementById('body-input-es').value = quillEs.root.innerHTML;
