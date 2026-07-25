@@ -73,6 +73,36 @@ function run_studio_note_workspace_tests(): void
     $service->remove(7, 17, (int)$ideaId);
     TestHarness::assertSame(0, count($service->boards(7, 17)['idea']), 'una tarjeta se puede retirar sin alterar la nota activa');
 
+    $adaptPayload = json_encode([
+        'current_spanish' => [
+            'title' => 'El recorrido de las series',
+            'body_html' => '<p>Fuente española exacta.</p>',
+        ],
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $adaptResult = json_encode([
+        'english_content' => [
+            'title' => 'The Journey Through the Series',
+            'body_html' => '<p>Exact English adaptation.</p>',
+        ],
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $insertAdaptJob = $pdo->prepare("INSERT INTO bilingual_editorial_jobs
+        (id,user_id,entity_type,entity_id,action,status,payload_json,result_json,error,task_name,attempts,created_at,updated_at)
+        VALUES (184,7,'studio_note',17,'adapt','completed',?,?,'','',1,'2026-07-25T18:20:00Z','2026-07-25T18:21:00Z')");
+    $insertAdaptJob->execute([$adaptPayload, $adaptResult]);
+    $service->syncHistoricalJobs(7, 17);
+    $adaptedCards = array_values(array_filter(
+        $service->boards(7, 17)['proposal'],
+        static fn(array $item): bool => str_contains(
+            (string)$item['label'],
+            'El recorrido de las series'
+        )
+    ));
+    TestHarness::assertSame(
+        1,
+        count($adaptedCards),
+        'la propuesta inglesa identifica claramente el título español que fue adaptado'
+    );
+
     $worker = (string)file_get_contents(dirname(__DIR__, 2) . '/app/Services/BilingualEditorialGenerationWorker.php');
     TestHarness::assertContains("'proposal_only' => true", $worker, 'el worker marca Studio Notes como propuesta sin guardado automático');
     TestHarness::assertContains('syncHistoricalJobs', $worker, 'al completar el trabajo el resultado se incorpora a la mesa editorial');

@@ -92,13 +92,27 @@ final class BilingualEditorialGenerationWorker
                     'spanish_published' => $publishSpanish,
                 ];
             } elseif ($entityType === 'studio_note') {
-                $english = $adapter->proposeAdaptation(
-                    $userId,
-                    $entityType,
-                    $entityId,
-                    'es',
-                    'en'
-                );
+                $sourceContent = is_array($payload['current_spanish'] ?? null)
+                    ? (array)$payload['current_spanish']
+                    : [];
+                $targetContent = is_array($payload['current_english'] ?? null)
+                    ? (array)$payload['current_english']
+                    : [];
+                $english = $sourceContent !== []
+                    ? $adapter->proposeAdaptationFromContent(
+                        $userId,
+                        $entityType,
+                        $entityId,
+                        $sourceContent,
+                        $targetContent
+                    )
+                    : $adapter->proposeAdaptation(
+                        $userId,
+                        $entityType,
+                        $entityId,
+                        'es',
+                        'en'
+                    );
                 $result = [
                     'english_content' => (array)($english['content'] ?? []),
                     'english_status' => 'proposal',

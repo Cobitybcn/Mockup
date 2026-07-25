@@ -190,6 +190,44 @@ function run_bilingual_editorial_service_tests(): void
     $queuedJob = $jobs->createOrReuse(7, 'mockup', 21, 'adapt');
     $sameQueuedJob = $jobs->createOrReuse(7, 'mockup', 21, 'prepare');
     TestHarness::assertSame((int)$queuedJob['id'], (int)$sameQueuedJob['id'], 'una navegación repetida reutiliza la generación editorial activa');
+    $strictStudioJob = $jobs->createOrReuse(
+        7,
+        'studio_note',
+        99,
+        'adapt',
+        ['current_spanish' => ['title' => 'Texto exacto A']],
+        true
+    );
+    $sameStrictStudioJob = $jobs->createOrReuse(
+        7,
+        'studio_note',
+        99,
+        'adapt',
+        ['current_spanish' => ['title' => 'Texto exacto A']],
+        true
+    );
+    TestHarness::assertSame(
+        (int)$strictStudioJob['id'],
+        (int)$sameStrictStudioJob['id'],
+        'una adaptación idéntica puede reutilizar el mismo trabajo activo'
+    );
+    $mismatchedStudioBlocked = false;
+    try {
+        $jobs->createOrReuse(
+            7,
+            'studio_note',
+            99,
+            'adapt',
+            ['current_spanish' => ['title' => 'Texto exacto B']],
+            true
+        );
+    } catch (RuntimeException $error) {
+        $mismatchedStudioBlocked = str_contains($error->getMessage(), 'otra versión');
+    }
+    TestHarness::assertTrue(
+        $mismatchedStudioBlocked,
+        'una adaptación activa nunca se reutiliza para otro texto español'
+    );
     $claimedJob = $jobs->claim((int)$queuedJob['id']);
     TestHarness::assertSame('processing', (string)($claimedJob['status'] ?? ''), 'el worker reclama la generación persistente una sola vez');
     $jobs->complete((int)$queuedJob['id'], ['english_content' => ['description' => 'Background English']]);

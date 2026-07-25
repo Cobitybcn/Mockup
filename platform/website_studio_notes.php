@@ -242,7 +242,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     throw new RuntimeException('El espacio editorial bilingüe no está habilitado para esta cuenta.');
                 }
                 $jobs = new BilingualEditorialJobService($pdo);
-                $job = $jobs->createOrReuse($userId, 'studio_note', $id, 'adapt');
+                $job = $jobs->createOrReuse($userId, 'studio_note', $id, 'adapt', [
+                    'current_spanish' => $spanish,
+                    'current_english' => $english,
+                    'source_hash' => hash(
+                        'sha256',
+                        json_encode(
+                            $spanish,
+                            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
+                        )
+                    ),
+                ], true);
                 if ((string)$job['status'] === 'queued' && trim((string)$job['task_name']) === '') {
                     if (CloudTasksService::isAvailable()) {
                         $jobs->attachTask(
@@ -254,7 +264,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                         (new BilingualEditorialGenerationWorker($pdo))->process((int)$job['id']);
                     }
                 }
-                $_SESSION['wsn_notice'] = 'La adaptación inglesa se está preparando en la pizarra; no reemplazará el editor.';
+                $_SESSION['wsn_notice'] = 'Se está adaptando exactamente el texto español que acabás de guardar. El resultado aparecerá en Propuestas.';
             } elseif ($action === 'publish_draft') {
                 if (!wsn_has_required_public_content($english)) {
                     throw new RuntimeException('Prepará y revisá el título y el cuerpo en inglés antes de publicar.');
@@ -435,6 +445,8 @@ $noteShape = [
 $spanishState = ['content' => $noteShape, 'status' => 'unprepared', 'is_published' => false, 'has_unpublished_changes' => false];
 $englishState = ['content' => $noteShape, 'status' => 'unprepared', 'is_published' => false, 'has_unpublished_changes' => false];
 $activeEditorialJob = null;
+$englishAdaptationActive = false;
+$englishAdaptationSourceTitle = '';
 $workspaceBoards = ['version' => [], 'proposal' => [], 'idea' => []];
 if ($openDraft) {
     $legacyEnglish = trim(strip_tags((string)$openDraft['objective'])) !== ''
@@ -461,8 +473,19 @@ if ($openDraft) {
             'studio_note',
             (int)$openDraft['id']
         );
+        $englishAdaptationActive = is_array($activeEditorialJob)
+            && (string)($activeEditorialJob['action'] ?? '') === 'adapt';
+        if ($englishAdaptationActive) {
+            $activePayload = json_decode((string)($activeEditorialJob['payload_json'] ?? '{}'), true);
+            $activePayload = is_array($activePayload) ? $activePayload : [];
+            $englishAdaptationSourceTitle = trim(
+                (string)($activePayload['current_spanish']['title'] ?? '')
+            );
+        }
     } catch (Throwable) {
         $activeEditorialJob = null;
+        $englishAdaptationActive = false;
+        $englishAdaptationSourceTitle = '';
     }
 }
 $openSource = null;
@@ -661,11 +684,18 @@ $initialSourceType = $requestedSourceKey !== ''
         .studio-editorial-panel > summary::-webkit-details-marker { display:none; }
         .studio-editorial-panel > summary small { color:#625b55; font:600 11px/1.3 var(--font-sans); letter-spacing:.04em; }
         .studio-editorial-panel__body { padding:4px 0 12px; }
+        .studio-english-panel { position:relative; min-height:132px; }
+        .studio-english-panel__lock { display:none; position:absolute; z-index:3; inset:4px 0 12px; align-items:center; justify-content:center; padding:28px; border:1px solid #c4d0c0; background:rgba(241,245,239,.94); color:#465342; text-align:center; }
+        .studio-english-panel__lock strong { display:block; margin-bottom:7px; font:400 21px/1.2 var(--font-serif); }
+        .studio-english-panel__lock span { display:block; max-width:520px; font-size:13px; line-height:1.5; }
+        .studio-english-panel.is-adapting .studio-english-panel__lock { display:flex; }
+        .studio-english-panel.is-adapting .studio-english-panel__controls { opacity:.28; }
         .studio-editorial-panel .studio-note-editor.ql-container { height:420px !important; min-height:420px; }
         .studio-editorial-panel .studio-note-editor .ql-editor { min-height:418px; }
         .studio-note-adapt { margin:0 0 18px !important; border-color:#9eaf99 !important; background:#dce7d8 !important; color:#354332 !important; }
         .studio-seo-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
         .studio-seo-column { padding:18px; border:1px solid var(--line); background:#fbfaf7; }
+        .studio-seo-column.is-adapting { opacity:.42; }
         .studio-seo-column h3 { margin:0 0 16px; font:400 21px/1.2 var(--font-serif); }
         .studio-seo-field { display:block; margin:0 0 15px; color:#625b55; font-size:12px; font-weight:650; letter-spacing:.04em; }
         .studio-seo-field input,
@@ -676,15 +706,15 @@ $initialSourceType = $requestedSourceKey !== ''
         .studio-note-media-library { position:sticky; top:18px; padding:16px; border:1px solid var(--line); border-radius:4px; background:#f8f6f2; }
         .studio-note-media-library h2 { margin:0 0 4px; font:400 23px/1.15 var(--font-serif); }
         .studio-note-media-library > p { margin:0 0 14px; color:#625b55; font-size:14px; line-height:1.4; }
-        .studio-note-media-filters { display:flex; align-items:center; gap:14px; overflow-x:auto; padding-bottom:2px; }
+        .studio-note-media-filters { display:flex; align-items:center; flex-wrap:wrap; gap:5px 12px; overflow:visible; padding-bottom:2px; }
         .studio-note-media-filters button { width:auto !important; min-width:0 !important; margin:0 !important; padding:7px 0 8px !important; border:0 !important; border-bottom:2px solid transparent !important; border-radius:0 !important; background:transparent !important; color:#554d46 !important; box-shadow:none !important; font-size:13px !important; font-weight:650 !important; letter-spacing:.03em !important; text-transform:none !important; white-space:nowrap; }
         .studio-note-media-filters button:hover,
         .studio-note-media-filters button.is-active { border-bottom-color:rgba(224,104,76,.65) !important; background:transparent !important; color:var(--ink) !important; transform:none !important; box-shadow:none !important; }
         .studio-note-media-library input.studio-note-media-search { width:100%; box-sizing:border-box; margin:10px 0 14px; padding:11px 12px; border:1px solid var(--line); border-radius:3px; background:#fff; color:var(--ink); font-family:var(--font-sans); font-size:15px; line-height:1.3; }
         .studio-note-media-library input.studio-note-media-search:focus { outline:0; border-color:#aa96b1; box-shadow:0 0 0 2px rgba(184,164,192,.18); }
-        .studio-note-media-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:14px; max-height:610px; overflow-y:auto; padding:1px 6px 1px 1px; scrollbar-width:thin; scrollbar-color:#c8beb4 transparent; }
+        .studio-note-media-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; max-height:610px; overflow-y:auto; padding:1px 6px 1px 1px; scrollbar-width:thin; scrollbar-color:#c8beb4 transparent; }
         .studio-note-media[hidden] { display:none !important; }
-        .studio-note-media { position:relative; width:100% !important; min-width:0 !important; aspect-ratio:4/5; margin:0 !important; padding:5px !important; overflow:hidden; border:1px solid #c7c1ba !important; border-radius:2px !important; background:#fff !important; box-shadow:none !important; cursor:grab; }
+        .studio-note-media { position:relative; width:100% !important; min-width:0 !important; aspect-ratio:4/3; margin:0 !important; padding:3px !important; overflow:hidden; border:1px solid #c7c1ba !important; border-radius:2px !important; background:#fff !important; box-shadow:none !important; cursor:grab; }
         .studio-note-media:active { cursor:grabbing; }
         .studio-note-media.is-dragging { opacity:.52; }
         .studio-note-media:hover { border-color:#a791b0 !important; background:#fff !important; transform:none !important; box-shadow:none !important; }
@@ -697,7 +727,7 @@ $initialSourceType = $requestedSourceKey !== ''
         @media (max-width:1280px) {
             .studio-note-editor-shell { grid-template-columns:minmax(240px,280px) minmax(0,1fr); }
             .studio-note-media-library { position:static; grid-column:1 / -1; }
-            .studio-note-media-grid { grid-template-columns:repeat(4,minmax(0,1fr)); max-height:520px; }
+            .studio-note-media-grid { grid-template-columns:repeat(auto-fill,minmax(138px,1fr)); max-height:520px; }
         }
         .studio-drafts { margin-top:36px; padding:0; }
         .studio-drafts-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,440px)); justify-content:start; gap:18px; }
@@ -821,7 +851,8 @@ $initialSourceType = $requestedSourceKey !== ''
                     <form class="studio-note-form" method="post" enctype="multipart/form-data"
                           data-note-id="<?= (int)$openDraft['id'] ?>"
                           data-editorial-csrf="<?= wsn_h(Auth::csrfToken('bilingual_editorial')) ?>"
-                          data-active-job="<?= (int)($activeEditorialJob['id'] ?? 0) ?>">
+                          data-active-job="<?= (int)($activeEditorialJob['id'] ?? 0) ?>"
+                          data-active-job-action="<?= wsn_h((string)($activeEditorialJob['action'] ?? '')) ?>">
                         <input type="hidden" name="csrf" value="<?= wsn_h($_SESSION['studio_notes_csrf']) ?>">
                         <input type="hidden" name="draft_id" value="<?= (int)$openDraft['id'] ?>">
                         <input type="hidden" name="workspace_item_id" id="workspace-item-id" value="">
@@ -941,20 +972,38 @@ $initialSourceType = $requestedSourceKey !== ''
                                     </div>
                                 </details>
 
-                                <details class="studio-editorial-panel">
+                                <details class="studio-editorial-panel"<?= $englishAdaptationActive ? ' open' : '' ?>>
                                     <summary>
                                         <span>English · adaptación internacional</span>
-                                        <small data-english-state><?= wsn_h((string)$englishState['status']) ?></small>
+                                        <small data-english-state>
+                                            <?= $englishAdaptationActive ? 'adaptando…' : wsn_h((string)$englishState['status']) ?>
+                                        </small>
                                     </summary>
-                                    <div class="studio-editorial-panel__body">
-                                        <button class="button-link studio-note-adapt" name="action" value="prepare_english" type="submit">
-                                            Adaptar desde el español — no traducir literalmente
-                                        </button>
-                                        <input class="studio-note-editor-title" type="text" name="title_en" id="studio-note-title-en"
-                                               value="<?= wsn_h((string)$englishState['content']['title']) ?>"
-                                               placeholder="English title" aria-label="Studio Note title in English">
-                                        <div id="editor-container-en" class="studio-note-editor" aria-label="Studio Note content in English"></div>
-                                        <input type="hidden" name="body_en" id="body-input-en">
+                                    <div class="studio-editorial-panel__body studio-english-panel<?= $englishAdaptationActive ? ' is-adapting' : '' ?>"
+                                         data-english-panel aria-busy="<?= $englishAdaptationActive ? 'true' : 'false' ?>">
+                                        <div class="studio-english-panel__lock" data-english-lock<?= $englishAdaptationActive ? '' : ' hidden' ?>>
+                                            <div>
+                                                <strong>Adaptando el texto español actual</strong>
+                                                <span>
+                                                    <?= $englishAdaptationSourceTitle !== ''
+                                                        ? 'Fuente: «' . wsn_h($englishAdaptationSourceTitle) . '». '
+                                                        : '' ?>
+                                                    El resultado aparecerá en Propuestas para que decidas si aplicarlo.
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="studio-english-panel__controls" data-english-dependent<?= $englishAdaptationActive ? ' inert' : '' ?>>
+                                            <button class="button-link studio-note-adapt" name="action" value="prepare_english"
+                                                    type="submit"<?= $englishAdaptationActive ? ' disabled' : '' ?>>
+                                                Adaptar desde el español — no traducir literalmente
+                                            </button>
+                                            <input class="studio-note-editor-title" type="text" name="title_en" id="studio-note-title-en"
+                                                   value="<?= wsn_h((string)$englishState['content']['title']) ?>"
+                                                   placeholder="English title" aria-label="Studio Note title in English"
+                                                   <?= $englishAdaptationActive ? 'readonly' : '' ?>>
+                                            <div id="editor-container-en" class="studio-note-editor" aria-label="Studio Note content in English"></div>
+                                            <input type="hidden" name="body_en" id="body-input-en">
+                                        </div>
                                     </div>
                                 </details>
 
@@ -965,7 +1014,9 @@ $initialSourceType = $requestedSourceKey !== ''
                                     </summary>
                                     <div class="studio-editorial-panel__body studio-seo-grid">
                                         <?php foreach (['es' => ['Español', $spanishState['content']], 'en' => ['English', $englishState['content']]] as $locale => [$languageLabel, $localizedContent]): ?>
-                                            <div class="studio-seo-column">
+                                            <div class="studio-seo-column<?= $locale === 'en' && $englishAdaptationActive ? ' is-adapting' : '' ?>"
+                                                 <?= $locale === 'en' ? 'data-english-dependent' : '' ?>
+                                                 <?= $locale === 'en' && $englishAdaptationActive ? 'inert' : '' ?>>
                                                 <h3><?= wsn_h($languageLabel) ?></h3>
                                                 <label class="studio-seo-field">Entradilla
                                                     <textarea name="excerpt_<?= $locale ?>"><?= wsn_h((string)$localizedContent['excerpt']) ?></textarea>
@@ -1163,6 +1214,32 @@ $initialSourceType = $requestedSourceKey !== ''
 
                     quillEs.root.innerHTML = <?= json_encode((string)$spanishState['content']['body_html'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
                     quillEn.root.innerHTML = <?= json_encode((string)$englishState['content']['body_html'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+                    var form = document.querySelector('form.studio-note-form');
+                    var activeJobAction = form ? form.getAttribute('data-active-job-action') : '';
+                    var englishPanel = document.querySelector('[data-english-panel]');
+                    var englishDependents = Array.prototype.slice.call(
+                        document.querySelectorAll('[data-english-dependent]')
+                    );
+                    var englishLock = document.querySelector('[data-english-lock]');
+                    var englishTitle = document.getElementById('studio-note-title-en');
+                    var englishAdaptButton = document.querySelector('button[value="prepare_english"]');
+
+                    function setEnglishAdaptationBusy(busy) {
+                        if (englishPanel) {
+                            englishPanel.classList.toggle('is-adapting', busy);
+                            englishPanel.setAttribute('aria-busy', busy ? 'true' : 'false');
+                        }
+                        englishDependents.forEach(function(dependent) {
+                            dependent.classList.toggle('is-adapting', busy);
+                            if (busy) dependent.setAttribute('inert', '');
+                            else dependent.removeAttribute('inert');
+                        });
+                        if (englishLock) englishLock.hidden = !busy;
+                        if (englishTitle) englishTitle.readOnly = busy;
+                        if (englishAdaptButton) englishAdaptButton.disabled = busy;
+                        quillEn.enable(!busy);
+                    }
+                    setEnglishAdaptationBusy(activeJobAction === 'adapt');
 
                     var imageTools = document.getElementById('studio-image-tools');
                     var toolbarModule = quill.getModule('toolbar');
@@ -1362,7 +1439,6 @@ $initialSourceType = $requestedSourceKey !== ''
                     });
                     
                     // Sincronizar el contenido antes de enviar el formulario
-                    var form = document.querySelector('form.studio-note-form');
                     var workspaceItemInput = document.getElementById('workspace-item-id');
                     document.querySelectorAll('[data-workspace-apply], [data-workspace-remove]').forEach(function(button) {
                         button.addEventListener('click', function() {
@@ -1456,6 +1532,7 @@ $initialSourceType = $requestedSourceKey !== ''
                                 }
                                 if (['failed', 'enqueue_failed'].indexOf(result.job.status) !== -1) {
                                     if (englishState) englishState.textContent = result.job.error || 'La adaptación falló';
+                                    if (activeJobAction === 'adapt') setEnglishAdaptationBusy(false);
                                     return;
                                 }
                                 window.setTimeout(pollEditorialJob, 1200);

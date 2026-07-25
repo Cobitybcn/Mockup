@@ -17,14 +17,27 @@ final class BilingualEditorialJobService
         string $entityType,
         int $entityId,
         string $action,
-        array $payload = []
+        array $payload = [],
+        bool $requireMatchingRequest = false
     ): array {
         $this->assertIdentity($userId, $entityType, $entityId, $action);
         $active = $this->activeForEntity($userId, $entityType, $entityId);
-        if ($active) return $active;
+        $encoded = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        if ($active) {
+            if ($requireMatchingRequest
+                && ((string)$active['action'] !== $action
+                    || !hash_equals(
+                        hash('sha256', (string)$active['payload_json']),
+                        hash('sha256', $encoded)
+                    ))) {
+                throw new RuntimeException(
+                    'Ya se está procesando otra versión de esta nota. Esperá a que termine antes de iniciar una nueva adaptación.'
+                );
+            }
+            return $active;
+        }
 
         $now = date(DATE_ATOM);
-        $encoded = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         $this->pdo->prepare(
             "INSERT INTO bilingual_editorial_jobs
              (user_id,entity_type,entity_id,action,status,source_locale,target_locale,payload_json,result_json,error,task_name,attempts,started_at,completed_at,created_at,updated_at)

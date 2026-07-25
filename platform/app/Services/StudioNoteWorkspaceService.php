@@ -120,7 +120,7 @@ final class StudioNoteWorkspaceService
     public function syncHistoricalJobs(int $userId, int $noteId): void
     {
         $this->assertNote($userId, $noteId);
-        $stmt = $this->pdo->prepare("SELECT id,payload_json,result_json,status,created_at
+        $stmt = $this->pdo->prepare("SELECT id,action,payload_json,result_json,status,created_at
             FROM bilingual_editorial_jobs
             WHERE user_id=? AND entity_type='studio_note' AND entity_id=?
             ORDER BY id");
@@ -145,14 +145,18 @@ final class StudioNoteWorkspaceService
             if ((string)$job['status'] !== 'completed') continue;
             foreach (['es' => 'spanish_content', 'en' => 'english_content'] as $locale => $key) {
                 if (!is_array($result[$key] ?? null)) continue;
+                $sourceTitle = trim((string)($payload['current_spanish']['title'] ?? ''));
+                $label = $locale === 'es' ? 'Propuesta española' : 'English proposal';
+                if ((string)$job['action'] === 'adapt' && $locale === 'en' && $sourceTitle !== '') {
+                    $label = 'Adaptación de «' . mb_substr($sourceTitle, 0, 110) . '»';
+                }
                 $this->capture(
                     $userId,
                     $noteId,
                     'proposal',
                     $locale,
                     (array)$result[$key],
-                    ($locale === 'es' ? 'Propuesta española' : 'English proposal')
-                        . ' · ' . $this->dateLabel((string)$job['created_at']),
+                    $label . ' · ' . $this->dateLabel((string)$job['created_at']),
                     $jobId
                 );
             }
