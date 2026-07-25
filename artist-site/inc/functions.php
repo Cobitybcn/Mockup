@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/SiteCopy.php';
+
 function e(mixed $value): string
 {
     return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
@@ -49,6 +51,11 @@ function artist_site_language(): string
 function site_t(string $english, string $spanish): string
 {
     return artist_site_language() === 'es' ? $spanish : $english;
+}
+
+function site_copy(string $key, array $replacements = []): string
+{
+    return SiteCopy::text(artist_site_language(), $key, $replacements);
 }
 
 function artist_site_url_with_language(string $url, string $language): string

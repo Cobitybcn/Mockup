@@ -46,6 +46,7 @@ $localizedCanonical = artist_site_url_with_language(
     <meta property="og:type" content="website">
     <meta property="og:url" content="<?= e($localizedCanonical) ?>">
     <meta property="og:locale" content="<?= $currentLanguage === 'es' ? 'es_ES' : 'en_US' ?>">
+    <meta property="og:locale:alternate" content="<?= $currentLanguage === 'es' ? 'en_US' : 'es_ES' ?>">
     <?php if ($metaImage): ?>
         <meta property="og:image" content="<?= e($metaImage) ?>">
     <?php endif; ?>
@@ -67,7 +68,7 @@ $localizedCanonical = artist_site_url_with_language(
 </head>
 <body class="<?= e($bodyClass) ?>">
 <header class="site-header">
-    <a class="brand" href="<?= e(url_for('/')) ?>" aria-label="<?= e($artistName ?? 'Artist') ?> home">
+    <a class="brand" href="<?= e(url_for('/')) ?>" aria-label="<?= e(site_copy('global.home_aria', ['artist' => $artistName ?? 'Artist'])) ?>">
         <span><?= e($artistName ?? 'Artist') ?></span>
         <small><?= e($site['tagline'] ?? '') ?></small>
     </a>
@@ -76,7 +77,7 @@ $localizedCanonical = artist_site_url_with_language(
         <span><?= e(site_t('Menu', 'Menú')) ?></span>
     </button>
     <div class="header-tools" id="header-tools" data-header-tools>
-        <nav class="main-nav" aria-label="Main navigation">
+        <nav class="main-nav" aria-label="<?= e(site_t('Main navigation', 'Navegación principal')) ?>">
             <a<?= $isActive('artworks') ?> href="<?= e(url_for('artworks/')) ?>"><?= e(site_t('Artworks', 'Obras')) ?></a>
             <a<?= $isActive('series') ?> href="<?= e(url_for('series')) ?>"><?= e(site_t('Series', 'Series')) ?></a>
             <a<?= $isActive('sold-works') ?> href="<?= e(url_for('sold-works')) ?>"><?= e(site_t('Constellations', 'Constelaciones')) ?></a>

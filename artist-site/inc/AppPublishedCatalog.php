@@ -73,15 +73,30 @@ final class AppPublishedCatalog
             $localized = $this->localization->content('artwork', (int)$row['canonical_artwork_id'], $language);
             $row['spanish_available'] = $spanish !== [];
             if ($localized !== []) {
-                $row['subtitle'] = (string)($localized['subtitle'] ?? $row['subtitle']);
-                $row['artwork_description'] = (string)($localized['description'] ?? $row['artwork_description']);
-                $row['artwork_short_description'] = (string)($localized['short_description'] ?? $row['artwork_short_description']);
-                $row['artwork_caption'] = (string)($localized['caption'] ?? $row['artwork_caption']);
-                $row['artwork_alt'] = (string)($localized['alt_text'] ?? $row['artwork_alt']);
-                $row['artwork_keywords'] = (string)($localized['search_terms'] ?? $localized['keywords'] ?? $row['artwork_keywords']);
-                $row['artwork_tags'] = (string)($localized['tags'] ?? $row['artwork_tags']);
+                $fallback = $language === 'es' ? '' : null;
+                $row['subtitle'] = (string)($localized['subtitle'] ?? $fallback ?? $row['subtitle']);
+                $row['artwork_description'] = (string)($localized['description'] ?? $fallback ?? $row['artwork_description']);
+                $row['artwork_short_description'] = (string)($localized['short_description'] ?? $fallback ?? $row['artwork_short_description']);
+                $row['artwork_caption'] = (string)($localized['caption'] ?? $fallback ?? $row['artwork_caption']);
+                $row['artwork_alt'] = (string)($localized['alt_text'] ?? $fallback ?? $row['artwork_alt']);
+                $row['artwork_keywords'] = (string)($localized['search_terms'] ?? $localized['keywords'] ?? $fallback ?? $row['artwork_keywords']);
+                $row['artwork_tags'] = (string)($localized['tags'] ?? $fallback ?? $row['artwork_tags']);
                 $row['seo_title'] = (string)($localized['seo_title'] ?? '');
                 $row['seo_description'] = (string)($localized['seo_description'] ?? '');
+                $row['translation_missing_fields'] = array_values(array_diff([
+                    'subtitle',
+                    'description',
+                    'short_description',
+                    'caption',
+                    'alt_text',
+                    'tags',
+                    'seo_title',
+                    'seo_description',
+                ], array_keys($localized)));
+                if ($language === 'es' && $row['translation_missing_fields'] !== []) {
+                    error_log('Incomplete Spanish artwork translation for artwork '
+                        . (int)$row['canonical_artwork_id'] . ': ' . implode(',', $row['translation_missing_fields']));
+                }
             } elseif ($language === 'es') {
                 $row['subtitle'] = '';
                 $row['artwork_description'] = '';
@@ -92,6 +107,9 @@ final class AppPublishedCatalog
                 $row['artwork_tags'] = '';
                 $row['seo_title'] = '';
                 $row['seo_description'] = '';
+                $row['translation_missing_fields'] = ['translation'];
+                error_log('Missing published Spanish artwork translation for artwork '
+                    . (int)$row['canonical_artwork_id']);
             }
             $row['title'] = (string)$row['artwork_title'];
             $row['description'] = (string)$row['artwork_description'];
@@ -286,13 +304,26 @@ final class AppPublishedCatalog
             $localized = $this->localization->content('mockup', (int)($item['mockup_id'] ?? 0), $language);
             $item['spanish_available'] = $spanish !== [];
             if ($localized !== []) {
-                $item['description'] = (string)($localized['description'] ?? $item['description']);
-                $item['keywords'] = (string)($localized['search_terms'] ?? $localized['keywords'] ?? $item['keywords']);
-                $item['tags'] = (string)($localized['tags'] ?? $item['tags']);
-                $item['alt_text'] = (string)($localized['alt_text'] ?? $item['alt_text']);
-                $item['caption'] = (string)($localized['caption'] ?? $item['caption']);
+                $fallback = $language === 'es' ? '' : null;
+                $item['description'] = (string)($localized['description'] ?? $fallback ?? $item['description']);
+                $item['keywords'] = (string)($localized['search_terms'] ?? $localized['keywords'] ?? $fallback ?? $item['keywords']);
+                $item['tags'] = (string)($localized['tags'] ?? $fallback ?? $item['tags']);
+                $item['alt_text'] = (string)($localized['alt_text'] ?? $fallback ?? $item['alt_text']);
+                $item['caption'] = (string)($localized['caption'] ?? $fallback ?? $item['caption']);
                 $item['seo_title'] = (string)($localized['seo_title'] ?? '');
                 $item['seo_description'] = (string)($localized['seo_description'] ?? '');
+                $item['translation_missing_fields'] = array_values(array_diff([
+                    'description',
+                    'tags',
+                    'alt_text',
+                    'caption',
+                    'seo_title',
+                    'seo_description',
+                ], array_keys($localized)));
+                if ($language === 'es' && $item['translation_missing_fields'] !== []) {
+                    error_log('Incomplete Spanish mockup translation for mockup '
+                        . (int)($item['mockup_id'] ?? 0) . ': ' . implode(',', $item['translation_missing_fields']));
+                }
             } elseif ($language === 'es') {
                 $item['description'] = '';
                 $item['keywords'] = '';
@@ -301,6 +332,9 @@ final class AppPublishedCatalog
                 $item['caption'] = '';
                 $item['seo_title'] = '';
                 $item['seo_description'] = '';
+                $item['translation_missing_fields'] = ['translation'];
+                error_log('Missing published Spanish mockup translation for mockup '
+                    . (int)($item['mockup_id'] ?? 0));
             }
             $technicalContexts = PublicSlug::technicalMockupContexts(
                 (string)($item['mockup_selector_state_json'] ?? ''),

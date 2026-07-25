@@ -1,14 +1,13 @@
 <?php
-$footerDescription = site_t(
-    trim((string)($site['tagline'] ?? '')) ?: 'Abstract Painting / Territory and Thought',
-    'Pintura abstracta / territorio y pensamiento'
-);
+$footerDescription = site_copy('global.tagline');
+$currentLanguage = artist_site_language();
 $schema = [
     '@context' => 'https://schema.org',
     '@type' => 'VisualArtist',
     'name' => $artistName ?? $site['name'],
-    'url' => $site['url'],
+    'url' => artist_site_url_with_language((string)$site['url'] . '/', $currentLanguage),
     'description' => $footerDescription,
+    'inLanguage' => $currentLanguage,
     'sameAs' => array_values($site['social']),
 ];
 ?>

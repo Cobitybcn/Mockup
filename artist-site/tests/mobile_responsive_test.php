@@ -21,7 +21,7 @@ $checks = [
     [str_contains($site, "site_t('Context study ', 'Estudio de contexto ')") && str_contains($site, '$mockupCaption'), 'mockups without a reviewed caption receive a distinct contextual label instead of repeating the artwork title'],
     [!str_contains($site, "\$profile['conceptual_keywords']") && str_contains($site, "site_t('Artist profile', 'Perfil del artista')"), 'internal artist keywords never render as a visible public tagline'],
     [substr_count($site, "nl2br(e(\$profile['short_bio']))") === 1, 'the public artist page renders the biography only once'],
-    [!str_contains((string)file_get_contents($root . '/inc/footer.php'), "\$profile['short_bio']") && str_contains((string)file_get_contents($root . '/inc/footer.php'), 'Pintura abstracta / territorio y pensamiento'), 'the footer uses the concise site identity instead of truncating the artist biography'],
+    [!str_contains((string)file_get_contents($root . '/inc/footer.php'), "\$profile['short_bio']") && str_contains((string)file_get_contents($root . '/inc/footer.php'), "site_copy('global.tagline')"), 'the footer uses the concise site identity instead of truncating the artist biography'],
     [str_contains($script, "window.matchMedia('(min-width: 1181px)')") && !str_contains($script, 'setInterval('), 'navigation collapses before its tools overflow and the hero never auto-advances'],
     [str_contains($site, 'data-srcset=') && str_contains($site, 'app_publication_media_srcset'), 'home defers secondary hero images and publishes responsive candidates'],
     [str_contains($site, "preg_match('~^(?:data:|javascript:)~i'") && str_contains($site, 'loading="lazy"'), 'Studio Notes never emits embedded data images as listing thumbnails'],

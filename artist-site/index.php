@@ -79,6 +79,8 @@ if ($path === '/sitemap.xml') {
         error_log('Artist Site Manager settings unavailable: ' . $error->getMessage());
     }
 }
+$site['tagline'] = site_copy('global.tagline');
+$site['description'] = site_copy('global.description');
 
 if ($path === '/sitemap.xml') {
     try {
@@ -878,13 +880,14 @@ function admin_handle_post(array &$site, array &$series, array &$artworks, array
     exit;
 }
 
-function render_home(array $site, array $series, array $artworks): void
+function render_home(array $site, array $artworks): void
 {
     $available = artworks_by_status($artworks, 'available');
     $publishedItems = array_filter(
         app_catalog()?->all() ?? [],
         static fn (array $item): bool => ($item['visibility'] ?? '') === 'public'
     );
+    $publishedSeries = app_series_catalog()?->all() ?? [];
     $heroSlides = array_values(array_map(
         static function (array $artwork): array {
             $file = trim((string)($artwork['header_file'] ?? ''))
@@ -892,7 +895,7 @@ function render_home(array $site, array $series, array $artworks): void
             return [
                 'image' => app_publication_media_url($artwork, $file, 1200),
                 'srcset' => app_publication_media_srcset($artwork, $file),
-                'title' => $artwork['title'] ?? 'Maurizio Valch artwork',
+                'title' => $artwork['title'] ?? 'Maurizio Valch',
             ];
         },
         $publishedItems
@@ -902,7 +905,7 @@ function render_home(array $site, array $series, array $artworks): void
             fn ($artwork) => !empty($artwork['image']) ? [
                 'image' => asset_url($artwork['image']),
                 'srcset' => '',
-                'title' => $artwork['title'] ?? 'Maurizio Valch artwork',
+                'title' => $artwork['title'] ?? 'Maurizio Valch',
             ] : null,
             $available
         )));
@@ -911,7 +914,7 @@ function render_home(array $site, array $series, array $artworks): void
         $heroSlides[] = [
             'image' => asset_url('/assets/images/the-path-before-architecture.jpg'),
             'srcset' => '',
-            'title' => 'Maurizio Valch artwork',
+            'title' => 'Maurizio Valch',
         ];
     }
     ?>
@@ -922,70 +925,70 @@ function render_home(array $site, array $series, array $artworks): void
                     <img class="hero__slide"
                         <?= $index === 0 ? 'src="' . e($slide['image']) . '"' : 'data-src="' . e($slide['image']) . '"' ?>
                         <?= !empty($slide['srcset']) ? ($index === 0 ? 'srcset="' : 'data-srcset="') . e($slide['srcset']) . '" sizes="(max-width: 940px) 100vw, 55vw"' : '' ?>
-                        alt="<?= e($slide['title'] . ' root artwork image') ?>"
+                        alt="<?= e(site_copy('global.root_image_alt', ['title' => $slide['title']])) ?>"
                         decoding="async" <?= $index === 0 ? 'fetchpriority="high"' : 'loading="lazy"' ?>
                         data-hero-slide <?= $index === 0 ? 'data-active="true"' : '' ?>>
                 <?php endforeach; ?>
             </div>
             <?php if (count($heroSlides) > 1): ?>
-                <button class="hero__arrow hero__arrow--prev" type="button" data-hero-prev aria-label="Previous artwork image">‹</button>
-                <button class="hero__arrow hero__arrow--next" type="button" data-hero-next aria-label="Next artwork image">›</button>
+                <button class="hero__arrow hero__arrow--prev" type="button" data-hero-prev aria-label="<?= e(site_copy('global.previous_artwork')) ?>">‹</button>
+                <button class="hero__arrow hero__arrow--next" type="button" data-hero-next aria-label="<?= e(site_copy('global.next_artwork')) ?>">›</button>
             <?php endif; ?>
         </div>
         <div class="hero__content">
-            <p class="eyebrow">Abstract Painting / Territory and Thought</p>
-            <h1>Strata, fault lines and ground frequency</h1>
-            <p class="lead">A catalog of works organized by scale, status, series, monoliths, horizons, tectonic tension, and the sedimented time of territory.</p>
+            <p class="eyebrow"><?= e(site_copy('home.hero.eyebrow')) ?></p>
+            <h1><?= e(site_copy('home.hero.title')) ?></h1>
+            <p class="lead"><?= e(site_copy('home.hero.lead')) ?></p>
             <form class="hero-search" action="<?= e(url_for('paintings')) ?>" method="get" role="search">
-                <label class="sr-only" for="hero-search-input">Search artwork catalog</label>
-                <input id="hero-search-input" name="q" type="search" placeholder="Try: strata, fault lines, monolith, 120 cm">
-                <button type="submit">Search Catalog</button>
+                <label class="sr-only" for="hero-search-input"><?= e(site_copy('home.hero.search_label')) ?></label>
+                <input id="hero-search-input" name="q" type="search" placeholder="<?= e(site_copy('home.hero.search_placeholder')) ?>">
+                <button type="submit"><?= e(site_copy('home.hero.search_button')) ?></button>
             </form>
             <div class="actions">
-                <a class="button" href="<?= e(url_for('paintings')) ?>">Open Catalog</a>
-                <a class="button button--quiet" href="<?= e(url_for('sold-works')) ?>">View Constellations</a>
-                <a class="button button--quiet" href="<?= e(url_for('artist-statement')) ?>">Read Artist Statement</a>
+                <a class="button" href="<?= e(url_for('paintings')) ?>"><?= e(site_copy('home.hero.open_catalog')) ?></a>
+                <a class="button button--quiet" href="<?= e(url_for('sold-works')) ?>"><?= e(site_copy('home.hero.view_constellations')) ?></a>
+                <a class="button button--quiet" href="<?= e(url_for('artist-statement')) ?>"><?= e(site_copy('home.hero.read_statement')) ?></a>
             </div>
         </div>
     </section>
 
     <section class="section search-paths">
         <div class="path-card">
-            <p class="eyebrow">Catalog</p>
-            <h2>Root images</h2>
-            <p>The catalog begins with one essential image per work. Detail pages hold the complete visual context and mockup sets.</p>
-            <a href="<?= e(url_for('paintings')) ?>">Enter catalog</a>
+            <p class="eyebrow"><?= e(site_copy('home.paths.catalog_eyebrow')) ?></p>
+            <h2><?= e(site_copy('home.paths.catalog_title')) ?></h2>
+            <p><?= e(site_copy('home.paths.catalog_text')) ?></p>
+            <a href="<?= e(url_for('paintings')) ?>"><?= e(site_copy('home.paths.catalog_action')) ?></a>
         </div>
         <div class="path-card">
-            <p class="eyebrow">Archive</p>
-            <h2>Constellations</h2>
-            <p>A map of works that have left the studio, preserving provenance context without reducing the work to transaction.</p>
-            <a href="<?= e(url_for('sold-works')) ?>">View constellations</a>
+            <p class="eyebrow"><?= e(site_copy('home.paths.archive_eyebrow')) ?></p>
+            <h2><?= e(site_copy('home.paths.archive_title')) ?></h2>
+            <p><?= e(site_copy('home.paths.archive_text')) ?></p>
+            <a href="<?= e(url_for('sold-works')) ?>"><?= e(site_copy('home.paths.archive_action')) ?></a>
         </div>
         <div class="path-card">
-            <p class="eyebrow">Explore</p>
-            <h2>Series and concepts</h2>
-            <p>Browse by strata, fault lines, ground frequency, monoliths, horizons, and structural silence.</p>
-            <a href="<?= e(url_for('series')) ?>">Explore series</a>
+            <p class="eyebrow"><?= e(site_copy('home.paths.explore_eyebrow')) ?></p>
+            <h2><?= e(site_copy('home.paths.explore_title')) ?></h2>
+            <p><?= e(site_copy('home.paths.explore_text')) ?></p>
+            <a href="<?= e(url_for('series')) ?>"><?= e(site_copy('home.paths.explore_action')) ?></a>
         </div>
     </section>
 
     <section class="section section--split">
         <div>
-            <p class="eyebrow">For collectors, architects and curators</p>
-            <h2>Structural metaphysical painting for slow perception</h2>
+            <p class="eyebrow"><?= e(site_copy('home.collectors.eyebrow')) ?></p>
+            <h2><?= e(site_copy('home.collectors.title')) ?></h2>
         </div>
         <div class="prose">
-            <p>Valch's work is built for slow perception: controlled mass, spatial silence, and structural clarity. The paintings function as contemplative presences rather than decorative abstractions.</p>
-            <p>The catalog is not arranged as a store. It is a visual index: root images, contextual mockups, conceptual notes, and a quiet distinction between works in the studio and works already placed.</p>
+            <p><?= e(site_copy('home.collectors.first')) ?></p>
+            <p><?= e(site_copy('home.collectors.second')) ?></p>
         </div>
     </section>
 
     <section class="section">
         <div class="section-head">
-            <p class="eyebrow">In studio</p>
-            <h2>Selected Works</h2>
-            <a href="<?= e(url_for('paintings')) ?>?status=available">Filter available works</a>
+            <p class="eyebrow"><?= e(site_copy('home.selected.eyebrow')) ?></p>
+            <h2><?= e(site_copy('home.selected.title')) ?></h2>
+            <a href="<?= e(url_for('paintings')) ?>?status=available"><?= e(site_copy('home.selected.filter')) ?></a>
         </div>
         <div class="art-grid">
             <?php if ($publishedItems): ?>
@@ -1000,7 +1003,7 @@ function render_home(array $site, array $series, array $artworks): void
                                 loading="lazy" decoding="async">
                         </a>
                         <div class="art-card__body">
-                            <div class="eyebrow"><?= e($artwork['series'] ?: 'Original work') ?></div>
+                            <div class="eyebrow"><?= e($artwork['series'] ?: site_copy('home.selected.original_work')) ?></div>
                             <h3><a href="<?= e(url_for('artworks/' . $slug)) ?>"><?= e($artwork['title']) ?></a></h3>
                             <p><?= e(implode(', ', array_filter([$artwork['medium'], published_dimensions($artwork)]))) ?></p>
                         </div>
@@ -1013,19 +1016,19 @@ function render_home(array $site, array $series, array $artworks): void
     </section>
 
     <section class="section band">
-        <p class="eyebrow">Artist identity</p>
-        <h2>Painting as sedimented structure</h2>
-        <p>At the center of this language stands the ground: strata, fault lines, and frequencies that precede language. The monolith anchors presence. The horizon organizes perception. Silence is not absence; it is structure.</p>
+        <p class="eyebrow"><?= e(site_copy('home.identity.eyebrow')) ?></p>
+        <h2><?= e(site_copy('home.identity.title')) ?></h2>
+        <p><?= e(site_copy('home.identity.text')) ?></p>
     </section>
 
     <section class="section">
         <div class="section-head">
-            <p class="eyebrow">Concept clusters</p>
-            <h2>Series and Concepts</h2>
-            <a href="<?= e(url_for('series')) ?>">Explore all series</a>
+            <p class="eyebrow"><?= e(site_copy('home.series.eyebrow')) ?></p>
+            <h2><?= e(site_copy('home.series.title')) ?></h2>
+            <a href="<?= e(url_for('series')) ?>"><?= e(site_copy('home.series.action')) ?></a>
         </div>
         <div class="series-grid">
-            <?php foreach ($series as $slug => $item): ?>
+            <?php foreach ($publishedSeries as $slug => $item): ?>
                 <a class="series-card" href="<?= e(url_for('series/' . $slug)) ?>">
                     <span><?= e($item['title']) ?></span>
                     <p><?= e($item['description']) ?></p>
@@ -1067,9 +1070,9 @@ function render_constellation_map(array $soldLocations, array $artworks): void
     }
     $pendingArtworks = array_filter($artworks, fn ($artwork, $slug) => ($artwork['status'] ?? '') === 'sold' && !in_array($slug, $mappedSlugs, true), ARRAY_FILTER_USE_BOTH);
     ?>
-    <section class="section constellation-section" aria-label="World map of placed works">
-        <div class="constellation-real-map" aria-label="Night world map of placed works" data-constellation-leaflet data-map-items="<?= e(json_encode($mapItems, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) ?>">
-            <div class="constellation-real-map__canvas" data-map-canvas aria-label="Placed works on the map"></div>
+    <section class="section constellation-section" aria-label="<?= e(site_t('World map of placed works', 'Mapa mundial de obras emplazadas')) ?>">
+        <div class="constellation-real-map" aria-label="<?= e(site_t('World map of placed works', 'Mapa mundial de obras emplazadas')) ?>" data-constellation-leaflet data-map-items="<?= e(json_encode($mapItems, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) ?>">
+            <div class="constellation-real-map__canvas" data-map-canvas aria-label="<?= e(site_t('Placed works on the map', 'Obras emplazadas en el mapa')) ?>"></div>
             <aside class="constellation-real-map__card" data-constellation-card>
                 <?php if (!empty($mapItems[0]['image'])): ?>
                     <img data-constellation-image src="<?= e($mapItems[0]['image']) ?>" alt="">
@@ -1276,6 +1279,7 @@ function render_artwork_detail(array $site, array $series, array $artworks, stri
         'dateCreated' => $artwork['year'],
         'image' => $site['url'] . $artwork['image'],
         'description' => $artwork['summary'],
+        'inLanguage' => artist_site_language(),
     ]);
     return true;
 }
@@ -1547,7 +1551,7 @@ function render_published_constellation_map(array $soldLocations, array $items):
                 <div class="constellation-real-map__card-content">
                     <span class="constellation-real-map__eyebrow" data-constellation-place><?= e($mapItems[0]['country'] ?? '') ?></span>
                     <h3 class="constellation-real-map__title" data-constellation-title><?= e($mapItems[0]['title'] ?? '') ?></h3>
-                    <a class="constellation-real-map__link" data-constellation-link href="<?= e($mapItems[0]['url'] ?? '#') ?>">Study placement context</a>
+                    <a class="constellation-real-map__link" data-constellation-link href="<?= e($mapItems[0]['url'] ?? '#') ?>"><?= e(site_t('Study placement context', 'Ver contexto de emplazamiento')) ?></a>
                 </div>
             </aside>
         </div>
@@ -1586,23 +1590,23 @@ function render_published_catalog(array $items, string $title = 'Artworks', stri
                 </article>
             <?php endforeach; ?>
         </div>
-        <?php if (!$items): ?><p>No artworks have been published here yet.</p><?php endif; ?>
+        <?php if (!$items): ?><p><?= e(site_t('No artworks have been published here yet.', 'Todavía no se han publicado obras aquí.')) ?></p><?php endif; ?>
     </section>
     <?php if ($eyebrow === 'Constellations' && !empty($soldRecords)): ?>
         <section class="section">
             <div class="section-head">
                 <div>
-                    <p class="eyebrow">Provenance map</p>
-                    <h2>Constellations of Works</h2>
+                    <p class="eyebrow"><?= e(site_t('Provenance map', 'Mapa de procedencia')) ?></p>
+                    <h2><?= e(site_copy('constellations.title')) ?></h2>
                 </div>
             </div>
-            <div class="sold-table" role="table" aria-label="Constellations of works">
+            <div class="sold-table" role="table" aria-label="<?= e(site_copy('constellations.title')) ?>">
                 <div class="sold-table__row sold-table__head" role="row">
-                    <span>Artwork</span>
-                    <span>Size</span>
-                    <span>Provenance</span>
-                    <span>Status</span>
-                    <span>Concept cluster</span>
+                    <span><?= e(site_t('Artwork', 'Obra')) ?></span>
+                    <span><?= e(site_t('Size', 'Medidas')) ?></span>
+                    <span><?= e(site_t('Provenance', 'Procedencia')) ?></span>
+                    <span><?= e(site_t('Status', 'Estado')) ?></span>
+                    <span><?= e(site_t('Series', 'Serie')) ?></span>
                 </div>
                 <?php foreach ($soldRecords as $record): ?>
                     <a class="sold-table__row" role="row" href="<?= e($record['url']) ?>" target="_blank" rel="noopener">
@@ -1727,7 +1731,7 @@ function render_published_artwork(array $site, array $artwork): void
                 <?php if (published_dimensions($artwork)): ?><div><dt><?= e(site_t('Size', 'Medidas')) ?></dt><dd><?= e(published_dimensions($artwork)) ?></dd></div><?php endif; ?>
                 <?php if ($artworkSeriesTitle !== ''): ?>
                     <div>
-                        <dt>Series</dt>
+                        <dt><?= e(site_t('Series', 'Serie')) ?></dt>
                         <dd>
                             <?php if ($publishedSeries): ?>
                                 <?php
@@ -1764,14 +1768,14 @@ function render_published_artwork(array $site, array $artwork): void
                         </dd>
                     </div>
                 <?php endif; ?>
-                <?php if (!empty($facts['orientation'])): ?><div><dt>Orientation</dt><dd><?= e(ucfirst((string)$facts['orientation'])) ?></dd></div><?php endif; ?>
-                <?php if (!empty($facts['certificate_of_authenticity'])): ?><div><dt>Certificate</dt><dd><?= e($facts['certificate_of_authenticity']) ?></dd></div><?php endif; ?>
+                <?php if (!empty($facts['orientation'])): ?><div><dt><?= e(site_t('Orientation', 'Orientación')) ?></dt><dd><?= e(ucfirst((string)$facts['orientation'])) ?></dd></div><?php endif; ?>
+                <?php if (!empty($facts['certificate_of_authenticity'])): ?><div><dt><?= e(site_t('Certificate', 'Certificado')) ?></dt><dd><?= e($facts['certificate_of_authenticity']) ?></dd></div><?php endif; ?>
                 <div><dt><?= e(site_t('Context studies', 'Estudios de contexto')) ?></dt><dd><?= count($artwork['items']) ?></dd></div>
             </dl>
             <div class="prose">
                 <?php if ($conceptualNote): ?><h2><?= e(site_t('Conceptual Note', 'Nota conceptual')) ?></h2><p><?= nl2br(e($conceptualNote)) ?></p><?php endif; ?>
                 <?php if ($studioInformation): ?><h2><?= e(site_t('Studio Information', 'Información de estudio')) ?></h2><p><?= nl2br(e($studioInformation)) ?></p><?php endif; ?>
-                <?php if (!empty($facts['shipping_notes'])): ?><h2>Shipping</h2><p><?= nl2br(e($facts['shipping_notes'])) ?></p><?php endif; ?>
+                <?php if (!empty($facts['shipping_notes'])): ?><h2><?= e(site_t('Shipping', 'Envío')) ?></h2><p><?= nl2br(e($facts['shipping_notes'])) ?></p><?php endif; ?>
             </div>
             <?php if ($storeOffer && !empty($storeOffer['is_purchasable'])): ?>
                 <aside class="store-offer" aria-label="<?= e(site_t('Acquisition information', 'Información de compra')) ?>">
@@ -1791,7 +1795,7 @@ function render_published_artwork(array $site, array $artwork): void
         </div>
     </section>
     <?php
-    echo json_ld(['@context'=>'https://schema.org','@type'=>'VisualArtwork','name'=>$artwork['title'],'creator'=>['@type'=>'Person','name'=>$site['name']],'artMedium'=>$artwork['medium'],'dateCreated'=>$artwork['artwork_year'],'image'=>site_absolute_asset_url(app_publication_media_url($artwork,$mainImageFile),(string)$site['url']),'description'=>$summary]);
+    echo json_ld(['@context'=>'https://schema.org','@type'=>'VisualArtwork','name'=>$artwork['title'],'creator'=>['@type'=>'Person','name'=>$site['name']],'artMedium'=>$artwork['medium'],'dateCreated'=>$artwork['artwork_year'],'image'=>site_absolute_asset_url(app_publication_media_url($artwork,$mainImageFile),(string)$site['url']),'description'=>$summary,'inLanguage'=>artist_site_language(),'url'=>artist_site_url_with_language($site['url'].'/artworks/'.$artwork['slug'].'/',artist_site_language())]);
 }
 
 function render_acquisition(array $site, array $artwork): void
@@ -2063,7 +2067,7 @@ function render_published_mockup(array $site, array $artwork, array $mockup): vo
         </div>
     </section>
     <?php
-    echo json_ld(['@context'=>'https://schema.org','@type'=>'ImageObject','name'=>$title,'description'=>$description,'contentUrl'=>app_publication_media_url($artwork,$mockup['mockup_file']),'creator'=>['@type'=>'Person','name'=>$site['name']],'isPartOf'=>['@type'=>'VisualArtwork','name'=>$artwork['title'],'url'=>$site['url'].'/artworks/'.$artwork['slug'].'/']]);
+    echo json_ld(['@context'=>'https://schema.org','@type'=>'ImageObject','name'=>$title,'description'=>$description,'contentUrl'=>app_publication_media_url($artwork,$mockup['mockup_file']),'creator'=>['@type'=>'Person','name'=>$site['name']],'inLanguage'=>artist_site_language(),'isPartOf'=>['@type'=>'VisualArtwork','name'=>$artwork['title'],'url'=>artist_site_url_with_language($site['url'].'/artworks/'.$artwork['slug'].'/',artist_site_language())]]);
 }
 
 function render_series_index(array $series, array $artworks): void
@@ -2251,7 +2255,7 @@ function render_published_series_detail(array $item): void
     );
     ?>
     <section class="page-hero">
-        <p class="eyebrow">Series<?= $yearLabel !== '' ? ' · ' . e($yearLabel) : '' ?></p>
+        <p class="eyebrow"><?= e(site_t('Series', 'Serie')) ?><?= $yearLabel !== '' ? ' · ' . e($yearLabel) : '' ?></p>
         <h1><?= e($item['title']) ?></h1>
         <?php if (trim((string)($item['subtitle'] ?? '')) !== ''): ?><p><?= e($item['subtitle']) ?></p><?php endif; ?>
     </section>
@@ -2260,7 +2264,7 @@ function render_published_series_detail(array $item): void
             <img src="<?= e(app_series_media_url($item, (string)$item['header_file'], 1200)) ?>"
                 srcset="<?= e(app_series_media_srcset($item, (string)$item['header_file'])) ?>"
                 sizes="(max-width: 940px) calc(100vw - 36px), 760px"
-                alt="<?= e($item['title'] . ' representative image') ?>" style="<?= e(series_header_style($item)) ?>" fetchpriority="high" decoding="async">
+                alt="<?= e($item['title'] . site_t(' representative image', ' — imagen representativa')) ?>" style="<?= e(series_header_style($item)) ?>" fetchpriority="high" decoding="async">
         </section>
     <?php endif; ?>
     <section class="section section--split">
@@ -2312,8 +2316,23 @@ function render_published_series_detail(array $item): void
             <p><?= e(site_t('No works have been published in this series yet.', 'Todavía no se han publicado obras en esta serie.')) ?></p>
         <?php endif; ?>
     </section>
-    <p><a href="<?= e(url_for('series2')) ?>">Back to Series preview</a></p>
+    <p><a href="<?= e(url_for('series')) ?>"><?= e(site_t('Back to Series', 'Volver a Series')) ?></a></p>
     <?php
+}
+
+function localized_artist_profile(array $profile): array
+{
+    foreach ([
+        'short_bio',
+        'statement',
+        'visual_language',
+        'materials',
+        'recurring_themes',
+        'palette_notes',
+    ] as $field) {
+        $profile[$field] = site_copy('artist.' . $field);
+    }
+    return $profile;
 }
 
 function render_published_artist_page(array $profile): void
@@ -2343,7 +2362,7 @@ function render_published_artist_page(array $profile): void
     <section class="section artist-profile-block<?= $portraitCanRender ? '' : ' artist-profile-block--text-only' ?>">
         <?php if ($portraitCanRender): ?>
             <figure class="artist-profile-block__portrait">
-                <img src="<?= e($portraitImage) ?>" alt="<?= e($profile['artist_name'] ?: 'Maurizio Valch') ?> portrait">
+                <img src="<?= e($portraitImage) ?>" alt="<?= e(site_t('Portrait of ', 'Retrato de ') . ($profile['artist_name'] ?: 'Maurizio Valch')) ?>">
             </figure>
         <?php endif; ?>
         <div class="prose">
@@ -2626,21 +2645,20 @@ function render_artist_page(array $site): void
 
 function render_statement(array $site): void
 {
-    $profile = artist_profile_defaults($site['artist_profile'] ?? []);
-    $statement = $profile['statement_page'] ?? [];
+    $body = SiteCopy::catalog(artist_site_language())['statement']['body'] ?? [];
     ?>
     <section class="page-hero artist-page-hero artist-statement-hero">
-        <p class="eyebrow">Artist statement</p>
-        <h1><?= e($statement['title'] ?? 'Genesis of Metaphysical Territories') ?></h1>
-        <p><?= e($statement['intro'] ?? 'Maurizio Valch develops an abstract painting practice centered on territories where thought seems to emerge from the earth.') ?></p>
+        <p class="eyebrow"><?= e(site_copy('statement.eyebrow')) ?></p>
+        <h1><?= e(site_copy('statement.title')) ?></h1>
+        <p><?= e(site_copy('statement.intro')) ?></p>
     </section>
     <section class="section artist-statement-body">
         <div>
-            <p class="eyebrow">Artist statement</p>
-            <h2><?= e($statement['title'] ?? 'Genesis of Metaphysical Territories') ?></h2>
+            <p class="eyebrow"><?= e(site_copy('statement.eyebrow')) ?></p>
+            <h2><?= e(site_copy('statement.title')) ?></h2>
         </div>
         <div class="prose">
-            <?php foreach (($statement['body'] ?? []) as $paragraph): ?>
+            <?php foreach ((array)$body as $paragraph): ?>
                 <p><?= e($paragraph) ?></p>
             <?php endforeach; ?>
         </div>
@@ -2650,17 +2668,17 @@ function render_statement(array $site): void
 
 function render_process(): void
 {
+    $steps = SiteCopy::catalog(artist_site_language())['process']['steps'] ?? [];
     ?>
     <section class="page-hero">
-        <p class="eyebrow">Studio process</p>
-        <h1>Structural Painting Process</h1>
-        <p>Painting begins with spatial order: field, mass, horizon, vertical tension, and only then chromatic vibration.</p>
+        <p class="eyebrow"><?= e(site_copy('process.eyebrow')) ?></p>
+        <h1><?= e(site_copy('process.title')) ?></h1>
+        <p><?= e(site_copy('process.intro')) ?></p>
     </section>
     <section class="section process-grid">
-        <div><span>01</span><h2>Field</h2><p>The dominant field establishes silence and scale.</p></div>
-        <div><span>02</span><h2>Structure</h2><p>Masses, segments, and horizons organize the pictorial territory.</p></div>
-        <div><span>03</span><h2>Ascent</h2><p>Stairways and thresholds introduce the measure of consciousness.</p></div>
-        <div><span>04</span><h2>Presence</h2><p>The final painting holds equilibrium between void, material, and perception.</p></div>
+        <?php foreach ((array)$steps as $index => $step): ?>
+            <div><span><?= e(str_pad((string)($index + 1), 2, '0', STR_PAD_LEFT)) ?></span><h2><?= e($step['title'] ?? '') ?></h2><p><?= e($step['text'] ?? '') ?></p></div>
+        <?php endforeach; ?>
     </section>
     <?php
 }
@@ -2671,9 +2689,9 @@ function render_exhibitions(array $site): void
     $items = $profile['exhibitions'] ?? [];
     ?>
     <section class="page-hero">
-        <p class="eyebrow">Trust signals</p>
-        <h1>Exhibitions and Collections</h1>
-        <p>Selected public references, marketplace history, and collection context for collectors and curators researching Maurizio Valch.</p>
+        <p class="eyebrow"><?= e(site_copy('exhibitions.eyebrow')) ?></p>
+        <h1><?= e(site_copy('exhibitions.title')) ?></h1>
+        <p><?= e(site_copy('exhibitions.intro')) ?></p>
     </section>
     <section class="section timeline">
         <?php foreach ($items as $item): ?>
@@ -2801,7 +2819,9 @@ function render_journal_post(array $journal, string $slug, string $sectionLabel 
 function render_contact(array $site, array $artworks): void
 {
     $requested = $_GET['artwork'] ?? '';
-    $subject = isset($artworks[$requested]) ? 'Inquiry about ' . $artworks[$requested]['title'] : 'Painting inquiry';
+    $subject = isset($artworks[$requested])
+        ? site_copy('contact.artwork_subject', ['title' => $artworks[$requested]['title']])
+        : site_copy('contact.default_subject');
 
     $success = false;
     $error = '';
@@ -2820,18 +2840,18 @@ function render_contact(array $site, array $artworks): void
         if ($honeypot !== '') {
             $success = true;
         } else if (empty($submittedName) || empty($submittedEmail) || empty($submittedMessage)) {
-            $error = 'All fields (Name, Email, Message) are required.';
+            $error = site_copy('contact.required_error');
         } else if (!filter_var($submittedEmail, FILTER_VALIDATE_EMAIL)) {
-            $error = 'Please enter a valid email address.';
+            $error = site_copy('contact.email_error');
         } else {
             try {
                 $contactPdo = artist_site_database_connection(dirname(__DIR__) . '/platform');
                 if (!artist_site_rate_limit($contactPdo, 'artist_contact', $submittedEmail, 5, 3600)) {
-                    $error = 'Too many messages have been submitted. Please try again later.';
+                    $error = site_copy('contact.rate_error');
                 }
             } catch (Throwable $rateLimitError) {
                 error_log('Artist contact rate limiter unavailable: ' . $rateLimitError->getMessage());
-                $error = 'The contact form is temporarily unavailable. Please email the studio directly.';
+                $error = site_copy('contact.temporary_error');
             }
         }
 
@@ -2854,23 +2874,23 @@ function render_contact(array $site, array $artworks): void
                 $submittedMessage = '';
             } catch (Throwable $mailError) {
                 error_log('Artist contact delivery failed: ' . $mailError->getMessage());
-                $error = 'There was an error sending your message. Please try again or email directly at ' . $to;
+                $error = site_copy('contact.delivery_error') . ' ' . $to;
             }
         }
     }
     ?>
     <section class="page-hero">
-        <p class="eyebrow">Inquiries</p>
-        <h1>Contact the Studio</h1>
-        <p><?= e(trim((string)($site['inquiry_intro'] ?? '')) ?: 'For catalog documentation, curatorial questions, commissions, trade inquiries, or studio availability.') ?></p>
+        <p class="eyebrow"><?= e(site_copy('contact.eyebrow')) ?></p>
+        <h1><?= e(site_copy('contact.title')) ?></h1>
+        <p><?= e(site_copy('contact.intro')) ?></p>
     </section>
     <section class="section contact-panel">
         <div style="min-height: auto; padding: 24px;">
-            <h2 style="font-size: clamp(20px, 1.8vw, 26px); margin-bottom: 20px; font-family: var(--serif-display); font-weight: normal; color: var(--ink); margin-top: 0;">Send Message</h2>
+            <h2 style="font-size: clamp(20px, 1.8vw, 26px); margin-bottom: 20px; font-family: var(--serif-display); font-weight: normal; color: var(--ink); margin-top: 0;"><?= e(site_copy('contact.send_title')) ?></h2>
             
             <?php if ($success): ?>
                 <div style="background: #f1fcf4; border: 1px solid #a3e2b4; color: #1b5e20; padding: 10px; margin-bottom: 15px; font-size: 14px; min-height: auto;">
-                    Message sent. Thank you.
+                    <?= e(site_copy('contact.sent')) ?>
                 </div>
             <?php elseif (!empty($error)): ?>
                 <div style="background: #fdf2f2; border: 1px solid #f8b4b4; color: #c81e1e; padding: 10px; margin-bottom: 15px; font-size: 14px; min-height: auto;">
@@ -2883,40 +2903,40 @@ function render_contact(array $site, array $artworks): void
                 
                 <!-- Honeypot anti-spam (hidden) -->
                 <div style="display: none; min-height: auto; padding: 0; border: none; background: transparent;">
-                    <label for="website">Leave blank</label>
+                    <label for="website"><?= e(site_t('Leave blank', 'Dejar en blanco')) ?></label>
                     <input type="text" name="website" id="website" autocomplete="off">
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 4px; min-height: auto; padding: 0; border: none; background: transparent;">
-                    <label for="contact-name" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600;">Name</label>
-                    <input type="text" name="name" id="contact-name" value="<?= e($submittedName) ?>" required placeholder="Your name" style="padding: 8px 10px; border: 1px solid var(--line); background: #ffffff; font-family: inherit; font-size: 14px; color: var(--ink); border-radius: 0; width: 100%;">
+                    <label for="contact-name" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600;"><?= e(site_copy('contact.name')) ?></label>
+                    <input type="text" name="name" id="contact-name" value="<?= e($submittedName) ?>" required placeholder="<?= e(site_copy('contact.name_placeholder')) ?>" style="padding: 8px 10px; border: 1px solid var(--line); background: #ffffff; font-family: inherit; font-size: 14px; color: var(--ink); border-radius: 0; width: 100%;">
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 4px; min-height: auto; padding: 0; border: none; background: transparent;">
-                    <label for="contact-email" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600;">Email</label>
+                    <label for="contact-email" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600;"><?= e(site_copy('contact.email')) ?></label>
                     <input type="email" name="email" id="contact-email" value="<?= e($submittedEmail) ?>" required placeholder="your@email.com" style="padding: 8px 10px; border: 1px solid var(--line); background: #ffffff; font-family: inherit; font-size: 14px; color: var(--ink); border-radius: 0; width: 100%;">
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 4px; min-height: auto; padding: 0; border: none; background: transparent;">
-                    <label for="contact-subject" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600;">Subject</label>
+                    <label for="contact-subject" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600;"><?= e(site_copy('contact.subject')) ?></label>
                     <input type="text" name="subject" id="contact-subject" value="<?= e($submittedSubject) ?>" style="padding: 8px 10px; border: 1px solid var(--line); background: #ffffff; font-family: inherit; font-size: 14px; color: var(--ink); border-radius: 0; width: 100%;">
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 4px; min-height: auto; padding: 0; border: none; background: transparent;">
-                    <label for="contact-message" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600;">Message</label>
-                    <textarea name="message" id="contact-message" required placeholder="Your message..." style="padding: 8px 10px; border: 1px solid var(--line); background: #ffffff; font-family: inherit; font-size: 14px; color: var(--ink); border-radius: 0; width: 100%; resize: vertical; min-height: 80px;"><?= e($submittedMessage) ?></textarea>
+                    <label for="contact-message" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600;"><?= e(site_copy('contact.message')) ?></label>
+                    <textarea name="message" id="contact-message" required placeholder="<?= e(site_copy('contact.message_placeholder')) ?>" style="padding: 8px 10px; border: 1px solid var(--line); background: #ffffff; font-family: inherit; font-size: 14px; color: var(--ink); border-radius: 0; width: 100%; resize: vertical; min-height: 80px;"><?= e($submittedMessage) ?></textarea>
                 </div>
 
-                <button type="submit" class="button" onmouseover="this.style.background='var(--red)'; this.style.borderColor='var(--red)';" onmouseout="this.style.background='var(--ink)'; this.style.borderColor='var(--ink)';" style="cursor: pointer; justify-content: center; min-height: 36px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; width: 100%; border-radius: 0; transition: background 0.18s, border-color 0.18s;">Send Message</button>
+                <button type="submit" class="button" onmouseover="this.style.background='var(--red)'; this.style.borderColor='var(--red)';" onmouseout="this.style.background='var(--ink)'; this.style.borderColor='var(--ink)';" style="cursor: pointer; justify-content: center; min-height: 36px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; width: 100%; border-radius: 0; transition: background 0.18s, border-color 0.18s;"><?= e(site_copy('contact.send')) ?></button>
             </form>
         </div>
         <div>
-            <h2>Collector Notes</h2>
-            <p>Works are original hand-painted acrylic paintings. Certificates of authenticity and professional shipping from Spain can be documented for each acquisition.</p>
+            <h2><?= e(site_copy('contact.collector_title')) ?></h2>
+            <p><?= e(site_copy('contact.collector_text')) ?></p>
         </div>
         <div>
-            <h2>Profiles</h2>
-            <div class="social-links" aria-label="Social and marketplace profiles">
+            <h2><?= e(site_copy('contact.profiles')) ?></h2>
+            <div class="social-links" aria-label="<?= e(site_t('Social and marketplace profiles', 'Perfiles sociales y de mercado')) ?>">
                 <?php foreach ($site['social'] as $label => $url): ?>
                     <a href="<?= e($url) ?>" target="_blank" rel="noopener noreferrer"><?= e($label) ?></a>
                 <?php endforeach; ?>
@@ -3606,25 +3626,25 @@ function render_privacy_policy(array $site): void
 {
     ?>
     <section class="page-hero">
-        <p class="eyebrow">Studio</p>
-        <h1>Privacy Policy</h1>
-        <p>Information about how data is handled by the studio.</p>
+        <p class="eyebrow"><?= e(site_copy('privacy.eyebrow')) ?></p>
+        <h1><?= e(site_copy('privacy.title')) ?></h1>
+        <p><?= e(site_copy('privacy.intro')) ?></p>
     </section>
     <section class="section artist-statement-body">
         <div>
-            <p class="eyebrow">Legal</p>
-            <h2>Privacy & Data</h2>
+            <p class="eyebrow"><?= e(site_copy('privacy.legal')) ?></p>
+            <h2><?= e(site_copy('privacy.data_title')) ?></h2>
         </div>
         <div class="prose">
-            <p>This website is the digital representation and catalog of Maurizio Valch’s original paintings.</p>
-            <h3>Personal Information</h3>
-            <p>When you contact the studio or submit an acquisition request, we collect the information you provide, such as your name, email, message, destination, and delivery details. We use this information to respond to inquiries, reserve artworks, and manage acquisition and shipping requests.</p>
-            <h3>Analytics & Cookies</h3>
-            <p>This website uses Google Analytics to analyze traffic and understand visitor behavior. This helps us optimize user experience. Google Analytics uses cookies to gather standard internet log information and visitor behavior in an anonymous form.</p>
-            <h3>Third Parties</h3>
-            <p>We do not sell, trade, or otherwise transfer your personal information to outside parties. This does not include trusted third parties who assist us in operating our website or conducting our studio activities, so long as those parties agree to keep this information confidential.</p>
-            <h3>Your Rights</h3>
-            <p>You have the right to request access to the personal information we hold about you, to ask for it to be updated or deleted. Please contact the studio at <?= e($site['email']) ?> for any inquiries regarding your data.</p>
+            <p><?= e(site_copy('privacy.site_text')) ?></p>
+            <h3><?= e(site_copy('privacy.personal_title')) ?></h3>
+            <p><?= e(site_copy('privacy.personal_text')) ?></p>
+            <h3><?= e(site_copy('privacy.analytics_title')) ?></h3>
+            <p><?= e(site_copy('privacy.analytics_text')) ?></p>
+            <h3><?= e(site_copy('privacy.third_title')) ?></h3>
+            <p><?= e(site_copy('privacy.third_text')) ?></p>
+            <h3><?= e(site_copy('privacy.rights_title')) ?></h3>
+            <p><?= e(site_copy('privacy.rights_text', ['email' => $site['email']])) ?></p>
         </div>
     </section>
     <?php
@@ -3640,7 +3660,12 @@ $handled = true;
 
 switch ($segments[0] ?? '') {
     case '':
-        render_home($site, $series, $artworks);
+        $meta = page_meta(
+            site_copy('home.meta_title'),
+            site_copy('home.meta_description'),
+            $site['url'] . '/'
+        );
+        render_home($site, $artworks);
         break;
     case 'available-paintings':
         header('Location: ' . url_for('paintings') . '?status=available', true, 301);
@@ -3654,7 +3679,12 @@ switch ($segments[0] ?? '') {
         $publishedCatalog = app_catalog();
         $publishedItems = $publishedCatalog?->all() ?? [];
         if (!isset($segments[1])) {
-            $meta = page_meta('Published Artworks | ' . $artistName, 'Published original paintings by ' . $artistName . ' with contextual mockups and individual visual records.', $site['url'] . '/artworks/');
+            $meta = page_meta(
+                site_t('Published Artworks', 'Obras publicadas') . ' | ' . $artistName,
+                site_t('Published original paintings by ', 'Pinturas originales publicadas de ') . $artistName
+                    . site_t(' with contextual mockups and individual visual records.', ' con estudios de contexto y registros visuales individuales.'),
+                $site['url'] . '/artworks/'
+            );
             // Unlisted publications stay reachable by direct link (below) but must not appear in the main catalog grid.
             $publicItems = array_filter($publishedItems, fn(array $item): bool => $item['visibility'] === 'public');
             
@@ -3840,12 +3870,16 @@ switch ($segments[0] ?? '') {
 
         $mergedLocations = $managedConstellations ? $dynamicLocations : array_merge($sold_locations, $dynamicLocations);
 
-        $meta = page_meta('Constellations of Works | ' . $artistName, 'Map of placed works, preserving provenance context.', $site['url'] . '/sold-works/');
+        $meta = page_meta(
+            site_copy('constellations.meta_title', ['artist' => $artistName]),
+            site_copy('constellations.meta_description'),
+            $site['url'] . '/sold-works/'
+        );
         render_published_catalog(
-            $soldItems, 
-            'Constellations of Works', 
-            'A map of works by ' . $artistName . ' that have left the studio, preserving provenance, relationships, and traces of circulation.', 
-            'Constellations',
+            $soldItems,
+            site_copy('constellations.title'),
+            site_copy('constellations.intro', ['artist' => $artistName]),
+            site_copy('constellations.eyebrow'),
             $mergedLocations,
             $soldRecords
         );
@@ -3874,12 +3908,13 @@ switch ($segments[0] ?? '') {
     case 'artist':
         $profile = app_artist_profile()?->get();
         if (!$profile) { $handled = false; break; }
+        $profile = localized_artist_profile($profile);
         $description = trim((string)($profile['short_bio'] ?: $profile['statement']));
         $photoFile = trim((string)($profile['photo_file'] ?? ''));
         $metaImage = $photoFile !== '' ? app_artist_photo_url($photoFile) : '';
         $meta = page_meta(
-            ($profile['artist_name'] ?: $artistName) . ' | Artist Profile',
-            $description,
+            site_copy('artist.meta_title', ['artist' => $profile['artist_name'] ?: $artistName]),
+            site_copy('artist.meta_description'),
             $site['url'] . '/artist/',
             $metaImage
         );
@@ -3889,21 +3924,27 @@ switch ($segments[0] ?? '') {
         header('Location: ' . url_for('artist/'), true, 302);
         exit;
     case 'artist-statement':
-        $artistProfile = artist_profile_defaults($site['artist_profile'] ?? []);
-        $statementPage = $artistProfile['statement_page'] ?? [];
         $meta = page_meta(
-            'Artist Statement | ' . $artistName,
-            trim(($statementPage['intro'] ?? 'Genesis of metaphysical territories: artist statement by ' . $artistName . '.') . ' ' . implode(' ', $statementPage['body'] ?? [])),
+            site_copy('statement.meta_title', ['artist' => $artistName]),
+            site_copy('statement.meta_description'),
             $site['url'] . '/artist-statement/'
         );
         render_statement($site);
         break;
     case 'studio-process':
-        $meta = page_meta('Studio Process | ' . $artistName, 'The structural painting process behind ' . $artistName . ' paintings.', $site['url'] . '/studio-process/');
+        $meta = page_meta(
+            site_copy('process.meta_title', ['artist' => $artistName]),
+            site_copy('process.meta_description'),
+            $site['url'] . '/studio-process/'
+        );
         render_process();
         break;
     case 'exhibitions-collections':
-        $meta = page_meta('Exhibitions and Collections | ' . $artistName, 'Exhibitions, collection context, and trust signals for ' . $artistName . '.', $site['url'] . '/exhibitions-collections/');
+        $meta = page_meta(
+            site_copy('exhibitions.meta_title', ['artist' => $artistName]),
+            site_copy('exhibitions.meta_description'),
+            $site['url'] . '/exhibitions-collections/'
+        );
         render_exhibitions($site);
         break;
     case 'journal':
@@ -3958,11 +3999,19 @@ switch ($segments[0] ?? '') {
         }
         break;
     case 'contact':
-        $meta = page_meta('Studio Contact | ' . $artistName, 'Contact ' . $artistName . ' studio for catalog documentation, curatorial questions, collector inquiries, and art consultant requests.', $site['url'] . '/contact/');
+        $meta = page_meta(
+            site_copy('contact.meta_title', ['artist' => $artistName]),
+            site_copy('contact.meta_description'),
+            $site['url'] . '/contact/'
+        );
         render_contact($site, $artworks);
         break;
     case 'privacy-policy':
-        $meta = page_meta('Privacy Policy | ' . $artistName, 'Privacy Policy for the studio website of ' . $artistName . '.', $site['url'] . '/privacy-policy/');
+        $meta = page_meta(
+            site_copy('privacy.meta_title', ['artist' => $artistName]),
+            site_copy('privacy.meta_description'),
+            $site['url'] . '/privacy-policy/'
+        );
         render_privacy_policy($site);
         break;
     case 'admin':
@@ -3977,8 +4026,15 @@ $content = ob_get_clean();
 
 if (!$handled) {
     http_response_code(404);
-    $meta = page_meta('Page Not Found | ' . $artistName, 'The requested page could not be found.', $site['url'] . $path);
-    $content = '<section class="page-hero"><p class="eyebrow">404</p><h1>Page not found</h1><p>The requested page does not exist.</p><a class="button" href="' . e(url_for('/')) . '">Return home</a></section>';
+    $meta = page_meta(
+        site_copy('errors.not_found_title', ['artist' => $artistName]),
+        site_copy('errors.not_found_description'),
+        $site['url'] . $path
+    );
+    $content = '<section class="page-hero"><p class="eyebrow">404</p><h1>'
+        . e(site_copy('errors.not_found_heading')) . '</h1><p>'
+        . e(site_copy('errors.not_found_text')) . '</p><a class="button" href="'
+        . e(url_for('/')) . '">' . e(site_copy('errors.return_home')) . '</a></section>';
 }
 
 require __DIR__ . '/inc/header.php';

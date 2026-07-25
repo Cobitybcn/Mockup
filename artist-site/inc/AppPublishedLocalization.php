@@ -40,7 +40,8 @@ final class AppPublishedLocalization
                 ) LIMIT 1");
             $stmt->execute([$this->userId()]);
             return (bool)$stmt->fetchColumn();
-        } catch (PDOException) {
+        } catch (PDOException $error) {
+            error_log('Published Spanish availability query failed: ' . $error->getMessage());
             return false;
         }
     }
@@ -81,10 +82,15 @@ final class AppPublishedLocalization
                     $payload = (string)$row['content_json'];
                 }
                 $decoded = json_decode($payload, true);
-                if (!is_array($decoded)) continue;
+                if (!is_array($decoded)) {
+                    error_log('Invalid published localization JSON for '
+                        . (string)$row['entity_type'] . ':' . (int)$row['entity_id'] . ':' . $locale);
+                    continue;
+                }
                 $entries[(string)$row['entity_type'] . '|' . (int)$row['entity_id'] . '|' . $locale] = $decoded;
             }
-        } catch (PDOException) {
+        } catch (PDOException $error) {
+            error_log('Published localization query failed: ' . $error->getMessage());
             return $this->contentCache[$mode] = [];
         }
         return $this->contentCache[$mode] = $entries;

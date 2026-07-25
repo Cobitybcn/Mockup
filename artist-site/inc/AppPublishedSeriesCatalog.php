@@ -46,13 +46,36 @@ final class AppPublishedSeriesCatalog
             $row['spanish_available'] = $spanish !== [];
             $row['english_available'] = $english !== [];
             if ($localized !== []) {
-                $row['subtitle'] = (string)($localized['subtitle'] ?? $row['subtitle']);
-                $row['description'] = (string)($localized['short_description'] ?? $row['description']);
-                $row['long_description'] = (string)($localized['description'] ?? $row['long_description']);
-                $row['tags'] = (string)($localized['tags'] ?? $row['tags']);
-                $row['keywords'] = $this->searchTerms($localized, (string)$row['keywords']);
+                $fallback = $language === 'es' ? '' : null;
+                $row['subtitle'] = (string)($localized['subtitle'] ?? $fallback ?? $row['subtitle']);
+                $row['description'] = (string)($localized['short_description'] ?? $fallback ?? $row['description']);
+                $row['long_description'] = (string)($localized['description'] ?? $fallback ?? $row['long_description']);
+                $row['tags'] = (string)($localized['tags'] ?? $fallback ?? $row['tags']);
+                $row['keywords'] = $this->searchTerms($localized, $language === 'es' ? '' : (string)$row['keywords']);
                 $row['seo_title'] = (string)($localized['seo_title'] ?? '');
-                $row['seo_description'] = (string)($localized['seo_description'] ?? $row['seo_description']);
+                $row['seo_description'] = (string)($localized['seo_description'] ?? ($language === 'es' ? '' : $row['seo_description']));
+                $row['translation_missing_fields'] = array_values(array_diff([
+                    'subtitle',
+                    'short_description',
+                    'description',
+                    'tags',
+                    'seo_title',
+                    'seo_description',
+                ], array_keys($localized)));
+                if ($language === 'es' && $row['translation_missing_fields'] !== []) {
+                    error_log('Incomplete Spanish series translation for series '
+                        . (int)$row['id'] . ': ' . implode(',', $row['translation_missing_fields']));
+                }
+            } elseif ($language === 'es') {
+                $row['subtitle'] = '';
+                $row['description'] = '';
+                $row['long_description'] = '';
+                $row['tags'] = '';
+                $row['keywords'] = '';
+                $row['seo_title'] = '';
+                $row['seo_description'] = '';
+                $row['translation_missing_fields'] = ['translation'];
+                error_log('Missing published Spanish series translation for series ' . (int)$row['id']);
             }
             $rows[(string)$row['slug']] = $row;
         }
