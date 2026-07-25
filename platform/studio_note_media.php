@@ -11,12 +11,21 @@ if ($noteId <= 0 || $file === '') {
 }
 
 $pdo = Database::connection();
-$stmt = $pdo->prepare("SELECT user_id,payload_json FROM social_campaigns WHERE id=? AND status='published' LIMIT 1");
+$stmt = $pdo->prepare("SELECT user_id,status,payload_json FROM social_campaigns WHERE id=? LIMIT 1");
 $stmt->execute([$noteId]);
 $note = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$note) {
     http_response_code(404);
     exit;
+}
+$isPublic = (string)$note['status'] === 'published';
+if (!$isPublic) {
+    $viewer = Auth::user();
+    if (!$viewer
+        || ((int)$viewer['id'] !== (int)$note['user_id'] && !Auth::isAdmin($viewer))) {
+        http_response_code(404);
+        exit;
+    }
 }
 $payload = json_decode((string)$note['payload_json'], true);
 if (!is_array($payload) || !in_array('website_blog', array_map('strval', (array)($payload['channels'] ?? [])), true)) {
@@ -83,6 +92,6 @@ $path = ResponsiveImage::prepare($path, $file, $width);
 $mime = @mime_content_type($path) ?: 'application/octet-stream';
 header('Content-Type: ' . $mime);
 header('Content-Length: ' . filesize($path));
-header('Cache-Control: public, max-age=604800');
+header('Cache-Control: ' . ($isPublic ? 'public, max-age=604800' : 'private, no-store'));
 header('X-Content-Type-Options: nosniff');
 readfile($path);

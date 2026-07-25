@@ -33,6 +33,13 @@ $path = RESULTS_DIR . DIRECTORY_SEPARATOR . $file;
 studio_note_media_assert((string)($media['type'] ?? '') === 'studio_note', 'persisted image uses the Studio Note media type');
 studio_note_media_assert(is_file($path), 'embedded image is persisted as a real file');
 studio_note_media_assert(is_array($normalized['payload']['source'] ?? null), 'first embedded image becomes the source of a custom note');
+studio_note_media_assert(
+    str_contains(
+        (string)$normalized['html'],
+        'studio_note_media.php?note=987654&amp;file=' . rawurlencode($file) . '&amp;w=1200'
+    ),
+    'the editor and public website share the note-scoped media URL'
+);
 
 $protected = StudioNoteMediaService::protectImagesForAdaptation($normalized['html']);
 studio_note_media_assert(
@@ -45,8 +52,20 @@ $restored = StudioNoteMediaService::restoreImagesAfterAdaptation(
     (array)$protected['images']
 );
 studio_note_media_assert(
-    str_contains($restored, 'src="media.php?file=' . rawurlencode($file)),
+    str_contains($restored, 'src="studio_note_media.php?note=987654&amp;file=' . rawurlencode($file)),
     'a model that omits the slot cannot delete the source image'
+);
+$rewrittenLegacy = StudioNoteMediaService::rewriteDeliveryUrls(
+    24680,
+    987654,
+    '<p><img src="media.php?file=' . rawurlencode($file)
+        . '&amp;thumb=1&amp;w=1200" data-editor-size="small" data-editor-align="right"></p>'
+);
+studio_note_media_assert(
+    str_contains($rewrittenLegacy, 'studio_note_media.php?note=987654&amp;file=' . rawurlencode($file))
+        && str_contains($rewrittenLegacy, 'data-editor-size="small"')
+        && str_contains($rewrittenLegacy, 'data-editor-align="right"'),
+    'historical editor URLs move to note-scoped delivery without changing layout'
 );
 
 $orphanPayload = $normalized['payload'];

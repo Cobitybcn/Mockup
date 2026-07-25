@@ -332,6 +332,10 @@ function wsn_media_url(?string $file, int $width = 520): string
     $file = basename((string)$file);
     return $file !== '' ? 'media.php?file=' . rawurlencode($file) . '&thumb=1&w=' . max(240, min(900, $width)) : '';
 }
+function wsn_note_media_url(int $noteId, ?string $file, int $width = 520): string
+{
+    return StudioNoteMediaService::deliveryUrl($noteId, basename((string)$file), $width);
+}
 
 function first_html_image_src(string $html): string
 {
@@ -432,6 +436,16 @@ if ($openDraft) {
     $englishState = $editorial->get($userId, 'studio_note', (int)$openDraft['id'], 'en', $legacyEnglish);
     $spanishState['content'] = array_replace($noteShape, (array)$spanishState['content']);
     $englishState['content'] = array_replace($noteShape, (array)$englishState['content']);
+    $spanishState['content']['body_html'] = StudioNoteMediaService::rewriteDeliveryUrls(
+        $userId,
+        (int)$openDraft['id'],
+        (string)$spanishState['content']['body_html']
+    );
+    $englishState['content']['body_html'] = StudioNoteMediaService::rewriteDeliveryUrls(
+        $userId,
+        (int)$openDraft['id'],
+        (string)$englishState['content']['body_html']
+    );
     try {
         $studioWorkspace->syncHistoricalJobs($userId, (int)$openDraft['id']);
         $activeEditorialJob = (new BilingualEditorialJobService($pdo))->activeForEntity(
@@ -825,13 +839,21 @@ $initialSourceType = $requestedSourceKey !== ''
                             $draftBody = trim((string)($draftSpanish['body_html'] ?? ''))
                                 ?: trim((string)($draftEnglish['body_html'] ?? ''))
                                 ?: (string)$draft['objective'];
+                            $draftBody = StudioNoteMediaService::rewriteDeliveryUrls(
+                                $userId,
+                                (int)$draft['id'],
+                                $draftBody
+                            );
                             $mockupIds = array_values(array_filter(array_map('intval', (array)($payload['mockup_ids'] ?? []))));
                             
                             $thumbUrl = '';
                             $payloadSource = is_array($payload['source'] ?? null) ? $payload['source'] : [];
                             $payloadSourceKey = trim((string)($payloadSource['key'] ?? ''));
                             if ($payloadSourceKey !== '' && isset($studioSourceLookup[$payloadSourceKey])) {
-                                $thumbUrl = wsn_media_url((string)$studioSourceLookup[$payloadSourceKey]['file'], 360);
+                                $sourceFile = (string)$studioSourceLookup[$payloadSourceKey]['file'];
+                                $thumbUrl = str_starts_with(basename($sourceFile), 'studio-note-' . $userId . '-' . (int)$draft['id'] . '-')
+                                    ? wsn_note_media_url((int)$draft['id'], $sourceFile, 360)
+                                    : wsn_media_url($sourceFile, 360);
                             }
                             if ($thumbUrl === '' && $mockupIds) {
                                 $stmt = $pdo->prepare("SELECT mockup_file FROM mockups WHERE id = ? AND user_id = ? LIMIT 1");

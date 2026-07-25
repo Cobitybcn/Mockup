@@ -56,6 +56,39 @@ final class StudioNoteMediaService
         return trim($restored);
     }
 
+    public static function deliveryUrl(int $noteId, string $file, int $width = 1200): string
+    {
+        $file = basename($file);
+        if ($noteId <= 0 || $file === '') return '';
+        return 'studio_note_media.php?note=' . $noteId
+            . '&file=' . rawurlencode($file)
+            . '&w=' . max(240, min(1200, $width));
+    }
+
+    /**
+     * Moves historical editor-only media.php URLs onto the note-scoped media
+     * endpoint without changing image order, sizing or alignment attributes.
+     */
+    public static function rewriteDeliveryUrls(int $userId, int $noteId, string $html): string
+    {
+        if ($userId <= 0 || $noteId <= 0 || trim($html) === '') return $html;
+        $prefix = 'studio-note-' . $userId . '-' . $noteId . '-';
+        $rewritten = preg_replace_callback(
+            '~(<img\b[^>]*\bsrc=["\'])([^"\']+)(["\'])~iu',
+            static function (array $match) use ($prefix, $noteId): string {
+                $source = html_entity_decode((string)$match[2], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $file = self::fileFromUrl($source);
+                if ($file === '' || !str_starts_with($file, $prefix)) return (string)$match[0];
+                $url = self::deliveryUrl($noteId, $file);
+                return (string)$match[1]
+                    . htmlspecialchars($url, ENT_QUOTES, 'UTF-8')
+                    . (string)$match[3];
+            },
+            $html
+        );
+        return is_string($rewritten) ? $rewritten : $html;
+    }
+
     /**
      * Converts editor-only image sources into persistent note media and rewrites
      * the HTML to a stable platform media URL.
@@ -152,7 +185,7 @@ final class StudioNoteMediaService
                     $mediaFiles[$file] = true;
                     $media[] = $mediaItem;
                 }
-                $stableSource = 'media.php?file=' . rawurlencode($file) . '&thumb=1&w=1200';
+                $stableSource = self::deliveryUrl($noteId, $file, 1200);
                 $rewritten .= substr($html, $copyFrom, $valueStart - $copyFrom)
                     . htmlspecialchars($stableSource, ENT_QUOTES, 'UTF-8');
                 $copyFrom = $valueEnd;

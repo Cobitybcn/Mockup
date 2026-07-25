@@ -131,6 +131,9 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertContains('(string)$spanish[\'body_html\']', $studioNotesPage, 'el HTML español gobierna los medios al publicar la adaptación');
     TestHarness::assertContains('$localizedBodies', $publishedStudioNotes, 'el catálogo recupera medios persistentes desde los cuerpos bilingües publicados');
     TestHarness::assertContains("entity_type='studio_note'", $studioNoteMediaEndpoint, 'el endpoint puede reautorizar un archivo huérfano desde el snapshot bilingüe publicado');
+    TestHarness::assertContains('$isPublic', $studioNoteMediaEndpoint, 'el mismo endpoint sirve la nota pública y el borrador de su propietario');
+    TestHarness::assertContains('rewriteDeliveryUrls', $studioNotesPage, 'el WYSIWYG reemplaza las URLs privadas históricas al abrir la nota');
+    TestHarness::assertContains('wsn_note_media_url', $studioNotesPage, 'el thumbnail editorial usa el mismo medio específico de la nota');
     TestHarness::assertTrue(
         !str_contains($artistSiteIndex, '$thumbUrl = first_html_image_src((string)$post[\'objective\'])'),
         'el catálogo no convierte una etiqueta de imagen huérfana en una portada rota'
