@@ -51,6 +51,15 @@ foreach ($notes as $note) {
          GROUP BY status"
     );
     $jobs->execute([(int)$note['user_id'], (int)$note['id']]);
+    $workspace = $pdo->prepare(
+        "SELECT board_type,locale,COUNT(*) AS count,
+                SUM(CHAR_LENGTH(content_json)) AS total_bytes,
+                MAX(CHAR_LENGTH(content_json)) AS max_bytes
+         FROM studio_note_workspace_items
+         WHERE user_id=? AND note_id=?
+         GROUP BY board_type,locale"
+    );
+    $workspace->execute([(int)$note['user_id'], (int)$note['id']]);
     $report[] = [
         'id' => (int)$note['id'],
         'title' => (string)$note['title'],
@@ -60,6 +69,7 @@ foreach ($notes as $note) {
         'source_file' => basename((string)($payload['source']['file'] ?? '')),
         'languages' => $languages,
         'jobs' => $jobs->fetchAll(PDO::FETCH_ASSOC),
+        'workspace' => $workspace->fetchAll(PDO::FETCH_ASSOC),
     ];
 }
 
