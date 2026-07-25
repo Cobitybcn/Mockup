@@ -181,6 +181,7 @@ steps:
           test -f /var/www/html/app/Services/StripeArtistCredentials.php
           test -f /var/www/artist-site/inc/StripeArtistCredentials.php
           test -f /var/www/artist-site/inc/SiteCopy.php
+          test -f /var/www/artist-site/inc/AppPublishedStudioNotes.php
         '
         docker run --rm "$$image" php -r '
           require "/var/www/html/app/bootstrap.php";
