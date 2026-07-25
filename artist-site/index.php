@@ -1583,9 +1583,11 @@ function render_published_artwork(array $site, array $artwork): void
     $interpretation = $analysis['interpretation'] ?? [];
     $conceptualNote = trim((string)$artwork['description']);
     $imageCaption = trim((string)($metadata['caption'] ?? ''));
-    $studioInformation = artist_site_language() === 'en'
-        ? trim((string)($interpretation['central_reading'] ?? ''))
-        : '';
+    // Studio Information was sourced from the Spanish-only AI analysis blob and
+    // rendered on the EN page, surfacing Spanish text under an English heading
+    // (and nothing on ES). Suppress it until a properly localized field exists;
+    // the Conceptual Note already carries the localized interpretive reading.
+    $studioInformation = '';
     $medium = trim((string)($artwork['medium'] ?: ($facts['medium'] ?? '')));
     $year = trim((string)($artwork['artwork_year'] ?: ($facts['year'] ?? '')));
     $mainImageFile = trim((string)($artwork['header_file'] ?? '')) ?: (string)$artwork['source_image_file'];
