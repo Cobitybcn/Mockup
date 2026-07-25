@@ -85,5 +85,6 @@ function run_security_hardening_regression_tests(): void
     TestHarness::assertContains('tests/run_regression_tests.php', $releaseBuild, 'release artifacts must pass regression tests before they are published');
     $webDockerfile = (string)file_get_contents($platformRoot . '/Dockerfile.web');
     TestHarness::assertContains('artist-site/inc/functions.php', $webDockerfile, 'the production image carries the complete artist security contract fixture');
+    TestHarness::assertContains('artist-site/inc/SiteCopy.php', $webDockerfile, 'the production image carries the bilingual artist copy dependency');
     TestHarness::assertContains('apache2ctl configtest', $webDockerfile, 'the production image rejects invalid Apache security configuration during its build');
 }

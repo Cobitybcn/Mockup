@@ -46,7 +46,8 @@ function run_deployment_pipeline_regression_tests(): void
     TestHarness::assertTrue(
         str_contains($cloudBuild, 'production-artifact-smoke')
             && str_contains($cloudBuild, 'SiteManagerService.php')
-            && str_contains($cloudBuild, 'StripeArtistCredentials.php'),
+            && str_contains($cloudBuild, 'StripeArtistCredentials.php')
+            && str_contains($cloudBuild, 'SiteCopy.php'),
         'the built web image loads Site Manager dependencies before it can be pushed'
     );
     TestHarness::assertTrue(

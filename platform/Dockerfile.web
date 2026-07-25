@@ -54,6 +54,7 @@ RUN a2enconf artworkmockups-security && apache2ctl configtest
 COPY artist-site/index.php /var/www/artist-site/index.php
 COPY artist-site/inc/header.php /var/www/artist-site/inc/header.php
 COPY artist-site/inc/functions.php /var/www/artist-site/inc/functions.php
+COPY artist-site/inc/SiteCopy.php /var/www/artist-site/inc/SiteCopy.php
 COPY artist-site/inc/TenantResolver.php /var/www/artist-site/inc/TenantResolver.php
 COPY artist-site/inc/AppStore.php /var/www/artist-site/inc/AppStore.php
 COPY artist-site/inc/StripeArtistCredentials.php /var/www/artist-site/inc/StripeArtistCredentials.php
