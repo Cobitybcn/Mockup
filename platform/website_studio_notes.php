@@ -253,6 +253,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                         )
                     ),
                 ], true);
+                if (wsn_has_content($english)) {
+                    $studioWorkspace->capture(
+                        $userId,
+                        $id,
+                        'version',
+                        'en',
+                        $english,
+                        'English before adapting «' . mb_substr((string)$spanish['title'], 0, 100) . '»',
+                        (int)$job['id']
+                    );
+                }
                 if ((string)$job['status'] === 'queued' && trim((string)$job['task_name']) === '') {
                     if (CloudTasksService::isAvailable()) {
                         $jobs->attachTask(
@@ -264,7 +275,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                         (new BilingualEditorialGenerationWorker($pdo))->process((int)$job['id']);
                     }
                 }
-                $_SESSION['wsn_notice'] = 'Se está adaptando exactamente el texto español que acabás de guardar. El resultado aparecerá en Propuestas.';
+                $_SESSION['wsn_notice'] = 'Se está adaptando exactamente el texto español que acabás de guardar. Al terminar se actualizará el editor inglés.';
             } elseif ($action === 'publish_draft') {
                 if (!wsn_has_required_public_content($english)) {
                     throw new RuntimeException('Prepará y revisá el título y el cuerpo en inglés antes de publicar.');
@@ -566,7 +577,7 @@ foreach (array_merge($openMedia, $studioSources) as $media) {
     $mediaLibrary[] = $media;
     if (count($mediaLibrary) >= 400) break;
 }
-$mediaDefaultFilter = $noteMediaKeys ? 'note' : ($openSource ? 'related' : 'all');
+$mediaDefaultFilter = 'all';
 
 $requestedSourceKey = trim((string)($_GET['source'] ?? ''));
 if ($requestedSourceKey !== '' && !isset($studioSourceLookup[$requestedSourceKey])) {
@@ -623,7 +634,8 @@ $initialSourceType = $requestedSourceKey !== ''
         .studio-workspace-board__heading { margin-bottom:16px; }
         .studio-workspace-board__heading h2 { margin:0 0 5px; font:400 25px/1.1 var(--font-serif); }
         .studio-workspace-board__heading p { margin:0; color:#625b55; font-size:13px; line-height:1.45; }
-        .studio-workspace-generate { width:100% !important; min-height:84px !important; margin:0 0 16px !important; padding:16px !important; border-color:#9eaf99 !important; background:#dce7d8 !important; color:#354332 !important; font-size:12px !important; letter-spacing:.05em !important; line-height:1.35 !important; }
+        .studio-workspace-generate { width:auto !important; min-width:0 !important; min-height:0 !important; margin:0 0 14px !important; padding:3px 0 7px !important; border:0 !important; border-bottom:1px solid #a99aad !important; border-radius:0 !important; background:transparent !important; color:#514951 !important; box-shadow:none !important; font-size:11px !important; letter-spacing:.05em !important; line-height:1.35 !important; }
+        .studio-workspace-generate:hover { background:transparent !important; color:#2f2930 !important; transform:none !important; box-shadow:none !important; }
         .studio-workspace-generate:disabled { opacity:.58; cursor:wait; }
         .studio-workspace-job { margin:-7px 0 15px; color:#5d5161; font-size:12px; line-height:1.4; }
         .studio-board-section { border-top:1px solid #d2c6d5; }
@@ -706,11 +718,7 @@ $initialSourceType = $requestedSourceKey !== ''
         .studio-note-media-library { position:sticky; top:18px; padding:16px; border:1px solid var(--line); border-radius:4px; background:#f8f6f2; }
         .studio-note-media-library h2 { margin:0 0 4px; font:400 23px/1.15 var(--font-serif); }
         .studio-note-media-library > p { margin:0 0 14px; color:#625b55; font-size:14px; line-height:1.4; }
-        .studio-note-media-filters { display:flex; align-items:center; flex-wrap:wrap; gap:5px 12px; overflow:visible; padding-bottom:2px; }
-        .studio-note-media-filters button { width:auto !important; min-width:0 !important; margin:0 !important; padding:7px 0 8px !important; border:0 !important; border-bottom:2px solid transparent !important; border-radius:0 !important; background:transparent !important; color:#554d46 !important; box-shadow:none !important; font-size:13px !important; font-weight:650 !important; letter-spacing:.03em !important; text-transform:none !important; white-space:nowrap; }
-        .studio-note-media-filters button:hover,
-        .studio-note-media-filters button.is-active { border-bottom-color:rgba(224,104,76,.65) !important; background:transparent !important; color:var(--ink) !important; transform:none !important; box-shadow:none !important; }
-        .studio-note-media-library input.studio-note-media-search { width:100%; box-sizing:border-box; margin:10px 0 14px; padding:11px 12px; border:1px solid var(--line); border-radius:3px; background:#fff; color:var(--ink); font-family:var(--font-sans); font-size:15px; line-height:1.3; }
+        .studio-note-media-library input.studio-note-media-search { width:100%; box-sizing:border-box; margin:0 0 14px; padding:11px 12px; border:1px solid var(--line); border-radius:3px; background:#fff; color:var(--ink); font-family:var(--font-sans); font-size:15px; line-height:1.3; }
         .studio-note-media-library input.studio-note-media-search:focus { outline:0; border-color:#aa96b1; box-shadow:0 0 0 2px rgba(184,164,192,.18); }
         .studio-note-media-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; max-height:610px; overflow-y:auto; padding:1px 6px 1px 1px; scrollbar-width:thin; scrollbar-color:#c8beb4 transparent; }
         .studio-note-media[hidden] { display:none !important; }
@@ -721,9 +729,9 @@ $initialSourceType = $requestedSourceKey !== ''
         .studio-note-media img { display:block; width:100%; height:100%; object-fit:contain; background:#eeece7; }
         .studio-note-media.is-inserted { border-color:#8b7a92 !important; }
         .studio-note-media-empty { margin:14px 0 0 !important; color:#625b55; font-size:14px; }
-        .studio-media-upload { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px; margin:0 0 13px; padding:10px; border:1px dashed #b9afa5; background:#fff; }
-        .studio-media-upload input { width:100%; min-width:0; color:#625b55; font-size:12px; }
-        .studio-media-upload button { width:auto !important; min-width:0 !important; margin:0 !important; padding:8px 10px !important; border-color:#c8b384 !important; background:#eee0bd !important; color:#5d4c2d !important; box-shadow:none !important; font-size:10px !important; }
+        .studio-media-upload { margin:0 0 13px; }
+        .studio-media-upload__trigger { display:inline-block; padding:3px 0 7px; border-bottom:1px solid #b9a472; color:#5d4c2d; font-size:11px; font-weight:650; letter-spacing:.04em; cursor:pointer; }
+        .studio-media-upload__trigger:hover { color:#342b1d; }
         @media (max-width:1280px) {
             .studio-note-editor-shell { grid-template-columns:minmax(240px,280px) minmax(0,1fr); }
             .studio-note-media-library { position:static; grid-column:1 / -1; }
@@ -864,11 +872,11 @@ $initialSourceType = $requestedSourceKey !== ''
                                 </div>
                                 <button class="studio-workspace-generate" name="action" value="generate_bilingual"
                                         type="submit"<?= $activeEditorialJob ? ' disabled' : '' ?>>
-                                    Crear propuesta ES + EN<br>sin reemplazar el texto activo
+                                    + Nueva propuesta española
                                 </button>
                                 <?php if ($activeEditorialJob): ?>
                                     <p class="studio-workspace-job" data-workspace-job-state>
-                                        Preparando una propuesta. Podés seguir trabajando: aparecerá en este Board.
+                                        Preparando una propuesta española. Podés seguir trabajando: aparecerá en este Board.
                                     </p>
                                 <?php endif; ?>
 
@@ -960,18 +968,6 @@ $initialSourceType = $requestedSourceKey !== ''
                                 </div>
                                 <div id="editor-container-es" class="studio-note-editor" aria-label="Contenido de la nota en español"></div>
                                 <input type="hidden" name="body_es" id="body-input-es">
-                                <details class="studio-editorial-panel">
-                                    <summary>
-                                        <span>Dirección privada para la propuesta</span>
-                                        <small>No se publica</small>
-                                    </summary>
-                                    <div class="studio-editorial-panel__body">
-                                        <label class="studio-seo-field">Enfoque, límites o ideas que la nota debe respetar
-                                            <textarea name="private_memo_es"><?= wsn_h((string)$spanishState['private_memo']) ?></textarea>
-                                        </label>
-                                    </div>
-                                </details>
-
                                 <details class="studio-editorial-panel"<?= $englishAdaptationActive ? ' open' : '' ?>>
                                     <summary>
                                         <span>English · adaptación internacional</span>
@@ -988,7 +984,7 @@ $initialSourceType = $requestedSourceKey !== ''
                                                     <?= $englishAdaptationSourceTitle !== ''
                                                         ? 'Fuente: «' . wsn_h($englishAdaptationSourceTitle) . '». '
                                                         : '' ?>
-                                                    El resultado aparecerá en Propuestas para que decidas si aplicarlo.
+                                                    Al terminar se actualizará el editor inglés. La versión anterior queda protegida.
                                                 </span>
                                             </div>
                                         </div>
@@ -1058,17 +1054,14 @@ $initialSourceType = $requestedSourceKey !== ''
                                 <h2>Material visual</h2>
                                 <p>Subí, buscá y arrastrá imágenes al artículo activo.</p>
                                 <div class="studio-media-upload">
-                                    <input type="file" name="workspace_images[]" accept="image/jpeg,image/png,image/webp" multiple
-                                           aria-label="Cargar imágenes a la mesa editorial">
-                                    <button type="submit" name="action" value="upload_workspace_media">Subir</button>
-                                </div>
-                                <div class="studio-note-media-filters" role="tablist" aria-label="Image source">
-                                    <?php if ($noteMediaKeys): ?><button type="button" data-media-filter="note">En esta nota</button><?php endif; ?>
-                                    <?php if ($openSource): ?><button type="button" data-media-filter="related">Related</button><?php endif; ?>
-                                    <button type="button" data-media-filter="all">All</button>
-                                    <button type="button" data-media-filter="artwork">Artworks</button>
-                                    <button type="button" data-media-filter="mockup">Mockups</button>
-                                    <button type="button" data-media-filter="series">Series</button>
+                                    <label class="studio-media-upload__trigger">
+                                        <input type="file" name="workspace_images[]" accept="image/jpeg,image/png,image/webp"
+                                               multiple hidden data-workspace-upload
+                                               aria-label="Cargar imágenes a la mesa editorial">
+                                        <span>+ Añadir imágenes</span>
+                                    </label>
+                                    <button type="submit" name="action" value="upload_workspace_media"
+                                            hidden data-workspace-upload-submit>Subir imágenes</button>
                                 </div>
                                 <input class="studio-note-media-search" type="search" data-media-search placeholder="Search artwork, series or camera" aria-label="Search visual material">
                                 <div class="studio-note-media-grid">
@@ -1240,6 +1233,15 @@ $initialSourceType = $requestedSourceKey !== ''
                         quillEn.enable(!busy);
                     }
                     setEnglishAdaptationBusy(activeJobAction === 'adapt');
+                    var workspaceUpload = document.querySelector('[data-workspace-upload]');
+                    var workspaceUploadSubmit = document.querySelector('[data-workspace-upload-submit]');
+                    if (workspaceUpload && workspaceUploadSubmit && form) {
+                        workspaceUpload.addEventListener('change', function() {
+                            if (workspaceUpload.files && workspaceUpload.files.length > 0) {
+                                form.requestSubmit(workspaceUploadSubmit);
+                            }
+                        });
+                    }
 
                     var imageTools = document.getElementById('studio-image-tools');
                     var toolbarModule = quill.getModule('toolbar');

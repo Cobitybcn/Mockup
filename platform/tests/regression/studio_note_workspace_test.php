@@ -55,15 +55,19 @@ function run_studio_note_workspace_tests(): void
         (string)$boards['version'][0]['content']['title'],
         'la migración recupera el texto anterior conservado por el trabajo automático'
     );
-    TestHarness::assertSame(2, count($boards['proposal']), 'las propuestas española e inglesa quedan separadas del texto activo');
-    $englishProposal = array_values(array_filter(
-        $boards['proposal'],
-        static fn(array $item): bool => (string)$item['locale'] === 'en'
-    ))[0] ?? [];
+    TestHarness::assertSame(1, count($boards['proposal']), 'el Board muestra únicamente propuestas españolas');
     TestHarness::assertSame(
-        'Territories in Transformation',
-        (string)($englishProposal['content']['title'] ?? ''),
-        'la adaptación inglesa permanece como tarjeta aplicable'
+        'Territorios en transformación',
+        (string)($boards['proposal'][0]['content']['title'] ?? ''),
+        'la propuesta visible pertenece al flujo de trabajo español'
+    );
+    $proposalId = (int)$boards['proposal'][0]['id'];
+    $service->remove(7, 17, $proposalId);
+    $service->syncHistoricalJobs(7, 17);
+    TestHarness::assertSame(
+        0,
+        count($service->boards(7, 17)['proposal']),
+        'retirar una propuesta es persistente y la sincronización histórica no la recrea'
     );
 
     $ideaId = $service->addIdea(7, 17, 'Cruce de materiales', "Relacionar pigmento\ncon memoria");
@@ -90,20 +94,14 @@ function run_studio_note_workspace_tests(): void
         VALUES (184,7,'studio_note',17,'adapt','completed',?,?,'','',1,'2026-07-25T18:20:00Z','2026-07-25T18:21:00Z')");
     $insertAdaptJob->execute([$adaptPayload, $adaptResult]);
     $service->syncHistoricalJobs(7, 17);
-    $adaptedCards = array_values(array_filter(
-        $service->boards(7, 17)['proposal'],
-        static fn(array $item): bool => str_contains(
-            (string)$item['label'],
-            'El recorrido de las series'
-        )
-    ));
     TestHarness::assertSame(
-        1,
-        count($adaptedCards),
-        'la propuesta inglesa identifica claramente el título español que fue adaptado'
+        0,
+        count($service->boards(7, 17)['proposal']),
+        'las adaptaciones inglesas no aparecen en el Board español'
     );
 
     $worker = (string)file_get_contents(dirname(__DIR__, 2) . '/app/Services/BilingualEditorialGenerationWorker.php');
     TestHarness::assertContains("'proposal_only' => true", $worker, 'el worker marca Studio Notes como propuesta sin guardado automático');
     TestHarness::assertContains('syncHistoricalJobs', $worker, 'al completar el trabajo el resultado se incorpora a la mesa editorial');
+    TestHarness::assertContains("'applied_to_editor' => true", $worker, 'la adaptación explícita actualiza el editor inglés al terminar');
 }

@@ -49,18 +49,11 @@ final class BilingualEditorialGenerationWorker
                     array_key_exists('private_memo', $payload) ? (string)$payload['private_memo'] : null
                 );
                 $spanishContent = (array)($spanish['content'] ?? []);
-                $english = $adapter->proposeAdaptationFromContent(
-                    $userId,
-                    $entityType,
-                    $entityId,
-                    $spanishContent
-                );
                 $result = [
                     'spanish_content' => $spanishContent,
-                    'english_content' => (array)($english['content'] ?? []),
-                    'english_status' => 'proposal',
                     'spanish_published' => false,
                     'proposal_only' => true,
+                    'spanish_first' => true,
                 ];
             } elseif ($action === 'prepare') {
                 $spanish = $adapter->generateSpanishDraft(
@@ -113,10 +106,18 @@ final class BilingualEditorialGenerationWorker
                         'es',
                         'en'
                     );
+                $englishContent = (array)($english['content'] ?? []);
+                $englishState = $editorial->save(
+                    $userId,
+                    $entityType,
+                    $entityId,
+                    'en',
+                    $englishContent
+                );
                 $result = [
-                    'english_content' => (array)($english['content'] ?? []),
-                    'english_status' => 'proposal',
-                    'proposal_only' => true,
+                    'english_content' => $englishContent,
+                    'english_status' => (string)($englishState['status'] ?? 'current'),
+                    'applied_to_editor' => true,
                 ];
             } else {
                 $english = $adapter->adaptMissing($userId, $entityType, $entityId, 'es', 'en');

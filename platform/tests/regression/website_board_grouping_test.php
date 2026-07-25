@@ -109,8 +109,7 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertContains('draggable="true"', $studioNotesPage, 'el material relacionado se puede arrastrar al editor');
     TestHarness::assertContains('application/x-studio-note-media', $studioNotesPage, 'Studio Notes usa un payload de drag and drop propio');
     TestHarness::assertContains('data-image-align="center"', $studioNotesPage, 'las imagenes insertadas se pueden alinear editorialmente');
-    TestHarness::assertContains('data-media-filter="related"', $studioNotesPage, 'la biblioteca distingue el material relacionado');
-    TestHarness::assertContains('data-media-filter="mockup"', $studioNotesPage, 'la biblioteca permite buscar entre mockups diferentes');
+    TestHarness::assertTrue(!str_contains($studioNotesPage, 'data-media-filter='), 'la biblioteca elimina la fila de filtros apretada y su desplazamiento horizontal');
     TestHarness::assertContains('data-media-search', $studioNotesPage, 'la biblioteca visual ofrece busqueda por sus metadatos');
     TestHarness::assertContains("(string)(\$media['searchTerms'] ?? '')", $studioNotesPage, 'la busqueda incluye camara, slot y sinonimos del mockup');
     TestHarness::assertContains("normalize('NFD')", $studioNotesPage, 'la busqueda visual ignora tildes');
@@ -122,12 +121,16 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertContains('Ideas y fragmentos', $studioNotesPage, 'la mesa permite conservar ideas legibles dentro del mismo borrador');
     TestHarness::assertContains('application/x-studio-note-fragment', $studioNotesPage, 'las tarjetas editoriales se pueden arrastrar al WYSIWYG');
     TestHarness::assertContains('name="workspace_images[]"', $studioNotesPage, 'el borrador permite subir varias imágenes a su mesa de material');
-    TestHarness::assertContains('sin reemplazar el texto activo', $studioNotesPage, 'la acción de IA declara que no sobrescribe el texto en curso');
+    TestHarness::assertContains('+ Nueva propuesta española', $studioNotesPage, 'la propuesta española usa una acción editorial breve');
+    TestHarness::assertContains('background:transparent !important; color:#514951', $studioNotesPage, 'la acción de propuesta no conserva el cartel verde');
     TestHarness::assertContains("'current_spanish' => \$spanish", $studioNotesPage, 'la adaptación recibe la instantánea española exacta enviada por el editor');
     TestHarness::assertContains('data-active-job-action', $studioNotesPage, 'la interfaz distingue una adaptación activa de otras propuestas');
     TestHarness::assertContains('setEnglishAdaptationBusy', $studioNotesPage, 'el editor inglés queda inhabilitado mientras se prepara su adaptación');
     TestHarness::assertContains('grid-template-columns:repeat(2,minmax(0,1fr))', $studioNotesPage, 'la galería lateral aprovecha su ancho con dos thumbnails por fila');
     TestHarness::assertContains('aspect-ratio:4/3', $studioNotesPage, 'los thumbnails visuales usan marcos rectangulares compactos');
+    TestHarness::assertContains('data-workspace-upload-submit', $studioNotesPage, 'la carga visual elimina el segundo paso visible');
+    TestHarness::assertContains('form.requestSubmit(workspaceUploadSubmit)', $studioNotesPage, 'elegir imágenes inicia su carga directamente');
+    TestHarness::assertTrue(!str_contains($studioNotesPage, 'Dirección privada para la propuesta'), 'el editor elimina el bloque de dirección privada');
     TestHarness::assertContains("DELETE FROM studio_note_workspace_items", $studioNotesPage, 'eliminar una nota también elimina su mesa editorial');
     TestHarness::assertContains('value="prepare_english"', $studioNotesPage, 'la nota puede reconstruir el inglés desde el español revisado');
     TestHarness::assertContains('Publicar ES + EN', $studioNotesPage, 'la publicación bilingüe se presenta como un único compromiso');

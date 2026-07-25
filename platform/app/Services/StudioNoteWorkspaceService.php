@@ -92,6 +92,10 @@ final class StudioNoteWorkspaceService
         foreach ($stmt as $row) {
             $content = json_decode((string)$row['content_json'], true);
             if (!is_array($content) || !isset($boards[(string)$row['board_type']])) continue;
+            if (!empty($content['_dismissed'])
+                || ((string)$row['board_type'] === 'proposal' && (string)$row['locale'] !== 'es')) {
+                continue;
+            }
             $row['content'] = $this->normalizeContent($content);
             $boards[(string)$row['board_type']][] = $row;
         }
@@ -106,6 +110,9 @@ final class StudioNoteWorkspaceService
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!is_array($row)) throw new RuntimeException('El elemento de la mesa editorial ya no está disponible.');
         $content = json_decode((string)$row['content_json'], true);
+        if (is_array($content) && !empty($content['_dismissed'])) {
+            throw new RuntimeException('El elemento de la mesa editorial ya fue retirado.');
+        }
         $row['content'] = is_array($content) ? $this->normalizeContent($content) : [];
         return $row;
     }
@@ -113,8 +120,19 @@ final class StudioNoteWorkspaceService
     public function remove(int $userId, int $noteId, int $itemId): void
     {
         $this->item($userId, $noteId, $itemId);
-        $this->pdo->prepare('DELETE FROM studio_note_workspace_items
-            WHERE id=? AND user_id=? AND note_id=?')->execute([$itemId, $userId, $noteId]);
+        $dismissed = json_encode(
+            ['_dismissed' => date(DATE_ATOM)],
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
+        );
+        $this->pdo->prepare('UPDATE studio_note_workspace_items
+            SET content_json=?,updated_at=?
+            WHERE id=? AND user_id=? AND note_id=?')->execute([
+                $dismissed,
+                date(DATE_ATOM),
+                $itemId,
+                $userId,
+                $noteId,
+            ]);
     }
 
     public function syncHistoricalJobs(int $userId, int $noteId): void
@@ -143,13 +161,9 @@ final class StudioNoteWorkspaceService
                 );
             }
             if ((string)$job['status'] !== 'completed') continue;
-            foreach (['es' => 'spanish_content', 'en' => 'english_content'] as $locale => $key) {
+            foreach (['es' => 'spanish_content'] as $locale => $key) {
                 if (!is_array($result[$key] ?? null)) continue;
-                $sourceTitle = trim((string)($payload['current_spanish']['title'] ?? ''));
-                $label = $locale === 'es' ? 'Propuesta española' : 'English proposal';
-                if ((string)$job['action'] === 'adapt' && $locale === 'en' && $sourceTitle !== '') {
-                    $label = 'Adaptación de «' . mb_substr($sourceTitle, 0, 110) . '»';
-                }
+                $label = 'Propuesta española';
                 $this->capture(
                     $userId,
                     $noteId,
