@@ -28,6 +28,8 @@ $checks = [
     [str_contains((string)file_get_contents($platform . '/publication_media.php'), 'ResponsiveImage::prepare'), 'published artwork media supports responsive delivery'],
     [str_contains((string)file_get_contents($platform . '/series_media.php'), 'ResponsiveImage::prepare'), 'series media supports responsive delivery'],
     [str_contains((string)file_get_contents($platform . '/studio_note_media.php'), 'ResponsiveImage::prepare'), 'Studio Notes media supports responsive delivery'],
+    [str_contains($site, '$externalMediaFiles = array_values(array_diff($noteMediaFiles, $bodyMediaFiles))'), 'Studio Notes keeps inline images in the article and reserves only unattached media for cover or context'],
+    [str_contains($site, 'foreach (array_slice($externalMediaFiles, 1) as $mockupFile)'), 'the context gallery never pulls images out of the written body'],
     [str_contains($site, 'app_studio_note_embedded_image_url') && is_file($platform . '/studio_note_embedded_image.php'), 'legacy embedded Studio Note images have a safe public compatibility path'],
 ];
 

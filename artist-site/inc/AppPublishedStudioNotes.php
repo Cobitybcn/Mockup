@@ -54,14 +54,17 @@ final class AppPublishedStudioNotes
                 continue;
             }
 
-            $mediaFiles = $this->mediaFiles($row, $payload, [
+            $localizedBodies = [
                 (string)($spanish['body_html'] ?? ''),
                 (string)($english['body_html'] ?? ''),
                 (string)$row['objective'],
-            ]);
+            ];
+            $bodyMediaFiles = $this->bodyMediaFiles($row, $localizedBodies);
+            $mediaFiles = $this->mediaFiles($row, $payload, $bodyMediaFiles);
             $row['source'] = is_array($payload['source'] ?? null) ? $payload['source'] : null;
             $row['media_files'] = $mediaFiles;
             $row['mockup_files'] = $mediaFiles;
+            $row['body_media_files'] = $this->bodyMediaFiles($row, [(string)$content['body_html']]);
             $row['title'] = trim((string)$content['title']);
             $row['objective'] = (string)$content['body_html'];
             $row['excerpt'] = trim((string)($content['excerpt'] ?? ''));
@@ -103,7 +106,7 @@ final class AppPublishedStudioNotes
     }
 
     /** @return list<string> */
-    private function mediaFiles(array $row, array $payload, array $localizedBodies = []): array
+    private function mediaFiles(array $row, array $payload, array $bodyMediaFiles = []): array
     {
         $mediaFiles = [];
         foreach ((array)($payload['media'] ?? []) as $media) {
@@ -112,7 +115,20 @@ final class AppPublishedStudioNotes
             if ($file !== '' && !in_array($file, $mediaFiles, true)) $mediaFiles[] = $file;
         }
         if ($mediaFiles) return $mediaFiles;
+        if ($bodyMediaFiles) return array_values(array_unique(array_map('basename', $bodyMediaFiles)));
 
+        $mockupIds = array_values(array_filter(array_map('intval', (array)($payload['mockup_ids'] ?? []))));
+        if (!$mockupIds) return [];
+        $marks = implode(',', array_fill(0, count($mockupIds), '?'));
+        $stmt = $this->pdo->prepare("SELECT mockup_file FROM mockups WHERE user_id = ? AND id IN ($marks)");
+        $stmt->execute(array_merge([(int)$row['user_id']], $mockupIds));
+        return array_values(array_filter(array_map('basename', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [])));
+    }
+
+    /** @return list<string> */
+    private function bodyMediaFiles(array $row, array $localizedBodies): array
+    {
+        $mediaFiles = [];
         $notePrefix = 'studio-note-' . (int)$row['user_id'] . '-' . (int)$row['id'] . '-';
         foreach ($localizedBodies as $bodyHtml) {
             $imageCount = preg_match_all(
@@ -133,14 +149,7 @@ final class AppPublishedStudioNotes
                 }
             }
         }
-        if ($mediaFiles) return $mediaFiles;
-
-        $mockupIds = array_values(array_filter(array_map('intval', (array)($payload['mockup_ids'] ?? []))));
-        if (!$mockupIds) return [];
-        $marks = implode(',', array_fill(0, count($mockupIds), '?'));
-        $stmt = $this->pdo->prepare("SELECT mockup_file FROM mockups WHERE user_id = ? AND id IN ($marks)");
-        $stmt->execute(array_merge([(int)$row['user_id']], $mockupIds));
-        return array_values(array_filter(array_map('basename', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [])));
+        return $mediaFiles;
     }
 
     private function contentSlug(array $content, int $noteId): string

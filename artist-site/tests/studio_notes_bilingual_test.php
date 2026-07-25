@@ -20,7 +20,11 @@ $pdo->exec("CREATE TABLE bilingual_editorial_content (
 )");
 $pdo->exec('CREATE TABLE mockups (id INTEGER PRIMARY KEY,user_id INTEGER NOT NULL,mockup_file TEXT NOT NULL)');
 $pdo->exec("INSERT INTO users VALUES (7,'artist@example.com')");
-$payload = json_encode(['channels' => ['website_blog']], JSON_UNESCAPED_SLASHES);
+$imageFile = 'studio-note-7-12-aabbccddeeff00112233.jpg';
+$payload = json_encode([
+    'channels' => ['website_blog'],
+    'media' => [['file' => $imageFile]],
+], JSON_UNESCAPED_SLASHES);
 $insertNote = $pdo->prepare("INSERT INTO social_campaigns
     (id,user_id,campaign_type,title,objective,status,payload_json,created_at,updated_at)
     VALUES (?,?, 'website_blog',?,?, 'published',?,'2026-07-01','2026-07-25')");
@@ -31,7 +35,7 @@ $insertLocalized = $pdo->prepare("INSERT INTO bilingual_editorial_content
     VALUES (7,'studio_note',12,?,1,?)");
 $insertLocalized->execute(['es', json_encode([
     'title' => 'Donde el pensamiento emerge de la tierra',
-    'body_html' => '<p>El territorio nunca es una superficie neutral.</p>',
+    'body_html' => '<p>El territorio nunca es una superficie neutral.</p><img src="/studio_note_media.php?note=12&amp;file=' . $imageFile . '">',
     'slug' => 'donde-el-pensamiento-emerge-de-la-tierra',
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)]);
 $insertLocalized->execute(['en', json_encode([
@@ -49,6 +53,8 @@ $englishSlug = 'where-thought-emerges-from-the-earth-12';
 if (!isset($spanish[$spanishSlug])
     || !isset($english[$englishSlug])
     || (string)$spanish[$spanishSlug]['language_slugs']['en'] !== $englishSlug
+    || (array)$spanish[$spanishSlug]['body_media_files'] !== [$imageFile]
+    || (array)$english[$englishSlug]['body_media_files'] !== []
     || isset($spanish['english-only-13'])
     || !isset($english['english-only-13'])) {
     fwrite(STDERR, "FAIL: Studio Notes does not preserve localized routes and English-only migration fallback.\n");

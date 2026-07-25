@@ -2470,9 +2470,12 @@ function render_published_journal_post(array $notes, string $slug): bool
     }
     artist_site_set_language_urls($languageSwitchUrls);
     
+    $noteMediaFiles = array_values(array_filter(array_map('basename', (array)($post['media_files'] ?? []))));
+    $bodyMediaFiles = array_values(array_filter(array_map('basename', (array)($post['body_media_files'] ?? []))));
+    $externalMediaFiles = array_values(array_diff($noteMediaFiles, $bodyMediaFiles));
     $coverUrl = '';
     $coverSrcset = '';
-    $coverFile = (string)($post['media_files'][0] ?? $post['mockup_files'][0] ?? '');
+    $coverFile = (string)($externalMediaFiles[0] ?? '');
     if ($coverFile !== '') {
         $coverUrl = app_studio_note_media_url($post, $coverFile, 768);
         $coverSrcset = app_studio_note_media_srcset($post, $coverFile);
@@ -2480,7 +2483,6 @@ function render_published_journal_post(array $notes, string $slug): bool
         $coverUrl = app_studio_note_embedded_image_url($post, 768);
         $coverSrcset = app_studio_note_embedded_image_srcset($post);
     }
-    $noteMediaFiles = array_values(array_filter(array_map('basename', (array)($post['media_files'] ?? []))));
     $renderNoteBody = static fn(): string => safe_studio_note_rich_text(
         (string)$post['objective'],
         $noteMediaFiles,
@@ -2511,13 +2513,13 @@ function render_published_journal_post(array $notes, string $slug): bool
         </section>
     <?php endif; ?>
     
-    <?php if (count($post['mockup_files']) > 1): ?>
+    <?php if (count($externalMediaFiles) > 1): ?>
         <section class="section">
             <div class="section-head section-head--simple">
                 <h2><?= e(site_t('Context & Studies', 'Contexto y estudios')) ?></h2>
             </div>
             <div class="artist-studio-grid">
-                <?php foreach (array_slice($post['mockup_files'], 1) as $mockupFile): ?>
+                <?php foreach (array_slice($externalMediaFiles, 1) as $mockupFile): ?>
                     <figure>
                         <img src="<?= e(app_studio_note_media_url($post, (string)$mockupFile, 768)) ?>"
                             srcset="<?= e(app_studio_note_media_srcset($post, (string)$mockupFile)) ?>"
