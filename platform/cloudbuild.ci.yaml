@@ -71,6 +71,14 @@ steps:
 
         worker_required=true
         migrations_required=true
+        if [[ "$$deployed_commit" =~ ^[0-9a-f]{40}$$ ]] \
+          && ! git cat-file -e "$$deployed_commit^{commit}" 2>/dev/null; then
+          # GitHub triggers may provide a shallow checkout containing only the
+          # new revision. Fetch the immutable production baseline explicitly so
+          # a web-only change cannot be mistaken for a full database release.
+          git fetch --no-tags --depth=1 origin "$$deployed_commit" || true
+        fi
+
         if [[ "$$deployed_commit" =~ ^[0-9a-f]{40}$$ ]] && git cat-file -e "$$deployed_commit^{commit}" 2>/dev/null; then
           changed_files="$$(git diff --name-only "$$deployed_commit" "$COMMIT_SHA")"
           worker_required=false
@@ -339,7 +347,7 @@ steps:
           --memory=4Gi \
           --concurrency=20 \
           --min-instances=1 \
-          --max-instances=10 \
+          --max-instances=1 \
           --timeout=300 \
           --update-env-vars="APP_ENV=production,APP_ALLOW_SCHEMA_MIGRATIONS=false,APP_RELEASE_COMMIT=$COMMIT_SHA,PUBLIC_REGISTRATION_ENABLED=false,FEATURE_WEBSITE_ENABLED=true,FEATURE_SOCIAL_ENABLED=true,FEATURE_VIDEO_ENABLED=true,PINTEREST_API_ENVIRONMENT=production,PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED=true,PINTEREST_LIVE_PUBLISH_ENABLED=true" \
           --remove-env-vars="DB_PASSWORD" \

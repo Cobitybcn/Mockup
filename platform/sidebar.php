@@ -1428,7 +1428,10 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
     }
     async function poll() {
         try {
-            const response = await fetch(endpoint, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+            const requestUrl = new URL(endpoint);
+            const requestedIds = Array.from(new Set(ids(trackedKey).concat(ids(pendingKey)))).slice(-60);
+            if (requestedIds.length) requestUrl.searchParams.set('ids', requestedIds.join(','));
+            const response = await fetch(requestUrl, { headers: { Accept: 'application/json' }, cache: 'no-store' });
             const data = await response.json();
             if (data.ok) render(data);
             window.clearTimeout(pollTimer);

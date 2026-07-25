@@ -348,7 +348,11 @@ function wsn_note_media_url(int $noteId, ?string $file, int $width = 520): strin
 function first_html_image_src(string $html): string
 {
     if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $html, $matches)) {
-        return $matches[1];
+        // The rich-text body stores query separators as HTML entities. Decode
+        // once before escaping the final <img> attribute, otherwise "&amp;"
+        // becomes part of the actual request and the note media endpoint
+        // receives no file parameter.
+        return html_entity_decode((string)$matches[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
     return '';
 }
@@ -1133,7 +1137,7 @@ $initialSourceType = $requestedSourceKey !== ''
                                     setEnglishAdaptationBusy(false);
                                     return;
                                 }
-                                window.setTimeout(pollEditorialJob, 1200);
+                                window.setTimeout(pollEditorialJob, 3000);
                             })
                             .catch(function(error) {
                                 if (publicationState) publicationState.textContent = error.message || 'Publicación no disponible';

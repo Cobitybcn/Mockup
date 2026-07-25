@@ -11,6 +11,23 @@ if (!$user) {
     exit;
 }
 
+$trackedIds = array_values(array_unique(array_filter(
+    array_map('intval', preg_split('/[^0-9]+/', (string)($_GET['ids'] ?? '')) ?: []),
+    static fn(int $id): bool => $id > 0
+)));
+$trackedIds = array_slice($trackedIds, -60);
+$trackedSql = '';
+$parameters = ['user_id' => (int)$user['id']];
+if ($trackedIds !== []) {
+    $marks = [];
+    foreach ($trackedIds as $index => $trackedId) {
+        $key = 'tracked_' . $index;
+        $marks[] = ':' . $key;
+        $parameters[$key] = $trackedId;
+    }
+    $trackedSql = ' OR j.id IN (' . implode(',', $marks) . ')';
+}
+
 $stmt = Database::connection()->prepare("
     SELECT j.id, j.artwork_id, j.context_id, j.status, j.mockup_id, j.error,
            j.selector_state_json, j.created_at, j.updated_at,
@@ -19,10 +36,11 @@ $stmt = Database::connection()->prepare("
     LEFT JOIN artworks a ON a.id = j.artwork_id AND a.user_id = j.user_id
     LEFT JOIN artwork_groups g ON g.id = j.artwork_group_id AND g.user_id = j.user_id
     WHERE j.user_id = :user_id
+      AND (j.status IN ('pending_enqueue', 'queued', 'processing') {$trackedSql})
     ORDER BY j.id DESC
     LIMIT 80
 ");
-$stmt->execute(['user_id' => (int)$user['id']]);
+$stmt->execute($parameters);
 
 $activeStatuses = ['pending_enqueue', 'queued', 'processing'];
 $items = [];
@@ -32,6 +50,10 @@ foreach ($stmt->fetchAll() as $row) {
         continue;
     }
     $status = (string)$row['status'];
+    $updatedAt = strtotime((string)($row['updated_at'] ?? ''));
+    $isActive = in_array($status, $activeStatuses, true)
+        && $updatedAt !== false
+        && $updatedAt >= time() - 7200;
     $combination = (array)($state['combination'] ?? []);
     $board = max(1, min(3, (int)($state['scene_board_index'] ?? $combination['camera_slot_scene_board_index'] ?? 1)));
     $provider = ServiceFactory::generationProvider((string)($state['generation_provider'] ?? ''));
@@ -52,13 +74,13 @@ foreach ($stmt->fetchAll() as $row) {
         'artwork_id' => (int)$row['artwork_id'],
         'artwork_title' => (string)$row['artwork_title'],
         'status' => $status,
-        'active' => in_array($status, $activeStatuses, true),
+        'active' => $isActive,
         'kind' => (int)($improvement['existing_mockup_id'] ?? 0) > 0 ? 'regeneration' : 'generation',
         'generation_run_id' => $generationRunId,
         'scene_category' => $category,
         'replaces_mockup_id' => (int)($improvement['existing_mockup_id'] ?? 0) ?: null,
         'mockup_id' => (int)($row['mockup_id'] ?? 0) ?: null,
-        'error' => (string)($row['error'] ?? ''),
+        'error' => mb_substr((string)($row['error'] ?? ''), 0, 500),
         'results_url' => $resultsUrl,
         'created_at' => (string)$row['created_at'],
         'updated_at' => (string)$row['updated_at'],

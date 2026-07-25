@@ -51,21 +51,9 @@ class CloudTasksService
 
     public static function enqueueEditorialGeneration(int $jobId): string
     {
-        $editorialWorkerUrl = trim(app_env('GCP_EDITORIAL_WORKER_URL', ''));
-        if ($editorialWorkerUrl !== '') {
-            $editorialWorkerToken = trim(app_env('EDITORIAL_WORKER_TOKEN', ''));
-            if ($editorialWorkerToken === '') {
-                throw new RuntimeException('EDITORIAL_WORKER_TOKEN is required for the public editorial worker.');
-            }
-
-            return self::enqueue('editorial_worker.php', [
-                'job_id' => $jobId,
-                'timestamp' => date('c'),
-            ], null, '', $editorialWorkerUrl, [
-                'X-Editorial-Worker-Token' => $editorialWorkerToken,
-            ], false);
-        }
-
+        // Editorial adaptation is deliberately isolated from the interactive
+        // web service. Cloud Run validates the task identity before the
+        // dedicated worker spends time on metadata and language generation.
         return self::enqueue('editorial_worker.php', [
             'job_id' => $jobId,
             'timestamp' => date('c'),

@@ -26,9 +26,18 @@ function run_deployment_pipeline_regression_tests(): void
         'database migration jobs are limited to schema migration changes'
     );
     TestHarness::assertTrue(
+        str_contains($cloudBuild, 'git fetch --no-tags --depth=1 origin "$$deployed_commit"'),
+        'shallow release checkouts fetch the production baseline before deciding whether migrations are required'
+    );
+    TestHarness::assertTrue(
         str_contains($cloudBuild, 'WORKER_REQUIRED')
             && str_contains($cloudBuild, 'Skipping worker deployment'),
         'web-only releases skip worker build and deployment work'
+    );
+    TestHarness::assertContains(
+        '--max-instances=1',
+        $cloudBuild,
+        'the interactive web service remains bounded while generation runs in the worker'
     );
     TestHarness::assertTrue(
         str_contains($setupScript, "'platform/**', 'site-admin/**'")

@@ -97,6 +97,7 @@ function run_generation_provider_isolation_tests(): void
     $queueWorkerSource = (string)file_get_contents(__DIR__ . '/../../mockup_queue_worker.php');
     $resultsSource = (string)file_get_contents(__DIR__ . '/../../mockup_combination_results.php');
     $activitySource = (string)file_get_contents(__DIR__ . '/../../mockup_generation_activity.php');
+    $sidebarSource = (string)file_get_contents(__DIR__ . '/../../sidebar.php');
     $createScenesSource = (string)file_get_contents(__DIR__ . '/../../create_scenes.php');
     $startGenerateSource = (string)file_get_contents(__DIR__ . '/../../start_generate.php');
     $jobStatusSource = (string)file_get_contents(__DIR__ . '/../../job_status.php');
@@ -121,6 +122,16 @@ function run_generation_provider_isolation_tests(): void
     TestHarness::assertContains("PHP_OS_FAMILY === 'Windows'", $dispatcherSource, 'El entorno local dispone de un worker desacoplado en Windows');
     TestHarness::assertContains('LOCK_EX | LOCK_NB', $queueWorkerSource, 'Cada carril local tiene un unico supervisor activo');
     TestHarness::assertContains("data-generation-provider", $resultsSource, 'Las regeneraciones conservan el proveedor del resultado');
+    TestHarness::assertContains(
+        "j.status IN ('pending_enqueue', 'queued', 'processing')",
+        $activitySource,
+        'la actividad global no vuelve a cargar el historial completo en cada consulta'
+    );
+    TestHarness::assertContains(
+        "requestUrl.searchParams.set('ids', requestedIds.join(','))",
+        $sidebarSource,
+        'el navegador solicita únicamente los resultados que está siguiendo'
+    );
     TestHarness::assertContains('name="generation_provider" value="gemini"', $createScenesSource, 'Create Scenes envia Vertex de forma explicita');
     TestHarness::assertTrue(
         !str_contains($createScenesSource, 'id="generationProviderSelect"'),
