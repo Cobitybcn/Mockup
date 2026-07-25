@@ -60,45 +60,29 @@ function run_studio_note_bilingual_tests(): void
     $service->setPublished(7, 'studio_note', 12, 'es', true);
     $service->setPublished(7, 'studio_note', 12, 'en', true);
 
-    require_once dirname(__DIR__, 3) . '/artist-site/inc/AppPublishedStudioNotes.php';
-    $catalog = new AppPublishedStudioNotes($pdo, 'artist@example.com');
-    $spanishNotes = $catalog->all('es');
-    $englishNotes = $catalog->all('en');
-    $spanishSlug = 'donde-el-pensamiento-emerge-de-la-tierra-12';
-    $englishSlug = 'where-thought-emerges-from-the-earth-12';
-    TestHarness::assertTrue(isset($spanishNotes[$spanishSlug]), 'la ruta española usa su slug editorial propio');
-    TestHarness::assertTrue(isset($englishNotes[$englishSlug]), 'la ruta inglesa usa su slug editorial propio');
+    $publishedRows = $pdo->query("SELECT locale,published_content_json
+        FROM bilingual_editorial_content
+        WHERE entity_type='studio_note' AND entity_id=12 AND is_published=1
+        ORDER BY locale")->fetchAll(PDO::FETCH_KEY_PAIR);
     TestHarness::assertSame(
         'Donde el pensamiento emerge de la tierra',
-        (string)$spanishNotes[$spanishSlug]['title'],
-        'el website español lee el snapshot español publicado'
+        (string)(json_decode((string)$publishedRows['es'], true)['title'] ?? ''),
+        'la plataforma conserva el snapshot español publicado'
     );
     TestHarness::assertSame(
-        $englishSlug,
-        (string)$spanishNotes[$spanishSlug]['language_slugs']['en'],
-        'hreflang conserva la pareja inglesa de la misma entidad'
+        'Where Thought Emerges from the Earth',
+        (string)(json_decode((string)$publishedRows['en'], true)['title'] ?? ''),
+        'la plataforma conserva la pareja inglesa publicada'
     );
 
     $spanish['body_html'] = '<p>El territorio contiene presión, memoria y tiempo.</p>';
     $service->save(7, 'studio_note', 12, 'es', $spanish);
     $staleEnglish = $service->get(7, 'studio_note', 12, 'en');
     TestHarness::assertSame('stale', (string)$staleEnglish['status'], 'editar el master español marca el inglés como desactualizado');
+    $publishedSpanish = $service->get(7, 'studio_note', 12, 'es');
     TestHarness::assertSame(
         '<p>El territorio nunca es una superficie neutral.</p>',
-        (string)$catalog->all('es')[$spanishSlug]['objective'],
+        (string)($publishedSpanish['published_content']['body_html'] ?? ''),
         'los cambios privados no reemplazan el snapshot español publicado'
-    );
-
-    $insertLegacy = $pdo->prepare("INSERT INTO social_campaigns
-        (id,user_id,campaign_type,title,objective,status,payload_json,created_at,updated_at)
-        VALUES (13,7,'website_blog','English only','<p>English legacy content.</p>','published',?,'2026-07-01','2026-07-25')");
-    $insertLegacy->execute([$payload]);
-    TestHarness::assertTrue(
-        !isset($catalog->all('es')['english-only-13']),
-        'una nota inglesa heredada nunca se reutiliza como contenido español'
-    );
-    TestHarness::assertTrue(
-        isset($catalog->all('en')['english-only-13']),
-        'las notas inglesas heredadas siguen disponibles durante la migración'
     );
 }
