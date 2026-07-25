@@ -82,6 +82,23 @@ function inspectBody(string $html): array
         ];
     }
     $lower = strtolower($html);
+    preg_match_all('/<img\b[^>]*>/iu', $html, $imageTags);
+    $tagDiagnostics = [];
+    foreach ((array)($imageTags[0] ?? []) as $tag) {
+        $marker = stripos((string)$tag, 'base64');
+        $context = $marker === false
+            ? substr((string)$tag, 0, 180)
+            : substr((string)$tag, max(0, $marker - 100), 220);
+        $context = preg_replace(
+            '/(base64(?:%2c|&#0*44;|,)?)[A-Za-z0-9+\/=%\s]{12,}/iu',
+            '$1[IMAGE_BYTES]',
+            $context
+        ) ?? $context;
+        $tagDiagnostics[] = [
+            'bytes' => strlen((string)$tag),
+            'context' => $context,
+        ];
+    }
     return [
         'bytes' => strlen($html),
         'image_count' => count($sources),
@@ -96,6 +113,7 @@ function inspectBody(string $html): array
         'img_tag_occurrences' => substr_count($lower, '<img'),
         'text_bytes' => strlen(strip_tags($html)),
         'sources' => $sources,
+        'image_tags' => $tagDiagnostics,
     ];
 }
 
