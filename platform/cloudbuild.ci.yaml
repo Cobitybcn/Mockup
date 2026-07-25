@@ -91,7 +91,7 @@ steps:
                 migrations_required=true
                 worker_required=true
                 ;;
-              site-admin/*|platform/*.css|platform/*.js|platform/assets/*|platform/public/*)
+              site-admin/*|platform/*.css|platform/*.js|platform/assets/*|platform/public/*|platform/tests/*|platform/scripts/audit_studio_note_media.php|platform/cloudbuild*.yaml)
                 ;;
               platform/*)
                 worker_required=true
