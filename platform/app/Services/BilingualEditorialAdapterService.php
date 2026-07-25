@@ -346,19 +346,90 @@ final class BilingualEditorialAdapterService
         int $entityId,
         array $sourceContent
     ): array {
-        $generated = $this->generateSpanishDraft(
-            $userId,
-            'studio_note',
-            $entityId,
-            $sourceContent
-        );
-        $analysis = (array)($generated['content'] ?? []);
-        foreach (['excerpt', 'slug', 'seo_title', 'seo_description', 'alt_text', 'search_terms'] as $field) {
-            if (trim((string)($sourceContent[$field] ?? '')) === '') {
-                $sourceContent[$field] = trim((string)($analysis[$field] ?? ''));
+        $analysis = $this->analyzeStudioNoteMetadata($userId, $entityId, $sourceContent);
+        foreach (['excerpt', 'slug', 'seo_title', 'seo_description', 'alt_text', 'caption', 'tags', 'search_terms'] as $field) {
+            $sourceContent[$field] = trim((string)($analysis[$field] ?? ''));
+        }
+        $sourceContent['image_metadata'] = (array)($analysis['image_metadata'] ?? []);
+        $sourceContent['meta_source_hash'] = hash('sha256', json_encode([
+            'title' => (string)($sourceContent['title'] ?? ''),
+            'body_html' => (string)($sourceContent['body_html'] ?? ''),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+        return $sourceContent;
+    }
+
+    private function analyzeStudioNoteMetadata(int $userId, int $entityId, array $sourceContent): array
+    {
+        $context = $this->entityContext($userId, 'studio_note', $entityId);
+        if ($context === []) throw new RuntimeException('Studio Note not found.');
+        $profile = $this->profileContext(ArtistProfile::findForUser($userId));
+        $imagePaths = $this->entityImagePaths($userId, 'studio_note', $entityId);
+        $imageFiles = array_map('basename', $imagePaths);
+        $shape = [
+            'excerpt' => '',
+            'slug' => '',
+            'seo_title' => '',
+            'seo_description' => '',
+            'alt_text' => '',
+            'caption' => '',
+            'tags' => '',
+            'search_terms' => '',
+            'image_metadata' => [],
+        ];
+        $prompt = "You are the Spanish Meta Analyzer used by the artist's mockup-analysis.v2 editorial pipeline. "
+            . "Analyze the finished Studio Note; do not rewrite its title or body. Return strict JSON only.\n\n"
+            . SearchIntentPrompt::forEntity('studio_note') . "\n\n"
+            . EditorialIntegrityPolicy::promptRules('studio_note') . "\n\n"
+            . "STUDIO NOTE META CONTRACT\n"
+            . "- Write every value directly in natural Spanish.\n"
+            . "- excerpt: one or two precise editorial sentences grounded in the article.\n"
+            . "- slug: concise lowercase Spanish words separated by hyphens, without accents.\n"
+            . "- seo_title and seo_description: page-specific, sober and supported by the article.\n"
+            . "- tags: eight to twelve distinct, standardized informational topic filters; no poetic filler.\n"
+            . "- search_terms: six to ten natural informational searches; no acquisition language or keyword stuffing.\n"
+            . "- alt_text and caption describe the lead image; alt is visual and accessible, caption is brief and editorial.\n"
+            . "- image_metadata contains one object per supplied filename, in the same order, with exactly file, alt_text and caption. "
+            . "Never invent, omit, rename or reorder filenames.\n"
+            . "- Do not alter, translate, summarize into, or return title/body_html.\n\n"
+            . "ARTIST PROFILE\n{$profile}\n\n"
+            . "ENTITY CONTEXT\n" . json_encode($context, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
+            . "AUTHORITATIVE SPANISH NOTE\n" . json_encode($sourceContent, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
+            . "ATTACHED IMAGE FILENAMES IN ORDER\n" . json_encode($imageFiles, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
+            . "OUTPUT SHAPE\n" . json_encode($shape, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $parts = [$this->client->textPart($prompt)];
+        foreach ($imagePaths as $imagePath) $parts[] = $this->client->imagePart($imagePath);
+        $analysis = $this->decodeJson($this->client->generateText($parts, 'gemini-2.5-flash'));
+        $projected = $this->projectToSourceShape($shape, $analysis);
+        $imageMetadata = [];
+        foreach ((array)($analysis['image_metadata'] ?? []) as $index => $metadata) {
+            if (!is_array($metadata) || !isset($imageFiles[$index])) continue;
+            $imageMetadata[] = [
+                'file' => $imageFiles[$index],
+                'alt_text' => trim((string)($metadata['alt_text'] ?? '')),
+                'caption' => trim((string)($metadata['caption'] ?? '')),
+            ];
+        }
+        $projected['image_metadata'] = $imageMetadata;
+        foreach (['excerpt', 'slug', 'seo_title', 'seo_description', 'alt_text', 'caption', 'tags', 'search_terms'] as $field) {
+            if (trim((string)($projected[$field] ?? '')) === '') {
+                throw new RuntimeException("Studio Note Meta Analyzer returned empty {$field}.");
             }
         }
-        return $sourceContent;
+        $issues = EditorialIntegrityPolicy::issues($projected, 'studio_note');
+        $tagCount = count($this->listItems((string)$projected['tags']));
+        $searchCount = count($this->listItems((string)$projected['search_terms']));
+        if ($tagCount < 8 || $tagCount > 12) $issues[] = 'tags must contain 8 to 12 supported topic filters';
+        if ($searchCount < 6 || $searchCount > 10) $issues[] = 'search_terms must contain 6 to 10 natural informational searches';
+        if (preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', (string)$projected['slug']) !== 1) {
+            $issues[] = 'slug must be lowercase ASCII words separated by hyphens';
+        }
+        if (count($imageMetadata) !== count($imageFiles)) {
+            $issues[] = 'image_metadata must cover every supplied image exactly once';
+        }
+        if ($issues !== []) {
+            throw new RuntimeException('Studio Note Meta Analyzer validation failed: ' . implode('; ', $issues));
+        }
+        return $projected;
     }
 
     private function prompt(
@@ -534,9 +605,11 @@ RULES
             $entityType,
             $entityId
         );
-        $imageInstruction = in_array($entityType, ['series', 'studio_note'], true)
+        $imageInstruction = $entityType === 'series'
             ? 'No image is attached. Use only the supplied catalogue evidence.'
-            : 'The exact image may be attached after this prompt. Use it only as visual evidence under the entity-specific rules.';
+            : ($entityType === 'studio_note'
+                ? 'The exact images used by the note may be attached after this prompt. Use them only as visual evidence and never alter their order or identity.'
+                : 'The exact image may be attached after this prompt. Use it only as visual evidence under the entity-specific rules.');
 
         return <<<PROMPT
 You are the Spanish-first editorial assistant for a contemporary artist's catalogue.
@@ -753,7 +826,10 @@ RULES;
                 'seo_title' => '',
                 'seo_description' => '',
                 'alt_text' => '',
+                'caption' => '',
+                'tags' => '',
                 'search_terms' => '',
+                'image_metadata' => [],
             ];
         }
 

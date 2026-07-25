@@ -120,6 +120,9 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertContains('padding-top:190px', $studioNotesPage, 'la flecha queda dentro del tercio superior de las superficies de escritura');
     TestHarness::assertContains('min-height:27px', $studioNotesPage, 'las cabeceras bilingües alinean el inicio de ambos editores');
     TestHarness::assertContains('studio-note-actions__secondary', $studioNotesPage, 'retirar y eliminar se presentan juntos como acciones secundarias');
+    TestHarness::assertContains("'metadata'", $studioNotesPage, 'guardar la nota española inicia automáticamente el Meta Analyzer');
+    TestHarness::assertContains('name="tags_<?= $locale ?>"', $studioNotesPage, 'Studio Notes conserva los tags producidos por el Meta Analyzer');
+    TestHarness::assertContains('name="caption_<?= $locale ?>"', $studioNotesPage, 'Studio Notes conserva los captions editoriales por idioma');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'Mesa editorial'), 'el borrador elimina la mesa editorial lateral');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'Ideas y fragmentos'), 'el borrador elimina el board de ideas que ocupaba espacio');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'Adaptar desde el español — no traducir literalmente'), 'la flecha sustituye el botón largo redundante');

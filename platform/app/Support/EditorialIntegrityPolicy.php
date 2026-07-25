@@ -11,14 +11,18 @@ final class EditorialIntegrityPolicy
 {
     public static function promptRules(string $entityType): string
     {
-        $lengthRules = $entityType === 'mockup'
+        $lengthRules = $entityType === 'studio_note'
+            ? <<<'TEXT'
+- Keep the excerpt at 70 words or fewer, SEO description at 35 words or fewer, alt text at 90 words or fewer, and captions at 50 words or fewer.
+TEXT
+            : ($entityType === 'mockup'
             ? <<<'TEXT'
 - Keep the main mockup or contextual description at 180 words or fewer.
 - Keep the website description at 140 words or fewer, Pinterest description at 100 words or fewer, Instagram and Facebook copy at 180 words or fewer, alt text at 90 words or fewer, and captions at 50 words or fewer.
 TEXT
             : <<<'TEXT'
 - Keep the complete artwork description at 350 words or fewer, the short description at 70 words or fewer, alt text at 90 words or fewer, and captions at 50 words or fewer.
-TEXT;
+TEXT);
 
         return <<<TEXT
 NON-NEGOTIABLE EDITORIAL INTEGRITY
@@ -38,7 +42,7 @@ TEXT;
      */
     public static function issues(array|string $content, string $entityType): array
     {
-        if (!in_array($entityType, ['artwork', 'mockup'], true)) {
+        if (!in_array($entityType, ['artwork', 'mockup', 'studio_note'], true)) {
             return [];
         }
 
@@ -123,6 +127,16 @@ TEXT;
                 str_ends_with($path, 'master_description'),
                 $path === 'description' => 350,
                 str_ends_with($path, 'short_description') => 70,
+                str_ends_with($path, 'alt_text') => 90,
+                str_ends_with($path, 'caption') => 50,
+                default => 0,
+            };
+        }
+
+        if ($entityType === 'studio_note') {
+            return match (true) {
+                $path === 'excerpt' => 70,
+                $path === 'seo_description' => 35,
                 str_ends_with($path, 'alt_text') => 90,
                 str_ends_with($path, 'caption') => 50,
                 default => 0,

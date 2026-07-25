@@ -84,6 +84,20 @@ final class BilingualEditorialGenerationWorker
                     'english_status' => (string)($english['english_status'] ?? 'current'),
                     'spanish_published' => $publishSpanish,
                 ];
+            } elseif ($action === 'metadata' && $entityType === 'studio_note') {
+                $sourceContent = is_array($payload['current_spanish'] ?? null)
+                    ? (array)$payload['current_spanish']
+                    : (array)$editorial->get($userId, $entityType, $entityId, 'es')['content'];
+                $sourceContent = $adapter->completeStudioNoteMetadata($userId, $entityId, $sourceContent);
+                $editorial->save($userId, $entityType, $entityId, 'es', $sourceContent);
+                if (!empty($payload['republish_spanish'])) {
+                    $editorial->setPublished($userId, $entityType, $entityId, 'es', true);
+                }
+                $result = [
+                    'spanish_content' => $sourceContent,
+                    'metadata_completed' => true,
+                    'republished_spanish' => !empty($payload['republish_spanish']),
+                ];
             } elseif ($entityType === 'studio_note') {
                 $sourceContent = is_array($payload['current_spanish'] ?? null)
                     ? (array)$payload['current_spanish']
@@ -91,14 +105,6 @@ final class BilingualEditorialGenerationWorker
                 $targetContent = is_array($payload['current_english'] ?? null)
                     ? (array)$payload['current_english']
                     : [];
-                if ($sourceContent !== []) {
-                    $sourceContent = $adapter->completeStudioNoteMetadata(
-                        $userId,
-                        $entityId,
-                        $sourceContent
-                    );
-                    $editorial->save($userId, $entityType, $entityId, 'es', $sourceContent);
-                }
                 $english = $sourceContent !== []
                     ? $adapter->proposeAdaptationFromContent(
                         $userId,
@@ -123,10 +129,8 @@ final class BilingualEditorialGenerationWorker
                     $englishContent
                 );
                 $result = [
-                    'spanish_content' => $sourceContent,
                     'english_content' => $englishContent,
                     'english_status' => (string)($englishState['status'] ?? 'current'),
-                    'metadata_completed' => true,
                     'applied_to_editor' => true,
                 ];
             } else {

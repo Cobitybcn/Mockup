@@ -288,6 +288,35 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             } else {
                 $_SESSION['wsn_notice'] = 'Borrador bilingüe guardado.';
             }
+            if ($action !== 'prepare_english' && $editorial->isEnabled($userId)) {
+                $metaSourceHash = hash('sha256', json_encode([
+                    'title' => (string)$spanish['title'],
+                    'body_html' => (string)$spanish['body_html'],
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+                if (!hash_equals((string)($spanish['meta_source_hash'] ?? ''), $metaSourceHash)) {
+                    $jobs = new BilingualEditorialJobService($pdo);
+                    $job = $jobs->activeForEntity($userId, 'studio_note', $id);
+                    if ($job === null) {
+                        $job = $jobs->createOrReuse($userId, 'studio_note', $id, 'metadata', [
+                            'current_spanish' => $spanish,
+                            'source_hash' => $metaSourceHash,
+                            'republish_spanish' => $action === 'publish_draft',
+                        ]);
+                        if ((string)$job['status'] === 'queued' && trim((string)$job['task_name']) === '') {
+                            if (CloudTasksService::isAvailable()) {
+                                $jobs->attachTask(
+                                    (int)$job['id'],
+                                    $userId,
+                                    CloudTasksService::enqueueEditorialGeneration((int)$job['id'])
+                                );
+                            } else {
+                                (new BilingualEditorialGenerationWorker($pdo))->process((int)$job['id']);
+                            }
+                        }
+                        $_SESSION['wsn_notice'] .= ' El Meta Analyzer está completando SEO, tags, alts y captions en español.';
+                    }
+                }
+            }
             header('Location: website_studio_notes.php?draft=' . $id);
             exit;
         }
@@ -326,6 +355,7 @@ if (!empty($_SESSION['wsn_notice'])) {
 function wsn_h(mixed $value): string { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); }
 function wsn_post_content(string $locale): array
 {
+    $imageMetadata = json_decode((string)($_POST['image_metadata_' . $locale] ?? '[]'), true);
     return [
         'title' => trim((string)($_POST['title_' . $locale] ?? '')),
         'excerpt' => trim((string)($_POST['excerpt_' . $locale] ?? '')),
@@ -334,12 +364,19 @@ function wsn_post_content(string $locale): array
         'seo_title' => trim((string)($_POST['seo_title_' . $locale] ?? '')),
         'seo_description' => trim((string)($_POST['seo_description_' . $locale] ?? '')),
         'alt_text' => trim((string)($_POST['alt_text_' . $locale] ?? '')),
+        'caption' => trim((string)($_POST['caption_' . $locale] ?? '')),
+        'tags' => trim((string)($_POST['tags_' . $locale] ?? '')),
         'search_terms' => trim((string)($_POST['search_terms_' . $locale] ?? '')),
+        'image_metadata' => is_array($imageMetadata) ? array_values($imageMetadata) : [],
+        'meta_source_hash' => trim((string)($_POST['meta_source_hash_' . $locale] ?? '')),
     ];
 }
 function wsn_has_content(array $content): bool
 {
-    foreach ($content as $value) if (trim(strip_tags((string)$value)) !== '') return true;
+    foreach ($content as $value) {
+        if (is_array($value) && $value !== []) return true;
+        if (!is_array($value) && trim(strip_tags((string)$value)) !== '') return true;
+    }
     return false;
 }
 function wsn_has_required_public_content(array $content): bool
@@ -431,7 +468,8 @@ foreach ($websiteDrafts as $draft) {
 }
 $noteShape = [
     'title' => '', 'excerpt' => '', 'body_html' => '', 'slug' => '',
-    'seo_title' => '', 'seo_description' => '', 'alt_text' => '', 'search_terms' => '',
+    'seo_title' => '', 'seo_description' => '', 'alt_text' => '', 'caption' => '',
+    'tags' => '', 'search_terms' => '', 'image_metadata' => [], 'meta_source_hash' => '',
 ];
 $spanishState = ['content' => $noteShape, 'status' => 'unprepared', 'is_published' => false, 'has_unpublished_changes' => false];
 $englishState = ['content' => $noteShape, 'status' => 'unprepared', 'is_published' => false, 'has_unpublished_changes' => false];
@@ -447,7 +485,11 @@ if ($openDraft) {
             'seo_title' => '',
             'seo_description' => '',
             'alt_text' => '',
+            'caption' => '',
+            'tags' => '',
             'search_terms' => '',
+            'image_metadata' => [],
+            'meta_source_hash' => '',
         ]
         : [];
     $spanishState = $editorial->get($userId, 'studio_note', (int)$openDraft['id'], 'es');
@@ -748,7 +790,7 @@ $initialSourceType = $requestedSourceKey !== ''
 
                                     <div class="studio-translation-control">
                                         <button class="studio-translation-arrow" name="action" value="prepare_english" type="submit"
-                                                aria-label="Analizar la nota y adaptar al inglés" title="Analizar metadatos y adaptar al inglés"
+                                                aria-label="Adaptar el paquete español al inglés" title="Adaptar al inglés"
                                                 <?= $englishAdaptationActive ? 'disabled' : '' ?>>
                                             <svg viewBox="0 0 24 24" aria-hidden="true">
                                                 <path d="M5 12h13M14 7l5 5-5 5"></path>
@@ -808,9 +850,19 @@ $initialSourceType = $requestedSourceKey !== ''
                                                 <label class="studio-seo-field">Texto alternativo de portada
                                                     <textarea name="alt_text_<?= $locale ?>"><?= wsn_h((string)$localizedContent['alt_text']) ?></textarea>
                                                 </label>
+                                                <label class="studio-seo-field">Caption editorial
+                                                    <textarea name="caption_<?= $locale ?>"><?= wsn_h((string)($localizedContent['caption'] ?? '')) ?></textarea>
+                                                </label>
+                                                <label class="studio-seo-field">Tags
+                                                    <textarea name="tags_<?= $locale ?>"><?= wsn_h((string)($localizedContent['tags'] ?? '')) ?></textarea>
+                                                </label>
                                                 <label class="studio-seo-field">Arquitectura de búsqueda
                                                     <textarea name="search_terms_<?= $locale ?>"><?= wsn_h((string)$localizedContent['search_terms']) ?></textarea>
                                                 </label>
+                                                <input type="hidden" name="image_metadata_<?= $locale ?>"
+                                                       value="<?= wsn_h(json_encode((array)($localizedContent['image_metadata'] ?? []), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>">
+                                                <input type="hidden" name="meta_source_hash_<?= $locale ?>"
+                                                       value="<?= wsn_h((string)($localizedContent['meta_source_hash'] ?? '')) ?>">
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
@@ -1061,7 +1113,9 @@ $initialSourceType = $requestedSourceKey !== ''
                             .then(function(response) { return response.json(); })
                             .then(function(result) {
                                 if (!result.ok || !result.job) throw new Error(result.error || 'No se pudo consultar la adaptación.');
-                                if (englishState) englishState.textContent = result.job.status === 'processing' ? 'adaptando…' : result.job.status;
+                                if (englishState) englishState.textContent = result.job.status === 'processing'
+                                    ? (activeJobAction === 'metadata' ? 'analizando SEO…' : 'adaptando…')
+                                    : result.job.status;
                                 if (result.job.status === 'completed') {
                                     window.location.reload();
                                     return;
