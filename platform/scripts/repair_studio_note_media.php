@@ -174,15 +174,27 @@ echo json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNES
 
 function embeddedImageCount(string $html): int
 {
-    return preg_match_all(
-        '~<img\b[^>]*\bsrc=["\']data:(?:image/(?:jpeg|png|webp)|application/octet-stream);base64,[^"\']+["\'][^>]*>~iu',
-        $html
-    ) ?: 0;
+    $lower = strtolower($html);
+    return substr_count($lower, 'data:image/jpeg;base64,')
+        + substr_count($lower, 'data:image/png;base64,')
+        + substr_count($lower, 'data:image/webp;base64,')
+        + substr_count($lower, 'data:application/octet-stream;base64,');
 }
 
 function normalizedEditorialText(string $html): string
 {
-    $withoutImages = preg_replace('/<img\b[^>]*>/iu', '', $html) ?? $html;
+    $withoutImages = '';
+    $copyFrom = 0;
+    $searchFrom = 0;
+    $length = strlen($html);
+    while ($searchFrom < $length && ($start = stripos($html, '<img', $searchFrom)) !== false) {
+        $end = strpos($html, '>', $start + 4);
+        if ($end === false) break;
+        $withoutImages .= substr($html, $copyFrom, $start - $copyFrom);
+        $copyFrom = $end + 1;
+        $searchFrom = $end + 1;
+    }
+    $withoutImages .= substr($html, $copyFrom);
     return trim(preg_replace('/\s+/u', ' ', html_entity_decode(
         strip_tags($withoutImages),
         ENT_QUOTES | ENT_HTML5,
