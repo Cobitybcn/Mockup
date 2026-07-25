@@ -31,6 +31,8 @@ foreach ($notes as $note) {
     foreach ($localized as $row) {
         $content = json_decode((string)$row['content_json'], true);
         $published = json_decode((string)$row['published_content_json'], true);
+        $content = is_array($content) ? $content : [];
+        $published = is_array($published) ? $published : [];
         $languages[(string)$row['locale']] = [
             'status' => (string)$row['status'],
             'is_published' => (bool)$row['is_published'],
