@@ -101,6 +101,10 @@ final class BilingualEditorialGenerationWorker
                 );
                 $englishContent = (array)($english['content'] ?? []);
 
+                // WebsiteBoardService performs its schema compatibility check in
+                // the constructor. MySQL implicitly commits on DDL, so construct
+                // it before opening the atomic bilingual publication transaction.
+                $websiteBoard = new WebsiteBoardService($this->pdo);
                 $ownsTransaction = !$this->pdo->inTransaction();
                 if ($ownsTransaction) $this->pdo->beginTransaction();
                 try {
@@ -108,7 +112,6 @@ final class BilingualEditorialGenerationWorker
                     $editorial->save($userId, $entityType, $entityId, 'en', $englishContent);
                     $editorial->setPublished($userId, $entityType, $entityId, 'es', true);
                     $editorial->setPublished($userId, $entityType, $entityId, 'en', true);
-                    $websiteBoard = new WebsiteBoardService($this->pdo);
                     $saved = $websiteBoard->saveNote(
                         $userId,
                         $entityId,

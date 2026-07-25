@@ -105,6 +105,14 @@ function run_studio_note_workspace_tests(): void
     TestHarness::assertContains('completeStudioNoteMetadata', $worker, 'el worker completa los metadatos españoles desde el análisis editorial');
     TestHarness::assertContains("'metadata_completed' => true", $worker, 'publicar registra que el paquete SEO español fue completado');
     TestHarness::assertContains("\$action === 'publish'", $worker, 'Studio Notes ejecuta análisis, adaptación y publicación desde una sola decisión');
+    $boardConstruction = strpos($worker, '$websiteBoard = new WebsiteBoardService($this->pdo);');
+    $publicationTransaction = strpos($worker, '$ownsTransaction = !$this->pdo->inTransaction();', (int)$boardConstruction);
+    TestHarness::assertTrue(
+        $boardConstruction !== false
+            && $publicationTransaction !== false
+            && $boardConstruction < $publicationTransaction,
+        'la verificación DDL de WebsiteBoardService ocurre antes de abrir la transacción bilingüe'
+    );
     TestHarness::assertContains('syncHistoricalJobs', $worker, 'al completar el trabajo el resultado se incorpora a la mesa editorial');
     TestHarness::assertContains("'applied_to_editor' => true", $worker, 'la adaptación explícita actualiza el editor inglés al terminar');
 }
