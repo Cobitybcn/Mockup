@@ -1986,8 +1986,8 @@ function render_published_mockup(array $site, array $artwork, array $mockup): vo
                 <div class="prose"><h2><?= e(site_t('Context references', 'Referencias de contexto')) ?></h2><p><?= e(str_replace(',', ' · ', (string)$mockup['keywords'])) ?></p></div>
             <?php endif; ?>
             <div class="prose">
-                <h2><?= e(site_t('Collector note', 'Nota para coleccionistas')) ?></h2>
-                <p><?= e(site_t('This visualization presents the artwork at its declared physical scale in an architectural context. The original work remains the authority for color, surface, dimensions and material presence.', 'Esta visualización presenta la obra a su escala física declarada dentro de un contexto arquitectónico. La obra original conserva la autoridad sobre el color, la superficie, las dimensiones y la presencia material.')) ?></p>
+                <h2><?= e(site_t('About this visualization', 'Sobre esta visualización')) ?></h2>
+                <p><?= e(site_t('This visualization places the artwork within an architectural context to help collectors and viewers imagine its presence in a real space. It is an interpretive reference, not an exact reproduction: the original work remains the sole authority for scale, color, surface and material presence.', 'Esta visualización sitúa la obra dentro de un contexto arquitectónico para ayudar a coleccionistas y público a imaginar su presencia en un espacio real. Es una referencia interpretativa, no una reproducción exacta: la obra original es la única autoridad sobre la escala, el color, la superficie y la presencia material.')) ?></p>
             </div>
             <?php if ($storeOffer && !empty($storeOffer['is_purchasable'])): ?>
                 <aside class="store-offer" aria-label="<?= e(site_t('Acquisition information', 'Información de compra')) ?>">
