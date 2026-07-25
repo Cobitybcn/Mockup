@@ -181,7 +181,8 @@ final class AppPublishedStudioNotes
     {
         return stripos($html, 'data:image/jpeg;base64,') !== false
             || stripos($html, 'data:image/png;base64,') !== false
-            || stripos($html, 'data:image/webp;base64,') !== false;
+            || stripos($html, 'data:image/webp;base64,') !== false
+            || stripos($html, 'data:application/octet-stream;base64,') !== false;
     }
 
     private function slug(string $title): string

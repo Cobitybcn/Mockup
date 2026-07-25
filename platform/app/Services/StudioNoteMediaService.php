@@ -161,7 +161,10 @@ final class StudioNoteMediaService
             [$valueStart, $valueEnd] = $range;
             $source = html_entity_decode(substr($html, $valueStart, $valueEnd - $valueStart), ENT_QUOTES | ENT_HTML5, 'UTF-8');
             $mediaItem = null;
-            if (preg_match('~^data:image/(?:jpeg|png|webp);base64,~i', $source) === 1) {
+            if (preg_match(
+                '~^data:(?:image/(?:jpeg|png|webp)|application/octet-stream);base64,~i',
+                $source
+            ) === 1) {
                 $mediaItem = self::persistDataImage($userId, $noteId, $source);
             } else {
                 $file = self::fileFromUrl($source);
@@ -228,7 +231,11 @@ final class StudioNoteMediaService
         $comma = strpos($uri, ',');
         if ($comma === false) throw new RuntimeException('La imagen insertada no tiene un formato válido.');
         $prefix = strtolower(substr($uri, 0, $comma));
-        if (preg_match('~^data:image/(jpeg|png|webp);base64$~', $prefix, $match) !== 1) {
+        if (preg_match(
+            '~^data:(image/(?:jpeg|png|webp)|application/octet-stream);base64$~',
+            $prefix,
+            $match
+        ) !== 1) {
             throw new RuntimeException('Studio Notes solo admite imágenes JPEG, PNG o WebP.');
         }
         $encoded = preg_replace('/\s+/', '', substr($uri, $comma + 1)) ?? '';
@@ -236,10 +243,14 @@ final class StudioNoteMediaService
         if (!is_string($bytes) || $bytes === '' || strlen($bytes) > self::MAX_IMAGE_BYTES) {
             throw new RuntimeException('La imagen insertada está dañada o supera el límite de 12 MB.');
         }
-        $mime = 'image/' . strtolower((string)$match[1]);
         $info = @getimagesizefromstring($bytes);
-        if (!is_array($info) || (string)($info['mime'] ?? '') !== $mime) {
+        $mime = is_array($info) ? strtolower((string)($info['mime'] ?? '')) : '';
+        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
             throw new RuntimeException('No se pudo validar la imagen insertada.');
+        }
+        $declaredMime = strtolower((string)$match[1]);
+        if ($declaredMime !== 'application/octet-stream' && $declaredMime !== $mime) {
+            throw new RuntimeException('La imagen insertada no coincide con su tipo declarado.');
         }
 
         $extension = $mime === 'image/jpeg' ? 'jpg' : substr($mime, 6);

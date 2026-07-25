@@ -19,6 +19,14 @@ $legacyImage = StudioNoteEmbeddedImage::decodeFirst($html);
 studio_note_media_assert(StudioNoteEmbeddedImage::has($html), 'legacy embedded image is detected');
 studio_note_media_assert(is_array($legacyImage) && ($legacyImage['mime'] ?? '') === 'image/png', 'legacy embedded image is decoded with its verified MIME type');
 studio_note_media_assert(is_array($legacyImage) && getimagesizefromstring((string)($legacyImage['bytes'] ?? '')) !== false, 'legacy embedded image bytes remain a valid image');
+$genericHtml = '<p><img src="data:application/octet-stream;base64,' . $png . '" alt="Dropped image"></p>';
+$genericImage = StudioNoteEmbeddedImage::decodeFirst($genericHtml);
+studio_note_media_assert(
+    StudioNoteEmbeddedImage::has($genericHtml)
+        && is_array($genericImage)
+        && ($genericImage['mime'] ?? '') === 'image/png',
+    'dragged images with a generic browser MIME are detected by their verified bytes'
+);
 
 $normalized = StudioNoteMediaService::normalize(24680, 987654, $html, [
     'channels' => ['website_blog'],
@@ -39,6 +47,15 @@ studio_note_media_assert(
         'studio_note_media.php?note=987654&amp;file=' . rawurlencode($file) . '&amp;w=1200'
     ),
     'the editor and public website share the note-scoped media URL'
+);
+$normalizedGeneric = StudioNoteMediaService::normalize(24680, 987654, $genericHtml, [
+    'channels' => ['website_blog'],
+    'media' => [],
+], []);
+studio_note_media_assert(
+    !str_contains((string)$normalizedGeneric['html'], 'application/octet-stream')
+        && count((array)$normalizedGeneric['payload']['media']) === 1,
+    'a dragged generic data URI is persisted instead of remaining inside the editorial document'
 );
 
 $protected = StudioNoteMediaService::protectImagesForAdaptation($normalized['html']);

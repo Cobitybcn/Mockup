@@ -1031,40 +1031,67 @@ $initialSourceType = $requestedSourceKey !== ''
 
                     quill.root.querySelectorAll('img').forEach(prepareImage);
 
+                    var imageUploadQueue = Promise.resolve();
+
+                    function persistSpanishImage(file) {
+                        var data = new FormData();
+                        data.append('csrf', formCsrf.value);
+                        data.append('note_id', String(noteId));
+                        data.append('image', file);
+                        return fetch('studio_note_inline_upload.php', {
+                            method: 'POST',
+                            body: data,
+                            headers: {'Accept': 'application/json'}
+                        })
+                            .then(function(response) { return response.json(); })
+                            .then(function(result) {
+                                if (!result.ok || !result.url) {
+                                    throw new Error(result.error || 'No se pudo guardar la imagen.');
+                                }
+                                return result.url;
+                            });
+                    }
+
+                    function insertSpanishImages(files) {
+                        files = Array.prototype.slice.call(files || []).filter(function(file) {
+                            return file && (
+                                String(file.type || '').indexOf('image/') === 0
+                                || file.type === 'application/octet-stream'
+                                || file.type === ''
+                            );
+                        });
+                        if (!files.length || !formCsrf || !noteId) return imageUploadQueue;
+                        var range = quillEs.getSelection(true) || {index: Math.max(0, quillEs.getLength() - 1)};
+                        var insertAt = range.index;
+                        quillEs.enable(false);
+                        imageUploadQueue = imageUploadQueue.then(function() {
+                            return files.reduce(function(chain, file) {
+                                return chain.then(function() {
+                                    return persistSpanishImage(file).then(function(url) {
+                                        quillEs.insertEmbed(insertAt, 'image', url, 'user');
+                                        insertAt += 1;
+                                    });
+                                });
+                            }, Promise.resolve());
+                        }).then(function() {
+                            quillEs.setSelection(insertAt, 0, 'silent');
+                            quillEs.root.querySelectorAll('img').forEach(prepareImage);
+                        }).catch(function(error) {
+                            window.alert(error.message || 'No se pudo guardar la imagen.');
+                        }).finally(function() {
+                            quillEs.enable(true);
+                            quillEs.focus();
+                        });
+                        return imageUploadQueue;
+                    }
+
                     function uploadSpanishImage() {
                         var input = document.createElement('input');
                         input.type = 'file';
                         input.accept = 'image/jpeg,image/png,image/webp';
                         input.addEventListener('change', function() {
                             var file = input.files && input.files[0];
-                            if (!file || !formCsrf || !noteId) return;
-                            var data = new FormData();
-                            data.append('csrf', formCsrf.value);
-                            data.append('note_id', String(noteId));
-                            data.append('image', file);
-                            var range = quillEs.getSelection(true);
-                            quillEs.enable(false);
-                            fetch('studio_note_inline_upload.php', {
-                                method: 'POST',
-                                body: data,
-                                headers: {'Accept': 'application/json'}
-                            })
-                                .then(function(response) { return response.json(); })
-                                .then(function(result) {
-                                    if (!result.ok || !result.url) {
-                                        throw new Error(result.error || 'No se pudo guardar la imagen.');
-                                    }
-                                    quillEs.insertEmbed(range.index, 'image', result.url, 'user');
-                                    quillEs.setSelection(range.index + 1, 0, 'silent');
-                                    quillEs.root.querySelectorAll('img').forEach(prepareImage);
-                                })
-                                .catch(function(error) {
-                                    window.alert(error.message || 'No se pudo guardar la imagen.');
-                                })
-                                .finally(function() {
-                                    quillEs.enable(true);
-                                    quillEs.focus();
-                                });
+                            if (file) insertSpanishImages([file]);
                         });
                         input.click();
                     }
@@ -1077,6 +1104,18 @@ $initialSourceType = $requestedSourceKey !== ''
                             window.alert('Las imágenes pertenecen al original español y se reflejan automáticamente en inglés.');
                         });
                     }
+                    quillEs.root.addEventListener('drop', function(event) {
+                        var files = event.dataTransfer ? event.dataTransfer.files : null;
+                        if (!files || !files.length) return;
+                        event.preventDefault();
+                        insertSpanishImages(files);
+                    });
+                    quillEs.root.addEventListener('paste', function(event) {
+                        var files = event.clipboardData ? event.clipboardData.files : null;
+                        if (!files || !files.length) return;
+                        event.preventDefault();
+                        insertSpanishImages(files);
+                    });
 
                     if (imageTools) {
                         imageTools.addEventListener('click', function(event) {
@@ -1103,8 +1142,19 @@ $initialSourceType = $requestedSourceKey !== ''
                         } else selectImage(null);
                     });
                     
+                    var queuedSubmitAllowed = false;
                     if (form) {
-                        form.addEventListener('submit', function() {
+                        form.addEventListener('submit', function(event) {
+                            if (!queuedSubmitAllowed) {
+                                event.preventDefault();
+                                var submitter = event.submitter || null;
+                                imageUploadQueue.then(function() {
+                                    queuedSubmitAllowed = true;
+                                    form.requestSubmit(submitter);
+                                }).catch(function() {});
+                                return;
+                            }
+                            queuedSubmitAllowed = false;
                             document.getElementById('body-input-es').value = quillEs.root.innerHTML;
                             document.getElementById('body-input-en').value = quillEn.root.innerHTML;
                         });
