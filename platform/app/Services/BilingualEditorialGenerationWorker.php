@@ -91,6 +91,14 @@ final class BilingualEditorialGenerationWorker
                 $targetContent = is_array($payload['current_english'] ?? null)
                     ? (array)$payload['current_english']
                     : [];
+                if ($sourceContent !== []) {
+                    $sourceContent = $adapter->completeStudioNoteMetadata(
+                        $userId,
+                        $entityId,
+                        $sourceContent
+                    );
+                    $editorial->save($userId, $entityType, $entityId, 'es', $sourceContent);
+                }
                 $english = $sourceContent !== []
                     ? $adapter->proposeAdaptationFromContent(
                         $userId,
@@ -115,8 +123,10 @@ final class BilingualEditorialGenerationWorker
                     $englishContent
                 );
                 $result = [
+                    'spanish_content' => $sourceContent,
                     'english_content' => $englishContent,
                     'english_status' => (string)($englishState['status'] ?? 'current'),
+                    'metadata_completed' => true,
                     'applied_to_editor' => true,
                 ];
             } else {

@@ -102,6 +102,8 @@ function run_studio_note_workspace_tests(): void
 
     $worker = (string)file_get_contents(dirname(__DIR__, 2) . '/app/Services/BilingualEditorialGenerationWorker.php');
     TestHarness::assertContains("'proposal_only' => true", $worker, 'el worker marca Studio Notes como propuesta sin guardado automático');
+    TestHarness::assertContains('completeStudioNoteMetadata', $worker, 'la flecha completa primero los metadatos españoles desde el análisis editorial');
+    TestHarness::assertContains("'metadata_completed' => true", $worker, 'la adaptación registra que el paquete SEO español fue completado');
     TestHarness::assertContains('syncHistoricalJobs', $worker, 'al completar el trabajo el resultado se incorpora a la mesa editorial');
     TestHarness::assertContains("'applied_to_editor' => true", $worker, 'la adaptación explícita actualiza el editor inglés al terminar');
 }

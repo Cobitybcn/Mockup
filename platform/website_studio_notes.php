@@ -748,7 +748,7 @@ $initialSourceType = $requestedSourceKey !== ''
 
                                     <div class="studio-translation-control">
                                         <button class="studio-translation-arrow" name="action" value="prepare_english" type="submit"
-                                                aria-label="Adaptar el español al inglés" title="Adaptar al inglés"
+                                                aria-label="Analizar la nota y adaptar al inglés" title="Analizar metadatos y adaptar al inglés"
                                                 <?= $englishAdaptationActive ? 'disabled' : '' ?>>
                                             <svg viewBox="0 0 24 24" aria-hidden="true">
                                                 <path d="M5 12h13M14 7l5 5-5 5"></path>

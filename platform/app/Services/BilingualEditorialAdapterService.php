@@ -224,8 +224,7 @@ final class BilingualEditorialAdapterService
             $privateMemoOverride ?? (string)$spanish['private_memo']
         );
         $parts = [$this->client->textPart($prompt)];
-        $imagePath = $this->entityImagePath($userId, $entityType, $entityId);
-        if ($imagePath !== '') {
+        foreach ($this->entityImagePaths($userId, $entityType, $entityId) as $imagePath) {
             $parts[] = $this->client->imagePart($imagePath);
         }
 
@@ -335,6 +334,31 @@ final class BilingualEditorialAdapterService
             'source_locale' => 'es',
             'target_locale' => 'en',
         ];
+    }
+
+    /**
+     * Analyzes the artist's finished Spanish note and fills only its missing
+     * editorial metadata. The written title, body, links and image placement
+     * remain the artist's exact source of truth.
+     */
+    public function completeStudioNoteMetadata(
+        int $userId,
+        int $entityId,
+        array $sourceContent
+    ): array {
+        $generated = $this->generateSpanishDraft(
+            $userId,
+            'studio_note',
+            $entityId,
+            $sourceContent
+        );
+        $analysis = (array)($generated['content'] ?? []);
+        foreach (['excerpt', 'slug', 'seo_title', 'seo_description', 'alt_text', 'search_terms'] as $field) {
+            if (trim((string)($sourceContent[$field] ?? '')) === '') {
+                $sourceContent[$field] = trim((string)($analysis[$field] ?? ''));
+            }
+        }
+        return $sourceContent;
     }
 
     private function prompt(
@@ -884,20 +908,39 @@ RULES;
         return $row;
     }
 
-    private function entityImagePath(int $userId, string $entityType, int $entityId): string
+    /** @return list<string> */
+    private function entityImagePaths(int $userId, string $entityType, int $entityId): array
     {
-        if (in_array($entityType, ['series', 'studio_note'], true)) return '';
-        $stmt = $entityType === 'artwork'
-            ? $this->pdo->prepare('SELECT COALESCE(NULLIF(root_file,\'\'),main_file) FROM artworks WHERE id=? AND user_id=? LIMIT 1')
-            : $this->pdo->prepare('SELECT mockup_file FROM mockups WHERE id=? AND user_id=? LIMIT 1');
-        $stmt->execute([$entityId, $userId]);
-        $file = basename(trim((string)$stmt->fetchColumn()));
-        if ($file === '' || !defined('RESULTS_DIR')) return '';
-        $path = RESULTS_DIR . DIRECTORY_SEPARATOR . $file;
-        if (!is_file($path) && StorageService::isGcsActive()) {
-            StorageService::downloadFile('results/' . $file, $path);
+        if ($entityType === 'series' || !defined('RESULTS_DIR')) return [];
+        $files = [];
+        if ($entityType === 'studio_note') {
+            $stmt = $this->pdo->prepare("SELECT payload_json FROM social_campaigns
+                WHERE id=? AND user_id=? AND campaign_type='website_blog' LIMIT 1");
+            $stmt->execute([$entityId, $userId]);
+            $payload = json_decode((string)$stmt->fetchColumn(), true);
+            foreach ((array)($payload['media'] ?? []) as $media) {
+                if (!is_array($media)) continue;
+                $file = basename(trim((string)($media['file'] ?? '')));
+                if ($file !== '' && !in_array($file, $files, true)) $files[] = $file;
+                if (count($files) >= 6) break;
+            }
+        } else {
+            $stmt = $entityType === 'artwork'
+                ? $this->pdo->prepare('SELECT COALESCE(NULLIF(root_file,\'\'),main_file) FROM artworks WHERE id=? AND user_id=? LIMIT 1')
+                : $this->pdo->prepare('SELECT mockup_file FROM mockups WHERE id=? AND user_id=? LIMIT 1');
+            $stmt->execute([$entityId, $userId]);
+            $file = basename(trim((string)$stmt->fetchColumn()));
+            if ($file !== '') $files[] = $file;
         }
-        return is_file($path) ? $path : '';
+        $paths = [];
+        foreach ($files as $file) {
+            $path = RESULTS_DIR . DIRECTORY_SEPARATOR . $file;
+            if (!is_file($path) && StorageService::isGcsActive()) {
+                StorageService::downloadFile('results/' . $file, $path);
+            }
+            if (is_file($path)) $paths[] = $path;
+        }
+        return $paths;
     }
 
     private function decodeJson(string $raw): array

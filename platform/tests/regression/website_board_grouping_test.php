@@ -117,6 +117,9 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertContains('grid-template-columns:minmax(0,1fr) 54px minmax(0,1fr)', $studioNotesPage, 'los dos idiomas permanecen lado a lado con el mismo ancho');
     TestHarness::assertContains('class="studio-translation-arrow"', $studioNotesPage, 'la adaptación usa una única flecha central');
     TestHarness::assertContains('<path d="M5 12h13M14 7l5 5-5 5"></path>', $studioNotesPage, 'la flecha de adaptación usa un icono vectorial alineado');
+    TestHarness::assertContains('padding-top:190px', $studioNotesPage, 'la flecha queda dentro del tercio superior de las superficies de escritura');
+    TestHarness::assertContains('min-height:27px', $studioNotesPage, 'las cabeceras bilingües alinean el inicio de ambos editores');
+    TestHarness::assertContains('studio-note-actions__secondary', $studioNotesPage, 'retirar y eliminar se presentan juntos como acciones secundarias');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'Mesa editorial'), 'el borrador elimina la mesa editorial lateral');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'Ideas y fragmentos'), 'el borrador elimina el board de ideas que ocupaba espacio');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'Adaptar desde el español — no traducir literalmente'), 'la flecha sustituye el botón largo redundante');
