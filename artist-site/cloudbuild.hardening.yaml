@@ -99,8 +99,8 @@ steps:
           --region="${_REGION}" \
           --platform=managed \
           --image="$$image@$$digest" \
-          --update-env-vars="APP_ENV=production,APP_RELEASE_COMMIT=$COMMIT_SHA,ARTIST_ADMIN_URL=${_ADMIN_URL}" \
-          --update-secrets="STRIPE_CREDENTIALS_KEY=${_STRIPE_CREDENTIALS_KEY_SECRET}:latest" \
+          --update-env-vars="APP_ENV=production,APP_RELEASE_COMMIT=$COMMIT_SHA,ARTIST_ADMIN_URL=${_ADMIN_URL},SMTP_HOST=smtp.gmail.com,SMTP_PORT=587,SMTP_ENCRYPTION=tls,SMTP_USERNAME=${_CONTACT_SENDER},CONTACT_FROM_EMAIL=${_CONTACT_SENDER},CONTACT_RECIPIENT_EMAIL=${_CONTACT_RECIPIENT}" \
+          --update-secrets="STRIPE_CREDENTIALS_KEY=${_STRIPE_CREDENTIALS_KEY_SECRET}:latest,SMTP_PASSWORD=${_SMTP_PASSWORD_SECRET}:latest" \
           --revision-suffix="cb-$SHORT_SHA-$$build_short" \
           --no-traffic \
           --quiet
@@ -183,6 +183,10 @@ substitutions:
   _SERVICE: mockups-artist-site
   _RUNTIME_SA: artist-site-sa
   _ADMIN_URL: https://artworkmockups.com/site-admin
+  # Contact form email transport (Gmail SMTP). Password lives in Secret Manager.
+  _CONTACT_SENDER: mauriziovalch@gmail.com
+  _CONTACT_RECIPIENT: mauriziovalch@gmail.com
+  _SMTP_PASSWORD_SECRET: mockups-artist-smtp-password
   _STRIPE_CREDENTIALS_KEY_SECRET: mockups-stripe-credentials-key
 
 options:
