@@ -17,7 +17,7 @@
     } catch (error) {
         boardConfig = {};
     }
-    const configuredDestinations = {
+    let configuredDestinations = {
         website: String(boardConfig?.destinations?.website || ''),
         saatchi: String(boardConfig?.destinations?.saatchi || ''),
     };
@@ -629,6 +629,80 @@
         document.body.classList.remove('smb-confirm-open');
     };
 
+    const clearAcceptedPublications = (jobs = []) => {
+        const accepted = { pinterest: new Set(), instagram: new Set(), facebook: new Set() };
+        jobs.forEach((job) => {
+            const platform = String(job?.channel || '');
+            const clientKey = String(job?.client_key || '');
+            if (accepted[platform] && clientKey) accepted[platform].add(clientKey);
+        });
+
+        state.pinterest = state.pinterest.filter((id) => {
+            const remove = accepted.pinterest.has(`pinterest-${id}`);
+            if (remove) delete state.pinData[String(id)];
+            return !remove;
+        });
+        publicationPlatforms.forEach((platform) => {
+            state.publications[platform] = state.publications[platform]
+                .filter((group) => !accepted[platform].has(String(group.id)));
+        });
+        saveState();
+    };
+
+    const saveDefaultDestinations = async (button) => {
+        const websiteInput = document.querySelector('[data-default-destination="website"]');
+        const saatchiInput = document.querySelector('[data-default-destination="saatchi"]');
+        if (!websiteInput || !saatchiInput) return;
+        const next = {
+            website: String(websiteInput.value || '').trim(),
+            saatchi: String(saatchiInput.value || '').trim(),
+        };
+        if (!isPublicHttpsUrl(next.website) || !isPublicHttpsUrl(next.saatchi)) {
+            showToast('Both default links must use a public HTTPS URL.');
+            return;
+        }
+
+        const previous = { ...configuredDestinations };
+        button.disabled = true;
+        try {
+            const response = await fetch('social_media_destinations.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify({ csrf: String(boardConfig.csrf || ''), ...next }),
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.ok) throw new Error(result.error || 'The default links could not be saved.');
+            configuredDestinations = {
+                website: String(result.destinations?.website || next.website),
+                saatchi: String(result.destinations?.saatchi || next.saatchi),
+            };
+            Object.values(state.pinData).forEach((pin) => {
+                const destination = pin?.destination === 'saatchi' ? 'saatchi' : 'website';
+                if (!pin.destinationUrl || pin.destinationUrl === previous[destination]) {
+                    pin.destinationUrl = configuredDestinations[destination];
+                }
+            });
+            publicationPlatforms.forEach((platform) => {
+                state.publications[platform].forEach((group) => {
+                    const destination = group.link === 'saatchi' ? 'saatchi' : 'website';
+                    if (!group.linkUrl || group.linkUrl === previous[destination]) {
+                        group.linkUrl = configuredDestinations[destination];
+                    }
+                });
+            });
+            websiteInput.value = configuredDestinations.website;
+            saatchiInput.value = configuredDestinations.saatchi;
+            saveState();
+            renderAll();
+            showToast(result.message || 'Default destination links saved.');
+        } catch (error) {
+            showToast(error.message || 'The default links could not be saved.', 0);
+        } finally {
+            button.disabled = false;
+        }
+    };
+
     const openPublishConfirmation = (payload) => {
         const backdrop = document.querySelector('[data-confirm-backdrop]');
         const summary = document.querySelector('[data-confirm-summary]');
@@ -691,9 +765,13 @@
                 const key = String(job.client_key || '');
                 if (networkPlatforms.includes(platform) && key) state.scheduled[platform][key] = job;
             });
+            clearAcceptedPublications(result.jobs || []);
             closePublishConfirmation();
             renderAll();
-            showToast(result.message || (isNow ? `${result.publication_count} publications entered the queue.` : `${result.publication_count} publications scheduled.`), 8000);
+            showToast(
+                `${result.message || (isNow ? `${result.publication_count} publications entered the queue.` : `${result.publication_count} publications scheduled.`)} The board is ready for new work.`,
+                8000
+            );
             await loadScheduledJobs(true);
         } catch (error) {
             closePublishConfirmation();
@@ -1301,6 +1379,20 @@
             const backdrop = document.querySelector('[data-schedule-backdrop]');
             if (backdrop) backdrop.hidden = false;
             document.body.classList.add('smb-confirm-open');
+            return;
+        }
+        const destinationToggle = event.target.closest('[data-toggle-destinations]');
+        if (destinationToggle) {
+            const panel = document.querySelector('[data-destinations-panel]');
+            const expanded = destinationToggle.getAttribute('aria-expanded') === 'true';
+            destinationToggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+            destinationToggle.textContent = expanded ? 'Default links' : 'Hide default links';
+            if (panel) panel.hidden = expanded;
+            return;
+        }
+        const saveDestinations = event.target.closest('[data-save-destinations]');
+        if (saveDestinations) {
+            await saveDefaultDestinations(saveDestinations);
             return;
         }
         if (event.target.closest('[data-submit-publish]')) {

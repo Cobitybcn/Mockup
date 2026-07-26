@@ -65,6 +65,7 @@ require_once __DIR__ . '/Services/BilingualEditorialService.php';
 require_once __DIR__ . '/Services/BilingualEditorialJobService.php';
 require_once __DIR__ . '/Services/SeriesKeywordResearchService.php';
 require_once __DIR__ . '/Services/MockupSocialContentService.php';
+require_once __DIR__ . '/Services/SocialBoardDestinationSettings.php';
 require_once __DIR__ . '/Services/MockupPinterestDraftService.php';
 require_once __DIR__ . '/Services/MetaSocialDraftService.php';
 require_once __DIR__ . '/Services/MetaIntegrationService.php';

@@ -35,6 +35,7 @@ if ($isAdmin) {
 }
 $pinterestEnvironment = $pinterestEnvironments[$defaultPinterestPurpose] ?? 'production';
 $pinterestSandbox = $pinterestEnvironment === 'sandbox';
+$socialDestinations = (new SocialBoardDestinationSettings($pdo))->forUser($userId);
 $socialBoardConfig = [
     'csrf' => (string)$_SESSION['social_media_board_csrf'],
     'pinterest' => [
@@ -43,10 +44,7 @@ $socialBoardConfig = [
         'environment' => $pinterestEnvironment,
         'environments' => $pinterestEnvironments,
     ],
-    'destinations' => [
-        'website' => rtrim(app_env('ARTIST_WEBSITE_CATALOG_URL', 'https://mauriziovalch.com/artworks'), '/'),
-        'saatchi' => rtrim(app_env('SAATCHI_ARTIST_URL', 'https://www.saatchiart.com/mauriziovalch'), '/'),
-    ],
+    'destinations' => $socialDestinations,
 ];
 $favoriteIds = MockupFavorites::idsForUser($userId);
 $favoriteLookup = array_fill_keys($favoriteIds, true);
@@ -243,7 +241,7 @@ foreach ($mockups as $mockup) {
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Social Media Board - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="social_media_board.css?v=23">
+    <link rel="stylesheet" href="social_media_board.css?v=24">
     <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body data-social-board-user="<?= $userId ?>">
@@ -282,9 +280,23 @@ foreach ($mockups as $mockup) {
                     <div class="smb-publish-controls" aria-label="Publishing controls">
                         <button type="button" class="smb-confirm" data-confirm-schedule data-publish-now data-delivery-mode="now"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 3-7.6 18-3.2-7.2L3 10.6 21 3Z"/><path d="m10.2 13.8 4.2-4.2"/></svg><span>Publish now</span></button>
                         <button type="button" class="smb-schedule-open" data-open-schedule>Schedule</button>
+                        <button type="button" class="smb-destinations-open" data-toggle-destinations aria-expanded="false">Default links</button>
                     </div>
                     <button class="smb-focus-exit" type="button" data-exit-network-focus>Overview</button>
                 </div>
+
+                <section class="smb-destinations" data-destinations-panel hidden aria-labelledby="smb-destinations-title">
+                    <div class="smb-destinations-copy">
+                        <span>Publication destinations</span>
+                        <h3 id="smb-destinations-title">Default links</h3>
+                        <p>New publications start with these links. You can still replace the exact URL inside an individual publication.</p>
+                    </div>
+                    <div class="smb-destinations-fields">
+                        <label><span>Website</span><input type="url" data-default-destination="website" value="<?= smb_h($socialDestinations['website']) ?>" placeholder="https://…" autocomplete="url"></label>
+                        <label><span>Saatchi Art</span><input type="url" data-default-destination="saatchi" value="<?= smb_h($socialDestinations['saatchi']) ?>" placeholder="https://…" autocomplete="url"></label>
+                        <button type="button" data-save-destinations>Save defaults</button>
+                    </div>
+                </section>
 
                 <div class="smb-catalog-rail-wrap">
                     <button class="smb-rail-arrow smb-rail-arrow--left" type="button" data-scroll-catalog="-1" aria-label="Previous mockups">‹</button>
@@ -423,6 +435,6 @@ foreach ($mockups as $mockup) {
 <script type="application/json" id="social-board-mockups"><?= json_encode($mockupPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <script type="application/json" id="social-board-config"><?= json_encode($socialBoardConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?></script>
 <script src="assets/vendor/sortablejs/Sortable.min.js?v=1.15.7"></script>
-<script src="social_media_board.js?v=23"></script>
+<script src="social_media_board.js?v=24"></script>
 </body>
 </html>

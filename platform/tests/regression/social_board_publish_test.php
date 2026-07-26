@@ -172,6 +172,8 @@ $worker = (string)file_get_contents(__DIR__ . '/../../social_publish_worker.php'
 $workerDockerfile = (string)file_get_contents(__DIR__ . '/../../Dockerfile.worker');
 if (!str_contains($boardJs, "fetch('social_media_schedule.php'")
     || !str_contains($boardJs, "fetch('social_media_scheduled_jobs.php'")
+    || !str_contains($boardJs, "fetch('social_media_destinations.php'")
+    || !str_contains($boardJs, 'clearAcceptedPublications(result.jobs || [])')
     || !str_contains($boardJs, "data-scheduled-action=\"publish_now\"")
     || !str_contains($boardJs, "data-scheduled-action=\"retry\"")
     || !str_contains($boardJs, "mode: 'now'")
@@ -190,6 +192,8 @@ $boardService = (string)file_get_contents(__DIR__ . '/../../app/Services/SocialB
 $boardsEndpoint = (string)file_get_contents(__DIR__ . '/../../social_media_pinterest_boards.php');
 if (!str_contains($boardController, "['platform', 'artist']")
     || !str_contains($boardController, 'data-delivery-mode="now"')
+    || !str_contains($boardController, 'data-toggle-destinations')
+    || !str_contains($boardController, 'data-default-destination="website"')
     || !str_contains($boardService, 'pinterestPurpose')
     || !str_contains($boardService, '$drafts->create($mockupId, $user, $purpose')
     || !str_contains($boardsEndpoint, "\$_GET['purpose']")) {
