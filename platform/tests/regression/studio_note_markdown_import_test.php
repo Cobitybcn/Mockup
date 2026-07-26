@@ -144,6 +144,17 @@ The surface preserves what has passed through it. [View the series](https://exam
 MD;
 
     $service = new StudioNoteMarkdownImportService($pdo);
+    $withoutCreatedAt = str_replace(
+        'created_at: "2026-07-26T14:30:00-03:00"' . "\n",
+        '',
+        $markdown
+    );
+    $defaultedPackage = $service->parse($withoutCreatedAt);
+    TestHarness::assertTrue(
+        trim((string)$defaultedPackage['manifest']['created_at']) !== '',
+        'created_at ausente se completa con la fecha de importación'
+    );
+
     $imported = $service->importString(70, $markdown, 'la-piel-del-territorio.md');
     TestHarness::assertTrue((int)$imported['id'] > 0, 'la importación crea un borrador nuevo');
     TestHarness::assertTrue($imported['no_ai'] === true, 'el resultado declara explícitamente que no ejecutó IA');

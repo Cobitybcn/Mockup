@@ -385,12 +385,15 @@ final class StudioNoteMarkdownImportService
         }
 
         $dateValue = trim((string)($manifest['created_at'] ?? ''));
-        try {
-            $createdAt = new DateTimeImmutable($dateValue);
-        } catch (Throwable) {
-            throw new RuntimeException('created_at debe contener una fecha ISO 8601 válida.');
+        if ($dateValue === '') {
+            $createdAt = new DateTimeImmutable('now');
+        } else {
+            try {
+                $createdAt = new DateTimeImmutable($dateValue);
+            } catch (Throwable) {
+                throw new RuntimeException('created_at debe contener una fecha ISO 8601 válida.');
+            }
         }
-        if ($dateValue === '') throw new RuntimeException('created_at es obligatorio.');
 
         $localized = [];
         foreach (self::LOCALES as $locale) {
