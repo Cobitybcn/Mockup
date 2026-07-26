@@ -2442,7 +2442,7 @@ function render_published_journal(array $notes): void
             <article>
                 <?php if ($thumbUrl !== ''): ?>
                     <a class="article-thumb" href="<?= e(url_for('studio-notes/' . $slug)) ?>">
-                        <img src="<?= e($thumbUrl) ?>" <?= $thumbSrcset !== '' ? 'srcset="' . e($thumbSrcset) . '" sizes="(max-width: 940px) calc(100vw - 72px), 33vw"' : '' ?>
+                        <img src="<?= e($thumbUrl) ?>" <?= $thumbSrcset !== '' ? 'srcset="' . e($thumbSrcset) . '" sizes="(max-width: 560px) calc(100vw - 72px), (max-width: 1180px) 50vw, 25vw"' : '' ?>
                             alt="<?= e((string)($thumbMetadata['alt_text'] ?? '') ?: ((string)($post['alt_text'] ?? '') ?: $post['title'])) ?>" loading="lazy" decoding="async">
                     </a>
                 <?php endif; ?>

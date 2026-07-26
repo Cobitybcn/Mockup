@@ -31,6 +31,8 @@ $checks = [
     [str_contains($site, '$externalMediaFiles = array_values(array_diff($noteMediaFiles, $bodyMediaFiles))'), 'Studio Notes keeps inline images in the article and reserves only unattached media for cover or context'],
     [str_contains($site, 'foreach (array_slice($externalMediaFiles, 1) as $mockupFile)'), 'the context gallery never pulls images out of the written body'],
     [str_contains($site, 'app_studio_note_embedded_image_url') && is_file($platform . '/studio_note_embedded_image.php'), 'legacy embedded Studio Note images have a safe public compatibility path'],
+    [str_contains($styles, '.journal .article-list') && str_contains($styles, 'grid-template-columns: repeat(4, minmax(0, 1fr));'), 'Studio Notes uses four editorial columns on desktop'],
+    [str_contains($site, '(max-width: 1180px) 50vw, 25vw'), 'Studio Notes requests responsive thumbnails for its four-column layout'],
 ];
 
 foreach ($checks as [$passed, $message]) {
