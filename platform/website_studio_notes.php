@@ -217,6 +217,19 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 }
             }
             $spanish['body_html'] = $websiteBoard->normalizeNoteBody($userId, $id, (string)$spanish['body_html']);
+            $submissionSources = $draftId === $id && $studioSources !== []
+                ? $studioSources
+                : $websiteBoard->sources($userId);
+            $spanish = StudioNoteMediaService::hydrateImageMetadata(
+                $spanish,
+                $submissionSources,
+                'es'
+            );
+            $english = StudioNoteMediaService::hydrateImageMetadata(
+                $english,
+                $submissionSources,
+                'en'
+            );
             $editorial->save($userId, 'studio_note', $id, 'es', $spanish);
             if (wsn_has_content($english)) {
                 $editorial->save($userId, 'studio_note', $id, 'en', $english);
