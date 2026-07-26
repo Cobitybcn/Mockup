@@ -1901,6 +1901,20 @@ function render_published_artwork_video(array $site, array $artwork): void
     $medium = trim((string)($artwork['medium'] ?: ($facts['medium'] ?? '')));
     $year = trim((string)($artwork['artwork_year'] ?: ($facts['year'] ?? '')));
     $conceptualNote = trim((string)($artwork['description'] ?? ''));
+    if ($conceptualNote === '') {
+        $conceptualNote = published_excerpt([
+            $artwork['short_description'] ?? '',
+            $artwork['seo_description'] ?? '',
+            $artwork['artwork_metadata']['seo_description'] ?? '',
+        ], 420);
+    }
+    $seriesContext = $series
+        ? published_excerpt([
+            $series['seo_description'] ?? '',
+            $series['description'] ?? '',
+            $series['long_description'] ?? '',
+        ], 320)
+        : '';
     $mockups = array_values(array_filter(
         (array)($artwork['items'] ?? []),
         static fn(array $mockup): bool => !empty($mockup['public_slug'])
@@ -1979,6 +1993,13 @@ function render_published_artwork_video(array $site, array $artwork): void
                 <div class="prose">
                     <h2><?= e(site_t('Conceptual Note', 'Nota conceptual')) ?></h2>
                     <p><?= nl2br(e($conceptualNote)) ?></p>
+                </div>
+            <?php endif; ?>
+            <?php if ($seriesContext !== '' && $series): ?>
+                <div class="prose artwork-video-series-context">
+                    <h2><?= e(site_t('Within ', 'Dentro de ') . (string)$series['title']) ?></h2>
+                    <p><?= e($seriesContext) ?></p>
+                    <p class="artwork-video-series-context__link"><a href="<?= e(url_for('series/' . $series['slug'])) ?>"><?= e(site_t('View series', 'Ver serie')) ?> <span aria-hidden="true">→</span></a></p>
                 </div>
             <?php endif; ?>
         </div>

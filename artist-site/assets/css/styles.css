@@ -1351,6 +1351,22 @@ p {
     object-fit: contain;
 }
 
+.artwork-video-series-context {
+    margin-top: 30px;
+}
+
+.artwork-video-series-context__link {
+    margin-top: 14px !important;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.artwork-video-series-context__link a {
+    color: var(--red);
+}
+
 .artwork-video-related {
     width: min(var(--max), calc(100% - 36px));
     margin: 0 auto;

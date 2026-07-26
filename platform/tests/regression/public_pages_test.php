@@ -100,6 +100,9 @@ function run_public_pages_regression_tests(): void {
     TestHarness::assertContains('class="artwork-detail artwork-video-detail"',$videoLanding,'the video page reuses the artwork detail architecture');
     TestHarness::assertContains("site_t('Published work', 'Obra publicada')",$videoLanding,'the video page repeats the artwork detail heading');
     TestHarness::assertContains("site_t('Conceptual Note', 'Nota conceptual')",$videoLanding,'the video page repeats the artwork conceptual note');
+    TestHarness::assertContains("\$artwork['short_description'] ?? ''",$videoLanding,'the video page can reuse the artwork short description without a new analysis');
+    TestHarness::assertContains("\$artwork['artwork_metadata']['seo_description'] ?? ''",$videoLanding,'the video page can reuse existing artwork SEO copy when its conceptual note is empty');
+    TestHarness::assertContains("site_t('Within ', 'Dentro de ')",$videoLanding,'the artwork information continues with its existing series context');
     TestHarness::assertTrue(
         !str_contains($videoLanding,"site_t('Duration', 'Duración')")
             && !str_contains($videoLanding,"site_t('Format', 'Formato')")
