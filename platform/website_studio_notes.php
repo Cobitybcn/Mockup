@@ -7,6 +7,7 @@ $user = Auth::requireUser();
 FeatureAccess::requirePage($user, FeatureAccess::WEBSITE_MANAGE, 'Studio Notes');
 $pdo = Database::connection();
 $userId = (int)$user['id'];
+$draftId = max(0, (int)($_GET['draft'] ?? 0));
 
 $notice = '';
 $error = '';
@@ -17,11 +18,7 @@ if (session_status() === PHP_SESSION_NONE) {
 $websiteBoard = new WebsiteBoardService($pdo);
 $editorial = new BilingualEditorialService($pdo);
 $studioWorkspace = new StudioNoteWorkspaceService($pdo);
-$studioSources = $websiteBoard->sources($userId);
-$studioSourceLookup = [];
-foreach ($studioSources as $studioSource) {
-    $studioSourceLookup[(string)$studioSource['key']] = $studioSource;
-}
+$studioSources = $draftId > 0 ? $websiteBoard->sources($userId) : [];
 if (empty($_SESSION['studio_notes_csrf'])) {
     $_SESSION['studio_notes_csrf'] = bin2hex(random_bytes(24));
 }
@@ -35,35 +32,26 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         
         if ($action === 'create_draft') {
             $title = trim((string)($_POST['title'] ?? ''));
-            $sourceKey = trim((string)($_POST['source_key'] ?? ''));
-            $source = $sourceKey !== '' ? ($studioSourceLookup[$sourceKey] ?? null) : null;
-            if ($sourceKey !== '' && !is_array($source)) {
-                throw new RuntimeException('The selected source is not available.');
-            }
             if ($title === '') {
-                $title = $source ? trim((string)$source['label']) . ' — Nota de estudio' : 'Nueva nota de estudio';
+                $title = 'Nueva nota de estudio';
             }
             $now = date('c');
             $payload = [
                 'channels' => ['website_blog'],
                 'destinations' => ['website_blog'],
                 'editorial_sync_key' => 'studio-note-' . bin2hex(random_bytes(16)),
-                'mockup_ids' => $source && (string)$source['type'] === 'mockup' ? [(int)$source['id']] : [],
+                'mockup_ids' => [],
                 'channel_status' => ['website_blog' => 'draft'],
             ];
-            if ($source) {
-                $payload['source'] = $source;
-                $payload['media'] = [$source];
-            }
             $stmt = $pdo->prepare('INSERT INTO social_campaigns (user_id, campaign_type, title, objective, source_type, source_id, source_label, status, payload_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
             $stmt->execute([
                 $userId,
                 'website_blog',
                 $title,
                 '',
-                $source ? (string)$source['type'] : 'custom',
-                $source ? (string)$source['id'] : '',
-                $source ? (string)$source['label'] : 'Independent note',
+                'custom',
+                '',
+                'Independent note',
                 'draft',
                 json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
                 $now,
@@ -232,6 +220,37 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 if (!$editorial->isEnabled($userId)) {
                     throw new RuntimeException('El espacio editorial bilingüe no está habilitado para esta cuenta.');
                 }
+                $savedSpanishState = $editorial->get($userId, 'studio_note', $id, 'es');
+                $savedEnglishState = $editorial->get($userId, 'studio_note', $id, 'en');
+                $publishedSpanish = (array)($savedSpanishState['published_content'] ?? []);
+                $layoutOnlyUpdate = !empty($savedSpanishState['is_published'])
+                    && !empty($savedEnglishState['is_published'])
+                    && $publishedSpanish !== []
+                    && hash_equals(
+                        StudioNoteMediaService::semanticHash($publishedSpanish),
+                        StudioNoteMediaService::semanticHash($savedSpanishContent)
+                    )
+                    && trim((string)($savedEnglishState['content']['body_html'] ?? '')) !== '';
+                if ($layoutOnlyUpdate) {
+                    $englishContent = (array)$savedEnglishState['content'];
+                    $englishContent['body_html'] = StudioNoteMediaService::mirrorImages(
+                        (string)($savedSpanishContent['body_html'] ?? ''),
+                        (string)($englishContent['body_html'] ?? '')
+                    );
+                    $editorial->save($userId, 'studio_note', $id, 'en', $englishContent);
+                    $editorial->setPublished($userId, 'studio_note', $id, 'es', true);
+                    $editorial->setPublished($userId, 'studio_note', $id, 'en', true);
+                    $websiteBoard->saveNote(
+                        $userId,
+                        $id,
+                        (string)($englishContent['title'] ?? ''),
+                        (string)($englishContent['body_html'] ?? ''),
+                        (string)($savedSpanishContent['body_html'] ?? '')
+                    );
+                    $_SESSION['wsn_notice'] = 'Cambios visuales publicados sin nuevo análisis.';
+                    header('Location: website_studio_notes.php?draft=' . $id);
+                    exit;
+                }
                 $jobs = new BilingualEditorialJobService($pdo);
                 $job = $jobs->createOrReuse($userId, 'studio_note', $id, 'publish', [
                     'source_hash' => hash(
@@ -297,9 +316,6 @@ function wsn_post_content(string $locale): array
 {
     $imageMetadata = json_decode((string)($_POST['image_metadata_' . $locale] ?? '[]'), true);
     $bodyHtml = trim((string)($_POST['body_' . $locale] ?? ''));
-    if ($locale === 'en') {
-        $bodyHtml = StudioNoteMediaService::removeImages($bodyHtml);
-    }
     return [
         'title' => trim((string)($_POST['title_' . $locale] ?? '')),
         'excerpt' => trim((string)($_POST['excerpt_' . $locale] ?? '')),
@@ -381,7 +397,6 @@ function wsn_website_payload(?array $payload): bool
 }
 wsn_ensure_campaign_table($pdo);
 
-$draftId = max(0, (int)($_GET['draft'] ?? 0));
 $allStmt = $pdo->prepare("SELECT * FROM social_campaigns WHERE user_id=? ORDER BY id DESC LIMIT 80");
 $allStmt->execute([$userId]);
 $websiteDrafts = [];
@@ -429,6 +444,7 @@ $spanishState = ['content' => $noteShape, 'status' => 'unprepared', 'is_publishe
 $englishState = ['content' => $noteShape, 'status' => 'unprepared', 'is_published' => false, 'has_unpublished_changes' => false];
 $activeEditorialJob = null;
 $englishAdaptationActive = false;
+$publicationActionMode = 'first';
 if ($openDraft) {
     $legacyEnglish = trim(strip_tags((string)$openDraft['objective'])) !== ''
         ? [
@@ -476,20 +492,34 @@ if ($openDraft) {
         $englishAdaptationActive = false;
         $publicationActive = false;
     }
+    if (!empty($spanishState['is_published']) && !empty($englishState['is_published'])) {
+        $publishedSpanishContent = (array)($spanishState['published_content'] ?? []);
+        $publicationActionMode = $publishedSpanishContent !== []
+            && hash_equals(
+                StudioNoteMediaService::semanticHash($publishedSpanishContent),
+                StudioNoteMediaService::semanticHash((array)$spanishState['content'])
+            )
+            ? 'layout'
+            : 'reanalyze';
+    }
 }
 
-$requestedSourceKey = trim((string)($_GET['source'] ?? ''));
-if ($requestedSourceKey !== '' && !isset($studioSourceLookup[$requestedSourceKey])) {
-    $requestedSourceKey = '';
+$mockupSources = array_values(array_filter(
+    $studioSources,
+    static fn(array $source): bool => (string)($source['type'] ?? '') === 'mockup'
+));
+$mockupArtworkFilters = [];
+$mockupSeriesFilters = [];
+foreach ($mockupSources as $mockupSource) {
+    $artworkId = (int)($mockupSource['artworkId'] ?? 0);
+    $artworkTitle = trim((string)($mockupSource['artworkTitle'] ?? ''));
+    if ($artworkId > 0 && $artworkTitle !== '') $mockupArtworkFilters[$artworkId] = $artworkTitle;
+    $seriesId = (int)($mockupSource['seriesId'] ?? 0);
+    $seriesTitle = trim((string)($mockupSource['seriesTitle'] ?? ''));
+    if ($seriesId > 0 && $seriesTitle !== '') $mockupSeriesFilters[$seriesId] = $seriesTitle;
 }
-$sourcesByType = ['artwork' => [], 'series' => [], 'mockup' => []];
-foreach ($studioSources as $studioSource) {
-    $type = (string)($studioSource['type'] ?? '');
-    if (isset($sourcesByType[$type])) $sourcesByType[$type][] = $studioSource;
-}
-$initialSourceType = $requestedSourceKey !== ''
-    ? (string)($studioSourceLookup[$requestedSourceKey]['type'] ?? 'artwork')
-    : 'artwork';
+natcasesort($mockupArtworkFilters);
+natcasesort($mockupSeriesFilters);
 ?>
 <!doctype html>
 <html lang="es">
@@ -503,30 +533,36 @@ $initialSourceType = $requestedSourceKey !== ''
     <style>
         .studio-notes-page { padding:28px 24px 80px; }
         .studio-notes-page .catalog-heading { margin-bottom:18px; }
-        .studio-source-stage { padding:0 0 22px; border-bottom:1px solid var(--line); }
-        .studio-source-toolbar { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:12px; }
-        .studio-source-tabs { display:flex; align-items:center; gap:22px; overflow-x:auto; }
-        .studio-source-tab { width:auto !important; min-height:auto !important; margin:0 !important; padding:7px 0 9px !important; border:0 !important; border-bottom:2px solid transparent !important; border-radius:0 !important; background:transparent !important; color:#554d46 !important; box-shadow:none !important; font-size:15px !important; font-weight:600 !important; white-space:nowrap; }
-        .studio-source-tab.is-active { border-bottom-color:rgba(224,104,76,.65) !important; color:var(--ink) !important; }
-        .studio-source-workline { display:grid; grid-template-columns:minmax(0,1fr) 164px; align-items:start; gap:40px; }
-        .studio-source-panels { min-width:0; }
-        .studio-source-panel[hidden] { display:none; }
-        .studio-source-rail { display:grid; grid-auto-flow:column; grid-auto-columns:clamp(150px,13vw,188px); gap:12px; overflow-x:auto; overflow-y:hidden; padding:1px 1px 11px; scroll-snap-type:x proximity; scrollbar-width:thin; scrollbar-color:#c8beb4 transparent; }
-        .studio-source-rail::-webkit-scrollbar { height:7px; }
-        .studio-source-rail::-webkit-scrollbar-thumb { border-radius:999px; background:#c8beb4; }
-        .studio-source-card { position:relative; display:grid; align-content:start; min-width:0; margin:0; border:0; background:transparent; cursor:pointer; scroll-snap-align:start; }
-        .studio-source-card > input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
-        .studio-source-card__image { aspect-ratio:4/5; padding:5px; border:1px solid #bbb7b1; background:#fff; }
-        .studio-source-card__image img { display:block; width:100%; height:100%; object-fit:cover; }
-        .studio-source-card__label { display:block; min-width:0; padding:8px 1px 1px; overflow:hidden; color:var(--ink); font:400 17px/1.15 var(--font-serif); text-overflow:ellipsis; white-space:nowrap; }
-        .studio-source-card > input:checked + .studio-source-card__image { border-color:#ae7258; box-shadow:0 0 0 2px rgba(224,104,76,.22); }
-        .studio-create-decision { width:164px !important; min-width:164px !important; height:164px !important; min-height:164px !important; align-self:start; margin-top:clamp(12px, calc(8.125vw - 82px), 36px) !important; padding:18px !important; }
+        .studio-create-decision { width:164px !important; min-width:164px !important; height:164px !important; min-height:164px !important; align-self:start; margin:0 !important; padding:18px !important; }
         .studio-create-decision__content { display:flex !important; align-items:center; flex-direction:column; justify-content:center; gap:10px; }
         .studio-create-decision .studio-create-decision__plus { display:block !important; font-size:48px !important; font-weight:300 !important; line-height:.72 !important; letter-spacing:0 !important; }
         .studio-create-decision .studio-create-decision__label { display:block !important; font-size:14px !important; line-height:1 !important; letter-spacing:.12em !important; }
         .studio-editor-workspace { width:100%; box-sizing:border-box; margin:0 auto; padding:28px 24px 32px; border:1px solid var(--line); border-radius:4px; background:var(--surface); }
         .studio-note-editor-top { display:flex; justify-content:flex-end; margin-bottom:8px; }
         .studio-note-editor-top a { color:#625b55; font-size:12px; font-weight:650; letter-spacing:.05em; text-decoration:none; text-transform:uppercase; }
+        .studio-media-carousel { margin:0 0 26px; padding:14px 14px 10px; border:1px solid var(--line); border-radius:4px; background:#fbfaf7; }
+        .studio-media-carousel__toolbar { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:11px; }
+        .studio-media-carousel__heading { display:flex; align-items:baseline; gap:10px; min-width:0; }
+        .studio-media-carousel__heading h2 { margin:0; color:var(--ink); font:400 21px/1.2 var(--font-serif); }
+        .studio-media-carousel__heading span { color:#6c645d; font-size:11px; line-height:1.35; }
+        .studio-media-carousel__filters { display:flex; align-items:center; gap:8px; }
+        .studio-media-carousel__filters select,
+        .studio-media-carousel__filters input { width:auto; min-width:150px; height:36px; box-sizing:border-box; margin:0; padding:7px 10px; border:1px solid var(--line); border-radius:2px; background:#fff; color:var(--ink); font:400 13px/1.2 var(--font-sans); box-shadow:none; }
+        .studio-media-carousel__filters input { min-width:220px; }
+        .studio-media-carousel__rail { display:grid; grid-auto-flow:column; grid-auto-columns:clamp(148px,12vw,182px); gap:10px; overflow-x:auto; overflow-y:hidden; padding:1px 1px 9px; scroll-snap-type:x proximity; scrollbar-width:thin; scrollbar-color:#c8beb4 transparent; }
+        .studio-media-carousel__rail::-webkit-scrollbar { height:6px; }
+        .studio-media-carousel__rail::-webkit-scrollbar-thumb { border-radius:999px; background:#c8beb4; }
+        .studio-media-card { position:relative; display:grid; align-content:start; min-width:0; margin:0 !important; padding:5px !important; border:1px solid #c8c2ba !important; border-radius:2px !important; background:#f4f1eb !important; color:var(--ink) !important; box-shadow:none !important; cursor:grab; scroll-snap-align:start; text-align:left; }
+        .studio-media-card:hover,
+        .studio-media-card:focus-visible { border-color:#a9949f !important; background:#f4f1eb !important; transform:none !important; box-shadow:0 0 0 2px rgba(185,163,194,.18) !important; }
+        .studio-media-card[hidden] { display:none !important; }
+        .studio-media-card.is-in-note { border-color:#a9949f !important; }
+        .studio-media-card__image { position:relative; display:block; aspect-ratio:4/5; overflow:hidden; background:#e6e2dc; }
+        .studio-media-card__image img { display:block; width:100%; height:100%; object-fit:cover; pointer-events:none; }
+        .studio-media-card__state { display:none; position:absolute; top:7px; right:7px; padding:4px 6px; border-radius:999px; background:rgba(243,238,244,.92); color:#514951; font-size:9px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+        .studio-media-card.is-in-note .studio-media-card__state { display:block; }
+        .studio-media-card__label { display:block; min-width:0; padding:7px 2px 2px; overflow:hidden; font:400 14px/1.15 var(--font-serif); text-overflow:ellipsis; white-space:nowrap; }
+        .studio-media-carousel__empty { margin:4px 2px 8px; color:#6c645d; font-size:13px; }
         .studio-note-editor-shell { display:block; }
         .studio-note-writing-desk { min-width:0; width:100%; }
         .studio-bilingual-editors { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); align-items:start; gap:24px; }
@@ -595,8 +631,8 @@ $initialSourceType = $requestedSourceKey !== ''
             .studio-notes-page .studio-note-editor .ql-editor { padding:26px 24px; font-size:17px; }
         }
         .studio-drafts { margin-top:36px; padding:0; }
-        .studio-drafts-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,440px)); justify-content:start; gap:18px; }
-        .studio-draft { display:grid; grid-template-columns:138px minmax(0,1fr); min-height:188px; overflow:hidden; border:1px solid #cfc3d3; border-radius:4px; background:#eee8f0; color:var(--ink); text-decoration:none; box-shadow:0 8px 20px rgba(126,104,133,.10); transition:border-color .16s ease, box-shadow .16s ease, transform .16s ease; }
+        .studio-drafts-list { display:flex; align-items:flex-start; flex-wrap:wrap; gap:18px; }
+        .studio-draft { display:grid; grid-template-columns:138px minmax(0,1fr); width:min(100%,440px); min-height:188px; overflow:hidden; border:1px solid #cfc3d3; border-radius:4px; background:#eee8f0; color:var(--ink); text-decoration:none; box-shadow:0 8px 20px rgba(126,104,133,.10); transition:border-color .16s ease, box-shadow .16s ease, transform .16s ease; }
         .studio-draft:hover { border-color:#aa96b1; box-shadow:0 11px 24px rgba(126,104,133,.16); transform:translateY(-1px); }
         .studio-draft:focus-visible { outline:2px solid #aa96b1; outline-offset:3px; }
         .studio-draft--text-only { grid-template-columns:minmax(0,1fr); }
@@ -608,11 +644,12 @@ $initialSourceType = $requestedSourceKey !== ''
         .studio-draft__state { display:block; margin-top:auto; padding-top:14px; color:#5d555f; font-size:11px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
         @media (max-width:860px) {
             .studio-notes-page { padding:18px 14px 60px; }
-            .studio-source-toolbar { align-items:flex-start; flex-direction:column; gap:8px; }
-            .studio-source-tabs { width:100%; }
-            .studio-source-workline { grid-template-columns:minmax(0,1fr) 126px; gap:20px; }
-            .studio-source-rail { grid-auto-columns:minmax(146px,44vw); }
-            .studio-create-decision { width:126px !important; min-width:126px !important; height:126px !important; min-height:126px !important; margin-top:clamp(28px, calc(27.5vw - 63px), 48px) !important; padding:12px !important; font-size:11px !important; }
+            .studio-create-decision { width:126px !important; min-width:126px !important; height:126px !important; min-height:126px !important; padding:12px !important; font-size:11px !important; }
+            .studio-media-carousel__toolbar { align-items:flex-start; flex-direction:column; }
+            .studio-media-carousel__filters { width:100%; flex-wrap:wrap; }
+            .studio-media-carousel__filters select,
+            .studio-media-carousel__filters input { min-width:0; flex:1 1 150px; }
+            .studio-media-carousel__rail { grid-auto-columns:minmax(146px,44vw); }
             .studio-bilingual-editors { grid-template-columns:1fr; }
             .studio-editor-workspace { padding:20px 16px 24px; }
             .studio-notes-page input.studio-note-editor-title { font-size:31px; }
@@ -626,8 +663,7 @@ $initialSourceType = $requestedSourceKey !== ''
             .studio-note-actions__main button { width:100%; min-width:0; }
             .studio-note-actions__secondary { align-self:flex-end; margin-left:0; }
             .studio-seo-grid { grid-template-columns:1fr; }
-            .studio-drafts-list { grid-template-columns:1fr; }
-            .studio-draft { grid-template-columns:112px minmax(0,1fr); min-height:164px; }
+            .studio-draft { grid-template-columns:112px minmax(0,1fr); width:100%; min-height:164px; }
             .studio-draft--text-only { grid-template-columns:minmax(0,1fr); }
             .studio-draft__thumb { width:112px; min-height:164px; }
             .studio-draft__body { padding:16px; }
@@ -659,62 +695,73 @@ $initialSourceType = $requestedSourceKey !== ''
 
 
 
-            <?php if (!$openDraft): ?>
-            <section class="studio-source-stage" id="new-studio-note">
-                <form method="post" id="studio-note-create-form">
-                    <input type="hidden" name="csrf" value="<?= wsn_h($_SESSION['studio_notes_csrf']) ?>">
-                    <input type="hidden" name="action" value="create_draft">
-
-                    <div class="studio-source-toolbar">
-                        <div class="studio-source-tabs" role="tablist" aria-label="Studio Note source type">
-                            <?php foreach (['artwork' => 'Artworks', 'series' => 'Series', 'mockup' => 'Mockups'] as $type => $label): ?>
-                                <button class="studio-source-tab<?= $initialSourceType === $type ? ' is-active' : '' ?>" type="button" role="tab" aria-selected="<?= $initialSourceType === $type ? 'true' : 'false' ?>" data-source-tab="<?= wsn_h($type) ?>"><?= wsn_h($label) ?></button>
-                            <?php endforeach; ?>
-                            <button class="studio-source-tab" type="button" role="tab" aria-selected="false" data-source-tab="none" data-clear-source>No source</button>
-                        </div>
-                    </div>
-
-                    <div class="studio-source-workline">
-                        <div class="studio-source-panels">
-                            <?php foreach ($sourcesByType as $type => $sources): ?>
-                                <div class="studio-source-panel" data-source-panel="<?= wsn_h($type) ?>"<?= $initialSourceType !== $type ? ' hidden' : '' ?>>
-                                    <?php if (!$sources): ?>
-                                        <div class="empty-state">No <?= wsn_h($type) ?> sources yet.</div>
-                                    <?php else: ?>
-                                        <div class="studio-source-rail">
-                                            <?php foreach ($sources as $source): ?>
-                                                <?php $sourceKey = (string)$source['key']; ?>
-                                                <label class="studio-source-card">
-                                                    <input type="radio" name="source_key" value="<?= wsn_h($sourceKey) ?>"<?= $requestedSourceKey === $sourceKey ? ' checked' : '' ?>>
-                                                    <span class="studio-source-card__image"><img src="<?= wsn_h(wsn_media_url((string)$source['file'], 520)) ?>" alt="<?= wsn_h((string)$source['label']) ?>" loading="lazy"></span>
-                                                    <span class="studio-source-card__label" title="<?= wsn_h((string)$source['label']) ?>"><?= wsn_h((string)$source['label']) ?></span>
-                                                </label>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                            <?php endforeach; ?>
-                            <div class="studio-source-panel" data-source-panel="none" hidden></div>
-                        </div>
-                        <button class="social-square-button social-square-button--studio_process studio-create-decision" type="submit">
-                            <span class="studio-create-decision__content">
-                                <span class="studio-create-decision__plus">+</span>
-                                <span class="studio-create-decision__label">NOTE</span>
-                            </span>
-                        </button>
-                    </div>
-                </form>
-            </section>
-            <?php endif; ?>
-
             <?php if ($openDraft): ?>
                 <section class="studio-editor-workspace">
                     <div class="studio-note-editor-top"><a href="website_studio_notes.php">Close</a></div>
+                    <?php if ($mockupSources): ?>
+                        <section class="studio-media-carousel" aria-labelledby="studio-media-carousel-title">
+                            <div class="studio-media-carousel__toolbar">
+                                <div class="studio-media-carousel__heading">
+                                    <h2 id="studio-media-carousel-title">Mockups para la nota</h2>
+                                    <span>Arrastrá o pulsá una imagen para insertarla.</span>
+                                </div>
+                                <div class="studio-media-carousel__filters">
+                                    <select data-mockup-artwork-filter aria-label="Filtrar mockups por obra">
+                                        <option value="">Todas las obras</option>
+                                        <?php foreach ($mockupArtworkFilters as $artworkId => $artworkTitle): ?>
+                                            <option value="<?= (int)$artworkId ?>"><?= wsn_h($artworkTitle) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <select data-mockup-series-filter aria-label="Filtrar mockups por serie">
+                                        <option value="">Todas las series</option>
+                                        <?php foreach ($mockupSeriesFilters as $seriesId => $seriesTitle): ?>
+                                            <option value="<?= (int)$seriesId ?>"><?= wsn_h($seriesTitle) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <input type="search" data-mockup-search placeholder="Buscar mockup" aria-label="Buscar mockup">
+                                </div>
+                            </div>
+                            <div class="studio-media-carousel__rail" data-mockup-carousel>
+                                <?php foreach ($mockupSources as $mockupSource): ?>
+                                    <?php
+                                        $guide = (array)($mockupSource['editorialGuide'] ?? []);
+                                        $guideEn = (array)($mockupSource['editorialGuideEn'] ?? []);
+                                        $mockupFile = basename((string)($mockupSource['file'] ?? ''));
+                                        $mockupAlt = trim((string)($guide['altText'] ?? '')) ?: (string)$mockupSource['label'];
+                                        $mockupSearch = implode(' ', array_filter([
+                                            (string)($mockupSource['label'] ?? ''),
+                                            (string)($mockupSource['artworkTitle'] ?? ''),
+                                            (string)($mockupSource['seriesTitle'] ?? ''),
+                                            (string)($mockupSource['searchTerms'] ?? ''),
+                                        ]));
+                                    ?>
+                                    <button class="studio-media-card" type="button" draggable="true"
+                                            data-mockup-source="<?= wsn_h((string)$mockupSource['key']) ?>"
+                                            data-mockup-file="<?= wsn_h($mockupFile) ?>"
+                                            data-mockup-url="<?= wsn_h(wsn_media_url($mockupFile, 900)) ?>"
+                                            data-mockup-artwork="<?= (int)($mockupSource['artworkId'] ?? 0) ?>"
+                                            data-mockup-series="<?= (int)($mockupSource['seriesId'] ?? 0) ?>"
+                                            data-mockup-search-text="<?= wsn_h(mb_strtolower($mockupSearch)) ?>"
+                                            data-mockup-guide="<?= wsn_h(json_encode($guide, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"
+                                            data-mockup-guide-en="<?= wsn_h(json_encode($guideEn, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"
+                                            aria-label="Insertar <?= wsn_h((string)$mockupSource['label']) ?>">
+                                        <span class="studio-media-card__image">
+                                            <img src="<?= wsn_h(wsn_media_url($mockupFile, 520)) ?>" alt="<?= wsn_h($mockupAlt) ?>" loading="lazy">
+                                            <span class="studio-media-card__state">En la nota</span>
+                                        </span>
+                                        <span class="studio-media-card__label" title="<?= wsn_h((string)$mockupSource['label']) ?>"><?= wsn_h((string)$mockupSource['label']) ?></span>
+                                    </button>
+                                <?php endforeach; ?>
+                            </div>
+                            <p class="studio-media-carousel__empty" data-mockup-empty hidden>No hay mockups para este filtro.</p>
+                        </section>
+                    <?php endif; ?>
                     <form class="studio-note-form" method="post" enctype="multipart/form-data"
                           data-note-id="<?= (int)$openDraft['id'] ?>"
                           data-editorial-csrf="<?= wsn_h(Auth::csrfToken('bilingual_editorial')) ?>"
                           data-active-job="<?= (int)($activeEditorialJob['id'] ?? 0) ?>"
-                          data-active-job-action="<?= wsn_h((string)($activeEditorialJob['action'] ?? '')) ?>">
+                          data-active-job-action="<?= wsn_h((string)($activeEditorialJob['action'] ?? '')) ?>"
+                          data-publication-mode="<?= wsn_h($publicationActionMode) ?>">
                         <input type="hidden" name="csrf" value="<?= wsn_h($_SESSION['studio_notes_csrf']) ?>">
                         <input type="hidden" name="draft_id" value="<?= (int)$openDraft['id'] ?>">
                         <div class="studio-note-editor-shell">
@@ -815,9 +862,17 @@ $initialSourceType = $requestedSourceKey !== ''
 
                                 <div class="studio-note-actions">
                                     <div class="studio-note-actions__main">
-                                        <button class="button-link primary studio-note-publish" name="action" value="publish_draft" type="submit"
+                                        <button class="button-link primary studio-note-publish" name="action" value="publish_draft" type="submit" data-publish-action
                                                 <?= $publicationActive ? 'disabled' : '' ?>>
-                                            <?= $publicationActive ? 'Publicando…' : ((string)$openDraft['status'] === 'published' ? 'Actualizar publicación' : 'Publicar ES + EN') ?>
+                                            <?php if ($publicationActive): ?>
+                                                Publicando…
+                                            <?php elseif ($publicationActionMode === 'layout'): ?>
+                                                Guardar cambios
+                                            <?php elseif ($publicationActionMode === 'reanalyze'): ?>
+                                                Reanalizar y publicar
+                                            <?php else: ?>
+                                                Analizar y publicar
+                                            <?php endif; ?>
                                         </button>
                                         <button class="button-link secondary" name="action" value="save_draft" type="submit">Guardar borrador</button>
                                         <span class="studio-publication-state" data-publication-state>
@@ -839,10 +894,20 @@ $initialSourceType = $requestedSourceKey !== ''
 
             <?php if (!$openDraft): ?>
             <section class="studio-drafts">
-                <?php if (!$websiteDrafts): ?>
-                    <div class="empty-state">No website drafts yet. Use the panel above to write your first essay.</div>
-                <?php else: ?>
-                    <div class="studio-drafts-list">
+                <div class="studio-drafts-list">
+                    <form method="post" id="studio-note-create-form">
+                        <input type="hidden" name="csrf" value="<?= wsn_h($_SESSION['studio_notes_csrf']) ?>">
+                        <input type="hidden" name="action" value="create_draft">
+                        <button class="social-square-button social-square-button--studio_process studio-create-decision" type="submit">
+                            <span class="studio-create-decision__content">
+                                <span class="studio-create-decision__plus">+</span>
+                                <span class="studio-create-decision__label">NOTE</span>
+                            </span>
+                        </button>
+                    </form>
+                    <?php if (!$websiteDrafts): ?>
+                        <div class="empty-state">Todavía no hay notas. Creá el primer borrador desde el bloque + Note.</div>
+                    <?php else: ?>
                         <?php foreach ($websiteDrafts as $draft): 
                             $payload = (array)$draft['_payload']; 
                             $draftSpanish = (array)($noteEditorialIndex[(int)$draft['id']]['es']['content'] ?? []);
@@ -872,11 +937,8 @@ $initialSourceType = $requestedSourceKey !== ''
                             $thumbUrl = first_html_image_src($draftBody)
                                 ?: first_html_image_src($publishedBody);
                             $payloadSource = is_array($payload['source'] ?? null) ? $payload['source'] : [];
-                            $payloadSourceKey = trim((string)($payloadSource['key'] ?? ''));
-                            if ($thumbUrl === ''
-                                && $payloadSourceKey !== ''
-                                && isset($studioSourceLookup[$payloadSourceKey])) {
-                                $sourceFile = (string)$studioSourceLookup[$payloadSourceKey]['file'];
+                            $sourceFile = basename((string)($payloadSource['file'] ?? ''));
+                            if ($thumbUrl === '' && $sourceFile !== '') {
                                 $thumbUrl = str_starts_with(basename($sourceFile), 'studio-note-' . $userId . '-' . (int)$draft['id'] . '-')
                                     ? wsn_note_media_url((int)$draft['id'], $sourceFile, 360)
                                     : wsn_media_url($sourceFile, 360);
@@ -908,37 +970,10 @@ $initialSourceType = $requestedSourceKey !== ''
                                 </div>
                             </a>
                         <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+                    <?php endif; ?>
+                </div>
             </section>
             <?php endif; ?>
-            <script>
-                (function () {
-                    var tabs = Array.prototype.slice.call(document.querySelectorAll('[data-source-tab]'));
-                    var panels = Array.prototype.slice.call(document.querySelectorAll('[data-source-panel]'));
-
-                    function activate(type) {
-                        tabs.forEach(function (tab) {
-                            var active = tab.getAttribute('data-source-tab') === type;
-                            tab.classList.toggle('is-active', active);
-                            tab.setAttribute('aria-selected', active ? 'true' : 'false');
-                        });
-                        panels.forEach(function (panel) {
-                            panel.hidden = panel.getAttribute('data-source-panel') !== type;
-                        });
-                    }
-
-                    tabs.forEach(function (tab) {
-                        tab.addEventListener('click', function () {
-                            activate(tab.getAttribute('data-source-tab'));
-                            if (tab.hasAttribute('data-clear-source')) {
-                                document.querySelectorAll('input[name="source_key"]').forEach(function (radio) { radio.checked = false; });
-                            }
-                        });
-                    });
-
-                })();
-            </script>
             <?php if ($openDraft): ?>
             <script>
                 document.addEventListener("DOMContentLoaded", function() {
@@ -947,6 +982,7 @@ $initialSourceType = $requestedSourceKey !== ''
                         ['bold', 'italic', 'underline'],
                         ['blockquote'],
                         [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
                         ['link', 'image'],
                         ['clean']
                     ];
@@ -966,12 +1002,212 @@ $initialSourceType = $requestedSourceKey !== ''
                     var noteId = Number(form ? form.getAttribute('data-note-id') : 0) || 0;
                     var formCsrf = form ? form.querySelector('input[name="csrf"]') : null;
                     var activeJobAction = form ? form.getAttribute('data-active-job-action') : '';
+                    var publishAction = form ? form.querySelector('[data-publish-action]') : null;
+                    var initialPublicationMode = form ? form.getAttribute('data-publication-mode') : 'first';
+                    var publishedSpanishContent = <?= json_encode(
+                        (array)($spanishState['published_content'] ?? []),
+                        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                    ) ?>;
                     var englishPanel = document.querySelector('[data-english-panel]');
                     var englishDependents = Array.prototype.slice.call(
                         document.querySelectorAll('[data-english-dependent]')
                     );
                     var englishLock = document.querySelector('[data-english-lock]');
                     var englishTitle = document.getElementById('studio-note-title-en');
+                    var mockupCards = Array.prototype.slice.call(document.querySelectorAll('[data-mockup-source]'));
+                    var mockupArtworkFilter = document.querySelector('[data-mockup-artwork-filter]');
+                    var mockupSeriesFilter = document.querySelector('[data-mockup-series-filter]');
+                    var mockupSearch = document.querySelector('[data-mockup-search]');
+                    var mockupEmpty = document.querySelector('[data-mockup-empty]');
+                    var imageMetadataInputs = {
+                        es: form ? form.querySelector('input[name="image_metadata_es"]') : null,
+                        en: form ? form.querySelector('input[name="image_metadata_en"]') : null
+                    };
+                    var imageMetadataByLocale = {es: {}, en: {}};
+
+                    function normalizedText(value) {
+                        return String(value || '').replace(/\s+/gu, ' ').trim();
+                    }
+
+                    function textFromHtml(html) {
+                        var container = document.createElement('div');
+                        container.innerHTML = String(html || '').replace(/<img\b[^>]*>/giu, '');
+                        return normalizedText(container.textContent || '');
+                    }
+
+                    function semanticSnapshot(content, bodyText) {
+                        return JSON.stringify({
+                            title: normalizedText(content.title),
+                            body_text: normalizedText(bodyText),
+                            excerpt: normalizedText(content.excerpt),
+                            seo_title: normalizedText(content.seo_title),
+                            seo_description: normalizedText(content.seo_description),
+                            alt_text: normalizedText(content.alt_text),
+                            caption: normalizedText(content.caption),
+                            tags: normalizedText(content.tags),
+                            search_terms: normalizedText(content.search_terms)
+                        });
+                    }
+
+                    var publishedSemanticSnapshot = semanticSnapshot(
+                        publishedSpanishContent,
+                        textFromHtml(publishedSpanishContent.body_html || '')
+                    );
+
+                    function currentSpanishField(name) {
+                        var field = form ? form.querySelector('[name="' + name + '"]') : null;
+                        return field ? field.value : '';
+                    }
+
+                    function updatePublishActionMode() {
+                        if (!form || !publishAction || initialPublicationMode === 'first' || publishAction.disabled) return;
+                        var current = {
+                            title: currentSpanishField('title_es'),
+                            excerpt: currentSpanishField('excerpt_es'),
+                            seo_title: currentSpanishField('seo_title_es'),
+                            seo_description: currentSpanishField('seo_description_es'),
+                            alt_text: currentSpanishField('alt_text_es'),
+                            caption: currentSpanishField('caption_es'),
+                            tags: currentSpanishField('tags_es'),
+                            search_terms: currentSpanishField('search_terms_es')
+                        };
+                        var mode = semanticSnapshot(current, quillEs.getText()) === publishedSemanticSnapshot
+                            ? 'layout'
+                            : 'reanalyze';
+                        form.setAttribute('data-publication-mode', mode);
+                        publishAction.textContent = mode === 'layout'
+                            ? 'Guardar cambios'
+                            : 'Reanalizar y publicar';
+                    }
+
+                    function parseJson(value, fallback) {
+                        try {
+                            var parsed = JSON.parse(value || '');
+                            return parsed && typeof parsed === 'object' ? parsed : fallback;
+                        } catch (error) {
+                            return fallback;
+                        }
+                    }
+
+                    Object.keys(imageMetadataInputs).forEach(function(locale) {
+                        var input = imageMetadataInputs[locale];
+                        var rows = input ? parseJson(input.value, []) : [];
+                        (Array.isArray(rows) ? rows : []).forEach(function(row) {
+                            var file = String(row && row.file || '');
+                            if (file) imageMetadataByLocale[locale][file] = row;
+                        });
+                    });
+
+                    function imageFile(source) {
+                        try {
+                            return new URL(String(source || ''), window.location.href).searchParams.get('file') || '';
+                        } catch (error) {
+                            return '';
+                        }
+                    }
+
+                    function metadataFromGuide(file, guide) {
+                        guide = guide && typeof guide === 'object' ? guide : {};
+                        return {
+                            file: file,
+                            alt_text: String(guide.altText || ''),
+                            caption: String(guide.caption || '')
+                        };
+                    }
+
+                    function registerMockupMetadata(card) {
+                        var file = card ? String(card.getAttribute('data-mockup-file') || '') : '';
+                        if (!file) return;
+                        var spanishGuide = parseJson(card.getAttribute('data-mockup-guide'), {});
+                        var englishGuide = parseJson(card.getAttribute('data-mockup-guide-en'), {});
+                        var spanishMetadata = metadataFromGuide(file, spanishGuide);
+                        var englishMetadata = metadataFromGuide(file, englishGuide);
+                        if (spanishMetadata.alt_text && spanishMetadata.caption) {
+                            imageMetadataByLocale.es[file] = spanishMetadata;
+                        }
+                        if (englishMetadata.alt_text && englishMetadata.caption) {
+                            imageMetadataByLocale.en[file] = englishMetadata;
+                        }
+                    }
+
+                    function syncImageMetadata() {
+                        var orderedFiles = [];
+                        quillEs.root.querySelectorAll('img').forEach(function(image) {
+                            var file = imageFile(image.getAttribute('src'));
+                            if (file && orderedFiles.indexOf(file) === -1) orderedFiles.push(file);
+                        });
+                        Object.keys(imageMetadataInputs).forEach(function(locale) {
+                            var input = imageMetadataInputs[locale];
+                            if (!input) return;
+                            input.value = JSON.stringify(orderedFiles.map(function(file) {
+                                return imageMetadataByLocale[locale][file] || null;
+                            }).filter(Boolean));
+                        });
+                        mockupCards.forEach(function(card) {
+                            card.classList.toggle(
+                                'is-in-note',
+                                orderedFiles.indexOf(String(card.getAttribute('data-mockup-file') || '')) !== -1
+                            );
+                        });
+                    }
+
+                    function insertMockup(card, index) {
+                        if (!card) return;
+                        var url = String(card.getAttribute('data-mockup-url') || '');
+                        var file = String(card.getAttribute('data-mockup-file') || '');
+                        if (!url || !file) return;
+                        registerMockupMetadata(card);
+                        var range = typeof index === 'number'
+                            ? {index: index}
+                            : (quillEs.getSelection(true) || {index: Math.max(0, quillEs.getLength() - 1)});
+                        quillEs.insertEmbed(range.index, 'image', url, 'user');
+                        quillEs.setSelection(range.index + 1, 0, 'silent');
+                        var inserted = Array.prototype.slice.call(quillEs.root.querySelectorAll('img')).reverse().find(function(image) {
+                            return imageFile(image.getAttribute('src')) === file;
+                        });
+                        if (inserted) {
+                            var guide = parseJson(card.getAttribute('data-mockup-guide'), {});
+                            inserted.setAttribute('alt', String(guide.altText || card.getAttribute('aria-label') || ''));
+                            prepareImage(inserted);
+                        }
+                        syncImageMetadata();
+                        quillEs.focus();
+                    }
+
+                    function filterMockupCarousel() {
+                        var artwork = mockupArtworkFilter ? mockupArtworkFilter.value : '';
+                        var series = mockupSeriesFilter ? mockupSeriesFilter.value : '';
+                        var query = mockupSearch ? mockupSearch.value.trim().toLocaleLowerCase('es') : '';
+                        var visible = 0;
+                        mockupCards.forEach(function(card) {
+                            var matches = (!artwork || card.getAttribute('data-mockup-artwork') === artwork)
+                                && (!series || card.getAttribute('data-mockup-series') === series)
+                                && (!query || String(card.getAttribute('data-mockup-search-text') || '').indexOf(query) !== -1);
+                            card.hidden = !matches;
+                            if (matches) visible += 1;
+                        });
+                        if (mockupEmpty) mockupEmpty.hidden = visible !== 0;
+                    }
+
+                    [mockupArtworkFilter, mockupSeriesFilter, mockupSearch].forEach(function(control) {
+                        if (control) control.addEventListener('input', filterMockupCarousel);
+                    });
+                    mockupCards.forEach(function(card) {
+                        card.addEventListener('click', function() { insertMockup(card); });
+                        card.addEventListener('dragstart', function(event) {
+                            event.dataTransfer.effectAllowed = 'copy';
+                            event.dataTransfer.setData('application/x-studio-note-mockup', card.getAttribute('data-mockup-source'));
+                        });
+                    });
+                    if (form) {
+                        form.querySelectorAll(
+                            '[name="title_es"],[name="excerpt_es"],[name="seo_title_es"],'
+                            + '[name="seo_description_es"],[name="alt_text_es"],[name="caption_es"],'
+                            + '[name="tags_es"],[name="search_terms_es"]'
+                        ).forEach(function(field) {
+                            field.addEventListener('input', updatePublishActionMode);
+                        });
+                    }
 
                     function setEnglishAdaptationBusy(busy) {
                         if (englishPanel) {
@@ -1105,6 +1341,17 @@ $initialSourceType = $requestedSourceKey !== ''
                         });
                     }
                     quillEs.root.addEventListener('drop', function(event) {
+                        var sourceKey = event.dataTransfer
+                            ? event.dataTransfer.getData('application/x-studio-note-mockup')
+                            : '';
+                        if (sourceKey) {
+                            event.preventDefault();
+                            var sourceCard = mockupCards.find(function(card) {
+                                return card.getAttribute('data-mockup-source') === sourceKey;
+                            });
+                            insertMockup(sourceCard);
+                            return;
+                        }
                         var files = event.dataTransfer ? event.dataTransfer.files : null;
                         if (!files || !files.length) return;
                         event.preventDefault();
@@ -1129,6 +1376,7 @@ $initialSourceType = $requestedSourceKey !== ''
                                 var imageBlot = Quill.find(selectedImage);
                                 if (imageBlot) quill.deleteText(quill.getIndex(imageBlot), 1, 'user');
                                 selectImage(null);
+                                syncImageMetadata();
                                 return;
                             }
                             quill.update('user');
@@ -1141,6 +1389,12 @@ $initialSourceType = $requestedSourceKey !== ''
                             selectImage(e.target);
                         } else selectImage(null);
                     });
+                    quillEs.on('text-change', function() {
+                        window.requestAnimationFrame(syncImageMetadata);
+                        window.requestAnimationFrame(updatePublishActionMode);
+                    });
+                    syncImageMetadata();
+                    updatePublishActionMode();
                     
                     var queuedSubmitAllowed = false;
                     if (form) {
@@ -1155,6 +1409,7 @@ $initialSourceType = $requestedSourceKey !== ''
                                 return;
                             }
                             queuedSubmitAllowed = false;
+                            syncImageMetadata();
                             document.getElementById('body-input-es').value = quillEs.root.innerHTML;
                             document.getElementById('body-input-en').value = quillEn.root.innerHTML;
                         });

@@ -192,8 +192,20 @@ final class BilingualEditorialService
 
         $newHash = hash('sha256', json_encode($content, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         if ($locale === 'es') {
+            $semanticChanged = true;
+            if ($entityType === 'studio_note') {
+                $previous = $this->get($userId, $entityType, $entityId, 'es');
+                $previousContent = (array)($previous['content'] ?? []);
+                $semanticChanged = $previousContent === []
+                    || !hash_equals(
+                        StudioNoteMediaService::semanticHash($previousContent),
+                        StudioNoteMediaService::semanticHash($content)
+                    );
+            }
             $this->upsertRow($userId, $entityType, $entityId, 'es', $content, $privateMemo, 'source', $newHash);
-            $this->markEnglishStale($userId, $entityType, $entityId);
+            if ($semanticChanged) {
+                $this->markEnglishStale($userId, $entityType, $entityId);
+            }
             $english = $this->get($userId, $entityType, $entityId, 'en');
             return ['status' => 'source', 'english_status' => (string)$english['status']];
         }

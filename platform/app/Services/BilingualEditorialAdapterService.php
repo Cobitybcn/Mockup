@@ -379,6 +379,12 @@ final class BilingualEditorialAdapterService
         $profile = $this->profileContext(ArtistProfile::findForUser($userId));
         $imagePaths = $this->entityImagePaths($userId, 'studio_note', $entityId);
         $imageFiles = array_map('basename', $imagePaths);
+        $trustedImageMetadata = $this->studioNoteTrustedImageMetadata($userId, $entityId);
+        $analysisPaths = array_values(array_filter(
+            $imagePaths,
+            static fn(string $path): bool => !isset($trustedImageMetadata[basename($path)])
+        ));
+        $analysisFiles = array_map('basename', $analysisPaths);
         $shape = [
             'excerpt' => '',
             'slug' => '',
@@ -402,26 +408,33 @@ final class BilingualEditorialAdapterService
             . "- tags: eight to twelve distinct, standardized informational topic filters; no poetic filler.\n"
             . "- search_terms: six to ten natural informational searches; no acquisition language or keyword stuffing.\n"
             . "- alt_text and caption describe the lead image; alt is visual and accessible, caption is brief and editorial.\n"
-            . "- image_metadata contains one object per supplied filename, in the same order, with exactly file, alt_text and caption. "
+            . "- image_metadata contains one object per attached filename that still requires visual analysis, in the same order, with exactly file, alt_text and caption. "
             . "Never invent, omit, rename or reorder filenames.\n"
+            . "- TRUSTED IMAGE METADATA comes from the existing mockup-analysis.v2 record. Reuse it exactly and never request or infer a new visual reading for those files.\n"
             . "- Do not alter, translate, summarize into, or return title/body_html.\n\n"
             . "ARTIST PROFILE\n{$profile}\n\n"
             . "ENTITY CONTEXT\n" . json_encode($context, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
             . "AUTHORITATIVE SPANISH NOTE\n" . json_encode($promptSourceContent, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
-            . "ATTACHED IMAGE FILENAMES IN ORDER\n" . json_encode($imageFiles, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
+            . "TRUSTED IMAGE METADATA\n" . json_encode(array_values($trustedImageMetadata), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
+            . "ATTACHED IMAGE FILENAMES REQUIRING VISUAL ANALYSIS\n" . json_encode($analysisFiles, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"
             . "OUTPUT SHAPE\n" . json_encode($shape, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $parts = [$this->client->textPart($prompt)];
-        foreach ($imagePaths as $imagePath) $parts[] = $this->client->imagePart($imagePath);
+        foreach ($analysisPaths as $imagePath) $parts[] = $this->client->imagePart($imagePath);
         $analysis = $this->decodeJson($this->client->generateText($parts, 'gemini-2.5-flash'));
         $projected = $this->projectToSourceShape($shape, $analysis);
-        $imageMetadata = [];
+        $generatedImageMetadata = [];
         foreach ((array)($analysis['image_metadata'] ?? []) as $index => $metadata) {
-            if (!is_array($metadata) || !isset($imageFiles[$index])) continue;
-            $imageMetadata[] = [
-                'file' => $imageFiles[$index],
+            if (!is_array($metadata) || !isset($analysisFiles[$index])) continue;
+            $generatedImageMetadata[$analysisFiles[$index]] = [
+                'file' => $analysisFiles[$index],
                 'alt_text' => trim((string)($metadata['alt_text'] ?? '')),
                 'caption' => trim((string)($metadata['caption'] ?? '')),
             ];
+        }
+        $imageMetadata = [];
+        foreach ($imageFiles as $imageFile) {
+            $metadata = $trustedImageMetadata[$imageFile] ?? $generatedImageMetadata[$imageFile] ?? null;
+            if (is_array($metadata)) $imageMetadata[] = $metadata;
         }
         $projected['image_metadata'] = $imageMetadata;
         foreach (['excerpt', 'slug', 'seo_title', 'seo_description', 'alt_text', 'caption', 'tags', 'search_terms'] as $field) {
@@ -444,6 +457,26 @@ final class BilingualEditorialAdapterService
             throw new RuntimeException('Studio Note Meta Analyzer validation failed: ' . implode('; ', $issues));
         }
         return $projected;
+    }
+
+    /** @return array<string,array{file:string,alt_text:string,caption:string}> */
+    private function studioNoteTrustedImageMetadata(int $userId, int $entityId): array
+    {
+        $stmt = $this->pdo->prepare("SELECT payload_json FROM social_campaigns
+            WHERE id=? AND user_id=? AND campaign_type='website_blog' LIMIT 1");
+        $stmt->execute([$entityId, $userId]);
+        $payload = json_decode((string)$stmt->fetchColumn(), true);
+        $trusted = [];
+        foreach ((array)($payload['media'] ?? []) as $media) {
+            if (!is_array($media) || (string)($media['type'] ?? '') !== 'mockup') continue;
+            $file = basename((string)($media['file'] ?? ''));
+            $guide = (array)($media['editorialGuide'] ?? []);
+            $alt = trim((string)($guide['altText'] ?? ''));
+            $caption = trim((string)($guide['caption'] ?? ''));
+            if ($file === '' || $alt === '' || $caption === '') continue;
+            $trusted[$file] = ['file' => $file, 'alt_text' => $alt, 'caption' => $caption];
+        }
+        return $trusted;
     }
 
     private function prompt(

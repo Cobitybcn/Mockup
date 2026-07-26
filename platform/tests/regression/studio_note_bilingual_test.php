@@ -75,6 +75,14 @@ function run_studio_note_bilingual_tests(): void
         'la plataforma conserva la pareja inglesa publicada'
     );
 
+    $spanish['body_html'] = '<p>El territorio nunca es una superficie neutral.</p><p><img src="media.php?file=strata.jpg" data-editor-align="center"></p>';
+    $service->save(7, 'studio_note', 12, 'es', $spanish);
+    TestHarness::assertSame(
+        'current',
+        (string)$service->get(7, 'studio_note', 12, 'en')['status'],
+        'maquetar imágenes sin cambiar el texto no vuelve obsoleto el inglés'
+    );
+
     $spanish['body_html'] = '<p>El territorio contiene presión, memoria y tiempo.</p>';
     $service->save(7, 'studio_note', 12, 'es', $spanish);
     $staleEnglish = $service->get(7, 'studio_note', 12, 'en');

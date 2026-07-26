@@ -127,6 +127,40 @@ $excluded = safe_studio_note_rich_text(
 );
 studio_note_media_assert(!str_contains($excluded, '<img'), 'cover image can be excluded from the body to prevent duplication');
 
+$semanticBase = [
+    'title' => 'La piel del territorio',
+    'body_html' => '<p>El territorio conserva memoria.</p><p><img src="media.php?file=mockup.jpg" data-editor-align="left"></p>',
+    'excerpt' => 'Una nota sobre territorio.',
+];
+$semanticLayout = $semanticBase;
+$semanticLayout['body_html'] = '<p>El territorio conserva memoria.</p><p><img src="media.php?file=mockup.jpg" data-editor-align="center" data-editor-size="large"></p>';
+studio_note_media_assert(
+    hash_equals(
+        StudioNoteMediaService::semanticHash($semanticBase),
+        StudioNoteMediaService::semanticHash($semanticLayout)
+    ),
+    'image alignment and size do not request a new editorial analysis'
+);
+$semanticText = $semanticBase;
+$semanticText['body_html'] = '<p>El territorio conserva memoria y presión.</p>';
+studio_note_media_assert(
+    !hash_equals(
+        StudioNoteMediaService::semanticHash($semanticBase),
+        StudioNoteMediaService::semanticHash($semanticText)
+    ),
+    'real prose changes remain eligible for reanalysis'
+);
+$mirroredLayout = StudioNoteMediaService::mirrorImages(
+    $semanticLayout['body_html'],
+    '<p>Territory preserves memory.</p><p><img src="old.jpg" data-editor-align="left"></p>'
+);
+studio_note_media_assert(
+    str_contains($mirroredLayout, 'data-editor-align="center"')
+        && str_contains($mirroredLayout, 'data-editor-size="large"')
+        && str_contains($mirroredLayout, 'Territory preserves memory.'),
+    'visual image changes are mirrored into English without rewriting translated prose'
+);
+
 $removed = StudioNoteMediaService::normalize(24680, 987654, '<p>Image removed.</p>', $normalized['payload'], []);
 studio_note_media_assert(count((array)$removed['payload']['media']) === 0, 'removed inline image does not remain in the note media payload');
 studio_note_media_assert(!isset($removed['payload']['source']), 'removed inline image does not remain as the note cover');

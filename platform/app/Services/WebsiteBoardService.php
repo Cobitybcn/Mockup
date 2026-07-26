@@ -111,6 +111,28 @@ final class WebsiteBoardService
             WHERE m.user_id=? ORDER BY m.created_at DESC,m.id DESC LIMIT 200");
         $mockupStmt->execute([$userId]);
         $mockups = $mockupStmt->fetchAll(PDO::FETCH_ASSOC);
+        $localizedMockupEditorial = [];
+        $mockupIds = array_values(array_filter(array_map(
+            static fn(array $row): int => (int)($row['id'] ?? 0),
+            $mockups
+        )));
+        if ($mockupIds !== []) {
+            try {
+                $marks = implode(',', array_fill(0, count($mockupIds), '?'));
+                $localizedStmt = $this->pdo->prepare("SELECT entity_id,locale,content_json
+                    FROM bilingual_editorial_content
+                    WHERE user_id=? AND entity_type='mockup'
+                    AND entity_id IN ($marks) AND locale IN ('es','en')");
+                $localizedStmt->execute(array_merge([$userId], $mockupIds));
+                foreach ($localizedStmt->fetchAll(PDO::FETCH_ASSOC) as $localizedRow) {
+                    $content = json_decode((string)($localizedRow['content_json'] ?? ''), true);
+                    if (!is_array($content)) continue;
+                    $localizedMockupEditorial[(int)$localizedRow['entity_id']][(string)$localizedRow['locale']] = $content;
+                }
+            } catch (Throwable) {
+                // Isolated legacy fixtures may not include the bilingual table.
+            }
+        }
         usort($mockups, static function (array $left, array $right) use ($favoriteLookup, $favoritePosition): int {
             $leftId = (int)$left['id']; $rightId = (int)$right['id'];
             $lf = isset($favoriteLookup[$leftId]); $rf = isset($favoriteLookup[$rightId]);
@@ -144,6 +166,10 @@ final class WebsiteBoardService
             if (MockupVariationEligibility::isCloseupMockup($row)) {
                 $searchTerms[] = 'close close-up closeup detail detalle macro texture textura edge borde corner esquina surface superficie crop recorte';
             }
+            $localizedSpanish = (array)($localizedMockupEditorial[(int)$row['id']]['es'] ?? []);
+            $localizedEnglish = (array)($localizedMockupEditorial[(int)$row['id']]['en'] ?? []);
+            $spanishGuide = $this->localizedMockupEditorialGuide($localizedSpanish, $editorialGuide);
+            $englishGuide = $this->localizedMockupEditorialGuide($localizedEnglish, []);
             $sources[] = $this->source('mockup', (int)$row['id'], $file, $label, [
                 'artworkId' => (int)$row['source_artwork_id'],
                 'artworkTitle' => (string)$row['artwork_title'],
@@ -154,7 +180,8 @@ final class WebsiteBoardService
                 'cameraSlotId' => $cameraSlotId,
                 'cameraSlotName' => $cameraSlotName,
                 'searchTerms' => implode(' ', array_filter($searchTerms, static fn(string $value): bool => $value !== '')),
-                'editorialGuide' => $editorialGuide,
+                'editorialGuide' => $spanishGuide,
+                'editorialGuideEn' => $englishGuide,
             ]);
         }
 
@@ -614,18 +641,44 @@ final class WebsiteBoardService
             $keywords = preg_split('/\s*,\s*/u', trim((string)($row['editorial_keywords'] ?? '')), -1, PREG_SPLIT_NO_EMPTY) ?: [];
         }
         $atmosphere = is_array($scene['atmosphere'] ?? null) ? $scene['atmosphere'] : [];
+        $firstText = static function (mixed ...$values): string {
+            foreach ($values as $value) {
+                $value = trim((string)$value);
+                if ($value !== '') return $value;
+            }
+            return '';
+        };
 
         return [
-            'title' => trim((string)($row['editorial_title'] ?? '')),
-            'description' => trim((string)($row['editorial_description'] ?? ($neutral['contextual_description'] ?? ''))),
-            'caption' => trim((string)($row['editorial_caption'] ?? ($neutral['caption'] ?? ''))),
-            'altText' => trim((string)($row['editorial_alt_text'] ?? ($neutral['alt_text'] ?? ''))),
+            'title' => $firstText($row['editorial_title'] ?? '', $neutral['context_title'] ?? ''),
+            'description' => $firstText($row['editorial_description'] ?? '', $neutral['contextual_description'] ?? ''),
+            'caption' => $firstText($row['editorial_caption'] ?? '', $neutral['caption'] ?? ''),
+            'altText' => $firstText($row['editorial_alt_text'] ?? '', $neutral['alt_text'] ?? ''),
             'spaceType' => trim((string)($scene['space_type'] ?? '')),
             'architecture' => trim((string)($scene['architecture'] ?? '')),
             'lighting' => trim((string)($scene['lighting'] ?? '')),
             'artworkRelationship' => trim((string)($scene['artwork_space_relationship'] ?? '')),
             'atmosphere' => array_values(array_filter(array_map('strval', $atmosphere), static fn(string $value): bool => trim($value) !== '')),
             'keywords' => array_values(array_filter(array_map('strval', $keywords), static fn(string $value): bool => trim($value) !== '')),
+        ];
+    }
+
+    /** @return array<string,mixed> */
+    private function localizedMockupEditorialGuide(array $content, array $fallback): array
+    {
+        $keywords = $content['keywords'] ?? ($content['tags'] ?? ($fallback['keywords'] ?? []));
+        if (!is_array($keywords)) {
+            $keywords = preg_split('/\s*,\s*/u', trim((string)$keywords), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        }
+        return [
+            'title' => trim((string)($content['title'] ?? '')) ?: trim((string)($fallback['title'] ?? '')),
+            'description' => trim((string)($content['description'] ?? '')) ?: trim((string)($fallback['description'] ?? '')),
+            'caption' => trim((string)($content['caption'] ?? '')) ?: trim((string)($fallback['caption'] ?? '')),
+            'altText' => trim((string)($content['alt_text'] ?? '')) ?: trim((string)($fallback['altText'] ?? '')),
+            'keywords' => array_values(array_filter(array_map(
+                static fn(mixed $value): string => trim((string)$value),
+                $keywords
+            ))),
         ];
     }
 

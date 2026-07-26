@@ -11,6 +11,59 @@ final class StudioNoteMediaService
         return trim((string)(preg_replace('/<img\b[^>]*>/iu', '', $html) ?? $html));
     }
 
+    public static function semanticHash(array $content): string
+    {
+        $bodyWithoutImages = self::removeImages((string)($content['body_html'] ?? ''));
+        $bodyText = html_entity_decode(
+            strip_tags($bodyWithoutImages),
+            ENT_QUOTES | ENT_HTML5,
+            'UTF-8'
+        );
+        $bodyText = trim((string)(preg_replace('/\s+/u', ' ', $bodyText) ?? $bodyText));
+        $semantic = [
+            'title' => trim((string)($content['title'] ?? '')),
+            'body_text' => $bodyText,
+            'excerpt' => trim((string)($content['excerpt'] ?? '')),
+            'seo_title' => trim((string)($content['seo_title'] ?? '')),
+            'seo_description' => trim((string)($content['seo_description'] ?? '')),
+            'alt_text' => trim((string)($content['alt_text'] ?? '')),
+            'caption' => trim((string)($content['caption'] ?? '')),
+            'tags' => trim((string)($content['tags'] ?? '')),
+            'search_terms' => trim((string)($content['search_terms'] ?? '')),
+        ];
+        return hash(
+            'sha256',
+            json_encode($semantic, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)
+        );
+    }
+
+    /**
+     * Reflects image-only layout changes in an existing translation without
+     * sending translated prose or visual assets back through an AI model.
+     */
+    public static function mirrorImages(string $sourceHtml, string $targetHtml): string
+    {
+        preg_match_all('/<img\b[^>]*>/iu', $sourceHtml, $sourceMatches);
+        $sourceImages = array_values((array)($sourceMatches[0] ?? []));
+        $index = 0;
+        $mirrored = preg_replace_callback(
+            '/<img\b[^>]*>/iu',
+            static function () use (&$index, $sourceImages): string {
+                return $sourceImages[$index++] ?? '';
+            },
+            $targetHtml
+        );
+        $mirrored = is_string($mirrored) ? $mirrored : $targetHtml;
+        if ($index < count($sourceImages)) {
+            $missing = array_slice($sourceImages, $index);
+            $mirrored = rtrim($mirrored) . implode('', array_map(
+                static fn(string $image): string => '<p>' . $image . '</p>',
+                $missing
+            ));
+        }
+        return trim($mirrored);
+    }
+
     /**
      * Replaces images with immutable slots before language adaptation. The
      * model receives the editorial text and placement markers, never ownership
