@@ -649,6 +649,17 @@ natcasesort($mockupSeriesFilters);
         .studio-note-actions button { width:auto; min-width:148px; margin:0; }
         .studio-note-publish { border-color:#b8a4c0 !important; background:#b8a4c0 !important; color:#fffaf7 !important; }
         .studio-note-publish:hover { border-color:#a791b0 !important; background:#a791b0 !important; }
+        .studio-note-command-bar__actions .studio-note-publish--commit {
+            width:116px;
+            min-width:116px;
+            height:116px;
+            padding:14px;
+            border-radius:2px;
+            font-size:13px;
+            line-height:1.2;
+            letter-spacing:.08em;
+            text-align:center;
+        }
         .studio-note-secondary-action { min-width:92px !important; padding:9px 13px !important; border:1px solid #cfc7c0 !important; border-radius:3px !important; background:#fff !important; color:#625b55 !important; box-shadow:none !important; font-size:10px !important; }
         .studio-note-secondary-action:hover { border-color:#9f958d !important; background:#f7f4ef !important; transform:none !important; box-shadow:none !important; }
         .studio-note-secondary-action--danger { border-color:#d8bebe !important; color:#8b5151 !important; }
@@ -824,7 +835,7 @@ natcasesort($mockupSeriesFilters);
                                 <span data-change-detail><?= wsn_h((string)$changeState['status_detail']) ?></span>
                             </div>
                             <div class="studio-note-command-bar__actions">
-                                <button class="button-link primary studio-note-publish" name="action"
+                                <button class="button-link primary studio-note-publish<?= (string)$changeState['primary_action'] === 'publish_changes' ? ' studio-note-publish--commit' : '' ?>" name="action"
                                         value="<?= wsn_h((string)($changeState['primary_action'] ?: 'publish_changes')) ?>"
                                         type="submit" data-publish-action
                                         <?= $editorialProcessActive ? 'disabled' : '' ?>
@@ -834,7 +845,7 @@ natcasesort($mockupSeriesFilters);
                                     <?php else: ?>
                                         <?= (string)$changeState['primary_action'] === 'update_english'
                                             ? 'Actualizar inglés'
-                                            : 'Publicar cambios' ?>
+                                            : 'PUBLICAR' ?>
                                     <?php endif; ?>
                                 </button>
                                 <button class="button-link secondary" name="action" value="save_draft" type="submit">Guardar borrador</button>
@@ -1154,6 +1165,22 @@ natcasesort($mockupSeriesFilters);
                         };
                     }
 
+                    function preparedForPublication(content) {
+                        if (!normalizedText(content.title) || !textFromHtml(content.body_html)) return false;
+                        return [
+                            'excerpt',
+                            'slug',
+                            'seo_title',
+                            'seo_description',
+                            'alt_text',
+                            'caption',
+                            'tags',
+                            'search_terms'
+                        ].every(function(field) {
+                            return !!normalizedText(content[field]);
+                        });
+                    }
+
                     var clientDirty = false;
                     function updatePublishActionMode() {
                         if (!form || !publishAction || publishAction.disabled || !clientDirty) return;
@@ -1179,13 +1206,16 @@ natcasesort($mockupSeriesFilters);
                         var mediaRequiresAnalysis = mediaChanged
                             && (!hasCompleteMediaMetadata(currentMediaFiles, currentSpanish)
                                 || !hasCompleteMediaMetadata(currentMediaFiles, currentEnglish));
-                        var needsEnglish = !hasPublishedPair
+                        var needsEnglish = (!hasPublishedPair
+                                && (!preparedForPublication(currentSpanish)
+                                    || !preparedForPublication(currentEnglish)))
                             || (spanishContentChanged && !englishContentChanged)
                             || mediaRequiresAnalysis;
                         form.setAttribute('data-change-state', needsEnglish ? 'english_pending' : 'ready_to_publish');
                         publishAction.hidden = false;
                         publishAction.value = needsEnglish ? 'update_english' : 'publish_changes';
-                        publishAction.textContent = needsEnglish ? 'Actualizar inglés' : 'Publicar cambios';
+                        publishAction.textContent = needsEnglish ? 'Actualizar inglés' : 'PUBLICAR';
+                        publishAction.classList.toggle('studio-note-publish--commit', !needsEnglish);
                         if (changeMessage) changeMessage.textContent = needsEnglish
                             ? 'El contenido en español fue modificado'
                             : 'Cambios listos para publicar';

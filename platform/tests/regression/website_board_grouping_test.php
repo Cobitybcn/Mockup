@@ -118,8 +118,11 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'Material visual'), 'el editor elimina la biblioteca visual lateral redundante');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'data-media-library'), 'el borrador no conserva una segunda superficie para insertar imágenes');
     TestHarness::assertContains('data-mockup-guide-en', $studioNotesPage, 'cada mockup transporta su SEO bilingüe existente al artículo');
-    TestHarness::assertContains('Publicar cambios', $studioNotesPage, 'la interfaz publica cambios listos sin consumir Vertex');
+    TestHarness::assertContains('PUBLICAR', $studioNotesPage, 'la interfaz presenta la publicación final como compromiso principal');
     TestHarness::assertContains('Actualizar inglés', $studioNotesPage, 'la interfaz separa la actualización inglesa de la publicación');
+    TestHarness::assertContains('studio-note-publish--commit', $studioNotesPage, 'PUBLICAR reutiliza la geometría cuadrada del Primary Action');
+    TestHarness::assertContains('preparedForPublication(currentSpanish)', $studioNotesPage, 'una nota nueva completa deja de pedir otra adaptación inglesa');
+    TestHarness::assertContains('preparedForPublication(currentEnglish)', $studioNotesPage, 'el cliente reconoce el paquete inglés completo antes de ofrecer PUBLICAR');
     TestHarness::assertContains('data-change-message', $studioNotesPage, 'el estado editorial permanece junto a su acción');
     TestHarness::assertContains('studio-note-command-bar', $studioNotesPage, 'la acción no queda perdida debajo del editor largo');
     TestHarness::assertContains('name="title_es"', $studioNotesPage, 'Studio Notes escribe primero el título español');
