@@ -88,4 +88,17 @@ function run_security_hardening_regression_tests(): void
     TestHarness::assertContains('artist-site/inc/SiteCopy.php', $webDockerfile, 'the production image carries the bilingual artist copy dependency');
     TestHarness::assertContains('artist-site/inc/AppPublishedStudioNotes.php', $webDockerfile, 'the production image carries the published Studio Notes recovery contract');
     TestHarness::assertContains('apache2ctl configtest', $webDockerfile, 'the production image rejects invalid Apache security configuration during its build');
+
+    $workerApache = (string)file_get_contents($platformRoot . '/apache-worker.conf');
+    foreach (['worker.php', 'root_worker.php', 'social_publish_worker.php', 'video_worker.php', 'video_export_worker.php', 'editorial_worker.php'] as $workerHandler) {
+        TestHarness::assertContains(
+            str_replace('.', '\\.', $workerHandler),
+            $workerApache,
+            $workerHandler . ' remains reachable behind the private Cloud Run IAM boundary'
+        );
+    }
+
+    $bootstrapScript = (string)file_get_contents($platformRoot . '/scripts/bootstrap_operational_project.ps1');
+    TestHarness::assertContains('--max-attempts=8', $bootstrapScript, 'task retries have a finite production limit');
+    TestHarness::assertContains('--min-backoff=5s', $bootstrapScript, 'task failures cannot create a tight retry storm');
 }
