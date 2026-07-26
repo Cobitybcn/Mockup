@@ -220,22 +220,46 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $submissionSources = $draftId === $id && $studioSources !== []
                 ? $studioSources
                 : $websiteBoard->sources($userId);
-            $spanish = StudioNoteMediaService::hydrateImageMetadata(
+            $previousEnglishState = $editorial->get($userId, 'studio_note', $id, 'en');
+            $canonicalSubmission = StudioNoteMediaService::canonicalizeBilingualContent(
                 $spanish,
-                $submissionSources,
-                'es'
-            );
-            $english = StudioNoteMediaService::hydrateImageMetadata(
                 $english,
+                (array)$previousEnglishState['published_content'],
                 $submissionSources,
-                'en'
             );
+            $spanish = $canonicalSubmission['spanish'];
+            $english = $canonicalSubmission['english'];
             $editorial->save($userId, 'studio_note', $id, 'es', $spanish);
             if (wsn_has_content($english)) {
                 $editorial->save($userId, 'studio_note', $id, 'en', $english);
             }
             $savedSpanishState = $editorial->get($userId, 'studio_note', $id, 'es');
             $savedEnglishState = $editorial->get($userId, 'studio_note', $id, 'en');
+            $canonicalSaved = StudioNoteMediaService::canonicalizeBilingualContent(
+                (array)$savedSpanishState['content'],
+                (array)$savedEnglishState['content'],
+                (array)$savedEnglishState['published_content'],
+                $submissionSources
+            );
+            if ($canonicalSaved['spanish'] !== (array)$savedSpanishState['content']
+                || $canonicalSaved['english'] !== (array)$savedEnglishState['content']) {
+                $editorial->save(
+                    $userId,
+                    'studio_note',
+                    $id,
+                    'es',
+                    $canonicalSaved['spanish']
+                );
+                $editorial->save(
+                    $userId,
+                    'studio_note',
+                    $id,
+                    'en',
+                    $canonicalSaved['english']
+                );
+                $savedSpanishState = $editorial->get($userId, 'studio_note', $id, 'es');
+                $savedEnglishState = $editorial->get($userId, 'studio_note', $id, 'en');
+            }
             $changes = StudioNoteChangeClassifier::classify(
                 (array)$savedSpanishState['content'],
                 (array)$savedSpanishState['published_content'],
@@ -527,16 +551,14 @@ if ($openDraft) {
         (int)$openDraft['id'],
         (string)$englishState['content']['body_html']
     );
-    $spanishState['content'] = StudioNoteMediaService::hydrateImageMetadata(
+    $canonicalContent = StudioNoteMediaService::canonicalizeBilingualContent(
         (array)$spanishState['content'],
-        $studioSources,
-        'es'
-    );
-    $englishState['content'] = StudioNoteMediaService::hydrateImageMetadata(
         (array)$englishState['content'],
+        (array)$englishState['published_content'],
         $studioSources,
-        'en'
     );
+    $spanishState['content'] = $canonicalContent['spanish'];
+    $englishState['content'] = $canonicalContent['english'];
     try {
         $studioWorkspace->syncHistoricalJobs($userId, (int)$openDraft['id']);
         $activeEditorialJob = (new BilingualEditorialJobService($pdo))->activeForEntity(
@@ -559,15 +581,6 @@ if ($openDraft) {
         (array)$englishState['published_content'],
         (bool)$spanishState['is_published'],
         (bool)$englishState['is_published']
-    );
-    $englishState['content']['body_html'] = StudioNoteMediaService::mirrorImagesWithPublishedFallback(
-        (string)$spanishState['content']['body_html'],
-        (string)$englishState['content']['body_html'],
-        StudioNoteMediaService::rewriteDeliveryUrls(
-            $userId,
-            (int)$openDraft['id'],
-            (string)($englishState['published_content']['body_html'] ?? '')
-        )
     );
 }
 

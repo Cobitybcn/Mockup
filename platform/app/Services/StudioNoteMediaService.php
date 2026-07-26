@@ -225,6 +225,34 @@ final class StudioNoteMediaService
     }
 
     /**
+     * Produces the only representation that may be classified or published.
+     * Images are owned by the Spanish master; their layout is reflected into
+     * English and each locale receives the trusted catalog metadata.
+     *
+     * @param array<string,mixed> $spanish
+     * @param array<string,mixed> $english
+     * @param array<string,mixed> $publishedEnglish
+     * @param array<int,array<string,mixed>> $availableSources
+     * @return array{spanish:array<string,mixed>,english:array<string,mixed>}
+     */
+    public static function canonicalizeBilingualContent(
+        array $spanish,
+        array $english,
+        array $publishedEnglish,
+        array $availableSources
+    ): array {
+        $english['body_html'] = self::mirrorImagesWithPublishedFallback(
+            (string)($spanish['body_html'] ?? ''),
+            (string)($english['body_html'] ?? ''),
+            (string)($publishedEnglish['body_html'] ?? '')
+        );
+        return [
+            'spanish' => self::hydrateImageMetadata($spanish, $availableSources, 'es'),
+            'english' => self::hydrateImageMetadata($english, $availableSources, 'en'),
+        ];
+    }
+
+    /**
      * Converts editor-only image sources into persistent note media and rewrites
      * the HTML to a stable platform media URL.
      *

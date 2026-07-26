@@ -183,6 +183,21 @@ studio_note_media_assert(
         && (string)($hydratedEnglish['image_metadata'][0]['caption'] ?? '') === $catalogSources[0]['editorialGuideEn']['caption'],
     'catalog mockups restore their bilingual image SEO without another visual analysis'
 );
+$canonical = StudioNoteMediaService::canonicalizeBilingualContent(
+    $semanticLayout,
+    [
+        'body_html' => '<p>Territory preserves memory.</p>',
+        'image_metadata' => [],
+    ],
+    [],
+    $catalogSources
+);
+studio_note_media_assert(
+    str_contains((string)$canonical['english']['body_html'], 'data-editor-align="center"')
+        && count((array)$canonical['spanish']['image_metadata']) === 1
+        && count((array)$canonical['english']['image_metadata']) === 1,
+    'one canonical bilingual representation mirrors image layout and restores both SEO records'
+);
 
 $removed = StudioNoteMediaService::normalize(24680, 987654, '<p>Image removed.</p>', $normalized['payload'], []);
 studio_note_media_assert(count((array)$removed['payload']['media']) === 0, 'removed inline image does not remain in the note media payload');

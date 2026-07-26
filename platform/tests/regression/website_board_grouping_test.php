@@ -123,7 +123,7 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertContains('studio-note-publish--commit', $studioNotesPage, 'PUBLICAR reutiliza la geometría cuadrada del Primary Action');
     TestHarness::assertContains('preparedForPublication(currentSpanish)', $studioNotesPage, 'una nota nueva completa deja de pedir otra adaptación inglesa');
     TestHarness::assertContains('preparedForPublication(currentEnglish)', $studioNotesPage, 'el cliente reconoce el paquete inglés completo antes de ofrecer PUBLICAR');
-    TestHarness::assertContains('StudioNoteMediaService::hydrateImageMetadata', $studioNotesPage, 'el servidor recupera el SEO bilingüe ya existente en los mockups antes de decidir la acción');
+    TestHarness::assertContains('StudioNoteMediaService::canonicalizeBilingualContent', $studioNotesPage, 'abrir y publicar comparten una sola representación bilingüe de texto, imágenes y SEO');
     TestHarness::assertContains('registerMockupMetadata(card)', $studioNotesPage, 'el editor recupera metadatos de los mockups que ya estaban insertados al recargar');
     TestHarness::assertContains(
         '$submissionSources = $draftId === $id',
@@ -131,9 +131,9 @@ function run_website_board_grouping_regression_tests(): void
         'PUBLICAR recupera el mismo SEO de mockups en el POST antes de volver a clasificar'
     );
     TestHarness::assertContains(
-        "StudioNoteMediaService::hydrateImageMetadata(\n                \$english,\n                \$submissionSources,\n                'en'",
+        "\$canonicalSaved = StudioNoteMediaService::canonicalizeBilingualContent",
         $studioNotesPage,
-        'PUBLICAR no pierde el SEO inglés de imágenes al guardar el formulario'
+        'PUBLICAR vuelve a leer y repara el contenido persistido antes de decidir'
     );
     TestHarness::assertContains('data-change-message', $studioNotesPage, 'el estado editorial permanece junto a su acción');
     TestHarness::assertContains('studio-note-command-bar', $studioNotesPage, 'la acción no queda perdida debajo del editor largo');
@@ -155,9 +155,9 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertContains("'review_spanish_metadata' =>", $studioNotesPage, 'actualizar inglés revisa SEO solo cuando quedan campos no protegidos');
     TestHarness::assertContains('mirrorImagesWithPublishedFallback', $studioNotesPage, 'publicar refleja la estructura visual sin nueva adaptación');
     TestHarness::assertContains(
-        "\$englishState['content']['body_html'] = StudioNoteMediaService::mirrorImagesWithPublishedFallback",
+        "\$englishState['content'] = \$canonicalContent['english'];",
         $studioNotesPage,
-        'el editor inglés recupera las imágenes desde el snapshot publicado antes de cualquier acción'
+        'el editor inglés recibe la representación canónica antes de decidir cualquier acción'
     );
     TestHarness::assertContains(
         "\$action = 'publish_changes';",
