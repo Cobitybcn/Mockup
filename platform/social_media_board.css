@@ -1410,7 +1410,6 @@
     text-transform: uppercase;
 }
 .smb-scheduled-note { max-width: 240px; color: #8a4d49; font-size: 9px; line-height: 1.4; }
-.smb-scheduled-chip--published { background: #5e8158; }
 .smb-scheduled-chip--failed,
 .smb-scheduled-chip--needs_verification { background: #a4534d; }
 

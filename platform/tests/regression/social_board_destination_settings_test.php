@@ -46,4 +46,14 @@ function run_social_board_destination_settings_tests(): void
         $javascript,
         'las publicaciones aceptadas dejan el tablero limpio para el siguiente trabajo'
     );
+    TestHarness::assertContains(
+        "clearAcceptedPublications(jobs.filter((job) => String(job?.status || '') === 'published'))",
+        $javascript,
+        'una sesión anterior se limpia al reconciliar publicaciones terminadas con el historial'
+    );
+    TestHarness::assertContains(
+        "if (status === 'published') return '';",
+        $javascript,
+        'las tarjetas del tablero no muestran una mancha verde de estado publicado'
+    );
 }

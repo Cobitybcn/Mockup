@@ -346,8 +346,8 @@
     const scheduledChip = (job) => {
         if (!job) return '';
         const status = String(job.status || '');
-        const label = status === 'published' ? 'Publicado'
-            : status === 'failed' ? 'Failed'
+        if (status === 'published') return '';
+        const label = status === 'failed' ? 'Failed'
                 : status === 'needs_verification' ? 'Verificar'
                     : status === 'publishing' ? 'Publicando'
                         : status === 'queued' ? (scheduledStatusLabel(job).includes('now') ? 'Queued' : 'Scheduled')
@@ -362,6 +362,7 @@
             const key = String(job.client_key || '');
             if (networkPlatforms.includes(platform) && key && !state.scheduled[platform][key]) state.scheduled[platform][key] = job;
         });
+        clearAcceptedPublications(jobs.filter((job) => String(job?.status || '') === 'published'));
         saveState();
         renderAll();
     };
@@ -1837,6 +1838,10 @@
         state.schedule.perPublication = false;
     }
 
+    clearAcceptedPublications(networkPlatforms.flatMap((platform) =>
+        Object.values(state.scheduled?.[platform] || {})
+            .filter((job) => String(job?.status || '') === 'published')
+    ));
     sortCatalog();
     renderAll();
     initializeCatalogSortable();
