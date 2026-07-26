@@ -70,7 +70,7 @@ function videos_artist_site_url(string $slug): string
     <title>Videos - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
-    <link rel="stylesheet" href="videos.css?v=14">
+    <link rel="stylesheet" href="videos.css?v=15">
     <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body>
@@ -158,17 +158,17 @@ function videos_artist_site_url(string $slug): string
                                             <small data-final-artwork-error hidden></small>
                                         </form>
                                     </details>
+                                    <form class="videos-final-publish" data-final-publish-form>
+                                        <input type="hidden" name="csrf" value="<?= videos_h($csrf) ?>">
+                                        <input type="hidden" name="exportId" value="<?= (int)$final['id'] ?>">
+                                        <button type="submit" <?= $sitePublished || !$canPublish ? 'disabled' : '' ?>
+                                            title="<?= videos_h(!$canPublish ? 'Assign a published artwork first' : '') ?>"><?= $sitePublished ? 'PUBLISHED' : 'PUBLISH' ?></button>
+                                        <?php if ($sitePublished && $siteVideoUrl !== ''): ?>
+                                            <a href="<?= videos_h($siteVideoUrl) ?>" target="_blank" rel="noopener">VIEW →</a>
+                                        <?php endif; ?>
+                                        <small data-final-publish-error hidden></small>
+                                    </form>
                                 </div>
-                                <form class="videos-final-actions" data-final-publish-form>
-                                    <input type="hidden" name="csrf" value="<?= videos_h($csrf) ?>">
-                                    <input type="hidden" name="exportId" value="<?= (int)$final['id'] ?>">
-                                    <button type="submit" <?= $sitePublished || !$canPublish ? 'disabled' : '' ?>
-                                        title="<?= videos_h(!$canPublish ? 'Assign a published artwork first' : '') ?>"><?= $sitePublished ? 'PUBLISHED' : 'PUBLISH' ?></button>
-                                    <?php if ($sitePublished && $siteVideoUrl !== ''): ?>
-                                        <a href="<?= videos_h($siteVideoUrl) ?>" target="_blank" rel="noopener">VIEW →</a>
-                                    <?php endif; ?>
-                                    <small data-final-publish-error hidden></small>
-                                </form>
                             </article>
                         <?php endforeach; ?>
                     </div>

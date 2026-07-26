@@ -274,6 +274,7 @@ final class AppPublishedCatalog
             ORDER BY i.position,i.id");
         $statement->execute([$publicationId]);
         $items = $statement->fetchAll();
+        $explicitFavoriteCount = count($items);
         $seenMockupIds = [];
         $seenFiles = [];
         foreach ($items as $item) {
@@ -296,7 +297,8 @@ final class AppPublishedCatalog
 
         $usedEnglish = [];
         $usedSpanish = [];
-        foreach ($items as &$item) {
+        foreach ($items as $itemIndex => &$item) {
+            $item['is_publication_favorite'] = $itemIndex < $explicitFavoriteCount;
             $item['title'] = (string)($item['resolved_title'] ?? $item['title'] ?? '');
             unset($item['resolved_title']);
             $language = function_exists('artist_site_language') ? artist_site_language() : 'es';

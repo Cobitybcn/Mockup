@@ -89,11 +89,20 @@ function run_public_pages_regression_tests(): void {
     TestHarness::assertContains('artwork_video_publications',$publicVideoMedia,'public video delivery requires an explicit artwork publication');
     $videoLandingStart=strpos($artistSite,'function render_published_artwork_video');
     $videoLanding=$videoLandingStart===false?'':substr($artistSite,$videoLandingStart,strpos($artistSite,'function render_acquisition',$videoLandingStart)-$videoLandingStart);
+    $videoRelationshipsStart=strpos($videoLanding,'<div class="artwork-video-related">');
+    $videoRelationships=$videoRelationshipsStart===false?'':substr($videoLanding,$videoRelationshipsStart);
     TestHarness::assertTrue(
-        strpos($videoLanding,"site_t('Related Studio Notes'") < strpos($videoLanding,"site_t('Series',")
-            && strpos($videoLanding,"site_t('Series',") < strpos($videoLanding,"site_t('Associated Mockups'")
-            && strpos($videoLanding,"site_t('Associated Mockups'") < strpos($videoLanding,"site_t('Main Artwork'"),
+        strpos($videoRelationships,"site_t('Related Studio Notes'") < strpos($videoRelationships,"site_t('Series',")
+            && strpos($videoRelationships,"site_t('Series',") < strpos($videoRelationships,"site_t('Associated Mockups'")
+            && !str_contains($videoLanding,"site_t('Main Artwork'"),
         'the artwork video landing preserves its editorial relationship order'
     );
+    TestHarness::assertContains('class="artwork-detail artwork-video-detail"',$videoLanding,'the video page reuses the artwork detail architecture');
+    TestHarness::assertTrue(
+        strpos($videoLanding,'<h1>') < strpos($videoLanding,"site_t('Artwork video'"),
+        'the artwork video title is always the first element in the information column'
+    );
+    TestHarness::assertContains('published_excerpt([$note[\'seo_description\']',$videoLanding,'related Studio Notes reuse published destination metadata');
+    TestHarness::assertContains('$mockup[\'is_publication_favorite\']',$videoLanding,'the video page prioritizes the artwork publication favorites');
     TestHarness::assertContains('class="artwork-video-spec"',$artistSite,'the artwork detail appends the compact film icon, video duration and link');
 }

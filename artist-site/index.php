@@ -1399,6 +1399,18 @@ function published_video_duration(float $seconds): string
     return sprintf('%02d:%02d', intdiv($total, 60), $total % 60);
 }
 
+function published_excerpt(array $values, int $limit = 220): string
+{
+    foreach ($values as $value) {
+        $text = trim(preg_replace('/\s+/u', ' ', strip_tags((string)$value)) ?? '');
+        if ($text === '') continue;
+        return mb_strlen($text) > $limit
+            ? rtrim(mb_substr($text, 0, max(1, $limit - 1))) . '…'
+            : $text;
+    }
+    return '';
+}
+
 /** @return array<string,array<string,mixed>> */
 function artwork_related_studio_notes(array $artwork): array
 {
@@ -1413,8 +1425,10 @@ function artwork_related_studio_notes(array $artwork): array
         (array)($artwork['items'] ?? [])
     )));
 
-    $related = [];
+    $ranked = [];
+    $position = 0;
     foreach ($notes as $slug => $note) {
+        $position++;
         $payloadSource = is_array($note['source'] ?? null) ? $note['source'] : [];
         $type = mb_strtolower(trim((string)($payloadSource['type'] ?? $note['source_type'] ?? '')));
         $id = (int)($payloadSource['id'] ?? $note['source_id'] ?? 0);
@@ -1425,10 +1439,27 @@ function artwork_related_studio_notes(array $artwork): array
         $matchesSeries = in_array($type, ['series', 'serie'], true)
             && (($seriesId > 0 && $id === $seriesId) || ($seriesTitle !== '' && $label === $seriesTitle));
         $matchesMedia = (bool)array_intersect($mockupFiles, $noteFiles);
-        if (!$matchesArtwork && !$matchesSeries && !$matchesMedia) continue;
-        $related[$slug] = $note;
-        if (count($related) >= 3) break;
+        $searchable = mb_strtolower(implode(' ', array_filter([
+            (string)($note['title'] ?? ''),
+            (string)($note['excerpt'] ?? ''),
+            (string)($note['seo_description'] ?? ''),
+            (string)($note['search_terms'] ?? ''),
+            strip_tags((string)($note['objective'] ?? '')),
+        ])));
+        $matchesText = ($seriesTitle !== '' && mb_stripos($searchable, $seriesTitle) !== false)
+            || ($artworkTitle !== '' && mb_stripos($searchable, $artworkTitle) !== false);
+        if (!$matchesArtwork && !$matchesSeries && !$matchesMedia && !$matchesText) continue;
+        $score = ($matchesArtwork ? 120 : 0)
+            + ($matchesSeries ? 100 : 0)
+            + ($matchesMedia ? 80 : 0)
+            + ($matchesText ? 20 : 0);
+        $ranked[] = ['slug' => $slug, 'note' => $note, 'score' => $score, 'position' => $position];
     }
+    usort($ranked, static fn(array $left, array $right): int =>
+        ($right['score'] <=> $left['score']) ?: ($left['position'] <=> $right['position'])
+    );
+    $related = [];
+    foreach (array_slice($ranked, 0, 3) as $match) $related[$match['slug']] = $match['note'];
     return $related;
 }
 
@@ -1865,98 +1896,129 @@ function render_published_artwork_video(array $site, array $artwork): void
             break;
         }
     }
-    $mainImageFile = trim((string)($artwork['header_file'] ?? '')) ?: (string)$artwork['source_image_file'];
     $duration = published_video_duration((float)$video['duration_seconds']);
+    $intro = published_excerpt([
+        $artwork['short_description'] ?? '',
+        $artwork['subtitle'] ?? '',
+        $artwork['description'] ?? '',
+    ], 280);
+    $analysis = is_array($artwork['artwork_analysis'] ?? null) ? $artwork['artwork_analysis'] : [];
+    $facts = is_array($analysis['confirmed_facts'] ?? null) ? $analysis['confirmed_facts'] : [];
+    $medium = trim((string)($artwork['medium'] ?: ($facts['medium'] ?? '')));
+    $year = trim((string)($artwork['artwork_year'] ?: ($facts['year'] ?? '')));
+    $mockups = array_values(array_filter(
+        (array)($artwork['items'] ?? []),
+        static fn(array $mockup): bool => !empty($mockup['public_slug'])
+    ));
+    $favoriteMockups = array_values(array_filter(
+        $mockups,
+        static fn(array $mockup): bool => !empty($mockup['is_publication_favorite'])
+    ));
+    if ($favoriteMockups) $mockups = $favoriteMockups;
+    $rotationDate = gmdate('Y-m-d');
+    usort($mockups, static function (array $left, array $right) use ($artwork, $rotationDate): int {
+        $seed = (string)($artwork['canonical_artwork_id'] ?? $artwork['slug'] ?? '');
+        $leftKey = hash('sha256', $seed . '|' . $rotationDate . '|' . (string)($left['mockup_id'] ?? $left['mockup_file'] ?? ''));
+        $rightKey = hash('sha256', $seed . '|' . $rotationDate . '|' . (string)($right['mockup_id'] ?? $right['mockup_file'] ?? ''));
+        return $leftKey <=> $rightKey;
+    });
+    $mockups = array_slice($mockups, 0, 3);
     ?>
-    <section class="artwork-video-editorial">
-        <header class="artwork-video-editorial__header">
-            <p class="eyebrow"><?= e(site_t('Artwork video', 'Video de la obra')) ?><?= !empty($artwork['series']) ? ' / ' . e((string)$artwork['series']) : '' ?></p>
-            <h1><?= e((string)$artwork['title']) ?></h1>
-            <?php if (!empty($artwork['subtitle'])): ?><p class="lead"><?= e((string)$artwork['subtitle']) ?></p><?php endif; ?>
-            <p class="artwork-video-editorial__meta"><?= e($duration) ?><?= !empty($video['aspect_ratio']) ? ' · ' . e((string)$video['aspect_ratio']) : '' ?></p>
-        </header>
-
-        <figure class="artwork-video-editorial__player">
+    <section class="artwork-detail artwork-video-detail">
+        <div class="artwork-video-detail__viewer">
             <video controls playsinline preload="metadata"<?= !empty($video['has_poster']) ? ' poster="' . e(app_publication_video_url($artwork, true)) . '"' : '' ?>>
                 <source src="<?= e(app_publication_video_url($artwork)) ?>">
             </video>
-        </figure>
+        </div>
 
-        <div class="artwork-video-board">
-            <section class="artwork-video-board__row artwork-video-board__notes">
-                <div class="artwork-video-board__label">
+        <div class="artwork-detail__content artwork-video-detail__content">
+            <h1><?= e((string)$artwork['title']) ?></h1>
+            <?php if ($intro !== ''): ?><p class="lead"><?= e($intro) ?></p><?php endif; ?>
+
+            <h2 class="artwork-video-detail__section-title"><?= e(site_t('Artwork video', 'Video de la obra')) ?></h2>
+            <dl class="specs artwork-video-detail__specs">
+                <div><dt><?= e(site_t('Duration', 'Duración')) ?></dt><dd><?= e($duration) ?></dd></div>
+                <?php if (!empty($video['aspect_ratio'])): ?><div><dt><?= e(site_t('Format', 'Formato')) ?></dt><dd><?= e((string)$video['aspect_ratio']) ?></dd></div><?php endif; ?>
+            </dl>
+
+            <h2 class="artwork-video-detail__section-title"><?= e(site_t('Artwork details', 'Detalles de la obra')) ?></h2>
+            <dl class="specs artwork-video-detail__specs">
+                <?php if ($year !== ''): ?><div><dt><?= e(site_t('Year', 'Año')) ?></dt><dd><?= e($year) ?></dd></div><?php endif; ?>
+                <?php if ($medium !== ''): ?><div><dt><?= e(site_t('Medium', 'Técnica')) ?></dt><dd><?= e($medium) ?></dd></div><?php endif; ?>
+                <?php if (published_dimensions($artwork) !== ''): ?><div><dt><?= e(site_t('Size', 'Medidas')) ?></dt><dd><?= e(published_dimensions($artwork)) ?></dd></div><?php endif; ?>
+                <?php if (!empty($artwork['series'])): ?>
+                    <div><dt><?= e(site_t('Series', 'Serie')) ?></dt><dd>
+                        <?php if ($series): ?><a href="<?= e(url_for('series/' . $series['slug'])) ?>"><?= e((string)$artwork['series']) ?></a><?php else: ?><?= e((string)$artwork['series']) ?><?php endif; ?>
+                    </dd></div>
+                <?php endif; ?>
+                <div><dt><?= e(site_t('Context studies', 'Estudios de contexto')) ?></dt><dd><?= count((array)($artwork['items'] ?? [])) ?></dd></div>
+            </dl>
+
+            <div class="artwork-video-related">
+                <section>
                     <h2><?= e(site_t('Related Studio Notes', 'Studio Notes relacionadas')) ?></h2>
-                </div>
-                <div class="artwork-video-board__content">
                     <?php if ($notes): ?>
                         <?php foreach ($notes as $slug => $note): ?>
-                            <?php
-                            $snippet = trim((string)($note['excerpt'] ?? '')) ?: trim(strip_tags((string)($note['objective'] ?? '')));
-                            if (mb_strlen($snippet) > 220) $snippet = mb_substr($snippet, 0, 217) . '…';
-                            ?>
-                            <article class="artwork-video-note">
+                            <?php $snippet = published_excerpt([$note['seo_description'] ?? '', $note['excerpt'] ?? '', $note['objective'] ?? '']); ?>
+                            <article>
                                 <h3><a href="<?= e(url_for('studio-notes/' . $slug)) ?>"><?= e((string)$note['title']) ?> <span aria-hidden="true">→</span></a></h3>
                                 <?php if ($snippet !== ''): ?><p><?= e($snippet) ?></p><?php endif; ?>
                             </article>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <a class="artwork-video-board__text-link" href="<?= e(url_for('studio-notes')) ?>"><?= e(site_t('Explore Studio Notes', 'Explorar Studio Notes')) ?> <span aria-hidden="true">→</span></a>
+                        <article>
+                            <h3><a href="<?= e(url_for('studio-notes')) ?>"><?= e(site_t('Concepts in Architectural Abstract Painting', 'Ideas sobre pintura abstracta, territorio y espacio')) ?> <span aria-hidden="true">→</span></a></h3>
+                            <p><?= e(site_t(
+                                'Reflections, essays, and notes on abstract painting, space, and territory.',
+                                'Reflexiones, ensayos y apuntes sobre pintura abstracta, espacio y territorio.'
+                            )) ?></p>
+                        </article>
                     <?php endif; ?>
-                </div>
-            </section>
+                </section>
 
-            <section class="artwork-video-board__row">
-                <div class="artwork-video-board__label">
-                    <h2><?= e(site_t('Series', 'Serie')) ?></h2>
-                </div>
-                <div class="artwork-video-board__content">
-                    <?php if ($series): ?>
-                        <h3><a href="<?= e(url_for('series/' . $series['slug'])) ?>"><?= e((string)$series['title']) ?> <span aria-hidden="true">→</span></a></h3>
-                        <?php $seriesText = trim((string)($series['description'] ?? $series['long_description'] ?? '')); ?>
-                        <?php if ($seriesText !== ''): ?><p><?= e($seriesText) ?></p><?php endif; ?>
-                    <?php elseif (!empty($artwork['series'])): ?>
-                        <h3><?= e((string)$artwork['series']) ?></h3>
-                    <?php endif; ?>
-                </div>
-            </section>
+                <?php if ($series || !empty($artwork['series'])): ?>
+                    <section>
+                        <h2><?= e(site_t('Series', 'Serie')) ?></h2>
+                        <?php $seriesText = $series ? published_excerpt([$series['seo_description'] ?? '', $series['description'] ?? '', $series['long_description'] ?? '']) : ''; ?>
+                        <article>
+                            <h3>
+                                <?php if ($series): ?><a href="<?= e(url_for('series/' . $series['slug'])) ?>"><?= e((string)$series['title']) ?> <span aria-hidden="true">→</span></a>
+                                <?php else: ?><?= e((string)$artwork['series']) ?><?php endif; ?>
+                            </h3>
+                            <?php if ($seriesText !== ''): ?><p><?= e($seriesText) ?></p><?php endif; ?>
+                        </article>
+                    </section>
+                <?php endif; ?>
 
-            <section class="artwork-video-board__row artwork-video-board__mockups">
-                <div class="artwork-video-board__label">
-                    <h2><?= e(site_t('Associated Mockups', 'Mockups asociados')) ?></h2>
-                </div>
-                <div class="artwork-video-board__content">
-                    <?php if (!empty($artwork['items'])): ?>
-                        <div class="artwork-video-mockup-rail">
-                            <?php foreach (array_slice((array)$artwork['items'], 0, 6) as $mockup): ?>
-                                <a href="<?= e(url_for('artworks/' . $artwork['slug'] . '/mockups/' . $mockup['public_slug'])) ?>">
-                                    <img src="<?= e(app_publication_media_url($artwork, (string)$mockup['mockup_file'], 768)) ?>"
-                                        srcset="<?= e(app_publication_media_srcset($artwork, (string)$mockup['mockup_file'])) ?>"
-                                        sizes="(max-width: 700px) 78vw, 34vw"
-                                        alt="<?= e((string)($mockup['alt_text'] ?: $mockup['title'] ?: $artwork['title'])) ?>"
-                                        loading="lazy" decoding="async">
-                                    <span><?= e((string)($mockup['title'] ?: site_t('Context study', 'Estudio de contexto'))) ?> →</span>
-                                </a>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </section>
-
-            <section class="artwork-video-board__row artwork-video-board__artwork">
-                <div class="artwork-video-board__label">
-                    <h2><?= e(site_t('Main Artwork', 'Obra principal')) ?></h2>
-                </div>
-                <div class="artwork-video-board__content">
-                    <a class="artwork-video-main-link" href="<?= e(url_for('artworks/' . $artwork['slug'])) ?>">
-                        <img src="<?= e(app_publication_media_url($artwork, $mainImageFile, 768)) ?>"
-                            srcset="<?= e(app_publication_media_srcset($artwork, $mainImageFile)) ?>"
-                            sizes="(max-width: 700px) 100vw, 52vw"
-                            alt="<?= e((string)($artwork['artwork_alt'] ?: $artwork['title'])) ?>"
-                            loading="lazy" decoding="async">
-                        <span><strong><?= e((string)$artwork['title']) ?></strong><i><?= e(site_t('View artwork', 'Ver obra')) ?> →</i></span>
-                    </a>
-                </div>
-            </section>
+                <?php if ($mockups): ?>
+                    <section>
+                        <h2><?= e(site_t('Associated Mockups', 'Mockups asociados')) ?></h2>
+                        <?php foreach ($mockups as $mockup): ?>
+                            <?php
+                            $mockupTitle = published_excerpt([
+                                $mockup['seo_title'] ?? '',
+                                $mockup['title'] ?? '',
+                                $mockup['caption'] ?? '',
+                                (string)$artwork['title'] . ' — ' . site_t('Context Study', 'Estudio de contexto'),
+                            ], 90);
+                            $mockupText = published_excerpt([
+                                $mockup['seo_description'] ?? '',
+                                $mockup['description'] ?? '',
+                                $mockup['caption'] ?? '',
+                                $mockup['mockup_caption'] ?? '',
+                                site_t('A contextual presentation of ', 'Una presentación contextual de ')
+                                    . (string)$artwork['title']
+                                    . site_t(' by Maurizio Valch.', ' por Maurizio Valch.'),
+                            ]);
+                            ?>
+                            <article>
+                                <h3><a href="<?= e(url_for('artworks/' . $artwork['slug'] . '/mockups/' . $mockup['public_slug'])) ?>"><?= e($mockupTitle) ?> <span aria-hidden="true">→</span></a></h3>
+                                <?php if ($mockupText !== ''): ?><p><?= e($mockupText) ?></p><?php endif; ?>
+                            </article>
+                        <?php endforeach; ?>
+                    </section>
+                <?php endif; ?>
+            </div>
         </div>
     </section>
     <?php
@@ -1965,7 +2027,7 @@ function render_published_artwork_video(array $site, array $artwork): void
         '@type' => 'VideoObject',
         'name' => (string)$artwork['title'] . ' — ' . site_t('Artwork video', 'Video de la obra'),
         'description' => trim((string)($artwork['short_description'] ?: $artwork['description'])),
-        'thumbnailUrl' => !empty($video['has_poster']) ? site_absolute_asset_url(app_publication_video_url($artwork, true), (string)$site['url']) : site_absolute_asset_url(app_publication_media_url($artwork, $mainImageFile), (string)$site['url']),
+        'thumbnailUrl' => !empty($video['has_poster']) ? site_absolute_asset_url(app_publication_video_url($artwork, true), (string)$site['url']) : site_absolute_asset_url(app_publication_media_url($artwork, trim((string)($artwork['header_file'] ?? '')) ?: (string)$artwork['source_image_file']), (string)$site['url']),
         'uploadDate' => (string)$video['published_at'],
         'duration' => 'PT' . max(1, (int)round((float)$video['duration_seconds'])) . 'S',
         'contentUrl' => site_absolute_asset_url(app_publication_video_url($artwork), (string)$site['url']),
