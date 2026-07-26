@@ -64,6 +64,20 @@ final class StudioNoteMediaService
         return trim($mirrored);
     }
 
+    public static function mirrorImagesWithPublishedFallback(
+        string $sourceHtml,
+        string $targetHtml,
+        string $publishedTargetHtml
+    ): string {
+        $sourceCount = preg_match_all('/<img\b[^>]*>/iu', $sourceHtml);
+        $targetCount = preg_match_all('/<img\b[^>]*>/iu', $targetHtml);
+        $publishedCount = preg_match_all('/<img\b[^>]*>/iu', $publishedTargetHtml);
+        if ($targetCount !== $sourceCount && $publishedCount === $sourceCount) {
+            $targetHtml = $publishedTargetHtml;
+        }
+        return self::mirrorImages($sourceHtml, $targetHtml);
+    }
+
     /**
      * Replaces images with immutable slots before language adaptation. The
      * model receives the editorial text and placement markers, never ownership

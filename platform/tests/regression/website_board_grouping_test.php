@@ -118,11 +118,10 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'Material visual'), 'el editor elimina la biblioteca visual lateral redundante');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'data-media-library'), 'el borrador no conserva una segunda superficie para insertar imágenes');
     TestHarness::assertContains('data-mockup-guide-en', $studioNotesPage, 'cada mockup transporta su SEO bilingüe existente al artículo');
-    TestHarness::assertContains('Guardar cambios', $studioNotesPage, 'la interfaz anuncia los cambios visuales que no consumen Vertex');
-    TestHarness::assertContains('Reanalizar y publicar', $studioNotesPage, 'la interfaz anuncia antes de ejecutar una revisión semántica');
-    TestHarness::assertContains('textFromHtml(quillEs.root.innerHTML)', $studioNotesPage, 'el comparador descarta los marcadores internos de imagen de Quill');
-    TestHarness::assertTrue(!str_contains($studioNotesPage, 'semanticSnapshot(current, quillEs.getText())'), 'los embeds de imagen no se confunden con cambios de texto');
-    TestHarness::assertContains('$publishedTargetBody', $studioNotesPage, 'una nota histórica recupera las posiciones inglesas de su snapshot publicado');
+    TestHarness::assertContains('Publicar cambios', $studioNotesPage, 'la interfaz publica cambios listos sin consumir Vertex');
+    TestHarness::assertContains('Actualizar inglés', $studioNotesPage, 'la interfaz separa la actualización inglesa de la publicación');
+    TestHarness::assertContains('data-change-message', $studioNotesPage, 'el estado editorial permanece junto a su acción');
+    TestHarness::assertContains('studio-note-command-bar', $studioNotesPage, 'la acción no queda perdida debajo del editor largo');
     TestHarness::assertContains('name="title_es"', $studioNotesPage, 'Studio Notes escribe primero el título español');
     TestHarness::assertContains('id="editor-container-es"', $studioNotesPage, 'Studio Notes conserva una superficie amplia para el master español');
     TestHarness::assertContains('id="editor-container-en"', $studioNotesPage, 'la adaptación inglesa tiene una superficie editorial independiente');
@@ -131,19 +130,16 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'studio-translation-arrow'), 'Studio Notes elimina la acción adicional de traducción');
     TestHarness::assertContains('min-height:27px', $studioNotesPage, 'las cabeceras bilingües alinean el inicio de ambos editores');
     TestHarness::assertContains('studio-note-actions__secondary', $studioNotesPage, 'retirar y eliminar se presentan juntos como acciones secundarias');
-    TestHarness::assertContains("'publish'", $studioNotesPage, 'publicar inicia el Meta Analyzer y la adaptación bilingüe');
+    TestHarness::assertContains("value=\"<?= wsn_h((string)(\$changeState['primary_action']", $studioNotesPage, 'la acción principal procede del clasificador del servidor');
     TestHarness::assertContains('name="tags_<?= $locale ?>"', $studioNotesPage, 'Studio Notes conserva los tags producidos por el Meta Analyzer');
     TestHarness::assertContains('name="caption_<?= $locale ?>"', $studioNotesPage, 'Studio Notes conserva los captions editoriales por idioma');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'Mesa editorial'), 'el borrador elimina la mesa editorial lateral');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'Ideas y fragmentos'), 'el borrador elimina el board de ideas que ocupaba espacio');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'Adaptar desde el español — no traducir literalmente'), 'el editor elimina el botón largo redundante');
-    TestHarness::assertContains("'source_hash' => hash(", $studioNotesPage, 'la publicación identifica la instantánea española sin copiar el documento completo a la cola');
-    TestHarness::assertContains('StudioNoteMediaService::semanticHash', $studioNotesPage, 'publicar distingue texto editorial de maquetación visual');
-    TestHarness::assertContains('StudioNoteMediaService::mirrorImages', $studioNotesPage, 'los cambios visuales se reflejan en inglés sin nueva adaptación');
-    TestHarness::assertTrue(
-        !str_contains($studioNotesPage, "'current_english' => \$english"),
-        'la publicación no transporta el editor inglés ni sus imágenes dentro del trabajo'
-    );
+    TestHarness::assertContains('StudioNoteChangeClassifier::classify', $studioNotesPage, 'el servidor clasifica el cambio antes de decidir una operación');
+    TestHarness::assertContains("'review_spanish_metadata' =>", $studioNotesPage, 'actualizar inglés revisa SEO solo cuando quedan campos no protegidos');
+    TestHarness::assertContains('mirrorImagesWithPublishedFallback', $studioNotesPage, 'publicar refleja la estructura visual sin nueva adaptación');
+    TestHarness::assertContains("'current_english' => (array)\$savedEnglishState['content']", $studioNotesPage, 'actualizar inglés conserva el editor vigente como contexto separado');
     TestHarness::assertContains("studio_note_inline_upload.php", $studioNotesPage, 'las imágenes del WYSIWYG se persisten al insertarlas y no esperan hasta publicar');
     TestHarness::assertContains("published_content_json", $studioNotesPage, 'la tarjeta recupera la imagen del último snapshot publicado cuando el borrador actual perdió su referencia');
     TestHarness::assertContains("first_html_image_src(\$publishedBody)", $studioNotesPage, 'el cuerpo editorial publicado actúa como respaldo real del thumbnail');
@@ -167,7 +163,8 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'Dirección privada para la propuesta'), 'el editor elimina el bloque de dirección privada');
     TestHarness::assertContains("DELETE FROM studio_note_workspace_items", $studioNotesPage, 'eliminar una nota también elimina su mesa editorial');
     TestHarness::assertTrue(!str_contains($studioNotesPage, 'value="prepare_english"'), 'publicar sustituye la preparación inglesa separada');
-    TestHarness::assertContains('Analizar y publicar', $studioNotesPage, 'la publicación bilingüe se presenta como un único compromiso');
+    TestHarness::assertTrue(!str_contains($studioNotesPage, 'Reanalizar y publicar'), 'la interfaz ya no mezcla análisis y publicación');
+    TestHarness::assertContains("value=\"save_draft\"", $studioNotesPage, 'guardar borrador permanece como operación secundaria independiente');
     TestHarness::assertContains("setPublished(\$userId, \$entityType, \$entityId, 'es', true)", $editorialWorker, 'la publicación congela un snapshot español');
     TestHarness::assertContains("setPublished(\$userId, \$entityType, \$entityId, 'en', true)", $editorialWorker, 'la publicación congela un snapshot inglés');
     $editorialAdapter = (string)file_get_contents($platformRoot . '/app/Services/BilingualEditorialAdapterService.php');

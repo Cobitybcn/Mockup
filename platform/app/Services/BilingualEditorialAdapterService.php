@@ -351,17 +351,24 @@ final class BilingualEditorialAdapterService
     public function completeStudioNoteMetadata(
         int $userId,
         int $entityId,
-        array $sourceContent
+        array $sourceContent,
+        array $protectedFields = []
     ): array {
         $analysis = $this->analyzeStudioNoteMetadata($userId, $entityId, $sourceContent);
+        $protected = array_fill_keys(array_map('strval', $protectedFields), true);
         foreach (['excerpt', 'slug', 'seo_title', 'seo_description', 'alt_text', 'caption', 'tags', 'search_terms'] as $field) {
+            if (isset($protected[$field])) continue;
             $sourceContent[$field] = trim((string)($analysis[$field] ?? ''));
         }
-        $sourceContent['image_metadata'] = (array)($analysis['image_metadata'] ?? []);
-        $sourceContent['meta_source_hash'] = hash('sha256', json_encode([
-            'title' => (string)($sourceContent['title'] ?? ''),
-            'body_html' => (string)($sourceContent['body_html'] ?? ''),
-        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+        if (!isset($protected['image_metadata'])) {
+            $sourceContent['image_metadata'] = (array)($analysis['image_metadata'] ?? []);
+        }
+        if ($protected === []) {
+            $sourceContent['meta_source_hash'] = hash('sha256', json_encode([
+                'title' => (string)($sourceContent['title'] ?? ''),
+                'body_html' => (string)($sourceContent['body_html'] ?? ''),
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+        }
         return $sourceContent;
     }
 

@@ -197,80 +197,70 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             exit;
         }
 
-        if (in_array($action, ['save_draft', 'publish_draft'], true)) {
+        if (in_array($action, ['save_draft', 'update_english', 'publish_changes', 'publish_draft'], true)) {
             $id = max(0, (int)($_POST['draft_id'] ?? 0));
             $spanish = wsn_post_content('es');
             $english = wsn_post_content('en');
             if (trim((string)$spanish['title']) === '') throw new RuntimeException('El título en español es obligatorio.');
             if (trim(strip_tags((string)$spanish['body_html'])) === '') throw new RuntimeException('Escribí el contenido español antes de guardar.');
 
-            $spanish['body_html'] = $websiteBoard->normalizeNoteBody($userId, $id, (string)$spanish['body_html']);
-            $editorial->save($userId, 'studio_note', $id, 'es', $spanish);
-            if (wsn_has_content($english)) {
-                $editorial->save($userId, 'studio_note', $id, 'en', $english);
-            }
-            $savedSpanishContent = (array)$editorial->get(
+            $previousSpanishContent = (array)$editorial->get(
                 $userId,
                 'studio_note',
                 $id,
                 'es'
             )['content'];
-
+            foreach (['excerpt', 'slug', 'seo_title', 'seo_description', 'alt_text', 'caption', 'tags', 'search_terms'] as $metadataField) {
+                if (($spanish[$metadataField] ?? null) !== ($previousSpanishContent[$metadataField] ?? null)) {
+                    $spanish['meta_source_hash'] = '';
+                    break;
+                }
+            }
+            $spanish['body_html'] = $websiteBoard->normalizeNoteBody($userId, $id, (string)$spanish['body_html']);
+            $editorial->save($userId, 'studio_note', $id, 'es', $spanish);
+            if (wsn_has_content($english)) {
+                $editorial->save($userId, 'studio_note', $id, 'en', $english);
+            }
+            $savedSpanishState = $editorial->get($userId, 'studio_note', $id, 'es');
+            $savedEnglishState = $editorial->get($userId, 'studio_note', $id, 'en');
+            $changes = StudioNoteChangeClassifier::classify(
+                (array)$savedSpanishState['content'],
+                (array)$savedSpanishState['published_content'],
+                (array)$savedEnglishState['content'],
+                (array)$savedEnglishState['published_content'],
+                (bool)$savedSpanishState['is_published'],
+                (bool)$savedEnglishState['is_published']
+            );
             if ($action === 'publish_draft') {
+                $action = !empty($changes['needs_english_update'])
+                    ? 'update_english'
+                    : 'publish_changes';
+            }
+
+            if ($action === 'update_english') {
                 if (!$editorial->isEnabled($userId)) {
                     throw new RuntimeException('El espacio editorial bilingüe no está habilitado para esta cuenta.');
                 }
-                $savedSpanishState = $editorial->get($userId, 'studio_note', $id, 'es');
-                $savedEnglishState = $editorial->get($userId, 'studio_note', $id, 'en');
-                $publishedSpanish = (array)($savedSpanishState['published_content'] ?? []);
-                $layoutOnlyUpdate = !empty($savedSpanishState['is_published'])
-                    && !empty($savedEnglishState['is_published'])
-                    && $publishedSpanish !== []
-                    && hash_equals(
-                        StudioNoteMediaService::semanticHash($publishedSpanish),
-                        StudioNoteMediaService::semanticHash($savedSpanishContent)
-                    )
-                    && trim((string)($savedEnglishState['content']['body_html'] ?? '')) !== '';
-                if ($layoutOnlyUpdate) {
-                    $englishContent = (array)$savedEnglishState['content'];
-                    $sourceBody = (string)($savedSpanishContent['body_html'] ?? '');
-                    $targetBody = (string)($englishContent['body_html'] ?? '');
-                    $publishedEnglishContent = (array)($savedEnglishState['published_content'] ?? []);
-                    $publishedTargetBody = (string)($publishedEnglishContent['body_html'] ?? '');
-                    preg_match_all('/<img\b[^>]*>/iu', $sourceBody, $sourceImages);
-                    preg_match_all('/<img\b[^>]*>/iu', $targetBody, $targetImages);
-                    preg_match_all('/<img\b[^>]*>/iu', $publishedTargetBody, $publishedTargetImages);
-                    if (count((array)($targetImages[0] ?? [])) !== count((array)($sourceImages[0] ?? []))
-                        && count((array)($publishedTargetImages[0] ?? [])) === count((array)($sourceImages[0] ?? []))) {
-                        $targetBody = $publishedTargetBody;
-                    }
-                    $englishContent['body_html'] = StudioNoteMediaService::mirrorImages(
-                        $sourceBody,
-                        $targetBody
-                    );
-                    $editorial->save($userId, 'studio_note', $id, 'en', $englishContent);
-                    $editorial->setPublished($userId, 'studio_note', $id, 'es', true);
-                    $editorial->setPublished($userId, 'studio_note', $id, 'en', true);
-                    $websiteBoard->saveNote(
-                        $userId,
-                        $id,
-                        (string)($englishContent['title'] ?? ''),
-                        (string)($englishContent['body_html'] ?? ''),
-                        (string)($savedSpanishContent['body_html'] ?? '')
-                    );
-                    $_SESSION['wsn_notice'] = 'Cambios visuales publicados sin nuevo análisis.';
+                if (empty($changes['needs_english_update'])) {
+                    $_SESSION['wsn_notice'] = 'La versión inglesa ya está lista. Podés publicar los cambios.';
                     header('Location: website_studio_notes.php?draft=' . $id);
                     exit;
                 }
                 $jobs = new BilingualEditorialJobService($pdo);
-                $job = $jobs->createOrReuse($userId, 'studio_note', $id, 'publish', [
-                    'source_hash' => hash(
-                        'sha256',
-                        json_encode(
-                            $savedSpanishContent,
-                            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
-                        )
-                    ),
+                $protectedSpanishFields = StudioNoteChangeClassifier::protectedSpanishSeoFields(
+                    (array)$savedSpanishState['content'],
+                    (array)$savedSpanishState['published_content']
+                );
+                $protectedSeoCount = count(array_intersect(
+                    ['excerpt', 'slug', 'seo_title', 'seo_description', 'alt_text', 'caption', 'tags', 'search_terms'],
+                    $protectedSpanishFields
+                ));
+                $job = $jobs->createOrReuse($userId, 'studio_note', $id, 'adapt', [
+                    'current_spanish' => (array)$savedSpanishState['content'],
+                    'current_english' => (array)$savedEnglishState['content'],
+                    'protected_spanish_fields' => $protectedSpanishFields,
+                    'review_spanish_metadata' => !empty($changes['media_requires_analysis'])
+                        || $protectedSeoCount < 8,
                 ], true);
                 if ((string)$job['status'] === 'queued' && trim((string)$job['task_name']) === '') {
                     if (CloudTasksService::isAvailable()) {
@@ -283,7 +273,31 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                         (new BilingualEditorialGenerationWorker($pdo))->process((int)$job['id']);
                     }
                 }
-                $_SESSION['wsn_notice'] = 'Analizando y publicando la nota completa en español e inglés.';
+                $_SESSION['wsn_notice'] = 'Actualizando la versión inglesa y el SEO pendiente. Todavía no se publicará.';
+            } elseif ($action === 'publish_changes') {
+                if (!empty($changes['needs_english_update'])) {
+                    throw new RuntimeException('Actualizá la versión inglesa antes de publicar.');
+                }
+                $englishContent = (array)$savedEnglishState['content'];
+                if (!wsn_has_content($englishContent)) {
+                    throw new RuntimeException('Prepará la versión inglesa antes de publicar.');
+                }
+                $englishContent['body_html'] = StudioNoteMediaService::mirrorImagesWithPublishedFallback(
+                    (string)($savedSpanishState['content']['body_html'] ?? ''),
+                    (string)($englishContent['body_html'] ?? ''),
+                    (string)($savedEnglishState['published_content']['body_html'] ?? '')
+                );
+                $editorial->save($userId, 'studio_note', $id, 'en', $englishContent);
+                $editorial->setPublished($userId, 'studio_note', $id, 'es', true);
+                $editorial->setPublished($userId, 'studio_note', $id, 'en', true);
+                $websiteBoard->saveNote(
+                    $userId,
+                    $id,
+                    (string)($englishContent['title'] ?? ''),
+                    (string)($englishContent['body_html'] ?? ''),
+                    (string)($savedSpanishState['content']['body_html'] ?? '')
+                );
+                $_SESSION['wsn_notice'] = 'Cambios publicados sin ejecutar IA.';
             } else {
                 $_SESSION['wsn_notice'] = 'Borrador bilingüe guardado.';
             }
@@ -455,7 +469,16 @@ $spanishState = ['content' => $noteShape, 'status' => 'unprepared', 'is_publishe
 $englishState = ['content' => $noteShape, 'status' => 'unprepared', 'is_published' => false, 'has_unpublished_changes' => false];
 $activeEditorialJob = null;
 $englishAdaptationActive = false;
-$publicationActionMode = 'first';
+$editorialProcessActive = false;
+$changeState = [
+    'state' => 'english_pending',
+    'primary_action' => 'update_english',
+    'status_message' => 'La versión inglesa todavía no está preparada',
+    'status_detail' => 'La adaptación inglesa y el SEO pendiente se actualizarán antes de publicar.',
+    'english_status' => 'Pendiente de actualización',
+    'has_unpublished_changes' => true,
+    'needs_english_update' => true,
+];
 if ($openDraft) {
     $legacyEnglish = trim(strip_tags((string)$openDraft['objective'])) !== ''
         ? [
@@ -496,23 +519,20 @@ if ($openDraft) {
         );
         $englishAdaptationActive = is_array($activeEditorialJob)
             && in_array((string)($activeEditorialJob['action'] ?? ''), ['adapt', 'publish'], true);
-        $publicationActive = is_array($activeEditorialJob)
-            && (string)($activeEditorialJob['action'] ?? '') === 'publish';
+        $editorialProcessActive = is_array($activeEditorialJob);
     } catch (Throwable) {
         $activeEditorialJob = null;
         $englishAdaptationActive = false;
-        $publicationActive = false;
+        $editorialProcessActive = false;
     }
-    if (!empty($spanishState['is_published']) && !empty($englishState['is_published'])) {
-        $publishedSpanishContent = (array)($spanishState['published_content'] ?? []);
-        $publicationActionMode = $publishedSpanishContent !== []
-            && hash_equals(
-                StudioNoteMediaService::semanticHash($publishedSpanishContent),
-                StudioNoteMediaService::semanticHash((array)$spanishState['content'])
-            )
-            ? 'layout'
-            : 'reanalyze';
-    }
+    $changeState = StudioNoteChangeClassifier::classify(
+        (array)$spanishState['content'],
+        (array)$spanishState['published_content'],
+        (array)$englishState['content'],
+        (array)$englishState['published_content'],
+        (bool)$spanishState['is_published'],
+        (bool)$englishState['is_published']
+    );
 }
 
 $mockupSources = array_values(array_filter(
@@ -602,6 +622,13 @@ natcasesort($mockupSeriesFilters);
         .studio-image-tools button:hover,
         .studio-image-tools button.is-active { border-color:#c2b2c7 !important; background:#dfd3e2 !important; transform:none !important; box-shadow:none !important; }
         .studio-image-tools .studio-image-tools__remove { margin-left:auto !important; color:#966161 !important; }
+        .studio-note-command-bar { position:sticky; top:74px; z-index:8; display:flex; align-items:center; justify-content:space-between; gap:22px; margin:0 0 22px; padding:14px 16px; border:1px solid #d7ccd9; background:#f5f0f5; box-shadow:0 5px 16px rgba(57,45,60,.06); }
+        .studio-note-command-bar__state { min-width:0; }
+        .studio-note-command-bar__state strong { display:block; color:#423b40; font:400 18px/1.25 var(--font-serif); }
+        .studio-note-command-bar__state span { display:block; margin-top:4px; color:#70676d; font-size:12px; line-height:1.4; }
+        .studio-note-command-bar__actions { display:flex; align-items:center; flex:0 0 auto; gap:10px; }
+        .studio-note-command-bar__actions button { width:auto; min-width:150px; margin:0; }
+        .studio-note-command-bar__actions [hidden] { display:none !important; }
         .studio-note-actions { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-top:20px; }
         .studio-note-actions__main { display:flex; gap:10px; }
         .studio-publication-state { align-self:center; color:#625b55; font-size:11px; letter-spacing:.04em; }
@@ -669,6 +696,9 @@ natcasesort($mockupSeriesFilters);
             .studio-notes-page .studio-note-editor .ql-editor img { max-width:100%; max-height:320px; margin:18px auto; }
             .studio-image-tools { align-items:flex-start; flex-wrap:wrap; gap:8px; }
             .studio-image-tools__group { padding-left:8px; }
+            .studio-note-command-bar { top:58px; align-items:stretch; flex-direction:column; }
+            .studio-note-command-bar__actions { display:grid; grid-template-columns:1fr 1fr; }
+            .studio-note-command-bar__actions button { width:100%; min-width:0; }
             .studio-note-actions { align-items:stretch; flex-direction:column; }
             .studio-note-actions__main { display:grid; grid-template-columns:1fr 1fr; }
             .studio-note-actions__main button { width:100%; min-width:0; }
@@ -772,16 +802,40 @@ natcasesort($mockupSeriesFilters);
                           data-editorial-csrf="<?= wsn_h(Auth::csrfToken('bilingual_editorial')) ?>"
                           data-active-job="<?= (int)($activeEditorialJob['id'] ?? 0) ?>"
                           data-active-job-action="<?= wsn_h((string)($activeEditorialJob['action'] ?? '')) ?>"
-                          data-publication-mode="<?= wsn_h($publicationActionMode) ?>">
+                          data-change-state="<?= wsn_h((string)$changeState['state']) ?>">
                         <input type="hidden" name="csrf" value="<?= wsn_h($_SESSION['studio_notes_csrf']) ?>">
                         <input type="hidden" name="draft_id" value="<?= (int)$openDraft['id'] ?>">
+                        <div class="studio-note-command-bar" data-command-bar>
+                            <div class="studio-note-command-bar__state">
+                                <strong data-change-message><?= wsn_h((string)$changeState['status_message']) ?></strong>
+                                <span data-change-detail><?= wsn_h((string)$changeState['status_detail']) ?></span>
+                            </div>
+                            <div class="studio-note-command-bar__actions">
+                                <button class="button-link primary studio-note-publish" name="action"
+                                        value="<?= wsn_h((string)($changeState['primary_action'] ?: 'publish_changes')) ?>"
+                                        type="submit" data-publish-action
+                                        <?= $editorialProcessActive ? 'disabled' : '' ?>
+                                        <?= !$editorialProcessActive && (string)$changeState['primary_action'] === '' ? 'hidden' : '' ?>>
+                                    <?php if ($editorialProcessActive): ?>
+                                        <?= $englishAdaptationActive ? 'Actualizando inglés…' : 'Procesando…' ?>
+                                    <?php else: ?>
+                                        <?= (string)$changeState['primary_action'] === 'update_english'
+                                            ? 'Actualizar inglés'
+                                            : 'Publicar cambios' ?>
+                                    <?php endif; ?>
+                                </button>
+                                <button class="button-link secondary" name="action" value="save_draft" type="submit">Guardar borrador</button>
+                                <span class="studio-publication-state" data-publication-state>
+                                    <?= $editorialProcessActive ? ($englishAdaptationActive ? 'Actualizando inglés' : 'Procesando') : '' ?>
+                                </span>
+                            </div>
+                        </div>
                         <div class="studio-note-editor-shell">
                             <div class="studio-note-writing-desk">
                                 <div class="studio-bilingual-editors">
                                     <section class="studio-language-editor" aria-labelledby="studio-language-es">
                                         <div class="studio-language-heading">
-                                            <span id="studio-language-es">Español · original</span>
-                                            <span class="studio-language-state"><?= !empty($spanishState['is_published']) ? (!empty($spanishState['has_unpublished_changes']) ? 'Cambios sin publicar' : 'Publicado') : 'Borrador' ?></span>
+                                            <span id="studio-language-es">Español · fuente</span>
                                         </div>
                                         <input class="studio-note-editor-title" type="text" name="title_es" id="studio-note-title-es"
                                                value="<?= wsn_h((string)$spanishState['content']['title']) ?>"
@@ -809,11 +863,12 @@ natcasesort($mockupSeriesFilters);
                                              aria-busy="<?= $englishAdaptationActive ? 'true' : 'false' ?>">
                                         <div class="studio-language-heading">
                                             <span id="studio-language-en">English · adaptation</span>
+                                            <span class="studio-language-state" data-english-state><?= wsn_h((string)$changeState['english_status']) ?></span>
                                         </div>
                                         <div class="studio-english-panel__lock" data-english-lock<?= $englishAdaptationActive ? '' : ' hidden' ?>>
                                             <div>
-                                                <strong>Preparando publicación ES + EN</strong>
-                                                <span>Analizando metadata y adaptando el original español.</span>
+                                                <strong>Actualizando inglés</strong>
+                                                <span>Revisando el SEO pendiente y adaptando el original español.</span>
                                             </div>
                                         </div>
                                         <div class="studio-english-panel__controls" data-english-dependent<?= $englishAdaptationActive ? ' inert' : '' ?>>
@@ -872,24 +927,6 @@ natcasesort($mockupSeriesFilters);
                                 </details>
 
                                 <div class="studio-note-actions">
-                                    <div class="studio-note-actions__main">
-                                        <button class="button-link primary studio-note-publish" name="action" value="publish_draft" type="submit" data-publish-action
-                                                <?= $publicationActive ? 'disabled' : '' ?>>
-                                            <?php if ($publicationActive): ?>
-                                                Publicando…
-                                            <?php elseif ($publicationActionMode === 'layout'): ?>
-                                                Guardar cambios
-                                            <?php elseif ($publicationActionMode === 'reanalyze'): ?>
-                                                Reanalizar y publicar
-                                            <?php else: ?>
-                                                Analizar y publicar
-                                            <?php endif; ?>
-                                        </button>
-                                        <button class="button-link secondary" name="action" value="save_draft" type="submit">Guardar borrador</button>
-                                        <span class="studio-publication-state" data-publication-state>
-                                            <?= $publicationActive ? 'Analizando ES · preparando EN' : '' ?>
-                                        </span>
-                                    </div>
                                     <div class="studio-note-actions__secondary">
                                         <?php if ((string)$openDraft['status'] === 'published'): ?>
                                             <button class="studio-note-secondary-action" name="action" value="unpublish_draft" type="submit">Retirar</button>
@@ -1014,11 +1051,23 @@ natcasesort($mockupSeriesFilters);
                     var formCsrf = form ? form.querySelector('input[name="csrf"]') : null;
                     var activeJobAction = form ? form.getAttribute('data-active-job-action') : '';
                     var publishAction = form ? form.querySelector('[data-publish-action]') : null;
-                    var initialPublicationMode = form ? form.getAttribute('data-publication-mode') : 'first';
                     var publishedSpanishContent = <?= json_encode(
                         (array)($spanishState['published_content'] ?? []),
                         JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
                     ) ?>;
+                    var publishedEnglishContent = <?= json_encode(
+                        (array)($englishState['published_content'] ?? []),
+                        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                    ) ?>;
+                    var hasPublishedPair = <?= !empty($spanishState['is_published'])
+                        && !empty($englishState['is_published'])
+                        && (array)($spanishState['published_content'] ?? []) !== []
+                        && (array)($englishState['published_content'] ?? []) !== []
+                            ? 'true'
+                            : 'false' ?>;
+                    var changeMessage = document.querySelector('[data-change-message]');
+                    var changeDetail = document.querySelector('[data-change-detail]');
+                    var englishStateLabel = document.querySelector('[data-english-state]');
                     var englishPanel = document.querySelector('[data-english-panel]');
                     var englishDependents = Array.prototype.slice.call(
                         document.querySelectorAll('[data-english-dependent]')
@@ -1046,49 +1095,110 @@ natcasesort($mockupSeriesFilters);
                         return normalizedText(container.textContent || '');
                     }
 
-                    function semanticSnapshot(content, bodyText) {
+                    function bodyStructure(html) {
+                        var structure = [];
+                        String(html || '').replace(/<img\b[^>]*>/giu, '').replace(
+                            /<(h1|h2|h3|p|blockquote|ul|ol|li|a)\b([^>]*)>/giu,
+                            function(match, tag, attributes) {
+                                tag = String(tag || '').toLowerCase();
+                                if (tag === 'a') {
+                                    var href = String(attributes || '').match(/\bhref=["']([^"']+)["']/iu);
+                                    structure.push('a:' + String(href && href[1] || ''));
+                                } else structure.push(tag);
+                                return match;
+                            }
+                        );
+                        return structure;
+                    }
+
+                    function contentSnapshot(content, html) {
                         return JSON.stringify({
                             title: normalizedText(content.title),
-                            body_text: normalizedText(bodyText),
-                            excerpt: normalizedText(content.excerpt),
-                            seo_title: normalizedText(content.seo_title),
-                            seo_description: normalizedText(content.seo_description),
-                            alt_text: normalizedText(content.alt_text),
-                            caption: normalizedText(content.caption),
-                            tags: normalizedText(content.tags),
-                            search_terms: normalizedText(content.search_terms)
+                            body_text: textFromHtml(html),
+                            structure: bodyStructure(html)
                         });
                     }
 
-                    var publishedSemanticSnapshot = semanticSnapshot(
-                        publishedSpanishContent,
-                        textFromHtml(publishedSpanishContent.body_html || '')
-                    );
+                    function mediaFilesFromHtml(html) {
+                        var container = document.createElement('div');
+                        container.innerHTML = String(html || '');
+                        return Array.prototype.slice.call(container.querySelectorAll('img')).map(function(image) {
+                            return imageFile(image.getAttribute('src'));
+                        }).filter(Boolean);
+                    }
 
-                    function currentSpanishField(name) {
+                    function hasCompleteMediaMetadata(files, content) {
+                        var metadata = {};
+                        (Array.isArray(content.image_metadata) ? content.image_metadata : []).forEach(function(row) {
+                            var file = String(row && row.file || '');
+                            if (file) metadata[file] = !!String(row.alt_text || '').trim()
+                                && !!String(row.caption || '').trim();
+                        });
+                        return files.every(function(file) { return metadata[file] === true; });
+                    }
+
+                    function currentField(name) {
                         var field = form ? form.querySelector('[name="' + name + '"]') : null;
                         return field ? field.value : '';
                     }
 
-                    function updatePublishActionMode() {
-                        if (!form || !publishAction || initialPublicationMode === 'first' || publishAction.disabled) return;
-                        var current = {
-                            title: currentSpanishField('title_es'),
-                            excerpt: currentSpanishField('excerpt_es'),
-                            seo_title: currentSpanishField('seo_title_es'),
-                            seo_description: currentSpanishField('seo_description_es'),
-                            alt_text: currentSpanishField('alt_text_es'),
-                            caption: currentSpanishField('caption_es'),
-                            tags: currentSpanishField('tags_es'),
-                            search_terms: currentSpanishField('search_terms_es')
+                    function currentLocalizedContent(locale, quillEditor) {
+                        return {
+                            title: currentField('title_' + locale),
+                            body_html: quillEditor.root.innerHTML,
+                            excerpt: currentField('excerpt_' + locale),
+                            slug: currentField('slug_' + locale),
+                            seo_title: currentField('seo_title_' + locale),
+                            seo_description: currentField('seo_description_' + locale),
+                            alt_text: currentField('alt_text_' + locale),
+                            caption: currentField('caption_' + locale),
+                            tags: currentField('tags_' + locale),
+                            search_terms: currentField('search_terms_' + locale),
+                            image_metadata: parseJson(currentField('image_metadata_' + locale), [])
                         };
-                        var mode = semanticSnapshot(current, textFromHtml(quillEs.root.innerHTML)) === publishedSemanticSnapshot
-                            ? 'layout'
-                            : 'reanalyze';
-                        form.setAttribute('data-publication-mode', mode);
-                        publishAction.textContent = mode === 'layout'
-                            ? 'Guardar cambios'
-                            : 'Reanalizar y publicar';
+                    }
+
+                    var clientDirty = false;
+                    function updatePublishActionMode() {
+                        if (!form || !publishAction || publishAction.disabled || !clientDirty) return;
+                        var currentSpanish = currentLocalizedContent('es', quillEs);
+                        var currentEnglish = currentLocalizedContent('en', quillEn);
+                        var spanishContentChanged = contentSnapshot(
+                            currentSpanish,
+                            currentSpanish.body_html
+                        ) !== contentSnapshot(
+                            publishedSpanishContent,
+                            publishedSpanishContent.body_html || ''
+                        );
+                        var englishContentChanged = contentSnapshot(
+                            currentEnglish,
+                            currentEnglish.body_html
+                        ) !== contentSnapshot(
+                            publishedEnglishContent,
+                            publishedEnglishContent.body_html || ''
+                        );
+                        var currentMediaFiles = mediaFilesFromHtml(currentSpanish.body_html);
+                        var publishedMediaFiles = mediaFilesFromHtml(publishedSpanishContent.body_html || '');
+                        var mediaChanged = JSON.stringify(currentMediaFiles) !== JSON.stringify(publishedMediaFiles);
+                        var mediaRequiresAnalysis = mediaChanged
+                            && (!hasCompleteMediaMetadata(currentMediaFiles, currentSpanish)
+                                || !hasCompleteMediaMetadata(currentMediaFiles, currentEnglish));
+                        var needsEnglish = !hasPublishedPair
+                            || (spanishContentChanged && !englishContentChanged)
+                            || mediaRequiresAnalysis;
+                        form.setAttribute('data-change-state', needsEnglish ? 'english_pending' : 'ready_to_publish');
+                        publishAction.hidden = false;
+                        publishAction.value = needsEnglish ? 'update_english' : 'publish_changes';
+                        publishAction.textContent = needsEnglish ? 'Actualizar inglés' : 'Publicar cambios';
+                        if (changeMessage) changeMessage.textContent = needsEnglish
+                            ? 'El contenido en español fue modificado'
+                            : 'Cambios listos para publicar';
+                        if (changeDetail) changeDetail.textContent = needsEnglish
+                            ? 'La adaptación inglesa y el SEO pendiente se actualizarán antes de publicar.'
+                            : 'La publicación utilizará las versiones guardadas sin ejecutar IA.';
+                        if (englishStateLabel) englishStateLabel.textContent = needsEnglish
+                            ? 'Pendiente de actualización'
+                            : (englishContentChanged ? 'Editado manualmente' : 'Sincronizado');
                     }
 
                     function parseJson(value, fallback) {
@@ -1211,12 +1321,11 @@ natcasesort($mockupSeriesFilters);
                         });
                     });
                     if (form) {
-                        form.querySelectorAll(
-                            '[name="title_es"],[name="excerpt_es"],[name="seo_title_es"],'
-                            + '[name="seo_description_es"],[name="alt_text_es"],[name="caption_es"],'
-                            + '[name="tags_es"],[name="search_terms_es"]'
-                        ).forEach(function(field) {
-                            field.addEventListener('input', updatePublishActionMode);
+                        form.querySelectorAll('.studio-note-editor-title, .studio-seo-field input, .studio-seo-field textarea').forEach(function(field) {
+                            field.addEventListener('input', function() {
+                                clientDirty = true;
+                                updatePublishActionMode();
+                            });
                         });
                     }
 
@@ -1390,8 +1499,10 @@ natcasesort($mockupSeriesFilters);
                                 syncImageMetadata();
                                 return;
                             }
+                            clientDirty = true;
                             quill.update('user');
                             refreshImageTools();
+                            updatePublishActionMode();
                         });
                     }
 
@@ -1401,11 +1512,15 @@ natcasesort($mockupSeriesFilters);
                         } else selectImage(null);
                     });
                     quillEs.on('text-change', function() {
+                        clientDirty = true;
                         window.requestAnimationFrame(syncImageMetadata);
                         window.requestAnimationFrame(updatePublishActionMode);
                     });
+                    quillEn.on('text-change', function() {
+                        clientDirty = true;
+                        window.requestAnimationFrame(updatePublishActionMode);
+                    });
                     syncImageMetadata();
-                    updatePublishActionMode();
                     
                     var queuedSubmitAllowed = false;
                     if (form) {
@@ -1442,21 +1557,21 @@ natcasesort($mockupSeriesFilters);
                             .then(function(result) {
                                 if (!result.ok || !result.job) throw new Error(result.error || 'No se pudo consultar la adaptación.');
                                 if (publicationState) publicationState.textContent = result.job.status === 'processing'
-                                    ? 'Analizando ES · preparando EN'
+                                    ? 'Actualizando inglés'
                                     : result.job.status;
                                 if (result.job.status === 'completed') {
                                     window.location.reload();
                                     return;
                                 }
                                 if (['failed', 'enqueue_failed'].indexOf(result.job.status) !== -1) {
-                                    if (publicationState) publicationState.textContent = result.job.error || 'La publicación falló';
+                                    if (publicationState) publicationState.textContent = result.job.error || 'La actualización inglesa falló';
                                     setEnglishAdaptationBusy(false);
                                     return;
                                 }
                                 window.setTimeout(pollEditorialJob, 3000);
                             })
                             .catch(function(error) {
-                                if (publicationState) publicationState.textContent = error.message || 'Publicación no disponible';
+                                if (publicationState) publicationState.textContent = error.message || 'Actualización no disponible';
                             });
                     }
                     pollEditorialJob();

@@ -163,6 +163,16 @@ final class BilingualEditorialGenerationWorker
                 $targetContent = is_array($payload['current_english'] ?? null)
                     ? (array)$payload['current_english']
                     : [];
+                if ($action === 'adapt'
+                    && $sourceContent !== []
+                    && !empty($payload['review_spanish_metadata'])) {
+                    $sourceContent = $adapter->completeStudioNoteMetadata(
+                        $userId,
+                        $entityId,
+                        $sourceContent,
+                        (array)($payload['protected_spanish_fields'] ?? [])
+                    );
+                }
                 $english = $sourceContent !== []
                     ? $adapter->proposeAdaptationFromContent(
                         $userId,
@@ -179,16 +189,29 @@ final class BilingualEditorialGenerationWorker
                         'en'
                     );
                 $englishContent = (array)($english['content'] ?? []);
-                $englishState = $editorial->save(
-                    $userId,
-                    $entityType,
-                    $entityId,
-                    'en',
-                    $englishContent
-                );
+                $ownsTransaction = !$this->pdo->inTransaction();
+                if ($ownsTransaction) $this->pdo->beginTransaction();
+                try {
+                    if ($action === 'adapt' && $sourceContent !== []) {
+                        $editorial->save($userId, $entityType, $entityId, 'es', $sourceContent);
+                    }
+                    $englishState = $editorial->save(
+                        $userId,
+                        $entityType,
+                        $entityId,
+                        'en',
+                        $englishContent
+                    );
+                    if ($ownsTransaction) $this->pdo->commit();
+                } catch (Throwable $saveError) {
+                    if ($ownsTransaction && $this->pdo->inTransaction()) $this->pdo->rollBack();
+                    throw $saveError;
+                }
                 $result = [
                     'english_content' => $englishContent,
                     'english_status' => (string)($englishState['status'] ?? 'current'),
+                    'metadata_completed' => $action === 'adapt'
+                        && !empty($payload['review_spanish_metadata']),
                     'applied_to_editor' => true,
                 ];
             } else {
