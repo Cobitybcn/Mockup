@@ -108,6 +108,9 @@ if ($path === '/sitemap.xml') {
         foreach ($publishedCatalog->all() as $slug => $publishedArtwork) {
             if ($publishedArtwork['visibility'] !== 'public') continue;
             $addLocalizedRoute('/artworks/' . $slug . '/');
+            if (is_array($publishedArtwork['video'] ?? null)) {
+                $addLocalizedRoute('/artworks/' . $slug . '/video/');
+            }
             foreach ($publishedArtwork['items'] as $mockup) {
                 $addLocalizedRoute(
                     '/artworks/' . $slug . '/mockups/' . $mockup['public_slug_en'] . '/',
@@ -1384,6 +1387,51 @@ function app_publication_media_srcset(array $artwork, string $file): string
     ));
 }
 
+function app_publication_video_url(array $artwork, bool $poster = false): string
+{
+    $url = artworkmockups_public_url() . '/publication_video_media.php?slug=' . rawurlencode((string)$artwork['slug']);
+    return $poster ? $url . '&poster=1' : $url;
+}
+
+function published_video_duration(float $seconds): string
+{
+    $total = max(0, (int)round($seconds));
+    return sprintf('%02d:%02d', intdiv($total, 60), $total % 60);
+}
+
+/** @return array<string,array<string,mixed>> */
+function artwork_related_studio_notes(array $artwork): array
+{
+    $notes = app_studio_notes_catalog()?->all(artist_site_language()) ?? [];
+    if (!$notes) return [];
+    $artworkId = (int)($artwork['canonical_artwork_id'] ?? 0);
+    $seriesId = (int)($artwork['series_id'] ?? 0);
+    $artworkTitle = mb_strtolower(trim((string)($artwork['title'] ?? '')));
+    $seriesTitle = mb_strtolower(trim((string)($artwork['series'] ?? '')));
+    $mockupFiles = array_values(array_filter(array_map(
+        static fn(array $item): string => basename((string)($item['mockup_file'] ?? '')),
+        (array)($artwork['items'] ?? [])
+    )));
+
+    $related = [];
+    foreach ($notes as $slug => $note) {
+        $payloadSource = is_array($note['source'] ?? null) ? $note['source'] : [];
+        $type = mb_strtolower(trim((string)($payloadSource['type'] ?? $note['source_type'] ?? '')));
+        $id = (int)($payloadSource['id'] ?? $note['source_id'] ?? 0);
+        $label = mb_strtolower(trim((string)($payloadSource['label'] ?? $note['source_label'] ?? '')));
+        $noteFiles = array_values(array_filter(array_map('basename', (array)($note['mockup_files'] ?? []))));
+        $matchesArtwork = in_array($type, ['artwork', 'obra'], true)
+            && (($artworkId > 0 && $id === $artworkId) || ($artworkTitle !== '' && $label === $artworkTitle));
+        $matchesSeries = in_array($type, ['series', 'serie'], true)
+            && (($seriesId > 0 && $id === $seriesId) || ($seriesTitle !== '' && $label === $seriesTitle));
+        $matchesMedia = (bool)array_intersect($mockupFiles, $noteFiles);
+        if (!$matchesArtwork && !$matchesSeries && !$matchesMedia) continue;
+        $related[$slug] = $note;
+        if (count($related) >= 3) break;
+    }
+    return $related;
+}
+
 function artworkmockups_public_url(): string
 {
     $configured = trim((string)(getenv('ARTWORKMOCKUPS_PUBLIC_URL') ?: ''));
@@ -1771,6 +1819,12 @@ function render_published_artwork(array $site, array $artwork): void
                 <?php if (!empty($facts['orientation'])): ?><div><dt><?= e(site_t('Orientation', 'Orientación')) ?></dt><dd><?= e(ucfirst((string)$facts['orientation'])) ?></dd></div><?php endif; ?>
                 <?php if (!empty($facts['certificate_of_authenticity'])): ?><div><dt><?= e(site_t('Certificate', 'Certificado')) ?></dt><dd><?= e($facts['certificate_of_authenticity']) ?></dd></div><?php endif; ?>
                 <div><dt><?= e(site_t('Context studies', 'Estudios de contexto')) ?></dt><dd><?= count($artwork['items']) ?></dd></div>
+                <?php if (is_array($artwork['video'] ?? null)): ?>
+                    <div class="artwork-video-spec">
+                        <dt><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/></svg><?= e(site_t('Video', 'Video')) ?></dt>
+                        <dd><a href="<?= e(url_for('artworks/' . $artwork['slug'] . '/video')) ?>"><?= e(published_video_duration((float)$artwork['video']['duration_seconds'])) ?> <span aria-hidden="true">→</span></a></dd>
+                    </div>
+                <?php endif; ?>
             </dl>
             <div class="prose">
                 <?php if ($conceptualNote): ?><h2><?= e(site_t('Conceptual Note', 'Nota conceptual')) ?></h2><p><?= nl2br(e($conceptualNote)) ?></p><?php endif; ?>
@@ -1796,6 +1850,127 @@ function render_published_artwork(array $site, array $artwork): void
     </section>
     <?php
     echo json_ld(['@context'=>'https://schema.org','@type'=>'VisualArtwork','name'=>$artwork['title'],'creator'=>['@type'=>'Person','name'=>$site['name']],'artMedium'=>$artwork['medium'],'dateCreated'=>$artwork['artwork_year'],'image'=>site_absolute_asset_url(app_publication_media_url($artwork,$mainImageFile),(string)$site['url']),'description'=>$summary,'inLanguage'=>artist_site_language(),'url'=>artist_site_url_with_language($site['url'].'/artworks/'.$artwork['slug'].'/',artist_site_language())]);
+}
+
+function render_published_artwork_video(array $site, array $artwork): void
+{
+    $video = is_array($artwork['video'] ?? null) ? $artwork['video'] : null;
+    if (!$video) return;
+    $notes = artwork_related_studio_notes($artwork);
+    $series = null;
+    foreach (app_series_catalog()?->all() ?? [] as $candidate) {
+        if (((int)($artwork['series_id'] ?? 0) > 0 && (int)$candidate['id'] === (int)$artwork['series_id'])
+            || strcasecmp(trim((string)($candidate['title'] ?? '')), trim((string)($artwork['series'] ?? ''))) === 0) {
+            $series = $candidate;
+            break;
+        }
+    }
+    $mainImageFile = trim((string)($artwork['header_file'] ?? '')) ?: (string)$artwork['source_image_file'];
+    $duration = published_video_duration((float)$video['duration_seconds']);
+    ?>
+    <section class="artwork-video-editorial">
+        <header class="artwork-video-editorial__header">
+            <p class="eyebrow"><?= e(site_t('Artwork video', 'Video de la obra')) ?><?= !empty($artwork['series']) ? ' / ' . e((string)$artwork['series']) : '' ?></p>
+            <h1><?= e((string)$artwork['title']) ?></h1>
+            <?php if (!empty($artwork['subtitle'])): ?><p class="lead"><?= e((string)$artwork['subtitle']) ?></p><?php endif; ?>
+            <p class="artwork-video-editorial__meta"><?= e($duration) ?><?= !empty($video['aspect_ratio']) ? ' · ' . e((string)$video['aspect_ratio']) : '' ?></p>
+        </header>
+
+        <figure class="artwork-video-editorial__player">
+            <video controls playsinline preload="metadata"<?= !empty($video['has_poster']) ? ' poster="' . e(app_publication_video_url($artwork, true)) . '"' : '' ?>>
+                <source src="<?= e(app_publication_video_url($artwork)) ?>">
+            </video>
+        </figure>
+
+        <div class="artwork-video-board">
+            <section class="artwork-video-board__row artwork-video-board__notes">
+                <div class="artwork-video-board__label">
+                    <h2><?= e(site_t('Related Studio Notes', 'Studio Notes relacionadas')) ?></h2>
+                </div>
+                <div class="artwork-video-board__content">
+                    <?php if ($notes): ?>
+                        <?php foreach ($notes as $slug => $note): ?>
+                            <?php
+                            $snippet = trim((string)($note['excerpt'] ?? '')) ?: trim(strip_tags((string)($note['objective'] ?? '')));
+                            if (mb_strlen($snippet) > 220) $snippet = mb_substr($snippet, 0, 217) . '…';
+                            ?>
+                            <article class="artwork-video-note">
+                                <h3><a href="<?= e(url_for('studio-notes/' . $slug)) ?>"><?= e((string)$note['title']) ?> <span aria-hidden="true">→</span></a></h3>
+                                <?php if ($snippet !== ''): ?><p><?= e($snippet) ?></p><?php endif; ?>
+                            </article>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <a class="artwork-video-board__text-link" href="<?= e(url_for('studio-notes')) ?>"><?= e(site_t('Explore Studio Notes', 'Explorar Studio Notes')) ?> <span aria-hidden="true">→</span></a>
+                    <?php endif; ?>
+                </div>
+            </section>
+
+            <section class="artwork-video-board__row">
+                <div class="artwork-video-board__label">
+                    <h2><?= e(site_t('Series', 'Serie')) ?></h2>
+                </div>
+                <div class="artwork-video-board__content">
+                    <?php if ($series): ?>
+                        <h3><a href="<?= e(url_for('series/' . $series['slug'])) ?>"><?= e((string)$series['title']) ?> <span aria-hidden="true">→</span></a></h3>
+                        <?php $seriesText = trim((string)($series['description'] ?? $series['long_description'] ?? '')); ?>
+                        <?php if ($seriesText !== ''): ?><p><?= e($seriesText) ?></p><?php endif; ?>
+                    <?php elseif (!empty($artwork['series'])): ?>
+                        <h3><?= e((string)$artwork['series']) ?></h3>
+                    <?php endif; ?>
+                </div>
+            </section>
+
+            <section class="artwork-video-board__row artwork-video-board__mockups">
+                <div class="artwork-video-board__label">
+                    <h2><?= e(site_t('Associated Mockups', 'Mockups asociados')) ?></h2>
+                </div>
+                <div class="artwork-video-board__content">
+                    <?php if (!empty($artwork['items'])): ?>
+                        <div class="artwork-video-mockup-rail">
+                            <?php foreach (array_slice((array)$artwork['items'], 0, 6) as $mockup): ?>
+                                <a href="<?= e(url_for('artworks/' . $artwork['slug'] . '/mockups/' . $mockup['public_slug'])) ?>">
+                                    <img src="<?= e(app_publication_media_url($artwork, (string)$mockup['mockup_file'], 768)) ?>"
+                                        srcset="<?= e(app_publication_media_srcset($artwork, (string)$mockup['mockup_file'])) ?>"
+                                        sizes="(max-width: 700px) 78vw, 34vw"
+                                        alt="<?= e((string)($mockup['alt_text'] ?: $mockup['title'] ?: $artwork['title'])) ?>"
+                                        loading="lazy" decoding="async">
+                                    <span><?= e((string)($mockup['title'] ?: site_t('Context study', 'Estudio de contexto'))) ?> →</span>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </section>
+
+            <section class="artwork-video-board__row artwork-video-board__artwork">
+                <div class="artwork-video-board__label">
+                    <h2><?= e(site_t('Main Artwork', 'Obra principal')) ?></h2>
+                </div>
+                <div class="artwork-video-board__content">
+                    <a class="artwork-video-main-link" href="<?= e(url_for('artworks/' . $artwork['slug'])) ?>">
+                        <img src="<?= e(app_publication_media_url($artwork, $mainImageFile, 768)) ?>"
+                            srcset="<?= e(app_publication_media_srcset($artwork, $mainImageFile)) ?>"
+                            sizes="(max-width: 700px) 100vw, 52vw"
+                            alt="<?= e((string)($artwork['artwork_alt'] ?: $artwork['title'])) ?>"
+                            loading="lazy" decoding="async">
+                        <span><strong><?= e((string)$artwork['title']) ?></strong><i><?= e(site_t('View artwork', 'Ver obra')) ?> →</i></span>
+                    </a>
+                </div>
+            </section>
+        </div>
+    </section>
+    <?php
+    echo json_ld([
+        '@context' => 'https://schema.org',
+        '@type' => 'VideoObject',
+        'name' => (string)$artwork['title'] . ' — ' . site_t('Artwork video', 'Video de la obra'),
+        'description' => trim((string)($artwork['short_description'] ?: $artwork['description'])),
+        'thumbnailUrl' => !empty($video['has_poster']) ? site_absolute_asset_url(app_publication_video_url($artwork, true), (string)$site['url']) : site_absolute_asset_url(app_publication_media_url($artwork, $mainImageFile), (string)$site['url']),
+        'uploadDate' => (string)$video['published_at'],
+        'duration' => 'PT' . max(1, (int)round((float)$video['duration_seconds'])) . 'S',
+        'contentUrl' => site_absolute_asset_url(app_publication_video_url($artwork), (string)$site['url']),
+        'inLanguage' => artist_site_language(),
+    ]);
 }
 
 function render_acquisition(array $site, array $artwork): void
@@ -3722,6 +3897,38 @@ switch ($segments[0] ?? '') {
 
         $publishedArtwork = $publishedCatalog?->one($segments[1]);
         if (!$publishedArtwork) { $handled = false; break; }
+        if (($segments[2] ?? '') === 'video' && !isset($segments[3])) {
+            if (!is_array($publishedArtwork['video'] ?? null)) { $handled = false; break; }
+            if ($segments[1] !== (string)$publishedArtwork['slug']) {
+                header('Location: ' . artist_site_url_with_language(
+                    url_for('artworks/' . $publishedArtwork['slug'] . '/video'),
+                    artist_site_language()
+                ), true, 301);
+                exit;
+            }
+            $videoDescription = trim((string)($publishedArtwork['short_description'] ?: $publishedArtwork['description']));
+            $videoTitle = site_t('Artwork Video: ', 'Video de la obra: ') . $publishedArtwork['title'] . ' | ' . $artistName;
+            $videoCanonical = rtrim((string)$site['url'], '/') . '/artworks/' . $publishedArtwork['slug'] . '/video/';
+            $meta = page_meta(
+                $videoTitle,
+                $videoDescription,
+                $videoCanonical,
+                !empty($publishedArtwork['video']['has_poster'])
+                    ? app_publication_video_url($publishedArtwork, true)
+                    : app_publication_media_url($publishedArtwork, (string)$publishedArtwork['source_image_file'])
+            );
+            $meta['keywords'] = trim(implode(', ', array_filter([
+                (string)($publishedArtwork['artwork_keywords'] ?? ''),
+                (string)($publishedArtwork['artwork_tags'] ?? ''),
+                (string)($publishedArtwork['series'] ?? ''),
+            ])));
+            artist_site_set_language_urls([
+                'en' => url_for('artworks/' . $publishedArtwork['slug'] . '/video'),
+                'es' => url_for('artworks/' . $publishedArtwork['slug'] . '/video'),
+            ]);
+            render_published_artwork_video($site, $publishedArtwork);
+            break;
+        }
         if (($segments[2] ?? '') === 'mockups' && isset($segments[3])) {
             $record = $publishedCatalog?->mockup($segments[1], $segments[3]);
             if (!$record) { $handled = false; break; }

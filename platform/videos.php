@@ -54,6 +54,13 @@ function videos_date(string $value): string
     $timestamp = strtotime($value);
     return $timestamp ? date('d/m/Y · H:i', $timestamp) : '';
 }
+
+function videos_artist_site_url(string $slug): string
+{
+    if ($slug === '') return '';
+    $catalog = rtrim(app_env('ARTIST_WEBSITE_CATALOG_URL', 'https://mauriziovalch.com/artworks'), '/');
+    return $catalog . '/' . rawurlencode($slug) . '/video/';
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -63,7 +70,7 @@ function videos_date(string $value): string
     <title>Videos - Artwork Mockups</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="ui-catalog.css">
-    <link rel="stylesheet" href="videos.css?v=13">
+    <link rel="stylesheet" href="videos.css?v=14">
     <link rel="stylesheet" href="media-controls.css?v=2">
 </head>
 <body>
@@ -117,6 +124,9 @@ function videos_date(string $value): string
                             $projectTitle = trim((string)($final['displayTitle'] ?? '')) ?: 'Final video';
                             $associatedArtwork = trim((string)($final['artworkTitle'] ?? ''));
                             $sourceLabel = ($final['source'] ?? '') === 'desktop' ? 'Uploaded from computer' : 'Created in Video Lab';
+                            $sitePublished = !empty($final['sitePublished']);
+                            $siteVideoUrl = videos_artist_site_url((string)($final['siteSlug'] ?? ''));
+                            $canPublish = empty($final['associationMissing']) && $siteVideoUrl !== '';
                             ?>
                             <article class="videos-final-card">
                                 <div class="videos-final-media-shell">
@@ -149,6 +159,16 @@ function videos_date(string $value): string
                                         </form>
                                     </details>
                                 </div>
+                                <form class="videos-final-actions" data-final-publish-form>
+                                    <input type="hidden" name="csrf" value="<?= videos_h($csrf) ?>">
+                                    <input type="hidden" name="exportId" value="<?= (int)$final['id'] ?>">
+                                    <button type="submit" <?= $sitePublished || !$canPublish ? 'disabled' : '' ?>
+                                        title="<?= videos_h(!$canPublish ? 'Assign a published artwork first' : '') ?>"><?= $sitePublished ? 'PUBLISHED' : 'PUBLISH' ?></button>
+                                    <?php if ($sitePublished && $siteVideoUrl !== ''): ?>
+                                        <a href="<?= videos_h($siteVideoUrl) ?>" target="_blank" rel="noopener">VIEW →</a>
+                                    <?php endif; ?>
+                                    <small data-final-publish-error hidden></small>
+                                </form>
                             </article>
                         <?php endforeach; ?>
                     </div>
@@ -296,6 +316,6 @@ function videos_date(string $value): string
         </div>
     </main>
 </div>
-<script src="videos.js?v=8"></script>
+<script src="videos.js?v=9"></script>
 </body>
 </html>

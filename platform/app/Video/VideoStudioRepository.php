@@ -633,6 +633,8 @@ final class VideoStudioRepository
         }
 
         $artworks = $this->artworkIdentityMap($userId, array_values($artworkIds));
+        $publishedVideos = $this->publishedFinalVideoMap($userId);
+        $publicArtworkSlugs = $this->publicArtworkSlugMap($userId, array_values($artworkIds));
         $artistName = trim((string)(ArtistProfile::findForUser($userId)['artist_name'] ?? ''));
         $finals = [];
         foreach ($rows as $item) {
@@ -662,6 +664,8 @@ final class VideoStudioRepository
             $final['displayTitle'] = $displayTitle;
             $final['seoFileBase'] = $seoFileBase !== '' ? $seoFileBase : 'video-final';
             $final['associationMissing'] = $artworkTitle === '';
+            $final['sitePublished'] = isset($publishedVideos[(int)$row['id']]);
+            $final['siteSlug'] = (string)($publicArtworkSlugs[(int)($final['canonicalArtworkId'] ?? 0)] ?? '');
             $finals[] = $final;
         }
         return $finals;
@@ -712,11 +716,54 @@ final class VideoStudioRepository
         $snapshot['artworkTitle'] = (string)$artwork['artworkTitle'];
         $update = $this->pdo->prepare('UPDATE video_exports SET timeline_snapshot_json=?,updated_at=? WHERE id=? AND user_id=?');
         $update->execute([self::encode($snapshot), date('c'), $exportId, $userId]);
+        $this->pdo->prepare('DELETE FROM artwork_video_publications WHERE user_id=? AND video_export_id=?')
+            ->execute([$userId, $exportId]);
 
         foreach ($this->finalVideos($userId) as $final) {
             if ((int)$final['id'] === $exportId) return $final;
         }
         throw new RuntimeException('No se pudo actualizar la asociación del video.');
+    }
+
+    public function publishFinalVideo(int $userId, int $exportId): array
+    {
+        $final = null;
+        foreach ($this->finalVideos($userId) as $candidate) {
+            if ((int)$candidate['id'] === $exportId) {
+                $final = $candidate;
+                break;
+            }
+        }
+        if (!is_array($final)) throw new OutOfBoundsException('Video final no encontrado.');
+        $artworkId = (int)($final['canonicalArtworkId'] ?? 0);
+        if ($artworkId <= 0 || !empty($final['associationMissing'])) {
+            throw new DomainException('Asocia una obra antes de publicar el video.');
+        }
+        $slug = (string)($final['siteSlug'] ?? '');
+        if ($slug === '') {
+            throw new DomainException('La obra debe estar publicada en el sitio antes de añadir el video.');
+        }
+
+        $now = date('c');
+        $this->begin();
+        try {
+            $this->pdo->prepare('DELETE FROM artwork_video_publications
+                WHERE user_id=? AND (artwork_id=? OR video_export_id=?)')
+                ->execute([$userId, $artworkId, $exportId]);
+            $this->pdo->prepare('INSERT INTO artwork_video_publications
+                (user_id,artwork_id,video_export_id,published_at,updated_at)
+                VALUES (?,?,?,?,?)')
+                ->execute([$userId, $artworkId, $exportId, $now, $now]);
+            $this->commit();
+        } catch (Throwable $error) {
+            $this->rollback();
+            throw $error;
+        }
+
+        foreach ($this->finalVideos($userId) as $published) {
+            if ((int)$published['id'] === $exportId) return $published;
+        }
+        throw new RuntimeException('No se pudo publicar el video.');
     }
 
     public function begin(): void
@@ -932,6 +979,37 @@ final class VideoStudioRepository
             ];
         }
         return $identities;
+    }
+
+    /** @return array<int,bool> */
+    private function publishedFinalVideoMap(int $userId): array
+    {
+        $stmt = $this->pdo->prepare('SELECT video_export_id FROM artwork_video_publications WHERE user_id=?');
+        $stmt->execute([$userId]);
+        $map = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $exportId) $map[(int)$exportId] = true;
+        return $map;
+    }
+
+    /** @return array<int,string> */
+    private function publicArtworkSlugMap(int $userId, array $artworkIds): array
+    {
+        $artworkIds = array_values(array_unique(array_filter(array_map('intval', $artworkIds), static fn(int $id): bool => $id > 0)));
+        if ($artworkIds === []) return [];
+        $marks = implode(',', array_fill(0, count($artworkIds), '?'));
+        $stmt = $this->pdo->prepare("SELECT sh.canonical_artwork_id,p.slug,p.id
+            FROM publications p
+            INNER JOIN artwork_sheets sh ON sh.id=p.artwork_sheet_id AND sh.user_id=p.user_id
+            WHERE p.user_id=? AND sh.canonical_artwork_id IN ({$marks})
+                AND p.status='published' AND p.visibility IN ('public','unlisted')
+            ORDER BY p.id DESC");
+        $stmt->execute(array_merge([$userId], $artworkIds));
+        $map = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $artworkId = (int)$row['canonical_artwork_id'];
+            if (!isset($map[$artworkId])) $map[$artworkId] = (string)$row['slug'];
+        }
+        return $map;
     }
 
     private static function orientationFromDimensions(mixed $width, mixed $height): string

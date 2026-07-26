@@ -233,9 +233,11 @@
 
 .videos-final-actions {
     display: grid;
-    grid-template-columns: repeat(3,1fr);
+    grid-template-columns: repeat(auto-fit,minmax(0,1fr));
     border-top: 1px solid var(--line);
 }
+
+.videos-final-actions input { display: none; }
 
 .videos-final-actions button,
 .videos-final-actions a {
@@ -259,6 +261,22 @@
 .videos-final-actions > :last-child { border-right: 0; }
 .videos-final-actions button:hover,
 .videos-final-actions a:hover { color: var(--accent); background: rgba(168,129,86,.08); transform: none; }
+
+.videos-final-actions button:disabled {
+    color: var(--muted);
+    background: transparent;
+    cursor: default;
+    opacity: .62;
+}
+
+.videos-final-actions small {
+    grid-column: 1 / -1;
+    padding: 8px 10px;
+    border-top: 1px solid var(--line);
+    color: #944d44;
+    font-size: 9px;
+    text-transform: none;
+}
 
 .videos-filters {
     display: flex;

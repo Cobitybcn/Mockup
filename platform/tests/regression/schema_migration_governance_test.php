@@ -58,6 +58,8 @@ function run_schema_migration_governance_tests(): void
     TestHarness::assertTrue(true, 'el contenido bilingue experimental queda aislado por usuario, entidad e idioma');
     $pdo->query('SELECT series_id,locale,market,keyword_text,avg_monthly_searches,competition,selected FROM series_keyword_research WHERE 1=0');
     TestHarness::assertTrue(true, 'la investigación de búsqueda de Series queda separada por idioma y mercado');
+    $pdo->query('SELECT user_id,artwork_id,video_export_id,published_at,updated_at FROM artwork_video_publications WHERE 1=0');
+    TestHarness::assertTrue(true, 'cada obra puede publicar un único video final en el sitio del artista');
 
     $now = date(DATE_ATOM);
     $insert = $pdo->prepare("INSERT INTO users

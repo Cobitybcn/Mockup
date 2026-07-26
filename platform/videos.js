@@ -137,6 +137,33 @@
         });
     });
 
+    document.querySelectorAll('[data-final-publish-form]').forEach(form => {
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+            const submit = form.querySelector('[type="submit"]');
+            const error = form.querySelector('[data-final-publish-error]');
+            if (!submit || submit.disabled) return;
+            submit.disabled = true;
+            submit.textContent = '…';
+            if (error) error.hidden = true;
+            try {
+                const response = await fetch('video_final_publish.php', {
+                    method: 'POST', body: new FormData(form), credentials: 'same-origin'
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok || !payload.ok) throw new Error(payload.error || 'The video could not be published.');
+                window.location.reload();
+            } catch (cause) {
+                submit.disabled = false;
+                submit.textContent = 'PUBLISH';
+                if (error) {
+                    error.textContent = cause instanceof Error ? cause.message : 'The video could not be published.';
+                    error.hidden = false;
+                }
+            }
+        });
+    });
+
     document.addEventListener('click', event => {
         if (event.target.closest('[data-open-final-upload]')) { event.preventDefault(); openFinalUpload(); return; }
         if (event.target.closest('[data-close-final-upload]')) { closeFinalUpload(); return; }

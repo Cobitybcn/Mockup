@@ -32,7 +32,7 @@ final class AppPublishedCatalog
         $statement = $this->pdo->prepare("SELECT p.*, a.source_image_file, a.canonical_artwork_id, a.subtitle,
                 a.title artwork_title,a.description artwork_description,a.short_description artwork_short_description,
                 a.caption artwork_caption,a.generated_json artwork_generated_json,aw.medium,
-                aw.artwork_year, aw.series, aw.width, aw.height, aw.depth, aw.unit, a.alt_text artwork_alt,
+                aw.artwork_year, aw.series, aw.series_id, aw.width, aw.height, aw.depth, aw.unit, a.alt_text artwork_alt,
                 a.keywords artwork_keywords, a.tags artwork_tags
             FROM publications p
             JOIN users u ON u.id=p.user_id
@@ -134,6 +134,7 @@ final class AppPublishedCatalog
             $row['items'] = $this->items((int)$row['id'], (string)$row['slug'], (string)$row['artwork_title']);
             $row['artwork_views'] = $this->artworkViews((int)$row['canonical_artwork_id']);
             $row['header_file'] = $this->headerFileForArtwork((int)$row['user_id'], $row);
+            $row['video'] = $this->publishedVideo((int)$row['user_id'], (int)$row['canonical_artwork_id']);
             $publications[(string)$row['slug']] = $row;
         }
         return $this->catalogCache[$language] = $publications;
@@ -438,6 +439,34 @@ final class AppPublishedCatalog
             ORDER BY id');
         $statement->execute([$artworkId]);
         return $statement->fetchAll();
+    }
+
+    private function publishedVideo(int $userId, int $artworkId): ?array
+    {
+        try {
+            $statement = $this->pdo->prepare("SELECT e.id,e.duration_seconds,e.aspect_ratio,e.completed_at,e.updated_at,
+                    e.timeline_snapshot_json,avp.published_at
+                FROM artwork_video_publications avp
+                INNER JOIN video_exports e ON e.id=avp.video_export_id AND e.user_id=avp.user_id
+                WHERE avp.user_id=? AND avp.artwork_id=?
+                    AND e.status='succeeded' AND e.output_path<>''
+                ORDER BY avp.id DESC LIMIT 1");
+            $statement->execute([$userId, $artworkId]);
+            $row = $statement->fetch(PDO::FETCH_ASSOC);
+            if (!is_array($row)) return null;
+            $snapshot = json_decode((string)($row['timeline_snapshot_json'] ?? ''), true);
+            if (!is_array($snapshot)) $snapshot = [];
+            return [
+                'id' => (int)$row['id'],
+                'duration_seconds' => (float)$row['duration_seconds'],
+                'aspect_ratio' => (string)$row['aspect_ratio'],
+                'has_poster' => trim((string)($snapshot['thumbnailPath'] ?? '')) !== '',
+                'published_at' => (string)$row['published_at'],
+                'updated_at' => (string)($row['completed_at'] ?: $row['updated_at']),
+            ];
+        } catch (PDOException) {
+            return null;
+        }
     }
 
     private static function slug(string $value): string

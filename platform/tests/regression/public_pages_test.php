@@ -81,4 +81,19 @@ function run_public_pages_regression_tests(): void {
     );
     TestHarness::assertContains('.artwork-series-reference:hover .artwork-series-preview',$artistStyles,'series previews appear on pointer hover');
     TestHarness::assertContains('.artwork-series-reference:focus-within .artwork-series-preview',$artistStyles,'series previews appear for keyboard focus');
+    $videosPage=(string)file_get_contents($root.'/videos.php');
+    $publicVideoMedia=(string)file_get_contents($root.'/publication_video_media.php');
+    TestHarness::assertContains('data-final-publish-form',$videosPage,'each final video exposes its direct site publication action');
+    TestHarness::assertContains("\$sitePublished ? 'PUBLISHED' : 'PUBLISH'",$videosPage,'the final video publication action stays deliberately short');
+    TestHarness::assertTrue(!str_contains($publicVideoMedia,'Auth::requireUser'),'published artwork videos play without a private workspace session');
+    TestHarness::assertContains('artwork_video_publications',$publicVideoMedia,'public video delivery requires an explicit artwork publication');
+    $videoLandingStart=strpos($artistSite,'function render_published_artwork_video');
+    $videoLanding=$videoLandingStart===false?'':substr($artistSite,$videoLandingStart,strpos($artistSite,'function render_acquisition',$videoLandingStart)-$videoLandingStart);
+    TestHarness::assertTrue(
+        strpos($videoLanding,"site_t('Related Studio Notes'") < strpos($videoLanding,"site_t('Series',")
+            && strpos($videoLanding,"site_t('Series',") < strpos($videoLanding,"site_t('Associated Mockups'")
+            && strpos($videoLanding,"site_t('Associated Mockups'") < strpos($videoLanding,"site_t('Main Artwork'"),
+        'the artwork video landing preserves its editorial relationship order'
+    );
+    TestHarness::assertContains('class="artwork-video-spec"',$artistSite,'the artwork detail appends the compact film icon, video duration and link');
 }
