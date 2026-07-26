@@ -242,39 +242,43 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     throw new RuntimeException('El espacio editorial bilingüe no está habilitado para esta cuenta.');
                 }
                 if (empty($changes['needs_english_update'])) {
-                    $_SESSION['wsn_notice'] = 'La versión inglesa ya está lista. Podés publicar los cambios.';
-                    header('Location: website_studio_notes.php?draft=' . $id);
-                    exit;
+                    // Quill can normalize visual HTML after the page was
+                    // classified. Trust the server and publish that visual
+                    // change without creating an AI job.
+                    $action = 'publish_changes';
                 }
-                $jobs = new BilingualEditorialJobService($pdo);
-                $protectedSpanishFields = StudioNoteChangeClassifier::protectedSpanishSeoFields(
-                    (array)$savedSpanishState['content'],
-                    (array)$savedSpanishState['published_content']
-                );
-                $protectedSeoCount = count(array_intersect(
-                    ['excerpt', 'slug', 'seo_title', 'seo_description', 'alt_text', 'caption', 'tags', 'search_terms'],
-                    $protectedSpanishFields
-                ));
-                $job = $jobs->createOrReuse($userId, 'studio_note', $id, 'adapt', [
-                    'current_spanish' => (array)$savedSpanishState['content'],
-                    'current_english' => (array)$savedEnglishState['content'],
-                    'protected_spanish_fields' => $protectedSpanishFields,
-                    'review_spanish_metadata' => !empty($changes['media_requires_analysis'])
-                        || $protectedSeoCount < 8,
-                ], true);
-                if ((string)$job['status'] === 'queued' && trim((string)$job['task_name']) === '') {
-                    if (CloudTasksService::isAvailable()) {
-                        $jobs->attachTask(
-                            (int)$job['id'],
-                            $userId,
-                            CloudTasksService::enqueueEditorialGeneration((int)$job['id'])
-                        );
-                    } else {
-                        (new BilingualEditorialGenerationWorker($pdo))->process((int)$job['id']);
+                if ($action === 'update_english') {
+                    $jobs = new BilingualEditorialJobService($pdo);
+                    $protectedSpanishFields = StudioNoteChangeClassifier::protectedSpanishSeoFields(
+                        (array)$savedSpanishState['content'],
+                        (array)$savedSpanishState['published_content']
+                    );
+                    $protectedSeoCount = count(array_intersect(
+                        ['excerpt', 'slug', 'seo_title', 'seo_description', 'alt_text', 'caption', 'tags', 'search_terms'],
+                        $protectedSpanishFields
+                    ));
+                    $job = $jobs->createOrReuse($userId, 'studio_note', $id, 'adapt', [
+                        'current_spanish' => (array)$savedSpanishState['content'],
+                        'current_english' => (array)$savedEnglishState['content'],
+                        'protected_spanish_fields' => $protectedSpanishFields,
+                        'review_spanish_metadata' => !empty($changes['media_requires_analysis'])
+                            || $protectedSeoCount < 8,
+                    ], true);
+                    if ((string)$job['status'] === 'queued' && trim((string)$job['task_name']) === '') {
+                        if (CloudTasksService::isAvailable()) {
+                            $jobs->attachTask(
+                                (int)$job['id'],
+                                $userId,
+                                CloudTasksService::enqueueEditorialGeneration((int)$job['id'])
+                            );
+                        } else {
+                            (new BilingualEditorialGenerationWorker($pdo))->process((int)$job['id']);
+                        }
                     }
+                    $_SESSION['wsn_notice'] = 'Actualizando la versión inglesa y el SEO pendiente. Todavía no se publicará.';
                 }
-                $_SESSION['wsn_notice'] = 'Actualizando la versión inglesa y el SEO pendiente. Todavía no se publicará.';
-            } elseif ($action === 'publish_changes') {
+            }
+            if ($action === 'publish_changes') {
                 if (!empty($changes['needs_english_update'])) {
                     throw new RuntimeException('Actualizá la versión inglesa antes de publicar.');
                 }
@@ -298,7 +302,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     (string)($savedSpanishState['content']['body_html'] ?? '')
                 );
                 $_SESSION['wsn_notice'] = 'Cambios publicados sin ejecutar IA.';
-            } else {
+            } elseif ($action !== 'update_english') {
                 $_SESSION['wsn_notice'] = 'Borrador bilingüe guardado.';
             }
             header('Location: website_studio_notes.php?draft=' . $id);
@@ -532,6 +536,15 @@ if ($openDraft) {
         (array)$englishState['published_content'],
         (bool)$spanishState['is_published'],
         (bool)$englishState['is_published']
+    );
+    $englishState['content']['body_html'] = StudioNoteMediaService::mirrorImagesWithPublishedFallback(
+        (string)$spanishState['content']['body_html'],
+        (string)$englishState['content']['body_html'],
+        StudioNoteMediaService::rewriteDeliveryUrls(
+            $userId,
+            (int)$openDraft['id'],
+            (string)($englishState['published_content']['body_html'] ?? '')
+        )
     );
 }
 
@@ -1095,27 +1108,10 @@ natcasesort($mockupSeriesFilters);
                         return normalizedText(container.textContent || '');
                     }
 
-                    function bodyStructure(html) {
-                        var structure = [];
-                        String(html || '').replace(/<img\b[^>]*>/giu, '').replace(
-                            /<(h1|h2|h3|p|blockquote|ul|ol|li|a)\b([^>]*)>/giu,
-                            function(match, tag, attributes) {
-                                tag = String(tag || '').toLowerCase();
-                                if (tag === 'a') {
-                                    var href = String(attributes || '').match(/\bhref=["']([^"']+)["']/iu);
-                                    structure.push('a:' + String(href && href[1] || ''));
-                                } else structure.push(tag);
-                                return match;
-                            }
-                        );
-                        return structure;
-                    }
-
                     function contentSnapshot(content, html) {
                         return JSON.stringify({
                             title: normalizedText(content.title),
-                            body_text: textFromHtml(html),
-                            structure: bodyStructure(html)
+                            body_text: textFromHtml(html)
                         });
                     }
 
@@ -1388,16 +1384,24 @@ natcasesort($mockupSeriesFilters);
                     quill.root.querySelectorAll('img').forEach(prepareImage);
 
                     var imageUploadQueue = Promise.resolve();
+                    var pendingImageUploads = 0;
 
                     function persistSpanishImage(file) {
                         var data = new FormData();
                         data.append('csrf', formCsrf.value);
                         data.append('note_id', String(noteId));
                         data.append('image', file);
+                        var controller = typeof AbortController === 'function'
+                            ? new AbortController()
+                            : null;
+                        var timeout = window.setTimeout(function() {
+                            if (controller) controller.abort();
+                        }, 30000);
                         return fetch('studio_note_inline_upload.php', {
                             method: 'POST',
                             body: data,
-                            headers: {'Accept': 'application/json'}
+                            headers: {'Accept': 'application/json'},
+                            signal: controller ? controller.signal : undefined
                         })
                             .then(function(response) { return response.json(); })
                             .then(function(result) {
@@ -1405,6 +1409,15 @@ natcasesort($mockupSeriesFilters);
                                     throw new Error(result.error || 'No se pudo guardar la imagen.');
                                 }
                                 return result.url;
+                            })
+                            .catch(function(error) {
+                                if (error && error.name === 'AbortError') {
+                                    throw new Error('La carga de la imagen tardó demasiado. Volvé a intentarlo.');
+                                }
+                                throw error;
+                            })
+                            .finally(function() {
+                                window.clearTimeout(timeout);
                             });
                     }
 
@@ -1419,6 +1432,7 @@ natcasesort($mockupSeriesFilters);
                         if (!files.length || !formCsrf || !noteId) return imageUploadQueue;
                         var range = quillEs.getSelection(true) || {index: Math.max(0, quillEs.getLength() - 1)};
                         var insertAt = range.index;
+                        pendingImageUploads += files.length;
                         quillEs.enable(false);
                         imageUploadQueue = imageUploadQueue.then(function() {
                             return files.reduce(function(chain, file) {
@@ -1435,6 +1449,7 @@ natcasesort($mockupSeriesFilters);
                         }).catch(function(error) {
                             window.alert(error.message || 'No se pudo guardar la imagen.');
                         }).finally(function() {
+                            pendingImageUploads = Math.max(0, pendingImageUploads - files.length);
                             quillEs.enable(true);
                             quillEs.focus();
                         });
@@ -1525,13 +1540,17 @@ natcasesort($mockupSeriesFilters);
                     var queuedSubmitAllowed = false;
                     if (form) {
                         form.addEventListener('submit', function(event) {
-                            if (!queuedSubmitAllowed) {
+                            if (!queuedSubmitAllowed && pendingImageUploads > 0) {
                                 event.preventDefault();
                                 var submitter = event.submitter || null;
+                                if (publicationState) publicationState.textContent = 'Terminando la carga de imágenes';
                                 imageUploadQueue.then(function() {
                                     queuedSubmitAllowed = true;
                                     form.requestSubmit(submitter);
-                                }).catch(function() {});
+                                }).catch(function(error) {
+                                    if (publicationState) publicationState.textContent = '';
+                                    window.alert(error.message || 'No se pudo completar la carga pendiente.');
+                                });
                                 return;
                             }
                             queuedSubmitAllowed = false;

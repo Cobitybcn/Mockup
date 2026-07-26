@@ -136,7 +136,6 @@ final class StudioNoteChangeClassifier
         return self::encode([
             'title' => self::normalize((string)($content['title'] ?? '')),
             'body_text' => self::bodyText((string)($content['body_html'] ?? '')),
-            'structure' => self::structureSignature((string)($content['body_html'] ?? '')),
         ]);
     }
 

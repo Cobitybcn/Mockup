@@ -62,6 +62,59 @@ function run_studio_note_change_classifier_tests(): void
     TestHarness::assertSame('publish_changes', $visual['primary_action'], 'Studio Notes classifier: visual changes publish without AI');
     TestHarness::assertTrue(!$visual['needs_english_update'], 'Studio Notes classifier: image alignment does not stale English');
 
+    $quillNormalizedEs = $publishedEs;
+    $quillNormalizedEs['body_html'] = str_replace(
+        '<p><img src="studio_note_media.php?file=strata.jpg" data-editor-align="center"></p>',
+        '<div class="ql-align-left"><img src="studio_note_media.php?file=strata.jpg" data-editor-align="left"></div>',
+        $quillNormalizedEs['body_html']
+    );
+    $quillNormalized = StudioNoteChangeClassifier::classify(
+        $quillNormalizedEs,
+        $publishedEs,
+        $publishedEn,
+        $publishedEn,
+        true,
+        true
+    );
+    TestHarness::assertSame(
+        'publish_changes',
+        $quillNormalized['primary_action'],
+        'Studio Notes classifier: Quill image wrappers do not trigger a semantic English adaptation'
+    );
+
+    $englishWithoutImages = $publishedEn;
+    $englishWithoutImages['body_html'] = StudioNoteMediaService::removeImages(
+        $englishWithoutImages['body_html']
+    );
+    $missingEnglishMedia = StudioNoteChangeClassifier::classify(
+        $visualEs,
+        $publishedEs,
+        $englishWithoutImages,
+        $publishedEn,
+        true,
+        true
+    );
+    TestHarness::assertSame(
+        'publish_changes',
+        $missingEnglishMedia['primary_action'],
+        'Studio Notes classifier: a published English image fallback does not require Vertex'
+    );
+    $recoveredEnglishBody = StudioNoteMediaService::mirrorImagesWithPublishedFallback(
+        $visualEs['body_html'],
+        $englishWithoutImages['body_html'],
+        $publishedEn['body_html']
+    );
+    TestHarness::assertSame(
+        1,
+        preg_match_all('/<img\b/iu', $recoveredEnglishBody),
+        'Studio Notes editor: the published English image is restored before publication'
+    );
+    TestHarness::assertContains(
+        'data-editor-align="left"',
+        $recoveredEnglishBody,
+        'Studio Notes editor: the restored English image receives the current Spanish alignment'
+    );
+
     $textEs = $publishedEs;
     $textEs['body_html'] = str_replace('incisiones', 'incisiones y huellas', $textEs['body_html']);
     $textOnly = StudioNoteChangeClassifier::classify(

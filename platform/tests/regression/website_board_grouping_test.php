@@ -139,6 +139,30 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertContains('StudioNoteChangeClassifier::classify', $studioNotesPage, 'el servidor clasifica el cambio antes de decidir una operación');
     TestHarness::assertContains("'review_spanish_metadata' =>", $studioNotesPage, 'actualizar inglés revisa SEO solo cuando quedan campos no protegidos');
     TestHarness::assertContains('mirrorImagesWithPublishedFallback', $studioNotesPage, 'publicar refleja la estructura visual sin nueva adaptación');
+    TestHarness::assertContains(
+        "\$englishState['content']['body_html'] = StudioNoteMediaService::mirrorImagesWithPublishedFallback",
+        $studioNotesPage,
+        'el editor inglés recupera las imágenes desde el snapshot publicado antes de cualquier acción'
+    );
+    TestHarness::assertContains(
+        "\$action = 'publish_changes';",
+        $studioNotesPage,
+        'el servidor corrige una acción inglesa obsoleta y publica ajustes visuales sin crear un trabajo de IA'
+    );
+    TestHarness::assertTrue(
+        !str_contains($studioNotesPage, 'function bodyStructure(html)'),
+        'el navegador no confunde una normalización visual de Quill con contenido semántico'
+    );
+    TestHarness::assertContains(
+        'pendingImageUploads > 0',
+        $studioNotesPage,
+        'una acción normal se envía directamente cuando no existen cargas de imagen pendientes'
+    );
+    TestHarness::assertContains(
+        'controller.abort()',
+        $studioNotesPage,
+        'una carga de imagen colgada tiene un límite y no paraliza indefinidamente el editor'
+    );
     TestHarness::assertContains("'current_english' => (array)\$savedEnglishState['content']", $studioNotesPage, 'actualizar inglés conserva el editor vigente como contexto separado');
     TestHarness::assertContains("studio_note_inline_upload.php", $studioNotesPage, 'las imágenes del WYSIWYG se persisten al insertarlas y no esperan hasta publicar');
     TestHarness::assertContains("published_content_json", $studioNotesPage, 'la tarjeta recupera la imagen del último snapshot publicado cuando el borrador actual perdió su referencia');
