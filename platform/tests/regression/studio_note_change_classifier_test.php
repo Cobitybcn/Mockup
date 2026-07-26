@@ -178,6 +178,46 @@ function run_studio_note_change_classifier_tests(): void
     );
     TestHarness::assertSame('update_english', $initial['primary_action'], 'Studio Notes classifier: a new Spanish note prepares English before publication');
 
+    $newSpanish = $complete(
+        'El ascenso sin escalera',
+        '<p>El ascenso se integra en la materia.</p><p><img src="studio_note_media.php?file=strata.jpg"></p>'
+    );
+    $newEnglish = $complete(
+        'The Ascent Without a Ladder',
+        '<p>The ascent becomes integrated into the material.</p><p><img src="studio_note_media.php?file=strata.jpg"></p>'
+    );
+    $newSpanish['image_metadata'] = [];
+    $newEnglish['image_metadata'] = [];
+    $catalogSources = [[
+        'type' => 'mockup',
+        'file' => 'strata.jpg',
+        'editorialGuide' => [
+            'altText' => 'Obra roja de STRATA en un espacio arquitectónico.',
+            'caption' => 'Vista de conjunto de una obra de STRATA.',
+        ],
+        'editorialGuideEn' => [
+            'altText' => 'Red STRATA work in an architectural space.',
+            'caption' => 'Overall view of a work from STRATA.',
+        ],
+    ]];
+    $newReady = StudioNoteChangeClassifier::classify(
+        StudioNoteMediaService::hydrateImageMetadata($newSpanish, $catalogSources, 'es'),
+        [],
+        StudioNoteMediaService::hydrateImageMetadata($newEnglish, $catalogSources, 'en'),
+        [],
+        false,
+        false
+    );
+    TestHarness::assertSame(
+        'publish_changes',
+        $newReady['primary_action'],
+        'Studio Notes classifier: a complete new bilingual note with catalog image SEO offers PUBLICAR'
+    );
+    TestHarness::assertTrue(
+        !$newReady['media_requires_analysis'],
+        'Studio Notes classifier: recovered mockup SEO does not request Vertex again'
+    );
+
     $protected = StudioNoteChangeClassifier::protectedSpanishSeoFields($seoEs, $publishedEs);
     TestHarness::assertTrue(in_array('seo_description', $protected, true), 'Studio Notes classifier: manual SEO fields are protected');
     TestHarness::assertTrue(!in_array('seo_title', $protected, true), 'Studio Notes classifier: unchanged generated SEO may be refreshed');

@@ -161,6 +161,29 @@ studio_note_media_assert(
     'visual image changes are mirrored into English without rewriting translated prose'
 );
 
+$catalogSources = [[
+    'type' => 'mockup',
+    'file' => 'mockup.jpg',
+    'editorialGuide' => [
+        'altText' => 'Obra roja de la serie STRATA en un espacio arquitectónico.',
+        'caption' => 'Vista de conjunto de una obra de STRATA.',
+    ],
+    'editorialGuideEn' => [
+        'altText' => 'Red work from the STRATA series in an architectural space.',
+        'caption' => 'Overall view of a work from the STRATA series.',
+    ],
+]];
+$hydratedSpanish = StudioNoteMediaService::hydrateImageMetadata($semanticBase, $catalogSources, 'es');
+$hydratedEnglish = StudioNoteMediaService::hydrateImageMetadata([
+    'body_html' => '<p>Territory preserves memory.</p><p><img src="studio_note_media.php?note=1&amp;file=mockup.jpg&amp;w=1200"></p>',
+    'image_metadata' => [],
+], $catalogSources, 'en');
+studio_note_media_assert(
+    (string)($hydratedSpanish['image_metadata'][0]['alt_text'] ?? '') === $catalogSources[0]['editorialGuide']['altText']
+        && (string)($hydratedEnglish['image_metadata'][0]['caption'] ?? '') === $catalogSources[0]['editorialGuideEn']['caption'],
+    'catalog mockups restore their bilingual image SEO without another visual analysis'
+);
+
 $removed = StudioNoteMediaService::normalize(24680, 987654, '<p>Image removed.</p>', $normalized['payload'], []);
 studio_note_media_assert(count((array)$removed['payload']['media']) === 0, 'removed inline image does not remain in the note media payload');
 studio_note_media_assert(!isset($removed['payload']['source']), 'removed inline image does not remain as the note cover');

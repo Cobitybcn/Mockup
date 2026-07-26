@@ -123,6 +123,8 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertContains('studio-note-publish--commit', $studioNotesPage, 'PUBLICAR reutiliza la geometría cuadrada del Primary Action');
     TestHarness::assertContains('preparedForPublication(currentSpanish)', $studioNotesPage, 'una nota nueva completa deja de pedir otra adaptación inglesa');
     TestHarness::assertContains('preparedForPublication(currentEnglish)', $studioNotesPage, 'el cliente reconoce el paquete inglés completo antes de ofrecer PUBLICAR');
+    TestHarness::assertContains('StudioNoteMediaService::hydrateImageMetadata', $studioNotesPage, 'el servidor recupera el SEO bilingüe ya existente en los mockups antes de decidir la acción');
+    TestHarness::assertContains('registerMockupMetadata(card)', $studioNotesPage, 'el editor recupera metadatos de los mockups que ya estaban insertados al recargar');
     TestHarness::assertContains('data-change-message', $studioNotesPage, 'el estado editorial permanece junto a su acción');
     TestHarness::assertContains('studio-note-command-bar', $studioNotesPage, 'la acción no queda perdida debajo del editor largo');
     TestHarness::assertContains('name="title_es"', $studioNotesPage, 'Studio Notes escribe primero el título español');

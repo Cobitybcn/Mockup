@@ -514,6 +514,16 @@ if ($openDraft) {
         (int)$openDraft['id'],
         (string)$englishState['content']['body_html']
     );
+    $spanishState['content'] = StudioNoteMediaService::hydrateImageMetadata(
+        (array)$spanishState['content'],
+        $studioSources,
+        'es'
+    );
+    $englishState['content'] = StudioNoteMediaService::hydrateImageMetadata(
+        (array)$englishState['content'],
+        $studioSources,
+        'en'
+    );
     try {
         $studioWorkspace->syncHistoricalJobs($userId, (int)$openDraft['id']);
         $activeEditorialJob = (new BilingualEditorialJobService($pdo))->activeForEntity(
@@ -1283,12 +1293,22 @@ natcasesort($mockupSeriesFilters);
                             var file = imageFile(image.getAttribute('src'));
                             if (file && orderedFiles.indexOf(file) === -1) orderedFiles.push(file);
                         });
+                        mockupCards.forEach(function(card) {
+                            if (orderedFiles.indexOf(String(card.getAttribute('data-mockup-file') || '')) !== -1) {
+                                registerMockupMetadata(card);
+                            }
+                        });
+                        var changed = false;
                         Object.keys(imageMetadataInputs).forEach(function(locale) {
                             var input = imageMetadataInputs[locale];
                             if (!input) return;
-                            input.value = JSON.stringify(orderedFiles.map(function(file) {
+                            var value = JSON.stringify(orderedFiles.map(function(file) {
                                 return imageMetadataByLocale[locale][file] || null;
                             }).filter(Boolean));
+                            if (input.value !== value) {
+                                input.value = value;
+                                changed = true;
+                            }
                         });
                         mockupCards.forEach(function(card) {
                             card.classList.toggle(
@@ -1296,6 +1316,7 @@ natcasesort($mockupSeriesFilters);
                                 orderedFiles.indexOf(String(card.getAttribute('data-mockup-file') || '')) !== -1
                             );
                         });
+                        return changed;
                     }
 
                     function insertMockup(card, index) {
@@ -1565,7 +1586,10 @@ natcasesort($mockupSeriesFilters);
                         clientDirty = true;
                         window.requestAnimationFrame(updatePublishActionMode);
                     });
-                    syncImageMetadata();
+                    if (syncImageMetadata()) {
+                        clientDirty = true;
+                        updatePublishActionMode();
+                    }
                     
                     var queuedSubmitAllowed = false;
                     if (form) {

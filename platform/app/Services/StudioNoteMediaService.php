@@ -162,6 +162,69 @@ final class StudioNoteMediaService
     }
 
     /**
+     * Restores the bilingual image SEO already attached to catalog mockups.
+     * This is a local data join: it never invokes visual analysis or a model.
+     *
+     * @param array<string,mixed> $content
+     * @param array<int,array<string,mixed>> $availableSources
+     * @return array<string,mixed>
+     */
+    public static function hydrateImageMetadata(
+        array $content,
+        array $availableSources,
+        string $locale
+    ): array {
+        $metadataByFile = [];
+        foreach ((array)($content['image_metadata'] ?? []) as $row) {
+            if (!is_array($row)) continue;
+            $file = basename((string)($row['file'] ?? ''));
+            if ($file !== '') $metadataByFile[$file] = $row;
+        }
+
+        $guideKey = $locale === 'en' ? 'editorialGuideEn' : 'editorialGuide';
+        $trustedByFile = [];
+        foreach ($availableSources as $source) {
+            if ((string)($source['type'] ?? '') !== 'mockup') continue;
+            $file = basename((string)($source['file'] ?? ''));
+            $guide = (array)($source[$guideKey] ?? []);
+            $altText = trim((string)($guide['altText'] ?? ''));
+            $caption = trim((string)($guide['caption'] ?? ''));
+            if ($file !== '' && $altText !== '' && $caption !== '') {
+                $trustedByFile[$file] = [
+                    'file' => $file,
+                    'alt_text' => $altText,
+                    'caption' => $caption,
+                ];
+            }
+        }
+
+        preg_match_all(
+            '/<img\b[^>]*\bsrc=["\']([^"\']+)["\'][^>]*>/iu',
+            (string)($content['body_html'] ?? ''),
+            $matches
+        );
+        $ordered = [];
+        foreach ((array)($matches[1] ?? []) as $source) {
+            $file = self::fileFromUrl(html_entity_decode(
+                (string)$source,
+                ENT_QUOTES | ENT_HTML5,
+                'UTF-8'
+            ));
+            if ($file === '' || isset($ordered[$file])) continue;
+            $existing = (array)($metadataByFile[$file] ?? []);
+            $complete = trim((string)($existing['alt_text'] ?? '')) !== ''
+                && trim((string)($existing['caption'] ?? '')) !== '';
+            if ($complete) {
+                $ordered[$file] = $existing;
+            } elseif (isset($trustedByFile[$file])) {
+                $ordered[$file] = $trustedByFile[$file];
+            }
+        }
+        $content['image_metadata'] = array_values($ordered);
+        return $content;
+    }
+
+    /**
      * Converts editor-only image sources into persistent note media and rewrites
      * the HTML to a stable platform media URL.
      *
