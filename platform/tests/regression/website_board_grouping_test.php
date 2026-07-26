@@ -135,6 +135,16 @@ function run_website_board_grouping_regression_tests(): void
         $studioNotesPage,
         'PUBLICAR vuelve a leer y repara el contenido persistido antes de decidir'
     );
+    TestHarness::assertContains(
+        "\$websiteBoard->noteAction(\$userId, \$id, 'publish');",
+        $studioNotesPage,
+        'PUBLICAR cambia también la campaña que consume el website a estado published'
+    );
+    TestHarness::assertContains(
+        '$pdo->beginTransaction();',
+        $studioNotesPage,
+        'las versiones bilingües y la visibilidad del website se publican atómicamente'
+    );
     TestHarness::assertContains('data-change-message', $studioNotesPage, 'el estado editorial permanece junto a su acción');
     TestHarness::assertContains('studio-note-command-bar', $studioNotesPage, 'la acción no queda perdida debajo del editor largo');
     TestHarness::assertContains('name="title_es"', $studioNotesPage, 'Studio Notes escribe primero el título español');

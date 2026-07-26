@@ -328,16 +328,24 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     (string)($englishContent['body_html'] ?? ''),
                     (string)($savedEnglishState['published_content']['body_html'] ?? '')
                 );
-                $editorial->save($userId, 'studio_note', $id, 'en', $englishContent);
-                $editorial->setPublished($userId, 'studio_note', $id, 'es', true);
-                $editorial->setPublished($userId, 'studio_note', $id, 'en', true);
-                $websiteBoard->saveNote(
-                    $userId,
-                    $id,
-                    (string)($englishContent['title'] ?? ''),
-                    (string)($englishContent['body_html'] ?? ''),
-                    (string)($savedSpanishState['content']['body_html'] ?? '')
-                );
+                $pdo->beginTransaction();
+                try {
+                    $editorial->save($userId, 'studio_note', $id, 'en', $englishContent);
+                    $editorial->setPublished($userId, 'studio_note', $id, 'es', true);
+                    $editorial->setPublished($userId, 'studio_note', $id, 'en', true);
+                    $websiteBoard->saveNote(
+                        $userId,
+                        $id,
+                        (string)($englishContent['title'] ?? ''),
+                        (string)($englishContent['body_html'] ?? ''),
+                        (string)($savedSpanishState['content']['body_html'] ?? '')
+                    );
+                    $websiteBoard->noteAction($userId, $id, 'publish');
+                    $pdo->commit();
+                } catch (Throwable $publicationError) {
+                    if ($pdo->inTransaction()) $pdo->rollBack();
+                    throw $publicationError;
+                }
                 $_SESSION['wsn_notice'] = 'Cambios publicados sin ejecutar IA.';
             } elseif ($action !== 'update_english') {
                 $_SESSION['wsn_notice'] = 'Borrador bilingüe guardado.';
