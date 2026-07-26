@@ -1896,16 +1896,11 @@ function render_published_artwork_video(array $site, array $artwork): void
             break;
         }
     }
-    $duration = published_video_duration((float)$video['duration_seconds']);
-    $intro = published_excerpt([
-        $artwork['short_description'] ?? '',
-        $artwork['subtitle'] ?? '',
-        $artwork['description'] ?? '',
-    ], 280);
     $analysis = is_array($artwork['artwork_analysis'] ?? null) ? $artwork['artwork_analysis'] : [];
     $facts = is_array($analysis['confirmed_facts'] ?? null) ? $analysis['confirmed_facts'] : [];
     $medium = trim((string)($artwork['medium'] ?: ($facts['medium'] ?? '')));
     $year = trim((string)($artwork['artwork_year'] ?: ($facts['year'] ?? '')));
+    $conceptualNote = trim((string)($artwork['description'] ?? ''));
     $mockups = array_values(array_filter(
         (array)($artwork['items'] ?? []),
         static fn(array $mockup): bool => !empty($mockup['public_slug'])
@@ -1932,31 +1927,67 @@ function render_published_artwork_video(array $site, array $artwork): void
         </div>
 
         <div class="artwork-detail__content artwork-video-detail__content">
+            <p class="eyebrow"><?= e(site_t('Published work', 'Obra publicada')) ?><?= $artwork['series'] ? ' / ' . e((string)$artwork['series']) : '' ?></p>
             <h1><?= e((string)$artwork['title']) ?></h1>
-            <?php if ($intro !== ''): ?><p class="lead"><?= e($intro) ?></p><?php endif; ?>
-
-            <h2 class="artwork-video-detail__section-title"><?= e(site_t('Artwork video', 'Video de la obra')) ?></h2>
-            <dl class="specs artwork-video-detail__specs">
-                <div><dt><?= e(site_t('Duration', 'Duración')) ?></dt><dd><?= e($duration) ?></dd></div>
-                <?php if (!empty($video['aspect_ratio'])): ?><div><dt><?= e(site_t('Format', 'Formato')) ?></dt><dd><?= e((string)$video['aspect_ratio']) ?></dd></div><?php endif; ?>
-            </dl>
-
-            <h2 class="artwork-video-detail__section-title"><?= e(site_t('Artwork details', 'Detalles de la obra')) ?></h2>
-            <dl class="specs artwork-video-detail__specs">
+            <?php if (!empty($artwork['subtitle'])): ?><p class="lead"><?= e((string)$artwork['subtitle']) ?></p><?php endif; ?>
+            <dl class="specs">
                 <?php if ($year !== ''): ?><div><dt><?= e(site_t('Year', 'Año')) ?></dt><dd><?= e($year) ?></dd></div><?php endif; ?>
                 <?php if ($medium !== ''): ?><div><dt><?= e(site_t('Medium', 'Técnica')) ?></dt><dd><?= e($medium) ?></dd></div><?php endif; ?>
                 <?php if (published_dimensions($artwork) !== ''): ?><div><dt><?= e(site_t('Size', 'Medidas')) ?></dt><dd><?= e(published_dimensions($artwork)) ?></dd></div><?php endif; ?>
                 <?php if (!empty($artwork['series'])): ?>
-                    <div><dt><?= e(site_t('Series', 'Serie')) ?></dt><dd>
-                        <?php if ($series): ?><a href="<?= e(url_for('series/' . $series['slug'])) ?>"><?= e((string)$artwork['series']) ?></a><?php else: ?><?= e((string)$artwork['series']) ?><?php endif; ?>
-                    </dd></div>
+                    <div>
+                        <dt><?= e(site_t('Series', 'Serie')) ?></dt>
+                        <dd>
+                            <?php if ($series): ?>
+                                <?php
+                                $seriesPreviewId = 'video-series-preview-' . preg_replace('/[^a-z0-9_-]+/i', '-', (string)$series['slug']);
+                                $seriesYear = series_year_label($series);
+                                $seriesDescription = trim((string)($series['description'] ?? ''));
+                                ?>
+                                <span class="artwork-series-reference">
+                                    <a class="artwork-series-link" href="<?= e(url_for('series/' . $series['slug'])) ?>" aria-describedby="<?= e($seriesPreviewId) ?>"><?= e((string)$artwork['series']) ?></a>
+                                    <span class="artwork-series-preview" id="<?= e($seriesPreviewId) ?>" role="tooltip">
+                                        <?php if (!empty($series['header_file'])): ?>
+                                            <span class="artwork-series-preview__image">
+                                                <img src="<?= e(app_series_media_url($series, (string)$series['header_file'], 480)) ?>"
+                                                    srcset="<?= e(app_series_media_srcset($series, (string)$series['header_file'])) ?>"
+                                                    sizes="92px" alt="" style="<?= e(series_header_style($series)) ?>" loading="lazy" decoding="async">
+                                            </span>
+                                        <?php endif; ?>
+                                        <span class="artwork-series-preview__content">
+                                            <span class="artwork-series-preview__eyebrow"><?= e(site_t('Painting series', 'Serie pictórica')) ?></span>
+                                            <strong><?= e((string)$series['title']) ?></strong>
+                                            <span class="artwork-series-preview__meta">
+                                                <?= $seriesYear !== '' ? e($seriesYear) . ' · ' : '' ?><?= (int)($series['artwork_count'] ?? 0) ?> <?= (int)($series['artwork_count'] ?? 0) === 1 ? e(site_t('work', 'obra')) : e(site_t('works', 'obras')) ?>
+                                            </span>
+                                            <?php if ($seriesDescription !== ''): ?><span class="artwork-series-preview__description"><?= e($seriesDescription) ?></span><?php endif; ?>
+                                            <span class="artwork-series-preview__action"><?= e(site_t('View series', 'Ver serie')) ?></span>
+                                        </span>
+                                    </span>
+                                </span>
+                            <?php else: ?>
+                                <?= e((string)$artwork['series']) ?>
+                            <?php endif; ?>
+                        </dd>
+                    </div>
                 <?php endif; ?>
+                <?php if (!empty($facts['orientation'])): ?><div><dt><?= e(site_t('Orientation', 'Orientación')) ?></dt><dd><?= e(ucfirst((string)$facts['orientation'])) ?></dd></div><?php endif; ?>
+                <?php if (!empty($facts['certificate_of_authenticity'])): ?><div><dt><?= e(site_t('Certificate', 'Certificado')) ?></dt><dd><?= e((string)$facts['certificate_of_authenticity']) ?></dd></div><?php endif; ?>
                 <div><dt><?= e(site_t('Context studies', 'Estudios de contexto')) ?></dt><dd><?= count((array)($artwork['items'] ?? [])) ?></dd></div>
             </dl>
+            <?php if ($conceptualNote !== ''): ?>
+                <div class="prose">
+                    <h2><?= e(site_t('Conceptual Note', 'Nota conceptual')) ?></h2>
+                    <p><?= nl2br(e($conceptualNote)) ?></p>
+                </div>
+            <?php endif; ?>
+        </div>
+    </section>
 
-            <div class="artwork-video-related">
-                <section>
-                    <h2><?= e(site_t('Related Studio Notes', 'Studio Notes relacionadas')) ?></h2>
+    <section class="artwork-video-related">
+        <section class="artwork-video-related__row">
+            <h2><?= e(site_t('Related Studio Notes', 'Studio Notes relacionadas')) ?></h2>
+            <div class="artwork-video-related__entries artwork-video-related__entries--notes">
                     <?php if ($notes): ?>
                         <?php foreach ($notes as $slug => $note): ?>
                             <?php $snippet = published_excerpt([$note['seo_description'] ?? '', $note['excerpt'] ?? '', $note['objective'] ?? '']); ?>
@@ -1974,25 +2005,29 @@ function render_published_artwork_video(array $site, array $artwork): void
                             )) ?></p>
                         </article>
                     <?php endif; ?>
-                </section>
+            </div>
+        </section>
 
-                <?php if ($series || !empty($artwork['series'])): ?>
-                    <section>
-                        <h2><?= e(site_t('Series', 'Serie')) ?></h2>
-                        <?php $seriesText = $series ? published_excerpt([$series['seo_description'] ?? '', $series['description'] ?? '', $series['long_description'] ?? '']) : ''; ?>
-                        <article>
-                            <h3>
-                                <?php if ($series): ?><a href="<?= e(url_for('series/' . $series['slug'])) ?>"><?= e((string)$series['title']) ?> <span aria-hidden="true">→</span></a>
-                                <?php else: ?><?= e((string)$artwork['series']) ?><?php endif; ?>
-                            </h3>
-                            <?php if ($seriesText !== ''): ?><p><?= e($seriesText) ?></p><?php endif; ?>
-                        </article>
-                    </section>
-                <?php endif; ?>
+        <?php if ($series || !empty($artwork['series'])): ?>
+            <section class="artwork-video-related__row">
+                <h2><?= e(site_t('Series', 'Serie')) ?></h2>
+                <div class="artwork-video-related__entries">
+                    <?php $seriesText = $series ? published_excerpt([$series['seo_description'] ?? '', $series['description'] ?? '', $series['long_description'] ?? '']) : ''; ?>
+                    <article>
+                        <h3>
+                            <?php if ($series): ?><a href="<?= e(url_for('series/' . $series['slug'])) ?>"><?= e((string)$series['title']) ?> <span aria-hidden="true">→</span></a>
+                            <?php else: ?><?= e((string)$artwork['series']) ?><?php endif; ?>
+                        </h3>
+                        <?php if ($seriesText !== ''): ?><p><?= e($seriesText) ?></p><?php endif; ?>
+                    </article>
+                </div>
+            </section>
+        <?php endif; ?>
 
-                <?php if ($mockups): ?>
-                    <section>
-                        <h2><?= e(site_t('Associated Mockups', 'Mockups asociados')) ?></h2>
+        <?php if ($mockups): ?>
+            <section class="artwork-video-related__row">
+                <h2><?= e(site_t('Associated Mockups', 'Mockups asociados')) ?></h2>
+                <div class="artwork-video-related__entries artwork-video-related__entries--mockups">
                         <?php foreach ($mockups as $mockup): ?>
                             <?php
                             $mockupTitle = published_excerpt([
@@ -2016,10 +2051,9 @@ function render_published_artwork_video(array $site, array $artwork): void
                                 <?php if ($mockupText !== ''): ?><p><?= e($mockupText) ?></p><?php endif; ?>
                             </article>
                         <?php endforeach; ?>
-                    </section>
-                <?php endif; ?>
-            </div>
-        </div>
+                </div>
+            </section>
+        <?php endif; ?>
     </section>
     <?php
     echo json_ld([

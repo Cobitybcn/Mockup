@@ -89,7 +89,7 @@ function run_public_pages_regression_tests(): void {
     TestHarness::assertContains('artwork_video_publications',$publicVideoMedia,'public video delivery requires an explicit artwork publication');
     $videoLandingStart=strpos($artistSite,'function render_published_artwork_video');
     $videoLanding=$videoLandingStart===false?'':substr($artistSite,$videoLandingStart,strpos($artistSite,'function render_acquisition',$videoLandingStart)-$videoLandingStart);
-    $videoRelationshipsStart=strpos($videoLanding,'<div class="artwork-video-related">');
+    $videoRelationshipsStart=strpos($videoLanding,'<section class="artwork-video-related">');
     $videoRelationships=$videoRelationshipsStart===false?'':substr($videoLanding,$videoRelationshipsStart);
     TestHarness::assertTrue(
         strpos($videoRelationships,"site_t('Related Studio Notes'") < strpos($videoRelationships,"site_t('Series',")
@@ -98,10 +98,15 @@ function run_public_pages_regression_tests(): void {
         'the artwork video landing preserves its editorial relationship order'
     );
     TestHarness::assertContains('class="artwork-detail artwork-video-detail"',$videoLanding,'the video page reuses the artwork detail architecture');
+    TestHarness::assertContains("site_t('Published work', 'Obra publicada')",$videoLanding,'the video page repeats the artwork detail heading');
+    TestHarness::assertContains("site_t('Conceptual Note', 'Nota conceptual')",$videoLanding,'the video page repeats the artwork conceptual note');
     TestHarness::assertTrue(
-        strpos($videoLanding,'<h1>') < strpos($videoLanding,"site_t('Artwork video'"),
-        'the artwork video title is always the first element in the information column'
+        !str_contains($videoLanding,"site_t('Duration', 'Duración')")
+            && !str_contains($videoLanding,"site_t('Format', 'Formato')")
+            && !str_contains($videoLanding,'artwork-video-detail__section-title'),
+        'the public video page does not repeat technical playback metadata'
     );
+    TestHarness::assertContains('artwork-video-related__entries--notes',$videoLanding,'related content continues below the two-column artwork header');
     TestHarness::assertContains('published_excerpt([$note[\'seo_description\']',$videoLanding,'related Studio Notes reuse published destination metadata');
     TestHarness::assertContains('$mockup[\'is_publication_favorite\']',$videoLanding,'the video page prioritizes the artwork publication favorites');
     TestHarness::assertContains('class="artwork-video-spec"',$artistSite,'the artwork detail appends the compact film icon, video duration and link');
