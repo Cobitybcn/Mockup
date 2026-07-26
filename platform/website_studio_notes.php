@@ -233,9 +233,20 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     && trim((string)($savedEnglishState['content']['body_html'] ?? '')) !== '';
                 if ($layoutOnlyUpdate) {
                     $englishContent = (array)$savedEnglishState['content'];
+                    $sourceBody = (string)($savedSpanishContent['body_html'] ?? '');
+                    $targetBody = (string)($englishContent['body_html'] ?? '');
+                    $publishedEnglishContent = (array)($savedEnglishState['published_content'] ?? []);
+                    $publishedTargetBody = (string)($publishedEnglishContent['body_html'] ?? '');
+                    preg_match_all('/<img\b[^>]*>/iu', $sourceBody, $sourceImages);
+                    preg_match_all('/<img\b[^>]*>/iu', $targetBody, $targetImages);
+                    preg_match_all('/<img\b[^>]*>/iu', $publishedTargetBody, $publishedTargetImages);
+                    if (count((array)($targetImages[0] ?? [])) !== count((array)($sourceImages[0] ?? []))
+                        && count((array)($publishedTargetImages[0] ?? [])) === count((array)($sourceImages[0] ?? []))) {
+                        $targetBody = $publishedTargetBody;
+                    }
                     $englishContent['body_html'] = StudioNoteMediaService::mirrorImages(
-                        (string)($savedSpanishContent['body_html'] ?? ''),
-                        (string)($englishContent['body_html'] ?? '')
+                        $sourceBody,
+                        $targetBody
                     );
                     $editorial->save($userId, 'studio_note', $id, 'en', $englishContent);
                     $editorial->setPublished($userId, 'studio_note', $id, 'es', true);
@@ -1071,7 +1082,7 @@ natcasesort($mockupSeriesFilters);
                             tags: currentSpanishField('tags_es'),
                             search_terms: currentSpanishField('search_terms_es')
                         };
-                        var mode = semanticSnapshot(current, quillEs.getText()) === publishedSemanticSnapshot
+                        var mode = semanticSnapshot(current, textFromHtml(quillEs.root.innerHTML)) === publishedSemanticSnapshot
                             ? 'layout'
                             : 'reanalyze';
                         form.setAttribute('data-publication-mode', mode);

@@ -120,6 +120,9 @@ function run_website_board_grouping_regression_tests(): void
     TestHarness::assertContains('data-mockup-guide-en', $studioNotesPage, 'cada mockup transporta su SEO bilingüe existente al artículo');
     TestHarness::assertContains('Guardar cambios', $studioNotesPage, 'la interfaz anuncia los cambios visuales que no consumen Vertex');
     TestHarness::assertContains('Reanalizar y publicar', $studioNotesPage, 'la interfaz anuncia antes de ejecutar una revisión semántica');
+    TestHarness::assertContains('textFromHtml(quillEs.root.innerHTML)', $studioNotesPage, 'el comparador descarta los marcadores internos de imagen de Quill');
+    TestHarness::assertTrue(!str_contains($studioNotesPage, 'semanticSnapshot(current, quillEs.getText())'), 'los embeds de imagen no se confunden con cambios de texto');
+    TestHarness::assertContains('$publishedTargetBody', $studioNotesPage, 'una nota histórica recupera las posiciones inglesas de su snapshot publicado');
     TestHarness::assertContains('name="title_es"', $studioNotesPage, 'Studio Notes escribe primero el título español');
     TestHarness::assertContains('id="editor-container-es"', $studioNotesPage, 'Studio Notes conserva una superficie amplia para el master español');
     TestHarness::assertContains('id="editor-container-en"', $studioNotesPage, 'la adaptación inglesa tiene una superficie editorial independiente');
