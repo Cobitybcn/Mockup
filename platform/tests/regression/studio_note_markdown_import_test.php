@@ -154,12 +154,37 @@ MD;
         trim((string)$defaultedPackage['manifest']['created_at']) !== '',
         'created_at ausente se completa con la fecha de importación'
     );
+    $withoutInternalIds = str_replace(
+        [
+            "series:\n  - id: 7\n    title: \"STRATA\"",
+            "artworks:\n  - id: 101\n    title: \"STRATA IV\"",
+            "mockups:\n  - id: 2946",
+        ],
+        [
+            "series:\n  - title: \"STRATA\"",
+            "artworks:\n  - \"STRATA IV\"",
+            "mockups:\n  - file: \"strata-architectural.jpg\"",
+        ],
+        $withoutCreatedAt
+    );
+    $externalPackage = $service->parse($withoutInternalIds);
+    TestHarness::assertSame(0, (int)$externalPackage['manifest']['series'][0]['id'], 'una serie externa puede declararse por nombre');
+    TestHarness::assertSame('STRATA IV', (string)$externalPackage['manifest']['artworks'][0]['title'], 'una obra externa puede declararse como texto');
+    TestHarness::assertSame(
+        'strata-architectural.jpg',
+        (string)$externalPackage['manifest']['mockups'][0]['file'],
+        'un mockup externo puede declararse por archivo'
+    );
+    $externalImport = $service->importString(70, $withoutInternalIds, 'sin-ids.md');
+    TestHarness::assertTrue((int)$externalImport['id'] > 0, 'las relaciones sin IDs internos no bloquean la importación');
 
     $imported = $service->importString(70, $markdown, 'la-piel-del-territorio.md');
     TestHarness::assertTrue((int)$imported['id'] > 0, 'la importación crea un borrador nuevo');
     TestHarness::assertTrue($imported['no_ai'] === true, 'el resultado declara explícitamente que no ejecutó IA');
 
-    $campaign = $pdo->query('SELECT * FROM social_campaigns')->fetch(PDO::FETCH_ASSOC);
+    $campaignStmt = $pdo->prepare('SELECT * FROM social_campaigns WHERE id=?');
+    $campaignStmt->execute([(int)$imported['id']]);
+    $campaign = $campaignStmt->fetch(PDO::FETCH_ASSOC);
     TestHarness::assertSame('draft', (string)$campaign['status'], 'el archivo nunca publica automáticamente');
     TestHarness::assertSame(
         '2026-07-26T14:30:00-03:00',
@@ -175,7 +200,14 @@ MD;
     );
 
     $localized = [];
-    foreach ($pdo->query("SELECT locale,content_json,status FROM bilingual_editorial_content ORDER BY locale") as $row) {
+    $localizedStmt = $pdo->prepare(
+        "SELECT locale,content_json,status
+         FROM bilingual_editorial_content
+         WHERE entity_type='studio_note' AND entity_id=?
+         ORDER BY locale"
+    );
+    $localizedStmt->execute([(int)$imported['id']]);
+    foreach ($localizedStmt as $row) {
         $localized[(string)$row['locale']] = [
             'content' => json_decode((string)$row['content_json'], true),
             'status' => (string)$row['status'],

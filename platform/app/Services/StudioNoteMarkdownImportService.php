@@ -516,21 +516,42 @@ final class StudioNoteMarkdownImportService
         ];
     }
 
-    /** @return list<array{id:int,title?:string}> */
+    /** @return list<array{id:int,title?:string,file?:string}> */
     private function normalizedReferences(mixed $references, string $field, bool $withTitle = true): array
     {
         if ($references === null) return [];
         if (!is_array($references)) throw new RuntimeException("{$field} debe ser una lista.");
         $normalized = [];
         foreach ($references as $reference) {
-            if (!is_array($reference)) throw new RuntimeException("Cada relación de {$field} debe ser un objeto.");
+            if (is_scalar($reference)) {
+                $label = trim((string)$reference);
+                if ($label === '') continue;
+                $reference = $withTitle ? ['title' => $label] : ['file' => $label];
+            }
+            if (!is_array($reference)) {
+                throw new RuntimeException("Cada relación de {$field} debe indicar un nombre, archivo o ID.");
+            }
             $id = max(0, (int)($reference['id'] ?? 0));
-            if ($id <= 0) throw new RuntimeException("Cada relación de {$field} necesita un ID válido.");
             $row = ['id' => $id];
             if ($withTitle) {
-                $row['title'] = $this->requiredText($reference['title'] ?? '', "{$field}.title");
+                $title = trim((string)($reference['title'] ?? $reference['name'] ?? ''));
+                if ($id <= 0 && $title === '') {
+                    throw new RuntimeException("Cada relación de {$field} necesita un nombre o un ID.");
+                }
+                if ($title !== '') $row['title'] = $title;
+            } else {
+                $file = basename(trim((string)($reference['file'] ?? $reference['filename'] ?? '')));
+                $title = trim((string)($reference['title'] ?? $reference['name'] ?? ''));
+                if ($id <= 0 && $file === '' && $title === '') {
+                    throw new RuntimeException('Cada relación de mockups necesita un archivo, nombre o ID.');
+                }
+                if ($file !== '') $row['file'] = $file;
+                if ($title !== '') $row['title'] = $title;
             }
-            $normalized[$id] = $row;
+            $key = $id > 0
+                ? 'id:' . $id
+                : strtolower((string)($row['title'] ?? $row['file'] ?? count($normalized)));
+            $normalized[$key] = $row;
         }
         return array_values($normalized);
     }
@@ -640,6 +661,7 @@ final class StudioNoteMarkdownImportService
         foreach ($tables as $field => $table) {
             foreach ((array)($manifest[$field] ?? []) as $reference) {
                 $id = (int)($reference['id'] ?? 0);
+                if ($id <= 0) continue;
                 $stmt = $this->pdo->prepare("SELECT 1 FROM {$table} WHERE id=? AND user_id=? LIMIT 1");
                 $stmt->execute([$id, $userId]);
                 if (!$stmt->fetchColumn()) {
