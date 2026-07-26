@@ -320,7 +320,8 @@ final class BilingualEditorialService
     {
         $normalized = [];
         foreach ($content as $key => $value) {
-            $key = preg_replace('/[^a-z0-9_]/i', '', (string)$key) ?: '';
+            $normalizedKey = preg_replace('/[^a-z0-9_]/i', '', (string)$key);
+            $key = is_string($normalizedKey) ? $normalizedKey : '';
             if ($key === '') continue;
             if (is_array($value)) $normalized[$key] = $this->normalizeContent($value);
             elseif (is_scalar($value) || $value === null) $normalized[$key] = $this->plainEditorialText((string)$value);

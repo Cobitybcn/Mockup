@@ -42,6 +42,18 @@ function run_studio_note_bilingual_tests(): void
         'seo_description' => 'Una nota sobre STRATA, territorio y memoria.',
         'alt_text' => 'Pintura abstracta con estratos rojos y azules.',
         'search_terms' => 'pintura abstracta y territorio',
+        'image_metadata' => [
+            [
+                'file' => 'strata-primary.jpg',
+                'alt_text' => 'Obra roja de STRATA en el estudio.',
+                'caption' => 'Vista principal de STRATA.',
+            ],
+            [
+                'file' => 'strata-detail.jpg',
+                'alt_text' => 'Detalle de incisiones sobre la superficie.',
+                'caption' => 'Detalle material de STRATA.',
+            ],
+        ],
     ];
     $english = [
         'title' => 'Where Thought Emerges from the Earth',
@@ -52,10 +64,31 @@ function run_studio_note_bilingual_tests(): void
         'seo_description' => 'A Studio Note on STRATA, territory and memory.',
         'alt_text' => 'Abstract painting with red and blue strata.',
         'search_terms' => 'abstract painting and territory',
+        'image_metadata' => [
+            [
+                'file' => 'strata-primary.jpg',
+                'alt_text' => 'Red STRATA work in the studio.',
+                'caption' => 'Primary view of STRATA.',
+            ],
+            [
+                'file' => 'strata-detail.jpg',
+                'alt_text' => 'Detail of incisions across the surface.',
+                'caption' => 'Material detail of STRATA.',
+            ],
+        ],
     ];
     $service->save(7, 'studio_note', 12, 'es', $spanish);
     $englishState = $service->save(7, 'studio_note', 12, 'en', $english);
     TestHarness::assertSame('current', (string)$englishState['status'], 'la adaptación inglesa queda vinculada al hash español');
+    $storedSpanishMedia = (array)($service->get(7, 'studio_note', 12, 'es')['content']['image_metadata'] ?? []);
+    $storedEnglishMedia = (array)($service->get(7, 'studio_note', 12, 'en')['content']['image_metadata'] ?? []);
+    TestHarness::assertSame(2, count($storedSpanishMedia), 'guardar conserva todas las filas SEO de imágenes españolas');
+    TestHarness::assertSame(2, count($storedEnglishMedia), 'guardar conserva todas las filas SEO de imágenes inglesas');
+    TestHarness::assertSame(
+        'strata-primary.jpg',
+        (string)($storedSpanishMedia[0]['file'] ?? ''),
+        'el normalizador bilingüe no elimina el primer elemento de una lista'
+    );
 
     $service->setPublished(7, 'studio_note', 12, 'es', true);
     $service->setPublished(7, 'studio_note', 12, 'en', true);
