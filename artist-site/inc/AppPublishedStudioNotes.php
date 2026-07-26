@@ -18,7 +18,7 @@ final class AppPublishedStudioNotes
             FROM social_campaigns sc
             JOIN users u ON u.id = sc.user_id
             WHERE LOWER(u.email) = ? AND sc.status = 'published'
-            ORDER BY sc.updated_at DESC, sc.id DESC
+            ORDER BY sc.created_at ASC, sc.id ASC
         ");
         $statement->execute([$this->artistEmail]);
         $rows = $statement->fetchAll(PDO::FETCH_ASSOC);

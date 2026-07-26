@@ -27,9 +27,10 @@ $payload = json_encode([
 ], JSON_UNESCAPED_SLASHES);
 $insertNote = $pdo->prepare("INSERT INTO social_campaigns
     (id,user_id,campaign_type,title,objective,status,payload_json,created_at,updated_at)
-    VALUES (?,?, 'website_blog',?,?, 'published',?,'2026-07-01','2026-07-25')");
-$insertNote->execute([12, 7, 'Legacy English title', '<p>Legacy English body.</p>', $payload]);
-$insertNote->execute([13, 7, 'English only', '<p>English legacy content.</p>', $payload]);
+    VALUES (?,?, 'website_blog',?,?, 'published',?,?,?)");
+$insertNote->execute([12, 7, 'Legacy English title', '<p>Legacy English body.</p>', $payload, '2026-07-01', '2026-07-25']);
+$insertNote->execute([13, 7, 'English only', '<p>English legacy content.</p>', $payload, '2026-07-02', '2026-07-02']);
+$insertNote->execute([14, 7, 'English earliest', '<p>English earliest content.</p>', $payload, '2026-06-30', '2026-07-10']);
 $insertLocalized = $pdo->prepare("INSERT INTO bilingual_editorial_content
     (user_id,entity_type,entity_id,locale,is_published,published_content_json)
     VALUES (7,'studio_note',12,?,1,?)");
@@ -65,9 +66,14 @@ if (!isset($spanish[$spanishSlug])
     || (string)$spanish[$spanishSlug]['image_metadata'][$imageFile]['caption'] !== 'Estudio del territorio pictórico y sus estratos.'
     || (array)$english[$englishSlug]['body_media_files'] !== []
     || isset($spanish['english-only-13'])
-    || !isset($english['english-only-13'])) {
+    || !isset($english['english-only-13'])
+    || array_keys($english) !== [
+        'english-earliest-14',
+        $englishSlug,
+        'english-only-13',
+    ]) {
     fwrite(STDERR, "FAIL: Studio Notes does not preserve localized routes and English-only migration fallback.\n");
     exit(1);
 }
 
-echo "PASS: Studio Notes uses published ES/EN snapshots, paired slugs, and safe legacy fallback.\n";
+echo "PASS: Studio Notes uses creation order, published ES/EN snapshots, paired slugs, and safe legacy fallback.\n";
