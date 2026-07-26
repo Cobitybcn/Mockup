@@ -5,6 +5,7 @@ FROM php:8.2.32-apache-bookworm
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libzip-dev \
     libcurl4-openssl-dev \
+    libonig-dev \
     zip \
     unzip \
     ffmpeg \
@@ -15,7 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libwebp-dev \
     libfreetype6-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
-    && docker-php-ext-install curl zip pdo_mysql bcmath gd \
+    && docker-php-ext-install curl zip pdo_mysql bcmath mbstring gd \
     && rm -rf /var/lib/apt/lists/*
 
 # Install python dependencies for Vertex AI bridge

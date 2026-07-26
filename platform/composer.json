@@ -7,7 +7,9 @@
         "google/cloud-storage": "^1.42",
         "google/cloud-tasks": "^1.11",
         "phpmailer/phpmailer": "^6.10",
-        "stripe/stripe-php": "^19.0"
+        "stripe/stripe-php": "^19.0",
+        "symfony/yaml": ">=6.4.42 <7.0",
+        "league/commonmark": ">=2.8.3 <3.0"
     },
     "autoload": {
         "psr-4": {

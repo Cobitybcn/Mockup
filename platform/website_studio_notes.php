@@ -62,6 +62,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             header('Location: website_studio_notes.php?draft=' . $newId);
             exit;
         }
+
+        if ($action === 'import_markdown') {
+            $imported = (new StudioNoteMarkdownImportService($pdo))->importUpload(
+                $userId,
+                (array)($_FILES['studio_note_markdown'] ?? [])
+            );
+            $_SESSION['wsn_notice'] = 'ZIP bilingüe importado como borrador, sin ejecutar IA.';
+            header('Location: website_studio_notes.php?draft=' . (int)$imported['id']);
+            exit;
+        }
         
         if ($action === 'generate_bilingual') {
             $id = max(0, (int)($_POST['draft_id'] ?? 0));
@@ -624,7 +634,9 @@ natcasesort($mockupSeriesFilters);
         .studio-create-decision { width:164px !important; min-width:164px !important; height:164px !important; min-height:164px !important; align-self:start; margin:0 !important; padding:18px !important; }
         .studio-create-decision__content { display:flex !important; align-items:center; flex-direction:column; justify-content:center; gap:10px; }
         .studio-create-decision .studio-create-decision__plus { display:block !important; font-size:48px !important; font-weight:300 !important; line-height:.72 !important; letter-spacing:0 !important; }
+        .studio-create-decision .studio-create-decision__file-mark { display:block !important; font-size:24px !important; font-weight:500 !important; line-height:1 !important; letter-spacing:.04em !important; }
         .studio-create-decision .studio-create-decision__label { display:block !important; font-size:14px !important; line-height:1 !important; letter-spacing:.12em !important; }
+        .studio-markdown-file { position:absolute !important; width:1px !important; height:1px !important; overflow:hidden !important; clip:rect(0 0 0 0) !important; clip-path:inset(50%) !important; white-space:nowrap !important; }
         .studio-editor-workspace { width:100%; box-sizing:border-box; margin:0 auto; padding:28px 24px 32px; border:1px solid var(--line); border-radius:4px; background:var(--surface); }
         .studio-note-editor-top { display:flex; justify-content:flex-end; margin-bottom:8px; }
         .studio-note-editor-top a { color:#625b55; font-size:12px; font-weight:650; letter-spacing:.05em; text-decoration:none; text-transform:uppercase; }
@@ -1021,6 +1033,19 @@ natcasesort($mockupSeriesFilters);
                             </span>
                         </button>
                     </form>
+                    <form method="post" enctype="multipart/form-data" id="studio-note-import-form">
+                        <input type="hidden" name="csrf" value="<?= wsn_h($_SESSION['studio_notes_csrf']) ?>">
+                        <input type="hidden" name="action" value="import_markdown">
+                        <input class="studio-markdown-file" type="file" name="studio_note_markdown"
+                               id="studio-note-markdown" accept=".zip,application/zip,application/x-zip-compressed" required>
+                        <button class="social-square-button social-square-button--studio_process studio-create-decision"
+                                type="button" data-markdown-import aria-controls="studio-note-markdown">
+                            <span class="studio-create-decision__content">
+                                <span class="studio-create-decision__file-mark">ZIP</span>
+                                <span class="studio-create-decision__label">IMPORTAR</span>
+                            </span>
+                        </button>
+                    </form>
                     <?php if (!$websiteDrafts): ?>
                         <div class="empty-state">Todavía no hay notas. Creá el primer borrador desde el bloque + Note.</div>
                     <?php else: ?>
@@ -1089,6 +1114,23 @@ natcasesort($mockupSeriesFilters);
                     <?php endif; ?>
                 </div>
             </section>
+            <?php endif; ?>
+            <?php if (!$openDraft): ?>
+            <script>
+                (function() {
+                    var form = document.getElementById('studio-note-import-form');
+                    var picker = document.getElementById('studio-note-markdown');
+                    var trigger = form ? form.querySelector('[data-markdown-import]') : null;
+                    if (!form || !picker || !trigger) return;
+                    trigger.addEventListener('click', function() { picker.click(); });
+                    picker.addEventListener('change', function() {
+                        if (!picker.files || !picker.files.length) return;
+                        trigger.disabled = true;
+                        trigger.querySelector('.studio-create-decision__label').textContent = 'IMPORTANDO';
+                        form.requestSubmit();
+                    });
+                })();
+            </script>
             <?php endif; ?>
             <?php if ($openDraft): ?>
             <script>

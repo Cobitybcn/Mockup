@@ -411,6 +411,29 @@ final class StudioNoteMediaService
             throw new RuntimeException('La imagen insertada no coincide con su tipo declarado.');
         }
 
+        return self::persistImageBytes($userId, $noteId, $bytes, $mime);
+    }
+
+    /** @return array<string,mixed> */
+    public static function persistImageBytes(
+        int $userId,
+        int $noteId,
+        string $bytes,
+        string $declaredMime = ''
+    ): array {
+        if ($userId <= 0 || $noteId <= 0 || $bytes === '' || strlen($bytes) > self::MAX_IMAGE_BYTES) {
+            throw new RuntimeException('La imagen está dañada o supera el límite de 12 MB.');
+        }
+        $info = @getimagesizefromstring($bytes);
+        $mime = is_array($info) ? strtolower((string)($info['mime'] ?? '')) : '';
+        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
+            throw new RuntimeException('Studio Notes solo admite imágenes JPEG, PNG o WebP.');
+        }
+        $declaredMime = strtolower(trim($declaredMime));
+        if ($declaredMime !== '' && $declaredMime !== 'application/octet-stream' && $declaredMime !== $mime) {
+            throw new RuntimeException('La imagen no coincide con su tipo declarado.');
+        }
+
         $extension = $mime === 'image/jpeg' ? 'jpg' : substr($mime, 6);
         $hash = substr(hash('sha256', $bytes), 0, 20);
         $file = 'studio-note-' . $userId . '-' . $noteId . '-' . $hash . '.' . $extension;
