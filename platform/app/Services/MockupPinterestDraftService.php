@@ -5,7 +5,7 @@ final class MockupPinterestDraftService
 {
     public function __construct(private readonly PDO $pdo) {}
 
-    public function create(int $mockupId,array $user,string $purpose,string $destinationUrl,string $locale='en'): array
+    public function create(int $mockupId,array $user,string $purpose,string $destinationUrl,string $locale='en',bool $allowSandboxDemo=false): array
     {
         $userId=(int)$user['id'];$purpose=$this->purpose($purpose,$user);$locale=$locale==='es'?'es':'en';
         if(!filter_var($destinationUrl,FILTER_VALIDATE_URL)||strtolower((string)parse_url($destinationUrl,PHP_URL_SCHEME))!=='https')throw new InvalidArgumentException('Pinterest destination must be a public HTTPS URL.');
@@ -33,14 +33,14 @@ final class MockupPinterestDraftService
         $sheetStmt=$this->pdo->prepare("SELECT title,description,keywords,tags,alt_text,caption,generated_json FROM mockup_sheets WHERE user_id=? AND mockup_file=? ORDER BY id DESC LIMIT 1");$sheetStmt->execute([$userId,basename((string)$mockup['mockup_file'])]);$sheet=$sheetStmt->fetch(PDO::FETCH_ASSOC);
         if(!$hasReviewed&&is_array($sheet)){
             $storedGenerated=json_decode((string)($sheet['generated_json']??''),true);$v2=is_array($storedGenerated['mockup_analysis_v2']??null)?$storedGenerated['mockup_analysis_v2']:[];
-            if((string)($v2['analysis_language']??'')!=='es')throw new RuntimeException('Generá y revisá primero el análisis español del mockup.');
+            if((string)($v2['analysis_language']??'')!=='es'&&!$allowSandboxDemo)throw new RuntimeException('Generá y revisá primero el análisis español del mockup.');
             $v2Pinterest=(array)($v2['channels']['pinterest']??[]);$v2Neutral=(array)($v2['neutral']??[]);
             if(trim((string)($v2Pinterest['title']??''))!=='')$content['title']=(string)$v2Pinterest['title'];
             if(trim((string)($v2Pinterest['description']??''))!=='')$content['description']=(string)$v2Pinterest['description'];
             if(trim((string)($v2Neutral['alt_text']??''))!=='')$content['altText']=(string)$v2Neutral['alt_text'];
             if(array_filter((array)($v2Pinterest['keywords']??[]),'trim'))$content['keywords']=array_values(array_filter(array_map('trim',(array)$v2Pinterest['keywords'])));
             $boards=array_values(array_filter(array_map('trim',(array)($v2Pinterest['board_suggestions']??[]))));if($boards)$content['board']=$boards[0];
-        }elseif(!$hasReviewed){
+        }elseif(!$hasReviewed&&!$allowSandboxDemo){
             throw new RuntimeException('Generá y revisá primero el análisis español del mockup.');
         }
         $payload=['mockup_id'=>$mockupId,'purpose'=>$purpose,'locale'=>$locale,'board_suggestion'=>$content['board'],'title'=>$content['title'],'description'=>$content['description'],'alt_text'=>$content['altText'],'keywords'=>$content['keywords'],'hashtags'=>$content['hashtags'],'destination_url'=>$destinationUrl];$now=date('c');

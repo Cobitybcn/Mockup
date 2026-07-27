@@ -83,7 +83,9 @@ final class SocialBoardPublishService
         if ($existing) return $existing;
 
         $drafts = new MockupPinterestDraftService($this->pdo);
-        $draft = $drafts->create($mockupId, $user, $purpose, $destinationUrl, $locale);
+        $allowSandboxDemo = $purpose === 'platform'
+            && (new PinterestIntegrationService($this->pdo))->apiEnvironment($userId, $purpose) === 'sandbox';
+        $draft = $drafts->create($mockupId, $user, $purpose, $destinationUrl, $locale, $allowSandboxDemo);
         $draftId = (int)$draft['id'];
         $drafts->updateContent($draftId, $userId, $title, $description, (string)($item['alt_text'] ?? ''));
         $drafts->selectBoard($draftId, $userId, $boardId, $boards);
