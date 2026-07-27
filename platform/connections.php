@@ -45,6 +45,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'connect_pinterest') {
             header('Location: ' . $pinterestService->authorizationUrl($userId, 'artist'));
             exit;
+        } elseif ($action === 'save_pinterest_app') {
+            $savedApp = $pinterestService->saveArtistAppConfiguration(
+                $userId,
+                (string)($_POST['app_id'] ?? ''),
+                (string)($_POST['app_secret'] ?? ''),
+                'production'
+            );
+            $_SESSION['connections_notice'] = 'Pinterest app ' . (string)($savedApp['app_id'] ?? '') . ' was saved securely for this artist.';
         } elseif ($action === 'disconnect_pinterest') {
             $pinterestService->disconnect($userId, 'artist');
             $_SESSION['connections_notice'] = 'Pinterest fue desconectado.';
@@ -63,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $pinterestArtist = $pinterestService->connection($userId, 'artist');
 $pinterestReady = $pinterestService->isPublishingReady($userId, 'artist');
+$pinterestApp = $pinterestService->artistAppConfiguration($userId);
 $facebookArtist = $metaService->connection($userId, 'artist');
 $instagramArtist = $instagramService->connection($userId, 'artist');
 $facebookPages = [];
@@ -186,6 +195,11 @@ $artistConnections = [
         .connection-form__actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:4px}.connection-form__actions .button-link{min-height:48px;justify-content:center}
         .connection-choice{display:flex!important;grid-template-columns:auto 1fr!important;align-items:center;gap:10px!important;padding:13px;border:1px solid var(--line);border-radius:6px;background:var(--surface-soft)}
         .connection-choice input{width:auto;min-height:0}.connection-summary{padding:16px;border:1px solid var(--line);border-radius:6px;background:var(--surface-soft)}
+        .connection-advanced{border:1px solid var(--line);border-radius:6px;background:var(--surface-soft)}
+        .connection-advanced summary{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 16px;color:var(--ink);font-size:12px;font-weight:700;cursor:pointer;list-style:none}
+        .connection-advanced summary::-webkit-details-marker{display:none}.connection-advanced summary::after{content:"+";color:var(--accent);font-size:18px;font-weight:400}.connection-advanced[open] summary::after{content:"−"}
+        .connection-advanced__body{display:grid;gap:16px;padding:0 16px 16px;border-top:1px solid var(--line)}
+        .connection-advanced__body>p{padding-top:14px}.connection-callback{overflow-wrap:anywhere;color:var(--ink)!important;font-size:12px}
         @media(max-width:980px){.connections-grid{grid-template-columns:1fr}.connection-card{min-height:230px}.connections-platform-grid{grid-template-columns:1fr}}
         @media(max-width:680px){.connections-section-head{display:block}.connections-section-head p{margin-top:6px;text-align:left}.connection-card__top,.connections-platform-item{align-items:flex-start;flex-direction:column}.connection-form__row{grid-template-columns:1fr}.connection-dialog__head,.connection-dialog__body{padding-left:20px;padding-right:20px}}
     </style>
@@ -262,16 +276,38 @@ $artistConnections = [
                         <form class="connection-form" method="post">
                             <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>">
                             <input type="hidden" name="network" value="pinterest">
-                            <div class="connection-form__actions"><button class="button-link secondary" name="action" value="disconnect_pinterest">Desconectar Pinterest</button></div>
+                            <div class="connection-form__actions">
+                                <?php if (($pinterestApp['has_secret'] ?? false) === true): ?><button class="button-link primary" name="action" value="connect_pinterest">Reconnect with app <?= connections_h((string)$pinterestApp['app_id']) ?></button><?php endif; ?>
+                                <button class="button-link secondary" name="action" value="disconnect_pinterest">Desconectar Pinterest</button>
+                            </div>
                         </form>
                     <?php else: ?>
                         <p><?=($pinterestArtist['status']??'')==='connected'?'Pinterest needs a new authorization that allows publishing.':'Sign in to Pinterest and authorize Artwork Mockups.'?> You will not need to copy codes or tokens.</p>
                         <form class="connection-form" method="post">
                             <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>">
                             <input type="hidden" name="network" value="pinterest">
-                            <div class="connection-form__actions"><button class="button-link primary" name="action" value="connect_pinterest"><?=($pinterestArtist['status']??'')==='connected'?'Actualizar Pinterest':'Conectar Pinterest'?></button></div>
+                            <?php if (($pinterestApp['has_secret'] ?? false) === true): ?><div class="connection-form__actions"><button class="button-link primary" name="action" value="connect_pinterest"><?=($pinterestArtist['status']??'')==='connected'?'Actualizar Pinterest':'Conectar Pinterest'?></button></div><?php endif; ?>
                         </form>
                     <?php endif; ?>
+                    <details class="connection-advanced">
+                        <summary>Developer app<?= $pinterestApp ? ' · ' . connections_h((string)$pinterestApp['app_id']) : '' ?></summary>
+                        <div class="connection-advanced__body">
+                            <p>Use a dedicated Pinterest developer app for this artist. Its secret is encrypted and never displayed again.</p>
+                            <form class="connection-form" method="post" autocomplete="off">
+                                <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>">
+                                <input type="hidden" name="network" value="pinterest">
+                                <label>App ID
+                                    <input name="app_id" inputmode="numeric" pattern="[0-9]{5,30}" required value="<?= connections_h((string)($pinterestApp['app_id'] ?? '')) ?>">
+                                </label>
+                                <label>App Secret
+                                    <input type="password" name="app_secret" <?=($pinterestApp['has_secret']??false)?'':'required'?> placeholder="<?=($pinterestApp['has_secret']??false)?'Leave blank to keep the saved secret':'Paste the app secret'?>">
+                                    <small><?=($pinterestApp['has_secret']??false)?'A secret is already stored securely.':'The secret is sent only to Artwork Mockups over HTTPS.'?></small>
+                                </label>
+                                <p class="connection-callback"><strong>OAuth callback</strong><br><?= connections_h((string)($pinterestApp['redirect_uri'] ?? PublicPage::url('integrations/pinterest/callback'))) ?></p>
+                                <div class="connection-form__actions"><button class="button-link secondary" name="action" value="save_pinterest_app">Save developer app</button></div>
+                            </form>
+                        </div>
+                    </details>
                 </div>
             </dialog>
 

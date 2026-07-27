@@ -2,7 +2,7 @@
 
 OAuth, encrypted renewable tokens, board selection, explicit confirmation, and Pin creation are implemented. Apply migrations `000001` and `000002` in order. Existing administrator connections become `platform`; existing non-administrator connections become `artist`. Administrators may then connect a separate artist account.
 
-All users authorize through the single official Artwork Mockups app. The artist only clicks **Connect Pinterest**, signs in to their own Pinterest account and approves access. App ID, app secret and access tokens are never requested from the artist. Tokens are stored separately by user and purpose, so the administrator platform identity and every artist identity remain isolated.
+By default, users authorize through the official Artwork Mockups app. An artist who owns a separate Pinterest developer app can configure that App ID and secret inside their private Connections panel. The secret is encrypted at rest and never displayed again. OAuth tokens are stored separately by user and purpose, so the administrator platform identity and every artist identity remain isolated.
 
 Required environment variables are `PINTEREST_APP_ID`, `PINTEREST_APP_SECRET`, and `PINTEREST_REDIRECT_URI`. The app secret is backend-only and must not be committed, rendered, logged, or sent in an error. In Google Cloud production, load `PINTEREST_APP_SECRET` from Secret Manager rather than a deployed environment file.
 
@@ -10,7 +10,7 @@ OAuth state is random, session-bound, single-use, and expires after ten minutes.
 
 ## Artwork Mockups production identity
 
-The platform Pinterest identity is **Artworks Mockups (`@artworkmockups`)**. The deployed Pinterest app ID is `1589233`. Do not use app `1589266`, which belongs to the separate Maurizio Valch developer/account flow.
+The platform Pinterest identity is **Artworks Mockups (`@artworkmockups`)**. The deployed platform app ID is `1589233`. App `1589266` belongs exclusively to Maurizio Valch and must be stored as his account-specific developer app; it must never replace the platform environment configuration.
 
 The Social Media Board lets administrators choose between the platform and artist Pinterest identities. When the platform connection is available, it is the administrator default; the selected purpose is preserved in the draft, scheduled job, and worker publication. Non-administrators can only use their own `artist` connection.
 

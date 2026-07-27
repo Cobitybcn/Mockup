@@ -71,6 +71,29 @@ final class PinterestIntegrationService
         ];
     }
 
+    public function saveArtistAppConfiguration(int $userId,string $appId,string $appSecret,string $environment='production'): array
+    {
+        $appId=trim($appId);$appSecret=trim($appSecret);$environment=$this->environment($environment);
+        if(!preg_match('/^[0-9]{5,30}$/',$appId))throw new InvalidArgumentException('Introduce un App ID de Pinterest válido.');
+
+        $stmt=$this->pdo->prepare('SELECT app_secret_encrypted,created_at FROM pinterest_artist_apps WHERE user_id=? LIMIT 1');
+        $stmt->execute([$userId]);$existing=$stmt->fetch(PDO::FETCH_ASSOC);
+        if($appSecret===''){
+            if(!is_array($existing))throw new InvalidArgumentException('Introduce el App Secret de Pinterest.');
+            $appSecret=$this->decrypt((string)$existing['app_secret_encrypted']);
+        }
+        if(strlen($appSecret)<20||strlen($appSecret)>4096)throw new InvalidArgumentException('Introduce un App Secret de Pinterest válido.');
+
+        $now=date('c');$created=is_array($existing)?(string)$existing['created_at']:$now;
+        if((string)$this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME)==='mysql'){
+            $sql='INSERT INTO pinterest_artist_apps (user_id,app_id,app_secret_encrypted,api_environment,created_at,updated_at) VALUES (?,?,?,?,?,?) ON DUPLICATE KEY UPDATE app_id=VALUES(app_id),app_secret_encrypted=VALUES(app_secret_encrypted),api_environment=VALUES(api_environment),updated_at=VALUES(updated_at)';
+        }else{
+            $sql='INSERT INTO pinterest_artist_apps (user_id,app_id,app_secret_encrypted,api_environment,created_at,updated_at) VALUES (?,?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET app_id=excluded.app_id,app_secret_encrypted=excluded.app_secret_encrypted,api_environment=excluded.api_environment,updated_at=excluded.updated_at';
+        }
+        $this->pdo->prepare($sql)->execute([$userId,$appId,$this->encrypt($appSecret),$environment,$created,$now]);
+        return $this->artistAppConfiguration($userId)??[];
+    }
+
     public function connectArtistWithToken(int $userId,string $appId,string $accessToken,string $environment='production'): array
     {
         $appId=trim($appId);$accessToken=trim($accessToken);$environment=$this->environment($environment);
@@ -305,6 +328,23 @@ final class PinterestIntegrationService
     private function config(int $userId,string $purpose): array
     {
         $purpose=$this->purpose($purpose);
+        if($purpose==='artist'){
+            $stmt=$this->pdo->prepare('SELECT app_id,app_secret_encrypted,api_environment FROM pinterest_artist_apps WHERE user_id=? LIMIT 1');
+            $stmt->execute([$userId]);$artistApp=$stmt->fetch(PDO::FETCH_ASSOC);
+            if(is_array($artistApp)){
+                $appId=trim((string)$artistApp['app_id']);
+                $appSecret=$this->decrypt((string)$artistApp['app_secret_encrypted']);
+                if($appId!==''&&$appSecret!==''){
+                    return [
+                        'app_id'=>$appId,
+                        'app_secret'=>$appSecret,
+                        'redirect_uri'=>$this->redirectUri(),
+                        'api_environment'=>$this->environment((string)$artistApp['api_environment']),
+                        'source'=>'artist',
+                    ];
+                }
+            }
+        }
         return [
             'app_id'=>trim(app_env('PINTEREST_APP_ID')),
             'app_secret'=>trim(app_env('PINTEREST_APP_SECRET')),

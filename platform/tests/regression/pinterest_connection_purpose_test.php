@@ -47,20 +47,27 @@ $platformConfig=$configMethod->invoke($service,1,'platform');
 $checks[]=$artistConfig['app_id']==='1589233'&&$artistConfig['source']==='official';
 $checks[]=$platformConfig['app_id']==='1589233'&&$platformConfig['source']==='official';
 
+$savedArtistApp=$service->saveArtistAppConfiguration(2,'1589266',str_repeat('m',32),'production');
+$artistConfig=$configMethod->invoke($service,2,'artist');
+$platformConfig=$configMethod->invoke($service,1,'platform');
+$checks[]=$savedArtistApp['app_id']==='1589266'&&$savedArtistApp['has_secret']===true;
+$checks[]=$artistConfig['app_id']==='1589266'&&$artistConfig['source']==='artist';
+$checks[]=$platformConfig['app_id']==='1589233'&&$platformConfig['source']==='official';
+
 $readCredentials=new ReflectionMethod(PinterestIntegrationService::class,'boardReadCredentials');
 $checks[]=$readCredentials->invoke($service,1,'platform')===['sandbox-platform-token','https://api-sandbox.pinterest.com/v5'];
-$checks[]=$readCredentials->invoke($service,2,'artist')===['artist-oauth-token','https://api-sandbox.pinterest.com/v5'];
+$checks[]=$readCredentials->invoke($service,2,'artist')===['artist-oauth-token','https://api.pinterest.com/v5'];
 
 if(session_status()!==PHP_SESSION_ACTIVE)session_start();
 $url=$service->authorizationUrl(2,'artist');
-$checks[]=str_contains($url,'client_id=1589233');
+$checks[]=str_contains($url,'client_id=1589266');
 $checks[]=str_contains($url,'pins%3Awrite')&&str_contains($url,'boards%3Awrite');
 
 $pdo->prepare("UPDATE pinterest_connections SET scopes='manual_token' WHERE user_id=2 AND purpose='artist'")->execute();
 $checks[]=$service->isPublishingReady(2,'artist')===false;
 
 if(in_array(false,$checks,true)){
-    fwrite(STDERR,"FAIL: Pinterest official-app connection flow.\n");
+    fwrite(STDERR,"FAIL: Pinterest account-specific app connection flow.\n");
     exit(1);
 }
-echo "PASS: artists authorize their own Pinterest accounts through the official Artwork Mockups app without entering developer credentials.\n";
+echo "PASS: artists can use an account-specific Pinterest app while the platform app remains isolated.\n";
