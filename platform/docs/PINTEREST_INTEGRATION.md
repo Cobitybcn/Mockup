@@ -14,9 +14,9 @@ The platform Pinterest identity is **Artworks Mockups (`@artworkmockups`)**. The
 
 The Social Media Board lets administrators choose between the platform and artist Pinterest identities. When the platform connection is available, it is the administrator default; the selected purpose is preserved in the draft, scheduled job, and worker publication. Non-administrators can only use their own `artist` connection.
 
-App `1589233` was verified while signed into `@artworkmockups` on 2026-07-15. Its current level is **Trial access active**. The exact callback `https://artworkmockups.com/integrations/pinterest/callback` is registered, the backend secret belongs to the same app, and the `platform` identity has been reconnected through production OAuth. The real account boards load through the Social Media Board.
+App `1589233` was verified while signed into `@artworkmockups`. Its current level is **Trial access active**. The exact callback `https://artworkmockups.com/integrations/pinterest/callback` is registered, the backend secret belongs to the same app, and the `platform` identity was reconnected through Sandbox OAuth on 2026-07-27. During the review demo, the callback visibly pauses before the server exchanges the code at `https://api-sandbox.pinterest.com/v5/oauth/token`.
 
-Both Cloud Run services use `PINTEREST_API_ENVIRONMENT=production`, `PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED=true`, and `PINTEREST_LIVE_PUBLISH_ENABLED=true`. This enables the explicitly confirmed publishing path; it does not publish automatically. Under Trial access, Pinterest states that a Pin created by the app is visible only to the user who creates it. Public distribution requires the app's access upgrade.
+Both Cloud Run services currently use `PINTEREST_API_ENVIRONMENT=sandbox`, `PINTEREST_DRAFT_PUBLIC_MEDIA_ENABLED=true`, and `PINTEREST_LIVE_PUBLISH_ENABLED=true` while Standard access is under review. The OAuth token is stored encrypted and used for Sandbox API calls; the legacy `PINTEREST_SANDBOX_TOKEN` remains only as a fallback when no connected platform identity exists. This enables the explicitly confirmed publishing path and does not publish automatically. Sandbox Pin `1121888957218553543` was created through the API and verified while signed into `@artworkmockups`.
 
 For the first controlled Pin:
 
