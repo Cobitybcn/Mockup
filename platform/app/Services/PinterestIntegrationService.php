@@ -71,6 +71,26 @@ final class PinterestIntegrationService
         ];
     }
 
+    public function apiEnvironment(int $userId,string $purpose='artist'): string
+    {
+        return $this->environment((string)$this->config($userId,$purpose)['api_environment']);
+    }
+
+    public function createSandboxDemoBoard(int $userId,string $purpose='artist'): array
+    {
+        $purpose=$this->purpose($purpose);
+        $config=$this->config($userId,$purpose);
+        if(!$this->isSandbox($config))throw new RuntimeException('Switch this Pinterest app to Sandbox before creating the demo board.');
+        foreach($this->boards($userId,$purpose) as $board){
+            if(strcasecmp(trim((string)($board['name']??'')),'Artwork Mockups Sandbox Demo')===0)return $board;
+        }
+        return $this->api('POST','/boards',$this->accessToken($userId,$purpose),[
+            'name'=>'Artwork Mockups Sandbox Demo',
+            'description'=>'Sandbox board used to demonstrate Artwork Mockups OAuth and Pinterest API integration.',
+            'privacy'=>'PUBLIC',
+        ],$this->apiBase($config));
+    }
+
     public function saveArtistAppConfiguration(int $userId,string $appId,string $appSecret,string $environment='production'): array
     {
         $appId=trim($appId);$appSecret=trim($appSecret);$environment=$this->environment($environment);

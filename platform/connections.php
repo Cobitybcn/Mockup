@@ -53,6 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 (string)($_POST['api_environment'] ?? 'production')
             );
             $_SESSION['connections_notice'] = 'Pinterest app ' . (string)($savedApp['app_id'] ?? '') . ' was saved securely for this artist.';
+        } elseif ($action === 'create_pinterest_sandbox_board') {
+            $board = $pinterestService->createSandboxDemoBoard($userId, 'artist');
+            $_SESSION['connections_notice'] = 'Pinterest Sandbox board “' . (string)($board['name'] ?? 'Artwork Mockups Sandbox Demo') . '” is ready.';
         } elseif ($action === 'disconnect_pinterest') {
             $pinterestService->disconnect($userId, 'artist');
             $_SESSION['connections_notice'] = 'Pinterest fue desconectado.';
@@ -278,6 +281,7 @@ $artistConnections = [
                             <input type="hidden" name="network" value="pinterest">
                             <div class="connection-form__actions">
                                 <?php if (($pinterestApp['has_secret'] ?? false) === true): ?><button class="button-link primary" name="action" value="connect_pinterest">Reconnect with app <?= connections_h((string)$pinterestApp['app_id']) ?></button><?php endif; ?>
+                                <?php if (($pinterestApp['api_environment'] ?? 'production') === 'sandbox'): ?><button class="button-link secondary" name="action" value="create_pinterest_sandbox_board">Create Sandbox demo board</button><?php endif; ?>
                                 <button class="button-link secondary" name="action" value="disconnect_pinterest">Desconectar Pinterest</button>
                             </div>
                         </form>

@@ -16,8 +16,7 @@ $pinterestPurposes = [];
 $pinterestEnvironments = [];
 foreach ($isAdmin ? ['platform', 'artist'] : ['artist'] as $purpose) {
     $connection = $pinterestIntegration->connection($userId, $purpose);
-    $environment = strtolower(trim(app_env('PINTEREST_API_ENVIRONMENT', 'production')));
-    $pinterestEnvironments[$purpose] = $environment === 'sandbox' ? 'sandbox' : 'production';
+    $pinterestEnvironments[$purpose] = $pinterestIntegration->apiEnvironment($userId, $purpose);
     $pinterestPurposes[] = [
         'value' => $purpose,
         'label' => $purpose === 'platform' ? 'Artwork Mockups · @artworkmockups' : 'Artist Pinterest account',
