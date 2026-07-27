@@ -928,6 +928,13 @@
                 : platform === 'facebook'
                     ? facebookSection
                     : pinterestSection + instagramSection + facebookSection + metadataSection;
+        const catalogActions = !platform
+            ? `<div class="smb-inspector-actions">
+                    <button type="button" class="smb-inspector-add-pinterest" data-add-to-pinterest data-mockup-id="${escapeHtml(id)}">
+                        ${state.pinterest.includes(String(id)) ? 'Already on Pinterest board' : 'Add to Pinterest board'}
+                    </button>
+               </div>`
+            : '';
 
         kicker.textContent = platform ? `${platformLabels[platform]} data` : 'Publishing data';
         title.textContent = mockup.editorialTitle || mockup.contextTitle || mockup.artworkTitle || 'Mockup';
@@ -938,6 +945,7 @@
                 ${inspectorValue('Series', mockup.seriesTitle || 'No series')}
                 ${inspectorValue('Escena', mockup.contextTitle)}
             </dl>
+            ${catalogActions}
             ${currentPublication}
             ${channelSections}`;
         backdrop.hidden = false;
@@ -1505,6 +1513,17 @@
         if (inspectTarget) {
             const item = inspectTarget.closest('[data-board-item], [data-catalog-card]');
             if (item) openInspector(item.dataset.mockupId, item.dataset.platform || '', item.dataset.groupId || '');
+            return;
+        }
+
+        const addToPinterestButton = event.target.closest('[data-add-to-pinterest]');
+        if (addToPinterestButton) {
+            const id = String(addToPinterestButton.dataset.mockupId || '');
+            if (!mockupById.has(id)) return;
+            if (!state.pinterest.includes(id)) addToPinterest(id);
+            closeInspector();
+            setFocusedNetwork('pinterest');
+            showToast('The mockup was added to the Pinterest board.');
             return;
         }
 
