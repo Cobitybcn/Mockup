@@ -215,8 +215,7 @@ final class SocialBoardPublishService
             $response = (new PinterestIntegrationService($this->pdo))->createPin($userId, $pinPayload, (string)$draft['purpose']);
             $externalId = trim((string)($response['id'] ?? ''));
             if ($externalId === '') throw new RuntimeException('Pinterest no devolvió el identificador del Pin.');
-            $externalUrl = trim((string)($response['link'] ?? ''));
-            if ($externalUrl === '') $externalUrl = 'https://www.pinterest.com/pin/' . rawurlencode($externalId) . '/';
+            $externalUrl = 'https://www.pinterest.com/pin/' . rawurlencode($externalId) . '/';
             $draftService->markPublished($draftId, $userId, $externalId, $externalUrl, $response);
             $this->jobs->markPublished($jobId, $attemptId, $externalId, $externalUrl);
             return $this->summary($this->jobs->job($jobId, $userId));

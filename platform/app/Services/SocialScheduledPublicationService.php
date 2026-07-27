@@ -134,6 +134,11 @@ final class SocialScheduledPublicationService
             && (str_contains($error, 'Trial access') || str_contains($error, 'Pinterest code 29'));
         $label = $this->draftLabel($channel, $draftIds, (int)$job['user_id']);
         $destination = $this->pinterestDestination($channel, $draftIds, (int)$job['user_id']);
+        $externalId = trim((string)($job['external_id'] ?? ''));
+        $externalUrl = (string)($job['external_url'] ?? '');
+        if ($channel === 'pinterest' && $externalId !== '') {
+            $externalUrl = 'https://www.pinterest.com/pin/' . rawurlencode($externalId) . '/';
+        }
         return [
             'id' => (int)$job['id'],
             'channel' => $channel,
@@ -144,7 +149,7 @@ final class SocialScheduledPublicationService
             'item_count' => count($draftIds),
             'label' => $label !== '' ? $label : ucfirst($channel) . ' · publicación #' . (int)$job['id'],
             'error' => $error,
-            'external_url' => (string)($job['external_url'] ?? ''),
+            'external_url' => $externalUrl,
             'updated_at' => (string)($job['updated_at'] ?? ''),
             'can_reschedule' => in_array((string)$job['status'], ['queued', 'enqueue_failed'], true),
             'can_retry' => in_array($status, ['failed', 'enqueue_failed'], true) && !$trialPinterestFailure,

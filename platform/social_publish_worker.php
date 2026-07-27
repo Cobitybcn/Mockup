@@ -75,8 +75,7 @@ try {
         $response = (new PinterestIntegrationService($pdo))->createPin($userId, $pinPayload, (string)$draft['purpose']);
         $externalId = trim((string)($response['id'] ?? ''));
         if ($externalId === '') throw new RuntimeException('Pinterest did not return a Pin ID.');
-        $externalUrl = trim((string)($response['link'] ?? ''));
-        if ($externalUrl === '') $externalUrl = 'https://www.pinterest.com/pin/' . rawurlencode($externalId) . '/';
+        $externalUrl = 'https://www.pinterest.com/pin/' . rawurlencode($externalId) . '/';
         $draftService->markPublished((int)$draft['id'], $userId, $externalId, $externalUrl, $response);
         $jobService->markPublished($jobId, $attemptId, $externalId, $externalUrl);
         echo json_encode(['ok' => true, 'job_id' => $jobId, 'status' => 'published']);
