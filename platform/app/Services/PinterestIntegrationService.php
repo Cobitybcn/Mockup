@@ -34,7 +34,7 @@ final class PinterestIntegrationService
         ], '', '&', PHP_QUERY_RFC3986);
     }
 
-    public function completeAuthorization(int $userId, string $code, string $state): void
+    public function completeAuthorization(int $userId, string $code, string $state): string
     {
         Auth::start();
         $pending = $_SESSION['pinterest_oauth'] ?? null;
@@ -55,6 +55,7 @@ final class PinterestIntegrationService
         ],$config);
         $account = $this->api('GET', '/user_account', (string)$tokens['access_token'],null,$this->apiBase($config));
         $this->store($userId, $purpose, $tokens, (string)($account['id'] ?? $account['username'] ?? ''), (string)($account['username'] ?? 'Pinterest'));
+        return $purpose;
     }
 
     public function artistAppConfiguration(int $userId): ?array
@@ -68,6 +69,18 @@ final class PinterestIntegrationService
             'redirect_uri'=>$this->redirectUri(),
             'has_secret'=>$this->decrypt((string)$row['app_secret_encrypted'])!=='',
             'updated_at'=>(string)$row['updated_at'],
+        ];
+    }
+
+    public function platformAppConfiguration(int $userId): array
+    {
+        $this->assertPurposeAllowed($userId, 'platform');
+        $config=$this->config($userId, 'platform');
+        return [
+            'app_id'=>$config['app_id'],
+            'api_environment'=>$config['api_environment'],
+            'redirect_uri'=>$config['redirect_uri'],
+            'has_secret'=>$config['app_secret']!=='',
         ];
     }
 
@@ -205,17 +218,16 @@ final class PinterestIntegrationService
     private function accessToken(int $userId, string $purpose): string
     {
         $config=$this->config($userId,$purpose);
-        if ($this->isSandbox($config) && $purpose==='platform') {
-            $this->assertPurposeAllowed($userId, $purpose);
-            $token = trim(app_env('PINTEREST_SANDBOX_TOKEN'));
-            if ($token === '') {
-                throw new RuntimeException('Falta configurar PINTEREST_SANDBOX_TOKEN para publicar durante Trial access.');
-            }
-            return $token;
-        }
         $purpose=$this->purpose($purpose);$stmt=$this->pdo->prepare('SELECT * FROM pinterest_connections WHERE user_id=? AND purpose=? AND status=? LIMIT 1');
         $stmt->execute([$userId,$purpose,'connected']); $row=$stmt->fetch(PDO::FETCH_ASSOC);
-        if(!is_array($row)) throw new RuntimeException('Conecta tu cuenta de Pinterest primero.');
+        if(!is_array($row)) {
+            if ($this->isSandbox($config) && $purpose==='platform') {
+                $this->assertPurposeAllowed($userId, $purpose);
+                $token = trim(app_env('PINTEREST_SANDBOX_TOKEN'));
+                if ($token !== '') return $token;
+            }
+            throw new RuntimeException('Conecta tu cuenta de Pinterest primero.');
+        }
         $expiresAt=trim((string)($row['access_token_expires_at']??''));
         if($expiresAt!==''&&strtotime($expiresAt) <= time()+300) {
             $encryptedRefresh=trim((string)($row['refresh_token_encrypted']??''));

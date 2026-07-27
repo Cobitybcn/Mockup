@@ -10,6 +10,7 @@ function run_public_pages_regression_tests(): void {
     TestHarness::assertContains('no developer codes or tokens are required',$pin,'artists are not asked for Pinterest developer credentials');
     TestHarness::assertTrue(!str_contains($pin,'name="access_token"'),'the artist connection page does not request a manual token');
     TestHarness::assertContains("authorizationUrl(\$userId, 'artist')",(string)file_get_contents($root.'/connections.php'),'artist Pinterest connections use the official OAuth flow');
+    TestHarness::assertContains("authorizationUrl(\$userId, 'platform')",(string)file_get_contents($root.'/connections.php'),'platform Pinterest connections can repeat the OAuth flow');
     TestHarness::assertContains('explicitly approving each',$terms,'terms require Pin approval');
     TestHarness::assertContains('does not use Pinterest data for unrelated advertising',$privacy,'privacy limits Pinterest data use');
     TestHarness::assertContains('We do not sell Meta Platform Data',$privacy,'privacy limits Meta Platform Data use');

@@ -53,15 +53,19 @@ $platformConfig=$configMethod->invoke($service,1,'platform');
 $checks[]=$savedArtistApp['app_id']==='1589266'&&$savedArtistApp['has_secret']===true;
 $checks[]=$artistConfig['app_id']==='1589266'&&$artistConfig['source']==='artist';
 $checks[]=$platformConfig['app_id']==='1589233'&&$platformConfig['source']==='official';
+$platformApp=$service->platformAppConfiguration(1);
+$checks[]=$platformApp['app_id']==='1589233'&&$platformApp['api_environment']==='sandbox'&&$platformApp['has_secret']===true;
 
 $readCredentials=new ReflectionMethod(PinterestIntegrationService::class,'boardReadCredentials');
-$checks[]=$readCredentials->invoke($service,1,'platform')===['sandbox-platform-token','https://api-sandbox.pinterest.com/v5'];
+$checks[]=$readCredentials->invoke($service,1,'platform')===['platform-oauth-token','https://api-sandbox.pinterest.com/v5'];
 $checks[]=$readCredentials->invoke($service,2,'artist')===['artist-oauth-token','https://api.pinterest.com/v5'];
 
 if(session_status()!==PHP_SESSION_ACTIVE)session_start();
 $url=$service->authorizationUrl(2,'artist');
 $checks[]=str_contains($url,'client_id=1589266');
 $checks[]=str_contains($url,'pins%3Awrite')&&str_contains($url,'boards%3Awrite');
+$platformUrl=$service->authorizationUrl(1,'platform');
+$checks[]=str_contains($platformUrl,'client_id=1589233');
 
 $pdo->prepare("UPDATE pinterest_connections SET scopes='manual_token' WHERE user_id=2 AND purpose='artist'")->execute();
 $checks[]=$service->isPublishingReady(2,'artist')===false;

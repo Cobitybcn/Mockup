@@ -45,6 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'connect_pinterest') {
             header('Location: ' . $pinterestService->authorizationUrl($userId, 'artist'));
             exit;
+        } elseif ($action === 'connect_pinterest_platform') {
+            header('Location: ' . $pinterestService->authorizationUrl($userId, 'platform'));
+            exit;
         } elseif ($action === 'save_pinterest_app') {
             $savedApp = $pinterestService->saveArtistAppConfiguration(
                 $userId,
@@ -56,9 +59,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'create_pinterest_sandbox_board') {
             $board = $pinterestService->createSandboxDemoBoard($userId, 'artist');
             $_SESSION['connections_notice'] = 'Pinterest Sandbox board “' . (string)($board['name'] ?? 'Artwork Mockups Sandbox Demo') . '” is ready.';
+        } elseif ($action === 'create_pinterest_platform_sandbox_board') {
+            $board = $pinterestService->createSandboxDemoBoard($userId, 'platform');
+            $_SESSION['connections_notice'] = 'Pinterest Sandbox board “' . (string)($board['name'] ?? 'Artwork Mockups Sandbox Demo') . '” is ready for the platform account.';
         } elseif ($action === 'disconnect_pinterest') {
             $pinterestService->disconnect($userId, 'artist');
             $_SESSION['connections_notice'] = 'Pinterest fue desconectado.';
+        } elseif ($action === 'disconnect_pinterest_platform') {
+            $pinterestService->disconnect($userId, 'platform');
+            $_SESSION['connections_notice'] = 'The Artwork Mockups Pinterest account was disconnected.';
         } else {
             throw new RuntimeException('The connection action is not valid.');
         }
@@ -90,6 +99,8 @@ if (($facebookArtist['status'] ?? '') === 'awaiting_page') {
 $_SESSION['connections_csrf'] = bin2hex(random_bytes(24));
 
 $pinterestPlatform = $isAdmin ? $pinterestService->connection($userId, 'platform') : null;
+$pinterestPlatformReady = $isAdmin ? $pinterestService->isPublishingReady($userId, 'platform') : false;
+$pinterestPlatformApp = $isAdmin ? $pinterestService->platformAppConfiguration($userId) : null;
 $facebookPlatform = $isAdmin ? $metaService->connection($userId, 'platform') : null;
 
 function connections_h(mixed $value): string
@@ -252,12 +263,16 @@ $artistConnections = [
                     </div>
                     <div class="connections-platform-grid">
                         <?php foreach ([
-                            ['Pinterest', $pinterestPlatform, 'integrations/pinterest/'],
-                            ['Facebook', $facebookPlatform, 'integrations/meta/'],
-                        ] as [$name, $connection, $href]): $status = connections_status($connection); ?>
+                            ['Pinterest', $pinterestPlatform, 'pinterestplatform', ''],
+                            ['Facebook', $facebookPlatform, '', 'integrations/meta/'],
+                        ] as [$name, $connection, $dialog, $href]): $status = connections_status($connection); ?>
                             <div class="connections-platform-item">
                                 <div><strong><?= connections_h($name) ?></strong><small><?= connections_h($status['label']) ?></small></div>
-                                <a class="button-link secondary" href="<?= connections_h($href) ?>">Manage</a>
+                                <?php if ($dialog !== ''): ?>
+                                    <button class="button-link secondary" type="button" data-connection-open="<?= connections_h($dialog) ?>">Manage</button>
+                                <?php else: ?>
+                                    <a class="button-link secondary" href="<?= connections_h($href) ?>">Manage</a>
+                                <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -321,6 +336,39 @@ $artistConnections = [
                     </details>
                 </div>
             </dialog>
+
+            <?php if ($isAdmin): ?>
+                <dialog class="connection-dialog" id="connection-pinterestplatform" aria-labelledby="connection-pinterestplatform-title">
+                    <div class="connection-dialog__head">
+                        <div><span>Artwork Mockups platform</span><h2 id="connection-pinterestplatform-title">Pinterest</h2></div>
+                        <button class="connection-dialog__close" type="button" data-connection-close aria-label="Close">&times;</button>
+                    </div>
+                    <div class="connection-dialog__body">
+                        <div class="connection-summary">
+                            <p><strong><?= $pinterestPlatformReady ? 'Connected account' : 'Connection status' ?></strong></p>
+                            <p><?= connections_h($pinterestPlatformReady ? (string)($pinterestPlatform['pinterest_account_id'] ?? 'Pinterest') : 'Authorization required') ?></p>
+                        </div>
+                        <p>This administrative identity publishes only as Artwork Mockups and remains isolated from artist accounts.</p>
+                        <form class="connection-form" method="post">
+                            <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>">
+                            <input type="hidden" name="network" value="pinterestplatform">
+                            <div class="connection-form__actions">
+                                <button class="button-link primary" name="action" value="connect_pinterest_platform"><?= $pinterestPlatformReady ? 'Reconnect' : 'Connect' ?> with app <?= connections_h((string)($pinterestPlatformApp['app_id'] ?? '')) ?></button>
+                                <?php if (($pinterestPlatformApp['api_environment'] ?? 'production') === 'sandbox'): ?><button class="button-link secondary" name="action" value="create_pinterest_platform_sandbox_board">Create Sandbox demo board</button><?php endif; ?>
+                                <?php if ($pinterestPlatformReady): ?><button class="button-link secondary" name="action" value="disconnect_pinterest_platform">Disconnect Pinterest</button><?php endif; ?>
+                            </div>
+                        </form>
+                        <details class="connection-advanced">
+                            <summary>Developer app · <?= connections_h((string)($pinterestPlatformApp['app_id'] ?? '')) ?></summary>
+                            <div class="connection-advanced__body">
+                                <p>The platform app secret stays on the server and is never displayed.</p>
+                                <p><strong>API environment</strong><br><?= connections_h(ucfirst((string)($pinterestPlatformApp['api_environment'] ?? 'production'))) ?></p>
+                                <p class="connection-callback"><strong>OAuth callback</strong><br><?= connections_h((string)($pinterestPlatformApp['redirect_uri'] ?? PublicPage::url('integrations/pinterest/callback'))) ?></p>
+                            </div>
+                        </details>
+                    </div>
+                </dialog>
+            <?php endif; ?>
 
             <dialog class="connection-dialog" id="connection-facebook" aria-labelledby="connection-facebook-title">
                 <div class="connection-dialog__head">
@@ -394,7 +442,7 @@ $artistConnections = [
     document.querySelectorAll('.connection-dialog').forEach((dialog) => dialog.addEventListener('click', (event) => {
         if (event.target === dialog) dialog.close();
     }));
-    const initial = <?= json_encode(in_array($openConnection, ['pinterest', 'facebook', 'instagram'], true) ? $openConnection : '', JSON_UNESCAPED_SLASHES) ?>;
+    const initial = <?= json_encode(in_array($openConnection, ['pinterest', 'pinterestplatform', 'facebook', 'instagram'], true) ? $openConnection : '', JSON_UNESCAPED_SLASHES) ?>;
     if (initial) openDialog(initial);
 })();
 </script>
