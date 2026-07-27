@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $savedApp = $pinterestService->saveArtistAppConfiguration(
                 $userId,
                 (string)($_POST['app_id'] ?? ''),
-                (string)($_POST['app_secret'] ?? ''),
+                (string)($_POST['pinterest_app_secret'] ?? ''),
                 'production'
             );
             $_SESSION['connections_notice'] = 'Pinterest app ' . (string)($savedApp['app_id'] ?? '') . ' was saved securely for this artist.';
@@ -297,10 +297,10 @@ $artistConnections = [
                                 <input type="hidden" name="csrf" value="<?= connections_h($_SESSION['connections_csrf']) ?>">
                                 <input type="hidden" name="network" value="pinterest">
                                 <label>App ID
-                                    <input name="app_id" inputmode="numeric" pattern="[0-9]{5,30}" required value="<?= connections_h((string)($pinterestApp['app_id'] ?? '')) ?>">
+                                    <input name="app_id" inputmode="numeric" pattern="[0-9]{5,30}" autocomplete="off" data-1p-ignore data-lpignore="true" required value="<?= connections_h((string)($pinterestApp['app_id'] ?? '')) ?>">
                                 </label>
                                 <label>App Secret
-                                    <input type="password" name="app_secret" <?=($pinterestApp['has_secret']??false)?'':'required'?> placeholder="<?=($pinterestApp['has_secret']??false)?'Leave blank to keep the saved secret':'Paste the app secret'?>">
+                                    <input type="password" name="pinterest_app_secret" autocomplete="new-password" data-1p-ignore data-lpignore="true" <?=($pinterestApp['has_secret']??false)?'':'required'?> placeholder="<?=($pinterestApp['has_secret']??false)?'Leave blank to keep the saved secret':'Paste the app secret'?>">
                                     <small><?=($pinterestApp['has_secret']??false)?'A secret is already stored securely.':'The secret is sent only to Artwork Mockups over HTTPS.'?></small>
                                 </label>
                                 <p class="connection-callback"><strong>OAuth callback</strong><br><?= connections_h((string)($pinterestApp['redirect_uri'] ?? PublicPage::url('integrations/pinterest/callback'))) ?></p>
