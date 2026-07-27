@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $userId,
                 (string)($_POST['app_id'] ?? ''),
                 (string)($_POST['pinterest_app_secret'] ?? ''),
-                'production'
+                (string)($_POST['api_environment'] ?? 'production')
             );
             $_SESSION['connections_notice'] = 'Pinterest app ' . (string)($savedApp['app_id'] ?? '') . ' was saved securely for this artist.';
         } elseif ($action === 'disconnect_pinterest') {
@@ -302,6 +302,13 @@ $artistConnections = [
                                 <label>App Secret
                                     <input type="password" name="pinterest_app_secret" autocomplete="new-password" data-1p-ignore data-lpignore="true" <?=($pinterestApp['has_secret']??false)?'':'required'?> placeholder="<?=($pinterestApp['has_secret']??false)?'Leave blank to keep the saved secret':'Paste the app secret'?>">
                                     <small><?=($pinterestApp['has_secret']??false)?'A secret is already stored securely.':'The secret is sent only to Artwork Mockups over HTTPS.'?></small>
+                                </label>
+                                <label>API environment
+                                    <select name="api_environment">
+                                        <option value="production" <?=($pinterestApp['api_environment']??'production')==='production'?'selected':''?>>Production</option>
+                                        <option value="sandbox" <?=($pinterestApp['api_environment']??'production')==='sandbox'?'selected':''?>>Sandbox (Trial demo)</option>
+                                    </select>
+                                    <small>Use Sandbox while Pinterest is reviewing a Trial app. Switch back to Production after Standard access is approved.</small>
                                 </label>
                                 <p class="connection-callback"><strong>OAuth callback</strong><br><?= connections_h((string)($pinterestApp['redirect_uri'] ?? PublicPage::url('integrations/pinterest/callback'))) ?></p>
                                 <div class="connection-form__actions"><button class="button-link secondary" name="action" value="save_pinterest_app">Save developer app</button></div>
