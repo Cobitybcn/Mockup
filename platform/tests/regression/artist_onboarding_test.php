@@ -46,7 +46,7 @@ function run_artist_onboarding_tests(): void
         'con idioma explicito y subdominio, el onboarding queda completo'
     );
 
-    $adminPro = ['id' => 3, 'email' => 'admin@artmock.com', 'plan_code' => FeatureAccess::PLAN_ARTIST_PRO];
+    $adminPro = ['id' => 3, 'email' => 'not-in-admin-emails@example.test', 'is_admin' => 1, 'plan_code' => FeatureAccess::PLAN_ARTIST_PRO];
     TestHarness::assertSame(
         false,
         ArtistOnboarding::isRequired($adminPro),
