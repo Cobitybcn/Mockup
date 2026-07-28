@@ -245,6 +245,7 @@ $connectionsActive = $currentPage === 'connections.php' || $pinterestActive || $
 // Admin active states
 $promptsActive = ($currentPage === 'admin_prompts.php');
 $apiActive = ($currentPage === 'admin_api_keys.php');
+$metricsActive = ($currentPage === 'admin_metrics.php');
 $sidebarCanUseWebsite = $sidebarUser ? FeatureAccess::allows($sidebarUser, FeatureAccess::WEBSITE_MANAGE) : false;
 $sidebarCanUseSocial = $sidebarUser ? FeatureAccess::allows($sidebarUser, FeatureAccess::SOCIAL_MANAGE) : false;
 $sidebarCanUseVideo = $sidebarUser ? FeatureAccess::allows($sidebarUser, FeatureAccess::VIDEO_MANAGE) : false;
@@ -908,6 +909,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                         <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php"><?= h(t('Users & Credits', 'Usuarios y Créditos')) ?></a>
                         <a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php"><?= h(t('Prompts', 'Prompts')) ?></a>
                         <a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php"><?= h(t('API Settings', 'Configuración de API')) ?></a>
+                        <a class="<?= $metricsActive ? 'active' : '' ?>" href="admin_metrics.php"><?= h(t('Site Metrics', 'Métricas del sitio')) ?></a>
                         <?php if ($sidebarCanUseSocial): ?>
                             <a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php"><?= h(t('Connections', 'Conexiones')) ?></a>
                         <?php endif; ?>
@@ -1029,6 +1031,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                 <li><a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php"><?= h(t('Users & Credits', 'Usuarios y Créditos')) ?></a></li>
                 <li><a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php"><?= h(t('Prompts', 'Prompts')) ?></a></li>
                 <li><a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php"><?= h(t('API Settings', 'Configuración de API')) ?></a></li>
+                <li><a class="<?= $metricsActive ? 'active' : '' ?>" href="admin_metrics.php"><?= h(t('Site Metrics', 'Métricas del sitio')) ?></a></li>
             <?php endif; ?>
             <?php if ($sidebarCanUseSocial): ?>
                 <li><a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php"><?= h(t('Connections', 'Conexiones')) ?></a></li>
@@ -1077,6 +1080,7 @@ if ($generatedResultsActive && $sidebarContextArtworkId > 0) {
                     <a class="<?= $usersActive ? 'active' : '' ?>" href="admin_users.php"><?= h(t('Users & Credits', 'Usuarios y Créditos')) ?></a>
                     <a class="<?= $promptsActive ? 'active' : '' ?>" href="admin_prompts.php"><?= h(t('Prompts', 'Prompts')) ?></a>
                     <a class="<?= $apiActive ? 'active' : '' ?>" href="admin_api_keys.php"><?= h(t('API Settings', 'Configuración de API')) ?></a>
+                    <a class="<?= $metricsActive ? 'active' : '' ?>" href="admin_metrics.php"><?= h(t('Site Metrics', 'Métricas del sitio')) ?></a>
                     <?php if ($sidebarCanUseSocial): ?>
                         <a class="<?= $connectionsActive ? 'active' : '' ?>" href="connections.php"><?= h(t('Connections', 'Conexiones')) ?></a>
                     <?php endif; ?>

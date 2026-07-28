@@ -13,8 +13,8 @@ $site = [
         'Instagram' => 'https://www.instagram.com/mauriziovalch/',
         'Facebook' => 'https://www.facebook.com/MaurizioValch',
         'X / Twitter' => 'https://x.com/MauriValch',
-        'Pinterest' => 'https://es.pinterest.com/maurizio_artista/',
-        'Saatchi Art' => 'https://www.saatchiart.com/maurizioart',
+        'Pinterest' => 'https://es.pinterest.com/maurizio_valch/',
+        'Saatchi Art' => 'https://www.saatchiart.com/mauriziovalch',
     ],
 ];
 

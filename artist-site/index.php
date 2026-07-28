@@ -65,6 +65,25 @@ try {
     exit('Artist site configuration is temporarily unavailable.');
 }
 
+// First-party, privacy-clean visitor metrics beacon (no cookies, no IP, no UA).
+if (($segments[0] ?? '') === 'site-event' && strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? '')) === 'POST') {
+    header('Cache-Control: no-store');
+    $eventInput = json_decode((string)file_get_contents('php://input'), true);
+    $eventType = is_array($eventInput) ? (string)($eventInput['type'] ?? '') : '';
+    if (in_array($eventType, ['view', 'saatchi_click', 'acquire_click', 'inquire_click', 'share_click', 'language_switch', 'social_outbound', 'search'], true)) {
+        app_record_site_event(
+            $eventType,
+            (string)($eventInput['entity'] ?? ''),
+            (string)($eventInput['slug'] ?? ''),
+            (string)($eventInput['locale'] ?? ''),
+            (string)($eventInput['referrer'] ?? ''),
+            (string)($eventInput['detail'] ?? '')
+        );
+    }
+    http_response_code(204);
+    exit;
+}
+
 if ($path === '/sitemap.xml') {
     $site['url'] = rtrim(app_absolute_url('/'), '/');
 } else {
@@ -1588,6 +1607,47 @@ function app_studio_note_embedded_image_srcset(array $post): string
     ));
 }
 
+function app_saatchi_listing_url(array $artwork): string
+{
+    $url = trim((string)($artwork['saatchi_url'] ?? ''));
+    if ($url === '') return '';
+    $host = strtolower((string)(parse_url($url, PHP_URL_HOST) ?: ''));
+    if (!str_starts_with($url, 'https://')
+        || ($host !== 'saatchiart.com' && !str_ends_with($host, '.saatchiart.com'))) {
+        return '';
+    }
+    $siteHost = (string)(parse_url((string)($GLOBALS['site']['url'] ?? ''), PHP_URL_HOST) ?: 'artist-site');
+    return $url . (str_contains($url, '?') ? '&' : '?')
+        . 'utm_source=' . rawurlencode($siteHost) . '&utm_medium=referral&utm_campaign=artwork_page';
+}
+
+function app_record_site_event(string $type, string $entityType = '', string $slug = '', string $locale = '', string $referrer = '', string $detail = ''): void
+{
+    try {
+        $pdo = artist_site_database_connection(dirname(__DIR__) . '/platform');
+        $ownerStmt = $pdo->prepare('SELECT id FROM users WHERE LOWER(email)=? LIMIT 1');
+        $ownerStmt->execute([strtolower(resolved_artist_email())]);
+        $ownerId = (int)($ownerStmt->fetchColumn() ?: 0);
+        if ($ownerId <= 0) return;
+        $referrerHost = strtolower((string)(parse_url($referrer, PHP_URL_HOST) ?: ''));
+        $siteHost = strtolower((string)(parse_url((string)($GLOBALS['site']['url'] ?? ''), PHP_URL_HOST) ?: ''));
+        if ($referrerHost === $siteHost) $referrerHost = '';
+        $pdo->prepare('INSERT INTO artist_site_events (user_id,event_type,entity_type,slug,locale,referrer_host,detail,created_at) VALUES (?,?,?,?,?,?,?,?)')
+            ->execute([
+                $ownerId,
+                substr($type, 0, 40),
+                substr(trim($entityType), 0, 30),
+                substr(trim($slug), 0, 255),
+                in_array($locale, ['es', 'en'], true) ? $locale : '',
+                substr($referrerHost, 0, 255),
+                substr(trim($detail), 0, 255),
+                date(DATE_ATOM),
+            ]);
+    } catch (Throwable $error) {
+        error_log('Site event logging failed: ' . $error->getMessage());
+    }
+}
+
 function first_html_image_src(string $html): string
 {
     if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $html, $matches)) {
@@ -1883,6 +1943,7 @@ function render_published_artwork(array $site, array $artwork): void
                 <?php if ($studioInformation): ?><h2><?= e(site_t('Studio Information', 'Información de estudio')) ?></h2><p><?= nl2br(e($studioInformation)) ?></p><?php endif; ?>
                 <?php if (!empty($facts['shipping_notes'])): ?><h2><?= e(site_t('Shipping', 'Envío')) ?></h2><p><?= nl2br(e($facts['shipping_notes'])) ?></p><?php endif; ?>
             </div>
+            <?php $saatchiListingUrl = app_saatchi_listing_url($artwork); ?>
             <?php if ($storeOffer && !empty($storeOffer['is_purchasable'])): ?>
                 <aside class="store-offer" aria-label="<?= e(site_t('Acquisition information', 'Información de compra')) ?>">
                     <p class="eyebrow"><?= e(site_t('Available for acquisition', 'Disponible para adquisición')) ?></p>
@@ -1891,12 +1952,23 @@ function render_published_artwork(array $site, array $artwork): void
                         'Shipping is calculated from the destination country using the rate set for its continent.',
                         'El envío se calcula según el país de destino y la tarifa correspondiente a su continente.'
                     )) ?></p>
-                    <div class="actions"><a class="button" href="<?= e(url_for('acquire/' . $artwork['slug'])) ?>"><?= e(site_t('Acquire this work', 'Adquirir esta obra')) ?></a><a class="button button--quiet" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>"><?= e(site_t('Ask the studio', 'Consultar al estudio')) ?></a></div>
+                    <?php if ($saatchiListingUrl !== ''): ?>
+                        <div class="actions"><a class="button" href="<?= e($saatchiListingUrl) ?>" target="_blank" rel="noopener" data-metric-event="saatchi_click" data-metric-entity="artwork" data-metric-slug="<?= e($artwork['slug']) ?>"><?= e(site_t('Buy on Saatchi Art', 'Comprar en Saatchi Art')) ?></a><a class="button button--quiet" href="<?= e(url_for('acquire/' . $artwork['slug'])) ?>" data-metric-event="acquire_click" data-metric-entity="artwork" data-metric-slug="<?= e($artwork['slug']) ?>"><?= e(site_t('Acquire from the studio', 'Adquirir desde el estudio')) ?></a><a class="button button--quiet" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>" data-metric-event="inquire_click" data-metric-entity="artwork" data-metric-slug="<?= e($artwork['slug']) ?>"><?= e(site_t('Ask the studio', 'Consultar al estudio')) ?></a></div>
+                        <p class="store-offer__assurance"><?= e(site_t("Purchase with Saatchi Art's buyer guarantee.", 'Compra con la garantía de Saatchi Art.')) ?></p>
+                    <?php else: ?>
+                        <div class="actions"><a class="button" href="<?= e(url_for('acquire/' . $artwork['slug'])) ?>" data-metric-event="acquire_click" data-metric-entity="artwork" data-metric-slug="<?= e($artwork['slug']) ?>"><?= e(site_t('Acquire this work', 'Adquirir esta obra')) ?></a><a class="button button--quiet" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>" data-metric-event="inquire_click" data-metric-entity="artwork" data-metric-slug="<?= e($artwork['slug']) ?>"><?= e(site_t('Ask the studio', 'Consultar al estudio')) ?></a></div>
+                    <?php endif; ?>
                 </aside>
             <?php elseif ($storeOffer && ((string)$storeOffer['status'] === 'sold_out' || (int)$storeOffer['stock_available'] <= 0)): ?>
                 <aside class="store-offer store-offer--unavailable"><p class="eyebrow"><?= e(site_t('No longer available', 'Ya no está disponible')) ?></p><p><?= e(site_t('This work is currently reserved or sold.', 'Esta obra se encuentra reservada o vendida.')) ?></p><div class="actions"><a class="button button--quiet" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>"><?= e(site_t('Ask the studio', 'Consultar al estudio')) ?></a></div></aside>
+            <?php elseif ($saatchiListingUrl !== ''): ?>
+                <aside class="store-offer" aria-label="<?= e(site_t('Acquisition information', 'Información de compra')) ?>">
+                    <p class="eyebrow"><?= e(site_t('Available on Saatchi Art', 'Disponible en Saatchi Art')) ?></p>
+                    <div class="actions"><a class="button" href="<?= e($saatchiListingUrl) ?>" target="_blank" rel="noopener" data-metric-event="saatchi_click" data-metric-entity="artwork" data-metric-slug="<?= e($artwork['slug']) ?>"><?= e(site_t('Buy on Saatchi Art', 'Comprar en Saatchi Art')) ?></a><a class="button button--quiet" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>" data-metric-event="inquire_click" data-metric-entity="artwork" data-metric-slug="<?= e($artwork['slug']) ?>"><?= e(site_t('Ask the studio', 'Consultar al estudio')) ?></a></div>
+                    <p class="store-offer__assurance"><?= e(site_t("Purchase with Saatchi Art's buyer guarantee.", 'Compra con la garantía de Saatchi Art.')) ?></p>
+                </aside>
             <?php else: ?>
-                <div class="actions"><a class="button" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>"><?= e(site_t('Inquire about this work', 'Consultar por esta obra')) ?></a></div>
+                <div class="actions"><a class="button" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>" data-metric-event="inquire_click" data-metric-entity="artwork" data-metric-slug="<?= e($artwork['slug']) ?>"><?= e(site_t('Inquire about this work', 'Consultar por esta obra')) ?></a></div>
             <?php endif; ?>
         </div>
     </section>
@@ -2353,15 +2425,22 @@ function render_published_mockup(array $site, array $artwork, array $mockup): vo
                 <h2><?= e(site_t('About this visualization', 'Sobre esta visualización')) ?></h2>
                 <p><?= e(site_t('This visualization places the artwork within an architectural context to help collectors and viewers imagine its presence in a real space. It is an interpretive reference, not an exact reproduction: the original work remains the sole authority for scale, color, surface and material presence.', 'Esta visualización sitúa la obra dentro de un contexto arquitectónico para ayudar a coleccionistas y público a imaginar su presencia en un espacio real. Es una referencia interpretativa, no una reproducción exacta: la obra original es la única autoridad sobre la escala, el color, la superficie y la presencia material.')) ?></p>
             </div>
+            <?php $saatchiListingUrl = app_saatchi_listing_url($artwork); ?>
             <?php if ($storeOffer && !empty($storeOffer['is_purchasable'])): ?>
                 <aside class="store-offer" aria-label="<?= e(site_t('Acquisition information', 'Información de compra')) ?>">
                     <p class="eyebrow"><?= e(site_t('Original artwork available for acquisition', 'Obra original disponible para compra')) ?></p>
                     <strong class="store-offer__price"><?= e(AppStore::money((int)$storeOffer['price_minor'], (string)$storeOffer['currency'])) ?></strong>
                     <p><?= e(site_t('The price and purchase option apply to the original artwork shown in this contextual visualization. Shipping is calculated from the destination country.', 'El precio y la opción de compra corresponden a la obra original mostrada en esta visualización contextual. El envío se calcula según el país de destino.')) ?></p>
                     <div class="actions">
-                        <a class="button" href="<?= e(url_for('acquire/' . $artwork['slug'])) ?>"><?= e(site_t('Acquire this work', 'Comprar esta obra')) ?></a>
-                        <a class="button button--quiet" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>"><?= e(site_t('Ask the studio', 'Consultar al estudio')) ?></a>
+                        <?php if ($saatchiListingUrl !== ''): ?>
+                            <a class="button" href="<?= e($saatchiListingUrl) ?>" target="_blank" rel="noopener" data-metric-event="saatchi_click" data-metric-entity="artwork" data-metric-slug="<?= e($artwork['slug']) ?>" data-metric-detail="mockup_page"><?= e(site_t('Buy on Saatchi Art', 'Comprar en Saatchi Art')) ?></a>
+                            <a class="button button--quiet" href="<?= e(url_for('acquire/' . $artwork['slug'])) ?>" data-metric-event="acquire_click" data-metric-entity="artwork" data-metric-slug="<?= e($artwork['slug']) ?>" data-metric-detail="mockup_page"><?= e(site_t('Acquire from the studio', 'Adquirir desde el estudio')) ?></a>
+                        <?php else: ?>
+                            <a class="button" href="<?= e(url_for('acquire/' . $artwork['slug'])) ?>" data-metric-event="acquire_click" data-metric-entity="artwork" data-metric-slug="<?= e($artwork['slug']) ?>" data-metric-detail="mockup_page"><?= e(site_t('Acquire this work', 'Comprar esta obra')) ?></a>
+                        <?php endif; ?>
+                        <a class="button button--quiet" href="<?= e(url_for('contact')) ?>?artwork=<?= e($artwork['slug']) ?>" data-metric-event="inquire_click" data-metric-entity="artwork" data-metric-slug="<?= e($artwork['slug']) ?>" data-metric-detail="mockup_page"><?= e(site_t('Ask the studio', 'Consultar al estudio')) ?></a>
                     </div>
+                    <?php if ($saatchiListingUrl !== ''): ?><p class="store-offer__assurance"><?= e(site_t("Purchase with Saatchi Art's buyer guarantee.", 'Compra con la garantía de Saatchi Art.')) ?></p><?php endif; ?>
                 </aside>
             <?php elseif ($storeOffer && ((string)$storeOffer['status'] === 'sold_out' || (int)$storeOffer['stock_available'] <= 0)): ?>
                 <aside class="store-offer store-offer--unavailable">
@@ -4015,6 +4094,8 @@ switch ($segments[0] ?? '') {
             // Apply search query filtering
             $q = trim((string)($_GET['q'] ?? ''));
             if ($q !== '') {
+                // What visitors type here is direct vocabulary intelligence.
+                app_record_site_event('search', 'catalog', '', $siteLanguage, (string)($_SERVER['HTTP_REFERER'] ?? ''), $q);
                 $publicItems = array_filter($publicItems, function(array $item) use ($q): bool {
                     $term = mb_strtolower($q);
                     return mb_strpos(mb_strtolower((string)$item['title']), $term) !== false

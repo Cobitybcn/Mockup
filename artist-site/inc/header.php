@@ -99,11 +99,11 @@ $defaultPublicationLocale = in_array('en', $publicationLocales, true) ? 'en' : (
         <?php if (count($publicationLocales) > 1): ?>
         <nav class="language-switch" aria-label="<?= e(site_t('Language', 'Idioma')) ?>">
             <?php if (in_array('es', $publicationLocales, true)): ?>
-                <a href="<?= e(artist_site_language_url('es')) ?>" lang="es" hreflang="es"<?= $currentLanguage === 'es' ? ' class="is-active" aria-current="true"' : '' ?>>ES</a>
+                <a href="<?= e(artist_site_language_url('es')) ?>" lang="es" hreflang="es" data-metric-event="language_switch" data-metric-detail="es"<?= $currentLanguage === 'es' ? ' class="is-active" aria-current="true"' : '' ?>>ES</a>
             <?php endif; ?>
             <?php if (in_array('es', $publicationLocales, true) && in_array('en', $publicationLocales, true)): ?><span aria-hidden="true">/</span><?php endif; ?>
             <?php if (in_array('en', $publicationLocales, true)): ?>
-                <a href="<?= e(artist_site_language_url('en')) ?>" lang="en" hreflang="en"<?= $currentLanguage === 'en' ? ' class="is-active" aria-current="true"' : '' ?>>EN</a>
+                <a href="<?= e(artist_site_language_url('en')) ?>" lang="en" hreflang="en" data-metric-event="language_switch" data-metric-detail="en"<?= $currentLanguage === 'en' ? ' class="is-active" aria-current="true"' : '' ?>>EN</a>
             <?php endif; ?>
         </nav>
         <?php endif; ?>

@@ -338,6 +338,7 @@ p {
 .store-offer__price { display: block; font: 500 clamp(28px, 2.6vw, 38px)/1 var(--serif-display); }
 .store-offer > p:not(.eyebrow) { max-width: 460px; margin: 9px 0 0; color: var(--muted); font-size: 14px; }
 .store-offer--unavailable { background: transparent; }
+.store-offer__assurance { margin: 10px 0 0; color: var(--muted); font-size: 13px; letter-spacing: .01em; }
 
 .acquisition-workspace { display: grid; grid-template-columns: minmax(300px, .8fr) minmax(0, 1.2fr); gap: clamp(28px, 5vw, 68px); width: min(var(--max), calc(100% - 36px)); margin: 0 auto; padding: 0 0 clamp(54px, 7vw, 92px); }
 .acquisition-artwork { align-self: start; border: 1px solid var(--line); background: var(--panel); }

@@ -927,8 +927,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
         $headerMockups->execute([$artworkOwnerId, $id, (int)$sheet['id'], $groupId, $groupId]);
         $allowedHeaders = array_merge($allowedHeaders, array_map('basename', $headerMockups->fetchAll(PDO::FETCH_COLUMN)));
         if ($headerFile !== '' && !in_array($headerFile, $allowedHeaders, true)) throw new RuntimeException(t('The selected website cover does not belong to this artwork.', 'La portada seleccionada para el sitio web no pertenece a esta obra.'));
-        $pdo->prepare('UPDATE publications SET header_file=?,updated_at=? WHERE id=? AND user_id=?')
-            ->execute([$headerFile, date('c'), (int)$savedWebsitePublication['id'], $artworkOwnerId]);
+        $saatchiUrl = trim((string)($_POST['saatchi_url'] ?? ''));
+        if ($saatchiUrl !== '') {
+            $saatchiHost = strtolower((string)(parse_url($saatchiUrl, PHP_URL_HOST) ?: ''));
+            if (!str_starts_with($saatchiUrl, 'https://')
+                || ($saatchiHost !== 'saatchiart.com' && !str_ends_with($saatchiHost, '.saatchiart.com'))) {
+                throw new RuntimeException(t('The Saatchi Art link must be an https URL on saatchiart.com.', 'El enlace de Saatchi Art debe ser una URL https de saatchiart.com.'));
+            }
+        }
+        $pdo->prepare('UPDATE publications SET header_file=?,saatchi_url=?,updated_at=? WHERE id=? AND user_id=?')
+            ->execute([$headerFile, $saatchiUrl, date('c'), (int)$savedWebsitePublication['id'], $artworkOwnerId]);
         $constellationCountry = trim((string)($_POST['constellation_country'] ?? ''));
         $constellation = $pdo->prepare('SELECT id FROM artist_site_constellations WHERE user_id=? AND artwork_id=? LIMIT 1');
         $constellation->execute([$artworkOwnerId, $id]);
@@ -1543,6 +1551,9 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
         .artwork-website-sale-grid input,.artwork-website-sale-grid select { width:100%; box-sizing:border-box; padding:12px 13px; border:1px solid var(--line); border-radius:var(--radius); background:#fff; color:var(--ink); font:400 15px/1.4 var(--font-sans); }
         .artwork-website-shipping { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-top:12px; padding:13px 14px; background:var(--surface-soft); color:var(--muted); font-size:13px; }
         .artwork-website-shipping a { color:var(--accent); font-weight:700; white-space:nowrap; }
+        .artwork-website-saatchi { display:grid; gap:7px; margin-top:14px; color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+        .artwork-website-saatchi input { width:100%; box-sizing:border-box; padding:12px 13px; border:1px solid var(--line); border-radius:var(--radius); background:#fff; color:var(--ink); font:400 15px/1.4 var(--font-sans); }
+        .artwork-website-saatchi small { color:var(--muted); font-size:12px; font-weight:400; letter-spacing:normal; text-transform:none; line-height:1.5; }
         .artwork-website-settings { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:end; gap:16px; margin-top:18px; }
         .artwork-website-settings label { display:grid; gap:7px; color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
         .artwork-website-settings input,.artwork-website-settings select { width:100%; box-sizing:border-box; padding:12px 13px; border:1px solid var(--line); border-radius:var(--radius); background:#fff; color:var(--ink); font:400 15px/1.4 var(--font-sans); }
@@ -3777,6 +3788,11 @@ $editIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentC
                                             <span><?= h(t('Shipping uses the editable rates by continent for the whole store.', 'El envío usa las tarifas editables por continente para toda la tienda.')) ?></span>
                                             <a href="../site-admin/?area=store&amp;section=shipping"><?= h(t('Edit shipping rates', 'Editar tarifas de envío')) ?></a>
                                         </div>
+                                        <label class="artwork-website-saatchi">
+                                            <?= h(t('Saatchi Art listing link', 'Enlace del listing en Saatchi Art')) ?>
+                                            <input type="url" name="saatchi_url" value="<?= h((string)($websitePublication['saatchi_url'] ?? '')) ?>" placeholder="https://www.saatchiart.com/art/...">
+                                            <small><?= h(t('When set, the public artwork page shows "Buy on Saatchi Art" as the primary action.', 'Si se completa, la ficha pública muestra "Comprar en Saatchi Art" como acción principal.')) ?></small>
+                                        </label>
                                     </section>
 
                                     <div class="artwork-website-settings">
