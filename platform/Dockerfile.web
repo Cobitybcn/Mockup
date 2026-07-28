@@ -64,6 +64,8 @@ COPY artist-site/inc/StripeCheckout.php /var/www/artist-site/inc/StripeCheckout.
 COPY artist-site/inc/AppPublishedSeriesCatalog.php /var/www/artist-site/inc/AppPublishedSeriesCatalog.php
 COPY artist-site/inc/PublicSlug.php /var/www/artist-site/inc/PublicSlug.php
 COPY artist-site/assets/css/styles.css /var/www/artist-site/assets/css/styles.css
+COPY artist-site/inc/footer.php /var/www/artist-site/inc/footer.php
+COPY artist-site/data/site.php /var/www/artist-site/data/site.php
 
 # Configure Apache port to 8080 (Cloud Run standard)
 RUN sed -i 's/Listen 80/Listen 8080/g' /etc/apache2/ports.conf
