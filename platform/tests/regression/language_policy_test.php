@@ -255,8 +255,6 @@ function run_translator_tests(): void
     TestHarness::group('Fase 5: interfaz bilingue (Translator)');
 
     $pdo = Database::connection();
-    $existingUserId = (int)$pdo->query('SELECT id FROM users ORDER BY id LIMIT 1')->fetchColumn();
-    TestHarness::assertTrue($existingUserId > 0, 'existe al menos una cuenta local para ejercitar el traductor');
 
     Translator::forgetResolvedLocale();
     TestHarness::assertSame(
@@ -265,8 +263,17 @@ function run_translator_tests(): void
         'sin usuario, la interfaz cae a ingles'
     );
 
+    // Cuenta descartable propia del test: no depender de que la base ya
+    // tenga usuarios cargados (el contenedor de preflight arranca vacio).
+    $existingUserId = 0;
     $pdo->beginTransaction();
     try {
+        $now = date(DATE_ATOM);
+        $pdo->prepare('INSERT INTO users (email, password_hash, created_at, updated_at) VALUES (?,?,?,?)')
+            ->execute(['translator-test-' . bin2hex(random_bytes(4)) . '@example.test', password_hash('x', PASSWORD_DEFAULT), $now, $now]);
+        $existingUserId = (int)$pdo->lastInsertId();
+        TestHarness::assertTrue($existingUserId > 0, 'la cuenta descartable del test se crea correctamente');
+
         LanguagePolicy::save($existingUserId, 'en', ['en'], 'en');
         LanguagePolicy::forgetCachedPolicy($existingUserId);
         Translator::forgetResolvedLocale();
