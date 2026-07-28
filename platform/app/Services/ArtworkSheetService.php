@@ -645,6 +645,18 @@ final class ArtworkSheetService
         if (ProviderSettings::isRealMode() && ProviderSettings::allowRealApi() && ProviderSettings::imageProvider() === 'gemini' && $imagePath !== '') {
             $artworkIdentity = json_decode((string)($artworkSheet['generated_json'] ?? ''), true);
             $artworkIdentity = is_array($artworkIdentity) ? $artworkIdentity : [];
+            // The analysis blob can carry its own working title under
+            // canonical_editorial (an internal draft from the artwork-level
+            // pass) which the model would otherwise read as the artwork's
+            // name. The artist's confirmed title/subtitle are always
+            // authoritative; force them at both the top level and inside
+            // canonical_editorial so no invented name reaches this prompt.
+            $artworkIdentity['title'] = $artworkSheet['title'];
+            $artworkIdentity['subtitle'] = $artworkSheet['subtitle'];
+            if (isset($artworkIdentity['canonical_editorial']) && is_array($artworkIdentity['canonical_editorial'])) {
+                $artworkIdentity['canonical_editorial']['title'] = $artworkSheet['title'];
+                $artworkIdentity['canonical_editorial']['subtitle'] = $artworkSheet['subtitle'];
+            }
             $prompt = "Analyze this exact mockup image. {$languageInstruction} The approved artwork identity is authoritative; analyze the scene without renaming, reinterpreting, or inventing facts about the artwork. Return strict JSON only.\n"
                 . "APPROVED ARTWORK IDENTITY:\n" . json_encode($artworkIdentity ?: ['title'=>$artworkSheet['title'],'subtitle'=>$artworkSheet['subtitle'],'description'=>$artworkSheet['description']], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) . "\n"
                 . "MOCKUP RULES: describe space type, architecture, materials, lighting, camera, scale perception, atmosphere, and artwork-space relationship. Keywords, long tails, tags, captions and channel copy must be justified by the visible image. Never use generic repeated copy. Never call the artwork framed unless a real frame is visible. Exclude home decor, wall art, perfect for any room, elevate your space, decor inspiration, and generic interior-marketing filler. Do not invent furniture, materials, colors, light, artwork facts, or destination links. Website is detailed and collector-facing; Pinterest is shorter and traffic-oriented; Instagram is visual/community-oriented; Facebook is conversational; TikTok is future preparation only.\n"
