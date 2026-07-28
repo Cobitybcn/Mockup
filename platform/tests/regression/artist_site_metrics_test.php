@@ -48,8 +48,16 @@ function run_artist_site_metrics_tests(): void
     TestHarness::assertContains('saatchiart.com/mauriziovalch', $siteData, 'el perfil de Saatchi del pie usa la URL confirmada /mauriziovalch');
 
     $metricsScreen = (string)file_get_contents(dirname(__DIR__, 2) . '/admin_metrics.php');
-    TestHarness::assertContains('Auth::isAdmin', $metricsScreen, 'las metricas del sitio son exclusivas del administrador');
-    TestHarness::assertContains('artist_site_events', $metricsScreen, 'la pantalla de metricas lee la tabla de eventos propia');
+    TestHarness::assertContains(
+        "FeatureAccess::requirePage(\$currentUser, FeatureAccess::WEBSITE_MANAGE",
+        $metricsScreen,
+        'las metricas del sitio se habilitan por el plan Pro del artista, no por ser administrador de la plataforma'
+    );
+    TestHarness::assertContains(
+        'WHERE user_id = ? AND created_at',
+        $metricsScreen,
+        'cada consulta de metricas queda acotada al propio artista, nunca a todos los usuarios'
+    );
 
     $sidebar = (string)file_get_contents(dirname(__DIR__, 2) . '/sidebar.php');
     TestHarness::assertContains('admin_metrics.php', $sidebar, 'las metricas viven en el menu Admin, sin ocupar secciones de trabajo');

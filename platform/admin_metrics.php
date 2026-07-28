@@ -4,50 +4,47 @@ declare(strict_types=1);
 require_once __DIR__ . '/app/bootstrap.php';
 
 $currentUser = Auth::requireUser();
-
-if (!Auth::isAdmin($currentUser)) {
-    http_response_code(403);
-    exit('You do not have access to this section.');
-}
+FeatureAccess::requirePage($currentUser, FeatureAccess::WEBSITE_MANAGE, 'Site Metrics');
 
 $pdo = Database::connection();
+$ownerId = (int)$currentUser['id'];
 
 $rangeDays = (int)($_GET['days'] ?? 30);
 if (!in_array($rangeDays, [7, 30, 90, 365], true)) $rangeDays = 30;
 $since = date(DATE_ATOM, time() - $rangeDays * 86400);
 
-$totalsStmt = $pdo->prepare('SELECT event_type, COUNT(*) AS total FROM artist_site_events WHERE created_at >= ? GROUP BY event_type ORDER BY total DESC');
-$totalsStmt->execute([$since]);
+$totalsStmt = $pdo->prepare('SELECT event_type, COUNT(*) AS total FROM artist_site_events WHERE user_id = ? AND created_at >= ? GROUP BY event_type ORDER BY total DESC');
+$totalsStmt->execute([$ownerId, $since]);
 $totals = $totalsStmt->fetchAll();
 
 $saatchiStmt = $pdo->prepare("SELECT COALESCE(NULLIF(slug,''), detail) AS label, COUNT(*) AS total
-    FROM artist_site_events WHERE created_at >= ? AND event_type = 'saatchi_click'
+    FROM artist_site_events WHERE user_id = ? AND created_at >= ? AND event_type = 'saatchi_click'
     GROUP BY label ORDER BY total DESC LIMIT 20");
-$saatchiStmt->execute([$since]);
+$saatchiStmt->execute([$ownerId, $since]);
 $saatchiClicks = $saatchiStmt->fetchAll();
 
 $viewsStmt = $pdo->prepare("SELECT slug, COUNT(*) AS total FROM artist_site_events
-    WHERE created_at >= ? AND event_type = 'view' AND slug <> ''
+    WHERE user_id = ? AND created_at >= ? AND event_type = 'view' AND slug <> ''
     GROUP BY slug ORDER BY total DESC LIMIT 20");
-$viewsStmt->execute([$since]);
+$viewsStmt->execute([$ownerId, $since]);
 $topViews = $viewsStmt->fetchAll();
 
 $searchStmt = $pdo->prepare("SELECT detail, COUNT(*) AS total FROM artist_site_events
-    WHERE created_at >= ? AND event_type = 'search' AND detail <> ''
+    WHERE user_id = ? AND created_at >= ? AND event_type = 'search' AND detail <> ''
     GROUP BY detail ORDER BY total DESC LIMIT 30");
-$searchStmt->execute([$since]);
+$searchStmt->execute([$ownerId, $since]);
 $searches = $searchStmt->fetchAll();
 
 $localeStmt = $pdo->prepare("SELECT locale, COUNT(*) AS total FROM artist_site_events
-    WHERE created_at >= ? AND event_type = 'view' AND locale <> ''
+    WHERE user_id = ? AND created_at >= ? AND event_type = 'view' AND locale <> ''
     GROUP BY locale ORDER BY total DESC");
-$localeStmt->execute([$since]);
+$localeStmt->execute([$ownerId, $since]);
 $locales = $localeStmt->fetchAll();
 
 $referrerStmt = $pdo->prepare("SELECT referrer_host, COUNT(*) AS total FROM artist_site_events
-    WHERE created_at >= ? AND event_type = 'view' AND referrer_host <> ''
+    WHERE user_id = ? AND created_at >= ? AND event_type = 'view' AND referrer_host <> ''
     GROUP BY referrer_host ORDER BY total DESC LIMIT 15");
-$referrerStmt->execute([$since]);
+$referrerStmt->execute([$ownerId, $since]);
 $referrers = $referrerStmt->fetchAll();
 ?>
 <!doctype html>
